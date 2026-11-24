@@ -310,7 +310,7 @@
             },
             "security": {
                 "title": "Sicherheit",
-                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren werden die Sandbox und alles, was die Sicherheitsrichtlinie für die Tests festlegt, abgeschaltet.",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren werden die Sandbox und alles, was die Sicherheitsrichtlinie für die Tests festlegt, deaktiviert.",
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
@@ -348,7 +348,7 @@
                 },
                 "unsupportedReason": {
                     "UNEVALUABLE_ARGUMENTS": "{{ location }}: Eine @Policy-Annotation verwendet einen Ausdruck statt eines literalen Werts.",
-                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, einem Feld oder einem verschachtelten Typ statt an der Testklasse.",
+                    "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einer Methode, die kein Test ist, an einer von mehreren gleichnamigen Testmethoden, an einem Feld oder an einem verschachtelten Typ.",
                     "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: Eine @Policy-Annotation steht an einem Annotationstyp.",
                     "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: Die Datei deklariert mehr als einen Top-Level-Typ, der eine Testklasse ist oder eine @Policy-Annotation trägt.",
                     "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests oder Ares-Annotationen befinden sich in einem verschachtelten Typ.",
@@ -357,7 +357,10 @@
                     "ARES_1": "{{ location }}: Die Tests verwenden Ares 1, dessen eigene Sandbox weiterläuft.",
                     "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest.",
-                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: Ein Maven-Profil legt die Ares-Version fest, daher hängt die verwendete Version von den aktiven Profilen ab."
+                    "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: Ein Maven-Profil legt die Ares-Version fest, daher hängt die verwendete Version von den aktiven Profilen ab.",
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode, auch eine von einer anderen Testklasse geerbte, nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation der Testklasse die Sandbox deaktiviert.",
+                    "TEST_INTERFACE": "{{ location }}: Ein Interface deklariert Tests oder Ares-Annotationen, die jede Klasse erbt, die es implementiert.",
+                    "INHERITED_METHOD_POLICY": "{{ location }}: Die Testklasse erbt von einer anderen Testklasse eine Testmethode mit eigener @Policy-Annotation, sodass dieser Test diese Policy behält, egal welcher Policy die Klasse zugeordnet ist."
                 },
                 "sync": {
                     "loading": "Der Zustand des Test-Repositorys wird geladen…",
@@ -381,9 +384,17 @@
                 "deactivate": "Deaktivieren",
                 "deactivateConfirmation": {
                     "header": "Security Framework deaktivieren?",
-                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit werden die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, abgeschaltet, etwa die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Ares-Funktionen, die die Tests direkt verwenden, etwa @StrictTimeout, funktionieren weiter. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
+                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit werden die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, deaktiviert, etwa die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Ares-Funktionen, die die Tests direkt verwenden, etwa @StrictTimeout, funktionieren weiter. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
                     "aresLibraryStays": "Die Tests verwenden außerdem andere Teile von Ares ({{ apis }}), daher bleibt die Ares-Bibliothek in der Build-Datei.",
                     "confirm": "Deaktivieren"
+                },
+                "unsavedPoliciesOnSave": {
+                    "header": "Ungespeicherte Änderungen der Sicherheitsrichtlinien verwerfen?",
+                    "message": {
+                        "one": "Die Sicherheitsrichtlinien haben 1 ungespeicherte Änderung. Das Speichern der Aufgabe speichert sie nicht und verlässt diese Seite, daher wird sie verworfen. Um sie zu behalten, brich ab und speichere sie zuerst mit Richtlinien speichern unter Sicherheitsrichtlinien verwalten.",
+                        "other": "Die Sicherheitsrichtlinien haben {{ count }} ungespeicherte Änderungen. Das Speichern der Aufgabe speichert sie nicht und verlässt diese Seite, daher werden sie verworfen. Um sie zu behalten, brich ab und speichere sie zuerst mit Richtlinien speichern unter Sicherheitsrichtlinien verwalten."
+                    },
+                    "confirm": "Verwerfen und speichern"
                 },
                 "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox, und nichts, was die Sicherheitsrichtlinie für die Tests festlegt, gilt mehr. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis.",
                 "templateVersionUnsupported": "Die Vorlage verwendet Version {{ version }}, die nicht mehr unterstützt wird.",
@@ -398,7 +409,731 @@
                 "noLongerSupportedSuffix": "(nicht mehr unterstützt)",
                 "incompatibleSuffix": "(akzeptiert die Richtlinie nicht)",
                 "unverifiedSuffix": "(Kompatibilität nicht geprüft)",
-                "versionIncompatible": "Version {{ version }} kann nicht festgelegt werden, weil sie diese Teile der Richtlinie nicht akzeptiert: {{ details }}"
+                "versionIncompatible": "Version {{ version }} kann nicht festgelegt werden, weil sie diese Teile der Richtlinie nicht akzeptiert: {{ details }}",
+                "advanced": {
+                    "loading": "Wird geladen…",
+                    "loadError": "Die Sicherheitsrichtlinien konnten nicht geladen werden.",
+                    "retry": "Erneut versuchen",
+                    "uncommitted": "Nicht gespeichert",
+                    "uncommittedCount": "{{ count }} nicht gespeichert",
+                    "unsavedCount": {
+                        "one": "1 ungespeicherte Änderung",
+                        "other": "{{ count }} ungespeicherte Änderungen"
+                    },
+                    "card": {
+                        "activate": "Ares2 aktivieren",
+                        "activateHelp": "Ares2, das Security Framework für Programmieraufgaben, führt den Code der Studierenden während der automatischen Tests in einer Sandbox aus. Jeder Zugriff, den keine Sicherheitsrichtlinie erlaubt, lässt den Testfall mit einer Sicherheitsverletzung fehlschlagen.",
+                        "inactive": "Inaktiv",
+                        "inactiveHelp": "Der Code der Studierenden läuft ohne Einschränkungen. Keine Sicherheitsrichtlinie wird durchgesetzt.",
+                        "active": "Aktiv",
+                        "activeHelp": "Die automatischen Tests führen den Code der Studierenden in der Ares2-Sandbox aus und setzen die gespeicherten Sicherheitsrichtlinien durch.",
+                        "configured": "Konfiguriert",
+                        "configuredHelp": "Deine Sicherheitsrichtlinien sind im Test-Repository gespeichert. Der nächste Build von Vorlage und Lösung zeigt, ob Ares2 sie akzeptiert.",
+                        "turningOn": "Wird aktiviert…",
+                        "turningOff": "Wird deaktiviert…",
+                        "committing": "Wird gespeichert…",
+                        "scan": "Von Studierenden genutzte Bibliotheken prüfen",
+                        "scanHelp": "Ares2 prüft dann auch die Bibliotheken, die der Code der Studierenden aufruft, z. B. eine JSON- oder HTTP-Bibliothek, sodass auch ein verbotener Zugriff über eine Bibliothek erkannt wird. Testfälle laufen deutlich langsamer.",
+                        "scanInactive": "Verfügbar, sobald Ares2 aktiv ist.",
+                        "scanUnavailable": "Der Build dieser Aufgabe bindet den Ares2-Agenten nicht ein, den die Prüfung der Bibliotheken braucht.",
+                        "scanReadOnly": "Eine Richtlinie wird schreibgeschützt angezeigt, und das Aktivieren oder Deaktivieren der Prüfung betrifft jede Richtlinie: Behebe sie zuerst im Test-Repository.",
+                        "synced": "Gespeichert",
+                        "notActive": "Nicht aktiv",
+                        "notActiveHelp": "Builds seit dieser Version führen die Tests ohne Sandbox aus.",
+                        "by": "von {{ author }}",
+                        "version": "Framework-Version",
+                        "versionHelp": "Das Ares2-Release, mit dem die Tests laufen. Neuere Releases unterstützen mehr Richtlinien-Einstellungen und beheben Probleme der Sandbox, daher ist das neueste kompatible voreingestellt. Wähle ein älteres Release nur, wenn sich die Aufgabe genau wie damit verhalten muss.",
+                        "versionHelpActive": "Ein neues Release wirkt, sobald du speicherst.",
+                        "uncommitted": "Nicht gespeichert",
+                        "versionUncommittedHelp": "Das gewählte Release wirkt, sobald du speicherst.",
+                        "chooseOnActivation": "Beim Aktivieren wählen",
+                        "chooseOnActivationHelp": "Wenn du Ares2 aktivierst, wählst du das Release. Das neueste kompatible Release ist vorausgewählt."
+                    },
+                    "activate": {
+                        "title": "Ares2 aktivieren",
+                        "description": "Der Code der Studierenden läuft in der Ares2-Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
+                        "annotations": "Aktiviert die @Policy-Annotationen der Testklassen und stellt ihre Richtliniendateien aus der Git-Historie wieder her oder erzeugt eine Richtlinie aus den Berechtigungen der Vorlage.",
+                        "control": "Aktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
+                        "version": "Framework-Version",
+                        "versionHelp": "Die Tests dieser Aufgabe laufen mit diesem Release. Das neueste kompatible unterstützt die meisten Richtlinien-Einstellungen; wähle ein älteres nur, wenn sich die Aufgabe genau wie damit verhalten muss. Du kannst das Release später ändern.",
+                        "latest": "neuestes kompatibles Release",
+                        "older": "älteres Release",
+                        "build": "Startet einen Build von Vorlage und Lösung, der zeigt, ob Ares2 die Richtlinien akzeptiert.",
+                        "confirm": "Ares2 aktivieren"
+                    },
+                    "deactivate": {
+                        "title": "Ares2 deaktivieren",
+                        "description": "Der Code der Studierenden läuft ohne Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
+                        "deleteOne": "Löscht {{ file }} und deaktiviert die @Policy-Annotationen der Testklassen.",
+                        "deleteMany": "Löscht {{ count }} Richtliniendateien und deaktiviert die @Policy-Annotationen der Testklassen.",
+                        "control": "Deaktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
+                        "apiUsesTitle": {
+                            "one": "1 Testdatei verwendet weitere Funktionen von Ares2.",
+                            "other": "{{ count }} Testdateien verwenden weitere Funktionen von Ares2."
+                        },
+                        "apiUses": "Ares2 bleibt im Build, daher kompilieren sie weiterhin: {{ files }} ({{ apis }}).",
+                        "showFiles": "Dateien im Repository anzeigen",
+                        "discarded": {
+                            "one": "Deine ungespeicherte Änderung wird verworfen.",
+                            "other": "Deine {{ count }} ungespeicherten Änderungen werden verworfen."
+                        },
+                        "confirm": "Ares2 deaktivieren"
+                    },
+                    "scanOn": {
+                        "title": "Prüfung der Bibliotheken aktivieren",
+                        "description": "Ares2 prüft auch die Bibliotheken, die der Code der Studierenden verwendet. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
+                        "beforeTitle": "Bevor die Tests laufen,",
+                        "before": "analysiert Ares2 auch die Bibliotheken des Codes der Studierenden.",
+                        "whileTitle": "Während die Tests laufen,",
+                        "while": "prüft Ares2 auch jeden Aufruf in eine Bibliothek.",
+                        "slowerTitle": "Jeder Testfall läuft erheblich langsamer.",
+                        "slower": "Aktiviere die Prüfung nur, wenn die Aufgabe sie braucht.",
+                        "timeouts": "Prüfe, ob deine strikten Timeouts noch lang genug sind.",
+                        "confirm": "Prüfung aktivieren",
+                        "commitMessage": "Scan the libraries that student code uses",
+                        "committedTitle": "Prüfung der Bibliotheken aktiviert",
+                        "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt auch die Bibliotheken des Codes der Studierenden. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
+                    },
+                    "scanOff": {
+                        "title": "Prüfung der Bibliotheken deaktivieren",
+                        "description": "Ares2 prüft nur noch den Code der Studierenden selbst. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
+                        "beforeTitle": "Bevor die Tests laufen,",
+                        "before": "analysiert Ares2 nur den Code der Studierenden selbst.",
+                        "whileTitle": "Während die Tests laufen,",
+                        "while": "werden Aufrufe in Bibliotheken nicht mehr geprüft.",
+                        "riskTitle": "Verbotene Zugriffe über eine Bibliothek werden nicht mehr erkannt.",
+                        "risk": "Zum Beispiel kann der Code der Studierenden unbemerkt über eine Hilfsbibliothek eine Datei lesen.",
+                        "confirm": "Prüfung deaktivieren",
+                        "commitMessage": "Stop scanning the libraries that student code uses",
+                        "committedTitle": "Prüfung der Bibliotheken deaktiviert",
+                        "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt nur noch den Code der Studierenden selbst. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
+                    },
+                    "section": {
+                        "title": "Sicherheitsrichtlinien verwalten",
+                        "description": "Lege eine Sicherheitsrichtlinie fest, die bestimmt, auf welche Ressourcen der Code der Studierenden zugreifen darf und wie sich die Tests verhalten.",
+                        "emptyTitle": "Noch keine Sicherheitsrichtlinie",
+                        "emptyDescription": "Alle Testfälle laufen unter der restriktiven Standardrichtlinie von Ares2. Füge eine Sicherheitsrichtlinie hinzu, um festzulegen, auf welche Ressourcen der Code der Studierenden zugreifen darf und wie sich die Testfälle verhalten.",
+                        "addPolicy": "Sicherheitsrichtlinie hinzufügen"
+                    },
+                    "commitBar": {
+                        "restrictions": {
+                            "one": "1 erlaubter Ressourcenzugriff",
+                            "other": "{{ count }} erlaubte Ressourcenzugriffe"
+                        },
+                        "behaviours": {
+                            "one": "1 festgelegtes Testverhalten",
+                            "other": "{{ count }} festgelegte Testverhalten"
+                        },
+                        "testCases": {
+                            "one": "1 Testfallzuordnung",
+                            "other": "{{ count }} Testfallzuordnungen"
+                        },
+                        "testClasses": {
+                            "one": "1 deklarierte Testklasse",
+                            "other": "{{ count }} deklarierte Testklassen"
+                        },
+                        "settings": {
+                            "one": "1 Richtlinieneinstellung",
+                            "other": "{{ count }} Richtlinieneinstellungen"
+                        },
+                        "build": {
+                            "one": "1 Build-Einstellung",
+                            "other": "{{ count }} Build-Einstellungen"
+                        },
+                        "notEnforced": "Nichts wird durchgesetzt, bevor du speicherst.",
+                        "nothing": "Alles ist gespeichert.",
+                        "instructorsOnly": "Nur Lehrende des Kurses können die Sicherheitsrichtlinien ändern.",
+                        "discard": "Verwerfen",
+                        "commit": "Richtlinien speichern"
+                    },
+                    "policy": {
+                        "defaultName": "Sicherheitsrichtlinie {{ number }}",
+                        "unnamed": "Unbenannte Richtlinie",
+                        "new": "Neu · nicht gespeichert",
+                        "newHelp": "Diese Richtlinie wurde noch nicht gespeichert. Sie wirkt, sobald du speicherst.",
+                        "changesHelp": {
+                            "one": "Diese Richtlinie hat 1 ungespeicherte Änderung. Sie wirkt, sobald du speicherst.",
+                            "other": "Diese Richtlinie hat {{ count }} ungespeicherte Änderungen. Sie wirken, sobald du speicherst."
+                        },
+                        "readOnly": "Schreibgeschützt",
+                        "viewYaml": "YAML anzeigen",
+                        "delete": "Richtlinie löschen",
+                        "deleteLabel": "{{ policy }} löschen",
+                        "expand": "{{ policy }} aufklappen",
+                        "collapse": "{{ policy }} zuklappen",
+                        "name": "Name",
+                        "nameHelp": "Bestimmt den Dateinamen im Test-Repository. Eine Umbenennung benennt die Datei beim Speichern um.",
+                        "namePlaceholder": "z. B. Stresstests",
+                        "presets": "Vorlagen",
+                        "presetsHelp": "Eine Vorlage ist ein fertiger Satz von Berechtigungen für eine Bibliothek oder ein Framework, z. B. alles, was eine Testbibliothek braucht. Wählst du eine aus, werden diese Berechtigungen für dich hinzugefügt; sie bleiben gesperrt, bis du die Vorlage abwählst.",
+                        "presetsUnavailable": "Eine Vorlage ist ein fertiger Satz von Berechtigungen für eine Bibliothek oder ein Framework. Noch kein Ares2-Release bietet Vorlagen an, daher fügst du jede Berechtigung selbst hinzu.",
+                        "noPreset": "Keine",
+                        "supervised": "Überwachter Code",
+                        "supervisedHelp": "Aus dem Vorlagen-Repository ermittelt. Ares2 überwacht den gesamten Code in diesem Paket. Die Richtlinienversion ist die Formatversion der Richtliniendatei.",
+                        "package": "Paket",
+                        "mainClass": "Hauptklasse",
+                        "none": "keine",
+                        "policyVersion": "Richtlinienversion",
+                        "box": {
+                            "resources": "Ressourcenzugriff erlauben",
+                            "behaviour": "Testverhalten konfigurieren",
+                            "tests": "Testfälle zuordnen"
+                        },
+                        "boxChangesHelp": {
+                            "one": "1 ungespeicherte Änderung in diesem Bereich. Sie wirkt, sobald du speicherst.",
+                            "other": "{{ count }} ungespeicherte Änderungen in diesem Bereich. Sie wirken, sobald du speicherst."
+                        },
+                        "readOnlyReason": {
+                            "MISSING": "{{ path }} existiert nicht und kann daher hier nicht bearbeitet werden.",
+                            "TOO_LARGE": "{{ path }} ist zu groß, um hier bearbeitet zu werden.",
+                            "INVALID_PATH": "Der Pfad {{ path }} verlässt das Repository oder ist keine reguläre Datei und kann daher hier nicht bearbeitet werden.",
+                            "YAML_ERROR": "{{ path }} hat einen YAML-Fehler in Zeile {{ line }} und kann hier nicht bearbeitet werden, ohne ihn zu überschreiben.",
+                            "UNSUPPORTED_CONTENT": "{{ path }} verwendet Felder oder Werte, die der Editor nicht anzeigen kann, und kann daher hier nicht bearbeitet werden, ohne sie zu ändern.",
+                            "DUPLICATE_RESOURCE": "{{ path }} führt eine Ressource mehrfach auf, z. B. einen Pfad oder ein Paket, und kann daher hier nicht bearbeitet werden, ohne diese Einträge zusammenzuführen."
+                        }
+                    },
+                    "resources": {
+                        "tabsLabel": "Ressourcenkategorie",
+                        "tab": {
+                            "files": "Dateisystem",
+                            "network": "Netzwerk",
+                            "commands": "Befehle",
+                            "threads": "Threads",
+                            "packages": "Importe"
+                        },
+                        "hint": {
+                            "files": "Jeder Pfad erlaubt die aufgeführten Aktionen genau auf diesem Pfad und allen Pfaden darunter.",
+                            "network": "Jeder Endpunkt erlaubt die aufgeführten Aktionen genau auf diesem Host und Port.",
+                            "commands": "Jeder Befehl darf genau mit diesen Argumenten in dieser Reihenfolge gestartet werden.",
+                            "threads": "Jede Thread-Klasse darf bis zur angegebenen Anzahl gestartet werden.",
+                            "packages": "Jedes Paket darf vom Code der Studierenden importiert werden."
+                        },
+                        "empty": {
+                            "files": "Noch kein Pfad ist erlaubt. Der Code der Studierenden kann auf keine Datei zugreifen.",
+                            "network": "Noch kein Endpunkt ist erlaubt. Der Code der Studierenden kann keine Verbindung öffnen.",
+                            "commands": "Noch kein Befehl ist erlaubt. Der Code der Studierenden kann kein Programm starten.",
+                            "threads": "Noch keine Thread-Klasse ist erlaubt. Der Code der Studierenden kann keine zusätzlichen Threads starten.",
+                            "packages": "Noch kein Paket ist erlaubt. Der Code der Studierenden kann keine zusätzlichen Pakete importieren."
+                        },
+                        "column": {
+                            "path": "Pfad",
+                            "host": "Host",
+                            "port": "Port",
+                            "command": "Befehl",
+                            "arguments": "Mit diesen Argumenten",
+                            "maxThreads": "Max. Threads",
+                            "threadClass": "Dieser Klasse",
+                            "package": "Darf importieren",
+                            "granted": "Erlaubt",
+                            "source": "Herkunft",
+                            "actions": "Aktionen"
+                        },
+                        "noArguments": "keine",
+                        "granted": {
+                            "read": "Lesen",
+                            "overwrite": "Überschreiben",
+                            "create": "Erstellen",
+                            "execute": "Ausführen",
+                            "delete": "Löschen",
+                            "open": "Öffnen",
+                            "send": "Senden",
+                            "receive": "Empfangen",
+                            "import": "Importieren"
+                        },
+                        "grantedHelp": {
+                            "files": {
+                                "read": "Der Code der Studierenden darf Dateien auf diesem Pfad und allen Pfaden darunter öffnen und lesen.",
+                                "overwrite": "Der Code der Studierenden darf vorhandene Dateien auf diesem Pfad und allen Pfaden darunter beschreiben.",
+                                "create": "Der Code der Studierenden darf neue Dateien und Ordner auf diesem Pfad und allen Pfaden darunter erstellen.",
+                                "execute": "Der Code der Studierenden darf Dateien auf diesem Pfad und allen Pfaden darunter als Programme ausführen.",
+                                "delete": "Der Code der Studierenden darf Dateien und Ordner auf diesem Pfad und allen Pfaden darunter entfernen."
+                            },
+                            "network": {
+                                "open": "Der Code der Studierenden darf eine Verbindung zu diesem Endpunkt öffnen.",
+                                "send": "Der Code der Studierenden darf Daten an diesen Endpunkt senden.",
+                                "receive": "Der Code der Studierenden darf Daten von diesem Endpunkt empfangen."
+                            },
+                            "commands": "Der Code der Studierenden darf dieses Programm genau mit diesen Argumenten starten.",
+                            "threads": {
+                                "one": "Der Code der Studierenden darf bis zu 1 Thread dieser Klasse starten.",
+                                "other": "Der Code der Studierenden darf bis zu {{ count }} Threads dieser Klasse starten."
+                            },
+                            "packages": "Der Code der Studierenden darf Klassen aus diesem Paket verwenden."
+                        },
+                        "source": {
+                            "PRESET": "Vorlage · {{ preset }}",
+                            "COMMITTED": "Gespeichert",
+                            "NEW": "Nicht gespeichert",
+                            "CHANGED": "Geändert",
+                            "REMOVED": "Entfernt · nicht gespeichert"
+                        },
+                        "sourceHelp": {
+                            "PRESET": "Von der Vorlage {{ preset }} hinzugefügt und gesperrt. Wähle die Vorlage ab, um die Zeile zu entfernen.",
+                            "COMMITTED": "Gespeichert und durchgesetzt.",
+                            "NEW": "Seit dem letzten Speichern hinzugefügt. Wird durchgesetzt, sobald du speicherst.",
+                            "CHANGED": "Seit dem letzten Speichern bearbeitet. Bis zum Speichern wird die gespeicherte Fassung durchgesetzt.",
+                            "REMOVED": "Seit dem letzten Speichern gelöscht. Wird bis zum Speichern weiter durchgesetzt."
+                        },
+                        "locked": "Durch Vorlage gesperrt",
+                        "lockedHelp": "Diese Zeile gehört zur Vorlage {{ preset }}. Wähle die Vorlage im Feld Vorlagen ab, um sie zu entfernen.",
+                        "actionsFor": "Aktionen für",
+                        "deleteRow": "Löschen",
+                        "undo": "Rückgängig",
+                        "undoLabel": "Entfernen rückgängig machen für",
+                        "delete": {
+                            "title": "{{ noun }} löschen",
+                            "question": "Möchtest du diesen Eintrag ({{ noun }}) wirklich aus {{ tab }} löschen?",
+                            "warning": {
+                                "files": "Ares2 erlaubt dem Code der Studierenden nicht mehr, auf {{ target }} zuzugreifen. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl.",
+                                "network": "Ares2 erlaubt dem Code der Studierenden nicht mehr, sich mit {{ target }} zu verbinden. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl.",
+                                "commands": "Ares2 erlaubt dem Code der Studierenden nicht mehr, {{ target }} auszuführen. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl.",
+                                "threads": "Ares2 erlaubt dem Code der Studierenden nicht mehr, Threads von {{ target }} zu erzeugen. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl.",
+                                "packages": "Ares2 erlaubt dem Code der Studierenden nicht mehr, {{ target }} zu importieren. Tests, die darauf angewiesen sind, schlagen mit einer Sicherheitsverletzung fehl."
+                            },
+                            "note": "Das Löschen wird als ungespeicherte Änderung hinzugefügt. Nichts erreicht das Repository, bevor du speicherst.",
+                            "confirm": "Löschen"
+                        }
+                    },
+                    "row": {
+                        "files": {
+                            "noun": "Pfad",
+                            "nounInSentence": "Pfad",
+                            "addTitle": "Pfad hinzufügen",
+                            "editTitle": "Pfad bearbeiten",
+                            "target": "Auf diesem Pfad und allen Pfaden darunter",
+                            "hint": "Relativ zum Testordner. Trenne mehrere Pfade durch Kommas; jeder wird eine eigene Zeile.",
+                            "hintEdit": "Relativ zum Testordner.",
+                            "action": {
+                                "read": "Lesen",
+                                "overwrite": "Überschreiben",
+                                "create": "Erstellen",
+                                "execute": "Ausführen",
+                                "delete": "Löschen"
+                            },
+                            "actionHint": {
+                                "read": "Dateien öffnen und lesen",
+                                "overwrite": "In vorhandene Dateien schreiben",
+                                "create": "Neue Dateien und Ordner erstellen",
+                                "execute": "Dateien als Programme ausführen",
+                                "delete": "Dateien und Ordner entfernen"
+                            },
+                            "verb": {
+                                "read": "lesen",
+                                "overwrite": "überschreiben",
+                                "create": "erstellen",
+                                "execute": "ausführen",
+                                "delete": "löschen",
+                                "any": "zugreifen auf"
+                            }
+                        },
+                        "network": {
+                            "noun": "Endpunkt",
+                            "nounInSentence": "Endpunkt",
+                            "addTitle": "Endpunkt hinzufügen",
+                            "editTitle": "Endpunkt bearbeiten",
+                            "host": "Auf diesem Host",
+                            "port": "Auf diesem Port",
+                            "hint": "Hostname oder IP-Adresse; Port zwischen 0 und 65535.",
+                            "action": {
+                                "open": "Öffnen",
+                                "send": "Senden",
+                                "receive": "Empfangen"
+                            },
+                            "actionHint": {
+                                "open": "Eine Verbindung zu diesem Endpunkt öffnen",
+                                "send": "Daten an diesen Endpunkt senden",
+                                "receive": "Daten von diesem Endpunkt empfangen"
+                            },
+                            "verb": {
+                                "open": "Verbindungen öffnen zu",
+                                "send": "Daten senden an",
+                                "receive": "Daten empfangen von",
+                                "any": "sich verbinden mit"
+                            }
+                        },
+                        "commands": {
+                            "noun": "Befehl",
+                            "nounInSentence": "Befehl",
+                            "addTitle": "Befehl hinzufügen",
+                            "editTitle": "Befehl bearbeiten",
+                            "command": "Diesen Befehl",
+                            "arguments": "Mit diesen Argumenten",
+                            "hint": "Durch Leerzeichen getrennt; die Argumente müssen genau und in dieser Reihenfolge übereinstimmen. Setze ein Argument mit Leerzeichen in doppelte Anführungszeichen. Trenne mehrere Befehle durch Kommas.",
+                            "verb": "{{ target }} ausführen"
+                        },
+                        "threads": {
+                            "noun": "Thread-Klasse",
+                            "nounInSentence": "Thread-Klasse",
+                            "addTitle": "Thread-Klasse hinzufügen",
+                            "editTitle": "Thread-Klasse bearbeiten",
+                            "threadClass": "Diese Klasse",
+                            "maxThreads": "Mit dieser Höchstzahl",
+                            "hint": "Vollqualifizierter Klassenname; die Zahl ist die Obergrenze für diese Klasse.",
+                            "verb": "bis zu {{ count }} Threads von {{ target }} erzeugen"
+                        },
+                        "packages": {
+                            "noun": "Paket",
+                            "nounInSentence": "Paket",
+                            "addTitle": "Paket hinzufügen",
+                            "editTitle": "Paket bearbeiten",
+                            "packageName": "Dieses Paket",
+                            "hint": "Vollqualifizierter Paketname, z. B. org.apache.commons.lang3.",
+                            "verb": "{{ target }} importieren"
+                        },
+                        "or": "oder",
+                        "warning": "Mit dieser Zeile darf der Code der Studierenden: {{ action }}.",
+                        "browse": "Durchsuchen",
+                        "studentCodeMay": "Der Code der Studierenden darf",
+                        "grantsNothing": "Wähle mindestens eine Aktion, um den Eintrag ({{ noun }}) hinzuzufügen.",
+                        "addNote": "Fügt die Zeile als ungespeicherte Änderung hinzu. Nichts erreicht das Repository, bevor du speicherst.",
+                        "editNote": "Behält die Änderung als ungespeichert. Nichts erreicht das Repository, bevor du speicherst.",
+                        "saveChanges": "Änderungen speichern",
+                        "problem": {
+                            "pathRequired": "Gib einen Pfad ein.",
+                            "pathCharacters": "Ein Pfad darf keinen Zeilenumbruch und kein NUL-Zeichen enthalten.",
+                            "hostRequired": "Gib einen Hostnamen oder eine IP-Adresse ohne Leerzeichen ein.",
+                            "portRange": "Gib einen Port zwischen 0 und 65535 ein.",
+                            "commandRequired": "Gib einen Befehl ein.",
+                            "commandCharacters": "Ein Befehl und seine Argumente dürfen keinen Zeilenumbruch und kein NUL-Zeichen enthalten.",
+                            "argumentsQuote": "Schließe das doppelte Anführungszeichen der Argumente.",
+                            "listQuote": "Schließe das doppelte Anführungszeichen des Eintrags.",
+                            "className": "Gib einen vollqualifizierten Klassennamen ein, z. B. java.lang.Thread.",
+                            "threadCount": "Gib eine ganze Zahl von mindestens 1 ein.",
+                            "packageName": "Gib einen Paketnamen wie org.apache.commons.lang3 ein.",
+                            "duplicate": "{{ entry }} ist bereits aufgeführt. Bearbeite stattdessen die vorhandene Zeile."
+                        }
+                    },
+                    "browse": {
+                        "pathsTitle": "Pfade auswählen",
+                        "scriptsTitle": "Befehle auswählen",
+                        "searchPaths": "Dateien und Ordner durchsuchen",
+                        "searchScripts": "Skripte durchsuchen",
+                        "inTemplate": "Dateien im Vorlagen-Repository",
+                        "scriptsInTemplate": "Skripte im Vorlagen-Repository",
+                        "empty": "Nichts passt zu „{{ query }}“.",
+                        "loadFailed": "Die Dateien des Vorlagen-Repositorys konnten nicht geladen werden.",
+                        "retry": "Erneut versuchen",
+                        "selectPath": "Auswählen",
+                        "selectFolderScripts": "Alle Skripte in {{ folder }} auswählen, auch die von der Suche ausgeblendeten",
+                        "selectFolderListedScripts": "Alle aufgeführten Skripte in {{ folder }} auswählen, auch die von der Suche ausgeblendeten",
+                        "remove": "{{ entry }} entfernen",
+                        "clear": "Feld leeren",
+                        "expand": "Aufklappen",
+                        "collapse": "Zuklappen",
+                        "pathsHint": "Wähle mehrere Pfade auf einmal — jeder wird eine eigene Zeile mit denselben Berechtigungen. Markierungen zeigen Pfade, die bereits einen Eintrag haben.",
+                        "scriptsHint": "Wähle mehrere Skripte auf einmal — jedes wird eine eigene Zeile. Ein Ordner wählt alle seine Skripte aus, auch die von der Suche ausgeblendeten. Die Argumente gibst du danach im Dialog ein.",
+                        "scriptsHintTruncated": "Wähle mehrere Skripte auf einmal — jedes wird eine eigene Zeile. Ein Ordner wählt alle seine aufgeführten Skripte aus, auch die von der Suche ausgeblendeten. Die Argumente gibst du danach im Dialog ein.",
+                        "truncated": "Das Vorlagen-Repository hat mehr Dateien, als hier aufgeführt sind; gib andere Pfade direkt ein.",
+                        "selected": "{{ count }} ausgewählt:",
+                        "nothingSelected": "Nichts ausgewählt",
+                        "select": "Auswählen ({{ count }})"
+                    },
+                    "behaviour": {
+                        "tabsLabel": "Kategorie des Testverhaltens",
+                        "tab": {
+                            "securityFeedback": "Sicherheitsrückmeldung",
+                            "standardFeedback": "Standardrückmeldung",
+                            "visibility": "Sichtbarkeit",
+                            "timeout": "Timeout",
+                            "output": "Ausgabe"
+                        },
+                        "uncommittedMark": "(nicht gespeichert)",
+                        "uncommittedHelp": "Die Einstellungen in diesem Tab weichen von den gespeicherten ab. Sie wirken, sobald du speicherst.",
+                        "feedbackLevel": "Detailgrad der Fehlerrückmeldung",
+                        "feedbackLevelHelp": "Bestimmt, wie viel Studierende über eine Sicherheitsverletzung erfahren, von I0 (nur dass die Richtlinie verletzt wurde) bis I3 (die vollständige Ares2-Meldung und die Regel, die den Zugriff erlauben würde). Rückmeldungen versteckter Testfälle werden immer geschwärzt.",
+                        "feedbackLevelUnavailable": "Noch kein Ares2-Release lässt eine Richtlinie den Detailgrad wählen: Studierende sehen die vollständige Ares2-Meldung, wie unten gezeigt.",
+                        "level": {
+                            "I3": "Maximale Information (I3)",
+                            "I2": "Mehr Information (I2)",
+                            "I1": "Weniger Information (I1)",
+                            "I0": "Minimale Information (I0)"
+                        },
+                        "preview": "Vorschau dessen, was Studierende sehen",
+                        "securityViolation": "Ares2-Sicherheitsverletzung",
+                        "securityMessage": "Ares Sicherheitsfehler (Grund: Student-Code; Phase: Ausführung): de.student.StudentCode.exploit hat versucht, illegal die Datei /etc/passwd über java.nio.file.Files.readString(java.nio.file.Path) zu lesen, wurde jedoch von Ares blockiert.",
+                        "replaceExceptions": "Exceptions, die Studierende sehen, durch diese Nachricht ersetzen",
+                        "replaceExceptionsHelp": "Studierende sehen die Nachricht unten statt der Exception und des Stacktrace eines fehlgeschlagenen Testfalls. Sicherheitsverletzungen behalten ihre eigene Rückmeldung.",
+                        "message": "Nachricht",
+                        "messageHelp": "Wird Studierenden bei jedem fehlgeschlagenen Testfall angezeigt, solange der Schalter oben aktiviert ist.",
+                        "messagePlaceholder": "Test fehlgeschlagen.",
+                        "regularFailure": "regulärer Testfehler",
+                        "originalException": "java.lang.AssertionError: expected [1, 2, 3] but was [3, 2, 1]\n    at MergeSortTest.testMergeSort(MergeSortTest.java:27)",
+                        "hideTests": "Rückmeldung zu Testfällen zwischen diesen Zeitpunkten vor Studierenden verbergen",
+                        "hideTestsHelp": "Zwischen den beiden Zeitpunkten sehen Studierende nur, dass ein Testfall versteckt ist. Seine Ergebnisse erscheinen, sobald der Zeitraum vorbei ist.",
+                        "feedback": "Studierende sehen die Testergebnisse",
+                        "hidden": "Testergebnisse sind für Studierende versteckt",
+                        "timelineCaption": "Was Studierende sehen",
+                        "timelineLabel": "Was Studierende sehen: die Testergebnisse, dann nichts von {{ from }} bis {{ until }}, dann wieder die Testergebnisse",
+                        "timelineAlways": "Was Studierende sehen: durchgehend die Testergebnisse",
+                        "hiddenFrom": "Versteckt ab",
+                        "hiddenFromHelp": "Ab diesem Zeitpunkt sehen Studierende die Ergebnisse der Testfälle dieser Richtlinie nicht mehr.",
+                        "hiddenUntil": "Versteckt bis",
+                        "hiddenUntilHelp": "Ab diesem Zeitpunkt sehen Studierende die Ergebnisse wieder, auch die der Abgaben dazwischen.",
+                        "turnOnFirst": "Aktiviere den Schalter oben, um die Zeitpunkte festzulegen.",
+                        "hiddenPeriodInvalid": "„Versteckt bis“ muss nach „Versteckt ab“ liegen.",
+                        "timeZone": "Die Zeitpunkte verwenden die Zeitzone deines Browsers.",
+                        "strictTimeout": "Für jeden Testfall ein striktes Timeout erzwingen",
+                        "strictTimeoutHelp": "Ares2 beendet jeden Testfall, der das Zeitlimit überschreitet, und markiert ihn als fehlgeschlagen.",
+                        "timeLimit": "Zeitlimit",
+                        "timeLimitHelp": "Jeder Testfall bekommt diese Zeit für sich. Testfälle teilen sich das Limit nicht.",
+                        "timeLimitUnit": "Einheit des Zeitlimits",
+                        "gracePeriod": "Karenzzeit",
+                        "gracePeriodHelp": "Nach dem Zeitlimit bekommt ein Testfall so viel zusätzliche Zeit, bevor Ares2 ihn beendet und als fehlgeschlagen markiert.",
+                        "gracePeriodUnit": "Einheit der Karenzzeit",
+                        "unit": {
+                            "label": "Einheit",
+                            "NANOSECONDS": "Nanosekunden",
+                            "MICROSECONDS": "Mikrosekunden",
+                            "MILLISECONDS": "Millisekunden",
+                            "SECONDS": "Sekunden",
+                            "MINUTES": "Minuten",
+                            "HOURS": "Stunden",
+                            "DAYS": "Tage"
+                        },
+                        "mirrorOutput": "Ausgabe der Studierenden bis zu dieser Zeichenzahl in die Testergebnisse spiegeln",
+                        "mirrorOutputHelp": "Text, den der Code der Studierenden auf der Konsole ausgibt, erscheint in den Testergebnissen, abgeschnitten nach der maximalen Zeichenzahl.",
+                        "maximumCharacters": "Maximale Zeichenzahl",
+                        "maximumCharactersHelp": "Ausgabe über diese Zeichenzahl hinaus wird in den Testergebnissen abgeschnitten."
+                    },
+                    "tests": {
+                        "assigned": "Zugeordnete Testfälle ({{ count }})",
+                        "assignedHelp": "Diese Testfälle laufen unter dieser Richtlinie. Wenn du eine ganze Klasse zuordnest, gehören später hinzugefügte Testfälle ebenfalls dazu.",
+                        "assignedTo": "Testfälle von {{ policy }}",
+                        "addTestCases": "Testfälle hinzufügen",
+                        "noTests": "Keine Testfälle zugeordnet. Diese Richtlinie gilt noch für keinen Test.",
+                        "allTestCases": "alle Testfälle",
+                        "testCaseCount": {
+                            "one": "1 Testfall",
+                            "other": "{{ count }} Testfälle"
+                        },
+                        "declared": "Deklarierte Testklassen ({{ count }})",
+                        "declaredHelp": "Ares2 behandelt Code in diesen Klassen als Testcode, nicht als Code der Studierenden. Klassen zugeordneter Testfälle gehören immer dazu. Füge hier Hilfsklassen ohne Testannotationen hinzu.",
+                        "declaredIn": "In {{ policy }} deklarierte Testklassen",
+                        "addTestClass": "Testklasse hinzufügen",
+                        "noClasses": "Noch keine Testklassen deklariert.",
+                        "fromTests": "Aus Testfällen",
+                        "fromTestsHelp": "Automatisch deklariert, weil Testfälle dieser Klasse zugeordnet sind. Sie bleibt deklariert, solange einer davon zugeordnet ist.",
+                        "removed": "Entfernt · nicht gespeichert",
+                        "testRemovedHelp": "Seit dem letzten Speichern entfernt. Gilt bis zum Speichern weiter.",
+                        "classRemovedHelp": "Seit dem letzten Speichern entfernt. Bleibt bis zum Speichern deklariert.",
+                        "testNewHelp": "Seit dem letzten Speichern zugeordnet. Wirkt, sobald du speicherst.",
+                        "classNewHelp": "Seit dem letzten Speichern deklariert. Wirkt, sobald du speicherst.",
+                        "undo": "Rückgängig",
+                        "undoLabel": "Entfernen rückgängig machen für",
+                        "undoBlocked": "Jetzt {{ policy }} zugeordnet. Entferne es dort, um dies rückgängig zu machen.",
+                        "conflict": {
+                            "label": "Konflikt:",
+                            "text": "Eine neuere Speicherung ordnet dieser Richtlinie alle Testfälle von {{ testClass }} zu, deine ungespeicherten Änderungen entfernen aber {{ testCases }}. Wähle vor dem Speichern, was gelten soll.",
+                            "keepClass": "Alle Testfälle behalten",
+                            "keepRemoval": "Entfernen beibehalten",
+                            "casesUnknown": "Artemis kann die Testfälle von {{ testClass }} nicht laden, die zum Beibehalten des Entfernens nötig sind. Du kannst sie auch unter „Testfälle hinzufügen“ wählen."
+                        },
+                        "removeLabel": "Entfernen",
+                        "remove": {
+                            "caseTitle": "Testfall entfernen",
+                            "wholeClassTitle": "Testklasse entfernen",
+                            "classTitle": "Testklasse entfernen",
+                            "caseQuestion": "Möchtest du diesen Testfall wirklich aus {{ policy }} entfernen?",
+                            "wholeClassQuestion": "Möchtest du diese Testklasse wirklich aus {{ policy }} entfernen?",
+                            "classQuestion": "Möchtest du diese Testklasse wirklich aus {{ policy }} entfernen?",
+                            "caseWarning": "Dieser Testfall läuft nicht mehr unter dieser Richtlinie.",
+                            "caseWarningUndeclared": "Dieser Testfall läuft nicht mehr unter dieser Richtlinie. {{ testClass }} ist dann nicht mehr als Testklasse deklariert.",
+                            "wholeClassWarning": "Die Testfälle dieser Klasse laufen nicht mehr unter dieser Richtlinie.",
+                            "wholeClassWarningUndeclared": "Die Testfälle dieser Klasse laufen nicht mehr unter dieser Richtlinie. {{ testClass }} ist dann nicht mehr als Testklasse deklariert.",
+                            "classWarning": "Ares2 behandelt Code in {{ testClass }} wieder als Code der Studierenden. Testfälle, die ihn verwenden, können mit einer Sicherheitsverletzung fehlschlagen.",
+                            "confirm": "Entfernen"
+                        }
+                    },
+                    "assign": {
+                        "title": "Testfälle zuordnen",
+                        "description": "Angehakte Testfälle werden von {{ file }} erfasst. Entferne den Haken, um einen Testfall für eine andere Richtlinie freizugeben; von einer anderen Richtlinie erfasste Testfälle sind gesperrt.",
+                        "search": "Pakete, Klassen und Testfälle durchsuchen",
+                        "inRepository": "Tests im Test-Repository",
+                        "empty": "Nichts passt zu „{{ query }}“.",
+                        "selectPackage": "Alle verfügbaren Testfälle auswählen in",
+                        "selectClass": "Auswählen",
+                        "selectCase": "Auswählen",
+                        "expand": "Aufklappen",
+                        "collapse": "Zuklappen",
+                        "selectedOf": "{{ selected }} von {{ total }} ausgewählt",
+                        "allCaptured": "alle von anderen Richtlinien erfasst",
+                        "coveredBy": "Erfasst von {{ policy }}",
+                        "lockedBy": "{{ policy }} zugeordnet. Gib den Testfall dort zuerst frei.",
+                        "switchedOff": "Die Sandbox ist für diese Klasse deaktiviert, daher können ihre Testfälle keine Richtlinie verwenden.",
+                        "switchedOffCase": "Dieser Testfall kann nicht zugeordnet werden: Seine eigene @Policy-Annotation deaktiviert die Sandbox.",
+                        "overloadedCase": "Mehrere Testmethoden haben diesen Namen, daher nutzen sie die Richtlinie nur zusammen mit ihrer ganzen Testklasse. Wähle die anderen Testfälle der Klasse aus, um sie einzuschließen.",
+                        "switchedOffTag": "Sandbox deaktiviert",
+                        "willBeAdded": "Wird hinzugefügt",
+                        "willBeRemoved": "Wird entfernt",
+                        "hint": "Eine vollständig angehakte Klasse wird als Ganzes erfasst; sonst nur die angehakten Testfälle.",
+                        "selectAll": "Alle nicht zugeordneten Testfälle auswählen ({{ count }})",
+                        "noChanges": "Keine Änderungen",
+                        "apply": "Übernehmen"
+                    },
+                    "declare": {
+                        "title": "Testklassen deklarieren",
+                        "description": "Angehakte Klassen werden in {{ file }} als Testklassen deklariert. Entferne den Haken, um eine Klasse zu entfernen.",
+                        "search": "Klassen durchsuchen",
+                        "inRepository": "Klassen im Test-Repository",
+                        "empty": "Nichts passt zu „{{ query }}“.",
+                        "declare": "Deklarieren",
+                        "selectPackage": "Alle Klassen deklarieren in",
+                        "fromTestsHelp": "Automatisch deklariert, weil Testfälle dieser Klasse zugeordnet sind.",
+                        "noTests": "keine Testannotationen"
+                    },
+                    "yaml": {
+                        "readOnly": "schreibgeschützt",
+                        "keysExplained": "Diese Datei liest Ares2. Ihre Abschnitte enthalten dieselben Einstellungen wie diese Bereiche des Editors:",
+                        "keyResources": "Ressourcenzugriff erlauben",
+                        "keyBehaviour": "Testverhalten konfigurieren",
+                        "keyClasses": "Testfälle zuordnen (deklarierte Testklassen)",
+                        "viewLabel": "Version",
+                        "committed": "Gespeichert",
+                        "unsaved": "Mit ungespeicherten Änderungen",
+                        "uncommittedLines": "Nicht gespeichert ({{ count }} Zeilen)",
+                        "copy": "YAML kopieren",
+                        "copied": "Kopiert",
+                        "notCommitted": "Diese Richtlinie wurde noch nicht gespeichert.",
+                        "rendering": "Die Richtlinie wird erzeugt…",
+                        "source": "YAML-Quelltext",
+                        "importHint": "Ein Import ersetzt diese Richtlinie durch die gewählte YAML-Datei als ungespeicherte Änderungen.",
+                        "importFile": "Zu importierende YAML-Datei",
+                        "import": "Importieren",
+                        "export": "Exportieren",
+                        "importTooLarge": "Die Datei ist größer als 256 KB.",
+                        "importUnreadable": "Die Datei konnte nicht gelesen werden. Wähle sie erneut aus.",
+                        "imported": {
+                            "one": "Importiert. 1 ungespeicherte Änderung in {{ policy }} — prüfe sie vor dem Speichern.",
+                            "other": "Importiert. {{ count }} ungespeicherte Änderungen in {{ policy }} — prüfe sie vor dem Speichern."
+                        },
+                        "importTargetGone": "Die importierte Datei wurde nicht übernommen, weil es {{ policy }} im Repository nicht mehr gibt. Öffne das YAML einer anderen Richtlinie, um sie dort zu importieren."
+                    },
+                    "review": {
+                        "title": "Änderungen prüfen und speichern",
+                        "changed": {
+                            "restrictions": {
+                                "one": "1 erlaubter Ressourcenzugriff geändert",
+                                "other": "{{ count }} erlaubte Ressourcenzugriffe geändert"
+                            },
+                            "behaviours": {
+                                "one": "1 festgelegtes Testverhalten geändert",
+                                "other": "{{ count }} festgelegte Testverhalten geändert"
+                            },
+                            "testCases": {
+                                "one": "1 Testfallzuordnung geändert",
+                                "other": "{{ count }} Testfallzuordnungen geändert"
+                            },
+                            "testClasses": {
+                                "one": "1 deklarierte Testklasse geändert",
+                                "other": "{{ count }} deklarierte Testklassen geändert"
+                            },
+                            "settings": {
+                                "one": "1 Richtlinieneinstellung geändert",
+                                "other": "{{ count }} Richtlinieneinstellungen geändert"
+                            },
+                            "build": {
+                                "one": "1 Build-Einstellung geändert",
+                                "other": "{{ count }} Build-Einstellungen geändert"
+                            }
+                        },
+                        "basedOn": "basierend auf Commit {{ commit }}",
+                        "explanation": "Ares2 liest deine Einstellungen aus Richtliniendateien (YAML) im Test-Repository, daher bearbeitest du diese Dateien nicht selbst. Der Vergleich unten zeigt genau, was das Speichern darin ändert; YAML anzeigen erklärt die Feldnamen.",
+                        "rendering": "Die geänderten Dateien werden erzeugt…",
+                        "newFile": "neue Datei",
+                        "renamedFrom": "umbenannt von {{ file }}",
+                        "deleted": "gelöscht",
+                        "buildSettings": "Build-Einstellungen",
+                        "testAnnotations": "Testklasse · @Policy-Annotationen",
+                        "loadingTestCases": "Die Testfälle, die die Änderung freigibt, werden geladen…",
+                        "testCasesFailed": "Die Testfälle der aufgeteilten Testklassen konnten nicht geladen werden, daher kann die Überprüfung nicht zeigen, welche ihre Richtlinie verlieren.",
+                        "retry": "Erneut versuchen",
+                        "diffOf": "Diff von {{ file }} nebeneinander",
+                        "before": "Vorher · {{ commit }}",
+                        "after": "Nachher · deine Änderungen",
+                        "unchanged": {
+                            "one": "1 unveränderte Zeile",
+                            "other": "{{ count }} unveränderte Zeilen"
+                        },
+                        "assignments": "Testfallzuordnungen",
+                        "assignmentsWhere": "in den @Policy-Annotationen der Testklassen gespeichert, nicht in den YAML-Dateien",
+                        "assigned": "Zugeordnet:",
+                        "released": "Freigegeben:",
+                        "to": "zu {{ file }}",
+                        "from": "aus {{ file }}",
+                        "fixFirst": "Behebe diese Punkte vor dem Speichern",
+                        "incompatible": "Version {{ version }} akzeptiert diese Teile der Richtlinien nicht, daher würde jeder Test fehlschlagen. Entferne sie oder wähle eine neuere Version:",
+                        "commitMessage": "Beschreibung der Änderung",
+                        "createsCommit": "Das Speichern erstellt einen Commit mit dieser Beschreibung im Test-Repository und startet einen neuen Build von Vorlage und Lösung.",
+                        "compatible": "Gegen die festgelegte Version {{ version }} geprüft: Jedes Feld in diesen Dateien wird unterstützt.",
+                        "incompatibleShort": "Die festgelegte Version {{ version }} unterstützt nicht jedes Feld in diesen Dateien.",
+                        "unverified": "Version {{ version }} steht nicht im Kompatibilitätsverzeichnis, daher kann Artemis nicht prüfen, ob sie jedes Feld akzeptiert.",
+                        "versionUnchecked": "Artemis prüft, ob Version {{ version }} die Richtlinien akzeptiert, sobald die Probleme oben behoben sind.",
+                        "back": "Zurück zum Bearbeiten",
+                        "commitAndPush": "Änderungen speichern",
+                        "securitySettings": "security settings",
+                        "defaultMessage": {
+                            "one": "Update {{ subject }} (1 change)",
+                            "other": "Update {{ subject }} ({{ count }} changes)"
+                        }
+                    },
+                    "problem": {
+                        "nameRequired": "Eine Sicherheitsrichtlinie hat keinen Namen.",
+                        "hiddenPeriod": "{{ policy }}: „Versteckt bis“ muss nach „Versteckt ab“ liegen.",
+                        "assignmentConflict": "{{ policy }}: Eine neuere Speicherung ordnet alle Testfälle von {{ testClass }} zu, deine ungespeicherten Änderungen entfernen aber einige davon. Wähle unter „Testfälle zuordnen“, was gelten soll.",
+                        "noTests": "{{ policy }} ist kein Testfall zugeordnet. Artemis findet eine Richtlinie über die Testfälle, die sie verwenden, daher ordne mindestens einen zu.",
+                        "sameFile": "Zwei Richtlinien würden in derselben Datei gespeichert, oder eine Richtlinie in der Datei einer gelöschten. Benenne eine davon um."
+                    },
+                    "banner": {
+                        "committing": "Wird gespeichert…",
+                        "committingText": "Das Bearbeiten ist pausiert, bis der Push in das Test-Repository verarbeitet ist.",
+                        "committed": "Gespeichert",
+                        "committedText": "Als Commit {{ hash }} gespeichert. Der gestartete Build zeigt, ob Ares2 die neue Richtlinie akzeptiert.",
+                        "conflict": "Die Richtlinie hat sich im Repository geändert",
+                        "conflictText": {
+                            "one": "{{ author }} hat eine neuere Fassung ({{ hash }}) gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "{{ author }} hat eine neuere Fassung ({{ hash }}) gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                        },
+                        "conflictTextUnknown": {
+                            "one": "Jemand hat eine neuere Fassung im Test-Repository gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine ungespeicherte Änderung bleibt erhalten.",
+                            "other": "Jemand hat eine neuere Fassung im Test-Repository gespeichert, nachdem du den Editor geöffnet hast. Lade neu, um sie zu sehen — deine {{ count }} ungespeicherten Änderungen bleiben erhalten."
+                        },
+                        "reload": "Neu laden",
+                        "reloadFailed": "Die neuere Version konnte nicht geladen werden. Deine ungespeicherten Änderungen bleiben erhalten; lade erneut.",
+                        "reloaded": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten — speichere erneut, wenn du so weit bist.",
+                        "reloadedWithConflicts": "Die als Commit {{ hash }} gespeicherte Fassung wurde neu geladen. Deine ungespeicherten Änderungen bleiben erhalten, einige widersprechen ihr aber: Wähle bei den Richtlinien mit Konflikt, was gelten soll, und speichere dann erneut.",
+                        "orphaned": "Eine geänderte Richtlinie fehlt im Repository",
+                        "orphanedText": "Seit du den Editor geöffnet hast, hat jemand {{ files }} gelöscht, umbenannt oder beschädigt, daher kann sie hier nicht mehr bearbeitet werden. Deine ungespeicherten Änderungen daran bleiben als neue Richtlinie erhalten: Speichere sie, um sie zu behalten, oder lösche sie, um sie zu verwerfen.",
+                        "failed": "Speichern fehlgeschlagen — nichts wurde geändert",
+                        "failedKept": "Deine Änderungen bleiben ungespeichert.",
+                        "failedGeneric": "Das Test-Repository konnte nicht geändert werden.",
+                        "processingFailed": "Gespeichert, aber die Builds wurden nicht gestartet",
+                        "processingFailedText": "Gespeichert und die Richtlinien zeigen die Änderung, aber Artemis konnte die Builds der Vorlage und der Lösung nicht starten. Versuche es erneut, um sie zu starten.",
+                        "savedButNotRead": "Gespeichert, aber die gespeicherten Richtlinien konnten nicht zurückgelesen werden, daher lädt der Editor sie erneut.",
+                        "retry": "Erneut versuchen",
+                        "tooOld": "Festgelegte Version zu alt für diese Richtlinie",
+                        "tooOldText": "Version {{ version }} unterstützt diese Einstellungen der Richtlinien nicht, daher würde jeder Test fehlschlagen. Wähle eine neuere Version.",
+                        "changeVersion": "Version ändern",
+                        "readOnly": "Schreibgeschützt angezeigt",
+                        "openRepository": "Repository öffnen",
+                        "discarded": "Alle ungespeicherten Änderungen wurden verworfen."
+                    },
+                    "discard": {
+                        "title": "Ungespeicherte Änderungen verwerfen",
+                        "question": {
+                            "one": "Möchtest du deine ungespeicherte Änderung wirklich verwerfen?",
+                            "other": "Möchtest du wirklich alle {{ count }} ungespeicherten Änderungen verwerfen?"
+                        },
+                        "warning": "Der Editor kehrt zur als Commit {{ commit }} gespeicherten Fassung zurück. Verworfene Änderungen können nicht wiederhergestellt werden.",
+                        "confirm": "Änderungen verwerfen"
+                    },
+                    "deletePolicy": {
+                        "title": "Sicherheitsrichtlinie löschen",
+                        "question": "Möchtest du {{ policy }} wirklich löschen?",
+                        "committed": "Das Speichern entfernt {{ file }} aus dem Test-Repository. Ihre zugeordneten Testeinträge ({{ count }}) laufen danach unter der restriktiven Standardrichtlinie von Ares2.",
+                        "neverCommitted": "Diese Richtlinie wurde nie gespeichert. Ihre Einstellungen gehen verloren.",
+                        "confirm": "Richtlinie löschen"
+                    }
+                }
             },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",

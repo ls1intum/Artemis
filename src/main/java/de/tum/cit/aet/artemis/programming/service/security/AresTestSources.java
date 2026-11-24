@@ -1,10 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -39,7 +44,14 @@ final class AresTestSources {
 
     private static final String END_OF_IDENTIFIER = AresPolicyAnnotations.END_OF_IDENTIFIER;
 
-    private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\p{javaJavaIdentifierPart}.]+)");
+    /** The modifier {@code private}, which keeps a member type from being inherited. Masked comments and literals cannot contain it. */
+    private static final Pattern PRIVATE_MODIFIER = Pattern.compile("(?<!\\p{javaJavaIdentifierPart})private(?!\\p{javaJavaIdentifierPart})");
+
+    /** Separates the names in the clauses {@code extends} and {@code implements} of a type declaration. */
+    private static final Pattern SUPERTYPE_SEPARATOR = Pattern.compile("[\\s,]+");
+
+    /** A dot of a qualified name with the whitespace Java allows around it, e.g. in {@code extends de.example . ParentTest}. */
+    private static final Pattern DOT_WITH_WHITESPACE = Pattern.compile("\\s*+\\.\\s*+");
 
     private static final String JUNIT_API_PACKAGE = "org.junit.jupiter.api";
 
@@ -110,13 +122,26 @@ final class AresTestSources {
      * @param qualifiedName    the name including the package of the file
      * @param superclass       the fully qualified names the class it extends may have: the one its single-type import or qualified name gives, or else the
      *                             one in its own package and one per wildcard import; empty if it extends nothing
+     * @param supertypes       the fully qualified names each type it extends or implements may have, resolved like the superclass, which they include
      * @param policies         its own Ares {@code @Policy} annotations
+     * @param methodPolicies   the Ares {@code @Policy} annotations of its methods, by the name of the method; Ares applies such an annotation instead of the
+     *                             one of the class to that test case
      * @param registersSandbox whether it registers the Ares sandbox through {@code @Public} or {@code @Hidden} on the type or {@code @PublicTest} or
      *                             {@code @HiddenTest} on a method
      * @param containsTests    whether one of its methods is a JUnit or Ares test
+     * @param testSignatures   the signatures of its test methods, in the order of the source, which decide whether a subclass overrides one of them
+     * @param memberTypes      the types declared directly in its body that its subclasses may inherit as member types, i.e. that are not private
      */
-    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<AresPolicyAnnotations.Annotation> policies, boolean registersSandbox,
-            boolean containsTests) {
+    record TypeDeclaration(String simpleName, String qualifiedName, List<String> superclass, List<List<String>> supertypes, List<AresPolicyAnnotations.Annotation> policies,
+            Map<String, AresPolicyAnnotations.Annotation> methodPolicies, boolean registersSandbox, boolean containsTests, List<AresTestCases.TestSignature> testSignatures,
+            Set<MemberType> memberTypes) {
+
+        /**
+         * @return the package of the type; empty for the default package
+         */
+        String packageName() {
+            return qualifiedName.length() > simpleName.length() ? qualifiedName.substring(0, qualifiedName.length() - simpleName.length() - 1) : "";
+        }
 
         /**
          * @return whether the type takes part in the sandbox decision: it is a test class or carries a {@code @Policy}
@@ -138,7 +163,17 @@ final class AresTestSources {
     record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1, List<String> aresApis) {
     }
 
-    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, String simpleName, @Nullable String superclass) {
+    /**
+     * A member type that a subclass may inherit.
+     *
+     * @param simpleName             the name of the member type
+     * @param visibleInOtherPackages whether it is public or protected, or declared in an interface, so a subclass in another package inherits it, too
+     */
+    record MemberType(String simpleName, boolean visibleInOtherPackages) {
+    }
+
+    private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, boolean interfaceType, String simpleName, @Nullable String superclass,
+            List<String> supertypes) {
     }
 
     private AresTestSources() {
@@ -158,7 +193,10 @@ final class AresTestSources {
         List<SecurityFrameworkState.UnsupportedReasonType> problems = new ArrayList<>();
         List<AresPolicyAnnotations.Annotation> annotations = AresPolicyAnnotations.find(source);
 
-        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, declarations, depth, problems);
+        List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType = new ArrayList<>();
+        declarations.forEach(_ -> methodPoliciesByType.add(new LinkedHashMap<>()));
+        Set<Integer> testDeclarations = AresTestCases.uniqueTestDeclarationOffsets(source);
+        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, masked, declarations, depth, testDeclarations, methodPoliciesByType, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
         markAresClassMarkers(masked, declarations, depth, registers, problems);
@@ -169,19 +207,31 @@ final class AresTestSources {
         }
         markJUnitTests(masked, declarations, depth, tests, problems);
 
-        List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, registers, tests);
+        List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, methodPoliciesByType, registers, tests);
         if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
+        }
+        for (int index = 0; index < declarations.size(); index++) {
+            TypeDeclaration type = types.get(index);
+            // Every test method counts, also a jqwik property or example, and every Ares annotation, also one on a method only.
+            if (declarations.get(index).interfaceType() && (type.isRelevant() || !type.testSignatures().isEmpty() || !type.methodPolicies().isEmpty())) {
+                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_INTERFACE);
+            }
         }
         return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE), aresApis(masked));
     }
 
     /**
-     * Assigns every {@code @Policy} annotation to the top-level type it annotates and records the annotations that annotate no such type.
+     * Assigns every {@code @Policy} annotation to the top-level type it annotates, or to the method of such a type, and records the annotations that annotate
+     * neither. A test method may carry one annotation; Ares applies it to the test case instead of the annotation of the class. Ares reads it only from the
+     * test method itself, so an annotation on another method, e.g. a helper the test calls, is not supported.
      *
+     * @param testDeclarations     the offsets of the names of the test method declarations of the source whose name no other test method has
+     * @param methodPoliciesByType receives the annotations of the methods of each declaration, by its index
      * @return the annotations of each declaration, by its index
      */
-    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, List<Declaration> declarations, int[] depth,
+    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, String masked, List<Declaration> declarations,
+            int[] depth, Set<Integer> testDeclarations, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType,
             List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
         declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
@@ -191,7 +241,11 @@ final class AresTestSources {
             }
             int owner = depth[annotation.start()] == 0 ? followingDeclaration(declarations, annotation.start()) : -1;
             if (owner < 0) {
-                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+                if (!assignToTestMethod(annotation, masked, declarations, depth, testDeclarations, methodPoliciesByType)) {
+                    // A field, a nested type, a method that is no test or one of several test methods with the same name: the editor cannot tell which test
+                    // case the annotation belongs to.
+                    addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
+                }
             }
             else if (declarations.get(owner).annotationType()) {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_ON_ANNOTATION_TYPE);
@@ -201,6 +255,20 @@ final class AresTestSources {
             }
         }
         return policiesByType;
+    }
+
+    /**
+     * Assigns an annotation inside a top-level type to the test method it annotates. The annotation must be on a test declaration itself whose name no other
+     * test method has: a method that is no test may share the name of one, e.g. an overload, and an entry could not tell overloaded test methods apart.
+     *
+     * @return whether the annotation annotates such a test method and is its only {@code @Policy} annotation
+     */
+    private static boolean assignToTestMethod(AresPolicyAnnotations.Annotation annotation, String masked, List<Declaration> declarations, int[] depth,
+            Set<Integer> testDeclarations, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType) {
+        int enclosing = enclosingDeclaration(declarations, annotation.start(), depth);
+        String method = enclosing >= 0 && !declarations.get(enclosing).annotationType() ? AresTestCases.methodNameAfter(masked, annotation.end()) : null;
+        boolean onTest = method != null && testDeclarations.contains(AresTestCases.methodNameOffsetAfter(masked, annotation.end()));
+        return onTest && methodPoliciesByType.get(enclosing).putIfAbsent(method, annotation) == null;
     }
 
     /**
@@ -282,15 +350,107 @@ final class AresTestSources {
      * @return the top-level types of the file, in the order of their declarations
      */
     private static List<TypeDeclaration> typeDeclarations(String masked, @Nullable String packageName, List<Declaration> declarations,
-            List<List<AresPolicyAnnotations.Annotation>> policiesByType, boolean[] registers, boolean[] tests) {
+            List<List<AresPolicyAnnotations.Annotation>> policiesByType, List<Map<String, AresPolicyAnnotations.Annotation>> methodPoliciesByType, boolean[] registers,
+            boolean[] tests) {
         List<TypeDeclaration> types = new ArrayList<>();
+        Map<Integer, AresTestCases.TestSignature> signatures = new TreeMap<>(AresTestCases.testSignatures(masked));
+        // Only the methods the type declares itself can override an inherited test, not those of a nested type, e.g. a jqwik group.
+        int[] depth = braceDepths(masked);
         for (int index = 0; index < declarations.size(); index++) {
             Declaration declaration = declarations.get(index);
             String qualifiedName = qualify(packageName, declaration.simpleName());
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
-            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)), registers[index], tests[index]));
+            List<AresTestCases.TestSignature> testSignatures = new ArrayList<>();
+            signatures.forEach((offset, signature) -> {
+                if (isDeclaredInBody(declaration, offset, depth)) {
+                    testSignatures.add(signature);
+                }
+            });
+            Set<MemberType> memberTypes = declaredMemberTypes(masked, declaration, depth);
+            List<List<String>> supertypes = declaration.supertypes().stream().map(name -> resolveTypeName(masked, packageName, name)).toList();
+            types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, supertypes, List.copyOf(policiesByType.get(index)),
+                    Collections.unmodifiableMap(new LinkedHashMap<>(methodPoliciesByType.get(index))), registers[index], tests[index], List.copyOf(testSignatures),
+                    Set.copyOf(memberTypes)));
         }
         return types;
+    }
+
+    /**
+     * @return whether the offset lies directly in the body of the declaration, not in a member of it
+     */
+    private static boolean isDeclaredInBody(Declaration declaration, int offset, int[] depth) {
+        return declaration.bodyStart() < offset && offset < declaration.bodyEnd() && depth[offset] == 1;
+    }
+
+    /**
+     * @return the member types that are no private: a type declared directly in the body is a member type; a local type of a method or a type nested in a
+     *         member type is none
+     */
+    private static Set<MemberType> declaredMemberTypes(String masked, Declaration declaration, int[] depth) {
+        Set<MemberType> memberTypes = new HashSet<>();
+        Matcher memberType = AresPolicyAnnotations.TYPE_DECLARATION.matcher(masked);
+        while (memberType.find()) {
+            if (isDeclaredInBody(declaration, memberType.start(), depth)) {
+                String modifiers = masked.substring(AresTestCases.memberStart(masked, memberType.start()), memberType.start());
+                if (!PRIVATE_MODIFIER.matcher(modifiers).find()) {
+                    boolean visible = declaration.interfaceType() || declaration.annotationType() || AresTestCases.VISIBLE_IN_OTHER_PACKAGES.matcher(modifiers).find();
+                    memberTypes.add(new MemberType(memberType.group(2), visible));
+                }
+            }
+        }
+        return memberTypes;
+    }
+
+    /**
+     * The member types that are in scope in the body of a type and shadow a single-type import of the same simple name there: its own and those it inherits.
+     * Like Java, a type inherits the member types of its direct superclass and superinterfaces that are not private and, if they are package-private, belong
+     * to its own package; the first candidate name of a supertype that exists wins.
+     *
+     * @param type  a top-level type of the repository
+     * @param types the top-level types of the repository, by their qualified names
+     * @return the simple names of the member types; empty if the type extends or implements a type outside the repository, e.g. of a library, whose member
+     *         types are unknown
+     */
+    static Optional<Set<String>> memberTypesInScope(TypeDeclaration type, Map<String, TypeDeclaration> types) {
+        return memberTypesOf(type, types, new HashSet<>(), new HashMap<>())
+                .map(memberTypes -> memberTypes.stream().map(InheritedMemberType::simpleName).collect(Collectors.toSet()));
+    }
+
+    /**
+     * A member type of a type, with the package of the type that declares it.
+     */
+    private record InheritedMemberType(String simpleName, String declaringPackage, boolean visibleInOtherPackages) {
+    }
+
+    /**
+     * @param path      the types whose member types are being collected, which ends a cycle of supertypes
+     * @param completed the member types of the types collected so far, by their qualified names, so a supertype that several branches of the hierarchy
+     *                      share is visited once
+     * @return the member types of the type, see {@link #memberTypesInScope}; empty if they are unknown
+     */
+    private static Optional<Set<InheritedMemberType>> memberTypesOf(TypeDeclaration type, Map<String, TypeDeclaration> types, Set<String> path,
+            Map<String, Set<InheritedMemberType>> completed) {
+        Set<InheritedMemberType> known = completed.get(type.qualifiedName());
+        if (known != null) {
+            return Optional.of(known);
+        }
+        if (!path.add(type.qualifiedName())) {
+            return Optional.empty();
+        }
+        Set<InheritedMemberType> memberTypes = new HashSet<>();
+        type.memberTypes().forEach(memberType -> memberTypes.add(new InheritedMemberType(memberType.simpleName(), type.packageName(), memberType.visibleInOtherPackages())));
+        for (List<String> candidates : type.supertypes()) {
+            Optional<Set<InheritedMemberType>> inherited = candidates.stream().filter(types::containsKey).findFirst()
+                    .flatMap(name -> memberTypesOf(types.get(name), types, path, completed));
+            if (inherited.isEmpty()) {
+                return Optional.empty();
+            }
+            inherited.get().stream().filter(memberType -> memberType.visibleInOtherPackages() || memberType.declaringPackage().equals(type.packageName()))
+                    .forEach(memberTypes::add);
+        }
+        path.remove(type.qualifiedName());
+        completed.put(type.qualifiedName(), memberTypes);
+        return Optional.of(memberTypes);
     }
 
     /**
@@ -317,7 +477,7 @@ final class AresTestSources {
     /**
      * @return for every offset the number of braces that are open there; the brace that opens a body has the depth outside of it
      */
-    private static int[] braceDepths(String masked) {
+    static int[] braceDepths(String masked) {
         int[] depths = new int[masked.length() + 1];
         int depth = 0;
         for (int index = 0; index < masked.length(); index++) {
@@ -357,10 +517,67 @@ final class AresTestSources {
      */
     private static Declaration declaration(String masked, Matcher matcher, int bodyStart) {
         int bodyEnd = AresPolicyAnnotations.matchingBrace(masked, bodyStart);
-        String header = masked.substring(matcher.end(), bodyStart);
-        Matcher superclass = SUPERCLASS.matcher(header);
-        String superclassName = superclass.find() ? superclass.group(1) : null;
-        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName);
+        Supertypes supertypes = supertypes(masked.substring(matcher.end(), bodyStart));
+        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), "interface".equals(matcher.group(1)),
+                matcher.group(2), supertypes.superclass(), supertypes.all());
+    }
+
+    /**
+     * The types a declaration extends or implements, as written, without their annotations and type arguments.
+     *
+     * @param superclass the first type after {@code extends}, which is the superclass of a class; null if there is none
+     * @param all        every type it extends or implements; the record components and the permitted subclasses are none
+     */
+    private record Supertypes(@Nullable String superclass, List<String> all) {
+    }
+
+    /**
+     * Reads both the superclass and the other supertypes from the header, so an annotation, e.g. in {@code extends @Marker ParentTest}, hides neither.
+     *
+     * @param header the part of a type declaration between its name and its body
+     */
+    private static Supertypes supertypes(String header) {
+        String outsideBrackets = outsideBrackets(AresTestCases.withoutAnnotations(header));
+        List<String> names = new ArrayList<>();
+        String superclass = null;
+        String keyword = null;
+        for (String token : SUPERTYPE_SEPARATOR.split(DOT_WITH_WHITESPACE.matcher(outsideBrackets).replaceAll("."))) {
+            if ("permits".equals(token)) {
+                break;
+            }
+            if ("extends".equals(token) || "implements".equals(token)) {
+                keyword = token;
+            }
+            else if (keyword != null && !token.isEmpty()) {
+                superclass = superclass == null && "extends".equals(keyword) ? token : superclass;
+                names.add(token);
+            }
+        }
+        return new Supertypes(superclass, List.copyOf(names));
+    }
+
+    /**
+     * @param header a header without annotations, whose arguments may contain a {@code <} or {@code >}, e.g. {@code Marker<@Flag(1 > 0) Date>}, so the
+     *                   parentheses enclose the record components only
+     * @return the header without its type arguments and record components
+     */
+    private static String outsideBrackets(String header) {
+        StringBuilder outsideBrackets = new StringBuilder();
+        int nesting = 0;
+        for (char character : header.toCharArray()) {
+            if (character == '<' || character == '(') {
+                nesting++;
+            }
+            else if (character == '>' || character == ')') {
+                nesting = Math.max(0, nesting - 1);
+                // The brackets separate tokens, e.g. Parent and implements in extends Parent<String>implements Marker.
+                outsideBrackets.append(nesting == 0 ? " " : "");
+            }
+            else if (nesting == 0) {
+                outsideBrackets.append(character);
+            }
+        }
+        return outsideBrackets.toString();
     }
 
     private static String qualify(@Nullable String packageName, String simpleName) {

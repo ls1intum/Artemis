@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,13 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.PushResult;
@@ -155,6 +160,12 @@ class SecurityFrameworkServiceTest {
     /** Simulates someone else, e.g. the online editor, pushing to the tests repository while a change is being prepared. */
     private boolean pushConcurrentlyAfterCheckout;
 
+    /** Whether the checkout writes symbolic links as plain files, as Artemis checks out repositories. */
+    private boolean checkoutWithoutSymbolicLinks;
+
+    /** The entries that a checkout without symbolic links wrote as regular files, relative to its root, e.g. {@code test/de/linked}. */
+    private final Set<String> plainLinkEntries = ConcurrentHashMap.newKeySet();
+
     /** Runs once after the next checkout, e.g. another instructor's change that is pushed while this checkout is being prepared. */
     private Runnable afterNextCheckout;
 
@@ -184,7 +195,21 @@ class SecurityFrameworkServiceTest {
         gitService = mock(GitService.class);
         when(gitService.getOrCheckoutRepositoryOnBranch(any(LocalVCRepositoryUri.class), any(Path.class), anyString())).thenAnswer(call -> {
             Path localPath = call.getArgument(1, Path.class);
-            Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            if (checkoutWithoutSymbolicLinks) {
+                try (Git git = Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class))
+                        .setNoCheckout(true).call()) {
+                    StoredConfig config = git.getRepository().getConfig();
+                    config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+                    config.save();
+                    git.reset().setMode(ResetCommand.ResetType.HARD).setRef(Constants.HEAD).call();
+                }
+                if (Files.isRegularFile(localPath.resolve("test/de/linked"), LinkOption.NOFOLLOW_LINKS)) {
+                    plainLinkEntries.add("test/de/linked");
+                }
+            }
+            else {
+                Git.cloneRepository().setURI(remote.toUri().toString()).setDirectory(localPath.toFile()).setBranch(call.getArgument(2, String.class)).call().close();
+            }
             if (pushConcurrentlyAfterCheckout) {
                 pushUnrelatedCommit();
             }
@@ -490,6 +515,22 @@ class SecurityFrameworkServiceTest {
 
         assertThat(Files.readString(externalTest)).isEqualTo(externalContent);
         assertThat(outside.toFile().list()).containsExactly("OtherExerciseTest.java");
+        assertThat(pushedHead()).isEqualTo(headBefore);
+        verifyNoInteractions(localVCPushProcessingService);
+    }
+
+    @Test
+    void aSymbolicLinkIsRecognizedAlsoInACheckoutThatWritesLinksAsPlainFiles() throws Exception {
+        assumeTrue(FS.DETECTED.supportsSymlinks(), "The file system does not support symbolic links");
+        Path outside = newDirectory("other-exercise-");
+        pushCheckoutChange(checkout -> Files.createSymbolicLink(checkout.resolve("test/de/linked"), outside));
+        checkoutWithoutSymbolicLinks = true;
+        String headBefore = pushedHead();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user))
+                .matches(exception -> "securityFrameworkSymbolicLinks".equals(exception.getErrorKey()));
+        // The checkout wrote the link as a regular file, so only the tree of the commit shows that it is a link.
+        assertThat(plainLinkEntries).containsExactly("test/de/linked");
         assertThat(pushedHead()).isEqualTo(headBefore);
         verifyNoInteractions(localVCPushProcessingService);
     }
@@ -1127,6 +1168,77 @@ class SecurityFrameworkServiceTest {
         assertThat(readPushed("test/de/example/NewTest.java")).contains(NEW_TEST_CLASS);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
                 .contains(CUSTOM_POLICY.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+    }
+
+    @Test
+    void aSwitchedOffTestMethodStaysSwitchedOffAcrossADeactivateActivateCycle() throws Exception {
+        String withSwitchedOffMethod = TEST_CLASS.replace("    @Test\n    void sorts()",
+                "    @de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)\n    @Test\n    void sorts()");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/SortingTest.java").toFile(), withSwitchedOffMethod, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        // Deactivating switches only the class off; the method stays switched off.
+        String deactivated = withSwitchedOffMethod.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION + "\nclass SortingTest",
+                SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest");
+        assertThat(deactivated).isNotEqualTo(withSwitchedOffMethod);
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(deactivated);
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(withSwitchedOffMethod);
+    }
+
+    @Test
+    void anActionNamedOnlyInTheMessageOfACommitIsNoRestorePoint() throws Exception {
+        String classTestPath = "test/de/example/ClassTest.java";
+        String switchedOff = SECOND_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION);
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), switchedOff, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        // By hand, ClassTest is switched on and off again, in a commit whose message mentions the action without carrying it as a trailer.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), SECOND_TEST_CLASS, StandardCharsets.UTF_8));
+        pushCheckoutChange("Switch ClassTest off\n\nThis is no\nSecurity-Framework-Action: deactivate\n\nReviewed-by: Instructor\n",
+                checkout -> FileUtils.writeStringToFile(checkout.resolve(classTestPath).toFile(), switchedOff, StandardCharsets.UTF_8));
+        // The deactivation committed the inactive state, so the activation has to restore SortingTest and the policy file.
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(source -> assertThat(source)
+                .contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION + "\nclass SortingTest").doesNotContain(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+
+        // The last real deactivation is the restore point: SortingTest was on and ClassTest off before it, with the policy file of that commit.
+        SecurityFrameworkConfigDTO activated = securityFrameworkService.activate(exercise, "2.2.1", user);
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(activated.disabledTestClasses()).containsExactly("de.example.ClassTest");
+        assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
+    }
+
+    @Test
+    void deactivationDeletesNoFileThatIsNoPolicy() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/ClassTest.java").toFile(),
+                SECOND_TEST_CLASS.replace("value = \"SecurityPolicy.yaml\"", "value = \"build.gradle\""), StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        String buildFile = readPushed("build.gradle").orElseThrow();
+
+        SecurityFrameworkConfigDTO deactivated = securityFrameworkService.deactivate(exercise, user);
+
+        assertThat(readPushed("build.gradle")).contains(buildFile);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        // ClassTest is switched off as well, so Ares never reads the build file as a policy; its annotation keeps the path for a later activation.
+        assertThat(deactivated.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+        assertThat(readPushed("test/de/example/ClassTest.java"))
+                .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"build.gradle\", activated = false)"));
+    }
+
+    @Test
+    void deactivationKeepsADefaultPolicyFileThatIsNoPolicy() throws Exception {
+        String broken = "regardingTheSupervisedCode: [\n";
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), broken, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+
+        assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains(SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION));
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(broken);
     }
 
     @Test

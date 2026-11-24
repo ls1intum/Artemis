@@ -1,8 +1,18 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { SecurityFrameworkConfig, SecurityFrameworkVersions } from 'app/programming/shared/entities/security-framework-config.model';
+import {
+    SecurityPolicyChange,
+    SecurityPolicyCommitResult,
+    SecurityPolicyEditor,
+    SecurityPolicyFile,
+    SecurityPolicyPreview,
+    SecurityTemplateFiles,
+    SecurityTestStructure,
+} from 'app/programming/shared/entities/security-policy.model';
 
 /**
  * Client for the Security Framework (Ares 2) of a programming exercise.
@@ -51,5 +61,53 @@ export class SecurityFrameworkService {
         return this.http.put<SecurityFrameworkConfig>(`${this.resourceUrl(exerciseId)}/framework-version`, null, {
             params: new HttpParams().set('frameworkVersion', frameworkVersion),
         });
+    }
+
+    /** The security policies of an exercise, with the commit of the tests repository they were read from. */
+    getPolicies(exerciseId: number): Observable<SecurityPolicyEditor> {
+        return this.http.get<SecurityPolicyEditor>(`${this.resourceUrl(exerciseId)}/policies`);
+    }
+
+    /** The security policies and the Security Framework state of an exercise, read from the same commit of the tests repository. */
+    getPoliciesWithConfig(exerciseId: number): Observable<SecurityPolicyCommitResult> {
+        return this.http.get<SecurityPolicyCommitResult>(`${this.resourceUrl(exerciseId)}/policies-with-config`);
+    }
+
+    /**
+     * Renders changed policies without committing them and checks them against the pinned Ares version. The editor shows a failure itself, like the
+     * failures of committing and importing, so no error alert repeats it.
+     */
+    previewPolicies(exerciseId: number, change: SecurityPolicyChange): Observable<SecurityPolicyPreview> {
+        return this.http.post<SecurityPolicyPreview>(`${this.resourceUrl(exerciseId)}/policies/preview`, change, { context: this.shownByEditor() });
+    }
+
+    /** Commits changed policies to the tests repository; fails with 409 if the policies changed since they were loaded. */
+    commitPolicies(exerciseId: number, change: SecurityPolicyChange): Observable<SecurityPolicyCommitResult> {
+        return this.http.put<SecurityPolicyCommitResult>(`${this.resourceUrl(exerciseId)}/policies`, change, { context: this.shownByEditor() });
+    }
+
+    /** Reads an imported policy file like a committed one, without writing it. */
+    importPolicy(exerciseId: number, policyPath: string, content: string): Observable<SecurityPolicyFile> {
+        return this.http.post<SecurityPolicyFile>(`${this.resourceUrl(exerciseId)}/policies/import`, { policyPath, content }, { context: this.shownByEditor() });
+    }
+
+    /**
+     * The test classes of the tests repository with their test cases.
+     *
+     * @param commit the commit to read, e.g. the one the policies were loaded from; the head commit if absent
+     */
+    getTestStructure(exerciseId: number, commit?: string): Observable<SecurityTestStructure> {
+        const params = commit ? new HttpParams().set('commit', commit) : undefined;
+        return this.http.get<SecurityTestStructure>(`${this.resourceUrl(exerciseId)}/test-structure`, { params });
+    }
+
+    /** The files of the template repository. */
+    getTemplateFiles(exerciseId: number): Observable<SecurityTemplateFiles> {
+        return this.http.get<SecurityTemplateFiles>(`${this.resourceUrl(exerciseId)}/template-files`);
+    }
+
+    /** The context of a request whose failure the policy editor shows next to what failed. */
+    private shownByEditor(): HttpContext {
+        return new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
     }
 }

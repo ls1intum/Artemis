@@ -3,6 +3,26 @@
         <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
         <p class="mb-4! text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
+        <!-- Keyed by the exercise, so the policy editor of another exercise is never reused; in simple mode it is only hidden, so its unsaved changes survive. -->
+        @for (exerciseId of advancedViewExercise(); track exerciseId) {
+            <div [class.hidden]="!showAdvancedView()" data-testid="security-advanced-view">
+                <jhi-programming-exercise-security-policies
+                    [exerciseId]="exerciseId"
+                    [config]="config()"
+                    [versionOptions]="frameworkVersions()"
+                    [latestVersion]="latestVersion()"
+                    [activationVersion]="activationVersion()"
+                    [aresApiUses]="config().aresApiUses ?? []"
+                    [canCommit]="true"
+                    [locked]="isSaving()"
+                    [repositoryLink]="testsRepositoryLink()"
+                    (activateRequested)="onAdvancedActivate($event)"
+                    (deactivateRequested)="onAdvancedDeactivate()"
+                    (configChange)="onAdvancedCommitted($event)"
+                    (committingChange)="onAdvancedCommitting($event)"
+                />
+            </div>
+        }
         @if (loadFailed()) {
             <tumaet-ui-message severity="error" class="sf-warning block" data-testid="security-load-error">
                 <span jhiTranslate="artemisApp.programmingExercise.security.loadError"></span>
@@ -11,7 +31,7 @@
                     <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
                 </button>
             </tumaet-ui-message>
-        } @else {
+        } @else if (!showAdvancedView()) {
             <div class="sf-card" [class]="'sf-card--' + statusVariant()" data-testid="security-card">
                 <div class="sf-card__main">
                     <div class="sf-card__left">

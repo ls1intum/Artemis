@@ -9,8 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * Finds and rewrites the Ares {@code @Policy} annotations of a Java source file.
@@ -65,6 +68,8 @@ final class AresPolicyAnnotations {
     private static final String ACTIVATED_ARGUMENT = "activated";
 
     private static final String VALUE_ARGUMENT = "value";
+
+    private static final String WITHIN_PATH_ARGUMENT = "withinPath";
 
     private static final String FALSE_LITERAL = "false";
 
@@ -186,26 +191,272 @@ final class AresPolicyAnnotations {
     }
 
     /**
-     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
-     * argument are kept, so switching an annotation off and on again restores its policy and its activation. Its spelling may change: an implicit
-     * {@code value} becomes a named one, e.g. {@code @Policy(value = "custom.yaml")} for {@code @Policy("custom.yaml")}, and an explicit
-     * {@code activated = true} is left out. An annotation that already has the requested state is not touched.
+     * Switches every Ares {@code @Policy} annotation of the source on or off, see {@link #setActive(String, Predicate)}.
      *
      * @param source the content of a Java file
      * @param active whether the annotations should enforce their policy
      * @return the rewritten source
      */
     static String setActive(String source, boolean active) {
+        return setActive(source, _ -> active);
+    }
+
+    /**
+     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
+     * argument are kept, so switching an annotation off and on again restores its policy and its activation. Its spelling may change: an implicit
+     * {@code value} becomes a named one, e.g. {@code @Policy(value = "custom.yaml")} for {@code @Policy("custom.yaml")}, and an explicit
+     * {@code activated = true} is left out. An annotation that already has the requested state is not touched.
+     *
+     * @param source the content of a Java file
+     * @param active whether each annotation should enforce its policy
+     * @return the rewritten source
+     */
+    static String setActive(String source, Predicate<Annotation> active) {
         StringBuilder result = new StringBuilder(source);
         List<Annotation> annotations = find(source);
         // Replace from the end, so the offsets of the annotations before stay valid.
         for (int i = annotations.size() - 1; i >= 0; i--) {
             Annotation annotation = annotations.get(i);
-            if (annotation.isActivated() != active) {
-                result.replace(annotation.start(), annotation.end(), render(annotation, active));
+            boolean activate = active.test(annotation);
+            if (annotation.isActivated() != activate) {
+                result.replace(annotation.start(), annotation.end(), render(annotation, activate));
             }
         }
         return result.toString();
+    }
+
+    /**
+     * Renders an annotation that points to another policy file, or to none. Only the {@code value} argument changes; an unnamed value stays unnamed if it
+     * remains the only argument, and the {@code activated} argument and every other argument are kept. Without a policy file the annotation makes Ares apply
+     * its strict default policy.
+     *
+     * @param annotation an evaluable annotation, see {@link Annotation#isEvaluable()}
+     * @param policyPath the validated path of the policy file relative to the repository root, without quotes and backslashes; null for none
+     * @return the annotation as it should be written
+     */
+    static String withPolicyPath(Annotation annotation, @Nullable String policyPath) {
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        if (policyPath != null) {
+            String literal = quote(policyPath);
+            Argument previous = annotation.arguments().get(VALUE_ARGUMENT);
+            // A value that was written without its name stays so while it is the only argument; a new one is written with its name, like the templates do.
+            boolean named = previous == null || previous.named() || annotation.arguments().keySet().stream().anyMatch(name -> !VALUE_ARGUMENT.equals(name));
+            arguments.put(VALUE_ARGUMENT, new Argument(named, named ? VALUE_ARGUMENT + " = " + literal : literal, literal));
+        }
+        annotation.arguments().forEach((name, argument) -> {
+            if (!VALUE_ARGUMENT.equals(name)) {
+                arguments.put(name, argument);
+            }
+        });
+        if (arguments.isEmpty()) {
+            return annotation.name();
+        }
+        StringJoiner rendered = new StringJoiner(", ", annotation.name() + "(", ")");
+        arguments.values().forEach(argument -> rendered.add(arguments.size() == 1 ? argument.text() : argument.render()));
+        return rendered.toString();
+    }
+
+    /**
+     * @return whether the arguments of the method annotation other than {@code value} and {@code activated} differ from those of the class annotation, also
+     *         when the method annotation leaves out one the class annotation sets, e.g. {@code withinPath}, so Ares applies its default for the method
+     */
+    private static boolean hasOwnArguments(Annotation methodAnnotation, Annotation classAnnotation) {
+        return !otherArguments(methodAnnotation).equals(otherArguments(classAnnotation));
+    }
+
+    /**
+     * @param annotation an annotation
+     * @return the expressions of its arguments other than {@code value} and {@code activated}, e.g. {@code withinPath}, by their name
+     */
+    static Map<String, String> otherArguments(Annotation annotation) {
+        Map<String, String> arguments = new LinkedHashMap<>();
+        annotation.arguments().forEach((name, argument) -> {
+            if (!VALUE_ARGUMENT.equals(name) && !ACTIVATED_ARGUMENT.equals(name)) {
+                arguments.put(name, argument.expression());
+            }
+        });
+        return arguments;
+    }
+
+    /**
+     * Renders the annotation for a test method, written like the annotation of its class: with the same name and the same {@code withinPath} argument, so
+     * Ares resolves the policy file the same way.
+     *
+     * @param classAnnotation the evaluable annotation of the test class
+     * @param policyPath      the validated path of the policy file relative to the repository root, without quotes and backslashes
+     * @return the annotation as it should be written
+     */
+    static String methodAnnotation(Annotation classAnnotation, String policyPath) {
+        StringJoiner rendered = new StringJoiner(", ", classAnnotation.name() + "(", ")");
+        rendered.add(VALUE_ARGUMENT + " = " + quote(policyPath));
+        Argument withinPath = classAnnotation.arguments().get(WITHIN_PATH_ARGUMENT);
+        if (withinPath != null) {
+            rendered.add(withinPath.render());
+        }
+        return rendered.toString();
+    }
+
+    /**
+     * Rewrites the {@code @Policy} annotations of a test class so that its test cases use the given policy files: the annotation of the class points to
+     * {@code classPolicyPath}, every test method in {@code methodPolicyPaths} gets an annotation that points to its file, the annotations of the methods in
+     * {@code keptMethods} stay as they are, and the annotations of the other methods are removed, except one whose other arguments differ from those of the
+     * class annotation, e.g. another or no {@code withinPath}, which keeps them and points to {@code classPolicyPath}, or to no policy file if the class has none.
+     * Annotations that already point to the right file are not touched, and new method annotations go on their own line above the method's first test annotation,
+     * indented like it.
+     *
+     * @param path              the path of the file relative to the repository root
+     * @param source            the content of a Java file with exactly one test class, whose annotation is evaluable
+     * @param classPolicyPath   the validated policy path for the class annotation; null for the strict default policy
+     * @param methodPolicyPaths the validated policy path for each test method that uses another policy than the class
+     * @param keptMethods       the test methods whose annotation overrides the class without a policy file and stays, such as a switched-off one
+     * @return the rewritten source
+     */
+    static String assign(String path, String source, @Nullable String classPolicyPath, Map<String, String> methodPolicyPaths, Set<String> keptMethods) {
+        AresTestSources.TypeDeclaration type = AresTestSources.relevantType(AresTestSources.analyze(path, source)).filter(declaration -> declaration.policies().size() == 1)
+                .orElseThrow(() -> new IllegalArgumentException("The file " + path + " has no test class with one @Policy annotation"));
+        Annotation classAnnotation = type.policies().getFirst();
+        Edits edits = new Edits();
+        if (!classAnnotation.policyPath().equals(Optional.ofNullable(classPolicyPath))) {
+            edits.replace(classAnnotation.start(), classAnnotation.end(), withPolicyPath(classAnnotation, classPolicyPath));
+        }
+        type.methodPolicies().forEach((method, annotation) -> {
+            boolean kept = keptMethods.contains(method);
+            // A method annotation with arguments of its own, e.g. another withinPath, is not redundant under a class annotation with a policy file: it points
+            // to that policy instead of being removed, so its arguments stay.
+            String target = methodPolicyPaths.getOrDefault(method, classPolicyPath != null && !kept && hasOwnArguments(annotation, classAnnotation) ? classPolicyPath : null);
+            rewriteMethodAnnotation(edits, source, classAnnotation, annotation, target, kept);
+        });
+        addMethodAnnotations(edits, path, source, type, classAnnotation, methodPolicyPaths);
+        return edits.applyTo(source);
+    }
+
+    /**
+     * Edits of a source, each replacing the range [start, end) of the original source. They are applied from the end, so the offsets of the others stay
+     * valid.
+     */
+    private static final class Edits {
+
+        private final List<int[]> ranges = new ArrayList<>();
+
+        private final List<String> replacements = new ArrayList<>();
+
+        void replace(int start, int end, String replacement) {
+            ranges.add(new int[] { start, end });
+            replacements.add(replacement);
+        }
+
+        String applyTo(String source) {
+            List<Integer> order = new ArrayList<>();
+            for (int index = 0; index < ranges.size(); index++) {
+                order.add(index);
+            }
+            order.sort((first, second) -> Integer.compare(ranges.get(second)[0], ranges.get(first)[0]));
+            StringBuilder result = new StringBuilder(source);
+            for (int index : order) {
+                result.replace(ranges.get(index)[0], ranges.get(index)[1], replacements.get(index));
+            }
+            return result.toString();
+        }
+    }
+
+    /**
+     * Points an existing method annotation to its target, keeps it, or removes it.
+     *
+     * @param target the policy path the annotation points to after the change; null if it uses no policy file of its own
+     * @param kept   whether the annotation overrides the class without a policy file and stays, such as a switched-off one
+     */
+    private static void rewriteMethodAnnotation(Edits edits, String source, Annotation classAnnotation, Annotation annotation, @Nullable String target, boolean kept) {
+        if (target == null && kept) {
+            return;
+        }
+        if (target == null && hasOwnArguments(annotation, classAnnotation)) {
+            // Released to the strict default policy, the annotation keeps its own arguments, e.g. another withinPath, but no longer names a policy file.
+            if (annotation.policyPath().isPresent()) {
+                edits.replace(annotation.start(), annotation.end(), withPolicyPath(annotation, null));
+            }
+            return;
+        }
+        if (target == null) {
+            int[] line = lineRange(source, annotation.start(), annotation.end());
+            edits.replace(line[0], line[1], "");
+        }
+        else if (!annotation.policyPath().equals(Optional.of(target))) {
+            edits.replace(annotation.start(), annotation.end(), withPolicyPath(annotation, target));
+        }
+    }
+
+    /**
+     * Adds an annotation to every test method that uses another policy than the class and has none yet, on its own line above the method's first test
+     * annotation, indented like it.
+     */
+    private static void addMethodAnnotations(Edits edits, String path, String source, AresTestSources.TypeDeclaration type, Annotation classAnnotation,
+            Map<String, String> methodPolicyPaths) {
+        Map<String, Integer> testAnnotations = AresTestCases.testAnnotationOffsets(source);
+        String lineSeparator = lineSeparatorOf(source);
+        methodPolicyPaths.forEach((method, target) -> {
+            if (type.methodPolicies().containsKey(method)) {
+                return;
+            }
+            Integer offset = testAnnotations.get(method);
+            if (offset == null) {
+                throw new IllegalArgumentException("The test class in " + path + " has no test case " + method);
+            }
+            int lineStart = lineStart(source, offset);
+            String indentation = source.substring(lineStart, offset);
+            if (indentation.isBlank()) {
+                edits.replace(lineStart, lineStart, indentation + methodAnnotation(classAnnotation, target) + lineSeparator);
+            }
+            else {
+                edits.replace(offset, offset, methodAnnotation(classAnnotation, target) + " ");
+            }
+        });
+    }
+
+    /**
+     * @return the offset where the line of the offset starts; a line ends at a carriage return, a line feed or both (JLS 3.4)
+     */
+    private static int lineStart(String source, int offset) {
+        return Math.max(source.lastIndexOf('\n', offset - 1), source.lastIndexOf('\r', offset - 1)) + 1;
+    }
+
+    /**
+     * @return the line terminator the source uses, so that a new line matches the lines around it
+     */
+    private static String lineSeparatorOf(String source) {
+        if (source.contains("\r\n")) {
+            return "\r\n";
+        }
+        return source.indexOf('\r') >= 0 && source.indexOf('\n') < 0 ? "\r" : "\n";
+    }
+
+    /**
+     * @return the range to remove for an annotation: its whole line if nothing else is on it, otherwise the annotation and the whitespace after it
+     */
+    private static int[] lineRange(String source, int start, int end) {
+        int lineStart = lineStart(source, start);
+        int after = end;
+        while (after < source.length() && (source.charAt(after) == ' ' || source.charAt(after) == '\t')) {
+            after++;
+        }
+        boolean aloneOnLine = source.substring(lineStart, start).isBlank() && (after == source.length() || source.charAt(after) == '\n' || source.charAt(after) == '\r');
+        if (!aloneOnLine) {
+            return new int[] { start, after };
+        }
+        int lineEnd = after;
+        if (lineEnd < source.length() && source.charAt(lineEnd) == '\r') {
+            lineEnd++;
+        }
+        if (lineEnd < source.length() && source.charAt(lineEnd) == '\n') {
+            lineEnd++;
+        }
+        return new int[] { lineStart, lineEnd };
+    }
+
+    private static String quote(String policyPath) {
+        if (policyPath.indexOf('"') >= 0 || policyPath.indexOf('\\') >= 0) {
+            throw new IllegalArgumentException("A policy path must not contain quotes or backslashes: " + policyPath);
+        }
+        return "\"" + policyPath + "\"";
     }
 
     private static String render(Annotation annotation, boolean active) {

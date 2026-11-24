@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.programming.service.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.MatchResult;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -42,6 +45,30 @@ final class SecurityFrameworkCommitFiles {
         String gradleBuild = readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null);
         String mavenPom = readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null);
         return SecurityPolicyRepositoryFiles.parseAresVersion(gradleBuild, mavenPom);
+    }
+
+    /**
+     * The places that pin the Ares version in a commit. A change of the version rewrites all of them, see
+     * {@link SecurityPolicyRepositoryFiles#pinAresVersion(String, String, String)}.
+     *
+     * @param buildFile the build file that pins the version, e.g. {@code build.gradle}
+     * @param pins      the text of each pin, in the order of the file, e.g. {@code aresVersion = '2.2.1'} or {@code <ares.version>2.2.1</ares.version>}, also
+     *                      across lines
+     */
+    record AresPins(String buildFile, List<String> pins) {
+    }
+
+    /**
+     * @return the places that pin the Ares version in the build file of the commit that pins it; empty if no build file pins one
+     */
+    static Optional<AresPins> aresPins(Repository repository, RevTree tree) throws IOException {
+        String gradleBuild = readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null);
+        String mavenPom = readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null);
+        return SecurityPolicyRepositoryFiles.detectBuildTool(gradleBuild, mavenPom).map(buildTool -> {
+            boolean gradle = buildTool == SecurityPolicyRepositoryFiles.BuildTool.GRADLE;
+            List<String> pins = BuildFileSyntax.aresVersionPins(gradle ? gradleBuild : mavenPom, buildTool).stream().map(MatchResult::group).toList();
+            return new AresPins(gradle ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE, pins);
+        });
     }
 
     /**
@@ -102,6 +129,34 @@ final class SecurityFrameworkCommitFiles {
     }
 
     /**
+     * @return whether the commit has a file, a directory or a link at the path
+     */
+    static boolean exists(Repository repository, RevTree tree, String path) throws IOException {
+        try (TreeWalk entry = TreeWalk.forPath(repository, path, tree)) {
+            return entry != null;
+        }
+    }
+
+    /**
+     * Like {@link SecurityPolicyChangeRules#liesBelowAFile(java.nio.file.Path, String, Set)} for a checkout: whether a directory above the path is a file or
+     * a link of the commit, other than one of the given files, which the change deletes.
+     */
+    static boolean liesBelowAFile(Repository repository, RevTree tree, String path, Set<String> deleted) throws IOException {
+        for (int slash = path.indexOf('/'); slash >= 0; slash = path.indexOf('/', slash + 1)) {
+            String parentPath = path.substring(0, slash);
+            try (TreeWalk parent = TreeWalk.forPath(repository, parentPath, tree)) {
+                if (parent == null) {
+                    return false;
+                }
+                if ((parent.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_TREE && !deleted.contains(parentPath)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * A path whose parent is a symbolic link or a file is not found in a commit, but it is no missing file either: like in a checkout, it is an invalid
      * path that is never repaired.
      */
@@ -119,7 +174,7 @@ final class SecurityFrameworkCommitFiles {
         return false;
     }
 
-    private static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
+    static Optional<String> readFile(Repository repository, RevTree tree, String path) throws IOException {
         try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
             if (treeWalk == null) {
                 return Optional.empty();

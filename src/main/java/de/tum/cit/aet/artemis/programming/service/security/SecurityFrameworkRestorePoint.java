@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.programming.service.security;
 
-import static de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService.ACTION_TRAILER;
+import static de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService.ACTION_TRAILER_KEY;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService.DEACTIVATE_ACTION;
 import static de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService.ENTITY_NAME;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -35,20 +34,20 @@ final class SecurityFrameworkRestorePoint {
      * one active annotation. A test class is matched by its fully qualified name, so a class that replaced another one at the same path is not mistaken for
      * it; a class that did not exist then is switched on.
      *
-     * @return whether the annotations of a test class, by its fully qualified name, should be switched on; all of them if the exercise was never deactivated
-     *         by the service
+     * @return whether each annotation should be switched on, see {@link SecurityPolicyRepositoryFiles#annotationStates(Map)}: the annotation of a test method
+     *         that did not exist then follows its class; all of them if the exercise was never deactivated by the service
      */
-    static Predicate<String> annotationStatesBeforeLastDeactivation(Repository repository) {
+    static SecurityPolicyRepositoryFiles.AnnotationDecision annotationStatesBeforeLastDeactivation(Repository repository) {
         try (Git git = new Git(repository)) {
             for (RevCommit commit : git.log().call()) {
-                if (commit.getParentCount() > 0 && commit.getFullMessage().contains(ACTION_TRAILER + DEACTIVATE_ACTION)) {
+                if (isDeactivation(commit)) {
                     Map<String, Boolean> states = annotationStatesBefore(repository, commit);
                     if (states.containsValue(true)) {
-                        return testClass -> states.getOrDefault(testClass, true);
+                        return decision(states);
                     }
                 }
             }
-            return _ -> true;
+            return (_, _) -> true;
         }
         // The history is read while it is iterated, so a commit that cannot be read there fails with a RevWalkException.
         catch (GitAPIException | IOException | RevWalkException e) {
@@ -59,8 +58,12 @@ final class SecurityFrameworkRestorePoint {
         }
     }
 
+    private static boolean isDeactivation(RevCommit commit) {
+        return commit.getParentCount() > 0 && commit.getFooterLines(ACTION_TRAILER_KEY).contains(DEACTIVATE_ACTION);
+    }
+
     /**
-     * @return how the annotations were set in the parent of the deactivation, by the fully qualified name of their test class
+     * @return how the annotations were set in the parent of the deactivation, by {@link SecurityPolicyRepositoryFiles#annotationKey(String, String)}
      */
     private static Map<String, Boolean> annotationStatesBefore(Repository repository, RevCommit deactivation) throws IOException {
         RevCommit parent;
@@ -72,5 +75,15 @@ final class SecurityFrameworkRestorePoint {
                     "securityFrameworkRestorePointUnsupported");
         }
         return SecurityPolicyRepositoryFiles.annotationStates(SecurityFrameworkCommitFiles.javaSources(repository, parent.getTree()));
+    }
+
+    private static SecurityPolicyRepositoryFiles.AnnotationDecision decision(Map<String, Boolean> states) {
+        return (testClass, method) -> {
+            if (testClass == null) {
+                return true;
+            }
+            boolean classActive = states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, null), true);
+            return method == null ? classActive : states.getOrDefault(SecurityPolicyRepositoryFiles.annotationKey(testClass, method), classActive);
+        };
     }
 }

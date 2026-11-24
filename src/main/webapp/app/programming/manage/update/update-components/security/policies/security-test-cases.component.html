@@ -1,0 +1,277 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.tests.';
+<div class="sp-grid-2 sp-wide">
+    <div class="sp-col">
+        <div class="sp-row-between">
+            <span class="sp-label-row">
+                <span class="sp-label">{{ prefix + 'assigned' | artemisTranslate: { count: assignedClassCount() } }}</span>
+                <jhi-security-help [text]="prefix + 'assignedHelp' | artemisTranslate" />
+            </span>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                [disabled]="disabled()"
+                (click)="openAssign()"
+                data-testid="security-test-cases-add"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span [jhiTranslate]="prefix + 'addTestCases'"></span>
+            </button>
+        </div>
+        @if (!assignedPackages().length) {
+            <p class="sp-empty" [jhiTranslate]="prefix + 'noTests'" data-testid="security-test-cases-empty"></p>
+        } @else {
+            <ul class="sp-l1" [attr.aria-label]="prefix + 'assignedTo' | artemisTranslate: { policy: policy().name }">
+                @for (group of assignedPackages(); track group.packageName) {
+                    <li>
+                        <span class="sp-mono sp-strong">{{ group.packageName }}</span>
+                        <ul class="sp-l2">
+                            @for (node of group.classes; track node.qualifiedName) {
+                                @if (node.whole) {
+                                    <li data-testid="security-test-cases-class">
+                                        <span class="sp-li-row">
+                                            <span class="sp-mono">{{ node.simpleName }}</span>
+                                            <span class="sp-mut text-xs" [jhiTranslate]="prefix + 'allTestCases'"></span>
+                                            <ng-container
+                                                [ngTemplateOutlet]="entryActions"
+                                                [ngTemplateOutletContext]="{ entry: node.qualifiedName, state: node.whole, label: node.simpleName }"
+                                            />
+                                        </span>
+                                        @if (conflicts().get(node.qualifiedName); as view) {
+                                            <tumaet-ui-message
+                                                class="sp-conflict sp-message-fill"
+                                                severity="warn"
+                                                [icon]="faTriangleExclamation"
+                                                data-testid="security-test-cases-conflict"
+                                            >
+                                                <span class="sp-col">
+                                                    <span class="text-sm">
+                                                        <span class="sp-strong" [jhiTranslate]="prefix + 'conflict.label'"></span>
+                                                        {{ prefix + 'conflict.text' | artemisTranslate: { testClass: node.simpleName, testCases: view.removedNames } }}
+                                                    </span>
+                                                    @if (view.testCases?.length === 0) {
+                                                        <span class="text-sm" [id]="'security-conflict-cases-' + node.qualifiedName">{{
+                                                            prefix + 'conflict.casesUnknown' | artemisTranslate: { testClass: node.simpleName }
+                                                        }}</span>
+                                                    }
+                                                    <span class="sp-li-row">
+                                                        <button
+                                                            type="button"
+                                                            tumAetUiButton
+                                                            severity="secondary"
+                                                            variant="outlined"
+                                                            size="small"
+                                                            [disabled]="disabled()"
+                                                            (click)="keepWholeClass(node.qualifiedName)"
+                                                            data-testid="security-test-cases-conflict-keep-class"
+                                                        >
+                                                            {{ prefix + 'conflict.keepClass' | artemisTranslate }}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            tumAetUiButton
+                                                            severity="secondary"
+                                                            variant="outlined"
+                                                            size="small"
+                                                            [disabled]="disabled() || !view.testCases?.length"
+                                                            [attr.aria-describedby]="view.testCases?.length === 0 ? 'security-conflict-cases-' + node.qualifiedName : null"
+                                                            (click)="keepRemoval(view)"
+                                                            data-testid="security-test-cases-conflict-keep-removal"
+                                                        >
+                                                            {{ prefix + 'conflict.keepRemoval' | artemisTranslate }}
+                                                        </button>
+                                                    </span>
+                                                </span>
+                                            </tumaet-ui-message>
+                                        }
+                                    </li>
+                                }
+                                @if (node.testCases.length) {
+                                    <li>
+                                        <span class="sp-li-row">
+                                            <span class="sp-mono">{{ node.simpleName }}</span>
+                                            <span class="sp-mut text-xs">{{
+                                                countKey(prefix + 'testCaseCount', node.testCases.length) | artemisTranslate: { count: node.testCases.length }
+                                            }}</span>
+                                        </span>
+                                        <ul class="sp-l3">
+                                            @for (testCase of node.testCases; track testCase.entry) {
+                                                <li data-testid="security-test-cases-case">
+                                                    <span class="sp-li-row">
+                                                        <span class="sp-mono">{{ testCase.name }}</span>
+                                                        <ng-container
+                                                            [ngTemplateOutlet]="entryActions"
+                                                            [ngTemplateOutletContext]="{
+                                                                entry: testCase.entry,
+                                                                state: testCase.state,
+                                                                label: node.simpleName + '.' + testCase.name,
+                                                            }"
+                                                        />
+                                                    </span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="sp-col">
+        <div class="sp-row-between">
+            <span class="sp-label-row">
+                <span class="sp-label">{{ prefix + 'declared' | artemisTranslate: { count: declaredCount() } }}</span>
+                <jhi-security-help [text]="prefix + 'declaredHelp' | artemisTranslate" />
+            </span>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                [disabled]="disabled()"
+                (click)="openDeclare()"
+                data-testid="security-test-classes-add"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span [jhiTranslate]="prefix + 'addTestClass'"></span>
+            </button>
+        </div>
+        @if (!declaredClasses().length) {
+            <p class="sp-empty" [jhiTranslate]="prefix + 'noClasses'"></p>
+        } @else {
+            <ul class="sp-l1" [attr.aria-label]="prefix + 'declaredIn' | artemisTranslate: { policy: policy().name }">
+                @for (group of declaredPackages(); track group.packageName) {
+                    <li>
+                        <span class="sp-mono sp-strong">{{ group.packageName }}</span>
+                        <ul class="sp-l2">
+                            @for (declared of group.classes; track declared.qualifiedName) {
+                                <li data-testid="security-test-classes-row">
+                                    <span class="sp-li-row">
+                                        <span class="sp-mono">{{ declared.simpleName }}</span>
+                                        @if (declared.fromTests) {
+                                            <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="prefix + 'fromTestsHelp' | artemisTranslate" tabindex="0">
+                                                <span [jhiTranslate]="prefix + 'fromTests'"></span>
+                                            </tumaet-ui-tag>
+                                        } @else if (declared.state === 'removed') {
+                                            <tumaet-ui-tag severity="danger" size="sm" [tumAetUiTooltip]="prefix + 'classRemovedHelp' | artemisTranslate" tabindex="0">
+                                                <span [jhiTranslate]="prefix + 'removed'"></span>
+                                            </tumaet-ui-tag>
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="primary"
+                                                variant="text"
+                                                size="small"
+                                                [disabled]="disabled()"
+                                                [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + declared.simpleName"
+                                                (click)="undoClass(declared.qualifiedName)"
+                                            >
+                                                {{ prefix + 'undo' | artemisTranslate }}
+                                            </button>
+                                        } @else {
+                                            @if (declared.state === 'new') {
+                                                <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'classNewHelp' | artemisTranslate" tabindex="0">
+                                                    <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>
+                                                </tumaet-ui-tag>
+                                            }
+                                            <button
+                                                type="button"
+                                                class="sp-help"
+                                                [disabled]="disabled()"
+                                                [attr.aria-label]="(prefix + 'removeLabel' | artemisTranslate) + ' ' + declared.simpleName"
+                                                [tumAetUiTooltip]="prefix + 'removeLabel' | artemisTranslate"
+                                                (click)="askRemove('class', declared.qualifiedName)"
+                                                data-testid="security-test-classes-remove"
+                                            >
+                                                <fa-icon [icon]="faXmark" />
+                                            </button>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<ng-template #entryActions let-entry="entry" let-state="state" let-label="label">
+    @if (state === 'removed') {
+        <tumaet-ui-tag severity="danger" size="sm" [tumAetUiTooltip]="prefix + 'testRemovedHelp' | artemisTranslate" tabindex="0">
+            <span [jhiTranslate]="prefix + 'removed'"></span>
+        </tumaet-ui-tag>
+        <button
+            type="button"
+            tumAetUiButton
+            severity="primary"
+            variant="text"
+            size="small"
+            [disabled]="disabled() || undoOwners().has(entry)"
+            [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + label"
+            [attr.aria-describedby]="undoOwners().has(entry) ? 'security-undo-owner-' + entry : null"
+            (click)="undoTest(entry)"
+            data-testid="security-test-cases-undo"
+        >
+            {{ prefix + 'undo' | artemisTranslate }}
+        </button>
+        @if (undoOwners().get(entry); as owner) {
+            <span class="sp-mut text-xs" [id]="'security-undo-owner-' + entry" data-testid="security-test-cases-undo-owner">{{
+                prefix + 'undoBlocked' | artemisTranslate: { policy: owner }
+            }}</span>
+        }
+    } @else {
+        @if (state === 'new') {
+            <tumaet-ui-tag severity="warn" size="sm" [tumAetUiTooltip]="prefix + 'testNewHelp' | artemisTranslate" tabindex="0">
+                <span jhiTranslate="artemisApp.programmingExercise.security.advanced.uncommitted"></span>
+            </tumaet-ui-tag>
+        }
+        <button
+            type="button"
+            class="sp-help"
+            [disabled]="disabled()"
+            [attr.aria-label]="(prefix + 'removeLabel' | artemisTranslate) + ' ' + label"
+            [tumAetUiTooltip]="prefix + 'removeLabel' | artemisTranslate"
+            (click)="askRemove('test', entry)"
+            data-testid="security-test-cases-remove"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    }
+</ng-template>
+
+<jhi-security-add-test-cases-dialog
+    [(visible)]="assignOpen"
+    [structure]="structure()"
+    [policyFile]="policyFile()"
+    [ownTests]="policy().tests"
+    [otherTests]="otherTests()"
+    (applied)="onAssigned($event)"
+/>
+
+<jhi-security-declare-classes-dialog
+    [(visible)]="declareOpen"
+    [structure]="structure()"
+    [policyFile]="policyFile()"
+    [classesOfTests]="classesOfAssignedTests()"
+    [extraClasses]="policy().extraClasses"
+    (applied)="onDeclared($event)"
+/>
+
+<jhi-security-confirm-dialog
+    [(visible)]="confirmOpen"
+    [header]="removeHeader()"
+    [question]="removeQuestion()"
+    [entry]="removing()?.value"
+    [warning]="removeWarning()"
+    confirmLabel="artemisApp.programmingExercise.security.advanced.tests.remove.confirm"
+    (confirmed)="onRemoveConfirmed()"
+/>

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,8 @@ class SharedQueueManagementServiceIntegrationTest extends AbstractProgrammingInt
         DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDistributedDockerImageCleanupInfo();
         dockerImageCleanupInfo.clear();
 
-        ZonedDateTime now = ZonedDateTime.now();
+        // The database may round the fractional seconds of the start date to the next second, so the test only uses whole seconds.
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
         BuildJob b1 = new BuildJob();
         b1.setDockerImage("image1");

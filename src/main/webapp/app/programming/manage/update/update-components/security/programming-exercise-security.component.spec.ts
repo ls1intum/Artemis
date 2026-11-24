@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +21,7 @@ import {
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 
 const VERSIONS: SecurityFrameworkVersions = {
     selectableVersions: ['3.4.1', '3.3.0', '3.2.2'],
@@ -387,6 +390,101 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         comp.onToggleChanged(false);
         expect(confirmSpy).not.toHaveBeenCalled();
         expect(comp.showStagedDeactivationHint()).toBe(true);
+    });
+
+    describe('Advanced mode', () => {
+        type AdvancedHandlers = { onAdvancedActivate(version: string): void; onAdvancedDeactivate(): void; onAdvancedCommitted(config: SecurityFrameworkConfig): void };
+
+        function initAdvanced(initial: SecurityFrameworkConfig): AdvancedHandlers {
+            fixture.componentRef.setInput('advancedMode', true);
+            initEdit(initial);
+            return comp as unknown as AdvancedHandlers;
+        }
+
+        it('shows the Advanced view for an exercise whose sandbox is on or off', () => {
+            initAdvanced(configuredConfig());
+            expect(comp.showAdvancedView()).toBe(true);
+
+            fixture.componentRef.setInput('advancedMode', false);
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
+        it('keeps the Advanced view mounted but hidden in simple mode, so its unsaved changes survive switching back', () => {
+            fixture.componentRef.setInput('advancedMode', false);
+            initEdit(configuredConfig());
+            expect(comp.advancedViewMounted()).toBe(false);
+
+            fixture.componentRef.setInput('advancedMode', true);
+            fixture.detectChanges();
+            expect(comp.advancedViewMounted()).toBe(true);
+
+            fixture.componentRef.setInput('advancedMode', false);
+            fixture.detectChanges();
+
+            expect(comp.advancedViewMounted()).toBe(true);
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
+        it('keeps the Advanced view mounted but hidden while a failed request needs this card', () => {
+            initAdvanced(configuredConfig());
+            fixture.detectChanges();
+            expect(comp.advancedViewMounted()).toBe(true);
+            service.updateFrameworkVersion.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+
+            comp.onFrameworkVersionChanged('3.3.0');
+            fixture.detectChanges();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+            expect(comp.showAdvancedView()).toBe(false);
+            expect(comp.advancedViewMounted()).toBe(true);
+
+            service.updateFrameworkVersion.mockReturnValueOnce(of(configuredConfig('3.3.0')));
+            comp.onRetry();
+            fixture.detectChanges();
+            expect(comp.showAdvancedView()).toBe(true);
+        });
+
+        it('keeps this card for the states that need a repair, and when creating an exercise', () => {
+            initAdvanced(misconfiguredConfig());
+            expect(comp.showAdvancedView()).toBe(false);
+
+            createComponent();
+            fixture.componentRef.setInput('advancedMode', true);
+            initCreate();
+            expect(comp.showAdvancedView()).toBe(false);
+        });
+
+        it('turns the sandbox on with the version of the Advanced view and off again', () => {
+            const handlers = initAdvanced(inactiveConfig());
+            service.activate.mockReturnValue(of(configuredConfig('3.3.0')));
+            service.deactivate.mockReturnValue(of(inactiveConfig()));
+
+            handlers.onAdvancedActivate('3.3.0');
+            expect(service.activate).toHaveBeenCalledWith(42, '3.3.0');
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+            handlers.onAdvancedDeactivate();
+            expect(service.deactivate).toHaveBeenCalledWith(42);
+            expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        });
+
+        it('takes the state a commit of the Advanced view returns', () => {
+            const handlers = initAdvanced(configuredConfig());
+
+            handlers.onAdvancedCommitted(configuredConfig('3.3.0'));
+
+            expect(comp.config().frameworkVersion).toBe('3.3.0');
+        });
+
+        it('links the tests repository of a course exercise only', () => {
+            initAdvanced(configuredConfig());
+            expect(comp.testsRepositoryLink()).toBeUndefined();
+
+            const exercise = javaExercise(42);
+            exercise.course = { id: 7 };
+            fixture.componentRef.setInput('programmingExercise', exercise);
+            expect(comp.testsRepositoryLink()).toEqual(['/course-management', 7, 'programming-exercises', 42, 'repository', 'TESTS']);
+        });
     });
 
     it('edit mode activation goes GENERATING then CONFIGURED', () => {
@@ -1563,5 +1661,127 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-import-action')?.querySelectorAll('button')).toHaveLength(3);
         expect(query(element, 'security-activate-toggle')).toBeNull();
         expect(query(element, 'security-framework-version-select')).toBeNull();
+    });
+});
+
+/** Stands in for the policy editor, whose lifetime the card decides; the card finds it as the policy editor. */
+@Component({
+    selector: 'jhi-programming-exercise-security-policies',
+    template: '',
+    providers: [{ provide: ProgrammingExerciseSecurityPoliciesComponent, useExisting: forwardRef(() => PolicyEditorStubComponent) }],
+})
+class PolicyEditorStubComponent {
+    readonly totalChanges = signal(0);
+    readonly importPending = signal(false);
+    readonly exerciseId = input.required<number>();
+    readonly config = input<SecurityFrameworkConfig>();
+    readonly versionOptions = input<unknown>();
+    readonly latestVersion = input<string>();
+    readonly activationVersion = input<string>();
+    readonly aresApiUses = input<unknown>();
+    readonly canCommit = input(false);
+    readonly locked = input(false);
+    readonly repositoryLink = input<unknown>();
+    readonly activateRequested = output<string>();
+    readonly deactivateRequested = output<void>();
+    readonly configChange = output<SecurityFrameworkConfig>();
+    readonly committingChange = output<boolean>();
+}
+
+describe('ProgrammingExerciseSecurityComponent policy editor', () => {
+    let fixture: ComponentFixture<ProgrammingExerciseSecurityComponent>;
+    let service: SecurityServiceMock;
+
+    beforeEach(() => {
+        service = createServiceMock();
+        service.getConfig.mockReturnValue(of(configuredConfig()));
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }, { provide: SecurityFrameworkService, useValue: service }],
+        });
+        TestBed.overrideComponent(ProgrammingExerciseSecurityComponent, {
+            remove: { imports: [ProgrammingExerciseSecurityPoliciesComponent] },
+            add: { imports: [PolicyEditorStubComponent] },
+        });
+        fixture = TestBed.createComponent(ProgrammingExerciseSecurityComponent);
+        fixture.componentRef.setInput('mode', 'edit');
+        fixture.componentRef.setInput('advancedMode', true);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+    });
+
+    function showExercise(id: number): PolicyEditorStubComponent {
+        fixture.componentRef.setInput('programmingExercise', javaExercise(id));
+        fixture.detectChanges();
+        fixture.detectChanges();
+        return fixture.debugElement.query(By.directive(PolicyEditorStubComponent)).componentInstance as PolicyEditorStubComponent;
+    }
+
+    it('counts a YAML import that is still pending as an unsaved change, so saving the exercise asks first', () => {
+        const editor = showExercise(42);
+        const comp = fixture.componentInstance;
+        expect(comp.unsavedPolicyChanges()).toBe(0);
+
+        editor.importPending.set(true);
+        expect(comp.unsavedPolicyChanges()).toBe(1);
+        editor.totalChanges.set(2);
+        expect(comp.unsavedPolicyChanges()).toBe(3);
+        editor.importPending.set(false);
+        expect(comp.unsavedPolicyChanges()).toBe(2);
+    });
+
+    it('creates a new policy editor for another configured exercise instead of reusing the one with the changes of the previous exercise', () => {
+        const first = showExercise(42);
+        expect(first.exerciseId()).toBe(42);
+
+        const second = showExercise(43);
+
+        expect(second).not.toBe(first);
+        expect(second.exerciseId()).toBe(43);
+        expect(fixture.debugElement.queryAll(By.directive(PolicyEditorStubComponent))).toHaveLength(1);
+    });
+
+    it('changes nothing in simple mode while a commit of the hidden policy editor is pending, so its late answer cannot undo a deactivation', () => {
+        const editor = showExercise(42);
+        const comp = fixture.componentInstance;
+        service.deactivate.mockReturnValue(of(inactiveConfig()));
+        const confirmation = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const requests: TumAetUiConfirmationRequest[] = [];
+        vi.spyOn(confirmation, 'confirm').mockImplementation((request) => requests.push(request));
+
+        // A deactivation confirmation that is still open when the commit starts.
+        comp.onToggleChanged(false);
+        editor.committingChange.emit(true);
+        fixture.componentRef.setInput('advancedMode', false);
+        fixture.detectChanges();
+
+        expect(comp.isBusy()).toBe(true);
+        requests[0].accept();
+        comp.onToggleChanged(false);
+        comp.onRepair();
+        comp.onAddDiscoveredTestClasses();
+        expect(requests).toHaveLength(1);
+        expect(service.deactivate).not.toHaveBeenCalled();
+        expect(service.activate).not.toHaveBeenCalled();
+        expect(service.addDiscoveredTestClasses).not.toHaveBeenCalled();
+
+        // The commit answers late with the state of the repository, which nothing has changed meanwhile.
+        editor.configChange.emit(configuredConfig('3.3.0'));
+        editor.committingChange.emit(false);
+        fixture.detectChanges();
+        expect(comp.isBusy()).toBe(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+        comp.onToggleChanged(false);
+        requests[1].accept();
+        expect(service.deactivate).toHaveBeenCalledExactlyOnceWith(42);
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+    });
+
+    it('drops the pending commit of the policy editor of the previous exercise', () => {
+        showExercise(42).committingChange.emit(true);
+        expect(fixture.componentInstance.isBusy()).toBe(true);
+
+        showExercise(43);
+
+        expect(fixture.componentInstance.isBusy()).toBe(false);
     });
 });

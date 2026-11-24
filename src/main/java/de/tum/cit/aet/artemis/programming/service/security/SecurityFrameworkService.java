@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +24,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -101,9 +101,9 @@ public class SecurityFrameworkService {
 
     private static final String PROJECT_TEMPLATE_DIRECTORY = "projectTemplate";
 
-    private static final String GRADLE_BUILD_FILE = "build.gradle";
+    static final String GRADLE_BUILD_FILE = "build.gradle";
 
-    private static final String MAVEN_BUILD_FILE = "pom.xml";
+    static final String MAVEN_BUILD_FILE = "pom.xml";
 
     /** The oldest Ares version the Security Framework supports: the Java templates, the agent setup and the reserved packages script require it. */
     public static final String MINIMUM_FRAMEWORK_VERSION = "2.2.1";
@@ -123,14 +123,21 @@ public class SecurityFrameworkService {
     /** Which policy fields each Ares release accepts, see {@link AresCompatibilityManifest}. */
     private static final Path COMPATIBILITY_MANIFEST = Path.of("security-framework", "ares-compatibility.yml");
 
+    private static final String COMMIT_TRAILER_KEY = "Changed-by";
+
+    private static final String COMMIT_TRAILER_VALUE = "Artemis Security Framework";
+
     /** Marks the commits of this service whose push processing it runs itself, so a retry can tell an unprocessed change of its own from any other commit. */
-    private static final String COMMIT_TRAILER = "Changed-by: Artemis Security Framework";
+    private static final String COMMIT_TRAILER = COMMIT_TRAILER_KEY + ": " + COMMIT_TRAILER_VALUE;
+
+    static final String ACTION_TRAILER_KEY = "Security-Framework-Action";
 
     /**
      * Records what a commit of this service did, also for the commits made while an exercise is imported. Activating looks up the last deactivation by it,
-     * to restore the annotations as they were before.
+     * to restore the annotations as they were before. It is read from the trailers of a commit only, because the message above them may be written by an
+     * instructor and say anything.
      */
-    static final String ACTION_TRAILER = "Security-Framework-Action: ";
+    private static final String ACTION_TRAILER = ACTION_TRAILER_KEY + ": ";
 
     static final String DEACTIVATE_ACTION = "deactivate";
 
@@ -186,6 +193,13 @@ public class SecurityFrameworkService {
         this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct()
                 .filter(SecurityFrameworkService::isSupportedConfiguredVersion).toList();
         this.compatibilityManifest = loadCompatibilityManifest(resourceLoaderService);
+    }
+
+    /**
+     * @return which policy fields each Ares release accepts
+     */
+    AresCompatibilityManifest compatibilityManifest() {
+        return compatibilityManifest;
     }
 
     /**
@@ -287,16 +301,25 @@ public class SecurityFrameworkService {
             if (head == null) {
                 return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of(), List.of()), null, List.of());
             }
-            RevTree tree = revWalk.parseCommit(head).getTree();
-            String frameworkVersion = SecurityFrameworkCommitFiles.aresVersion(repository, tree).orElse(null);
-            SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
-            UnaryOperator<@Nullable String> policyContent = path -> SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content();
-            return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, policyContent));
+            return configAt(repository, revWalk.parseCommit(head).getTree());
         }
         catch (IOException e) {
             log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
             throw new InternalServerErrorAlertException("Could not read the tests repository.", ENTITY_NAME, "securityFrameworkReadFailed");
         }
+    }
+
+    /**
+     * @param repository the tests repository
+     * @param tree       the tree of one of its commits
+     * @return the Security Framework state of that commit
+     * @throws IOException if the commit cannot be read
+     */
+    public SecurityFrameworkConfigDTO configAt(Repository repository, RevTree tree) throws IOException {
+        String frameworkVersion = SecurityFrameworkCommitFiles.aresVersion(repository, tree).orElse(null);
+        SecurityFrameworkState state = SecurityFrameworkCommitFiles.evaluate(repository, tree);
+        UnaryOperator<@Nullable String> policyContent = path -> SecurityFrameworkCommitFiles.readPolicyFile(repository, tree, path).content();
+        return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, policyContent));
     }
 
     /**
@@ -636,7 +659,7 @@ public class SecurityFrameworkService {
      * @return the file and what the release does not accept in it, e.g. {@code SecurityPolicy.yaml: a.b, a.c}; empty if the release accepts the file or it
      *         could not be checked
      */
-    private static Optional<String> describeIncompatibility(String policyPath, AresCompatibilityManifest.Check check) {
+    static Optional<String> describeIncompatibility(String policyPath, AresCompatibilityManifest.Check check) {
         if (check.verdict() != AresCompatibilityManifest.Verdict.INCOMPATIBLE) {
             return Optional.empty();
         }
@@ -701,7 +724,11 @@ public class SecurityFrameworkService {
             // Nothing to do; a commit here would also become a misleading restore point for the next activation.
             return;
         }
-        SecurityPolicyRepositoryFiles.deletePolicy(root);
+        // Every policy file an active annotation points to is deleted, not only SecurityPolicy.yaml, because the policy editor can add more of them. A file
+        // that is no policy, e.g. an annotation that points to build.gradle or a YAML configuration, is not deleted.
+        Stream.concat(Stream.of(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), state.policyFiles().stream().map(SecurityFrameworkState.PolicyFile::policyPath))
+                .map(SecurityPolicyRepositoryFiles::validatePolicyPath).flatMap(Optional::stream).distinct()
+                .forEach(path -> SecurityPolicyRepositoryFiles.deletePolicyFileIfPolicy(root, path));
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
     }
 
@@ -713,7 +740,16 @@ public class SecurityFrameworkService {
      * @param action  what the change does, recorded in the commit so a later activation can find the last deactivation
      * @param process whether to run the push processing, which triggers the builds; false while an exercise is imported, because the import triggers them
      */
-    private SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, boolean process,
+    SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, boolean process, Consumer<Repository> change) {
+        return changeTestRepository(exercise, user, commitMessage, action, "", process, change);
+    }
+
+    /**
+     * Like {@link #changeTestRepository(ProgrammingExercise, User, String, String, boolean, Consumer)}, with further trailers for the commit.
+     *
+     * @param trailers further trailer lines of the commit, each ending with a line break; empty for none
+     */
+    SecurityFrameworkConfigDTO changeTestRepository(ProgrammingExercise exercise, User user, String commitMessage, String action, String trailers, boolean process,
             Consumer<Repository> change) {
         LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
         String branch = repositoryBranch(exercise);
@@ -728,8 +764,8 @@ public class SecurityFrameworkService {
             boolean changed = gitService.stageAllChanges(repository);
             SecurityFrameworkCheckout.requireStagedPolicyFiles(repository);
             if (changed) {
-                String trailers = "\n\n" + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
-                String commitHash = gitService.commitStagedChanges(repository, commitMessage + trailers, user);
+                String allTrailers = "\n\n" + trailers + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
+                String commitHash = gitService.commitStagedChanges(repository, commitMessage + allTrailers, user);
                 pushAndProcess(exercise, user, repository, branch, commitHash, checkedOutHead, process);
             }
             else if (process && checkedOutHead != null) {
@@ -841,7 +877,7 @@ public class SecurityFrameworkService {
         try (RevWalk revWalk = new RevWalk(repository)) {
             revWalk.markStart(revWalk.parseCommit(repository.resolve(head)));
             for (RevCommit commit : revWalk) {
-                if (commit.getFullMessage().contains(COMMIT_TRAILER)) {
+                if (commit.getFooterLines(COMMIT_TRAILER_KEY).contains(COMMIT_TRAILER_VALUE)) {
                     boolean isHead = commit.name().equals(head);
                     boolean pending = pendingProcessing().get(pendingProcessingKey(exercise, commit.name())) != null;
                     return (pending && (isHead || !headProcessed)) || (isHead && !headProcessed) ? Optional.of(commit.name()) : Optional.empty();
@@ -865,7 +901,7 @@ public class SecurityFrameworkService {
      *
      * @return the state, if it is supported
      */
-    private static SecurityFrameworkState requireSupported(SecurityFrameworkState state) {
+    static SecurityFrameworkState requireSupported(SecurityFrameworkState state) {
         if (state.status() == SecurityActivationStatus.UNSUPPORTED) {
             String reasons = state.unsupportedReasons().stream().map(reason -> reason.type() + " (" + reason.location() + ")").distinct().reduce((a, b) -> a + ", " + b).orElse("");
             throw new BadRequestAlertException("The Security Framework cannot manage the tests repository automatically: " + reasons, ENTITY_NAME,
@@ -890,56 +926,13 @@ public class SecurityFrameworkService {
     }
 
     /**
-     * Checks every selectable Ares version against the policy files of a state, so the client can tell which versions can be pinned before the instructor
-     * picks one. A version is {@code INCOMPATIBLE} as soon as one file uses something it does not accept, and {@code UNVERIFIED} if it is not incompatible but
-     * one file could not be checked.
-     *
-     * @param state         the state whose policy files are checked
-     * @param contentByPath reads a policy file by its validated path; null if it cannot be read
-     * @return one entry per selectable version, newest first; empty if none of the policy files of the state can be read
+     * @return for each selectable Ares version whether it accepts the policy files of the state, see {@link AresVersionCompatibilities}
      */
     private List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> versionCompatibilities(SecurityFrameworkState state, UnaryOperator<@Nullable String> contentByPath) {
-        Map<String, String> contents = new LinkedHashMap<>();
-        // A file that cannot be read cannot be checked, so a version that accepts all other files is not verified.
-        boolean someFileUnchecked = false;
-        for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
-            String path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).orElse(null);
-            String content = path == null ? null : contentByPath.apply(path);
-            if (path != null && content != null) {
-                contents.put(path, content);
-            }
-            else {
-                someFileUnchecked = true;
-            }
-        }
-        if (contents.isEmpty()) {
-            return List.of();
-        }
-        List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> compatibilities = new ArrayList<>();
-        for (String version : getFrameworkVersions().selectableVersions()) {
-            List<String> incompatibilities = new ArrayList<>();
-            boolean unverified = someFileUnchecked;
-            for (Map.Entry<String, String> file : contents.entrySet()) {
-                AresCompatibilityManifest.Check check = compatibilityManifest.check(version, file.getValue());
-                unverified |= check.verdict() == AresCompatibilityManifest.Verdict.UNVERIFIED;
-                describeIncompatibility(file.getKey(), check).ifPresent(incompatibilities::add);
-            }
-            AresCompatibilityManifest.Verdict verdict;
-            if (!incompatibilities.isEmpty()) {
-                verdict = AresCompatibilityManifest.Verdict.INCOMPATIBLE;
-            }
-            else if (unverified) {
-                verdict = AresCompatibilityManifest.Verdict.UNVERIFIED;
-            }
-            else {
-                verdict = AresCompatibilityManifest.Verdict.COMPATIBLE;
-            }
-            compatibilities.add(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO(version, verdict.name(), incompatibilities));
-        }
-        return compatibilities;
+        return AresVersionCompatibilities.check(compatibilityManifest, getFrameworkVersions().selectableVersions(), state, contentByPath);
     }
 
-    private LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
+    LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {
         LocalVCRepositoryUri testRepositoryUri = exercise.getVcsTestRepositoryUri();
         if (testRepositoryUri == null) {
             throw new BadRequestAlertException("The exercise has no tests repository.", ENTITY_NAME, "securityFrameworkNoTestRepository");
@@ -947,7 +940,7 @@ public class SecurityFrameworkService {
         return testRepositoryUri;
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
+    String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }
@@ -962,13 +955,13 @@ public class SecurityFrameworkService {
      *
      * @param exercise the programming exercise to check
      */
-    private void validateJavaExercise(ProgrammingExercise exercise) {
+    void validateJavaExercise(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             throw new BadRequestAlertException("The Security Framework is only supported for Java programming exercises.", ENTITY_NAME, "onlyJavaSupported");
         }
     }
 
-    private void validateFrameworkVersion(String frameworkVersion) {
+    void validateFrameworkVersion(String frameworkVersion) {
         if (!getFrameworkVersions().selectableVersions().contains(frameworkVersion)) {
             throw new BadRequestAlertException("Unsupported Security Framework version: " + frameworkVersion, ENTITY_NAME, "unsupportedFrameworkVersion");
         }

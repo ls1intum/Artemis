@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
     TumAetUiButtonDirective,
@@ -40,6 +40,8 @@ import {
     securityFrameworkProblemMessages,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseSecurityPoliciesComponent } from 'app/programming/manage/update/update-components/security/policies/programming-exercise-security-policies.component';
 
 /** The three-way choice of an import whose Security Framework state is not known: keep it, or activate or deactivate the sandbox. */
 export type SecurityImportAction = 'KEEP' | SecurityFrameworkAction;
@@ -76,6 +78,7 @@ const DEACTIVATE_CONFIRMATION_KEY = 'securityDeactivateConfirmation';
         TumAetUiButtonDirective,
         TumAetUiConfirmDialogComponent,
         FaIconComponent,
+        ProgrammingExerciseSecurityPoliciesComponent,
     ],
 })
 export class ProgrammingExerciseSecurityComponent {
@@ -119,8 +122,22 @@ export class ProgrammingExerciseSecurityComponent {
     readonly stagedChoiceChange = output<SecurityFrameworkChoice | undefined>();
     /** True while the parent form is saving the exercise, so this card's controls stay locked - a staged change made mid-save would disagree with what gets persisted. */
     readonly isSaving = input<boolean>(false);
+    /**
+     * Whether the form is in Advanced mode. There, an existing exercise whose sandbox is on or off shows the Advanced view of Objective 2: the activation card
+     * with dependency scanning and the Manage Security Policies section. Creating, importing and every state that needs a repair keep this card.
+     */
+    readonly advancedMode = input<boolean>(false);
 
     readonly isEditMode = computed(() => this.mode() === 'edit');
+    private readonly policiesEditor = viewChild(ProgrammingExerciseSecurityPoliciesComponent);
+    /**
+     * The number of unsaved changes to the security policies; saving the exercise neither commits nor keeps them. A YAML import that is still on its way
+     * counts as one, because it only becomes a change once it applies.
+     */
+    readonly unsavedPolicyChanges = computed(() => {
+        const editor = this.policiesEditor();
+        return (editor?.totalChanges() ?? 0) + (editor?.importPending() ? 1 : 0);
+    });
     readonly isCreateMode = computed(() => this.mode() === 'create');
     readonly isImportMode = computed(() => this.mode() === 'import');
     readonly isSupportedLanguage = computed(() => {
@@ -225,8 +242,63 @@ export class ProgrammingExerciseSecurityComponent {
     readonly hasFailedOperation = signal(false);
 
     readonly isActive = computed(() => isSecurityConfigured(this.config()));
-    /** In progress - loading the config, or activating/deactivating: spinner on, controls locked to prevent a double-submit or acting on not-yet-loaded state. */
-    readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()));
+    /**
+     * In progress - loading the config, activating/deactivating, or committing policies in the Advanced view: spinner on, controls locked to prevent a
+     * double-submit or acting on not-yet-loaded state.
+     */
+    readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()) || this.isPolicyCommitPending());
+    /** Whether the policy editor waits for the answer of a commit, also while simple mode hides it. */
+    private readonly policyCommitPending = signal(false);
+    /**
+     * A pending commit of the policy editor answers with the state of the tests repository, so an operation of this card started meanwhile, e.g. a
+     * deactivation in simple mode, would be overwritten by that answer. The card waits until the commit settles.
+     */
+    private readonly isPolicyCommitPending = computed(() => this.policyCommitPending() && this.advancedViewMounted());
+
+    /** The states the Advanced view manages; the others need the repair and retry actions of this card. */
+    private static readonly ADVANCED_VIEW_STATUSES: ReadonlySet<SecurityActivationStatus> = new Set([
+        SecurityActivationStatus.INACTIVE,
+        SecurityActivationStatus.GENERATING,
+        SecurityActivationStatus.CONFIGURED,
+        SecurityActivationStatus.DELETING,
+    ]);
+
+    /** Whether the exercise is in a state the Advanced view manages, whatever the mode of the form. */
+    private readonly advancedViewEligible = computed(
+        () =>
+            this.isEditMode() &&
+            this.programmingExercise().id !== undefined &&
+            !this.loading() &&
+            !this.loadFailed() &&
+            ProgrammingExerciseSecurityComponent.ADVANCED_VIEW_STATUSES.has(this.status()),
+    );
+
+    readonly showAdvancedView = computed(() => this.advancedMode() && this.advancedViewEligible());
+
+    /**
+     * The exercise whose Advanced view was shown. The view then stays mounted for that exercise, hidden while the form is in simple mode or while the
+     * status needs this card, e.g. after a failed request, so its unsaved changes survive switching modes and the error until it is shown again.
+     */
+    private readonly advancedViewOpenedFor = signal<number | undefined>(undefined);
+
+    /** Whether the Advanced view is in the page, shown or hidden. */
+    readonly advancedViewMounted = computed(
+        () => this.isEditMode() && this.programmingExercise().id !== undefined && this.advancedViewOpenedFor() === this.programmingExercise().id,
+    );
+    /** The exercise of the mounted Advanced view, as the key the template creates the policy editor for; empty while it is not mounted. */
+    protected readonly advancedViewExercise = computed(() => (this.advancedViewMounted() ? [this.programmingExercise().id!] : []));
+
+    /** The route to the tests repository of a course exercise; exam exercises have none here. */
+    readonly testsRepositoryLink = computed<(string | number)[] | undefined>(() => {
+        const exercise = this.programmingExercise();
+        const courseId = exercise.course?.id;
+        return courseId !== undefined && exercise.id !== undefined
+            ? ['/course-management', courseId, 'programming-exercises', exercise.id, 'repository', RepositoryType.TESTS]
+            : undefined;
+    });
+
+    /** The version the activation dialog of the Advanced view preselects. */
+    readonly activationVersion = computed(() => this.versionToActivate());
     /** Import from a file or the sharing platform: the state is only known after the import, and a MISCONFIGURED source can only be kept, repaired or deactivated. */
     readonly usesImportActionChoice = computed(
         () => this.isImportMode() && (this.sourceExerciseId() === undefined || this.sourceConfig()?.status === SecurityActivationStatus.MISCONFIGURED),
@@ -370,6 +442,12 @@ export class ProgrammingExerciseSecurityComponent {
     private loadCount = 0;
 
     constructor() {
+        effect(() => {
+            if (this.showAdvancedView()) {
+                const exerciseId = this.programmingExercise().id;
+                untracked(() => this.advancedViewOpenedFor.set(exerciseId));
+            }
+        });
         this.securityService.getVersions().subscribe({
             next: (versions) => this.versions.set(versions),
             // Without versions the selector stays disabled; activation still works with the version the exercise pins.
@@ -465,6 +543,8 @@ export class ProgrammingExerciseSecurityComponent {
         }
         this.visit++;
         this.pendingOperation = undefined;
+        // The policy editor of the previous exercise is replaced, together with its pending commit.
+        this.policyCommitPending.set(false);
         this.hasFailedOperation.set(false);
         this.config.set({ status: SecurityActivationStatus.CONFIGURED });
         this.lastSettledActive.set(true);
@@ -665,6 +745,32 @@ export class ProgrammingExerciseSecurityComponent {
         return current && (!versionsKnown || this.selectableVersions().includes(current)) ? current : this.stagedDefaultVersion();
     }
 
+    /** The Advanced view confirmed turning the sandbox on with a version. */
+    protected onAdvancedActivate(version: string): void {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined) {
+            this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: version }, () => this.securityService.activate(exerciseId, version));
+        }
+    }
+
+    /** The Advanced view confirmed turning the sandbox off. */
+    protected onAdvancedDeactivate(): void {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined) {
+            this.runOperation({ status: SecurityActivationStatus.DELETING }, () => this.securityService.deactivate(exerciseId));
+        }
+    }
+
+    /** The Advanced view started or finished a commit. */
+    protected onAdvancedCommitting(pending: boolean): void {
+        this.policyCommitPending.set(pending);
+    }
+
+    /** A commit of the Advanced view changed the tests repository; the returned state is the new truth. */
+    protected onAdvancedCommitted(next: SecurityFrameworkConfig): void {
+        this.settle(next);
+    }
+
     private activate(exerciseId: number): void {
         const version = this.versionToActivate();
         if (!version) {
@@ -689,6 +795,9 @@ export class ProgrammingExerciseSecurityComponent {
 
     /** Deactivating commits to the tests repository and runs the builds again, so the instructor confirms it; cancelling leaves everything as it was. */
     private confirmDeactivation(exerciseId: number): void {
+        if (this.isPolicyCommitPending()) {
+            return;
+        }
         const visit = this.visit;
         this.deactivationPending.set(true);
         this.confirmationService.confirm({
@@ -719,7 +828,8 @@ export class ProgrammingExerciseSecurityComponent {
      * with another version before it failed, which Repair, with the restored version, would change again.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
-        if (this.editExerciseId() === undefined) {
+        // Also guards a confirmation that was accepted while a commit of the policy editor was pending.
+        if (this.editExerciseId() === undefined || this.isPolicyCommitPending()) {
             return;
         }
         const visit = this.visit;

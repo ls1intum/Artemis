@@ -1,0 +1,220 @@
+@let prefix = 'artemisApp.programmingExercise.security.advanced.resources.';
+<tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+    <tumaet-ui-tab-list [attr.aria-label]="prefix + 'tabsLabel' | artemisTranslate">
+        @for (kind of RESOURCE_KINDS; track kind) {
+            <tumaet-ui-tab [value]="kind" [attr.data-testid]="'security-resource-tab-' + kind">
+                <span class="inline-flex items-center gap-2">
+                    <span [jhiTranslate]="prefix + 'tab.' + kind"></span>
+                    <tumaet-ui-tag [severity]="tabCounts()[kind].changed ? 'warn' : 'secondary'" size="sm" rounded [value]="'' + tabCounts()[kind].rows" />
+                </span>
+            </tumaet-ui-tab>
+        }
+    </tumaet-ui-tab-list>
+</tumaet-ui-tabs>
+
+<div class="sp-stack-4 pt-6!">
+    <div class="sp-row-between">
+        <p class="sp-mut m-0 text-sm" [jhiTranslate]="prefix + 'hint.' + activeTab()"></p>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" [disabled]="disabled()" (click)="openAdd()" data-testid="security-resource-add">
+            <fa-icon [icon]="faPlus" />
+            <span [jhiTranslate]="'artemisApp.programmingExercise.security.advanced.row.' + activeTab() + '.addTitle'"></span>
+        </button>
+    </div>
+
+    @if (activeRows().length) {
+        <div class="sp-table-frame">
+            <table class="sp-table" data-testid="security-resource-table">
+                <thead>
+                    <tr>
+                        @switch (activeTab()) {
+                            @case ('files') {
+                                <th scope="col" [jhiTranslate]="prefix + 'column.path'"></th>
+                            }
+                            @case ('network') {
+                                <th scope="col" [jhiTranslate]="prefix + 'column.host'"></th>
+                                <th scope="col" [jhiTranslate]="prefix + 'column.port'"></th>
+                            }
+                            @case ('commands') {
+                                <th scope="col" [jhiTranslate]="prefix + 'column.command'"></th>
+                                <th scope="col" [jhiTranslate]="prefix + 'column.arguments'"></th>
+                            }
+                            @case ('threads') {
+                                <th scope="col" [jhiTranslate]="prefix + 'column.maxThreads'"></th>
+                                <th scope="col" [jhiTranslate]="prefix + 'column.threadClass'"></th>
+                            }
+                            @case ('packages') {
+                                <th scope="col" [jhiTranslate]="prefix + 'column.package'"></th>
+                            }
+                            @default {}
+                        }
+                        <th scope="col" [jhiTranslate]="prefix + 'column.granted'"></th>
+                        <th scope="col" [jhiTranslate]="prefix + 'column.source'"></th>
+                        <th scope="col" class="sp-col-actions" [jhiTranslate]="prefix + 'column.actions'"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (entry of activeRowViews(); track entry.key + entry.source) {
+                        <tr
+                            [class.sp-row-preset]="entry.source === RowSource.PRESET"
+                            [class.sp-row-removed]="entry.source === RowSource.REMOVED"
+                            data-testid="security-resource-row"
+                        >
+                            @for (cell of entry.cells; track $index) {
+                                <td>
+                                    <span class="sp-cell sp-mono" [class.sp-mut]="entry.source === RowSource.PRESET">
+                                        @if (cell !== '') {
+                                            {{ cell }}
+                                        } @else {
+                                            <span class="sp-mut" [jhiTranslate]="prefix + 'noArguments'"></span>
+                                        }
+                                    </span>
+                                </td>
+                            }
+                            <td>
+                                <span class="sp-cell sp-tags">
+                                    @for (tag of entry.tags; track tag.labelKey) {
+                                        <tumaet-ui-tag severity="secondary" size="sm" [tumAetUiTooltip]="tag.tooltipKey | artemisTranslate: tag.params" tabindex="0">
+                                            <span [jhiTranslate]="tag.labelKey"></span>
+                                        </tumaet-ui-tag>
+                                    }
+                                </span>
+                            </td>
+                            <td>
+                                <span class="sp-tags" data-testid="security-resource-source">
+                                    @switch (entry.source) {
+                                        @case (RowSource.PRESET) {
+                                            <tumaet-ui-tag
+                                                severity="info"
+                                                size="sm"
+                                                [tumAetUiTooltip]="prefix + 'sourceHelp.PRESET' | artemisTranslate: { preset: entry.preset ?? '' }"
+                                                tabindex="0"
+                                                [value]="prefix + 'source.PRESET' | artemisTranslate: { preset: entry.preset ?? '' }"
+                                            />
+                                        }
+                                        @case (RowSource.COMMITTED) {
+                                            <tumaet-ui-tag
+                                                severity="secondary"
+                                                size="sm"
+                                                [tumAetUiTooltip]="prefix + 'sourceHelp.COMMITTED' | artemisTranslate"
+                                                tabindex="0"
+                                                [value]="prefix + 'source.COMMITTED' | artemisTranslate"
+                                            />
+                                        }
+                                        @case (RowSource.REMOVED) {
+                                            <tumaet-ui-tag
+                                                severity="danger"
+                                                size="sm"
+                                                [tumAetUiTooltip]="prefix + 'sourceHelp.REMOVED' | artemisTranslate"
+                                                tabindex="0"
+                                                [value]="prefix + 'source.REMOVED' | artemisTranslate"
+                                            />
+                                        }
+                                        @default {
+                                            <tumaet-ui-tag
+                                                severity="warn"
+                                                size="sm"
+                                                [tumAetUiTooltip]="prefix + 'sourceHelp.' + entry.source | artemisTranslate"
+                                                tabindex="0"
+                                                [value]="prefix + 'source.' + entry.source | artemisTranslate"
+                                            />
+                                        }
+                                    }
+                                </span>
+                            </td>
+                            <td class="sp-col-actions">
+                                @switch (entry.source) {
+                                    @case (RowSource.PRESET) {
+                                        <button
+                                            type="button"
+                                            class="sp-inherited"
+                                            [tumAetUiTooltip]="prefix + 'lockedHelp' | artemisTranslate: { preset: entry.preset ?? '' }"
+                                            data-testid="security-resource-locked"
+                                        >
+                                            <fa-icon [icon]="faLock" />
+                                            <span [jhiTranslate]="prefix + 'locked'"></span>
+                                        </button>
+                                    }
+                                    @case (RowSource.REMOVED) {
+                                        <button
+                                            type="button"
+                                            tumAetUiButton
+                                            severity="primary"
+                                            variant="text"
+                                            size="small"
+                                            [disabled]="disabled()"
+                                            [attr.aria-label]="(prefix + 'undoLabel' | artemisTranslate) + ' ' + entry.key"
+                                            (click)="undoDelete(entry)"
+                                            data-testid="security-resource-undo"
+                                        >
+                                            {{ prefix + 'undo' | artemisTranslate }}
+                                        </button>
+                                    }
+                                    @default {
+                                        <button
+                                            type="button"
+                                            tumAetUiButton
+                                            severity="secondary"
+                                            variant="text"
+                                            size="small"
+                                            [disabled]="disabled()"
+                                            [tumAetUiMenuTrigger]="rowMenu"
+                                            [attr.aria-label]="(prefix + 'actionsFor' | artemisTranslate) + ' ' + entry.key"
+                                            data-testid="security-resource-row-menu"
+                                        >
+                                            <fa-icon [icon]="faEllipsisVertical" />
+                                        </button>
+                                        <ng-template #rowMenu>
+                                            <tumaet-ui-menu>
+                                                <button type="button" tumAetUiMenuItem (triggered)="openEdit(entry)" data-testid="security-resource-edit">
+                                                    <fa-icon [fixedWidth]="true" [icon]="faPen" />
+                                                    <span jhiTranslate="entity.action.edit"></span>
+                                                </button>
+                                                <!-- The menu item sets its own text colour, so only an important colour marks the deletion. -->
+                                                <button
+                                                    type="button"
+                                                    tumAetUiMenuItem
+                                                    class="text-state-danger!"
+                                                    (triggered)="openDelete(entry)"
+                                                    data-testid="security-resource-delete"
+                                                >
+                                                    <fa-icon [fixedWidth]="true" [icon]="faTrashCan" />
+                                                    <span [jhiTranslate]="prefix + 'deleteRow'"></span>
+                                                </button>
+                                            </tumaet-ui-menu>
+                                        </ng-template>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } @else {
+        <p class="sp-empty" [jhiTranslate]="prefix + 'empty.' + activeTab()" data-testid="security-resource-empty"></p>
+    }
+</div>
+
+<jhi-security-permission-dialog
+    [(visible)]="dialogOpen"
+    [kind]="activeTab()"
+    [editing]="editingRow()"
+    [existingKeys]="existingKeys()"
+    [templateFiles]="templateFiles()"
+    [templateFilesTruncated]="templateFilesTruncated()"
+    [templateFilesFailed]="templateFilesFailed()"
+    [browseBadges]="browseBadges()"
+    (saved)="onSaved($event)"
+    (templateFilesRequested)="templateFilesRequested.emit()"
+/>
+
+<jhi-security-confirm-dialog
+    [(visible)]="confirmOpen"
+    [header]="deleteHeader()"
+    [question]="deleteQuestion()"
+    [details]="deleteDetails()"
+    [warning]="deleteWarning()"
+    [note]="deleteNote"
+    confirmLabel="artemisApp.programmingExercise.security.advanced.resources.delete.confirm"
+    (confirmed)="onDeleteConfirmed()"
+/>

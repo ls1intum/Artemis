@@ -1,0 +1,867 @@
+// Shared layout of the Advanced view of the Security section (Objective 2). Colours come only from the semantic TUM AET UI tokens, so light and dark mode
+// follow the theme, and spacing is a multiple of --tumaet-ui-spacing, like in the design. Each component of the view includes this file through its styleUrl.
+
+:host {
+    display: block;
+    color: var(--tumaet-ui-text-color);
+}
+
+.sp-mut {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.sp-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.sp-strong {
+    font-weight: 600;
+}
+
+.sp-label {
+    font-size: var(--tumaet-ui-font-size-sm);
+    font-weight: 600;
+}
+
+.sp-label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tumaet-ui-spacing);
+    min-height: calc(var(--tumaet-ui-spacing) * 6);
+}
+
+.sp-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--tumaet-ui-spacing) * 6);
+    height: calc(var(--tumaet-ui-spacing) * 6);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    cursor: help;
+
+    &:hover {
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+}
+
+.sp-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+// The option list is exactly as wide as the select, so it needs room for a label like "2.2.1 (latest)" next to the check mark.
+.sp-version-select {
+    display: block;
+    min-width: 10rem;
+    max-width: 100%;
+}
+
+.sp-row-between {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+.sp-stack {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.sp-stack-3 {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+.sp-stack-4 {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.sp-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+
+    &.sp-tight {
+        gap: calc(var(--tumaet-ui-spacing) * 3);
+    }
+
+    &.sp-wide {
+        gap: calc(var(--tumaet-ui-spacing) * 7);
+        align-items: start;
+    }
+}
+
+.sp-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.sp-grow {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.sp-push {
+    margin-inline-start: auto;
+}
+
+.sp-narrow {
+    max-width: 30rem;
+}
+
+.sp-mid {
+    max-width: 40rem;
+}
+
+.sp-xs {
+    max-width: 15rem;
+}
+
+.sp-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tumaet-ui-spacing);
+}
+
+.sp-dimmed {
+    opacity: 0.6;
+}
+
+.sp-empty {
+    margin: 0;
+    padding: calc(var(--tumaet-ui-spacing) * 4);
+    border: 1px dashed var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    text-align: center;
+}
+
+.sp-boxed {
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    font-size: var(--tumaet-ui-font-size-sm);
+    overflow-wrap: anywhere;
+}
+
+.sp-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--tumaet-ui-state-warning);
+}
+
+.sp-spin {
+    animation: sp-spin 1s linear infinite;
+}
+
+@keyframes sp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// Panels: the header projects a title and its actions into one row.
+.sp-panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    width: 100%;
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+.sp-panel-title {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    font-size: var(--tumaet-ui-font-size-base);
+    font-weight: 600;
+}
+
+.sp-panel-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.sp-panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+// Tables
+.sp-table-frame {
+    overflow-x: auto;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+.sp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--tumaet-ui-font-size-sm);
+
+    th,
+    td {
+        padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+        border-bottom: 1px solid var(--tumaet-ui-border-color);
+        text-align: start;
+        vertical-align: middle;
+    }
+
+    th {
+        font-weight: 600;
+    }
+
+    tbody tr:last-child > * {
+        border-bottom: 0;
+    }
+
+    tbody tr:hover {
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    .sp-col-actions {
+        text-align: end;
+        white-space: nowrap;
+    }
+
+    tr.sp-row-preset {
+        background: var(--tumaet-ui-highlight-background);
+    }
+
+    tr.sp-row-removed .sp-cell {
+        color: var(--tumaet-ui-muted-color);
+        text-decoration: line-through;
+    }
+}
+
+// The locked badge is a button only so that keyboard users reach its tooltip; it looks like plain text.
+.sp-inherited {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--tumaet-ui-muted-color);
+    font: inherit;
+    font-size: var(--tumaet-ui-font-size-xs);
+    cursor: help;
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+}
+
+// Permission rows of the add dialogs
+.sp-perm-set {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    legend {
+        margin-bottom: calc(var(--tumaet-ui-spacing) * 2);
+        padding: 0;
+    }
+}
+
+.sp-perm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--tumaet-ui-hover-background);
+    }
+}
+
+.sp-perm-desc {
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+}
+
+// Trees of the browse and assign dialogs
+.sp-tree {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tumaet-ui-spacing);
+    max-height: 22rem;
+    overflow-y: auto;
+    padding: calc(var(--tumaet-ui-spacing) * 2);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+.sp-tree-group {
+    padding: calc(var(--tumaet-ui-spacing) * 2);
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-weight: 600;
+}
+
+.sp-tree-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    min-height: calc(var(--tumaet-ui-spacing) * 8);
+    padding-block: var(--tumaet-ui-spacing);
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 2);
+    border-radius: var(--tumaet-ui-radius-sm);
+    font-size: var(--tumaet-ui-font-size-sm);
+
+    &:hover {
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &.sp-selected {
+        background: var(--tumaet-ui-highlight-background);
+        color: var(--tumaet-ui-highlight-color);
+        font-weight: 500;
+    }
+
+    &.sp-level-0 {
+        padding-inline-start: calc(var(--tumaet-ui-spacing) * 2);
+    }
+
+    &.sp-level-1 {
+        padding-inline-start: calc(var(--tumaet-ui-spacing) * 8);
+    }
+
+    &.sp-level-2 {
+        padding-inline-start: calc(var(--tumaet-ui-spacing) * 14);
+    }
+}
+
+.sp-twisty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--tumaet-ui-spacing) * 6);
+    height: calc(var(--tumaet-ui-spacing) * 6);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+}
+
+.sp-spacer {
+    display: inline-block;
+    width: calc(var(--tumaet-ui-spacing) * 5);
+}
+
+.sp-twisty-spacer {
+    display: inline-block;
+    width: calc(var(--tumaet-ui-spacing) * 6);
+}
+
+// Trees of assigned tests and declared classes: packages, their classes and their test cases, connected by guide lines like the trees of the dialogs
+.sp-l1,
+.sp-l2,
+.sp-l3 {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    margin: 0;
+    padding: 0;
+    font-size: var(--tumaet-ui-font-size-sm);
+    list-style: none;
+}
+
+.sp-l2,
+.sp-l3 {
+    margin-top: calc(var(--tumaet-ui-spacing) * 2);
+    margin-inline-start: calc(var(--tumaet-ui-spacing) * 1.5);
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 4);
+    border-inline-start: 1px solid var(--tumaet-ui-border-color);
+
+    > li {
+        position: relative;
+
+        // The branch from the guide line to the entry
+        &::before {
+            position: absolute;
+            top: 0.75em;
+            inset-inline-start: calc(var(--tumaet-ui-spacing) * -4);
+            width: calc(var(--tumaet-ui-spacing) * 3);
+            border-top: 1px solid var(--tumaet-ui-border-color);
+            content: '';
+        }
+    }
+}
+
+.sp-li-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.sp-col {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    min-width: 0;
+}
+
+// A conflict of an assignment, under the test class it concerns
+.sp-conflict {
+    display: block;
+    margin-top: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+// Previews of the feedback students see
+.sp-preview {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-hover-background);
+}
+
+.sp-preview-card {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-content-background);
+}
+
+.sp-preview-title {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    color: var(--tumaet-ui-state-danger-foreground);
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-weight: 600;
+}
+
+.sp-preview-message {
+    font-size: var(--tumaet-ui-font-size-xs);
+    line-height: var(--tumaet-ui-line-height-xs);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.sp-switch-row {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+// Visibility timeline; both are figures, which have a margin of their own
+.sp-timeline-wrap {
+    position: relative;
+    margin: 0;
+}
+
+.sp-timeline {
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+    min-height: calc(var(--tumaet-ui-spacing) * 10);
+    overflow: hidden;
+    border-radius: var(--tumaet-ui-radius-md);
+
+    &.sp-timeline-single {
+        grid-template-columns: 1fr;
+    }
+
+    > div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--tumaet-ui-spacing) calc(var(--tumaet-ui-spacing) * 3);
+        font-size: var(--tumaet-ui-font-size-sm);
+        font-weight: 600;
+        text-align: center;
+    }
+
+    > div:last-child {
+        clip-path: polygon(0 0, calc(100% - var(--tumaet-ui-spacing) * 6) 0, 100% 50%, calc(100% - var(--tumaet-ui-spacing) * 6) 100%, 0 100%);
+        padding-inline-end: calc(var(--tumaet-ui-spacing) * 9);
+    }
+}
+
+.sp-timeline-feedback {
+    background: var(--tumaet-ui-state-success);
+    color: var(--tumaet-ui-state-success-contrast);
+}
+
+.sp-timeline-hidden {
+    background: var(--tumaet-ui-state-danger);
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+.sp-tick {
+    position: absolute;
+    top: calc(var(--tumaet-ui-spacing) * -2);
+    bottom: calc(var(--tumaet-ui-spacing) * -2);
+    width: 2px;
+    background: var(--tumaet-ui-text-color);
+    transform: translateX(-50%);
+}
+
+.sp-marks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding-top: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+// Code and diff
+.sp-code {
+    overflow-x: auto;
+    padding-block: calc(var(--tumaet-ui-spacing) * 2);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-hover-background);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--tumaet-ui-font-size-xs);
+    line-height: 1.25rem;
+}
+
+.sp-code-line {
+    display: grid;
+    grid-template-columns: 2.75rem max-content;
+    min-width: 100%;
+
+    > span {
+        padding-inline: calc(var(--tumaet-ui-spacing) * 3);
+        white-space: pre;
+    }
+
+    > span:first-child {
+        color: var(--tumaet-ui-muted-color);
+        text-align: end;
+        user-select: none;
+    }
+
+    &.sp-code-new {
+        background: color-mix(in srgb, var(--tumaet-ui-state-warning) 10%, var(--tumaet-ui-content-background));
+    }
+}
+
+.sp-key {
+    color: var(--tumaet-ui-accent-color);
+}
+
+.sp-legend-swatch {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--tumaet-ui-state-warning) 40%, var(--tumaet-ui-content-background));
+    border-radius: var(--tumaet-ui-radius-sm);
+    background: color-mix(in srgb, var(--tumaet-ui-state-warning) 10%, var(--tumaet-ui-content-background));
+}
+
+.sp-file {
+    overflow: hidden;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+
+    > summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: calc(var(--tumaet-ui-spacing) * 2);
+        padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
+        background: var(--tumaet-ui-hover-background);
+        font-size: var(--tumaet-ui-font-size-sm);
+        list-style: none;
+        cursor: pointer;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--tumaet-ui-focus-color);
+            outline-offset: -2px;
+        }
+    }
+
+    .sp-chevron {
+        transition: transform 0.15s;
+    }
+
+    &[open] .sp-chevron {
+        transform: rotate(90deg);
+    }
+}
+
+.sp-diff-scroll {
+    overflow-x: auto;
+}
+
+.sp-diff {
+    min-width: 40rem;
+}
+
+.sp-diff-head,
+.sp-diff-row {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem minmax(0, 1fr);
+}
+
+.sp-diff-head {
+    border-top: 1px solid var(--tumaet-ui-border-color);
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-weight: 600;
+
+    > span {
+        padding: calc(var(--tumaet-ui-spacing) * 2);
+    }
+}
+
+.sp-diff-head > span:nth-child(3),
+.sp-diff-row > span:nth-child(3) {
+    border-left: 1px solid var(--tumaet-ui-border-color);
+}
+
+.sp-diff-row {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--tumaet-ui-font-size-xs);
+    line-height: 1.25rem;
+
+    // A long line wraps instead of being cut off, so the whole change can be compared before the commit.
+    > span {
+        padding-inline: calc(var(--tumaet-ui-spacing) * 2);
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+}
+
+.sp-diff-number {
+    color: var(--tumaet-ui-muted-color);
+    text-align: end;
+    user-select: none;
+}
+
+.sp-diff-gap {
+    background: var(--tumaet-ui-hover-background);
+    color: var(--tumaet-ui-muted-color);
+}
+
+.sp-diff-added {
+    background: color-mix(in srgb, var(--tumaet-ui-state-success) 20%, var(--tumaet-ui-content-background));
+    color: var(--tumaet-ui-state-success-foreground);
+}
+
+.sp-diff-removed {
+    background: color-mix(in srgb, var(--tumaet-ui-state-danger) 20%, var(--tumaet-ui-content-background));
+    color: var(--tumaet-ui-state-danger-foreground);
+}
+
+.sp-diff-empty {
+    background: repeating-linear-gradient(135deg, transparent 0 0.375rem, var(--tumaet-ui-border-color) 0.375rem 0.4375rem);
+}
+
+.sp-assignments {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tumaet-ui-spacing);
+    margin: 0;
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    list-style: none;
+
+    li {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--tumaet-ui-spacing) * 2);
+        overflow-wrap: anywhere;
+    }
+}
+
+.sp-assigned-sign {
+    color: var(--tumaet-ui-state-success-foreground);
+}
+
+.sp-released-sign {
+    color: var(--tumaet-ui-state-danger-foreground);
+}
+
+// Consequence lists of the dialogs
+.sp-consequence {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    font-size: var(--tumaet-ui-font-size-sm);
+
+    > fa-icon {
+        margin-top: var(--tumaet-ui-spacing);
+        color: var(--tumaet-ui-muted-color);
+    }
+}
+
+.sp-info-line {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+
+    > fa-icon {
+        margin-top: var(--tumaet-ui-spacing);
+    }
+}
+
+.sp-message-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    width: 100%;
+}
+
+// A message sizes its projected content to the content, so a row would end right after its text; the row must fill the message to put its actions at the end.
+.sp-message-fill ::ng-deep .tumaet-ui-message-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sp-kv {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--tumaet-ui-spacing) calc(var(--tumaet-ui-spacing) * 4);
+    margin: 0;
+    padding: calc(var(--tumaet-ui-spacing) * 3);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    font-size: var(--tumaet-ui-font-size-sm);
+
+    dt {
+        font-weight: 600;
+    }
+
+    dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.sp-key-map {
+    margin: var(--tumaet-ui-spacing) 0 0;
+    padding-left: 1.1rem;
+
+    li {
+        overflow-wrap: anywhere;
+    }
+}
+
+.sp-supervised {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
+    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.sp-supervised-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--tumaet-ui-spacing) calc(var(--tumaet-ui-spacing) * 4);
+    color: var(--tumaet-ui-muted-color);
+
+    .sp-mono {
+        color: var(--tumaet-ui-text-color);
+    }
+}
+
+.sp-commit-bar-idle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding-top: calc(var(--tumaet-ui-spacing) * 3);
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}
+
+.sp-card {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding: calc(var(--tumaet-ui-spacing) * 4) calc(var(--tumaet-ui-spacing) * 4.5);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-xl);
+    background: var(--tumaet-ui-content-background);
+}
+
+.sp-scan-disabled .sp-scan-label {
+    color: var(--tumaet-ui-disabled-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sp-spin {
+        animation-duration: 3s;
+    }
+
+    .sp-file .sp-chevron {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    .sp-timeline-feedback,
+    .sp-timeline-hidden {
+        border: 1px solid CanvasText;
+    }
+}
