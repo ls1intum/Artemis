@@ -11,6 +11,7 @@ import { PracticeQuizComponent } from 'app/atlas/overview/practice-quiz/practice
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
 import { PracticeSessionDTO, PracticeSessionReviewDTO, PracticeSessionSummaryDTO } from 'app/atlas/overview/practice-quiz/practice-quiz.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
@@ -171,7 +172,9 @@ describe('PracticeQuizComponent', () => {
         expect(component.questionTooltip(101, 2)).toBe('2/2 P');
         expect(component.reviewQuestions()[0].scoringType).toBe(ScoringType.ALL_OR_NOTHING);
         expect(component.reviewSubmittedResult()).toBeDefined();
-        expect(component.reviewSubmittedResult()?.submission?.submittedAnswers).toHaveLength(1);
+        const submission = component.reviewSubmittedResult()?.submission;
+        expect(submission).toBeInstanceOf(QuizSubmission);
+        expect(submission instanceof QuizSubmission ? submission.submittedAnswers : undefined).toHaveLength(1);
 
         const scrollSpy = vi.fn();
         const mockEl = { scrollIntoView: scrollSpy } as unknown as HTMLElement;

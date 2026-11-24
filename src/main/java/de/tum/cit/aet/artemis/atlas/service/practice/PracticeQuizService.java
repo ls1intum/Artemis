@@ -204,12 +204,11 @@ public class PracticeQuizService {
     }
 
     /**
-     * Submits student responses for a practice quiz session, looking up the session by sessionId and user.
+     * Evaluates whether the student's selected options match the correct answers for a pool item.
      *
-     * @param sessionId     the ID of the practice session
-     * @param user          the student submitting responses
-     * @param submissionDTO the submitted answers
-     * @return the review DTO with solutions, explanations, and scores
+     * @param item      the pool item
+     * @param answerDto the submitted answer from the client
+     * @return 1.0 if correct, 0.0 if not
      */
     public double evaluatePoolQuestionAnswer(QuizQuestionPoolItem item, SubmittedAnswerFromLiveClientDTO answerDto) {
         if (item.getQuestion() == null || !(answerDto instanceof MultipleChoiceSubmittedAnswerFromLiveClientDTO mcAnswer)) {
