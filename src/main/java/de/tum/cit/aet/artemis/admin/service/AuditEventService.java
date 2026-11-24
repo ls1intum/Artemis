@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.admin.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -48,33 +50,60 @@ public class AuditEventService {
     /**
      * Finds a page of audit events in the given log.
      *
-     * @param logType  which audit log to read
-     * @param pageable the pagination information
+     * @param logType   which audit log to read
+     * @param principal only the events of this principal (login) are returned, or all events if it is null or blank
+     * @param pageable  the pagination information
      * @return a page of audit events
      */
-    public Page<AuditEvent> findAll(AuditLogType logType, Pageable pageable) {
+    public Page<AuditEvent> findAll(AuditLogType logType, @Nullable String principal, Pageable pageable) {
+        String normalizedPrincipal = normalizePrincipal(principal);
         return switch (logType) {
-            case GENERAL -> persistenceAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
-            case SECURITY -> securityAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
-            case APPLICATION -> applicationAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
+            case GENERAL -> (normalizedPrincipal == null ? persistenceAuditEventRepository.findAllWithData(pageable)
+                    : persistenceAuditEventRepository.findAllWithDataByPrincipal(normalizedPrincipal, pageable)).map(auditEventConverter::convertToAuditEvent);
+            case SECURITY -> (normalizedPrincipal == null ? securityAuditEventRepository.findAllWithData(pageable)
+                    : securityAuditEventRepository.findAllWithDataByPrincipal(normalizedPrincipal, pageable)).map(auditEventConverter::convertToAuditEvent);
+            case APPLICATION -> (normalizedPrincipal == null ? applicationAuditEventRepository.findAllWithData(pageable)
+                    : applicationAuditEventRepository.findAllWithDataByPrincipal(normalizedPrincipal, pageable)).map(auditEventConverter::convertToAuditEvent);
         };
     }
 
     /**
      * Finds a page of audit events in the given log whose date lies in the given range.
      *
-     * @param logType  which audit log to read
-     * @param fromDate the start of the range
-     * @param toDate   the end of the range
-     * @param pageable the pagination information
+     * @param logType   which audit log to read
+     * @param principal only the events of this principal (login) are returned, or all events if it is null or blank
+     * @param fromDate  the start of the range
+     * @param toDate    the end of the range
+     * @param pageable  the pagination information
      * @return a page of audit events
      */
-    public Page<AuditEvent> findByDates(AuditLogType logType, Instant fromDate, Instant toDate, Pageable pageable) {
+    public Page<AuditEvent> findByDates(AuditLogType logType, @Nullable String principal, Instant fromDate, Instant toDate, Pageable pageable) {
+        String normalizedPrincipal = normalizePrincipal(principal);
         return switch (logType) {
-            case GENERAL -> persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
-            case SECURITY -> securityAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
-            case APPLICATION -> applicationAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
+            case GENERAL -> (normalizedPrincipal == null ? persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : persistenceAuditEventRepository.findAllWithDataByPrincipalAndAuditEventDateBetween(normalizedPrincipal, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
+            case SECURITY -> (normalizedPrincipal == null ? securityAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : securityAuditEventRepository.findAllWithDataByPrincipalAndAuditEventDateBetween(normalizedPrincipal, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
+            case APPLICATION -> (normalizedPrincipal == null ? applicationAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : applicationAuditEventRepository.findAllWithDataByPrincipalAndAuditEventDateBetween(normalizedPrincipal, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
         };
+    }
+
+    /**
+     * Logins are stored in lower case when a user signs in, so the search term is trimmed and lower cased the same way and then compared for equality. That keeps the search on
+     * the index on principal and date; a contains search could not use it and would read the whole date range of the largest log.
+     *
+     * @param principal the term typed by the administrator
+     * @return the principal to match, or null if no principal is searched
+     */
+    private static @Nullable String normalizePrincipal(@Nullable String principal) {
+        if (principal == null || principal.isBlank()) {
+            return null;
+        }
+        return principal.strip().toLowerCase(Locale.ENGLISH);
     }
 
     /**

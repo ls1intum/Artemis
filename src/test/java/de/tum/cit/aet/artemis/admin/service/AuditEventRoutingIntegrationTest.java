@@ -4,10 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -162,7 +166,7 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
     void eventsAreReadBackUnderTheirOwnLogTypeWithTheirDataPreserved() {
         addEvent(AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
 
-        List<AuditEvent> securityEvents = auditEventService.findAll(AuditLogType.SECURITY, NEWEST_FIRST).getContent();
+        List<AuditEvent> securityEvents = auditEventService.findAll(AuditLogType.SECURITY, null, NEWEST_FIRST).getContent();
         assertThat(securityEvents).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
             assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "-" + AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
@@ -171,7 +175,7 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         });
 
         // ... and must not leak into another tab's log.
-        assertThat(auditEventService.findAll(AuditLogType.GENERAL, NEWEST_FIRST).getContent())
+        assertThat(auditEventService.findAll(AuditLogType.GENERAL, null, NEWEST_FIRST).getContent())
                 .noneMatch(event -> AuditEventConstants.ACCOUNT_EMAIL_CHANGED.equals(event.getType()));
     }
 
@@ -221,7 +225,93 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         Instant from = Instant.now().minusSeconds(300);
         Instant to = Instant.now().plusSeconds(300);
 
-        assertThat(auditEventService.findByDates(AuditLogType.APPLICATION, from, to, NEWEST_FIRST).getContent()).anyMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
-        assertThat(auditEventService.findByDates(AuditLogType.SECURITY, from, to, NEWEST_FIRST).getContent()).noneMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
+        assertThat(auditEventService.findByDates(AuditLogType.APPLICATION, null, from, to, NEWEST_FIRST).getContent())
+                .anyMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
+        assertThat(auditEventService.findByDates(AuditLogType.SECURITY, null, from, to, NEWEST_FIRST).getContent())
+                .noneMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
+    }
+
+    /** The logins of one test. They are unique per test, because all tests share one database and the events of an earlier test must not count in a later one. */
+    private record Principals(String searched, String other) {
+
+        static Principals unique() {
+            String suffix = UUID.randomUUID().toString().substring(0, 8);
+            return new Principals("auditsearch-a-" + suffix, "auditsearch-b-" + suffix);
+        }
+    }
+
+    private static String eventTypeOf(AuditLogType logType) {
+        return switch (logType) {
+            case GENERAL -> AuditEventConstants.AUTHENTICATION_SUCCESS;
+            case SECURITY -> AuditEventConstants.PASSWORD_RESET_COMPLETED;
+            case APPLICATION -> Constants.DELETE_EXERCISE;
+        };
+    }
+
+    /** Two events of each of the two principals in the given log. */
+    private Principals addEventsOfTwoPrincipals(AuditLogType logType) {
+        Principals principals = Principals.unique();
+        for (String principal : List.of(principals.searched(), principals.other())) {
+            auditEventRepository.add(new AuditEvent(Instant.now(), principal, eventTypeOf(logType), Map.of("detail", "value")));
+            auditEventRepository.add(new AuditEvent(Instant.now(), principal, eventTypeOf(logType), Map.of("detail", "value")));
+        }
+        return principals;
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuditLogType.class)
+    void searchByPrincipalReturnsOnlyTheEventsOfThatPrincipalInTheRequestedLog(AuditLogType logType) {
+        Principals principals = addEventsOfTwoPrincipals(logType);
+
+        var page = auditEventService.findAll(logType, principals.searched(), NEWEST_FIRST);
+
+        assertThat(page.getContent()).hasSize(2).allMatch(event -> principals.searched().equals(event.getPrincipal()));
+        assertThat(page.getTotalElements()).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuditLogType.class)
+    void searchByPrincipalTrimsAndLowerCasesTheTypedTerm(AuditLogType logType) {
+        Principals principals = addEventsOfTwoPrincipals(logType);
+
+        // Logins are stored in lower case, so a term typed in upper case with spaces around it finds them
+        var page = auditEventService.findAll(logType, "  " + principals.searched().toUpperCase(Locale.ROOT) + " ", NEWEST_FIRST);
+
+        assertThat(page.getContent()).hasSize(2).allMatch(event -> principals.searched().equals(event.getPrincipal()));
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuditLogType.class)
+    void searchByPrincipalMatchesTheWholeLoginOnly(AuditLogType logType) {
+        Principals principals = addEventsOfTwoPrincipals(logType);
+
+        // Exact match is what keeps the search on the index, so a part of the login finds nothing
+        String partOfTheLogin = principals.searched().substring(0, principals.searched().length() - 3);
+        assertThat(auditEventService.findAll(logType, partOfTheLogin, NEWEST_FIRST).getContent()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuditLogType.class)
+    void searchByPrincipalCanBeCombinedWithTheDateRange(AuditLogType logType) {
+        Principals principals = addEventsOfTwoPrincipals(logType);
+
+        Instant from = Instant.now().minusSeconds(300);
+        Instant to = Instant.now().plusSeconds(300);
+
+        var inRange = auditEventService.findByDates(logType, principals.searched(), from, to, NEWEST_FIRST);
+        assertThat(inRange.getContent()).hasSize(2).allMatch(event -> principals.searched().equals(event.getPrincipal()));
+        assertThat(inRange.getTotalElements()).isEqualTo(2);
+
+        // the events exist, but not in this range
+        assertThat(auditEventService.findByDates(logType, principals.searched(), from.minusSeconds(3600), from.minusSeconds(1800), NEWEST_FIRST).getContent()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(AuditLogType.class)
+    void aBlankSearchTermReturnsTheEventsOfEveryPrincipal(AuditLogType logType) {
+        Principals principals = addEventsOfTwoPrincipals(logType);
+
+        assertThat(auditEventService.findAll(logType, "   ", NEWEST_FIRST).getContent()).extracting(AuditEvent::getPrincipal).contains(principals.searched(), principals.other());
+        assertThat(auditEventService.findAll(logType, null, NEWEST_FIRST).getContent()).extracting(AuditEvent::getPrincipal).contains(principals.searched(), principals.other());
     }
 }

@@ -73,6 +73,63 @@ public interface SecurityAuditEventRepository extends ArtemisJpaRepository<Secur
             """)
     List<Long> findAllIds(Pageable pageable);
 
+    @Query("""
+            SELECT p.id
+            FROM SecurityAuditEvent p
+            WHERE p.principal = :principal
+                AND p.auditEventDate BETWEEN :fromDate AND :toDate
+            """)
+    List<Long> findIdsByPrincipalAndAuditEventDateBetween(@Param("principal") String principal, @Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate,
+            Pageable pageable);
+
+    long countByPrincipalAndAuditEventDateBetween(String principal, Instant fromDate, Instant toDate);
+
+    /**
+     * Retrieves a page of the events of one principal whose date lies in the given range. The principal is matched exactly, so the query is served by the index on principal and
+     * date.
+     *
+     * @param principal the principal (login) to read the events of
+     * @param fromDate  the start of the date range (inclusive)
+     * @param toDate    the end of the date range
+     * @param pageable  the pagination information
+     * @return a page of events with their data, or an empty page if there are none
+     */
+    default Page<SecurityAuditEvent> findAllWithDataByPrincipalAndAuditEventDateBetween(String principal, Instant fromDate, Instant toDate, Pageable pageable) {
+        List<Long> ids = findIdsByPrincipalAndAuditEventDateBetween(principal, fromDate, toDate, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<SecurityAuditEvent> result = findWithDataByIdIn(ids);
+        result.sort(Comparator.comparing(event -> ids.indexOf(event.getId())));
+        return new PageImpl<>(result, pageable, countByPrincipalAndAuditEventDateBetween(principal, fromDate, toDate));
+    }
+
+    @Query("""
+            SELECT p.id
+            FROM SecurityAuditEvent p
+            WHERE p.principal = :principal
+            """)
+    List<Long> findIdsByPrincipal(@Param("principal") String principal, Pageable pageable);
+
+    long countByPrincipal(String principal);
+
+    /**
+     * Retrieves a page of the events of one principal. The principal is matched exactly, so the query is served by the index on principal and date.
+     *
+     * @param principal the principal (login) to read the events of
+     * @param pageable  the pagination information
+     * @return a page of events with their data, or an empty page if there are none
+     */
+    default Page<SecurityAuditEvent> findAllWithDataByPrincipal(String principal, Pageable pageable) {
+        List<Long> ids = findIdsByPrincipal(principal, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<SecurityAuditEvent> result = findWithDataByIdIn(ids);
+        result.sort(Comparator.comparing(event -> ids.indexOf(event.getId())));
+        return new PageImpl<>(result, pageable, countByPrincipal(principal));
+    }
+
     @NonNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Optional<SecurityAuditEvent> findById(@NonNull Long auditEventId);
