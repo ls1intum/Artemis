@@ -51,7 +51,7 @@ interface FeedbackTypeConfig {
     selector: 'jhi-unified-feedback',
     standalone: true,
     templateUrl: './unified-feedback.component.html',
-    styleUrls: ['./unified-feedback.component.scss'],
+    styleUrls: ['./unified-feedback.component.css'],
     imports: [
         NgClass,
         FaIconComponent,

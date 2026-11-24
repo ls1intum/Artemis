@@ -58,7 +58,7 @@ export interface ExerciseMetadataConflictModalData {
 @Component({
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
-    styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
+    styleUrls: ['./exercise-metadata-conflict-modal.component.css'],
     imports: [NgTemplateOutlet, NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, TumAetUiButtonComponent, TumAetUiTableDirective],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {

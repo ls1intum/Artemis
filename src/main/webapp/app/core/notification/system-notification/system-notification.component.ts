@@ -22,7 +22,7 @@ export const CLOSED_NOTIFICATION_IDS_STORAGE_KEY = 'system-notification.closedId
     selector: 'jhi-system-notification',
     preserveWhitespaces: false,
     templateUrl: './system-notification.component.html',
-    styleUrls: ['system-notification.scss'],
+    styleUrls: ['system-notification.css'],
     imports: [NgClass, FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective],
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy, AfterViewChecked {

@@ -59,7 +59,7 @@ export interface PresentationsConfig {
 @Component({
     selector: 'jhi-grading-presentations',
     templateUrl: './grading-presentations.component.html',
-    styleUrls: ['./grading-presentations.component.scss'],
+    styleUrls: ['./grading-presentations.component.css'],
     imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent, TumAetUiInputDirective],
 })
 export class GradingPresentationsComponent {

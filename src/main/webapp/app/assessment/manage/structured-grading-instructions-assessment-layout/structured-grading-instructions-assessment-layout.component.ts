@@ -31,7 +31,7 @@ export interface SortedGradingCriterion {
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
-    styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
+    styleUrls: ['./structured-grading-instructions-assessment-layout.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,

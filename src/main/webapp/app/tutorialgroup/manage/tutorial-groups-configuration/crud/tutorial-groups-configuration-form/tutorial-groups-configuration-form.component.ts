@@ -41,7 +41,7 @@ function isValidDate(value: unknown): value is Date {
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
-    styleUrl: './tutorial-groups-configuration-form.component.scss',
+    styleUrl: './tutorial-groups-configuration-form.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ReactiveFormsModule,

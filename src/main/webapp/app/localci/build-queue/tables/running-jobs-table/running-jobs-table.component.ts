@@ -12,7 +12,7 @@ import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui
 @Component({
     selector: 'jhi-running-jobs-table',
     templateUrl: './running-jobs-table.component.html',
-    styleUrls: ['../build-jobs-table.scss', './running-jobs-table.component.scss'],
+    styleUrl: '../build-jobs-table.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiTableLayoutComponent, BuildJobRowComponent, BuildJobsHeaderComponent, TumAetUiTableDirective],
 })

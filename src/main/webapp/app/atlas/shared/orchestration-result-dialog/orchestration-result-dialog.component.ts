@@ -11,7 +11,7 @@ const WEIGHT_BANDS_KEY_PREFIX = 'artemisApp.atlasOrchestrator.resultDialog.weigh
 @Component({
     selector: 'jhi-orchestration-result-dialog',
     templateUrl: './orchestration-result-dialog.component.html',
-    styleUrl: './orchestration-result-dialog.component.scss',
+    styleUrl: './orchestration-result-dialog.component.css',
     imports: [
         TumAetUiDialogComponent,
         TumAetUiTableDirective,

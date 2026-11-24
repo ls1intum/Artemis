@@ -1,0 +1,11 @@
+@layer tumaet-ui {
+    :host(.tumaet-ui-tab-panel-fill) {
+        height: 100%;
+        min-height: 0;
+    }
+
+    :host(.tumaet-ui-tab-panel-fill) > .tumaet-ui-tab-panel-content {
+        height: 100%;
+        min-height: 0;
+    }
+}
