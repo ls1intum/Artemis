@@ -13,6 +13,7 @@ import jakarta.persistence.LockModeType;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -224,14 +225,42 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
             """)
     Set<QuizSubmission> findAllByQuizBatchAndStudentLogin(@Param("quizBatchId") Long quizBatchId, @Param("studentLogin") String studentLogin);
 
+    /**
+     * All submissions a student has for a quiz, the oldest first. A student has exactly one, which {@link #findByExerciseIdAndStudentLogin} relies on;
+     * this reads all of them so that a student with more can be told apart from one without.
+     *
+     * @param exerciseId   the id of the quiz exercise
+     * @param studentLogin the login of the student
+     * @return the submissions of the student for the quiz, ordered by id
+     */
     @Query("""
             SELECT submission
             FROM QuizSubmission submission
                 LEFT JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :studentLogin
+            ORDER BY submission.id ASC
             """)
-    Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
+    List<QuizSubmission> findAllByExerciseIdAndStudentLoginOrderById(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
+
+    /**
+     * The submission a student works on in a quiz. This is the oldest one, so every request of the student, and the quiz the client received when it started,
+     * agree on it. A student has exactly one submission per quiz; starting a quiz twice at the same moment used to be able to create a second one,
+     * and those that exist are still found here instead of failing every request of the student with a non-unique result. They are reported so
+     * that they can be looked at.
+     *
+     * @param exerciseId   the id of the quiz exercise
+     * @param studentLogin the login of the student
+     * @return the oldest submission of the student for the quiz, empty if there is none
+     */
+    default Optional<QuizSubmission> findByExerciseIdAndStudentLogin(Long exerciseId, String studentLogin) {
+        List<QuizSubmission> submissions = findAllByExerciseIdAndStudentLoginOrderById(exerciseId, studentLogin);
+        if (submissions.size() > 1) {
+            LoggerFactory.getLogger(QuizSubmissionRepository.class).warn("Student {} has {} submissions for quiz {}; using the oldest, {}", studentLogin, submissions.size(),
+                    exerciseId, submissions.getFirst().getId());
+        }
+        return submissions.stream().findFirst();
+    }
 
     /**
      * Check whether the submission with the given id belongs to the given participation. The exam quiz save uses it before a

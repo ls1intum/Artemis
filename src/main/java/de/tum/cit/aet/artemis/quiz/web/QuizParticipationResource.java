@@ -118,8 +118,9 @@ public class QuizParticipationResource {
         var result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
         QuizSubmission submission;
         if (result.getId() == null) {
-            // Load the live submission of the participation
-            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow();
+            // Load the live submission of the participation: the oldest one, which is the one every other request of the student works on
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().min(Comparator.comparing(QuizSubmission::getId))
+                    .orElseThrow();
         }
         else {
             // Load the actual submission of the result

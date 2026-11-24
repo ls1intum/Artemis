@@ -252,7 +252,14 @@ public class ParticipationService {
             if ((optionalStudentParticipation.isEmpty() && !participationCreatedConcurrently) || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text, file upload or quiz submission
                 if (createInitialSubmission) {
-                    submissionRepository.initializeSubmission(participation, exercise, null);
+                    if (exercise instanceof QuizExercise) {
+                        // Every quiz request relies on the participation having exactly one submission, and the request that created the participation and the one that
+                        // re-read it can reach this point at the same time.
+                        submissionRepository.initializeSubmissionIfAbsent(participation, exercise, null);
+                    }
+                    else {
+                        submissionRepository.initializeSubmission(participation, exercise, null);
+                    }
                 }
             }
         }

@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
@@ -148,6 +149,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private QuizBatchService quizBatchService;
+
+    @Autowired
+    private ParticipationService participationService;
 
     @Autowired
     private QuizSubmissionService quizSubmissionService;
@@ -1367,6 +1371,79 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
             assertThat(submission.getSubmittedAnswers().stream().map(answer -> answer.getQuizQuestion().getId())).doesNotHaveDuplicates();
+        }
+
+        /**
+         * A student who starts a quiz twice at the same moment, for example with a double click or a second tab: the requests race to create the participation and
+         * its first submission. Every later request of the student expects exactly one submission, so the race must not leave a second one behind.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+        void testStartQuizConcurrently_createsOneSubmission() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+            long exerciseId = quizExercise.getId();
+            QuizExercise exercise = quizExercise;
+            // The participation exists but has no submission yet, which is what the request that lost the race to create the participation finds. All requests then
+            // pass the check for a submission before the first one has inserted its own.
+            participationService.startExercise(exercise, student, false);
+            assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(exerciseId)).isEmpty();
+
+            int requests = 8;
+            var executor = Executors.newFixedThreadPool(requests);
+            var start = new CountDownLatch(1);
+            try {
+                var futures = new ArrayList<Future<?>>();
+                for (int i = 0; i < requests; i++) {
+                    futures.add(executor.submit(() -> {
+                        start.await();
+                        return participationService.startExercise(exercise, student, true);
+                    }));
+                }
+                start.countDown();
+                for (var future : futures) {
+                    future.get(30, TimeUnit.SECONDS);
+                }
+            }
+            finally {
+                executor.shutdownNow();
+            }
+
+            assertThat(participationRepository.findByExerciseId(exerciseId)).hasSize(1);
+            assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(exerciseId)).hasSize(1);
+        }
+
+        /**
+         * A student who already has two submissions for a quiz, as left by an earlier start that raced: the requests of the student work on the oldest one instead
+         * of failing with a non-unique result, and the saved answers end up there.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+        void testQuizWithTwoSubmissions_usesTheOldestOne() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+            var participation = participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            QuizSubmission oldest = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst();
+            QuizSubmission newer = new QuizSubmission();
+            newer.setParticipation(participation);
+            newer = quizSubmissionTestRepository.save(newer);
+            assertThat(newer.getId()).isGreaterThan(oldest.getId());
+
+            assertThat(quizSubmissionTestRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), student.getLogin())).get().extracting(QuizSubmission::getId)
+                    .isEqualTo(oldest.getId());
+
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(quizExercise.getId(), payload, student, false);
+
+            assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(oldest.getId()).getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
+            assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(newer.getId()).getSubmittedAnswers()).isEmpty();
         }
 
         /**
