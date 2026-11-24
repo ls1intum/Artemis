@@ -5,7 +5,7 @@
 }
 
 .pool-create-quiz .pool-create-quiz-intro {
-    color: var(--p-text-muted-color);
+    color: var(--tumaet-ui-muted-color);
     font-size: 0.9rem;
     margin: 0;
 }
@@ -21,7 +21,7 @@
 }
 
 .pool-create-quiz .pool-create-quiz-field label {
-    color: var(--p-text-color);
+    color: var(--tumaet-ui-text-color);
     font-weight: 600;
 }
 
@@ -32,10 +32,10 @@
 }
 
 .pool-create-quiz .pool-create-quiz-available {
-    color: var(--p-text-muted-color);
+    color: var(--tumaet-ui-muted-color);
     margin: 0;
 }
 
 .pool-create-quiz .pool-create-quiz-available-none {
-    color: var(--bs-danger-text-emphasis);
+    color: var(--tumaet-ui-state-danger);
 }
