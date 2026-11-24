@@ -14,7 +14,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, TumAetUiSelectComponent],
 })
 export class ProgrammingExerciseTheiaComponent {

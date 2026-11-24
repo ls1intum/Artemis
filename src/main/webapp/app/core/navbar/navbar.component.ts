@@ -66,7 +66,7 @@ import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperi
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['navbar.scss'],
+    styleUrls: ['navbar.css'],
     imports: [
         NgOptimizedImage,
         NgClass,

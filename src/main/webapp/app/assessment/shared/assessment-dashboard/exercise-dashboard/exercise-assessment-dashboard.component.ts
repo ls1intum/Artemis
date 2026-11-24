@@ -105,7 +105,7 @@ const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, 
 @Component({
     selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styleUrls: ['./exercise-assessment-dashboard.component.scss'],
+    styleUrls: ['./exercise-assessment-dashboard.component.css'],
     providers: [CourseManagementService],
     imports: [
         HeaderExercisePageWithDetailsComponent,

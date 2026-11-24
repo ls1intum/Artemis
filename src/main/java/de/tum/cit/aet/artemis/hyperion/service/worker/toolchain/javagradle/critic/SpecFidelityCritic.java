@@ -111,15 +111,20 @@ public class SpecFidelityCritic {
         }
     }
 
-    /** A complete, evidence-grounded brief-to-spec verdict. Incomplete means the provider returned no trustworthy verdict, so the runner must not freeze the contract. */
+    /** A brief-to-spec verdict; an incomplete review keeps final review required when the bounded workflow preserves a draft. */
     public record SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
-            @Nullable String learningFitDirection, List<String> riskHistory) {
+            @Nullable String learningFitDirection, List<String> riskHistory, @Nullable BriefLearningGoals briefLearningGoals) {
 
         public SpecificationReview {
             findings = List.copyOf(findings);
             auditSummary = auditSummary == null ? "" : auditSummary.strip();
             learningFitDirection = learningFitDirection == null ? null : learningFitDirection.strip();
             riskHistory = List.copyOf(riskHistory);
+        }
+
+        public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
+                @Nullable String learningFitDirection, List<String> riskHistory) {
+            this(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, learningFitDirection, riskHistory, null);
         }
 
         public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
@@ -141,6 +146,31 @@ public class SpecFidelityCritic {
 
         public boolean accepted() {
             return complete && findings.isEmpty();
+        }
+
+        /**
+         * Retains the same brief-owned scope through successful, incomplete and corrected specification reviews.
+         *
+         * @param goals the source-bound learning goals
+         * @return this verdict with the retained scope
+         */
+        public SpecificationReview withBriefLearningGoals(BriefLearningGoals goals) {
+            return new SpecificationReview(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, learningFitDirection, riskHistory, goals);
+        }
+
+        /**
+         * Keeps brief-owned goals when a new concept or assessment review clears candidate-specific findings.
+         *
+         * @param previousReview the preceding candidate review, when available
+         * @param goals          the session's retained source-bound learning goals
+         * @return the preceding review with retained goals, or an incomplete review when only the goals remain
+         */
+        @Nullable
+        public static SpecificationReview retainBriefLearningGoals(@Nullable SpecificationReview previousReview, @Nullable BriefLearningGoals goals) {
+            if (goals == null) {
+                return previousReview;
+            }
+            return (previousReview == null ? new SpecificationReview(false, List.of()) : previousReview).withBriefLearningGoals(goals);
         }
 
         public String feedback() {
@@ -296,6 +326,24 @@ public class SpecFidelityCritic {
         return ensureGradeableSpecification(specification, specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, usageSink, cancelled));
     }
 
+    /**
+     * Rechecks the frozen contract against native assessment observations without treating a grader's expectation as rule authority.
+     *
+     * @param brief             authoritative instructor requirements
+     * @param selectedConcept   selected design provenance, or null
+     * @param specification     frozen contract to check
+     * @param previousReview    prior grounded findings and original learner goals
+     * @param executionEvidence bounded native build and grading observations
+     * @param usageSink         shared provider-usage accounting
+     * @param cancelled         authoring stop signal
+     * @return a grounded contract verdict; incomplete review never certifies consistency
+     */
+    public SpecificationReview reviewSpecificationWithExecution(String brief, @Nullable String selectedConcept, String specification, @Nullable SpecificationReview previousReview,
+            String executionEvidence, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return ensureGradeableSpecification(specification,
+                specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, executionEvidence, usageSink, cancelled));
+    }
+
     /** Keeps a missed exact-technique mandate from becoming a known-but-ungraded requirement downstream: a frozen correctness rule must be enforceable by the assessment mode. */
     private static SpecificationReview ensureGradeableSpecification(String specification, SpecificationReview review) {
         List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(specification);
@@ -309,17 +357,14 @@ public class SpecFidelityCritic {
                         + "the configured assessment can enforce it without source, bytecode, stack, or grader-context inspection.")
                 .filter(finding -> !findings.contains(finding)).forEach(findings::add);
         return new SpecificationReview(review.complete(), review.conceptualReworkRequired(), true, List.copyOf(findings), review.auditSummary(), review.learningFitDirection(),
-                review.riskHistory());
+                review.riskHistory(), review.briefLearningGoals());
     }
 
     /**
      * Compares the proposed concepts against the instructor brief and selects one.
      * <p>
-     * The only judgments made here are the ones a concept can answer: whether it covers the brief, carries the requested learning objective, and fits the requested difficulty. A
-     * concept is a design sketch, not the graded contract, so grounding, observability, and partition-equivalence are deliberately not judged at this stage. Those are properties
-     * of the frozen specification and the suite that grades it, and {@link #reviewSpecification} judges them there, against an artifact that can actually satisfy them. Asking
-     * them of a concept rejects the very act of concretization every later stage depends on: a brief that says "describe the operations and their behavior on edge cases" needs
-     * some stage to decide what popping an empty stack does, and forbidding the concept to decide it leaves nothing that may.
+     * The grounded review judges brief coverage, learner-owned work and difficulty against the candidate it selects. Whether a technique carries the instructor's objective is
+     * part of that semantic brief-fit judgment. Detailed API, behavior and grading constraints are checked by {@link #reviewSpecification} against the compiled specification.
      *
      * @param brief      the authoritative instructor brief
      * @param candidates the candidate concepts keyed by their prompt ordinal
@@ -328,37 +373,27 @@ public class SpecFidelityCritic {
      * @return the selected concept, or a rejection that requests another candidate batch
      */
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        return enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
-    }
-
-    /**
-     * Rejects a selected concept that invents an implementation-technique constraint on a brief that requested none.
-     * <p>
-     * The guard is against the <em>generator</em> manufacturing an ungradeable requirement, not against a concept restating a technique the instructor already chose. Once the
-     * brief fixes any technique, that choice is instructor provenance and {@link #ensureGradeableSpecification} is what keeps it a non-graded pedagogical objective rather than a
-     * frozen correctness rule. Matching the concept's technique to the brief's is deliberately not checked here: comparing families cannot tell a restatement from its negation,
-     * so a Streams brief whose concept bans explicit loops reads as an iteration mandate the brief never made. Whether the technique is the requested one is a brief-fit
-     * question, and {@link ConceptSelectionCritic} already owns it.
-     */
-    static ConceptSelectionReview enforceExploratoryConcept(String brief, Map<Integer, String> candidates, ConceptSelectionReview review) {
-        if (!review.accepted()) {
-            return review;
-        }
-        String selected = candidates.get(review.selectedCandidate());
-        List<String> prematureMandates = ExerciseIntegrityGate.techniqueMandates(selected);
-        if (prematureMandates.isEmpty() || !ExerciseIntegrityGate.techniqueMandates(brief).isEmpty()) {
-            return review;
-        }
-        String finding = "Candidate " + review.selectedCandidate() + " prematurely fixes an implementation construct (" + String.join(", ", prematureMandates)
-                + ") during concept exploration. Keep the qualitative learner-owned branching or transformation, but leave exact constructs to the specification and preserve "
-                + "an instructor-requested technique there as non-graded pedagogy when public behavior cannot prove it.";
-        String audit = review.auditSummary() + "\n\nServer concept invariant: rejected selected candidate — " + finding;
-        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit, new ConceptFallback(review.selectedCandidate(), 0, 0));
+        return conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled);
     }
 
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
         return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, designTemplateStatuses(specificationContract), usageSink, cancelled);
+    }
+
+    /**
+     * Repairs standalone-probe compilation once per supplied batch without exposing graded test bodies or changing exercise artifacts.
+     *
+     * @param specification   approved rule authority
+     * @param solutionSources reference API and sources
+     * @param failures        unexecuted proposals with sanitized compiler diagnostics
+     * @param usageSink       shared provider-usage accounting
+     * @param cancelled       authoring stop signal
+     * @return changed methods with their original rule, name and misconception retained; all still require execution
+     */
+    public List<ContractWitness> repairProbeCompilation(String specification, String solutionSources, List<ContractWitnessOutcome> failures,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return witnessAuthor.repairCompilation(specification, solutionSources, failures, usageSink, cancelled);
     }
 
     public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources, List<ContractWitnessOutcome> outcomes,
@@ -525,6 +560,12 @@ public class SpecFidelityCritic {
                 + planEvidence + "\n\n" + evidence.text();
         String repairableDownstreamSource = (problemStatement == null || problemStatement.isBlank() ? "" : problemStatement.strip() + "\n\n") + evidence.text() + planEvidence;
         Map<String, String> downstreamEvidenceByArtifact = downstreamEvidenceByArtifact(problemStatement, testPlanJson, artifacts);
+        if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS && repairDelta != null && !repairDelta.isBlank()) {
+            // The full current candidate and prior findings carry the evidence; a duplicate diff is a navigation aid, not required authority.
+            userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport,
+                    "[Full repair diff omitted to fit the review bound. Complete current artifacts and previous findings remain below; omission does not mean unchanged or resolved.]",
+                    testPlanJson, templateFailureEvidence);
+        }
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -916,9 +957,6 @@ public class SpecFidelityCritic {
                     .append(" Change the test setup and assertion first; keep the verified solution unchanged unless the new witness proves it wrong. For delegation, inject a "
                             + "test-controlled fake or recording collaborator that returns one unique sentinel and records the exact input, then assert return propagation and forwarding. "
                             + "Never compare results from two independent production calls or add production caching/state to satisfy such a comparison.");
-            case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL -> builder.append(
-                    "\n- Preserve this executed grading-gap evidence for instructor review until the frozen specification is approved; do not autonomously add grading for it: \"")
-                    .append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_AVAILABLE ->
                 builder.append("\n- Optional environment-validated contract witness: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->

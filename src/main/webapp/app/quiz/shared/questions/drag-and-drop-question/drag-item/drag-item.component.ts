@@ -13,7 +13,7 @@ import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 @Component({
     selector: 'jhi-drag-item',
     templateUrl: './drag-item.component.html',
-    styleUrls: ['./drag-item.component.scss'],
+    styleUrls: ['./drag-item.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
 })

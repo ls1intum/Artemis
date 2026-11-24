@@ -79,7 +79,7 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
 @Component({
     selector: 'jhi-hyperion-run-inspector',
     templateUrl: './hyperion-run-inspector.component.html',
-    styleUrl: './hyperion-run-inspector.component.scss',
+    styleUrl: './hyperion-run-inspector.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [

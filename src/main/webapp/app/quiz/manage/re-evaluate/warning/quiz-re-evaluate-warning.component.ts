@@ -17,7 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
-    styleUrls: ['../../../shared/quiz.scss'],
+    styleUrls: ['../../../shared/quiz.css'],
     imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {

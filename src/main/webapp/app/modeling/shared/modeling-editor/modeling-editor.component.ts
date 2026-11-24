@@ -50,7 +50,7 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
-    styleUrls: ['./modeling-editor.component.scss'],
+    styleUrls: ['./modeling-editor.component.css'],
     encapsulation: ViewEncapsulation.None,
     host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [

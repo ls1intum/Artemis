@@ -41,7 +41,7 @@ interface RelatedThreadLocation {
 @Component({
     selector: 'jhi-review-comment-thread-widget',
     templateUrl: './review-comment-thread-widget.component.html',
-    styleUrls: ['./review-comment-thread-widget.component.scss'],
+    styleUrls: ['./review-comment-thread-widget.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,

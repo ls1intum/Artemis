@@ -1,0 +1,152 @@
+.scrollable-communication-content {
+    --channel-search-height: 59px;
+
+    height: calc(calc(calc(100vh - var(--sidebar-header-footer-combined-height)) - var(--header-height, 0px)) - var(--channel-search-height, 0px));
+    overflow-y: auto;
+}
+
+/*
+ * The Code of Conduct shown before it is accepted fills the page, which the shell sizes. `.scrollable-content` derives a
+ * height from the viewport instead, with a hardcoded navbar+footer estimate that is shorter than what is available, and
+ * leaves a grey area below the panel while the text still scrolls inside it. It stays the scroll container, and takes
+ * the height of the flex page it sits in.
+ */
+.code-of-conduct-panel {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
+.message-input {
+    border-top: 1px solid;
+    border-color: var(--tumaet-ui-border-color);
+}
+
+/*
+ * The page fills the shell's content region, so these rows pass that height down instead of collapsing to their
+ * content. Without it the cards stop a couple of pixels short and the grey divider above the footer reads as 8px
+ * rather than the 6px used everywhere else.
+ */
+.communication-layout-row {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Content column beside the sidebar; holds the search above the message/thread row. */
+.communication-content-main {
+    --header-height: 16px;
+
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.communication-content-main > .communication-message-row {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Keep the composer inside the filled pane: the header takes its natural height and the messages fill the remainder. */
+.communication-message-wrap {
+    min-width: 30%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+.communication-message-wrap > jhi-conversation-header {
+    flex: 0 0 auto;
+}
+
+.communication-message-wrap > jhi-conversation-messages {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/*
+ * Take the height from the filled row rather than from the viewport arithmetic of the rule above, whose hardcoded
+ * navbar+footer estimate does not match what the shell computes. The row has a definite height, so each pane still
+ * contains its own scrolling — it does not grow with the message list.
+ *
+ * Scoped to the row rather than to the message pane: the row's other child is the open answer thread, and a pane left
+ * on the viewport-derived height overflows the row it now sits in instead of ending at the divider above the footer.
+ */
+.communication-message-row > .scrollable-communication-content {
+    height: auto;
+}
+
+.highlight-post {
+    border-radius: 7px;
+    animation: highlight-post-fade 2s ease-in-out;
+}
+
+@keyframes highlight-post-fade {
+    0% {
+        background-color: color-mix(in srgb, var(--primary) 25%, transparent);
+    }
+
+    70% {
+        background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* Phones: below the 576px breakpoint the JS mobile checks (MOBILE_SIDEBAR_BREAKPOINT) use as well. */
+@media (max-width: 575.98px) {
+    .communication-content-sidebar {
+        position: absolute;
+        width: 100%;
+        z-index: 2;
+        pointer-events: none;
+
+        /*
+         * The drawer is anchored where the sidebar would sit in flow, which is the top of the search bar beside it, so
+         * it covered that bar. Offset it by the bar and its divider to open level with the message list instead.
+         */
+        margin-top: calc(var(--title-bar-height) + var(--spacing-divider));
+    }
+
+    .communication-content-sidebar .sidebar-wrap,
+    .communication-content-sidebar .communication-content-sidebar .sidebar-width {
+        max-width: 0;
+    }
+
+    .communication-content-sidebar.sidebar-collapsed {
+        pointer-events: all;
+    }
+
+    .communication-content-sidebar.sidebar-collapsed .sidebar-wrap,
+    .communication-content-sidebar.sidebar-collapsed .sidebar-width {
+        max-width: 100%;
+    }
+
+    .communication-content-sidebar.sidebar-collapsed .sidebar-width {
+        width: 100%;
+    }
+
+    .communication-content-sidebar .sidebar-content {
+        opacity: 0;
+    }
+
+    .communication-content-sidebar.sidebar-collapsed .sidebar-content {
+        opacity: 1;
+    }
+
+    .communication-content-sidebar .sidebar-wrap {
+        margin-right: 0;
+    }
+
+    .communication-message-wrap.is-answer-thread-open {
+        display: none;
+    }
+
+    .communication-message-wrap {
+        max-width: 100%;
+    }
+}

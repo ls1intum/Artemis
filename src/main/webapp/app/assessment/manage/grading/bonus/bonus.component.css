@@ -1,0 +1,31 @@
+/* To make number left borders align with page title. */
+.bonus-form-start {
+    counter-reset: bonus-step-counter; /* Set a custom counter with initial value 0. */
+    margin-right: calc(1.5rem + 0.75rem - 1px);
+}
+
+.bonus-form-step {
+    border-radius: 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid;
+    text-align: center;
+    margin-left: calc(0.75rem - 1px);
+}
+
+.bonus-form-step::before {
+    counter-increment: bonus-step-counter;
+    content: counter(bonus-step-counter);
+}
+
+.bonus-calculated {
+    margin-left: calc(1.5rem + 0.75rem - 1px);
+}
+
+.calculation-sign {
+    font-size: 3rem;
+}
+
+.dynamic-example {
+    width: 50%;
+}

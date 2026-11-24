@@ -26,7 +26,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-course-exercise-group-detail',
     templateUrl: './course-exercise-group-detail.component.html',
-    styleUrls: ['./course-exercise-group-detail.component.scss'],
+    styleUrls: ['./course-exercise-group-detail.component.css'],
     imports: [
         RouterLink,
         FaIconComponent,

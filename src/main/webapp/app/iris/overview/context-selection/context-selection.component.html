@@ -10,7 +10,7 @@
         <button
             type="button"
             data-testid="iris-context-trigger"
-            class="inline-flex cursor-pointer items-center justify-center border-0! bg-transparent! px-2! py-1.5 text-(--body-color) transition-colors hover:enabled:bg-primary hover:enabled:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex cursor-pointer items-center justify-center border-0 bg-transparent! px-2! py-1.5 text-(--body-color) transition-colors hover:enabled:bg-primary hover:enabled:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
             [disabled]="disabled()"
             [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
             [tumAetUiPopoverTrigger]="picker"
@@ -59,7 +59,7 @@
 
     @if (activeChip(); as chip) {
         <tumaet-ui-chip
-            class="max-w-56 min-w-0 flex-[0_1_auto]"
+            class="min-w-0 flex-[0_1_auto]"
             size="small"
             data-testid="iris-context-chip"
             [removable]="!disabled()"

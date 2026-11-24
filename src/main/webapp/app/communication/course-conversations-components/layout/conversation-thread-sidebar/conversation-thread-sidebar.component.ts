@@ -20,7 +20,7 @@ import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directiv
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
-    styleUrls: ['./conversation-thread-sidebar.component.scss'],
+    styleUrls: ['./conversation-thread-sidebar.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,

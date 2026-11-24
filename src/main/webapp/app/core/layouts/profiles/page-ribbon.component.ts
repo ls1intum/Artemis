@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             }
         </div>
     `,
-    styleUrls: ['page-ribbon.scss'],
+    styleUrls: ['page-ribbon.css'],
     imports: [TranslateDirective],
 })
 export class PageRibbonComponent implements OnInit {
