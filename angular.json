@@ -52,7 +52,6 @@
                             "browser": ""
                         },
                         "loader": {
-                            ".ttf": "file",
                             ".css": "empty"
                         },
                         "index": "src/main/webapp/index.html",
