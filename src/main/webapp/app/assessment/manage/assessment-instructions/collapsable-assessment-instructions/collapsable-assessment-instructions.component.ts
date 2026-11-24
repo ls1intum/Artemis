@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-collapsable-assessment-instructions',
     templateUrl: './collapsable-assessment-instructions.component.html',
-    styleUrls: ['./collapsable-assessment-instructions.scss'],
+    styleUrls: ['./collapsable-assessment-instructions.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, AssessmentInstructionsComponent, ResizableDirective],
 })
 export class CollapsableAssessmentInstructionsComponent {

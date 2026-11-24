@@ -8,7 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-file-browser-badge',
     templateUrl: './code-editor-file-browser-badge.component.html',
-    styleUrls: ['./code-editor-file-browser-badge.component.scss'],
+    styleUrls: ['./code-editor-file-browser-badge.component.css'],
     imports: [TumAetUiTooltipDirective, FaIconComponent],
 })
 export class CodeEditorFileBrowserBadgeComponent {

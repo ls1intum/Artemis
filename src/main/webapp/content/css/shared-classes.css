@@ -1,0 +1,75 @@
+/* Small classes that several features share and that have no equivalent Tailwind utility. */
+
+/* Styles for rotating chevron icons */
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotated {
+    transform: rotate(90deg);
+}
+
+.resizable-dragging {
+    user-select: none;
+}
+
+.result-orange {
+    color: var(--result-orange);
+}
+
+a.result-orange:hover {
+    color: var(--result-orange);
+}
+
+.result-late {
+    color: var(--result-late);
+}
+
+a.result-late:hover {
+    color: var(--result-late);
+}
+
+/*
+ * Hides the scrollbar, unless the user is currently using the scrollbar
+ * Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
+ */
+.hide-scrollbar-unless-scrolling {
+    /* required for Firefox and Safari, otherwise elments are hidden when scrollbar is not in use */
+    scrollbar-gutter: stable;
+
+    /* Firefox scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color var(--scrollbar-transition-time);
+}
+
+/* On hover/active, show the scrollbar in Firefox */
+.hide-scrollbar-unless-scrolling:hover,
+.hide-scrollbar-unless-scrolling:active {
+    scrollbar-color: var(--scrollbar-color) transparent;
+}
+
+/* WebKit scrollbar styling (Chrome, Safari, etc.) */
+.hide-scrollbar-unless-scrolling::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    opacity: 0;
+    transition: opacity var(--scrollbar-transition-time);
+}
+
+.hide-scrollbar-unless-scrolling::-webkit-scrollbar-thumb {
+    width: var(--scrollbar-width);
+    background-color: transparent;
+    border-radius: var(--scrollbar-width);
+    transition: background-color var(--scrollbar-transition-time);
+}
+
+.hide-scrollbar-unless-scrolling::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+/* Show scrollbar on hover/active scrolling */
+.hide-scrollbar-unless-scrolling:hover::-webkit-scrollbar-thumb,
+.hide-scrollbar-unless-scrolling:active::-webkit-scrollbar-thumb {
+    width: var(--scrollbar-width);
+    background-color: var(--scrollbar-color);
+}

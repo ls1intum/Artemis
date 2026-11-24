@@ -8,7 +8,7 @@ import { HyperionStepState } from 'app/hyperion/exercise-generation/model/hyperi
 @Component({
     selector: 'jhi-hyperion-stage',
     templateUrl: './hyperion-stage.component.html',
-    styleUrl: './hyperion-stage.component.scss',
+    styleUrl: './hyperion-stage.component.css',
     imports: [FaIconComponent, ArtemisTranslatePipe],
     host: {
         role: 'listitem',

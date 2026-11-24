@@ -187,6 +187,9 @@
                     </ng-container>
                 </tumaet-ui-form-field>
                 <jhi-course-home-welcome-context-form class="mb-4! block" [control]="studentWelcomeContext" />
+                @if (initialCommitAuthorGroup(); as initialCommitAuthorForm) {
+                    <jhi-course-initial-commit-author-form class="mb-4! block" [group]="initialCommitAuthorForm" />
+                }
 
                 <!-- The semester comes first because choosing it fills in the start and end date below. -->
                 <tumaet-ui-form-field

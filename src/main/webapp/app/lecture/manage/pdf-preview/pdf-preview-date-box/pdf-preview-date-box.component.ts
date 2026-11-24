@@ -22,7 +22,7 @@ const FOREVER = dayjs('9999-12-31');
 @Component({
     selector: 'jhi-pdf-preview-date-box-component',
     templateUrl: './pdf-preview-date-box.component.html',
-    styleUrls: ['./pdf-preview-date-box.component.scss'],
+    styleUrls: ['./pdf-preview-date-box.component.css'],
     standalone: true,
     imports: [
         TumAetUiButtonDirective,

@@ -34,7 +34,7 @@ export interface ExerciseFilterModalData {
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
-    styleUrls: ['./exercise-filter-modal.component.scss'],
+    styleUrls: ['./exercise-filter-modal.component.css'],
     imports: [
         TumAetUiCheckboxComponent,
         TumAetUiButtonDirective,

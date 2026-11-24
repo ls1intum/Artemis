@@ -43,7 +43,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    styleUrls: ['./example-text-submission.component.scss'],
+    styleUrls: ['./example-text-submission.component.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,

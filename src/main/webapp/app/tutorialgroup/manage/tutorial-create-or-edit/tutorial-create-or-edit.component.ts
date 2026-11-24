@@ -62,7 +62,7 @@ export interface UpdateTutorialGroupEvent {
     ],
     providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',
-    styleUrl: './tutorial-create-or-edit.component.scss',
+    styleUrl: './tutorial-create-or-edit.component.css',
 })
 export class TutorialCreateOrEditComponent {
     private confirmationService = inject(TumAetUiConfirmationService);

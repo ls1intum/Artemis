@@ -10,7 +10,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CompetencyNodeComponent, DagGraphComponent, TranslateDirective],
     templateUrl: './competency-graph.component.html',
-    styleUrl: './competency-graph.component.scss',
+    styleUrl: './competency-graph.component.css',
 })
 export class CompetencyGraphComponent {
     readonly competencyGraph = input.required<CompetencyGraphDTO>();

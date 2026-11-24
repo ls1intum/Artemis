@@ -18,7 +18,7 @@ export enum IrisLogoLookDirection {
 @Component({
     selector: 'jhi-iris-logo',
     templateUrl: './iris-logo.component.html',
-    styleUrls: ['./iris-logo.component.scss'],
+    styleUrls: ['./iris-logo.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgOptimizedImage, ArtemisTranslatePipe],
 })

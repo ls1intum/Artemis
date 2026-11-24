@@ -11,7 +11,7 @@ import { LEAGUES } from 'app/quiz/overview/course-training/league-resource';
 
 @Component({
     selector: 'jhi-quiz-training-dialog',
-    styleUrl: 'course-training.component.scss',
+    styleUrl: 'course-training.component.css',
     imports: [
         FormsModule,
         TranslateDirective,
