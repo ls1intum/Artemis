@@ -63,17 +63,6 @@ export class ThemeService {
      */
     public currentTheme = computed(() => this.userPreference() ?? this.systemPreference());
 
-    /**
-     * Revision counter that is bumped once a theme's CSS variables are actually in effect.
-     * Unlike {@link currentTheme}, which switches as soon as the user toggles the theme, this signal only
-     * changes after the `data-theme` attribute of the root element has been set. Consumers that resolve CSS
-     * custom properties via getComputedStyle (e.g. canvas-based charts) must depend on this signal instead of
-     * {@link currentTheme} to avoid reading stale variable values.
-     */
-    private _appliedThemeRevision = signal(0);
-
-    public readonly appliedThemeRevision = this._appliedThemeRevision.asReadonly();
-
     private darkSchemeMediaQuery!: MediaQueryList; // set in initialize(), called once on application startup before any read
 
     constructor() {
@@ -102,7 +91,7 @@ export class ThemeService {
         }
 
         addEventListener('storage', (event) => {
-            if (event.key === 'jhi-' + THEME_LOCAL_STORAGE_KEY) {
+            if (event.key === THEME_LOCAL_STORAGE_KEY) {
                 this._userPreference.set(this.getStoredThemePreference());
             }
         });
@@ -133,9 +122,7 @@ export class ThemeService {
      */
     public async print(): Promise<void> {
         return new Promise<void>((resolve) => {
-            const html = document.documentElement;
-            const themeBeforePrint = html.getAttribute(THEME_ATTRIBUTE);
-            html.setAttribute(THEME_ATTRIBUTE, Theme.LIGHT.attributeValue);
+            this.applyTheme(Theme.LIGHT);
             setTimeout(() => {
                 const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
 
@@ -144,9 +131,8 @@ export class ThemeService {
                 this.showNotificationSidebar(notificationSidebarDisplayAttribute);
             }, 250);
             setTimeout(() => {
-                if (themeBeforePrint) {
-                    html.setAttribute(THEME_ATTRIBUTE, themeBeforePrint);
-                }
+                // the theme may have changed while the print dialog was open
+                this.applyTheme(this.currentTheme());
                 resolve();
             }, 500);
         });
@@ -180,7 +166,6 @@ export class ThemeService {
         // Embedded widgets that follow the `data-theme` convention switch with Artemis: the Apollon modeling
         // editor reads the attribute from any ancestor for its light/dark base.
         document.documentElement.setAttribute(THEME_ATTRIBUTE, theme.attributeValue);
-        this._appliedThemeRevision.update((revision) => revision + 1);
     }
 
     /**

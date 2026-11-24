@@ -421,7 +421,12 @@
     --close-circle-opacity: 0.7;
 }
 
-:root,
+/*
+ * The tokens of the Apollon editor. Inside `.artemis-apollon-theme` they replace the values of Apollon's own stylesheet.
+ * On the root element they only fill in what Apollon does not declare: the selector is `html`, not `:root`, so the
+ * `:root` rule of Apollon, which is loaded later, keeps winning there.
+ */
+html,
 .artemis-apollon-theme {
     /* Apollon */
     --apollon-primary: var(--primary);

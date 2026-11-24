@@ -303,7 +303,7 @@ Before adding a property, search the existing semantic roles and the
 1. Name it after purpose rather than hue or a single screen.
 2. Add the value to `src/main/webapp/content/css/themes/light.css`. Add a value to `themes/dark.css` only
    if it differs in the dark theme. A role that follows another one refers to it
-   (`--card-bg: var(--module-bg)`), so it follows that role in both themes and needs no value of its own in
+   (`--link-item-color: var(--primary)`), so it follows that role in both themes and needs no value of its own in
    `dark.css`.
 3. Check text and non-text contrast on every surface where the role is used.
 4. Add a semantic Tailwind mapping only when application markup needs a utility.
@@ -327,10 +327,6 @@ private readonly themeService = inject(ThemeService);
 
 protected readonly isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
 ```
-
-Code that reads resolved CSS values after a change of the theme, such as a canvas chart, must also
-depend on `ThemeService.appliedThemeRevision`. This signal changes only after the service has set
-`data-theme` on the root element, which is when the tokens of the selected theme apply.
 
 Call `applyThemePreference()` only in response to an explicit user choice. Pass `undefined` to
 restore system-preference mode:

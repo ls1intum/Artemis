@@ -9,7 +9,7 @@ const label = positional[0];
 usage('Usage: node capture.mjs <label> [--base <url>] [--course <id>] [--themes light,dark] [--only <text,text>] [--screenshots] [--out <directory>]', options.help || !label);
 const base = options.base.replace(/\/$/, '');
 const wanted = nameFilter(options.only);
-const directory = outputDirectory(options, label);
+const directory = outputDirectory(options, label, { create: true });
 const problems = [];
 
 const { browser, page } = await openPage();

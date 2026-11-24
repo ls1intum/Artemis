@@ -107,8 +107,8 @@
  * them, identical across the shells. Vertical centering of the control content is handled by the flex layout of the
  * components. Search fields are projected into these bars too (FAQ, both shells); the kit sizes its inputs taller.
  *
- * The element with the class has to be a size container named `title-bar`, or be inside one, for the container query
- * below.
+ * The controls have to be inside a size container named `title-bar` for the container query below: the element with
+ * the class, an ancestor of it or the row inside it that holds the controls.
  */
 :is(.page-top-bar, .title-bar-controls) .tumaet-ui-btn,
 :is(.page-top-bar, .title-bar-controls) .tumaet-ui-select-trigger,

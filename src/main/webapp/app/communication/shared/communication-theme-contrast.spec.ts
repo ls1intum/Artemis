@@ -133,12 +133,14 @@ describe('Communication message highlight contrast', () => {
 });
 
 describe('Communication theme tokens', () => {
-    it('should define every communication token in the dark theme too, so that none falls back to its light value', () => {
+    it('should give the surfaces of a message a value of their own in the dark theme, so that none falls back to its light value', () => {
         const light = readThemeTokens('light');
         const dark = readThemeTokens('dark');
-        const communicationTokens = [...light.keys()].filter((name) => name.startsWith('communication-') || name.startsWith('reaction-button-'));
+        const surfaces = ['communication-selection-option-hover-background', 'module-bg', 'body-color'];
 
-        expect(communicationTokens).toContain('communication-selection-option-hover-background');
-        expect(communicationTokens.filter((name) => !dark.has(name))).toEqual([]);
+        for (const name of surfaces) {
+            expect(light.has(name), `--${name} is not a token of the light theme`).toBe(true);
+            expect(dark.get(name), `--${name} has the same value in both themes`).not.toBe(light.get(name));
+        }
     });
 });

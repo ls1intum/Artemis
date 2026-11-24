@@ -18,7 +18,12 @@ const normalise = (value) => (value === 'start' ? 'left' : value === 'end' ? 'ri
 const groups = new Map();
 const structure = [];
 let compared = 0;
-for (const file of readdirSync(afterDirectory).filter((name) => name.endsWith('.json'))) {
+const states = (directory) => readdirSync(directory).filter((name) => name.endsWith('.json'));
+// a state that one capture lacks is a page that failed there, which is a difference
+for (const file of states(beforeDirectory).filter((name) => !existsSync(`${afterDirectory}/${name}`))) {
+    if (wanted(file.replace('.json', ''))) structure.push(`${file.replace('.json', '')}: only in "${before}"`);
+}
+for (const file of states(afterDirectory)) {
     const state = file.replace('.json', '');
     if (!wanted(state)) continue;
     if (!existsSync(`${beforeDirectory}/${file}`)) {
@@ -53,7 +58,9 @@ for (const file of readdirSync(afterDirectory).filter((name) => name.endsWith('.
 const rows = [...groups].sort((first, second) => second[1].size - first[1].size);
 console.log(`${compared} states compared, ${rows.length} distinct differences`);
 if (structure.length) {
-    console.log(`\nStates with a different number of elements (compare those by eye, the paths of their elements have shifted):\n  ${structure.join('\n  ')}`);
+    console.log(
+        `\nStates that only one capture has, or that have a different number of elements (compare those by eye, the paths of their elements have shifted):\n  ${structure.join('\n  ')}`,
+    );
 }
 for (const [key, states] of rows.slice(0, Number(options.limit))) {
     console.log(`${String(states.size).padStart(4)}  ${key}   [${[...states].slice(0, 3).join(', ')}]`);

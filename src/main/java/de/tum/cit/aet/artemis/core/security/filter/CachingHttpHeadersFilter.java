@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
  * <p>
  * Registered in {@code WebConfigurer} for {@code *.js}, {@code *.css} and {@code /i18n/*}. Every one of those is
  * versioned in its URL — Angular emits content-hashed filenames, and the translation loader appends the build's
- * {@code I18N_HASH} as a query parameter — so a new build is a new URL and a cached response can never go stale. That is what makes caching them for weeks safe, and why they do
- * not share the
- * conservative lifetime that {@code StaticResourcesConfiguration} applies to the mutable files under {@code /public}.
+ * {@code I18N_HASH} as a query parameter — so a new build is a new URL and a cached response can never go stale.
+ * That is what makes caching them for weeks safe, and why they do not share the conservative lifetime that
+ * {@code StaticResourcesConfiguration} applies to the mutable files under {@code /public}.
  */
 public class CachingHttpHeadersFilter implements Filter {
 

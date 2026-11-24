@@ -125,6 +125,15 @@ for (const [title, read] of [
 ]) {
     const first = read(before);
     const second = read(after);
+    for (const [directory, lines] of [
+        [before, first],
+        [after, second],
+    ]) {
+        if (lines.size === 0) {
+            console.error(`${title}: no styles found in ${directory}. Pass the output directory of a client build (build/resources/main/static).`);
+            process.exit(2);
+        }
+    }
     const filter = (line) => !options.filter || line.includes(options.filter);
     const removed = [...first.keys()].filter((line) => !second.has(line) && filter(line));
     const added = [...second.keys()].filter((line) => !first.has(line) && filter(line));

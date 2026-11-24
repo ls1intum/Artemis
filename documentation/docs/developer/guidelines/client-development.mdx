@@ -921,12 +921,14 @@ Use Tailwind for application layout and TUM AET UI for reusable component stylin
 stylesheet only when semantic utilities and component contracts cannot express a genuinely
 component-specific rule. Keep global styles in `src/main/webapp/content/css` limited to what a
 component stylesheet cannot hold. `application.css` is the entry of the global styles: it declares the
-order of the cascade layers and imports the other files in the order in which they are loaded:
+order of the cascade layers and imports the stylesheets of libraries (KaTeX, highlight.js, the emoji
+picker) and the files below, in the order in which they are loaded:
 
 | File                     | Content                                                                                         |
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | `themes/light.css`       | The colour and size tokens of the application with their values in the light theme              |
 | `themes/dark.css`        | The values of the tokens that differ in the dark theme                                          |
+| `apollon.css`            | Rules for the controls of the Apollon editor inside `.artemis-apollon-theme`                    |
 | `base.css`               | Element defaults (body, headings, links, tables, form controls) in the cascade layer `base`     |
 | `third-party.css`        | Rules that adapt libraries (Angular CDK, Apollon) and TUM AET UI to Artemis                     |
 | `github-alerts.css`      | Markdown alerts and callouts                                                                    |

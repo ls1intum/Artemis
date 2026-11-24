@@ -1,5 +1,5 @@
 // Shared helpers of the style comparison scripts. See README.md.
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -91,9 +91,15 @@ export function parseArguments(argv, defaults = {}) {
     return { options, positional };
 }
 
-export function outputDirectory(options, ...segments) {
-    const directory = resolve(options.out ?? resolve(repositoryRoot, 'build/style-comparison'), ...segments);
-    mkdirSync(directory, { recursive: true });
+/** The directory of a capture. `create` makes it for a new capture; reading a capture that does not exist is an error. */
+export function outputDirectory(options, label, { create = false } = {}) {
+    const directory = resolve(options.out ?? resolve(repositoryRoot, 'build/style-comparison'), label);
+    if (create) {
+        mkdirSync(directory, { recursive: true });
+    } else if (!existsSync(directory) || !readdirSync(directory).some((name) => name.endsWith('.json'))) {
+        console.error(`There is no capture "${label}" in ${directory}`);
+        process.exit(2);
+    }
     return directory;
 }
 

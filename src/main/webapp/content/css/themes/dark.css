@@ -271,7 +271,8 @@
     --close-circle-opacity: 0.9;
 }
 
-:root[data-theme='dark'],
+/* `html:where(…)` keeps the specificity of an element selector, see the Apollon tokens in light.css. */
+html:where([data-theme='dark']),
 [data-theme='dark'] .artemis-apollon-theme {
     /* Apollon */
     --apollon-primary: var(--link-color);

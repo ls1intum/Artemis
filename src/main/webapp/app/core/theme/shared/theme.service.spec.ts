@@ -55,23 +55,6 @@ describe('ThemeService', () => {
         expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     });
 
-    it('bumps appliedThemeRevision once the theme attribute is set', () => {
-        TestBed.tick();
-        const initialRevision = service.appliedThemeRevision();
-
-        service.applyThemePreference(Theme.DARK);
-        // The effect that sets the attribute has not run yet, so the revision must not change
-        expect(service.appliedThemeRevision()).toBe(initialRevision);
-
-        TestBed.tick();
-        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-        expect(service.appliedThemeRevision()).toBe(initialRevision + 1);
-
-        service.applyThemePreference(Theme.LIGHT);
-        TestBed.tick();
-        expect(service.appliedThemeRevision()).toBe(initialRevision + 2);
-    });
-
     it('restores stored theme correctly', () => {
         const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
@@ -80,6 +63,20 @@ describe('ThemeService', () => {
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.LIGHT);
+    });
+
+    it('follows a theme change of another tab', () => {
+        service.initialize();
+        TestBed.tick();
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
+
+        // The other tab has stored the preference; this tab only receives the storage event.
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue('DARK');
+        window.dispatchEvent(new StorageEvent('storage', { key: THEME_LOCAL_STORAGE_KEY }));
+        TestBed.tick();
+
+        expect(service.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
 
     it('applies dark OS preferences', () => {
