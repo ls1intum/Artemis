@@ -52,7 +52,7 @@
                             "browser": ""
                         },
                         "loader": {
-                            ".ttf": "file"
+                            ".css": "empty"
                         },
                         "index": "src/main/webapp/index.html",
                         "browser": "src/main/webapp/app/app.main.ts",

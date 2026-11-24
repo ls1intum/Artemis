@@ -67,7 +67,12 @@
     font-size: 1.05rem;
     color: var(--text-body-secondary);
     background: var(--onboarding-page-bg, var(--body-bg));
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -79,7 +84,9 @@
     max-width: 100px;
     line-height: 1.25;
     letter-spacing: 0.01em;
-    transition: all 0.3s ease;
+    transition:
+        color 0.3s ease,
+        font-weight 0.3s ease;
 }
 
 .step-item.active .step-circle {
@@ -126,7 +133,7 @@
     min-width: 30px;
     max-width: 80px;
     border-radius: 2px;
-    transition: all 0.4s ease;
+    transition: background 0.4s ease;
     position: relative;
 }
 
@@ -145,6 +152,13 @@
     box-shadow: 0 1px 3px color-mix(in srgb, var(--black) 6%, transparent);
     overflow: hidden;
     animation: fadeSlideIn 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-content {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes fadeSlideIn {
@@ -178,7 +192,12 @@
     padding: 0.5rem 1.25rem;
     font-weight: 500;
     border-radius: 0.5rem;
-    transition: all 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
 }
 
 /* ── Responsive ──────────────────────────────────────── */
