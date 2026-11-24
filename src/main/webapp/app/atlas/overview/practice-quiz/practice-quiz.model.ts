@@ -5,15 +5,12 @@ export interface EntityIdRefDTO {
     id: number;
 }
 
-export type QuizQuestionWithoutSolutionDTO = QuizQuestionWithoutSolution;
-export type QuizQuestionWithSolutionDTO = QuizQuestionWithSolution;
-
 export interface PracticeSessionDTO {
     id: number;
     courseId: number;
     startTime: string;
     completedAt?: string;
-    questions: QuizQuestionWithoutSolutionDTO[];
+    questions: QuizQuestionWithoutSolution[];
 }
 
 export interface SubmittedAnswerFromLiveClientDTO {
@@ -27,7 +24,7 @@ export interface PracticeSubmissionDTO {
 }
 
 export interface PracticeQuestionReviewDTO {
-    question: QuizQuestionWithSolutionDTO;
+    question: QuizQuestionWithSolution;
     isAdaptive: boolean;
     score?: number;
     submittedAnswer?: string;

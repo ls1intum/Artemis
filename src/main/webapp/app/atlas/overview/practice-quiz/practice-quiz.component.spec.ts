@@ -10,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { PracticeQuizComponent } from 'app/atlas/overview/practice-quiz/practice-quiz.component';
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
 import { PracticeSessionDTO, PracticeSessionReviewDTO, PracticeSessionSummaryDTO } from 'app/atlas/overview/practice-quiz/practice-quiz.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
@@ -26,13 +27,13 @@ describe('PracticeQuizComponent', () => {
             {
                 id: 101,
                 title: 'Question 1',
-                text: 'What is polymorphism?',
+                text: 'Polymorphism',
                 points: 2,
                 type: 'multiple-choice',
                 singleChoice: false,
                 answerOptions: [
-                    { id: 201, text: 'Option A' },
-                    { id: 202, text: 'Option B' },
+                    { id: 201, text: 'A' },
+                    { id: 202, text: 'B' },
                 ],
             },
         ],
@@ -50,21 +51,17 @@ describe('PracticeQuizComponent', () => {
                 question: {
                     id: 101,
                     title: 'Question 1',
-                    text: 'What is polymorphism?',
+                    text: 'Polymorphism',
                     points: 2,
                     type: 'multiple-choice',
                     answerOptions: [
-                        { id: 201, text: 'Option A', isCorrect: true, explanation: 'Correct because A.' },
-                        { id: 202, text: 'Option B', isCorrect: false },
+                        { id: 201, text: 'A', isCorrect: true, explanation: 'Correct' },
+                        { id: 202, text: 'B', isCorrect: false },
                     ],
                 },
                 isAdaptive: true,
                 score: 2,
-                submittedAnswer: JSON.stringify({
-                    type: 'multiple-choice',
-                    quizQuestion: { id: 101 },
-                    selectedOptions: [{ id: 201 }],
-                }),
+                submittedAnswer: '{"selectedOptions":[{"id":201}]}',
             },
         ],
     };
@@ -155,12 +152,26 @@ describe('PracticeQuizComponent', () => {
 
         component.onSelectedAnswerOptionsChange(101, [optionA, optionB]);
         expect(component.selectedAnswerOptions()[101]).toEqual([optionA, optionB]);
+
+        // Zero-based option IDs across multiple questions
+        const optionZero = { id: 0, text: 'Option 0' } as AnswerOption;
+        component.onSelectedAnswerOptionsChange(101, [optionZero]);
+        expect(component.isAnswered(101)).toBe(true);
+        expect(component.selectedAnswerOptions()[101]).toEqual([optionZero]);
+
+        const optionQ2 = { id: 0, text: 'Q2 Option 0' } as AnswerOption;
+        component.onSelectedAnswerOptionsChange(102, [optionQ2]);
+        expect(component.selectedAnswerOptions()[101]).toEqual([optionZero]);
+        expect(component.selectedAnswerOptions()[102]).toEqual([optionQ2]);
     });
 
     it('should generate question tooltip in review mode and support navigateToQuestion', () => {
         component.setupReview(mockReview);
 
         expect(component.questionTooltip(101, 2)).toBe('2/2 P');
+        expect(component.reviewQuestions()[0].scoringType).toBe(ScoringType.ALL_OR_NOTHING);
+        expect(component.reviewSubmittedResult()).toBeDefined();
+        expect(component.reviewSubmittedResult()?.submission?.submittedAnswers).toHaveLength(1);
 
         const scrollSpy = vi.fn();
         const mockEl = { scrollIntoView: scrollSpy } as unknown as HTMLElement;

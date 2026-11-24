@@ -39,16 +39,4 @@ public interface PracticeSessionRepository extends ArtemisJpaRepository<Practice
     default PracticeSession findByIdAndCourseIdAndUserIdOrElseThrow(long sessionId, long courseId, long userId) {
         return getValueElseThrow(findByIdAndCourseIdAndUserId(sessionId, courseId, userId), sessionId);
     }
-
-    @Query("""
-            SELECT ps
-            FROM PracticeSession ps
-            WHERE ps.id = :sessionId
-                AND ps.user.id = :userId
-            """)
-    Optional<PracticeSession> findByIdAndUserId(@Param("sessionId") long sessionId, @Param("userId") long userId);
-
-    default PracticeSession findByIdAndUserIdOrElseThrow(long sessionId, long userId) {
-        return getValueElseThrow(findByIdAndUserId(sessionId, userId), sessionId);
-    }
 }

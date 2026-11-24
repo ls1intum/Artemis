@@ -211,18 +211,6 @@ public class PracticeQuizService {
      * @param submissionDTO the submitted answers
      * @return the review DTO with solutions, explanations, and scores
      */
-    public PracticeSessionReviewDTO submitPracticeSession(long sessionId, User user, PracticeSubmissionDTO submissionDTO) {
-        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
-        return submitPracticeSession(session.getCourse().getId(), sessionId, user, submissionDTO);
-    }
-
-    /**
-     * Evaluates whether the student's selected options match the correct answers for a pool item.
-     *
-     * @param item      the pool item
-     * @param answerDto the submitted answer from the client
-     * @return 1.0 if correct, 0.0 if not
-     */
     public double evaluatePoolQuestionAnswer(QuizQuestionPoolItem item, SubmittedAnswerFromLiveClientDTO answerDto) {
         if (item.getQuestion() == null || !(answerDto instanceof MultipleChoiceSubmittedAnswerFromLiveClientDTO mcAnswer)) {
             return 0.0;
@@ -264,18 +252,6 @@ public class PracticeQuizService {
         }).toList();
 
         return PracticeSessionReviewDTO.of(session, reviewQuestions);
-    }
-
-    /**
-     * Retrieves an already completed practice session for student review, looking up the session by sessionId and user.
-     *
-     * @param sessionId the ID of the practice session
-     * @param user      the student reviewing the session
-     * @return the review DTO
-     */
-    public PracticeSessionReviewDTO getPracticeSessionForReview(long sessionId, User user) {
-        PracticeSession session = practiceSessionRepository.findByIdAndUserIdOrElseThrow(sessionId, user.getId());
-        return getPracticeSessionForReview(session.getCourse().getId(), sessionId, user);
     }
 
     /**

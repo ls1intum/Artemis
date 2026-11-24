@@ -24,6 +24,10 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { toQuizQuestion } from 'app/quiz/shared/util/generated-quiz-question.util';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 @Component({
     selector: 'jhi-practice-quiz',
@@ -69,6 +73,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     readonly reviewQuestions = signal<MultipleChoiceQuestion[]>([]);
     readonly reviewSelectedAnswerOptions = signal<Record<number, AnswerOption[]>>({});
     readonly questionScores = signal<Record<number, number>>({});
+    readonly reviewSubmittedResult = signal<Result | undefined>(undefined);
 
     // FontAwesome icons
     readonly faPlay = faPlay;
@@ -164,6 +169,9 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     setupQuizSession(session: PracticeSessionDTO): void {
         this.currentSession.set(session);
         const questions = (session.questions ?? []).map((q) => toQuizQuestion(q)).filter((q): q is MultipleChoiceQuestion => q instanceof MultipleChoiceQuestion);
+        for (const q of questions) {
+            q.scoringType = ScoringType.ALL_OR_NOTHING;
+        }
         this.activeQuestions.set(questions);
         this.selectedAnswerOptions.set({});
         this.state.set('QUIZ');
@@ -277,6 +285,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         const questions: MultipleChoiceQuestion[] = [];
         const selections: Record<number, AnswerOption[]> = {};
         const scores: Record<number, number> = {};
+        const submittedAnswers: MultipleChoiceSubmittedAnswer[] = [];
 
         for (const item of review.questions ?? []) {
             const q = toQuizQuestion(item.question);
@@ -284,6 +293,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
                 continue;
             }
             const mcQuestion = q;
+            mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING;
             questions.push(mcQuestion);
             if (mcQuestion.id !== undefined) {
                 scores[mcQuestion.id] = item.score ?? 0;
@@ -292,9 +302,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
                 if (item.submittedAnswer) {
                     try {
                         const parsed = parseJson<{ selectedOptions?: { id: number }[] }>(item.submittedAnswer);
-                        if (Array.isArray(parsed?.selectedOptions)) {
-                            selectedOptionIds = parsed.selectedOptions.map((o) => o.id);
-                        }
+                        selectedOptionIds = Array.isArray(parsed?.selectedOptions) ? parsed.selectedOptions.map((o) => o.id) : [];
                     } catch {
                         selectedOptionIds = [];
                     }
@@ -302,9 +310,23 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
 
                 const chosen = (mcQuestion.answerOptions ?? []).filter((opt) => opt.id !== undefined && selectedOptionIds.includes(opt.id));
                 selections[mcQuestion.id] = chosen;
+
+                const submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.quizQuestion = mcQuestion;
+                submittedAnswer.selectedOptions = chosen;
+                submittedAnswer.scoreInPoints = item.score ?? 0;
+                submittedAnswers.push(submittedAnswer);
             }
         }
 
+        const submission = new QuizSubmission();
+        submission.submittedAnswers = submittedAnswers;
+        const result = new Result();
+        result.id = review.id;
+        result.score = review.score;
+        result.submission = submission;
+
+        this.reviewSubmittedResult.set(result);
         this.reviewQuestions.set(questions);
         this.reviewSelectedAnswerOptions.set(selections);
         this.questionScores.set(scores);
@@ -320,6 +342,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         this.currentSession.set(null);
         this.activeQuestions.set([]);
         this.reviewQuestions.set([]);
+        this.reviewSubmittedResult.set(undefined);
         const cId = this.activeCourseId();
         if (cId) {
             this.isLoading.set(true);

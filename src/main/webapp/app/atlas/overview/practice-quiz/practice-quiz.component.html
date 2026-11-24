@@ -269,6 +269,7 @@
                                         [selectedAnswerOptions]="reviewSelectedAnswerOptions()[q.id!] ?? []"
                                         [clickDisabled]="true"
                                         [showResult]="true"
+                                        [submittedResult]="reviewSubmittedResult()"
                                         [quizQuestions]="reviewQuestions()"
                                         [questionIndex]="i + 1"
                                         [score]="questionScores()[q.id!] ?? 0"
