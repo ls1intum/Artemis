@@ -76,6 +76,15 @@ describe('AthenaService', () => {
         await expect(result).rejects.toMatchObject({ status: 503 });
     });
 
+    it('keeps the global HTTP alert silent for a failed text suggestion request', async () => {
+        const result = lastValueFrom(service.getTextFeedbackSuggestions(exerciseBase, { id: 5 } as TextSubmission));
+        const request = httpMock.expectOne('/api/athena/text-exercises/10/submissions/5/feedback-suggestions');
+        // The text assessment shows its own error, so a second, generic alert must not appear.
+        expect(request.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        request.flush(null, { status: 403, statusText: 'Forbidden' });
+        await expect(result).rejects.toMatchObject({ status: 403 });
+    });
+
     it('should rehydrate grading instructions for text suggestions', async () => {
         const exercise = { ...exerciseBase, type: 'text' } as Exercise;
         const submission = { id: 5, text: 'Hello World' } as TextSubmission;

@@ -1,8 +1,7 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpContext } from '@angular/common/http';
 import { Observable, map, of } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
-import { ProgrammingFeedback } from 'app/openapi/model/programming-feedback';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -17,8 +16,10 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 @Service()
 export class AthenaService {
     private readonly athenaApi = inject(AthenaApi);
-    private readonly http = inject(HttpClient);
     private profileService = inject(ProfileService);
+
+    /** The assessment shows its own error for a failed suggestion request, so the global HTTP alert stays silent. */
+    private readonly skipErrorAlert = { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) };
 
     /**
      * Get feedback suggestions for the given submission from Athena
@@ -54,7 +55,7 @@ export class AthenaService {
      * with the "FeedbackSuggestion:accepted:" prefix
      */
     public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<(TextBlockRef | Feedback)[]> {
-        return this.getFeedbackSuggestions(() => this.athenaApi.getTextFeedbackSuggestions(exercise.id!, submission.id!)).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getTextFeedbackSuggestions(exercise.id!, submission.id!, this.skipErrorAlert)).pipe(
             map((suggestions) => {
                 // Convert referenced feedback suggestions to TextBlockRefs for easier handling in the components
                 return suggestions.map((suggestion) => {
@@ -93,11 +94,7 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
-        // The assessment shows its own error, and only for its latest request, so a failure must not also raise the global HTTP alert.
-        // The generated AthenaApi accepts no request options, hence the direct call.
-        const context = new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
-        const url = `/api/athena/programming-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`;
-        return this.getFeedbackSuggestions(() => this.http.get<ProgrammingFeedback[]>(url, { context })).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getProgrammingFeedbackSuggestions(exercise.id!, submissionId, this.skipErrorAlert)).pipe(
             map((suggestions) => {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
