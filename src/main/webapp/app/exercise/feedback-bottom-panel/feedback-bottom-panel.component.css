@@ -34,9 +34,7 @@ jhi-collapsed-panel-rail {
     height: 100%;
 }
 
-.feedback-bottom-panel {
-    /* Collapsed, only the icon rail remains */
-}
+/* Collapsed, only the icon rail remains */
 
 .feedback-bottom-panel--collapsed {
     height: auto;
