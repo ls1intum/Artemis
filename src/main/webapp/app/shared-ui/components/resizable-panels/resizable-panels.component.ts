@@ -40,6 +40,11 @@ export class PanelDirective {
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
     readonly iconTemplate = input<TemplateRef<unknown>>();
+    /**
+     * Keeps the right panels collapsed while it is true on any of them, and opens them when it turns false. Despite the name it is a live
+     * state, not only the initial one. It stops having an effect for a ResizablePanels instance as soon as the user has collapsed or
+     * expanded the right panel there, by hand or by dragging, so a user choice always wins over it.
+     */
     readonly startsCollapsed = input(false);
 }
 
@@ -174,7 +179,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             });
         });
 
-        // Apply the requested collapsed start state once, unless the user already
+        // Follow the requested collapsed state whenever it changes, unless the user already
         // controlled the right panel in this component instance.
         effect(() => {
             const collapsedPanelIndex = this.rightPanels().findIndex((panel) => panel.startsCollapsed());
@@ -182,10 +187,22 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 if (this.rightPanelCollapseChangedByUser) {
                     return;
                 }
-                if (collapsedPanelIndex >= 0) {
-                    this._isRightPanelCollapsed.set(true);
-                } else {
-                    this._isRightPanelCollapsed.set(false);
+                const collapse = collapsedPanelIndex >= 0;
+                if (collapse === this._isRightPanelCollapsed()) {
+                    return;
+                }
+                // The change does not come from the user, so keep the focus from being lost with the element that had it,
+                // as the manual collapse and expand do.
+                const restoreFocusSelector = collapse
+                    ? this.focusIsInRightPanel()
+                        ? '[data-testid="collapsed-panel-tab"]'
+                        : undefined
+                    : this.focusIsInCollapsedRail()
+                      ? '[role="tab"][aria-selected="true"]'
+                      : undefined;
+                this._isRightPanelCollapsed.set(collapse);
+                if (restoreFocusSelector) {
+                    this.focusAfterRender(restoreFocusSelector);
                 }
             });
         });
@@ -252,8 +269,20 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    private focusIsInRightPanel(): boolean {
+        const active = this.document.activeElement;
+        return (
+            !!this.elementRef.nativeElement.querySelector('[data-testid="right-panel-content"]')?.contains(active) ||
+            active === this.elementRef.nativeElement.querySelector('[role="separator"]')
+        );
+    }
+
+    private focusIsInCollapsedRail(): boolean {
+        return !!this.elementRef.nativeElement.querySelector('.collapsed-right-panel')?.contains(this.document.activeElement);
+    }
+
     expandRightPanel(index?: number): void {
-        const restoreFocus = !!this.elementRef.nativeElement.querySelector('.collapsed-right-panel')?.contains(this.document.activeElement);
+        const restoreFocus = this.focusIsInCollapsedRail();
         if (index !== undefined) {
             this._activeRightIndex.set(index);
         }
@@ -271,10 +300,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     }
 
     collapseRightPanel(): void {
-        const active = this.document.activeElement;
-        const restoreFocus =
-            !!this.elementRef.nativeElement.querySelector('[data-testid="right-panel-content"]')?.contains(active) ||
-            active === this.elementRef.nativeElement.querySelector('[role="separator"]');
+        const restoreFocus = this.focusIsInRightPanel();
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(true);
         if (restoreFocus) {

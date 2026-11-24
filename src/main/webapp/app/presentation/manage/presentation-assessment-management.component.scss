@@ -25,6 +25,13 @@
     overflow: hidden;
 }
 
+// The tables sit inside the bordered content panel. Their frame keeps only the rule above the toolbar, so no second
+// box is drawn inside the first one.
+.presentation-content tumaet-ui-table-layout {
+    border-width: 1px 0 0;
+    border-radius: 0;
+}
+
 .presentation-detail {
     display: flex;
     height: 100%;
