@@ -34,7 +34,7 @@ Two things in the tests repository control the sandbox:
 
     With `activated = false` as an additional argument, the class runs without the sandbox.
 
-Keep the sandbox on for graded exercises. Switch it off for an exercise whose solution legitimately needs resources
+Keep the sandbox activated for graded exercises. Deactivate it for an exercise whose solution legitimately needs resources
 the sandbox blocks, when you do not want to maintain a policy that permits them. The tests themselves stay
 unchanged either way. See [Testing with Ares](/instructor/exercises/programming-exercise/write-code-and-tests#testing-with-ares)
 for writing tests with Ares.
@@ -61,7 +61,7 @@ separate setting, so a change you make in the repository yourself is reflected t
 ### Configured
 
 At least one test class has an active policy, and the policy files and the Ares version pin it needs are in place.
-A test class you switched off yourself (with `activated = false`) does not change this, as long as another class
+A test class you deactivated yourself (with `activated = false`) does not change this, as long as another class
 still has an active policy.
 
 **Configured** is not the same as **confirmed ready**. Artemis checks the files itself (see
@@ -82,7 +82,7 @@ template, the solution and every student drop until the problem is fixed.
 
 - **Repair** restores a missing policy file from the repository history, or generates one with the permissions of the
   Java template if the history has none. The annotations stay as they are.
-- **Deactivate** switches the sandbox off instead, as described in [Deactivate the Sandbox](#deactivate-the-sandbox).
+- **Deactivate** deactivates the sandbox instead, as described in [Deactivate the Sandbox](#deactivate-the-sandbox).
 
 An invalid path, a file that is too large and a file that is not a valid policy are not repaired automatically,
 because Artemis cannot tell what the file should contain, so **Repair** is disabled for them. Fix them in the tests
@@ -104,7 +104,7 @@ lists the reasons, which can be:
 - The build file does not pin an Ares version through `aresVersion` (Gradle) or `ares.version` (Maven).
 - A Maven profile sets `ares.version`, so the version the build uses depends on which profiles are active.
 - A `@Policy` annotation is on a field or a nested class, on an annotation type, on a method that is not a test, or on one of several test methods with the same name.
-- A test method has an active `@Policy` annotation of its own, although the annotation of its test class switches the sandbox off.
+- A test method has an active `@Policy` annotation of its own, although the annotation of its test class deactivates the sandbox.
   This includes a test method the class inherits from another test class without overriding it.
 - Tests or Ares annotations are inside a nested class.
 - An interface declares tests or Ares annotations, which every class that implements it inherits.
@@ -132,7 +132,8 @@ If an activation, deactivation or version change fails, the card shows **Error**
 
 ## Deactivate the Sandbox
 
-When you edit an existing exercise, switching off **Activate Security Framework** opens a confirmation dialog first.
+When you edit an existing exercise, deactivating the sandbox with **Activate Security Framework** opens a confirmation
+dialog first.
 After you confirm, Artemis creates one commit in the tests repository that:
 
 - deletes the policy files that the `@Policy` annotations point to, `SecurityPolicy.yaml` by default, and
@@ -143,7 +144,7 @@ its other features, such as structural tests, `@StrictTimeout` and the reflectio
 features the tests of the exercise use, for example `StrictTimeout` or `structural.ClassTestProvider`, because
 these tests would no longer compile without the library. The tests of the Java template use several of them.
 
-Deactivating switches off more than the restrictions on student code. Everything the policy configures for the tests
+Deactivating removes more than the restrictions on student code. Everything the policy configures for the tests
 no longer applies either, such as the scheduling of hidden tests, output handling and failure reporting. Ares
 features that the tests use directly keep working, because they do not depend on the policy: for example,
 `@StrictTimeout` still limits how long a test runs, and structural tests still run. Hidden tests are then protected
@@ -153,16 +154,16 @@ restores the last policy from the repository history.
 
 Deactivating an exercise that is already inactive changes nothing.
 
-When you create or import an exercise, switching off the setting opens no dialog. A hint under the switch shows
-that the sandbox will be off, and nothing changes until you save the exercise. See
+When you create or import an exercise, deactivating the setting opens no dialog. A hint under the switch shows
+that the sandbox will be deactivated, and nothing changes until you save the exercise. See
 [When You Create an Exercise](#when-you-create-an-exercise) and [When You Import an Exercise](#when-you-import-an-exercise).
 
 ## Activate the Sandbox
 
-Switching on **Activate Security Framework** creates one commit in the tests repository that:
+Activating the sandbox with **Activate Security Framework** creates one commit in the tests repository that:
 
-- switches the `@Policy` annotations back on as they were before the last deactivation. A test class you had
-  switched off yourself stays off. Test classes added since then are switched on, and a renamed class counts as a
+- activates the `@Policy` annotations again as they were before the last deactivation. A test class you had
+  deactivated yourself stays deactivated. Test classes added since then are activated, and a renamed class counts as a
   new one.
 - restores the previous policy file from the repository history, or generates one if the history has none. A
   generated policy lists the test classes of the repository and permits what the Java template permits: one thread
@@ -174,8 +175,8 @@ Switching on **Activate Security Framework** creates one commit in the tests rep
 The template and solution builds then run again. If the restored policy file is not valid for the selected version,
 or a missing test class cannot be added because the policy writes its list of test classes in a form Artemis does
 not rewrite, Artemis changes nothing and shows an error instead. The same happens if no test class would run in the
-sandbox, e.g. because the only active one was deleted while the sandbox was off: switch on the `@Policy` annotation
-of a test class in the tests repository first.
+sandbox, e.g. because the only active one was deleted while the sandbox was deactivated: activate the `@Policy`
+annotation of a test class in the tests repository first.
 
 ## Choose the Framework Version
 
@@ -215,8 +216,8 @@ placing a copy with the same path in its resources folder; the file explains how
 The card starts as **Configured** with the version of the selected template. Artemis applies your choice to the tests
 repository before the first build, so the exercise is built only once.
 
-If you create the exercise with the sandbox switched off, the template's `SecurityPolicy.yaml` stays in the
-repository and only the annotations are switched off. Activating the sandbox later therefore brings back exactly
+If you create the exercise with the sandbox deactivated, the template's `SecurityPolicy.yaml` stays in the
+repository and only the annotations are deactivated. Activating the sandbox later therefore brings back exactly
 the permissions of the template.
 
 The card is not available together with empty repositories for [AI-assisted code generation](/instructor/exercises/programming-exercise/ai-assisted-authoring#ai-assisted-code-generation).
@@ -232,26 +233,26 @@ If your choice cannot be applied, for example because the imported tests use Are
 with the tests unchanged, and a warning tells you why.
 
 A file import does not keep the repository history. Deactivating an existing exercise deletes its policy file, and
-an exercise created with the sandbox switched off keeps the template's policy file (see
+an exercise created with the sandbox deactivated keeps the template's policy file (see
 [When You Create an Exercise](#when-you-create-an-exercise)). If you export an exercise whose policy file was deleted
 and activate it after importing the file, Artemis generates a policy as described in
 [Activate the Sandbox](#activate-the-sandbox). Permissions you added yourself are lost, and test classes you had
-switched off are switched on again. Add them back in the tests repository.
+deactivated are activated again. Add them back in the tests repository.
 
 ## Manage Security Policies in Advanced Mode
 
 The advanced view shows the state of the sandbox and every security policy of the tests repository. Changes to the
 policies, their test cases and the framework version stay unsaved until you select **Save Policies**; saving creates one
 commit that carries all of them. Two controls save right away after their own confirmation, without **Save Policies**:
-the sandbox toggle and **Scan the libraries students use**. Switching the scan keeps your unsaved changes, while turning
-the sandbox off discards them.
+the sandbox toggle and **Scan the libraries students use**. Activating or deactivating the scan keeps your unsaved
+changes, while deactivating the sandbox discards them.
 
-### Turn the Sandbox On or Off
+### Activate or Deactivate the Sandbox
 
 The **Ares 2** card at the top has the same toggle as the **Security** card. Before anything changes, a dialog lists
 what confirming will save, as described in [Activate the Sandbox](#activate-the-sandbox) and
-[Deactivate the Sandbox](#deactivate-the-sandbox). When you turn the sandbox on, you choose the framework version in
-the dialog. Turning the sandbox off discards your unsaved changes.
+[Deactivate the Sandbox](#deactivate-the-sandbox). When you activate the sandbox, you choose the framework version in
+the dialog. Deactivating the sandbox discards your unsaved changes.
 
 The card also shows the commit of the tests repository in which the settings were last saved, with its author and
 date, and the **Framework version**. A version you choose here is pinned when you save, and the review shows the change
@@ -282,13 +283,13 @@ and delete buttons appear in its header. Each policy has three parts:
   changed or removed.
 - **Configure test behaviour** replaces the exception of a failed test with your own message, hides the feedback of
   tests between two dates, enforces a strict timeout per test in milliseconds, seconds, minutes or hours, and mirrors
-  the output of the student code into the results. The fields of a setting stay disabled while its toggle is off. The
+  the output of the student code into the results. The fields of a setting stay disabled while its switch is deactivated. The
   security feedback tab shows what students see for a violation; its levels run from minimum to maximum information,
   but the level cannot be chosen yet, so students see the full Ares message.
 - **Assign test cases** chooses the tests that run under the policy: a whole test class, which also covers test cases
   added later, or single test cases. Artemis writes the assignment as the `@Policy` annotation of the class or of the
   test method. A test can use only one policy, so tests that another policy covers are locked, and so are the tests of
-  a class or a test method whose own `@Policy(activated = false)` switches the sandbox off. A test method annotated with
+  a class or a test method whose own `@Policy(activated = false)` deactivates the sandbox. A test method annotated with
   `@Policy` without a policy file keeps that annotation, and with it the strict default policy, until you assign it.
   Test methods that share a name, such as an overloaded `check()` and `check(int)`, can only be assigned with their
   whole class. **Declared test classes** lists the classes Ares treats as test code; the

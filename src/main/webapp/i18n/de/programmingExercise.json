@@ -310,7 +310,7 @@
             },
             "security": {
                 "title": "Sicherheit",
-                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren werden die Sandbox und alles, was die Sicherheitsrichtlinie für die Tests festlegt, abgeschaltet.",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren werden die Sandbox und alles, was die Sicherheitsrichtlinie für die Tests festlegt, deaktiviert.",
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
@@ -358,7 +358,7 @@
                     "NO_ARES_2": "{{ location }}: Die Tests verwenden nicht Ares 2.",
                     "NO_ARES_VERSION_PINNED": "{{ location }}: Die Build-Datei legt keine Ares-Version fest.",
                     "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: Ein Maven-Profil legt die Ares-Version fest, daher hängt die verwendete Version von den aktiven Profilen ab.",
-                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode, auch eine von einer anderen Testklasse geerbte, nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation der Testklasse die Sandbox ausschaltet.",
+                    "ACTIVE_POLICY_IN_SWITCHED_OFF_CLASS": "{{ location }}: Eine Testmethode, auch eine von einer anderen Testklasse geerbte, nutzt die Ares-Sandbox über ihre eigene @Policy-Annotation, obwohl die Annotation der Testklasse die Sandbox deaktiviert.",
                     "TEST_INTERFACE": "{{ location }}: Ein Interface deklariert Tests oder Ares-Annotationen, die jede Klasse erbt, die es implementiert.",
                     "INHERITED_METHOD_POLICY": "{{ location }}: Die Testklasse erbt von einer anderen Testklasse eine Testmethode mit eigener @Policy-Annotation, sodass dieser Test diese Policy behält, egal welcher Policy die Klasse zugeordnet ist."
                 },
@@ -384,7 +384,7 @@
                 "deactivate": "Deaktivieren",
                 "deactivateConfirmation": {
                     "header": "Security Framework deaktivieren?",
-                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit werden die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, abgeschaltet, etwa die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Ares-Funktionen, die die Tests direkt verwenden, etwa @StrictTimeout, funktionieren weiter. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
+                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit werden die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, deaktiviert, etwa die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Ares-Funktionen, die die Tests direkt verwenden, etwa @StrictTimeout, funktionieren weiter. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
                     "aresLibraryStays": "Die Tests verwenden außerdem andere Teile von Ares ({{ apis }}), daher bleibt die Ares-Bibliothek in der Build-Datei.",
                     "confirm": "Deaktivieren"
                 },
@@ -429,14 +429,14 @@
                         "activeHelp": "Die automatischen Tests führen den Code der Studierenden in der Ares2-Sandbox aus und setzen die gespeicherten Sicherheitsrichtlinien durch.",
                         "configured": "Konfiguriert",
                         "configuredHelp": "Deine Sicherheitsrichtlinien sind im Test-Repository gespeichert. Der nächste Build von Vorlage und Lösung zeigt, ob Ares2 sie akzeptiert.",
-                        "turningOn": "Wird eingeschaltet…",
-                        "turningOff": "Wird ausgeschaltet…",
+                        "turningOn": "Wird aktiviert…",
+                        "turningOff": "Wird deaktiviert…",
                         "committing": "Wird gespeichert…",
                         "scan": "Von Studierenden genutzte Bibliotheken prüfen",
                         "scanHelp": "Ares2 prüft dann auch die Bibliotheken, die der Code der Studierenden aufruft, z. B. eine JSON- oder HTTP-Bibliothek, sodass auch ein verbotener Zugriff über eine Bibliothek erkannt wird. Testfälle laufen deutlich langsamer.",
                         "scanInactive": "Verfügbar, sobald Ares2 aktiv ist.",
                         "scanUnavailable": "Der Build dieser Aufgabe bindet den Ares2-Agenten nicht ein, den die Prüfung der Bibliotheken braucht.",
-                        "scanReadOnly": "Eine Richtlinie wird schreibgeschützt angezeigt, und das Umschalten betrifft jede Richtlinie: Behebe sie zuerst im Test-Repository.",
+                        "scanReadOnly": "Eine Richtlinie wird schreibgeschützt angezeigt, und das Aktivieren oder Deaktivieren der Prüfung betrifft jede Richtlinie: Behebe sie zuerst im Test-Repository.",
                         "synced": "Gespeichert",
                         "notActive": "Nicht aktiv",
                         "notActiveHelp": "Builds seit dieser Version führen die Tests ohne Sandbox aus.",
@@ -447,25 +447,25 @@
                         "uncommitted": "Nicht gespeichert",
                         "versionUncommittedHelp": "Das gewählte Release wirkt, sobald du speicherst.",
                         "chooseOnActivation": "Beim Aktivieren wählen",
-                        "chooseOnActivationHelp": "Wenn du Ares2 einschaltest, wählst du das Release. Das neueste kompatible Release ist vorausgewählt."
+                        "chooseOnActivationHelp": "Wenn du Ares2 aktivierst, wählst du das Release. Das neueste kompatible Release ist vorausgewählt."
                     },
                     "activate": {
-                        "title": "Ares2 einschalten",
+                        "title": "Ares2 aktivieren",
                         "description": "Der Code der Studierenden läuft in der Ares2-Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
-                        "annotations": "Schaltet die @Policy-Annotationen der Testklassen ein und stellt ihre Richtliniendateien aus der Git-Historie wieder her oder erzeugt eine Richtlinie aus den Berechtigungen der Vorlage.",
+                        "annotations": "Aktiviert die @Policy-Annotationen der Testklassen und stellt ihre Richtliniendateien aus der Git-Historie wieder her oder erzeugt eine Richtlinie aus den Berechtigungen der Vorlage.",
                         "control": "Aktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
                         "version": "Framework-Version",
                         "versionHelp": "Die Tests dieser Aufgabe laufen mit diesem Release. Das neueste kompatible unterstützt die meisten Richtlinien-Einstellungen; wähle ein älteres nur, wenn sich die Aufgabe genau wie damit verhalten muss. Du kannst das Release später ändern.",
                         "latest": "neuestes kompatibles Release",
                         "older": "älteres Release",
                         "build": "Startet einen Build von Vorlage und Lösung, der zeigt, ob Ares2 die Richtlinien akzeptiert.",
-                        "confirm": "Ares2 einschalten"
+                        "confirm": "Ares2 aktivieren"
                     },
                     "deactivate": {
-                        "title": "Ares2 ausschalten",
+                        "title": "Ares2 deaktivieren",
                         "description": "Der Code der Studierenden läuft ohne Sandbox. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
-                        "deleteOne": "Löscht {{ file }} und schaltet die @Policy-Annotationen der Testklassen aus.",
-                        "deleteMany": "Löscht {{ count }} Richtliniendateien und schaltet die @Policy-Annotationen der Testklassen aus.",
+                        "deleteOne": "Löscht {{ file }} und deaktiviert die @Policy-Annotationen der Testklassen.",
+                        "deleteMany": "Löscht {{ count }} Richtliniendateien und deaktiviert die @Policy-Annotationen der Testklassen.",
                         "control": "Deaktiviert die Kontrolle des Ressourcenzugriffs und des Testverhaltens.",
                         "apiUsesTitle": {
                             "one": "1 Testdatei verwendet weitere Funktionen von Ares2.",
@@ -477,25 +477,25 @@
                             "one": "Deine ungespeicherte Änderung wird verworfen.",
                             "other": "Deine {{ count }} ungespeicherten Änderungen werden verworfen."
                         },
-                        "confirm": "Ares2 ausschalten"
+                        "confirm": "Ares2 deaktivieren"
                     },
                     "scanOn": {
-                        "title": "Prüfung der Bibliotheken einschalten",
+                        "title": "Prüfung der Bibliotheken aktivieren",
                         "description": "Ares2 prüft auch die Bibliotheken, die der Code der Studierenden verwendet. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "beforeTitle": "Bevor die Tests laufen,",
                         "before": "analysiert Ares2 auch die Bibliotheken des Codes der Studierenden.",
                         "whileTitle": "Während die Tests laufen,",
                         "while": "prüft Ares2 auch jeden Aufruf in eine Bibliothek.",
                         "slowerTitle": "Jeder Testfall läuft erheblich langsamer.",
-                        "slower": "Schalte die Prüfung nur ein, wenn die Aufgabe sie braucht.",
+                        "slower": "Aktiviere die Prüfung nur, wenn die Aufgabe sie braucht.",
                         "timeouts": "Prüfe, ob deine strikten Timeouts noch lang genug sind.",
-                        "confirm": "Prüfung einschalten",
+                        "confirm": "Prüfung aktivieren",
                         "commitMessage": "Scan the libraries that student code uses",
-                        "committedTitle": "Prüfung der Bibliotheken eingeschaltet",
+                        "committedTitle": "Prüfung der Bibliotheken aktiviert",
                         "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt auch die Bibliotheken des Codes der Studierenden. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
                     },
                     "scanOff": {
-                        "title": "Prüfung der Bibliotheken ausschalten",
+                        "title": "Prüfung der Bibliotheken deaktivieren",
                         "description": "Ares2 prüft nur noch den Code der Studierenden selbst. Mit der Bestätigung werden alle folgenden Änderungen auf einmal gespeichert.",
                         "beforeTitle": "Bevor die Tests laufen,",
                         "before": "analysiert Ares2 nur den Code der Studierenden selbst.",
@@ -503,9 +503,9 @@
                         "while": "werden Aufrufe in Bibliotheken nicht mehr geprüft.",
                         "riskTitle": "Verbotene Zugriffe über eine Bibliothek werden nicht mehr erkannt.",
                         "risk": "Zum Beispiel kann der Code der Studierenden unbemerkt über eine Hilfsbibliothek eine Datei lesen.",
-                        "confirm": "Prüfung ausschalten",
+                        "confirm": "Prüfung deaktivieren",
                         "commitMessage": "Stop scanning the libraries that student code uses",
-                        "committedTitle": "Prüfung der Bibliotheken ausgeschaltet",
+                        "committedTitle": "Prüfung der Bibliotheken deaktiviert",
                         "committedText": "Als Commit {{ hash }} gespeichert: Ares2 prüft jetzt nur noch den Code der Studierenden selbst. Der gestartete Build zeigt, ob Ares2 die Richtlinien akzeptiert."
                     },
                     "section": {
@@ -854,7 +854,7 @@
                         "replaceExceptions": "Exceptions, die Studierende sehen, durch diese Nachricht ersetzen",
                         "replaceExceptionsHelp": "Studierende sehen die Nachricht unten statt der Exception und des Stacktrace eines fehlgeschlagenen Testfalls. Sicherheitsverletzungen behalten ihre eigene Rückmeldung.",
                         "message": "Nachricht",
-                        "messageHelp": "Wird Studierenden bei jedem fehlgeschlagenen Testfall angezeigt, solange der Schalter oben eingeschaltet ist.",
+                        "messageHelp": "Wird Studierenden bei jedem fehlgeschlagenen Testfall angezeigt, solange der Schalter oben aktiviert ist.",
                         "messagePlaceholder": "Test fehlgeschlagen.",
                         "regularFailure": "regulärer Testfehler",
                         "originalException": "java.lang.AssertionError: expected [1, 2, 3] but was [3, 2, 1]\n    at MergeSortTest.testMergeSort(MergeSortTest.java:27)",
@@ -869,7 +869,7 @@
                         "hiddenFromHelp": "Ab diesem Zeitpunkt sehen Studierende die Ergebnisse der Testfälle dieser Richtlinie nicht mehr.",
                         "hiddenUntil": "Versteckt bis",
                         "hiddenUntilHelp": "Ab diesem Zeitpunkt sehen Studierende die Ergebnisse wieder, auch die der Abgaben dazwischen.",
-                        "turnOnFirst": "Schalte den Schalter oben ein, um die Zeitpunkte festzulegen.",
+                        "turnOnFirst": "Aktiviere den Schalter oben, um die Zeitpunkte festzulegen.",
                         "hiddenPeriodInvalid": "„Versteckt bis“ muss nach „Versteckt ab“ liegen.",
                         "timeZone": "Die Zeitpunkte verwenden die Zeitzone deines Browsers.",
                         "strictTimeout": "Für jeden Testfall ein striktes Timeout erzwingen",
@@ -959,10 +959,10 @@
                         "allCaptured": "alle von anderen Richtlinien erfasst",
                         "coveredBy": "Erfasst von {{ policy }}",
                         "lockedBy": "{{ policy }} zugeordnet. Gib den Testfall dort zuerst frei.",
-                        "switchedOff": "Die Sandbox ist für diese Klasse ausgeschaltet, daher können ihre Testfälle keine Richtlinie verwenden.",
-                        "switchedOffCase": "Dieser Testfall kann nicht zugeordnet werden: Seine eigene @Policy-Annotation schaltet die Sandbox aus.",
+                        "switchedOff": "Die Sandbox ist für diese Klasse deaktiviert, daher können ihre Testfälle keine Richtlinie verwenden.",
+                        "switchedOffCase": "Dieser Testfall kann nicht zugeordnet werden: Seine eigene @Policy-Annotation deaktiviert die Sandbox.",
                         "overloadedCase": "Mehrere Testmethoden haben diesen Namen, daher nutzen sie die Richtlinie nur zusammen mit ihrer ganzen Testklasse. Wähle die anderen Testfälle der Klasse aus, um sie einzuschließen.",
-                        "switchedOffTag": "Sandbox aus",
+                        "switchedOffTag": "Sandbox deaktiviert",
                         "willBeAdded": "Wird hinzugefügt",
                         "willBeRemoved": "Wird entfernt",
                         "hint": "Eine vollständig angehakte Klasse wird als Ganzes erfasst; sonst nur die angehakten Testfälle.",
@@ -1129,7 +1129,7 @@
                     "deletePolicy": {
                         "title": "Sicherheitsrichtlinie löschen",
                         "question": "Möchtest du {{ policy }} wirklich löschen?",
-                        "committed": "Das Speichern entfernt {{ file }} aus dem Test-Repository. Ihre {{ count }} zugeordneten Testeinträge laufen danach unter der restriktiven Standardrichtlinie von Ares2.",
+                        "committed": "Das Speichern entfernt {{ file }} aus dem Test-Repository. Ihre zugeordneten Testeinträge ({{ count }}) laufen danach unter der restriktiven Standardrichtlinie von Ares2.",
                         "neverCommitted": "Diese Richtlinie wurde nie gespeichert. Ihre Einstellungen gehen verloren.",
                         "confirm": "Richtlinie löschen"
                     }
