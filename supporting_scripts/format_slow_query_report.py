@@ -1319,6 +1319,7 @@ def main():
     parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
     parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
     parser.add_argument("--inline-out", help="write the new findings that have a line of code, as inline PR comments, here (only with a baseline)")
+    parser.add_argument("--tests-outcome", default="", help="outcome of the E2E test step; anything but success makes the comparison incomplete (omit to skip the check)")
     parser.add_argument("--phase", default="", help="the E2E job's phase (phase1, phase2 or all), named in the report's title")
     args = parser.parse_args()
 
@@ -1329,11 +1330,20 @@ def main():
         sys.exit(1)
 
     static_findings = []
+    incomplete = []  # why this run cannot be compared completely: nothing is then published as baseline or reconciled
     if args.static_findings:
         try:
             static_findings = load_json(args.static_findings)
-        except (json.JSONDecodeError, FileNotFoundError) as exc:
+            if not isinstance(static_findings, list):
+                raise ValueError("expected a list of findings")
+        except (json.JSONDecodeError, FileNotFoundError, ValueError) as exc:
+            static_findings = []
+            incomplete.append("the static scan is unavailable")
             print(f"Warning: could not load static findings from {args.static_findings}: {exc}", file=sys.stderr)
+    if report.get("truncated"):
+        incomplete.append("the collector reached its size limit and dropped findings")
+    if args.tests_outcome and args.tests_outcome != "success":
+        incomplete.append(f"the E2E tests did not succeed ({args.tests_outcome})")
 
     baseline = None
     if args.baseline:
@@ -1347,15 +1357,17 @@ def main():
     mark_new(groups, static_findings, baseline)
 
     print(build_report(report, groups, static_findings, baseline, args.run_url, args.phase))
+    if incomplete:
+        print(f"\n**⚠️ Incomplete comparison:** {'; '.join(incomplete)}. Existing inline comments are kept and this run is not used as a develop baseline.")
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
             f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
-    # Without a baseline there is no comparison: write no file, so that a reader cannot take "nothing
-    # new" for "everything fixed" and delete the comments of an earlier run.
-    if args.inline_out and baseline is not None:
+    # Without a baseline or with an incomplete run there is no comparison: write no file, so that a reader
+    # cannot take "nothing new" for "everything fixed" and delete the comments of an earlier run.
+    if args.inline_out and baseline is not None and not incomplete:
         with open(args.inline_out, "w", encoding="utf-8") as f:
             json.dump(build_inline_comments(report, groups, static_findings, baseline, args.run_url), f, indent=1)
-    if args.keys_out:
+    if args.keys_out and not incomplete:
         keys = collect_keys(groups, static_findings)
         keys["generatedAt"] = report.get("generatedAt")
         with open(args.keys_out, "w", encoding="utf-8") as f:

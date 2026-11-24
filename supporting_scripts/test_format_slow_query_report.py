@@ -145,6 +145,39 @@ class InlineCommentTest(unittest.TestCase):
                     report.main()
                 self.assertEqual(os.path.exists(inline), expected)
 
+    def test_an_incomplete_run_writes_neither_inline_comments_nor_baseline_keys(self):
+        import json
+        import os
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            source, baseline = os.path.join(tmp, "report.json"), os.path.join(tmp, "baseline.json")
+            static, inline, keys = os.path.join(tmp, "static.json"), os.path.join(tmp, "inline.json"), os.path.join(tmp, "keys.json")
+            data = {"repeatedQueries": [repeated(**self.LOCATION)]}
+            with open(baseline, "w", encoding="utf-8") as f:
+                json.dump({}, f)
+            with open(static, "w", encoding="utf-8") as f:
+                json.dump([], f)
+
+            def run(report_data, *extra, static_path=static):
+                with open(source, "w", encoding="utf-8") as f:
+                    json.dump(report_data, f)
+                for path in (inline, keys):
+                    if os.path.exists(path):
+                        os.remove(path)
+                with mock.patch.object(sys, "argv", ["x", source, "", "", static_path, "--baseline", baseline, "--inline-out", inline, "--keys-out", keys, *extra]), mock.patch("builtins.print"):
+                    report.main()
+                return os.path.exists(inline), os.path.exists(keys)
+
+            self.assertEqual(run(data), (True, True))
+            self.assertEqual(run(data, "--tests-outcome", "success"), (True, True))
+            self.assertEqual(run(data, "--tests-outcome", "failure"), (False, False))
+            self.assertEqual(run(dict(data, truncated=True)), (False, False))
+            self.assertEqual(run(data, static_path=os.path.join(tmp, "missing.json")), (False, False))
+            with open(static, "w", encoding="utf-8") as f:
+                f.write("{broken")
+            self.assertEqual(run(data), (False, False))
+
     def test_the_line_does_not_change_the_key(self):
         first = self.comments([repeated(**self.LOCATION)])[0]["key"]
         moved = self.comments([repeated(sourceFile=self.LOCATION["sourceFile"], line=130)])[0]["key"]

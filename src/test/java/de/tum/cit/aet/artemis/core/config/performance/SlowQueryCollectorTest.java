@@ -267,6 +267,25 @@ class SlowQueryCollectorTest {
     }
 
     @Test
+    void reportIsOnlyTruncatedAfterAListReachedItsLimit() {
+        SlowQueryProperties properties = new SlowQueryProperties();
+        properties.setMaxRecordedQueries(1);
+        collector = new SlowQueryCollector(properties);
+
+        query(SQL, 1);
+        assertThat(finishRequest()).isEmpty();
+        assertThat(collector.getReport(Map.of()).truncated()).isFalse();
+
+        // the one allowed endpoint timing is used up, so the next request is dropped
+        query(SQL, 2);
+        collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
+        assertThat(collector.getReport(Map.of()).truncated()).isTrue();
+
+        collector.reset();
+        assertThat(collector.getReport(Map.of()).truncated()).isFalse();
+    }
+
+    @Test
     void testNameHeaderIsPercentDecoded() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         assertThat(SlowQueryListener.testName(request)).isNull();

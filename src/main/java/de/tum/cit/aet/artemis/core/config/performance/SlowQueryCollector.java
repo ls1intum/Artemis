@@ -73,6 +73,9 @@ public class SlowQueryCollector {
     /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
     private final CopyOnWriteArrayList<EndpointTimingRecord> endpointTimings = new CopyOnWriteArrayList<>();
 
+    /** Set once any of the capped lists dropped an entry; the report is then incomplete. Cleared by {@link #reset()}. */
+    private volatile boolean truncated;
+
     public SlowQueryCollector(SlowQueryProperties properties) {
         this.properties = properties;
     }
@@ -126,6 +129,7 @@ public class SlowQueryCollector {
                 }
             }
             else {
+                truncated = true;
                 log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());
             }
         }
@@ -181,6 +185,7 @@ public class SlowQueryCollector {
             endpointTimings.add(new EndpointTimingRecord(httpMethod, httpEndpoint, testName, phase, totalDurationMs, dbTimeMs, queryCount, queries, Instant.now()));
         }
         else {
+            truncated = true;
             log.warn("[EndpointTiming] Circuit-breaker: max {} entries reached, ignoring further endpoint timings", properties.getMaxRecordedQueries());
         }
     }
@@ -196,7 +201,7 @@ public class SlowQueryCollector {
         List<RepeatedQueryFinding> repeatedSnapshot = new ArrayList<>(repeatedQueries);
         List<EndpointTimingRecord> endpointTimingSnapshot = new ArrayList<>(endpointTimings);
         return new SlowQueryReportDTO(Instant.now(), properties.getSlowQueryThresholdMs(), slowSnapshot.size(), repeatedSnapshot.size(), slowSnapshot, repeatedSnapshot,
-                endpointTimingSnapshot, indexes);
+                endpointTimingSnapshot, indexes, truncated);
     }
 
     /**
@@ -211,6 +216,7 @@ public class SlowQueryCollector {
         slowQueries.clear();
         repeatedQueries.clear();
         endpointTimings.clear();
+        truncated = false;
         log.info("[SlowQuery] Collector reset");
     }
 
@@ -294,6 +300,7 @@ public class SlowQueryCollector {
             repeatedQueries.add(finding);
         }
         else {
+            truncated = true;
             log.warn("[RepeatedQuery] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
         }
     }

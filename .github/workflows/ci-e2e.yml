@@ -204,6 +204,8 @@ jobs:
       - name: Collect slow-query report (Phase 1)
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          E2E_TESTS_OUTCOME: ${{ steps.run-tests-phase1.outcome }}
         run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
 
       - name: Upload slow-query report artifact (Phase 1)
@@ -485,6 +487,8 @@ jobs:
       - name: Collect slow-query report (Phase 2)
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          E2E_TESTS_OUTCOME: ${{ steps.run-tests-phase2.outcome }}
         run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
 
       - name: Upload slow-query report artifact (Phase 2)
@@ -756,6 +760,8 @@ jobs:
       - name: Collect slow-query report (All PR)
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          E2E_TESTS_OUTCOME: ${{ steps.run-tests-all-pr.outcome }}
         run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
 
       - name: Upload slow-query report artifact (All PR)
@@ -1012,6 +1018,8 @@ jobs:
       - name: Collect slow-query report (Non-PR)
         if: ${{ !cancelled() }}
         shell: bash
+        env:
+          E2E_TESTS_OUTCOME: ${{ steps.run-tests-all-non-pr.outcome }}
         run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
 
       - name: Upload slow-query report artifact (Non-PR)

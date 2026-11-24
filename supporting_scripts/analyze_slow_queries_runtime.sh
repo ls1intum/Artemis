@@ -19,6 +19,9 @@
 #   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
 #   slow-query-keys.json     – this run's finding keys (uploaded by develop runs as the baseline)
 #
+# Env, set by the CI steps: E2E_TESTS_OUTCOME, the outcome of the test step. Anything but "success" keeps
+# the report but withholds the baseline keys and the inline comments (see format_slow_query_report.py).
+#
 # Input, optional: slow-query-baseline.zip, the latest develop run's "Slow Query Baseline"
 # artifact, downloaded by the preceding CI step.
 #
@@ -94,7 +97,7 @@ fi
 # ------------------------------------------------------------------
 if ! python3 supporting_scripts/format_slow_query_report.py \
     "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" --inline-out "${INLINE_COMMENTS}" \
-    --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
+    --tests-outcome "${E2E_TESTS_OUTCOME:-}" --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
     # never upload partial keys as a baseline or post a partial summary
     echo "⚠️  Formatting the slow-query report failed."
     rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"
