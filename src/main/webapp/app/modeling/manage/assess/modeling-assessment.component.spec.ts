@@ -652,6 +652,45 @@ describe('ModelingAssessmentComponent', () => {
             expect(titled.hasLongFeedbackText).toBe(false);
         });
 
+        it('keeps the boxes empty and the editor read-only until the full description has loaded', async () => {
+            let resolveLongText!: (text: string) => void;
+            vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockReturnValue(new Promise((resolve) => (resolveLongText = resolve)));
+            const titled = feedbackFor('Missing abstraction', 'Preview');
+            titled.id = 42;
+            titled.hasLongFeedbackText = true;
+
+            const shown = await showFeedback(titled);
+            const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+            fixture.componentRef.setInput('resultFeedbacks', [titled]);
+            fixture.detectChanges();
+
+            expect(shown).toBeUndefined();
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID]).toBeUndefined();
+            expect(editor._options.readonly).toBe(true);
+
+            resolveLongText('Full description');
+            await waitForApollonInitialization();
+
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Full description');
+            expect(editor.setReadonly).toHaveBeenLastCalledWith(false);
+        });
+
+        it('keeps a description edited while its full text was loading', async () => {
+            let resolveLongText!: (text: string) => void;
+            vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockReturnValue(new Promise((resolve) => (resolveLongText = resolve)));
+            const titled = feedbackFor('Missing abstraction', 'Preview');
+            titled.id = 42;
+            titled.hasLongFeedbackText = true;
+            await showFeedback(titled);
+
+            titled.detailText = 'Edited description';
+            resolveLongText('Full description');
+            await waitForApollonInitialization();
+
+            expect(titled.detailText).toBe('Edited description');
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Edited description');
+        });
+
         it('keeps the preview of a long feedback whose full text fails to load', async () => {
             vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockRejectedValue(new Error('offline'));
             const titled = feedbackFor('Missing abstraction', 'Preview of the description');
@@ -690,6 +729,27 @@ describe('ModelingAssessmentComponent', () => {
 
             expect(stored.text).toBe('Missing abstraction');
             expect(stored.detailText).toBe('Extract an interface.');
+        });
+
+        it('keeps a description too long for text in detailText when the tutor clears the title, and shows it again', async () => {
+            const longDescription = 'Extract an interface. '.repeat(40);
+            const titled = feedbackFor('Missing abstraction', longDescription);
+            await showFeedback(titled);
+
+            const [saved] = comp.generateFeedbackFromAssessment([
+                { modelElementId: RELATIONSHIP_ID, elementType: 'ClassUnidirectional', score: 1, title: '', feedback: longDescription } as any,
+            ]);
+
+            expect(saved.text).toBeUndefined();
+            expect(saved.detailText).toBe(longDescription);
+
+            fixture.componentRef.setInput('resultFeedbacks', [feedbackFor(saved.text, saved.detailText)]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+            expect(assessment.title).toBeUndefined();
+            expect(assessment.feedback).toBe(longDescription);
         });
 
         it('keeps a title without a description through saving and showing it again', async () => {

@@ -30,6 +30,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
+import { MAX_FEEDBACK_TEXT_LENGTH } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { getModelElementType, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
@@ -130,6 +131,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private isUpdatingFromServer = false;
     /** Increments with every server update, so a long feedback text that loads late never overwrites newer feedback. */
     private feedbackGeneration = 0;
+    private loadingLongFeedbackTexts = false;
     protected readonly bottomCenterElevated = signal(false);
 
     constructor() {
@@ -158,9 +160,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
-            this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            untracked(() => this.showFeedbacks(incoming.filter((feedbackElement) => feedbackElement.reference != undefined)));
         });
 
         effect(() => {
@@ -170,7 +170,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
             untracked(() => {
-                editor.setReadonly(readOnly);
+                editor.setReadonly(readOnly || this.loadingLongFeedbackTexts);
                 this.synchronizeAssessmentSelectionSubscription(editor, readOnly);
             });
         });
@@ -269,7 +269,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: this.readOnly(),
+            readonly: this.readOnly() || this.loadingLongFeedbackTexts,
             model: model ? normalizeApollonModel(model) : undefined,
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
@@ -280,7 +280,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
-            if (!this.readOnly()) {
+            if (!this.readOnly() && !this.loadingLongFeedbackTexts) {
                 const assessmentsArray = Object.values(state.assessments);
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessmentsArray);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
@@ -626,7 +626,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * Stores the title and description of an Apollon assessment box in a manual feedback, the way Artemis keeps titled
      * feedback for every exercise type (and sends it to Athena): `text` holds the title and `detailText` the description.
      * Without a title of its own, the description stays in `text` and `detailText` stays empty, so the feedback keeps the
-     * shape it always had. A title without a description keeps an empty `detailText`, which tells it apart from an untitled
+     * shape it always had, unless it is longer than `text` can hold: then it stays in `detailText` and `text` stays empty. A title without a description keeps an empty `detailText`, which tells it apart from an untitled
      * comment when it is shown again.
      */
     private applyTitleAndDescription(feedback: Feedback, assessment: Assessment): void {
@@ -635,6 +635,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (title !== undefined) {
             feedback.text = title;
             feedback.detailText = description ?? '';
+        } else if (description !== undefined && description.length > MAX_FEEDBACK_TEXT_LENGTH) {
+            feedback.text = undefined;
+            feedback.detailText = description;
         } else {
             feedback.text = assessment.feedback;
             feedback.detailText = undefined;
@@ -671,37 +674,59 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private handleFeedback(): void {
         const feedbacks = this.resultFeedbacks();
         if (feedbacks !== undefined) {
-            const generation = ++this.feedbackGeneration;
-            this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
-            this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            const truncated = this.referencedFeedbacks.filter((feedback) => feedback.id !== undefined && feedback.hasLongFeedbackText);
-            if (truncated.length === 0) {
-                this.updateApollonAssessments(this.referencedFeedbacks);
-            } else {
-                void this.showAfterLoadingLongFeedbackTexts(truncated, generation);
-            }
+            this.showFeedbacks(filterInvalidFeedback(feedbacks, this.umlModel()));
         }
     }
 
     /**
-     * A description longer than the server keeps inline arrives as a short preview, with the full text stored separately.
-     * Apollon edits the description in place, so it must receive the full text: saving an edited preview would replace
-     * the full description with it. The assessment boxes are filled once the full texts are loaded. A text that fails to
-     * load keeps its preview, which the server maps back to the full text as long as it stays unchanged.
+     * Makes the given referenced feedback the one the assessment boxes show. A description longer than the server keeps
+     * inline arrives as a short preview, with the full text stored separately. Apollon edits the description in place, so
+     * it must receive the full text: saving an edited preview would replace the full description with it. Until the full
+     * texts are loaded, no path fills the assessment boxes and the editor stays read-only.
+     */
+    private showFeedbacks(referenced: Feedback[]): void {
+        const generation = ++this.feedbackGeneration;
+        this.referencedFeedbacks = referenced;
+        this.updateElementFeedbackMapping(referenced);
+        const truncated = referenced.filter((feedback) => feedback.id !== undefined && feedback.hasLongFeedbackText);
+        if (truncated.length === 0) {
+            this.setLoadingLongFeedbackTexts(false);
+            this.updateApollonAssessments(referenced);
+        } else {
+            this.setLoadingLongFeedbackTexts(true);
+            void this.showAfterLoadingLongFeedbackTexts(truncated, generation);
+        }
+    }
+
+    /**
+     * Loads the full descriptions of truncated feedback, then fills the assessment boxes. A text that fails to load keeps
+     * its preview, which the server maps back to the full text as long as it stays unchanged. A loaded text replaces only
+     * a preview that is still unchanged, and a response for feedback that has since been replaced is ignored.
      */
     private async showAfterLoadingLongFeedbackTexts(truncated: Feedback[], generation: number): Promise<void> {
+        const previews = truncated.map((feedback) => feedback.detailText);
         const fullTexts = await Promise.all(truncated.map((feedback) => this.feedbackService.getLongFeedbackText(feedback.id!).catch(() => undefined)));
         if (generation !== this.feedbackGeneration) {
             return;
         }
         truncated.forEach((feedback, index) => {
             const fullText = fullTexts[index];
-            if (fullText !== undefined) {
+            if (fullText !== undefined && feedback.detailText === previews[index]) {
                 feedback.detailText = fullText;
                 feedback.hasLongFeedbackText = false;
             }
         });
+        this.setLoadingLongFeedbackTexts(false);
         this.updateApollonAssessments(this.referencedFeedbacks);
+    }
+
+    /** Keeps the editor read-only while full descriptions load, so no assessment box can be edited on a preview. */
+    private setLoadingLongFeedbackTexts(loading: boolean): void {
+        if (this.loadingLongFeedbackTexts === loading) {
+            return;
+        }
+        this.loadingLongFeedbackTexts = loading;
+        this.apollonEditor?.setReadonly(untracked(() => this.readOnly()) || loading);
     }
 
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {
@@ -739,7 +764,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private updateApollonAssessments(feedbacks: Feedback[]): void {
         const editor = this.apollonEditor;
-        if (!editor) {
+        // While full descriptions load, the boxes stay empty; the loader fills them once the texts are there.
+        if (!editor || this.loadingLongFeedbackTexts) {
             return;
         }
         this.isUpdatingFromServer = true;

@@ -12,11 +12,13 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
+/** The longest feedback `text` the server stores; a longer description has to go into `detailText`. */
+export const MAX_FEEDBACK_TEXT_LENGTH = 500;
+
 @Service()
 export class ModelingAssessmentService {
     private http = inject(HttpClient);
 
-    private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
     private resourceUrl = 'api/modeling';
 
@@ -124,7 +126,7 @@ export class ModelingAssessmentService {
         }
         return feedback.every(
             (feedbackItem) =>
-                (!feedbackItem.text || feedbackItem.text.length <= this.MAX_FEEDBACK_TEXT_LENGTH) &&
+                (!feedbackItem.text || feedbackItem.text.length <= MAX_FEEDBACK_TEXT_LENGTH) &&
                 (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
         );
     }
