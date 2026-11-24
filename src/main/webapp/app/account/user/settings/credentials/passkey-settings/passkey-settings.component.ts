@@ -53,7 +53,7 @@ export interface DisplayedPasskey extends PasskeyDTO {
         TumAetUiTagComponent,
     ],
     templateUrl: './passkey-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
     protected readonly alertService = inject(AlertService);

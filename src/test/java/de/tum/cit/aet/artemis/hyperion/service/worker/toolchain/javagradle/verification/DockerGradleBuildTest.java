@@ -800,7 +800,7 @@ class DockerGradleBuildTest {
         List<String> phases = new ArrayList<>();
         try (var input = resources.getResource(Path.of("templates/phases/java/plain_gradle.yaml")).getInputStream()) {
             for (var phase : YAMLMapper.builder().build().readTree(input)) {
-                phases.add(phase.required("script").asText());
+                phases.add(phase.required("script").asString());
             }
         }
         var result = sandbox.exec(session, Duration.ofMinutes(3), "sh", "-c",

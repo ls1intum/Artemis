@@ -62,7 +62,7 @@ const UNIT_UNREACHABLE_STATUSES = [403, 404];
 @Component({
     selector: 'jhi-iris-citation-text',
     templateUrl: './iris-citation-text.component.html',
-    styleUrls: ['./iris-citation-text.component.scss'],
+    styleUrls: ['./iris-citation-text.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })

@@ -54,7 +54,7 @@ class AtlasTokenUsageAdvisorTest {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenReturn(response("first-model", true, 100, 20, 0.01), response("last-model", false, 50, 5, lastCost));
 
-        ChatResponse result = client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).toolCallbacks(tool(() -> "found")).call()
+        ChatResponse result = client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found")).call()
                 .chatResponse();
 
         var traces = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
@@ -80,7 +80,7 @@ class AtlasTokenUsageAdvisorTest {
         var priced = response("test", false, 50, 5, 0.003);
         when(model.call(any(Prompt.class))).thenReturn(unknown, priced);
 
-        client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).toolCallbacks(tool(() -> "found")).call().chatResponse();
+        client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found")).call().chatResponse();
 
         var traces = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(repository, times(2)).save(traces.capture());
@@ -99,8 +99,8 @@ class AtlasTokenUsageAdvisorTest {
         List<ChatResponse> innerCalls = new ArrayList<>();
         var worker = client(inner, innerCalls::add);
         client(outer, outerCalls::add).prompt().user("outer").options(OpenAiChatOptions.builder().model("outer"))
-                .toolCallbacks(tool(() -> worker.prompt().user("inner").options(OpenAiChatOptions.builder().model("inner")).toolCallbacks(tool(() -> "found")).call().content()))
-                .call().chatResponse();
+                .tools(tool(() -> worker.prompt().user("inner").options(OpenAiChatOptions.builder().model("inner")).tools(tool(() -> "found")).call().content())).call()
+                .chatResponse();
 
         assertThat(outerCalls).extracting(call -> call.getMetadata().getUsage().getPromptTokens()).containsExactly(10, 20);
         assertThat(innerCalls).extracting(call -> call.getMetadata().getUsage().getPromptTokens()).containsExactly(30, 40);
@@ -112,8 +112,8 @@ class AtlasTokenUsageAdvisorTest {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenReturn(response("test", true, 100, 20, 0.01)).thenThrow(new IllegalStateException("provider unavailable"));
 
-        assertThatThrownBy(() -> client(model, record(accounting(repository))).prompt().user("work").options(OpenAiChatOptions.builder().model("test"))
-                .toolCallbacks(tool(() -> "found")).call().chatResponse()).isInstanceOf(IllegalStateException.class).hasMessageContaining("provider unavailable");
+        assertThatThrownBy(() -> client(model, record(accounting(repository))).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found"))
+                .call().chatResponse()).isInstanceOf(IllegalStateException.class).hasMessageContaining("provider unavailable");
 
         var trace = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(repository).save(trace.capture());
@@ -137,8 +137,7 @@ class AtlasTokenUsageAdvisorTest {
                 throw new IllegalStateException("tool unavailable");
             }
         };
-        assertThatThrownBy(
-                () -> client(model, captured::add).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).toolCallbacks(callback).call().chatResponse())
+        assertThatThrownBy(() -> client(model, captured::add).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(callback).call().chatResponse())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("tool unavailable");
         assertThat(captured).hasSize(1);
     }

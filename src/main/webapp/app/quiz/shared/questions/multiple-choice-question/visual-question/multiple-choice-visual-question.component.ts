@@ -14,7 +14,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
     templateUrl: './multiple-choice-visual-question.component.html',
-    styleUrls: ['../multiple-choice-question.component.scss', '../../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['../multiple-choice-question.component.css', '../../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, FormsModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective, NgClass, ArtemisTranslatePipe],
 })

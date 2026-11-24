@@ -33,6 +33,9 @@ import io.zonky.test.db.provider.postgres.PostgreSQLContainerCustomizer;
 @Lazy
 public class PostgresTmpfsContainerCustomizer {
 
+    // The customizer interface of Zonky 2.8.0, the latest release, hands out the deprecated org.testcontainers.containers.PostgreSQLContainer, so the lambda parameter
+    // carries the deprecation. Remove the suppression once Zonky moves to org.testcontainers.postgresql.PostgreSQLContainer.
+    @SuppressWarnings("deprecation")
     @Bean
     PostgreSQLContainerCustomizer postgresTmpfs() {
         return container -> container.withTmpFs(Map.of("/var/lib/postgresql", "rw,noexec,nosuid"));

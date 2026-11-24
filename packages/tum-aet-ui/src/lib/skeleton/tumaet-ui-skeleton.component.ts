@@ -22,7 +22,7 @@ export type TumAetUiSkeletonShape = 'rectangle' | 'circle';
 @Component({
     selector: 'tumaet-ui-skeleton',
     template: '',
-    styleUrl: './tumaet-ui-skeleton.component.scss',
+    styleUrl: './tumaet-ui-skeleton.component.css',
     host: {
         class: 'tumaet-ui-skeleton',
         'aria-hidden': 'true',

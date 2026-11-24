@@ -25,7 +25,7 @@ import { SshUserSettingsService } from 'app/account/user/settings/credentials/ss
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-key-details.component.html',
-    styleUrls: ['../../../user-settings.scss', '../ssh-user-settings.component.scss'],
+    styleUrls: ['../../../user-settings.css', '../ssh-user-settings.component.css'],
     imports: [
         TranslateDirective,
         DocumentationLinkComponent,
