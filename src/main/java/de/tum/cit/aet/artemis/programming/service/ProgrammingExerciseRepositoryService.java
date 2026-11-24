@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
@@ -588,23 +587,9 @@ public class ProgrammingExerciseRepositoryService {
 
         replacePlaceholders(programmingExercise, buildConfig, resources.repository);
         if (securityFrameworkChoice != null && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            applySecurityFrameworkChoice(repoLocalPath, securityFrameworkChoice);
+            SecurityFrameworkService.applyChoiceToTestTemplate(repoLocalPath, securityFrameworkChoice);
         }
         commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, author);
-    }
-
-    /**
-     * Applies the Security Framework choice to the test template before its first commit. If the template is one the Security Framework cannot manage, e.g.
-     * because an instance overrides it, the template is kept as it is: an exception here would make {@link #setupRepositories} replace all repositories with
-     * empty commits. The client compares the resulting state with the choice and warns the instructor.
-     */
-    private void applySecurityFrameworkChoice(Path repoLocalPath, SecurityFrameworkChoiceDTO securityFrameworkChoice) {
-        try {
-            SecurityFrameworkService.applyChoiceToNewTestRepository(repoLocalPath, securityFrameworkChoice);
-        }
-        catch (BadRequestAlertException e) {
-            log.warn("The Security Framework choice was not applied to the test template: {}", e.getMessage());
-        }
     }
 
     private static Path getJavaProjectTemplatePath(final Path templatePath, final ProjectType projectType) {
