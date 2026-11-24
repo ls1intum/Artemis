@@ -4,7 +4,6 @@
             "points": "Points",
             "conflicts": "Conflicts",
             "assessor": "Assessor: {{firstName}} {{lastName}}",
-            "longFeedbackNotLoaded": "The full text of some feedback could not be loaded. The assessment stays read-only so that this text is not shortened. Reload the page to try again.",
             "noModel": "No model found to display",
             "invalidAssessments": "Your assessments are not valid!",
             "messages": {

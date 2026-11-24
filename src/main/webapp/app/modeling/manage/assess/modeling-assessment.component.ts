@@ -25,8 +25,6 @@ import {
     FeedbackType,
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
-import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
-import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
@@ -78,8 +76,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly feedbackService = inject(FeedbackService);
-    private readonly alertService = inject(AlertService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -131,8 +127,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeResizeFrame?: number;
     private isUpdatingFromServer = false;
-    /** Counts the feedback sets shown, so a long description that loads late never lands in newer feedback. */
-    private feedbackGeneration = 0;
     protected readonly bottomCenterElevated = signal(false);
 
     constructor() {
@@ -161,7 +155,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.showFeedbacks(incoming.filter((feedbackElement) => feedbackElement.reference != undefined));
+            this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
         effect(() => {
@@ -171,7 +167,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
             untracked(() => {
-                editor.setReadonly(readOnly || this.showsPreview);
+                editor.setReadonly(readOnly);
                 this.synchronizeAssessmentSelectionSubscription(editor, readOnly);
             });
         });
@@ -270,7 +266,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: this.readOnly() || this.showsPreview,
+            readonly: this.readOnly(),
             model: model ? normalizeApollonModel(model) : undefined,
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
@@ -281,7 +277,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
-            if (!this.readOnly() && !this.showsPreview) {
+            if (!this.readOnly()) {
                 const assessmentsArray = Object.values(state.assessments);
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessmentsArray);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
@@ -671,56 +667,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private handleFeedback(): void {
         const feedbacks = this.resultFeedbacks();
         if (feedbacks !== undefined) {
-            this.showFeedbacks(filterInvalidFeedback(feedbacks, this.umlModel()));
+            this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
         }
-    }
-
-    /**
-     * Shows the given referenced feedback in the assessment boxes. A description longer than the server keeps inline
-     * arrives as a preview, so its full text is loaded before the box becomes editable.
-     */
-    private showFeedbacks(referenced: Feedback[]): void {
-        const generation = ++this.feedbackGeneration;
-        this.referencedFeedbacks = referenced;
-        this.updateElementFeedbackMapping(referenced);
-        this.updateApollonAssessments(referenced);
-        this.applyReadonly();
-        const truncated = referenced.filter((feedback) => feedback.id !== undefined && feedback.hasLongFeedbackText);
-        if (truncated.length > 0) {
-            void this.loadLongFeedbackTexts(truncated, generation);
-        }
-    }
-
-    /** Replaces the previews with the full descriptions, unless newer feedback arrived meanwhile. */
-    private async loadLongFeedbackTexts(truncated: Feedback[], generation: number): Promise<void> {
-        const fullTexts = await Promise.all(truncated.map((feedback) => this.feedbackService.getLongFeedbackText(feedback.id!).catch(() => undefined)));
-        if (generation !== this.feedbackGeneration) {
-            return;
-        }
-        truncated.forEach((feedback, index) => {
-            const fullText = fullTexts[index];
-            if (fullText !== undefined) {
-                feedback.detailText = fullText;
-                feedback.hasLongFeedbackText = false;
-            }
-        });
-        this.updateApollonAssessments(this.referencedFeedbacks);
-        this.applyReadonly();
-        if (this.showsPreview) {
-            this.alertService.error('artemisApp.modelingAssessment.longFeedbackNotLoaded');
-        }
-    }
-
-    /**
-     * Whether a box shows only the preview of a long description, because its full text is loading or failed to load.
-     * The editor is read-only meanwhile: an edited preview would be saved over the full description.
-     */
-    private get showsPreview(): boolean {
-        return this.referencedFeedbacks.some((feedback) => feedback.hasLongFeedbackText);
-    }
-
-    private applyReadonly(): void {
-        this.apollonEditor?.setReadonly(untracked(() => this.readOnly()) || this.showsPreview);
     }
 
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {

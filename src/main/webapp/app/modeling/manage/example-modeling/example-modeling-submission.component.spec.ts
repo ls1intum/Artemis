@@ -289,6 +289,17 @@ describe('Example Modeling Submission Component', () => {
             expect(comp.umlModel()).toBe(canvasInput);
         });
 
+        it('does not save a comment longer than the server keeps inline', () => {
+            const alert = vi.spyOn(alertService, 'error');
+            comp.onReferencedFeedbackChanged([{ ...mockFeedbackWithReference, text: 'Missing abstraction', detailText: 'x'.repeat(1001) }]);
+
+            comp.saveExampleAssessment();
+
+            expect(alert).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
+            expect(updateRequests).toHaveLength(0);
+            expect(assessmentRequests).toHaveLength(0);
+        });
+
         it('builds queued metadata writes from the latest saved model', () => {
             currentModel.title = 'Second model';
             comp.showAssessment();
