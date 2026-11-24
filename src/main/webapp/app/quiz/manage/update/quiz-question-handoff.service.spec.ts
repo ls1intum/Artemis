@@ -14,24 +14,38 @@ describe('QuizQuestionHandoffService', () => {
     });
 
     it('should hand over the offered questions once', () => {
-        service.offer([question('a'), question('b')]);
+        service.offer(1, [question('a'), question('b')]);
 
-        expect(service.take().map((q) => q.id)).toEqual(['a', 'b']);
-        expect(service.take()).toEqual([]);
+        expect(service.take(1).map((q) => q.id)).toEqual(['a', 'b']);
+        expect(service.take(1)).toEqual([]);
     });
 
     it('should replace earlier offers', () => {
-        service.offer([question('a')]);
-        service.offer([question('b')]);
+        service.offer(1, [question('a')]);
+        service.offer(1, [question('b')]);
 
-        expect(service.take().map((q) => q.id)).toEqual(['b']);
+        expect(service.take(1).map((q) => q.id)).toEqual(['b']);
     });
 
     it('should return a copy that later offers do not change', () => {
         const offered = [question('a')];
-        service.offer(offered);
+        service.offer(1, offered);
         offered.push(question('b'));
 
-        expect(service.take()).toHaveLength(1);
+        expect(service.take(1)).toHaveLength(1);
+    });
+
+    it('should hand nothing to another course and drop the offer', () => {
+        service.offer(1, [question('a')]);
+
+        expect(service.take(2)).toEqual([]);
+        expect(service.take(1)).toEqual([]);
+    });
+
+    it('should drop the offer when cleared', () => {
+        service.offer(1, [question('a')]);
+        service.clear();
+
+        expect(service.take(1)).toEqual([]);
     });
 });

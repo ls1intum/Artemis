@@ -171,7 +171,10 @@ describe('QuizQuestionPoolComponent', () => {
         component.createQuiz({ competencyIds: [9], count: 2 });
 
         expect(poolService.selectQuestions).toHaveBeenCalledWith(1, { competencyIds: [9], count: 2 });
-        expect(offerSpy).toHaveBeenCalledWith(drawn.map((q) => q.question));
+        expect(offerSpy).toHaveBeenCalledWith(
+            1,
+            drawn.map((q) => q.question),
+        );
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'quiz-exercises', 'new']);
         expect(infoSpy).not.toHaveBeenCalled();
         expect(component.createQuizDialogVisible()).toBe(false);
@@ -195,6 +198,19 @@ describe('QuizQuestionPoolComponent', () => {
         expect(router.navigate).not.toHaveBeenCalled();
         expect(component.isCreatingQuiz()).toBe(false);
         expect(component.createQuizDialogVisible()).toBe(false);
+    });
+
+    it('should drop the handed-over questions when the quiz editor does not open', async () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] }));
+        vi.mocked(router.navigate).mockResolvedValue(false);
+        const clearSpy = vi.spyOn(handoffService, 'clear');
+
+        component.createQuiz({ competencyIds: [9], count: 2 });
+        await Promise.resolve();
+
+        expect(clearSpy).toHaveBeenCalledOnce();
+        expect(handoffService.take(1)).toEqual([]);
     });
 
     it('should say so when the draw yields fewer questions than requested', () => {

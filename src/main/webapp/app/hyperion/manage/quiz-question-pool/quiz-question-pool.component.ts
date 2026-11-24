@@ -454,9 +454,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     if (questions.length < selection.requested) {
                         this.alertService.info('artemisApp.hyperion.quizQuestionPool.createQuiz.fewer', { selected: questions.length, requested: selection.requested });
                     }
-                    this.handoffService.offer(questions);
+                    this.handoffService.offer(courseId, questions);
                     this.createQuizDialogVisible.set(false);
-                    void this.router.navigate(['/course-management', courseId, 'quiz-exercises', 'new']);
+                    this.router.navigate(['/course-management', courseId, 'quiz-exercises', 'new']).then(
+                        (opened) => {
+                            if (!opened) {
+                                this.handoffService.clear();
+                            }
+                        },
+                        () => this.handoffService.clear(),
+                    );
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.createQuiz.failed'),
             });

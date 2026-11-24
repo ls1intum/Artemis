@@ -432,7 +432,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
 
         if (!this.quizExercise().id && !this.isImport()) {
-            this.appendAiGeneratedQuestions(this.quizQuestionHandoffService.take());
+            this.appendAiGeneratedQuestions(this.quizQuestionHandoffService.take(this.courseId()));
         }
     }
 

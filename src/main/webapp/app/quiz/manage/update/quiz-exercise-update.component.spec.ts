@@ -2369,7 +2369,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     ],
                 },
             ];
-            handoffService.offer(handedOver);
+            handoffService.offer(123, handedOver);
             const newQuiz = new QuizExercise(course, undefined);
             newQuiz.title = '';
             newQuiz.duration = 600;
@@ -2377,25 +2377,26 @@ describe('QuizExerciseUpdateComponent', () => {
             newQuiz.isEditable = true;
             comp.quizExercise.set(newQuiz);
             comp.course = course;
+            comp.courseId.set(123);
 
             comp.init();
 
             expect(comp.quizExercise().quizQuestions).toHaveLength(1);
             expect((comp.quizExercise().quizQuestions?.[0] as MultipleChoiceQuestion).title).toBe('Pooled question');
-            expect(handoffService.take()).toEqual([]);
+            expect(handoffService.take(123)).toEqual([]);
         });
 
         it('should leave handed-over questions alone when an existing quiz is initialised', () => {
             vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
             const handoffService = TestBed.inject(QuizQuestionHandoffService);
-            handoffService.offer([{ id: 'pool-1', type: 'single-choice', title: 'Pooled question', questionText: 'From the pool', options: [{ text: 'A', correct: true }] }]);
+            handoffService.offer(123, [{ id: 'pool-1', type: 'single-choice', title: 'Pooled question', questionText: 'From the pool', options: [{ text: 'A', correct: true }] }]);
             comp.quizExercise().quizQuestions = [];
             comp.course = course;
 
             comp.init();
 
             expect(comp.quizExercise().quizQuestions).toHaveLength(0);
-            expect(handoffService.take()).toHaveLength(1);
+            expect(handoffService.take(123)).toHaveLength(1);
         });
 
         it('should append generated questions to existing quiz questions', () => {
