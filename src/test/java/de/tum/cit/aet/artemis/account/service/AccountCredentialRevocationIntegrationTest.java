@@ -566,12 +566,12 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         User updated = userCreationService.updateUser(userWithAuthorities, update);
         userService.activateUser(updated);
 
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
                 .as("one activation produces one audit entry").hasSize(1);
     }
 
     private List<AuditEvent> deactivationEvents() {
-        return auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
+        return auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
     }
 
     /**
@@ -582,7 +582,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      * {@code AuditEventConstants.SECURITY_EVENT_TYPES}).
      */
     private void assertAccountStateAudited(String expectedType) {
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(expectedType);
             assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
             assertThat(event.getData()).containsEntry("user", user.getLogin());
@@ -700,7 +700,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
         // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
         // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
             assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
         });

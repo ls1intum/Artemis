@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             [attr.aria-label]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
             [placeholder]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
             tumAetUiInput
-            size="small"
+            tumAetUiInputSize="small"
             class="max-w-56 min-w-24 flex-1"
             type="search"
             name="searchTerm"

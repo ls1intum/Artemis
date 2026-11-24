@@ -80,6 +80,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     readonly userColumns = computed<ColumnDef<User>[]>(() => [
         { field: 'id', headerKey: 'global.field.id', sort: true, width: '80px', templateRef: this.userIdTemplate() },
         { field: 'login', headerKey: 'artemisApp.userManagement.login', sort: true, width: '200px' },
+        { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.userManagement.registrationNumber', sort: true, width: '200px' },
         { field: 'name', headerKey: 'artemisApp.userManagement.name', sort: true, width: '250px' },
         { field: 'email', headerKey: 'artemisApp.userManagement.email', sort: true },
     ]);
