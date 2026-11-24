@@ -83,7 +83,7 @@
     </div>
 </div>
 @if (examNotFinished()) {
-    <div class="mt-6!">
+    <div class="mt-6">
         <tumaet-ui-message severity="info" id="assessment-not-possible-yet">
             <span jhiTranslate="error.assessmentNotPossibleExamRunning" [translateValues]="{ date: exam()?.latestIndividualEndDate | artemisDate }"></span>
         </tumaet-ui-message>
@@ -116,7 +116,7 @@
         </div>
     }
     @if (isTestRun() && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
-        <tumaet-ui-message class="mt-6! block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
+        <tumaet-ui-message class="mt-6" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
     }
     @if (course()) {
         <div class="space-y-6 pb-6">
@@ -140,11 +140,11 @@
                 />
             </div>
             <tumaet-ui-panel class="min-w-0 overflow-hidden">
-                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-6!">
+                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-6">
                     <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></span>
                     @if (!isTestRun() && allExercises().length > 0) {
-                        <div class="flex flex-wrap justify-end gap-x-12! gap-y-4!">
-                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
+                        <div class="flex flex-wrap justify-end gap-x-12 gap-y-4">
+                            <label class="cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
                                 <tumaet-ui-checkbox
                                     inputId="field_hideFinishedExercise"
                                     name="hideFinishedExercise"
@@ -153,7 +153,7 @@
                                 />
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></span>
                             </label>
-                            <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
+                            <label class="cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
                                 <tumaet-ui-checkbox inputId="field_hideOptional" name="hideOptional" [ngModel]="hideOptional()" (ngModelChange)="triggerOptionalExercises()" />
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></span>
                             </label>
@@ -184,7 +184,7 @@
                                     <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
                                 </th>
                                 @if (!isTestRun()) {
-                                    <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
+                                    <th class="w-[20rem] min-w-[18rem] xl:w-[44%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
                                 }
                                 <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 xl:table-cell xl:w-[7%]">
                                     <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
@@ -204,7 +204,7 @@
                                         <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
                                     </th>
                                 }
-                                <th class="w-10 min-w-10 text-end xl:w-[16%]">
+                                <th class="w-10 min-w-10 text-right xl:w-[8%] 2xl:w-[16%]">
                                     <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
                                 </th>
                             </tr>
@@ -233,7 +233,7 @@
                                         <tumaet-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tumaet-ui-tag>
                                     </td>
                                     @if (!isTestRun()) {
-                                        <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
+                                        <td class="w-[20rem] min-w-[18rem] xl:w-[44%] 2xl:w-[42%]">
                                             @if (exercise.tutorParticipations && exercise.tutorParticipations![0]) {
                                                 <jhi-tutor-participation-graph
                                                     class="block w-full"
@@ -297,7 +297,7 @@
                                             </div>
                                         </td>
                                     }
-                                    <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
+                                    <td class="w-10 min-w-10 whitespace-nowrap xl:w-[8%] 2xl:w-[16%]">
                                         <div class="flex flex-wrap justify-end gap-2">
                                             @if (!exercise.teamMode) {
                                                 <ng-container>
@@ -312,7 +312,7 @@
                                                         size="small"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                        <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                                                        <span class="hidden 2xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                                     </a>
                                                 </ng-container>
                                             } @else {
@@ -326,7 +326,7 @@
                                                     size="small"
                                                 >
                                                     <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                    <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
+                                                    <span class="hidden 2xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
                                                 </a>
                                             }
                                         </div>
@@ -338,7 +338,7 @@
                 </tumaet-ui-table-layout>
             </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <tumaet-ui-message severity="warn" class="block">
+                <tumaet-ui-message severity="warn">
                     <span class="flex flex-col gap-2">
                         <span class="flex items-center gap-2">
                             <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />
@@ -383,7 +383,7 @@
             }
             @if (stats().tutorLeaderboardEntries?.length) {
                 <tumaet-ui-panel class="min-w-0 overflow-hidden">
-                    <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-6!">
+                    <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-6">
                         @if (!isExamMode()) {
                             <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle"></span>
                         }

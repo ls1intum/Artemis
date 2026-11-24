@@ -9,7 +9,7 @@
         </div>
         @if (showOnboardingLink()) {
             <a class="step-hero-action" [routerLink]="['/course-management', course().id, 'onboarding']">
-                <fa-icon [icon]="faRocket" class="me-1" />
+                <fa-icon [icon]="faRocket" class="me-1!" />
                 <span jhiTranslate="artemisApp.course.onboarding.actions.restartSetup"></span>
             </a>
         }

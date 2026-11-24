@@ -8,15 +8,11 @@ import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
 import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
 import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -29,13 +25,9 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         ButtonComponent,
         LeaderboardComponent,
         TranslateDirective,
-        DialogModule,
-        FormsModule,
         FontAwesomeModule,
-        ToggleSwitchModule,
         LeagueBadgeComponent,
-        ButtonModule,
-        TooltipModule,
+        TumAetUiButtonDirective,
         QuizTrainingDialogComponent,
     ],
     templateUrl: './course-training.component.html',

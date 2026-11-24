@@ -40,7 +40,7 @@ on:
         required: false
     outputs:
       e2e_result:
-        description: 'Raw aggregated E2E test outcome (success|failure|error), for the CI Summary
+        description: 'Raw aggregated E2E outcome (success|failure|error|superseded), for the CI Summary
           table. This is the unexonerated signal — `failure` here includes known-flaky-only runs
           that report-results exonerates. The caller `e2e` job conclusion is the exonerated verdict
           (failures without history also remain blocking). `e2e` is part of the required
@@ -138,7 +138,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -173,7 +174,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -185,11 +186,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 1
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -199,13 +200,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase1-test-results/results.xml
@@ -357,7 +358,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -389,7 +391,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -401,11 +403,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 2
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -415,13 +417,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase2-test-results/results.xml
@@ -565,7 +567,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -596,7 +599,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -607,10 +610,10 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -619,7 +622,7 @@ jobs:
       - name: All Tests Report (PR)
         id: test-report
         uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (PR)'
@@ -632,13 +635,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
@@ -729,9 +732,41 @@ jobs:
               });
             }
 
+  # The caller has acquired the develop concurrency slot before this job runs. Compare the
+  # immutable build SHA before requesting a self-hosted runner for the full suite.
+  develop-e2e-tip:
+    name: Check develop tip for E2E
+    if: ${{ !inputs.is_pr && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      current: ${{ steps.tip.outputs.current }}
+    steps:
+      - name: Compare built revision with develop
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -Eeuo pipefail
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/develop" --jq '.object.sha')
+          [[ "$tip" =~ ^[a-f0-9]{40}$ && "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          if [[ "$tip" == "$COMMIT_SHA" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo "Develop advanced to \`$tip\`. Full E2E for \`$COMMIT_SHA\` was superseded." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
-    if: ${{ !inputs.is_pr }}
+    needs: develop-e2e-tip
+    if: >-
+      !cancelled() && !inputs.is_pr &&
+      ((needs.develop-e2e-tip.result == 'skipped' && (github.event_name != 'push' || github.ref != 'refs/heads/develop')) ||
+       (needs.develop-e2e-tip.result == 'success' && needs.develop-e2e-tip.outputs.current == 'true'))
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
@@ -756,7 +791,8 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -787,10 +823,10 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -798,7 +834,7 @@ jobs:
 
       - name: All Tests Report (Non-PR)
         uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (Multi-Node)'
@@ -811,7 +847,7 @@ jobs:
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
@@ -828,7 +864,7 @@ jobs:
   # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
   report-results:
     name: Report E2E Overall Status
-    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
+    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr, develop-e2e-tip]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -843,6 +879,9 @@ jobs:
         id: overall-status
         env:
           IS_PR: ${{ inputs.is_pr }}
+          DEVELOP_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+          DEVELOP_TIP_JOB: ${{ needs.develop-e2e-tip.result }}
+          DEVELOP_TIP_CURRENT: ${{ needs.develop-e2e-tip.outputs.current }}
           RUN_FULL_SUITE: ${{ inputs.run_full_suite }}
           RUN_ALL_TESTS: ${{ needs.determine-tests.outputs.run_all_tests }}
           RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
@@ -873,6 +912,18 @@ jobs:
           ALL_NON_PR_JOB: ${{ needs.run-e2e-all-non-pr.result }}
         run: |
           set -Eeuo pipefail
+          develop_tip="${DEVELOP_TIP_JOB:-}:${DEVELOP_TIP_CURRENT:-}"
+          if [ "${DEVELOP_PUSH:-false}" = true ] && [ "$IS_PR" = false ] &&
+            [ "$develop_tip" = success:false ] && [ "$ALL_NON_PR_JOB" = skipped ]; then
+            {
+              echo 'status=superseded'
+              echo 'scope=Superseded develop E2E'
+              echo 'conclusion=skipped'
+              echo 'description=A newer develop revision superseded this E2E suite'
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # `status` is the raw honest outcome (any `failure` wins; else the first `success`; else
           # `error`). It feeds the `status` output that CI Summary renders and never hides a failure.
           status=error
@@ -907,6 +958,9 @@ jobs:
           # `skipped` is the normal not-selected-path result (e.g. run-all on a phased run) and must pass;
           # an empty/unknown result is treated as blocking (fail closed).
           any_job_failed=false
+          if [ "${DEVELOP_PUSH:-false}" = true ] && [ "$develop_tip" != success:true ]; then
+            any_job_failed=true
+          fi
           for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB"; do
             case "$r" in
               success|skipped) ;;
@@ -1022,7 +1076,7 @@ jobs:
       # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
       # composite must be on disk before its `uses:` resolves.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: always()
+        if: always() && inputs.is_pr
         with:
           sparse-checkout: .github/actions
           fetch-depth: 1
@@ -1114,7 +1168,7 @@ jobs:
 
       # Fail the job (reds the run) on a real/infra/unclassified verdict; pass on success or an
       # exonerated flaky-only run. Runs last, after the PR comment finalises, and always. Fail-safe:
-      # any verdict other than success/neutral — including an empty one — reds the run.
+      # only success, neutral or a verified superseded skip passes.
       - name: Gate the run (and the required merge check) on the E2E verdict
         if: always()
         env:
@@ -1122,6 +1176,10 @@ jobs:
           DESCRIPTION: ${{ steps.overall-status.outputs.description }}
         run: |
           set -Eeuo pipefail
+          if [ "$CONCLUSION" = skipped ]; then
+            echo "::notice::$DESCRIPTION"
+            exit 0
+          fi
           if [ "$CONCLUSION" = success ] || [ "$CONCLUSION" = neutral ]; then
             echo "E2E verdict: ${DESCRIPTION:-passed} — not a real regression, run stays green."
             exit 0

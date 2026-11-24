@@ -3,9 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement, viewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
@@ -39,12 +38,14 @@ describe('CourseUsersSelectorComponent', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
+        fixture.destroy();
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
     });
 
     beforeEach(async () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule],
             providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }, provideTranslateService()],
         });
         fixture = TestBed.createComponent(WrapperComponent);
@@ -111,10 +112,13 @@ describe('CourseUsersSelectorComponent', () => {
             expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
             expectDropdownItems(['MHMortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
-            getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
+            getDropdownOptions()[0].click();
             fixture.changeDetectorRef.detectChanges();
             vi.advanceTimersByTime(0);
             expect(userSelectorComponent.selectedUsers()).toEqual([user]);
+            // the search input is empty again and the dropdown is closed
+            expect(getNativeInput(fixture.debugElement.nativeElement).value).toBe('');
+            expect(getDropdownOptions()).toHaveLength(0);
 
             // now we delete the user again from the selected users
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
@@ -152,28 +156,140 @@ describe('CourseUsersSelectorComponent', () => {
         });
     });
 
+    describe('search input', () => {
+        const user = generateExampleUserPublicInfoDTO({});
+        let searchStub: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            searchStub = vi.spyOn(courseManagementServiceMock, 'searchUsers').mockReturnValue(of(new HttpResponse({ body: [user], status: 200 })));
+        });
+
+        function search(term: string) {
+            changeInput(fixture.debugElement.nativeElement, term);
+            vi.advanceTimersByTime(1000);
+            fixture.changeDetectorRef.detectChanges();
+        }
+
+        it('should give the input an id derived from the host id and mark the results for end-to-end tests', () => {
+            const host: HTMLElement = fixture.debugElement.query(By.directive(CourseUsersSelectorComponent)).nativeElement;
+            expect(host.id).toMatch(/^users-selector\d+$/);
+            expect(getNativeInput(host).id).toBe(`${host.id}-search-input`);
+
+            search('test');
+
+            expect(document.querySelectorAll('.cdk-overlay-container [data-testid="user-search-result"]')).toHaveLength(1);
+        });
+
+        it('should say that it is searching instead of finding nothing while the request is pending', () => {
+            const response = new Subject<HttpResponse<UserPublicInfoDTO[]>>();
+            searchStub.mockReturnValue(response);
+
+            search('test');
+
+            expect(userSelectorComponent.isSearching()).toBe(true);
+            expectDropdownItems(['artemisApp.userSelector.searchingText']);
+
+            response.next(new HttpResponse({ body: [user], status: 200 }));
+            response.complete();
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(userSelectorComponent.isSearching()).toBe(false);
+            expectDropdownItems(['MHMortimer of Sto Helit (mort)']);
+        });
+
+        it('should not search for fewer than three characters while students are included', () => {
+            search('te');
+
+            expect(searchStub).not.toHaveBeenCalled();
+            expect(getDropdownOptions()).toHaveLength(0);
+        });
+
+        it('should search for a short term once students are excluded and offer the users on focus', () => {
+            fixture.debugElement.nativeElement.querySelector('#students').click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(userSelectorComponent.searchStudents()).toBe(false);
+
+            search('te');
+
+            // focusing the input already offers the tutors and instructors, typing narrows them down
+            expect(searchStub).toHaveBeenCalledTimes(2);
+            expect(searchStub).toHaveBeenNthCalledWith(1, 1, '', ['tutors', 'instructors']);
+            expect(searchStub).toHaveBeenNthCalledWith(2, 1, 'te', ['tutors', 'instructors']);
+            expectDropdownItems(['MHMortimer of Sto Helit (mort)']);
+        });
+
+        it('should repeat the search with the remaining roles when a filter changes', () => {
+            search('test');
+            expect(searchStub).toHaveBeenLastCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
+
+            fixture.debugElement.nativeElement.querySelector('#tutors').click();
+            vi.advanceTimersByTime(0);
+
+            expect(searchStub).toHaveBeenCalledTimes(2);
+            expect(searchStub).toHaveBeenLastCalledWith(1, 'test', ['students', 'instructors']);
+        });
+
+        it('should not search when a filter changes while the input is empty', () => {
+            fixture.debugElement.nativeElement.querySelector('#tutors').click();
+            vi.advanceTimersByTime(0);
+
+            expect(searchStub).not.toHaveBeenCalled();
+        });
+
+        it('should not offer any user when no role is searched', () => {
+            fixture.debugElement.nativeElement.querySelector('#students').click();
+            fixture.debugElement.nativeElement.querySelector('#tutors').click();
+            fixture.debugElement.nativeElement.querySelector('#instructors').click();
+            fixture.changeDetectorRef.detectChanges();
+
+            search('test');
+
+            expect(searchStub).not.toHaveBeenCalled();
+            expect(userSelectorComponent.suggestions()).toEqual([]);
+        });
+
+        it('should not offer users that are already selected', () => {
+            userSelectorComponent.selectedUsers.set([user]);
+
+            search('test');
+
+            expect(searchStub).toHaveBeenCalledOnce();
+            expect(userSelectorComponent.suggestions()).toEqual([]);
+        });
+
+        it('should tell the user when the search failed', () => {
+            searchStub.mockReturnValue(throwError(() => new Error('failed')));
+
+            search('test');
+
+            expect(userSelectorComponent.searchFailed()).toBe(true);
+            expect(userSelectorComponent.isSearching()).toBe(false);
+            expect(fixture.debugElement.nativeElement.textContent).toContain('artemisApp.userSelector.searchFailedText');
+        });
+    });
+
     function getNativeInput(element: HTMLElement): HTMLInputElement {
-        return <HTMLInputElement>element.querySelector('input');
+        return <HTMLInputElement>element.querySelector('input[type="text"]');
     }
 
     function changeInput(element: any, value: string) {
         const input = getNativeInput(element);
+        input.focus();
         input.value = value;
         const evt = new Event('input', { bubbles: true, cancelable: false });
         input.dispatchEvent(evt);
     }
 
-    function getDropdownButtons(element: DebugElement): DebugElement[] {
-        return Array.from(element.queryAll(By.css('button.dropdown-item')));
+    function getDropdownOptions(): HTMLElement[] {
+        return Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container li[role="option"]'));
     }
 
     function expectDropdownItems(dropdownEntries: string[]): void {
-        const completion = document.querySelector('ngb-typeahead-window');
-        const pages = completion!.querySelectorAll('button.dropdown-item');
-        expect(pages).toHaveLength(dropdownEntries.length);
+        const options = getDropdownOptions();
+        expect(options).toHaveLength(dropdownEntries.length);
         for (let i = 0; i < dropdownEntries.length; i++) {
             const resultDef = dropdownEntries[i];
-            expect(normalizeText(pages[i].textContent)).toEqual(resultDef);
+            expect(normalizeText(options[i].textContent)).toEqual(resultDef);
         }
     }
 

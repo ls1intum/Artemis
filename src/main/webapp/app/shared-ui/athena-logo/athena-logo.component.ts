@@ -32,7 +32,7 @@ export const ATHENA_LOGO_PATH = 'public/images/athena/athena-logo.png';
 
             // A filter replaces rather than extends the one above, so the dark variant repeats the shadow. Inverting
             // first casts it from the recoloured silhouette, leaving it dark exactly as the Iris logo's stays.
-            :host-context(html[prime-ng-use-dark-theme='true']) .athena-logo {
+            :host-context(html[data-theme='dark']) .athena-logo {
                 filter: invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
             }
         `,

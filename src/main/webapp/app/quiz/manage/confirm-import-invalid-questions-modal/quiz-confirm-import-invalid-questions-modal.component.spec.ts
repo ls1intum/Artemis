@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from './quiz-confirm-import-invalid-questions-modal.component';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -9,20 +9,20 @@ import { TranslateService } from '@ngx-translate/core';
 describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
     let component: QuizConfirmImportInvalidQuestionsModalComponent;
     let fixture: ComponentFixture<QuizConfirmImportInvalidQuestionsModalComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     const invalidQuestions: ValidationReason[] = [
         { translateKey: 'invalidQuestion1', translateValues: {} },
         { translateKey: 'invalidQuestion2', translateValues: { someValue: 'test' } },
     ];
-    const dialogRefMock = { close: vi.fn() } as unknown as DynamicDialogRef;
-    const dialogConfigMock = { data: { invalidFlaggedQuestions: invalidQuestions } } as DynamicDialogConfig;
+    const dialogRefMock = { close: vi.fn() } as unknown as TumAetUiDialogRef;
+    const dialogConfigMock = new TumAetUiDialogConfig({ data: { invalidFlaggedQuestions: invalidQuestions } });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRefMock },
-                { provide: DynamicDialogConfig, useValue: dialogConfigMock },
+                { provide: TumAetUiDialogRef, useValue: dialogRefMock },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfigMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -31,7 +31,7 @@ describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
 
         fixture = TestBed.createComponent(QuizConfirmImportInvalidQuestionsModalComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
     });
 
     afterEach(() => {

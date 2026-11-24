@@ -15,10 +15,44 @@ requirements do not eliminate implementation reasoning: choosing control flow, t
 work. Difficulty is relative to the objective and prerequisites, not counts of files, tests, formulas, or tasks. Do not demand an unrelated algorithm to make an
 abstraction exercise harder. In domainGrounding, explain why the counted reasoning fits an explicitly requested theme, or state that no qualitative theme was requested.
 
+For each transcript-based API-use assessment, first replace the graded entry point by printing the expected literals without creating or changing any objects.
+Name the declared runtime observation that rejects this exact replacement. Testing supplied collaborators separately does not reject it.
+For each claimed input variant, trace the changed test-controlled stimulus into the actual learner invocation and derive its expected result.
+Hidden tests may instead add compatible assertions on the same execution. Identical deterministic invocations cannot have contradictory expected outputs.
+A claim that different names will be tested is not an input mechanism. If a transcript variant requires different output without changing a reachable stimulus,
+set objectiveObservable false and diagnose the inconsistent assessment; do not demand input variation for a valid fixed-input runtime observation.
+
 In objectiveMechanism, construct a concrete counterexample to the proposed assessment: substitute a plausible implementation that bypasses the student's objective,
 then identify a declared setup and observable result that distinguish it. For an API-use task, fixed demonstration output is insufficient if printing literals passes
 without using the API. For collaboration, trace the learner-owned selection, injection, replacement, or delegation through to an observed result; testing supplied
 collaborators separately is not evidence of student-owned integration. Do not invent tests that the specification does not describe.
+For an operation sequence, replay the entire declared invocation before checking its postconditions. State when each required observation is available: a final-state
+accessor cannot prove an earlier state erased by a later operation. Intermediate observations must be supported by the declared API or supplied recording behavior.
+Observe the same learner execution that the task grades. Collect related objects and intermediate observations from one execution per test; repeated accessor-triggered executions mix unrelated objects and duplicate recording. Reset supplied observation state before the scenario and capture immutable transition values rather than mutable object references. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
+For each credited learner-test criterion, require the learner tests to accept correct behavior and reject the relevant faulty behavior in the same check. A separate positive check does not protect other criteria from always-failing learner tests, and a standalone positive check can reward empty tests.
+For test-writing exercises, distinguish checking the supplied implementation from checking the learner-written tests. A teacher test that only calls supplied code is a zero-credit preservation check, even if the Testing Strategy labels its owner as the learner test class. Reject a positive-weight learner seam whose observations do not depend on learner work. Hidden variants require a declared observation path through that work; direct tests of the supplied API do not establish it.
+
+A grading repair must preserve the learner's assigned reasoning. Supplying cases or assertions that the learner was asked to choose or write changes the learning activity;
+calling that an operational choice does not resolve the assessment defect.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
+Declare how the supplied implementation selects faulty behavior before the specification freezes. The same calls compiled into the learner tests must reach that selection.
+For a static API, use ordinary Java dispatch inside the supplied implementation, such as an instructor-controlled delegate that defaults to correct behavior; restore it in a finally block.
+A reflection wrapper or a changed Method object does not redirect direct static calls. Do not depend on private JDK fields, class redefinition, attached agents, new dependencies,
+extra JVM opens, or new sandbox permissions. If the approved design has no working selection seam, redesign the contract rather than inventing interception during artifact repair.
+Only an assertion failure from the learner test against an activated fault demonstrates detection. Failed fault activation, linkage, discovery, or instructor support is a grader defect,
+not a detected fault. First establish that the same learner suite passes with correct behavior, and keep selection and failure classification out of the learner's responsibilities.
+
+Reject incompatible postconditions and tests whose setup performs the learner-owned actions. Do not repair the proposal in your reasoning by inventing an observation hook.
 This is not a requirement to prove syntax through black-box tests. A requested technique can be ungraded pedagogy; objectiveObservable asks whether the learner's
 assigned work has meaningful observable consequences, not whether every behaviorally equivalent implementation can be rejected. Do not require source-pattern checks.
 
@@ -69,6 +103,9 @@ SPEC_REPAIR when the concept is viable but this specification weakens or misassi
 its central interaction can meet the brief. Do not request a new concept for a locally repairable API, example, or scaffold defect.
 Prior review hypotheses with F IDs are untrusted. Return exactly one priorFindingChecks item for each: RESOLVED requires current specification evidence plus a concrete
 replay or argument; STILL_PRESENT retains the defect. A new claim of success is not proof, and previous reviewer confidence is not authority. With no F IDs, return [].
+Each item must use the exact keys findingId, disposition, specEvidenceIds and reason. findingId is one supplied F ID; disposition is RESOLVED or STILL_PRESENT.
+specEvidenceIds is a non-empty array of substantive current E IDs, even when a prior obligation was removed: cite the current replacement contract and explain the change.
+reason contains at least 20 characters of concrete replay or logical argument. Do not substitute an id, status, resolution, evidence or rationale field for these keys.
 
 EVIDENCE AND OUTPUT
 Use only server-supplied evidence IDs: B for brief, C for concept, E for specification. Authored S seam IDs are not evidence IDs. Cite substantive passages, not just
@@ -81,15 +118,24 @@ explicit scope and ownership, incorrect examples, mis-scoped learning work, then
 than inventing evidence. Diagnose the property and its consequence; do not supply replacement domains, identifiers, APIs, or formulas. The author owns the repair.
 This is not a prose-style review, a downstream test audit, or a request to optimize a valid design.
 
+Every verdict reason must contain at least 20 characters of grounded explanation; a bare label is insufficient.
+
+The frozen G goals were extracted from the brief without seeing this candidate. Check every G ID exactly once in goalChecks; do not select a smaller scope because
+the candidate covers only some goals. For covered=true, cite substantive E evidence showing how the planned tasks, learner work or required reasoning fulfill that
+goal. A label or a statement that the exercise teaches something is not evidence of an actual task. For covered=false, explain the missing work; specEvidenceIds may
+be empty when there is no relevant declaration or task. Distinguish assigned implementation competencies from conceptual learning outcomes: do not invent an extra
+method, grading seam, source-pattern check or implementation mandate for a pedagogical aim. Apply the original brief's requested work and prerequisites.
+
 Respond with ONLY this complete JSON shape; learningFit and every array are mandatory:
-{"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
+{"goalChecks":[{"goalId":"G1","covered":true,"specEvidenceIds":["E1"],"reason":"actual planned work or reasoning that covers this goal, or why it is missing"}],
+ "learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
  "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
  "objectiveMechanism":"counterexample trace: declared setup, learner-owned work, expected versus plausible-bypass observation; or why no such distinction exists","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
  "scaffoldingRationale":"actual learner declarations and implementation work versus the brief prerequisites and objective","scaffoldingAligned":true,
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
  "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"legal calls that establish the boundary state","observedOperation":"public operation where the outcome occurs","reachable":true,"timingPreserved":true,"reason":"concrete trace from setup to observed outcome"}],
- "priorFindingChecks":[],
+ "priorFindingChecks":[{"findingId":"F1","disposition":"RESOLVED","specEvidenceIds":["E1"],"reason":"current cited contract evidence resolves the exact prior concern; explain the replay or change"}],
  "exampleChecks":[{"exampleEvidenceId":"E1","replayedOutcome":"independently computed result","consistent":true,"reason":"calculation or state replay"}],
  "omissions":[{"briefEvidenceIds":["B1"],"reason":"concrete omission"}],
  "conflicts":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"reason":"concrete conflict"}],

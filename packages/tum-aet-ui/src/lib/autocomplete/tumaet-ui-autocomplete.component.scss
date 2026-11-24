@@ -1,4 +1,6 @@
-:host {
-    display: block;
-    max-width: 100%;
+@layer tumaet-ui {
+    :host {
+        display: block;
+        max-width: 100%;
+    }
 }

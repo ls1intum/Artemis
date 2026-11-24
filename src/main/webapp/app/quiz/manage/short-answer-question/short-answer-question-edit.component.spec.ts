@@ -16,7 +16,6 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -70,7 +69,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 MockDirective(CdkDragHandle),
                 MockDirective(CdkDragPlaceholder),
                 MockDirective(CdkDropListGroup),
-                MockDirective(NgbCollapse),
                 MockComponent(FaIconComponent),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
@@ -752,7 +750,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
         const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
 
-        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(titleInput?.getAttribute('aria-invalid')).toBe('true');
         expect(feedback).not.toBeNull();
     });
 
@@ -767,7 +765,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(titleInput).not.toBeNull();
         expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
-        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(titleInput?.getAttribute('aria-invalid')).toBe('true');
         expect(feedback).not.toBeNull();
     });
 

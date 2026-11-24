@@ -24,6 +24,13 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS builder
 
+# The downloaded Node 26 ARM64 binary links libatomic.so.1, which the JDK base image
+# does not include. Install it before Gradle bootstraps pnpm.
+# hadolint ignore=DL3008
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends libatomic1 \
+  && rm -rf /var/lib/apt/lists/*
+
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
 # pnpm step below fails loudly and these can be reinstated.
@@ -104,16 +111,58 @@ ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 
 WORKDIR /extract
 COPY --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
-# `jarmode=tools extract` produces app/Artemis.war (thin) + app/lib/ with a flat Class-Path. Running
+# `jarmode=tools extract` produces app/Artemis.jar (thin) + app/lib/ with a flat Class-Path. Running
 # from this exploded layout avoids Spring Boot's nested-jar classloader, which dominates cold start
 # (~38s -> ~25s measured). The extraction cost is paid once here at image-build time, so every
 # container start is fast with no runtime extraction.
-RUN java -Djarmode=tools -jar Artemis.war extract --destination /extract/app
+# Spring Boot 4.1 wrote the thin archive as app/Artemis.war, Spring Boot 4.2 writes app/Artemis.jar. The check
+# names the file, because a missing one otherwise only shows as a NoSuchFileException in a later stage.
+RUN set -eu; \
+  java -Djarmode=tools -jar Artemis.war extract --destination /extract/app; \
+  if [ ! -f /extract/app/Artemis.jar ]; then \
+    echo "jarmode=tools extract did not produce app/Artemis.jar. It produced:"; \
+    ls -l /extract/app; \
+    exit 1; \
+  fi
+
+#-----------------------------------------------------------------------------------------------------------------------
+# runtime JDK stage (downloads the JDK that the runtime image runs on)
+#-----------------------------------------------------------------------------------------------------------------------
+# The runtime uses Oracle JDK 25.0.5.1 until a Temurin 25 image of the same update release is published.
+# The archive is pinned by version and verified against Oracle's published SHA-256 checksum.
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime_jdk
+
+ARG TARGETARCH
+ARG JDK_VERSION=25.0.5.1
+ARG JDK_SHA256_AMD64=3d40d69461200594380ac84c17be6224539022028730cffe043ac70c41ffd1d5
+ARG JDK_SHA256_ARM64=2c30d5fe69796452732d32e746c5f4b4031e4991e2be9a3313f76e51fe5196ee
+
+# hadolint ignore=DL3008
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN case "${TARGETARCH}" in \
+    amd64) jdk_arch=x64; jdk_sha256="${JDK_SHA256_AMD64}" ;; \
+    arm64) jdk_arch=aarch64; jdk_sha256="${JDK_SHA256_ARM64}" ;; \
+    *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+  esac \
+  && curl -fsSL -o /tmp/jdk.tar.gz "https://download.oracle.com/java/25/archive/jdk-${JDK_VERSION}_linux-${jdk_arch}_bin.tar.gz" \
+  && echo "${jdk_sha256}  /tmp/jdk.tar.gz" | sha256sum -c - \
+  && mkdir -p /opt/java/openjdk \
+  && tar -xzf /tmp/jdk.tar.gz -C /opt/java/openjdk --strip-components=1 \
+  && rm /tmp/jdk.tar.gz
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS runtime
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime
+
+# Same location as in the Temurin images, so that JAVA_HOME does not change for anything that relies on it.
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+COPY --from=runtime_jdk /opt/java/openjdk /opt/java/openjdk
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -123,11 +172,12 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
+# JDK: ca-certificates, fontconfig, tzdata (the Temurin base image shipped them)
 # Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
 # out of the Debian repos and would break the image build over time.
 # hadolint ignore=DL3008
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget ca-certificates fontconfig tzdata \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -148,7 +198,7 @@ RUN \
   && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 
-# Copy the exploded Artemis layout (app/Artemis.war + app/lib/) to the execution location.
+# Copy the exploded Artemis layout (app/Artemis.jar + app/lib/) to the execution location.
 # WORKDIR stays /opt/artemis so Spring still discovers config from /opt/artemis and /opt/artemis/config.
 WORKDIR /opt/artemis
 
@@ -156,38 +206,38 @@ COPY --chown=artemis:artemis --from=extractor /extract/app /opt/artemis/app
 
 # Verify the exploded runtime artifact actually contains a fully built Angular client.
 # `jarmode=tools extract` flattens the WAR: the former WEB-INF/classes/** content (including static/)
-# is hoisted to the root of the thin app/Artemis.war, so the client lives at static/** here — every
+# is hoisted to the root of the thin app/Artemis.jar, so the client lives at static/** here — every
 # entry name below is relative to that flattened root, not to WEB-INF/classes/.
 # The Tailwind directive list is a denylist: revisit it whenever Tailwind gains one. The same
 # invariant is asserted for the package stylesheet in packages/tum-aet-ui/check-styles.mjs.
 # `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
 # map embeds the original source, directives and all. Only the .css files are scanned.
 RUN set -eu; \
-  war_entries="$(jar tf app/Artemis.war)"; \
+  war_entries="$(jar tf app/Artemis.jar)"; \
   if ! printf '%s\n' "$war_entries" | grep -qx 'static/index.html'; then \
-    echo "app/Artemis.war does not contain static/index.html. The Angular client is missing from the deployable WAR."; \
+    echo "app/Artemis.jar does not contain static/index.html. The Angular client is missing from the deployable WAR."; \
     exit 1; \
   fi; \
   if ! printf '%s\n' "$war_entries" | grep -Eq '^static/main-.*\.js$'; then \
-    echo "app/Artemis.war does not contain a static/main-*.js bundle. The Angular client build is incomplete."; \
+    echo "app/Artemis.jar does not contain a static/main-*.js bundle. The Angular client build is incomplete."; \
     exit 1; \
   fi; \
   stylesheets="$(printf '%s\n' "$war_entries" | grep -E '^static/[^/]+\.css$' || true)"; \
   if [ -z "$stylesheets" ]; then \
-    echo "app/Artemis.war contains no static/*.css bundle. The Angular client build is incomplete."; \
+    echo "app/Artemis.jar contains no static/*.css bundle. The Angular client build is incomplete."; \
     exit 1; \
   fi; \
   extracted="$(mktemp -d)"; \
-  printf '%s\n' "$stylesheets" | while read -r stylesheet; do jar xf app/Artemis.war -C "$extracted" "$stylesheet"; done; \
+  printf '%s\n' "$stylesheets" | while read -r stylesheet; do jar xf app/Artemis.jar -C "$extracted" "$stylesheet"; done; \
   if [ "$(find "$extracted" -name '*.css' | wc -l)" -ne "$(printf '%s\n' "$stylesheets" | wc -l)" ]; then \
-    echo "Could not extract the stylesheet bundles from app/Artemis.war; the Tailwind check did not run."; \
+    echo "Could not extract the stylesheet bundles from app/Artemis.jar; the Tailwind check did not run."; \
     rm -rf "$extracted"; \
     exit 1; \
   fi; \
   uncompiled="$(find "$extracted" -name '*.css' -exec grep -hoE '@(tailwind|source|theme|plugin|custom-variant|utility|variant|apply|reference|config)[[:space:]("{]' {} + | sed 's/.$//' | sort -u | paste -sd' ' - || true)"; \
   rm -rf "$extracted"; \
   if [ -n "$uncompiled" ]; then \
-    echo "app/Artemis.war ships a client stylesheet that still contains Tailwind source directives: ${uncompiled}."; \
+    echo "app/Artemis.jar ships a client stylesheet that still contains Tailwind source directives: ${uncompiled}."; \
     echo "The Tailwind PostCSS plugin did not transform it, so no utility class in the templates resolves to a rule and the application renders unstyled."; \
     echo "Check that a PostCSS config at the repository root names the plugin and that the build which produced this WAR could read it; for an in-Docker build that means .dockerignore."; \
     exit 1; \
@@ -222,4 +272,4 @@ CMD [ "java", \
 "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
 "--add-opens", "java.management/sun.management=ALL-UNNAMED", \
 "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED", \
-"-jar", "/opt/artemis/app/Artemis.war" ]
+"-jar", "/opt/artemis/app/Artemis.jar" ]

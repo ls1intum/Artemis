@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -62,7 +61,7 @@ class AtlasAgentRoutingCoverageTest {
     @BeforeEach
     void setUp() {
         var surface = new AtlasToolSurface(mock(ToolCallbackProvider.class));
-        service = new AtlasAgentService(mock(ChatClient.class), memory, delegation, surface, surface, surface, surface, plans, cache, new AtlasAgentPreviewService(memory));
+        service = new AtlasAgentService(memory, delegation, surface, surface, surface, surface, plans, cache, new AtlasAgentPreviewService(memory));
         expert = new CompetencyExpertToolsService(JsonObjectMapper.get(), null, null, cache);
         CompetencyMappingToolsService.clearAllPreviews();
         CompetencyExpertToolsService.getAndClearPreviews();

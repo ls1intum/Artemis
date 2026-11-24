@@ -1,4 +1,4 @@
-<div class="w-full px-4! py-6!">
+<div class="w-full px-4 py-6">
     <h5 *adminTitleBarTitle id="course-requests-heading" class="mb-0" jhiTranslate="artemisApp.courseRequest.admin.title"></h5>
     <div *adminTitleBarActions>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="load()" [disabled]="loading()" data-testid="refresh-button">
@@ -6,11 +6,11 @@
             <span jhiTranslate="health.refresh.button"></span>
         </tumaet-ui-button>
     </div>
-    <p class="text-muted-color mb-4!" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
+    <p class="text-muted-color mb-4" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
 
     <!-- Pending Requests Table -->
-    <h4 class="mb-4!" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>
-    <div class="mb-12! overflow-x-auto">
+    <h4 class="mb-4" jhiTranslate="artemisApp.courseRequest.admin.pendingTitle"></h4>
+    <div class="mb-12 overflow-x-auto">
         <table tumAetUiTable size="small" [striped]="true" data-testid="pending-table">
             <thead>
                 <tr>
@@ -20,7 +20,7 @@
                     <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
                     <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.previousInstructor"></th>
                     <th scope="col" class="w-full min-w-40" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
-                    <th scope="col" class="text-end" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
+                    <th scope="col" class="text-right" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
                 </tr>
             </thead>
             <tbody>
@@ -34,19 +34,19 @@
                         </td>
                         <td class="whitespace-nowrap">{{ request.semester }}</td>
                         <td>
-                            <dl class="mb-0! grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
-                                <dd class="mb-0! ms-0!">{{ request.startDate | artemisDate: 'short' }}</dd>
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
-                                <dd class="mb-0! ms-0!">{{ request.endDate | artemisDate: 'short' }}</dd>
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.admin.created"></dt>
-                                <dd class="mb-0! ms-0! text-muted-color">{{ request.createdDate | artemisDate: 'short' }}</dd>
+                            <dl class="mb-0 grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
+                                <dd class="mb-0 ms-0">{{ request.startDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
+                                <dd class="mb-0 ms-0">{{ request.endDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.admin.created"></dt>
+                                <dd class="mb-0 ms-0 text-muted-color">{{ request.createdDate | artemisDate: 'short' }}</dd>
                             </dl>
                         </td>
                         <td>
                             @let requester = request.requester;
                             @if (requester?.login) {
-                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold no-underline">
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold">
                                     {{ requester?.name || requester?.login }}
                                 </a>
                             } @else {
@@ -80,15 +80,13 @@
                                     [ariaLabel]="'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate"
                                 >
                                     <div class="w-80 max-w-[calc(100vw-2rem)] text-sm" data-testid="instructor-courses-popover">
-                                        <!-- A div, not a heading: unlayered Bootstrap heading rules would beat the utilities, and the panel already carries this text as its accessible name. -->
+                                        <!-- A div, not a heading: the panel already carries this text as its accessible name. -->
                                         <div class="mb-2 font-semibold">{{ 'artemisApp.courseRequest.admin.instructorCoursesTitle' | artemisTranslate }}</div>
                                         <!-- Capped and scrollable: a requester with many courses must not grow the popover past the viewport. -->
                                         <ul class="m-0 flex max-h-64 list-none flex-col gap-2 overflow-y-auto p-0" data-testid="instructor-courses-list">
                                             @for (course of instructorCourses; track course.id) {
                                                 <li class="break-words" data-testid="instructor-course">
-                                                    <a [routerLink]="['/course-management', course.id]" class="font-semibold no-underline">{{
-                                                        course.title || course.shortName
-                                                    }}</a>
+                                                    <a [routerLink]="['/course-management', course.id]" class="font-semibold">{{ course.title || course.shortName }}</a>
                                                     <div class="text-xs text-muted-color">{{ course.shortName }} &middot; {{ course.semester }}</div>
                                                 </li>
                                             }
@@ -100,7 +98,7 @@
                             }
                         </td>
                         <td class="break-words">{{ request.reason }}</td>
-                        <td class="text-end">
+                        <td class="text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <tumaet-ui-button
                                     severity="warn"
@@ -147,7 +145,7 @@
     </div>
 
     <!-- Decided Requests Table -->
-    <h4 class="mb-4!" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
+    <h4 class="mb-4" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
     <tumaet-ui-table-layout [loading]="loading()" [empty]="decidedRequests().length === 0 && !loading()" emptyTitle="artemisApp.courseRequest.admin.noDecidedRequests">
         <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
             <thead>
@@ -175,19 +173,19 @@
                         </td>
                         <td class="whitespace-nowrap">{{ request.semester }}</td>
                         <td>
-                            <dl class="mb-0! grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
-                                <dd class="mb-0! ms-0!">{{ request.startDate | artemisDate: 'short' }}</dd>
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
-                                <dd class="mb-0! ms-0!">{{ request.endDate | artemisDate: 'short' }}</dd>
-                                <dt class="text-muted-color font-normal!" jhiTranslate="artemisApp.courseRequest.admin.processed"></dt>
-                                <dd class="mb-0! ms-0! text-muted-color">{{ request.processedDate | artemisDate: 'short' }}</dd>
+                            <dl class="mb-0 grid grid-cols-[auto_auto] justify-start gap-x-2 whitespace-nowrap">
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.form.startDate"></dt>
+                                <dd class="mb-0 ms-0">{{ request.startDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.form.endDate"></dt>
+                                <dd class="mb-0 ms-0">{{ request.endDate | artemisDate: 'short' }}</dd>
+                                <dt class="text-muted-color font-normal" jhiTranslate="artemisApp.courseRequest.admin.processed"></dt>
+                                <dd class="mb-0 ms-0 text-muted-color">{{ request.processedDate | artemisDate: 'short' }}</dd>
                             </dl>
                         </td>
                         <td>
                             @let requester = request.requester;
                             @if (requester?.login) {
-                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold no-underline">
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="font-semibold">
                                     {{ requester?.name || requester?.login }}
                                 </a>
                             } @else {
@@ -203,7 +201,7 @@
                                 </div>
                                 <div>{{ request.decisionReason }}</div>
                             } @else if (request.status === CourseRequestStatus.ACCEPTED && request.createdCourseId) {
-                                <a [routerLink]="['/course-management', request.createdCourseId]" class="no-underline whitespace-nowrap">
+                                <a [routerLink]="['/course-management', request.createdCourseId]" class="whitespace-nowrap">
                                     <fa-icon [icon]="faExternalLinkAlt" class="me-1" />
                                     <span jhiTranslate="artemisApp.courseRequest.admin.link"></span>
                                 </a>
@@ -225,7 +223,7 @@
 </div>
 
 <tumaet-ui-dialog [(visible)]="rejectModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}">
-    <div class="flex flex-col gap-2 mb-4!">
+    <div class="flex flex-col gap-2 mb-4">
         <label class="font-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
         <textarea
             id="rejectReason"

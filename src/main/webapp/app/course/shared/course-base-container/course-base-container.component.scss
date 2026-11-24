@@ -1,6 +1,3 @@
-@import '../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import './course-variables';
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
@@ -62,7 +59,7 @@
             }
 
             /*
-             * The rule that makes a sidebar page fill this region lives in `global.scss`, not here: it has to style
+             * The rule that makes a sidebar page fill this region lives in `_layout.scss`, not here: it has to style
              * the page component the router inserts, which is outside this template and therefore carries no
              * `_ngcontent` attribute for the emulated encapsulation to match. See `.layout-content` there.
              */
@@ -94,15 +91,11 @@
 }
 
 /*
- * Opts the shell's links (breadcrumbs, sidebar) out of the hover underline from `global.scss` — see the comment there
+ * Opts the shell's links (breadcrumbs, sidebar) out of the hover underline from `_base.scss` — see the comment there
  * for why the exclusions belong in one `:not()` argument list.
  */
-a:not(.btn, .tab-link):hover {
+a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
-}
-
-.module-bg {
-    background-color: var(--module-bg);
 }
 
 @media print {

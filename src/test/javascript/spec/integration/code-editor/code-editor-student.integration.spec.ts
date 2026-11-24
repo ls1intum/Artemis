@@ -8,7 +8,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -17,6 +16,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -47,7 +47,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockInstance as NgMockInstance, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockInstance as NgMockInstance, MockPipe } from 'ng-mocks';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -67,7 +67,7 @@ describe('CodeEditorStudentIntegration', () => {
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let resultService: ResultService;
+    let resultApi: ResultApi;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
@@ -84,7 +84,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), CodeEditorStudentContainerComponent, CodeEditorContainerComponent, CodeEditorRepositoryIsLockedComponent, TreeViewComponent],
+            imports: [CodeEditorStudentContainerComponent, CodeEditorContainerComponent, CodeEditorRepositoryIsLockedComponent, TreeViewComponent],
             providers: [
                 JhiLanguageHelper,
                 { provide: AccountService, useClass: MockAccountService },
@@ -142,7 +142,7 @@ describe('CodeEditorStudentIntegration', () => {
         containerDebugElement = containerFixture.debugElement;
 
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        resultService = TestBed.inject(ResultService);
+        resultApi = TestBed.inject(ResultApi);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         route = TestBed.inject(ActivatedRoute);
 
@@ -155,7 +155,7 @@ describe('CodeEditorStudentIntegration', () => {
         subscribeForLatestResultOfParticipationStub = vi
             .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         getStudentParticipationWithLatestResultStub = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
     });
 
@@ -238,8 +238,8 @@ describe('CodeEditorStudentIntegration', () => {
         findWithLatestResultSubject.next(participation);
         containerFixture.detectChanges();
 
-        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('module-bg')).toBe(fullPage);
-        expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('d-none')).toBe(!fullPage);
+        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('bg-(--module-bg)')).toBe(fullPage);
+        expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('hidden')).toBe(!fullPage);
     });
 
     // The result and the submissions of a participation of a student come on the topics of the student. An instructor who edits the code of a student gets them

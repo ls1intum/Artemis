@@ -1,16 +1,14 @@
 /**
- * Forbid Bootstrap CSS classes in templates of modules that have been migrated to Tailwind + PrimeNG.
- * This is the regression lock for the incremental Bootstrap → PrimeNG/Tailwind migration: once a module's
- * templates are clean, this rule (scoped to that module in eslint.config.mjs) prevents Bootstrap classes
- * from creeping back in.
+ * Forbid Bootstrap CSS classes in templates.
+ * Bootstrap is removed from the client, so these classes no longer style anything. The rule keeps them from coming
+ * back, for example through a merged branch or copied markup, and points to the replacement.
  *
- * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned — i.e. they do not collide with a valid
+ * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned, that is they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
- * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: Bootstrap and Tailwind share the same class
- * NAMES (the Tailwind value applies after migration), so they are legitimate Tailwind utilities. Their values 3 to 5
- * differ between the two, though, so `no-ambiguous-spacing-utility` handles the spacing scale in the folders that
- * eslint.config.mjs scopes it to. Color application is governed separately
- * by `no-raw-tailwind-color-palette` (templates) and the stylelint hex/`--bs-` ban (SCSS).
+ * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: they are legitimate Tailwind utilities.
+ * Bootstrap gave the steps 3 to 5 other values (16, 24 and 48px against Tailwind's 12, 16 and 20px).
+ * Color application is governed separately by `no-raw-tailwind-color-palette` (templates) and the stylelint
+ * hex/`--bs-` ban (SCSS).
  *
  * Scope: static `class="..."`, `[class.<bootstrap-class>]`, and the bound source of `[class]` / `[ngClass]`.
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
@@ -19,18 +17,18 @@
 import { classTokens, classTokensInBindingExpression, isClassListAttribute } from './class-list.mjs';
 
 // Each entry matches a single, whole class token (anchored). Grouped by Bootstrap concept with its
-// PrimeNG / Tailwind replacement noted for the reviewer.
+// TUM AET UI / Tailwind replacement noted for the reviewer.
 const BANNED = [
-    // Buttons -> p-button / p-buttonGroup
+    // Buttons -> tumaet-ui-button / tumaet-ui-button-group
     /^btn(-.+)?$/,
-    // Badges -> p-tag
+    // Badges -> tumaet-ui-tag
     /^badge$/,
-    // Cards -> p-card (or a Tailwind `rounded-lg border p-4` box)
+    // Cards -> tumaet-ui-card (or a Tailwind `rounded-lg border p-4` box)
     /^card(-.+)?$/,
-    // Alerts / callouts -> p-message. Only Bootstrap's own alert classes — not custom `alert-*` names
+    // Alerts / callouts -> tumaet-ui-message. Only Bootstrap's own alert classes — not custom `alert-*` names
     // (e.g. the alert overlay's `alert-wrap` / `alert-inner` / `alert-animation-wrapper`).
     /^alert(-(primary|secondary|success|danger|warning|info|light|dark|dismissible|link|heading))?$/,
-    // Form controls -> PrimeNG inputs (pInputText / p-select / p-textarea / p-checkbox / p-radiobutton)
+    // Form controls -> TUM AET UI inputs (tumAetUiInput / tumaet-ui-select / tumAetUiTextarea / tumaet-ui-checkbox / tumaet-ui-radio-button)
     /^form-(control|control-.+|group|select|label|text|range|floating|check|check-input|check-label|check-reverse|switch)$/,
     /^input-group(-.+)?$/,
     /^(valid|invalid)-feedback$/,
@@ -57,28 +55,28 @@ const BANNED = [
     // Bootstrap semantic text colors with no brand-bound Tailwind equivalent -> text-muted-color / tokens
     /^text-muted$/,
     /^text-body(-secondary|-tertiary|-emphasis)?$/,
-    // Bootstrap greyscale text colors with no tailwindcss-primeui equivalent -> text-muted-color / semantic
-    // token. `text-primary`/`text-white`/`text-black` are NOT listed: they collide with PrimeUI / Tailwind.
+    // Bootstrap greyscale text colors -> text-muted-color / semantic token. `text-primary`/`text-white`/
+    // `text-black` are NOT listed: they are also Tailwind utilities (`text-primary` is defined in tailwind.css).
     /^text-(secondary|light|dark)$/,
     // Bootstrap semantic state colors (text/border/bg) -> named state tokens, e.g. text-state-danger,
     // bg-state-success, border-state-warning, text-state-info (the arbitrary `text-(--danger)` form is itself
     // banned by no-raw-tailwind-color-palette). Only danger/success/warning/info are matched: those are
-    // Bootstrap-only, whereas `*-primary` / `*-surface-*` are PrimeNG tokens and stay allowed.
+    // Bootstrap-only, whereas `*-primary` / `*-surface-*` are colours that tailwind.css defines and stay allowed.
     /^(text|border|bg)-(danger|success|warning|info)$/,
-    // Bare `table` and the `collapse` family double as Tailwind utility NAMES, so tailwind.css blocklists them
-    // from generation (`@source not inline("table"/"collapse")`) to avoid the Bootstrap collision. Because the
-    // Tailwind versions can never generate, ANY `table`/`collapse*` in a locked template is Bootstrap winning at
-    // runtime — ban them here so the lint stays symmetric with the @source blocklist.
+    // Bare `table` and the `collapse` family double as Tailwind utility NAMES, and tailwind.css blocklists them
+    // from generation (`@source not inline("table"/"collapse")`). Because the Tailwind versions can never
+    // generate, a `table`/`collapse*` in a template styles nothing: ban them here so the lint stays symmetric
+    // with the @source blocklist.
     /^table$/,
     /^(collapse|collapse-horizontal|collapsing)$/,
-    // Table component modifiers -> p-table (Tailwind's `table-cell`/`table-fixed`/`table-auto` are NOT matched)
+    // Table component modifiers -> tumaet-ui-table / tumAetUiTable (Tailwind's `table-cell`/`table-fixed`/`table-auto` are NOT matched)
     /^table-(striped|striped-columns|bordered|borderless|hover|active|sm|responsive|responsive-(sm|md|lg|xl|xxl)|group-divider)$/,
     // Bootstrap percentage sizing -> Tailwind `h-full`/`w-full` or an explicit Tailwind size. These collide:
-    // Bootstrap `.h-100{height:100%!important}` beats Tailwind's `h-100` (= 25rem), so a stray `h-100` silently
-    // renders the Bootstrap value. Only 25/50/75/100 are matched; `h-auto`/`w-auto` are shared (width:auto) and stay.
+    // Bootstrap's `h-100` meant `height: 100%`, Tailwind's `h-100` is 25rem, so a stray `h-100` written with
+    // Bootstrap in mind silently renders the wrong size. Only 25/50/75/100 are matched; `h-auto`/`w-auto` are shared (width:auto) and stay.
     /^[hw]-(25|50|75|100)$/,
-    // Bootstrap component families with no Tailwind-utility name clash — each migrates to a PrimeNG component
-    // (modal -> DialogService/p-dialog, dropdown/nav -> p-menu, toast -> p-toast, etc.). Anchored whole-token, so
+    // Bootstrap component families with no Tailwind-utility name clash. Each has a TUM AET UI replacement
+    // (modal -> tumaet-ui-dialog, dropdown -> tumaet-ui-menu, nav -> tumaet-ui-tabs, etc.). Anchored whole-token, so
     // a custom class that merely contains the word (e.g. `my-modal-wrapper`) is unaffected.
     /^modal(-.+)?$/,
     /^dropdown(-.+)?$/,
@@ -158,7 +156,7 @@ function scanClassList(text, node, context) {
 }
 
 // Returns the banned tokens found in the bound source of a `[class]` / `[ngClass]` binding. Pure (no ESLint context)
-// so tools like supporting_scripts/migration/migrate.mjs reuse the exact same binding extraction.
+// so other tools can reuse the exact same binding extraction.
 export function bannedClassesInBindingExpression(source) {
     return classTokensInBindingExpression(source)
         .map(({ token }) => token)
@@ -175,16 +173,16 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Forbid Bootstrap CSS classes in migrated module templates; use Tailwind utilities + PrimeNG components instead.',
+            description: 'Forbid classes of the removed Bootstrap library in templates; use Tailwind utilities + TUM AET UI components instead.',
         },
         messages: {
             bootstrapClass:
-                "Bootstrap class '{{cls}}' is not allowed in a migrated module — use a Tailwind utility or a PrimeNG component (btn->p-button, badge->p-tag, alert->p-message, card->p-card, form-control->PrimeNG input, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
+                "Bootstrap class '{{cls}}' has no effect, Bootstrap is removed from the client: use a Tailwind utility or a TUM AET UI component (btn->tumaet-ui-button, badge->tumaet-ui-tag, alert->tumaet-ui-message, card->tumaet-ui-card, form-control->tumAetUiInput, row/col->grid|flex, d-flex->flex). See client-development.mdx (### Styling).",
         },
         schema: [],
     },
     create(context) {
-        // PrimeNG class inputs render their classes onto the host at runtime, so Bootstrap in them must be caught too.
+        // `styleClass`-like inputs render their classes onto the host at runtime, so Bootstrap in them must be caught too.
         return {
             TextAttribute(node) {
                 if (isClassListAttribute(node.name)) {

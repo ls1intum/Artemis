@@ -1,0 +1,565 @@
+// Base styles of the application: the element defaults that every page builds on.
+// They are in the cascade layer `base`, which comes before the layer of the Tailwind utilities. A utility on a
+// heading or a paragraph (`mb-0`, `text-xl`) therefore overrides a default from here without the important modifier.
+// Rules outside a layer, such as component stylesheets, still override both.
+// Colours come from the theme that imports this file (`themes/theme-default.scss`, `themes/theme-dark.scss`).
+
+$font-family-sans-serif:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    roboto,
+    'Helvetica Neue',
+    'Noto Sans',
+    'Liberation Sans',
+    arial,
+    sans-serif,
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Segoe UI Symbol',
+    'Noto Color Emoji' !default;
+$font-family-monospace: sfmono-regular, menlo, monaco, consolas, 'Liberation Mono', 'Courier New', monospace !default;
+$font-size-base: 0.9rem !default;
+$line-height-base: 1.5 !default;
+$headings-margin-bottom: 0.5rem !default;
+$paragraph-margin-bottom: 1rem !default;
+$code-color: $pink !default;
+$mark-bg: mix(white, $yellow, 80%) !default;
+
+// Viewport width from which the fluid font sizes of headings stop growing.
+$fluid-font-size-breakpoint: 1200px;
+
+// A font size that scales with the viewport below `$fluid-font-size-breakpoint` and is `$size` from there on.
+@mixin fluid-font-size($size, $minimum, $viewport-factor) {
+    font-size: calc(#{$minimum} + #{$viewport-factor});
+
+    @media (min-width: $fluid-font-size-breakpoint) {
+        font-size: $size;
+    }
+}
+
+// The order of the cascade layers. A later layer overrides an earlier one, whatever the specificity of the selectors.
+// - `components`: third-party stylesheets that are loaded later (Apollon). Declared first, so the element defaults
+//   still override it, as they did when they were not in a layer.
+// - `base`: the element defaults below.
+// - `tumaet-ui-theme`, `tumaet-ui-cdk`, `tumaet-ui`: TUM AET UI. Its components override the element defaults.
+// - `utilities`: the Tailwind utilities of the application (declared in `tailwind.css`, which is loaded later).
+//   A utility class on a TUM AET UI component therefore overrides the style of the component.
+@layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
+
+@layer base {
+    :root {
+        --font-family-sans-serif: #{$font-family-sans-serif};
+        --font-family-monospace: #{$font-family-monospace};
+    }
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        :root {
+            scroll-behavior: smooth;
+        }
+    }
+
+    body {
+        margin: 0;
+        font-family: var(--font-family-sans-serif);
+        font-size: $font-size-base;
+        font-weight: 400;
+        line-height: $line-height-base;
+        color: $body-color;
+        background-color: $body-bg;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    }
+
+    hr {
+        margin: 1rem 0;
+        color: inherit;
+        border: 0;
+        border-top: 1px solid;
+        opacity: 0.25;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin-top: 0;
+        margin-bottom: $headings-margin-bottom;
+        font-weight: 500;
+        line-height: 1.2;
+        color: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-weight: 400;
+    }
+
+    h1 {
+        @include fluid-font-size(2.25rem, 1.35rem, 1.2vw);
+    }
+
+    h2 {
+        @include fluid-font-size(1.8rem, 1.305rem, 0.66vw);
+    }
+
+    h3 {
+        @include fluid-font-size(1.575rem, 1.2825rem, 0.39vw);
+    }
+
+    h4 {
+        @include fluid-font-size(1.35rem, 1.26rem, 0.12vw);
+    }
+
+    h5 {
+        font-size: 1.125rem;
+    }
+
+    h6 {
+        font-size: 0.9rem;
+    }
+
+    p {
+        margin-top: 0;
+        margin-bottom: $paragraph-margin-bottom;
+    }
+
+    abbr[title] {
+        text-decoration: underline dotted;
+        cursor: help;
+        text-decoration-skip-ink: none;
+    }
+
+    address {
+        margin-bottom: 1rem;
+        font-style: normal;
+        line-height: inherit;
+    }
+
+    ol,
+    ul {
+        padding-left: 2rem;
+    }
+
+    ol,
+    ul,
+    dl {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+
+    ol ol,
+    ul ul,
+    ol ul,
+    ul ol {
+        margin-bottom: 0;
+    }
+
+    dt {
+        font-weight: 700;
+    }
+
+    dd {
+        margin-bottom: 0.5rem;
+        margin-left: 0;
+    }
+
+    blockquote {
+        margin: 0 0 1rem;
+    }
+
+    b,
+    strong {
+        font-weight: bolder;
+    }
+
+    b {
+        font-weight: 500;
+    }
+
+    small,
+    .small {
+        font-size: 0.875em;
+    }
+
+    mark {
+        padding: 0.1875em;
+        color: $body-color;
+        background-color: $mark-bg;
+    }
+
+    sub,
+    sup {
+        position: relative;
+        font-size: 0.75em;
+        line-height: 0;
+        vertical-align: baseline;
+    }
+
+    sub {
+        bottom: -0.25em;
+    }
+
+    sup {
+        top: -0.5em;
+    }
+
+    a {
+        color: $link-color;
+        text-decoration: underline;
+        cursor: pointer; // also for anchors without `href`
+
+        &:not([href]):not([class]),
+        &:not([href]):not([class]):hover {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+
+    pre,
+    code,
+    kbd,
+    samp {
+        font-family: var(--font-family-monospace);
+        font-size: 1em;
+    }
+
+    pre {
+        display: block;
+        padding: 9.5px;
+        margin: 0 0 10px;
+        overflow: auto;
+        font-size: 13px;
+        line-height: 1.4268;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        color: $artemis-pre-color;
+        background-color: $artemis-pre-background;
+        border: 1px solid $artemis-pre-border;
+        border-radius: 4px;
+
+        code {
+            font-size: inherit;
+            color: inherit;
+            word-break: normal;
+        }
+    }
+
+    code {
+        font-size: 0.875em;
+        color: $code-color;
+        overflow-wrap: break-word;
+
+        a > & {
+            color: inherit;
+        }
+    }
+
+    kbd {
+        padding: 0.1875rem 0.375rem;
+        font-size: 0.875em;
+        color: $body-bg;
+        background-color: $body-color;
+        border-radius: 0.1rem;
+
+        kbd {
+            padding: 0;
+            font-size: 1em;
+        }
+    }
+
+    figure {
+        margin: 0 0 1rem;
+    }
+
+    img,
+    svg {
+        vertical-align: middle;
+    }
+
+    table {
+        caption-side: bottom;
+        border-collapse: collapse;
+    }
+
+    caption {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        color: $text-body-secondary;
+        text-align: left;
+    }
+
+    th {
+        text-align: inherit;
+        text-align: -webkit-match-parent;
+    }
+
+    thead,
+    tbody,
+    tfoot,
+    tr,
+    td,
+    th {
+        border-color: inherit;
+        border-style: solid;
+        border-width: 0;
+    }
+
+    label {
+        display: inline-block;
+    }
+
+    button {
+        border-radius: 0;
+
+        &:focus:not(:focus-visible) {
+            outline: 0;
+        }
+    }
+
+    input,
+    button,
+    select,
+    optgroup,
+    textarea {
+        margin: 0;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+    }
+
+    textarea {
+        background-color: $form-control-focus-background;
+    }
+
+    button,
+    select {
+        text-transform: none;
+    }
+
+    [role='button'] {
+        cursor: pointer;
+    }
+
+    select {
+        overflow-wrap: normal;
+
+        &:disabled {
+            opacity: 1;
+        }
+    }
+
+    [list]:not([type='date']):not([type='datetime-local']):not([type='month']):not([type='week']):not([type='time'])::-webkit-calendar-picker-indicator {
+        display: none !important;
+    }
+
+    button,
+    [type='button'],
+    [type='reset'],
+    [type='submit'] {
+        -webkit-appearance: button;
+
+        &:not(:disabled) {
+            cursor: pointer;
+        }
+    }
+
+    ::-moz-focus-inner {
+        padding: 0;
+        border-style: none;
+    }
+
+    textarea {
+        resize: vertical;
+    }
+
+    fieldset {
+        min-width: 0;
+        padding: 0;
+        margin: 0;
+        border: 0;
+    }
+
+    legend {
+        float: left;
+        width: 100%;
+        padding: 0;
+        margin-bottom: 0.5rem;
+        line-height: inherit;
+
+        @include fluid-font-size(1.5rem, 1.275rem, 0.3vw);
+
+        + * {
+            clear: left;
+        }
+    }
+
+    ::-webkit-datetime-edit-fields-wrapper,
+    ::-webkit-datetime-edit-text,
+    ::-webkit-datetime-edit-minute-field,
+    ::-webkit-datetime-edit-hour-field,
+    ::-webkit-datetime-edit-day-field,
+    ::-webkit-datetime-edit-month-field,
+    ::-webkit-datetime-edit-year-field {
+        padding: 0;
+    }
+
+    ::-webkit-inner-spin-button {
+        height: auto;
+    }
+
+    [type='search'] {
+        -webkit-appearance: textfield;
+        outline-offset: -2px;
+
+        &::-webkit-search-cancel-button {
+            cursor: pointer;
+            filter: grayscale(1);
+        }
+    }
+
+    ::-webkit-search-decoration {
+        -webkit-appearance: none;
+    }
+
+    ::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+
+    ::file-selector-button {
+        font: inherit;
+        -webkit-appearance: button;
+    }
+
+    output {
+        display: inline-block;
+    }
+
+    iframe {
+        border: 0;
+    }
+
+    summary {
+        display: list-item;
+        cursor: pointer;
+    }
+
+    progress {
+        vertical-align: baseline;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+Rules outside the cascade layer
+
+They apply to every element of a kind, like the defaults above, but have to override component stylesheets or TUM AET
+UI classes, which a rule in the layer `base` cannot.
+========================================================================== */
+
+// Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
+// so the transition can never be seen there, yet it still marks every node of an SVG subtree as
+// running a paint transition - which is enough to keep a surface on a stale raster.
+// The rule is outside the layers for the elements of the application, where it has always overridden the transition
+// utilities. An element of TUM AET UI gets it from the layer `base` instead, so the transition that the component
+// declares for itself (a button, a toggle switch, the link of an empty state) still wins. `:where()` keeps the
+// specificity of the selector.
+*:not(svg, svg *, :where([class*='tumaet'], .tumaet-ui-empty-state-documentation a)) {
+    transition:
+        background-color 0.2s,
+        background 0.2s;
+}
+
+@layer base {
+    *:not(svg, svg *) {
+        transition:
+            background-color 0.2s,
+            background 0.2s;
+    }
+}
+
+html.modeling-exercise-editor-scroll-snap {
+    scroll-padding-block: calc(var(--header-height) + 1rem) 1rem;
+    scroll-snap-type: block proximity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.modeling-exercise-editor-scroll-snap {
+        scroll-snap-type: none;
+    }
+}
+
+/*
+ * Links are not underlined, except on hover. These two rules are important and outside the cascade layers on
+ * purpose: component stylesheets rely on their precedence (see below).
+ */
+a {
+    text-decoration: none !important;
+}
+
+/*
+ * Restores the hover underline that the rule above removes. Keep every exclusion inside the one `:not()` argument
+ * list: a `:not()` counts as its most specific argument, so the whole selector stays at one class no matter how many
+ * classes are listed. Component stylesheets opt individual links out of this underline (navbar, course sidebar, admin
+ * sidebar) and rely on Angular's `[_ngcontent]` attribute to keep them one class above it. Chaining the exclusions as
+ * separate `:not()` clauses raises this rule past those overrides, and the anchor underline comes back on top of the
+ * one they draw themselves — a double underline under the label plus a stray dash beside the icon.
+ */
+a:not(.tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link):hover {
+    text-decoration: underline !important;
+}
+
+a.disabled {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* Important and outside the cascade layers: it also sets the text colour of TUM AET UI text areas, whose own colour would win otherwise. */
+textarea {
+    color: $form-control-color !important;
+}
+
+/*
+ * Error highlight on input fields.
+ *
+ * TUM AET UI controls are excluded from both accents (here and on the invalid rule below): they paint their own
+ * state through `tumaet-ui-form-field [invalid]` / `tumAetUiInputInvalid`, which is a rounded 1px border on the
+ * control itself. The JHipster 5px stick does not follow those rounded corners, so it looked detached on an
+ * invalid field and — once a migrated field carries a real `required` — put a green bar down every valid one.
+ * `[class*='tumaet-ui-']` matches the package class every TUM AET UI control root carries, so components migrated
+ * later are covered without touching this rule again.
+ */
+.ng-valid[required]:not([class*='tumaet-ui-']),
+.ng-valid.required:not([class*='tumaet-ui-']) {
+    border-left: 5px solid $ng-valid-border;
+}
+
+/*
+ * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
+ * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
+ *   before the user has done anything);
+ * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
+ *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
+ * Applies app-wide, except to TUM AET UI controls — see the note on the valid rule above.
+ */
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']) {
+    border-left: 5px solid $ng-invalid-border;
+}
+
+body.transparent-background {
+    background: transparent;
+}

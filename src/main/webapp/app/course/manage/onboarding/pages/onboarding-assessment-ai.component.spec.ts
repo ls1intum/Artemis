@@ -155,7 +155,10 @@ describe('OnboardingAssessmentAiComponent', () => {
 
     describe('max points input', () => {
         const maxPointsInput = () => fixture.nativeElement.querySelector('#onboarding-maxPoints') as HTMLInputElement;
-        const errorTranslationKeys = () => Array.from(fixture.nativeElement.querySelectorAll('.alert-danger')).map((alert) => (alert as HTMLElement).getAttribute('jhiTranslate'));
+        const errorTranslationKeys = () =>
+            Array.from(fixture.nativeElement.querySelectorAll('[data-testid="onboarding-maxPoints-error"] [jhiTranslate]')).map((alert) =>
+                (alert as HTMLElement).getAttribute('jhiTranslate'),
+            );
         // the error messages are shown while the typed value violates a bound, before the field is left and clamps it
         const typeWithoutLeaving = (text: string) => {
             const input = maxPointsInput();

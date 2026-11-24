@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -9,6 +9,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
@@ -21,10 +23,22 @@ export interface AddUsersFormData {
 @Component({
     selector: 'jhi-conversation-add-users-form',
     templateUrl: './conversation-add-users-form.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        ReactiveFormsModule,
+        CourseUsersSelectorComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+    ],
 })
 export class ConversationAddUsersFormComponent implements OnInit {
     private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
 
     readonly formSubmitted = output<AddUsersFormData>();
 
@@ -42,6 +56,7 @@ export class ConversationAddUsersFormComponent implements OnInit {
     getAsChannel = getAsChannelDTO;
 
     mode: 'individual' | 'group' = 'individual';
+    readonly modeOptions = signal<{ label: string; value: 'individual' | 'group' }[]>([]);
 
     get selectedUsersControl() {
         return this.form.get('selectedUsers');
@@ -56,6 +71,10 @@ export class ConversationAddUsersFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.modeOptions.set([
+            { label: this.translateService.instant('artemisApp.dialogs.addUsers.addUsersForm.addIndividualUsers'), value: 'individual' },
+            { label: this.translateService.instant('artemisApp.dialogs.addUsers.addUsersForm.addWholeGroups'), value: 'group' },
+        ]);
         this.initializeForm();
     }
 

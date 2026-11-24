@@ -69,7 +69,6 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -140,7 +139,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(ProgrammingExerciseUpdateComponent, {
@@ -742,6 +740,60 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         });
 
+        it('should not show an unsupported branch-pattern save error a second time when the global handler shows it', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should translate an unsupported branch-pattern save error that the global handler does not show', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(false);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.programmingExercise.buildConfig.branchRegexNotSupported',
+                disableTranslation: false,
+            });
+        });
+
         it('should fail on error', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
@@ -942,6 +994,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
+        });
+
+        it('should keep the options of the exercise when the selected language is chosen again', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
+            // The instructor turns the solution checkout off, which the language switch had turned on.
+            comp.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
+            const loadTemplate = vi.spyOn(comp as unknown as { loadProgrammingLanguageTemplate: (language: ProgrammingLanguage) => void }, 'loadProgrammingLanguageTemplate');
+            const confirm = vi.spyOn(window, 'confirm');
+
+            expect(comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL)).toBe(ProgrammingLanguage.HASKELL);
+
+            expect(comp.programmingExercise.buildConfig!.checkoutSolutionRepository).toBe(false);
+            expect(loadTemplate).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
         });
 
         it('should activate SCA for Swift', () => {
@@ -1914,6 +1983,35 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { language: ProgrammingLanguage.GO, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.GO' },
                 { language: ProgrammingLanguage.DART, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.DART' },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de/', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // Ares 2 cannot supervise a package that contains or lies inside a namespace it reserves
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE, packageName: 'de', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_MAVEN,
+                    packageName: 'java.util',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'org', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // The build guards of the test templates reject the packages of Ares and of the libraries that come with it
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_MAVEN,
+                    packageName: 'de.tum.cit.ase.ares.other',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_GRADLE,
+                    packageName: 'org.apache.commons',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                {
+                    language: ProgrammingLanguage.KOTLIN,
+                    projectType: undefined,
+                    packageName: 'kotlin.collections',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                },
                 {
                     language: ProgrammingLanguage.JAVA,
                     projectType: ProjectType.MAVEN_BLACKBOX,
@@ -1926,6 +2024,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 comp.programmingExercise.packageName = packageName;
 
                 expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([expected]);
+            });
+
+            it.each([
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.MAVEN_BLACKBOX, packageName: 'org' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.MAVEN_BLACKBOX, packageName: 'sorting' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum.in' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'org.example' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'net.kotlin' },
+            ])('accepts the package name $packageName for $language $projectType', ({ language, projectType, packageName }) => {
+                // The tests of a black-box exercise are not run with Ares, so it may use a name that Ares reserves for other project types
+                comp.programmingExercise.programmingLanguage = language;
+                comp.programmingExercise.projectType = projectType;
+                comp.programmingExercise.packageName = packageName;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([]);
+            });
+
+            it('does not let the package name of a saved exercise block saving other changes', () => {
+                // The package name is read-only for a saved exercise, so a name that the rules refuse today must not block the save of the due date
+                comp.isEdit = true;
+                comp.programmingExercise.id = 42;
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                comp.programmingExercise.packageName = 'org';
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([]);
+            });
+
+            it('checks the package name of an exercise that is imported from an existing one', () => {
+                comp.isEdit = true;
+                comp.isImportFromExistingExercise = true;
+                comp.programmingExercise.id = undefined;
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                comp.programmingExercise.packageName = 'org';
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual(['artemisApp.exercise.form.packageName.pattern.JAVA']);
             });
 
             it('reports a package name that is too long before it checks the pattern', () => {

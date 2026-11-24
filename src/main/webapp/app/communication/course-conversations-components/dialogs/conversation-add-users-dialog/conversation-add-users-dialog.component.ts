@@ -1,4 +1,7 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -22,13 +25,15 @@ import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/communication/conversations/con
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
     templateUrl: './conversation-add-users-dialog.component.html',
-    imports: [ChannelIconComponent, TranslateDirective, ConversationAddUsersFormComponent, ArtemisTranslatePipe],
+    imports: [ChannelIconComponent, TranslateDirective, ConversationAddUsersFormComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
     channelService = inject(ChannelService);
     conversationService = inject(ConversationService);
     groupChatService = inject(GroupChatService);
+
+    protected readonly faXmark = faXmark;
 
     private ngUnsubscribe = new Subject<void>();
 

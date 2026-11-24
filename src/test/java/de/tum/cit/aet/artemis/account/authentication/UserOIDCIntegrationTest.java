@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -320,6 +321,32 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcUpdateRefusesAnAccountThatBecameInternalBeforeTheReloadAfterAMatriculationNumberConflict() {
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        createOtherUser(OTHER_STUDENT_NAME + "@other.domain.invalid");
+        User otherUser = userTestRepository.findOneByLogin(OTHER_STUDENT_NAME).orElseThrow();
+        otherUser.setRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        userTestRepository.save(otherUser);
+
+        // The save hits the unique constraint as in the test above. The account that is reloaded afterwards has become an internal one in the meantime.
+        UserRepository racingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doReturn(Optional.empty()).doCallRealMethod().when(racingRepository).findUserWithAuthoritiesByRegistrationNumber(STUDENT_REGISTRATION_NUMBER);
+        doAnswer(invocation -> userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME)).doAnswer(invocation -> {
+            User reloaded = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+            reloaded.setInternal(true);
+            return Optional.of(reloaded);
+        }).when(racingRepository).findOneWithAuthoritiesByLogin(STUDENT_NAME);
+        OIDCService racingOidcService = createOidcService(racingRepository);
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class)
+                .isThrownBy(() -> racingOidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "LastName"))))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+
+        // no claim reached the stored account
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).isNotEqualTo("ChangedFirstName");
+    }
+
+    @Test
     void testOidcUpdateRethrowsSaveFailureThatIsNotAMatriculationNumberConflict() {
         createUser(STUDENT_NAME + "@other.domain.invalid");
 
@@ -506,6 +533,47 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
+    void testOidcLogin_isRefusedForAnInternalAccount() {
+        createUser(STUDENT_NAME + "@artemis.local");
+        User student = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        student.setInternal(true);
+        userTestRepository.saveAndFlush(student);
+
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "LastName"));
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> oidcService.loadUser(mockUserRequest))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+        assertThat(userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow().getFirstName()).isNotEqualTo("ChangedFirstName");
+    }
+
+    @Test
+    void testOidcLogin_isRefusedForAnInternalAccountThatAConcurrentRequestCreated() {
+        createUser(STUDENT_NAME + "@artemis.local");
+        User student = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        student.setInternal(true);
+        userTestRepository.saveAndFlush(student);
+
+        // The first lookup sees no account and the creation hits the unique constraint, as if another request had created the account in between.
+        // The account that is read afterwards is an internal one and has to be refused like in the regular path.
+        UserRepository racingRepository = mock(UserRepository.class, AdditionalAnswers.delegatesTo(userTestRepository));
+        doReturn(Optional.empty()).doAnswer(invocation -> userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME)).when(racingRepository)
+                .findOneWithAuthoritiesByLogin(STUDENT_NAME);
+        UserCreationService failingCreationService = mock(UserCreationService.class);
+        doThrow(new DataIntegrityViolationException("duplicate login")).when(failingCreationService).createUser(any());
+        OIDCService racingOidcService = new OIDCService(racingRepository, failingCreationService, Optional.empty());
+        ReflectionTestUtils.setField(racingOidcService, "usernameClaimKey", "preferred_username");
+        ReflectionTestUtils.setField(racingOidcService, "matriculationClaimKey", "matriculation_number");
+        ReflectionTestUtils.setField(racingOidcService, "firstNameClaimKey", "given_name");
+        ReflectionTestUtils.setField(racingOidcService, "lastNameClaimKey", "family_name");
+        ReflectionTestUtils.setField(racingOidcService, "emailClaimKey", "email");
+
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "LastName"));
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> racingOidcService.loadUser(mockUserRequest))
+                .matches(ex -> "internal_account".equals(ex.getError().getErrorCode()));
+    }
+
+    @Test
     void testOidcFailureHandler_withDeactivatedUserException_redirectsToDeactivatedError() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -516,6 +584,38 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         failureHandler.onAuthenticationFailure(request, response, exception);
 
         assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=deactivated");
+    }
+
+    @Test
+    void testOidcFailureHandler_withInternalAccountException_redirectsToInternalAccountError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        withAuthorizationRequest(request, Map.of());
+
+        failureHandler.onAuthenticationFailure(request, response, new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "Not managed"));
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=internalAccount");
+    }
+
+    @Test
+    void testOidcFailureHandler_withInternalAccountException_logsWarningWithoutStackTrace() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        withAuthorizationRequest(request, Map.of());
+        Logger handlerLogger = (Logger) LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        handlerLogger.addAppender(appender);
+        try {
+            failureHandler.onAuthenticationFailure(request, response, new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "Not managed"));
+        }
+        finally {
+            handlerLogger.detachAppender(appender);
+        }
+
+        assertThat(appender.list).hasSize(1);
+        assertThat(appender.list.getFirst().getLevel()).isEqualTo(Level.WARN);
+        assertThat(appender.list.getFirst().getThrowableProxy()).isNull();
     }
 
     @Test
@@ -674,6 +774,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         User user = new User();
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
+        user.setInternal(false);
         user.setEmail(identifyingEmail);
         userTestRepository.save(user);
     }
@@ -682,6 +783,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         User user = new User();
         user.setLogin(OTHER_STUDENT_NAME);
         user.setActivated(true);
+        user.setInternal(false);
         user.setEmail(email);
         userTestRepository.save(user);
     }

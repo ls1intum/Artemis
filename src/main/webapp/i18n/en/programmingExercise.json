@@ -41,10 +41,10 @@
                 "invalidReason": "The grading section contains invalid values."
             },
             "delete": {
-                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
+                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
                 "questionLocalVC": {
-                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
-                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-state-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-state-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
                 },
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
@@ -167,7 +167,8 @@
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
                 "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB.",
                 "branchRegexTooLong": "The branch regex is too long. The maximum allowed length is 128 characters.",
-                "branchRegexInvalid": "The branch regex is not a valid regular expression."
+                "branchRegexInvalid": "The branch regex is not a valid regular expression.",
+                "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character."
             },
             "buildPhasesEditor": {
                 "title": "Build Phases",
@@ -809,8 +810,8 @@
                     "renamed": "Renamed"
                 },
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
-                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
-                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-state-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-state-info\"> {{ previousCommitHash }} </span>",
                 "lineStatBetweenSubmissionsTemplateLabel": "and the template",
                 "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
                 "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission.",
