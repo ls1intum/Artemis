@@ -4,6 +4,7 @@
             "points": "Punkte",
             "conflicts": "Konflikte",
             "assessor": "Bewertet von: {{firstName}} {{lastName}}",
+            "longFeedbackNotLoaded": "Der vollständige Text eines Feedbacks konnte nicht geladen werden. Die Bewertung bleibt schreibgeschützt, damit dieser Text nicht gekürzt wird. Lade die Seite neu, um es erneut zu versuchen.",
             "noModel": "Kein Modell zum Darstellen gefunden.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
             "messages": {

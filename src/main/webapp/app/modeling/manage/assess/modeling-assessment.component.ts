@@ -26,6 +26,7 @@ import {
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
@@ -78,6 +79,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
     private readonly feedbackService = inject(FeedbackService);
+    private readonly alertService = inject(AlertService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -131,7 +133,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private isUpdatingFromServer = false;
     /** Increments with every server update, so a long feedback text that loads late never overwrites newer feedback. */
     private feedbackGeneration = 0;
-    private loadingLongFeedbackTexts = false;
+    /**
+     * Whether the full descriptions of truncated feedback are loaded. While they load, the assessment boxes stay empty;
+     * if one fails, the boxes show its preview. Either way the editor stays read-only, so no preview can be edited and
+     * saved over the full description.
+     */
+    private longFeedbackTexts: 'complete' | 'loading' | 'failed' = 'complete';
     protected readonly bottomCenterElevated = signal(false);
 
     constructor() {
@@ -170,7 +177,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
             untracked(() => {
-                editor.setReadonly(readOnly || this.loadingLongFeedbackTexts);
+                editor.setReadonly(readOnly || this.editingWithheld);
                 this.synchronizeAssessmentSelectionSubscription(editor, readOnly);
             });
         });
@@ -269,7 +276,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: this.readOnly() || this.loadingLongFeedbackTexts,
+            readonly: this.readOnly() || this.editingWithheld,
             model: model ? normalizeApollonModel(model) : undefined,
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
@@ -280,7 +287,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
-            if (!this.readOnly() && !this.loadingLongFeedbackTexts) {
+            if (!this.readOnly() && !this.editingWithheld) {
                 const assessmentsArray = Object.values(state.assessments);
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessmentsArray);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
@@ -690,18 +697,19 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.updateElementFeedbackMapping(referenced);
         const truncated = referenced.filter((feedback) => feedback.id !== undefined && feedback.hasLongFeedbackText);
         if (truncated.length === 0) {
-            this.setLoadingLongFeedbackTexts(false);
+            this.setLongFeedbackTexts('complete');
             this.updateApollonAssessments(referenced);
         } else {
-            this.setLoadingLongFeedbackTexts(true);
+            this.setLongFeedbackTexts('loading');
             void this.showAfterLoadingLongFeedbackTexts(truncated, generation);
         }
     }
 
     /**
-     * Loads the full descriptions of truncated feedback, then fills the assessment boxes. A text that fails to load keeps
-     * its preview, which the server maps back to the full text as long as it stays unchanged. A loaded text replaces only
-     * a preview that is still unchanged, and a response for feedback that has since been replaced is ignored.
+     * Loads the full descriptions of truncated feedback, then fills the assessment boxes. A loaded text replaces only a
+     * preview that is still unchanged, and a response for feedback that has since been replaced is ignored. A text that
+     * fails to load keeps its preview, which the server maps back to the full text as long as it stays unchanged, so the
+     * editor then stays read-only and the assessor is told to reload.
      */
     private async showAfterLoadingLongFeedbackTexts(truncated: Feedback[], generation: number): Promise<void> {
         const previews = truncated.map((feedback) => feedback.detailText);
@@ -716,17 +724,25 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 feedback.hasLongFeedbackText = false;
             }
         });
-        this.setLoadingLongFeedbackTexts(false);
+        const failed = truncated.some((feedback, index) => fullTexts[index] === undefined && feedback.detailText === previews[index]);
+        this.setLongFeedbackTexts(failed ? 'failed' : 'complete');
         this.updateApollonAssessments(this.referencedFeedbacks);
+        if (failed) {
+            this.alertService.error('artemisApp.modelingAssessment.longFeedbackNotLoaded');
+        }
     }
 
-    /** Keeps the editor read-only while full descriptions load, so no assessment box can be edited on a preview. */
-    private setLoadingLongFeedbackTexts(loading: boolean): void {
-        if (this.loadingLongFeedbackTexts === loading) {
-            return;
+    /** Whether editing is withheld because a full description is not loaded (yet). */
+    private get editingWithheld(): boolean {
+        return this.longFeedbackTexts !== 'complete';
+    }
+
+    private setLongFeedbackTexts(state: 'complete' | 'loading' | 'failed'): void {
+        const wasWithheld = this.editingWithheld;
+        this.longFeedbackTexts = state;
+        if (wasWithheld !== this.editingWithheld) {
+            this.apollonEditor?.setReadonly(untracked(() => this.readOnly()) || this.editingWithheld);
         }
-        this.loadingLongFeedbackTexts = loading;
-        this.apollonEditor?.setReadonly(untracked(() => this.readOnly()) || loading);
     }
 
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {
@@ -765,7 +781,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private updateApollonAssessments(feedbacks: Feedback[]): void {
         const editor = this.apollonEditor;
         // While full descriptions load, the boxes stay empty; the loader fills them once the texts are there.
-        if (!editor || this.loadingLongFeedbackTexts) {
+        if (!editor || this.longFeedbackTexts === 'loading') {
             return;
         }
         this.isUpdatingFromServer = true;
