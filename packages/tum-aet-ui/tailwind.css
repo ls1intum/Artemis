@@ -145,6 +145,19 @@
         border-radius: 9999px;
     }
 
+    /*
+     * Inside the frame of `tumaet-ui-table-layout` the tinted header and the frame set a table apart, so the rule below the
+     * header and the one below the last row would only add lines. Outside the frame, and for a table in a cell, the table
+     * keeps both. A table with a footer keeps the rule above the footer, which its cells draw themselves.
+     */
+    .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *) > thead > tr > th {
+        border-bottom-width: 0;
+    }
+
+    .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *, :has(> tfoot)) > tbody:last-child > tr:last-child > :is(td, th) {
+        border-bottom-width: 0;
+    }
+
     .tumaet-ui-button-group {
         display: inline-flex;
     }

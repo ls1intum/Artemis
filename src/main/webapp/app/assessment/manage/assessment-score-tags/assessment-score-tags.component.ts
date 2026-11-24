@@ -13,7 +13,7 @@ import { round, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/
 @Component({
     selector: 'jhi-assessment-score-tags',
     templateUrl: './assessment-score-tags.component.html',
-    styleUrls: ['./assessment-score-tags.component.scss'],
+    styleUrls: ['./assessment-score-tags.component.css'],
     imports: [TumAetUiTagComponent, ArtemisTranslatePipe],
 })
 export class AssessmentScoreTagsComponent {

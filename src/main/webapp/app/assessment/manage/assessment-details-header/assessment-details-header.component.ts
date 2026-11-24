@@ -45,7 +45,7 @@ export function assessmentDetailsRailItems(options: { showBuildOutput?: boolean;
 @Component({
     selector: 'jhi-assessment-details-header',
     templateUrl: './assessment-details-header.component.html',
-    styleUrls: ['./assessment-details-header.component.scss'],
+    styleUrls: ['./assessment-details-header.component.css'],
     imports: [FaIconComponent, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, ArtemisTranslatePipe],
 })
 export class AssessmentDetailsHeaderComponent {

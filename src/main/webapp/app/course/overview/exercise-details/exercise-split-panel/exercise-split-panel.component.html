@@ -113,7 +113,7 @@
     @if (exercise().type === ExerciseType.QUIZ) {
         <!-- A quiz has no problem statement panel to lead, so its details get one of their own. It is never first:
              a quiz always has an editor panel, and panels()[0] becomes the left pane. -->
-        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo" [startsCollapsed]="collapseSidePanels()">
             <jhi-exercise-headers-information
                 [exercise]="exercise()"
                 [studentParticipation]="studentParticipation()"
@@ -141,7 +141,7 @@
     }
 
     @if (showDiscussion()) {
-        <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
+        <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment" [startsCollapsed]="collapseSidePanels()">
             @defer (on idle) {
                 <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
             }

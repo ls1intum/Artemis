@@ -37,7 +37,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-re-evaluate.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     imports: [

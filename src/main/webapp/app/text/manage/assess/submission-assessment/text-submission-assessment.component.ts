@@ -65,7 +65,7 @@ const NO_SCORE: AssessmentScore = { awarded: 0, deducted: 0, total: 0 };
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
-    styleUrls: ['./text-submission-assessment.component.scss'],
+    styleUrls: ['./text-submission-assessment.component.css'],
     imports: [
         AssessmentLayoutComponent,
         AssessmentWorkspaceComponent,

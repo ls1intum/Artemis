@@ -67,7 +67,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
     templateUrl: './code-editor-tutor-assessment-container.component.html',
-    styleUrls: ['./code-editor-tutor-assessment-container.component.scss'],
+    styleUrls: ['./code-editor-tutor-assessment-container.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,

@@ -13,7 +13,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 @Component({
     selector: 'jhi-assessment-instructions-tabs',
     templateUrl: './assessment-instructions-tabs.component.html',
-    styleUrl: './assessment-instructions-tabs.component.scss',
+    styleUrl: './assessment-instructions-tabs.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent],
 })

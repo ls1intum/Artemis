@@ -53,7 +53,7 @@ import { setInputs } from 'app/foundation/util/set-inputs.util';
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
-    styleUrls: ['./programming-exercise-instruction.scss'],
+    styleUrls: ['./programming-exercise-instruction.css'],
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

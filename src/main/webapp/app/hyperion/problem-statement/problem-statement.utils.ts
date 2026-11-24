@@ -24,9 +24,9 @@ export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 /**
  * Approximate pixel width of the expanded inline refinement prompt.
  * Derived from the `min-width: 20rem` rule in
- * `app/hyperion/editor/inline-refinement-button/inline-refinement-button.component.scss`
+ * `app/hyperion/editor/inline-refinement-button/inline-refinement-button.component.css`
  * (≈ 320 px at default font size) plus padding and action buttons.
- * Keep in sync with that SCSS value.
+ * Keep in sync with that CSS value.
  */
 export const INLINE_REFINEMENT_PROMPT_WIDTH_PX = 370;
 

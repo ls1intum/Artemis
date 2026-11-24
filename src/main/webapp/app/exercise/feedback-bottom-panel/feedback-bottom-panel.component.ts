@@ -22,7 +22,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 @Component({
     selector: 'jhi-feedback-bottom-panel',
     templateUrl: './feedback-bottom-panel.component.html',
-    styleUrls: ['./feedback-bottom-panel.component.scss'],
+    styleUrls: ['./feedback-bottom-panel.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { '[class.fill]': 'fill()' },
     imports: [FaIconComponent, ArtemisTranslatePipe, CollapsedPanelRailComponent],

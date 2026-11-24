@@ -1,0 +1,569 @@
+/* ==========================================================================
+   Code-Editor Layout
+   ========================================================================== */
+.editor-wrapper {
+    /* The width of the grips below the editor and the build output of a grid that does not fill the page, and the colour of the grip drawn on them. */
+    --code-editor-divider: 12px;
+    --code-editor-divider-grip: color-mix(in srgb, var(--tumaet-ui-text-color) 62%, transparent);
+
+    display: grid;
+    grid-template-rows: min-content auto auto;
+}
+
+/* In assessment context, the wrapper is inside assessment-layout which handles scrolling */
+
+/* In non-assessment context (e.g., student code editor), constrain to viewport */
+.editor-wrapper:not(.assessment-wrapper) {
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+/* A collapsed side panel keeps the divider next to it, like the collapsed panel of the course exercise page. */
+.editor-wrapper .collapsed--horizontal {
+    width: calc(3rem + var(--code-editor-divider)) !important;
+}
+
+.editor-wrapper .collapsed--vertical {
+    height: 2.75rem !important;
+}
+
+/* The student's editor has no navbar, so the panel shows the shorter secondary header, and the fixed height would leave
+   the card's white background below it. The header alone is the collapsed panel then. */
+.editor-wrapper .collapsed--vertical:has(.editor-panel-second-header) {
+    height: auto !important;
+}
+
+.editor-wrapper .editor-statusbar {
+    margin-bottom: 10px;
+    padding: 0.5rem 0;
+}
+
+/* The toolbar can be moved out of the bar by the page that shows the editor (the exam puts it in its title row). The bar then takes no room.
+   `:empty` would not do: the whitespace of the template, which the application keeps, is a node of the bar as well. */
+.editor-wrapper .editor-statusbar:not(:has(*)) {
+    display: none;
+}
+
+/* The divider below the panels is the second grid row of the main area. It lies outside the height of the area, in the margin
+   that is as high as the divider, so the build output starts right below it. */
+.editor-wrapper .editor-main {
+    display: grid;
+    grid-template-rows: auto auto;
+    height: 500px;
+    margin-bottom: var(--code-editor-divider);
+}
+
+.editor-wrapper .editor-main__content {
+    display: flex;
+    height: inherit;
+    min-width: 0;
+}
+
+/* allow middle strip to shrink */
+.editor-wrapper .editor-main__content .editor-sidebar-left {
+    flex: 0 1 auto;
+    display: flex;
+    width: 310px;
+}
+
+.editor-wrapper .editor-main__content .editor-sidebar-left > *:first-child {
+    flex: 1 1 auto;
+    width: 90%;
+}
+
+.editor-wrapper .editor-main .editor-center {
+    flex: 1 1 auto;
+
+    /* Even at phone widths, reserve the card's borders so they cannot overlap the neighbouring divider. */
+    min-width: 2px;
+}
+
+.editor-wrapper .editor-main .editor-center .editor-panel {
+    height: 100%;
+}
+
+.editor-wrapper .editor-main .editor-sidebar-right {
+    flex: 0 1 auto;
+    display: flex;
+    flex-flow: row nowrap;
+    width: 500px;
+
+    /* The panel must not keep the width of its widest line (the task wizard has padding and does not wrap its title): the panel
+     would then take the room of the editor, whose card overflows the divider next to it in a narrow window. */
+    min-width: 0;
+}
+
+.editor-wrapper .editor-main .editor-sidebar-right .instructions-wrapper__content {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100px;
+}
+
+.editor-wrapper .editor-main .editor-sidebar-right > *:last-child {
+    flex: 1 1 auto;
+    width: 90%;
+}
+
+.editor-wrapper .editor-bottom {
+    flex: 1 1 auto;
+    display: flex;
+    flex-flow: column nowrap;
+    height: 200px;
+    overflow: auto;
+}
+
+/* Hide grip when bottom area is empty */
+.editor-wrapper .editor-bottom .rg-bottom-bottom {
+    display: none;
+}
+
+.editor-wrapper .editor-bottom > * + .rg-bottom-bottom {
+    display: inherit !important;
+}
+
+.editor-wrapper .editor-bottom > * {
+    height: inherit;
+}
+
+/* Pin the resize divider to the panel's visible bottom edge. As a normal flex child it inherited the panel
+   height and was pushed below the scrolled-out area, where overflow:auto clipped it - leaving no grabbable
+   handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling.
+   The negative margin lays it over the bottom edge of the panel instead of below it, so it does not make the panel scroll. */
+.editor-wrapper .editor-bottom > .rg-bottom-bottom {
+    height: var(--code-editor-divider);
+    margin-top: calc(-1 * var(--code-editor-divider));
+    position: sticky;
+    bottom: 0;
+}
+
+/* The area below the build output of a tutor assessment keeps the distance it had before the dividers became thin. */
+.editor-wrapper .editor-assessment-bottom {
+    margin-top: 10px;
+}
+
+/* Nothing is shown in it, e.g. a student viewing a tutor's assessment, so it keeps no distance either */
+.editor-wrapper .editor-assessment-bottom:not(:has(*)) {
+    margin-top: 0;
+}
+
+/* In non-assessment mode, constrain the bottom section to fit in the viewport */
+.editor-wrapper:not(.assessment-wrapper) .editor-bottom {
+    max-height: calc(100vh - 550px);
+}
+
+/* ==========================================================================
+   Panels of the editor (file browser, instructions, Monaco editor, build output)
+   ========================================================================== */
+.editor-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--body-color);
+    overflow-wrap: break-word;
+    background-color: var(--card-bg);
+    background-clip: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 0.15rem;
+}
+
+.editor-panel-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+    color: var(--body-color);
+}
+
+.editor-panel-body input {
+    max-width: 100%;
+}
+
+.editor-panel-footer {
+    padding: 0.5rem 1rem;
+    color: var(--body-color);
+    background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ==========================================================================
+   Shared primary header (file browser, instructions, Monaco editor, build output)
+   ========================================================================== */
+.code-editor-panel-header {
+    align-items: center;
+    min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--code-editor-panel-header-background);
+    color: var(--code-editor-panel-header-color);
+    border-bottom: 1px solid var(--code-editor-panel-header-border);
+    cursor: pointer;
+}
+
+.code-editor-panel-header h3,
+.code-editor-panel-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.code-editor-panel-header fa-icon {
+    color: inherit;
+}
+
+/* ==========================================================================
+   Shared secondary header (used by file browser, Monaco editor, and build output)
+   ========================================================================== */
+.editor-panel-second-header {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 0.25rem;
+    background-color: var(--code-editor-file-browser-header-background);
+    border-bottom: 1px solid var(--code-editor-file-browser-header-border);
+}
+
+/* Normalize heading elements used as panel titles so all secondary headers match the button height */
+.editor-panel-second-header h3,
+.editor-panel-second-header h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* ==========================================================================
+   Collapsible styling
+   ========================================================================== */
+
+/* File browser: a collapsed one is only the rail (jhi-collapsed-panel-rail) that opens it again */
+.editor-sidebar-left.collapsed--horizontal {
+    flex: none !important;
+}
+
+.editor-sidebar-left.collapsed--horizontal .editor-panel-body,
+.editor-sidebar-left.collapsed--horizontal .editor-panel-second-header {
+    display: none !important;
+}
+
+.editor-sidebar-left.collapsed--horizontal jhi-collapsed-panel-rail {
+    flex: 1 1 auto;
+}
+
+.editor-sidebar-left:not(.collapsed--horizontal) .code-editor-status {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(max-content, 1fr));
+    column-gap: 10px;
+}
+
+.editor-sidebar-left:not(.collapsed--horizontal) .code-editor-status > :not(:first-child) {
+    border-left: 1px solid var(--border-color);
+    padding-left: 20px;
+}
+
+.editor-sidebar-left.collapsed--horizontal .code-editor-status > :not(:last-child) {
+    padding-bottom: 5px;
+}
+
+.editor-sidebar-left.collapsed--horizontal .code-editor-status > :not(:first-child) {
+    padding-top: 5px;
+    border-top: 1px solid var(--border-color);
+}
+
+.editor-sidebar-left.collapsed--horizontal .code-editor-status span {
+    display: none !important;
+}
+
+/* Instructions (right pane): a collapsed one is only the rail that opens it again */
+.editor-sidebar-right.collapsed--horizontal {
+    flex: none !important;
+}
+
+.editor-sidebar-right.collapsed--horizontal .instructions-wrapper__content,
+.editor-sidebar-right.collapsed--horizontal .editor-panel-second-header,
+.editor-sidebar-right.collapsed--horizontal .editable-instruction-container__status {
+    display: none !important;
+}
+
+.editor-sidebar-right.collapsed--horizontal jhi-collapsed-panel-rail {
+    flex: 1 1 auto;
+}
+
+/* The headers of an assessment's panels share the grey of the general feedback panel's header, and so do the rails of its collapsed panels */
+.editor-wrapper.assessment-workspace {
+    --code-editor-panel-header-background: var(--code-editor-file-browser-header-background);
+    --code-editor-panel-header-border: var(--code-editor-file-browser-header-border);
+    --collapsed-panel-rail-background: var(--code-editor-file-browser-header-background);
+    --collapsed-panel-rail-border: 1px solid var(--border-color);
+    --collapsed-panel-rail-radius: 0.375rem;
+}
+
+/* A rail inside a panel that is framed already (the file browser's card, the general feedback panel) would draw a second border over its frame */
+.editor-wrapper.assessment-workspace .editor-panel > jhi-collapsed-panel-rail,
+.editor-wrapper.assessment-workspace .feedback-bottom-panel > jhi-collapsed-panel-rail {
+    --collapsed-panel-rail-border: 0;
+    --collapsed-panel-rail-radius: 0;
+}
+
+/* An assessment's collapsed column is its rail alone, whatever the page projects into it */
+.editor-wrapper.assessment-workspace .editor-sidebar-right.collapsed--horizontal > :not(jhi-collapsed-panel-rail) {
+    display: none !important;
+}
+
+/* Build output */
+.editor-bottom.collapsed--vertical .editor-panel-body {
+    display: none;
+}
+
+/* ==========================================================================
+   Filling its host: the student's code editor in the exercise's split panel
+   ========================================================================== */
+
+/* The grid takes the full height of its host instead of fixed panel heights, so the page around it does not scroll: the
+   file browser and the editor take the upper part and the bottom area takes the rest, each scrolling on its own. The grip
+   between them moves the split; it sets the upper part's height and the bottom area follows. */
+.code-editor-container--fill,
+.code-editor-grid--fill {
+    display: block;
+    height: 100%;
+    min-height: 0;
+}
+
+.editor-wrapper.editor-wrapper--fill {
+    display: flex;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    flex-direction: column;
+    row-gap: 0;
+}
+
+.editor-wrapper.editor-wrapper--fill > .editor-statusbar {
+    flex: none;
+}
+
+/* A splitter divides the editor from the bottom area and hands each the share the user dragged it to, the same as it does
+   between the panels of the assessment pages. The two areas then fill the panel they sit in. */
+.editor-wrapper.editor-wrapper--fill > .editor-split {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-split__top,
+.editor-wrapper.editor-wrapper--fill .editor-split__bottom {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-main {
+    display: flex;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-main__content {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 0;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-main > .rg-main-bottom {
+    flex: none;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-bottom {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+}
+
+.editor-wrapper.editor-wrapper--fill .editor-bottom > * {
+    height: 100%;
+}
+
+/* A collapsed bottom area keeps only its header, and the editor takes the space it leaves */
+.editor-wrapper.editor-wrapper--fill.editor-wrapper--bottom-collapsed .editor-main {
+    flex-grow: 1;
+}
+
+.editor-wrapper.editor-wrapper--fill.editor-wrapper--bottom-collapsed .editor-bottom {
+    flex: 0 0 auto;
+}
+
+/* ==========================================================================
+   Assessment: laid out like the text and modeling assessments
+   ========================================================================== */
+
+/* The assessment fills the page's height, so the page itself never scrolls: the instructions run the whole height beside the rest,
+   and under the file browser and the editor is the feedback panel, which shows the build output as a tab. Each panel scrolls on its
+   own. */
+.programming-assessment-page__editor > jhi-code-editor-grid {
+    display: block;
+    height: 100%;
+}
+
+.editor-wrapper.assessment-workspace {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    row-gap: 0;
+}
+
+/* The area of the file browser and the editor, and the feedback panel under it, fill the panel they sit in */
+.editor-wrapper.assessment-workspace .editor-split {
+    height: 100%;
+}
+
+.editor-wrapper.assessment-workspace .editor-sidebars--inner {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+/* ==========================================================================
+   Resizable drag elements
+   ========================================================================== */
+
+/* The divider between two panels is one `--code-editor-divider` wide and carries the same small grip as the split of the course exercise
+   page. Its box is the gap between the panels. The grab area reaches 4px into the panel that follows the divider, and never into the
+   one before it, whose scrollbar sits on that edge. */
+.rg-main-bottom,
+.rg-bottom-bottom {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+
+    /* easier to grab + avoid selecting editor text while dragging */
+    user-select: none;
+    touch-action: none;
+    z-index: 3;
+}
+
+.rg-main-bottom::after,
+.rg-bottom-bottom::after {
+    content: '';
+    box-sizing: border-box;
+}
+
+.rg-main-bottom,
+.rg-bottom-bottom {
+    height: var(--code-editor-divider);
+    background: var(--body-bg);
+    cursor: row-resize;
+}
+
+/* Two thin horizontal lines, as on the handle of a vertical splitter */
+.rg-main-bottom::after,
+.rg-bottom-bottom::after {
+    width: 1.25rem;
+    height: 0.75rem;
+    background: linear-gradient(
+        to bottom,
+        transparent 0 3px,
+        var(--code-editor-divider-grip) 3px 5px,
+        transparent 5px 7px,
+        var(--code-editor-divider-grip) 7px 9px,
+        transparent 9px
+    );
+}
+
+/* The build output is the panel that follows. The divider at the bottom edge of the build output has nothing to reach into. */
+.rg-main-bottom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: -4px;
+    left: 0;
+}
+
+/* ==========================================================================
+   Problem Statement (center) – keep content inside the card and allow shrink
+   ========================================================================== */
+
+/* allow all layers in the center to shrink instead of pushing the right pane */
+.editor-wrapper .editor-main .editor-center .instructions-wrapper,
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
+    min-width: 0;
+}
+
+/* contain the markdown editor’s inner flow (it defaults to overflow: visible) */
+.editor-wrapper .editor-main .editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
+    overflow: hidden !important;
+}
+
+/* vertical sizing for the editable-instructions stack */
+.editor-wrapper .editor-main .editor-center .instructions-wrapper {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .editable-instruction-container {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .editable-instruction-container jhi-markdown-editor-monaco {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   The file browser, the editor and the instructions: the panels of two splitters
+   ========================================================================== */
+.editor-main__content > .editor-sidebars {
+    min-width: 0;
+}
+
+/* Each column fills its panel; the widths the columns had before the splitters set them are the splitters' now. */
+.editor-wrapper .editor-sidebars .editor-sidebar-left,
+.editor-wrapper .editor-sidebars .editor-sidebar-right,
+.editor-wrapper .editor-sidebars .editor-center {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: 100%;
+    flex: 1 1 auto !important;
+}
+
+/* The kit's splitter collapses only its second panel (the instructions, through collapsedSecondSize), so the file browser, the first panel
+   of the inner splitter, is collapsed here: it keeps just its rail, and the divider beside it is not there to drag. The splitter sizes its
+   panels by inline styles, hence the !important. */
+.editor-sidebars--left-collapsed > .tumaet-ui-splitter-panel:first-child {
+    flex: 0 0 3rem !important;
+}
+
+.editor-sidebars--left-collapsed > .tumaet-ui-splitter-separator {
+    display: none;
+}
+
+/* A collapsed side is a rail that stands for the panel. On the exercise page it is grey like a collapsed header, so it recedes
+   behind the editor; in an assessment it stays white like the panels around it. */
+.editor-wrapper:not(.assessment-workspace) .editor-sidebars--left-collapsed .editor-sidebar-left .editor-panel,
+.editor-wrapper:not(.assessment-workspace) .editor-sidebars--right-collapsed .editor-sidebar-right .editor-panel {
+    background-color: var(--hover-slightly-darker-body-bg);
+}
+
+.editor-wrapper.assessment-workspace .editor-sidebars--left-collapsed .editor-sidebar-left .editor-panel,
+.editor-wrapper.assessment-workspace .editor-sidebars--right-collapsed .editor-sidebar-right .editor-panel {
+    background-color: var(--module-bg);
+}

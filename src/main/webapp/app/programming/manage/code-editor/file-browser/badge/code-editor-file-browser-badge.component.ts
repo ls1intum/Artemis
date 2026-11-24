@@ -8,7 +8,7 @@ import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/mod
 @Component({
     selector: 'jhi-file-browser-badge',
     templateUrl: './code-editor-file-browser-badge.component.html',
-    styleUrls: ['./code-editor-file-browser-badge.component.scss'],
+    styleUrls: ['./code-editor-file-browser-badge.component.css'],
     imports: [TumAetUiTooltipDirective, FaIconComponent],
 })
 export class CodeEditorFileBrowserBadgeComponent {

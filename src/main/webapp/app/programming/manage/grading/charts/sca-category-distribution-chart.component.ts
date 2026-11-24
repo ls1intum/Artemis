@@ -15,7 +15,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
-    styleUrls: ['./sca-category-distribution-chart.scss'],
+    styleUrls: ['./sca-category-distribution-chart.css'],
     template: `
         <div>
             <div>

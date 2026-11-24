@@ -1,0 +1,33 @@
+.text-with-feedback {
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.text-with-feedback.positive-feedback {
+    color: var(--textblock-assessment-text-feedback-positive-color);
+    background-color: var(--textblock-assessment-text-feedback-positive-background);
+}
+
+.text-with-feedback.negative-feedback {
+    color: var(--textblock-assessment-text-feedback-negative-color);
+    background-color: var(--textblock-assessment-text-feedback-negative-background);
+}
+
+.text-with-feedback.neutral-feedback {
+    color: var(--textblock-assessment-text-feedback-neutral-color);
+    background-color: var(--textblock-assessment-text-feedback-neutral-background);
+}
+
+.text-with-feedback b {
+    font-weight: 600;
+}
+
+/* The feedback card of a sentence sits below it, set apart from the sentence and from the text that follows */
+.text-result__feedback {
+    display: block;
+    margin: 0.5rem 0;
+}
+
+.white-space {
+    white-space: pre-wrap;
+}

@@ -24,7 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
-    styleUrls: ['./assessment-header.component.scss'],
+    styleUrls: ['./assessment-header.component.css'],
     imports: [
         TranslateDirective,
         TumAetUiTooltipDirective,

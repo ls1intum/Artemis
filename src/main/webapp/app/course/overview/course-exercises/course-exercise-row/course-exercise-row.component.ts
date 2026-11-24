@@ -28,7 +28,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
-    styleUrls: ['./course-exercise-row.scss'],
+    styleUrls: ['./course-exercise-row.css'],
     imports: [
         RouterLink,
         FaIconComponent,

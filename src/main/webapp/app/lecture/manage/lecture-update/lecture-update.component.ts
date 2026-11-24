@@ -86,7 +86,7 @@ interface PdfUploadConfirmationText {
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
-    styleUrls: ['./lecture-update.component.scss'],
+    styleUrls: ['./lecture-update.component.css'],
     // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
     host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [

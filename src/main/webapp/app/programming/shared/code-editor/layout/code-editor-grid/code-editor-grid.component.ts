@@ -28,7 +28,7 @@ import { CollapsedPanelRailComponent, CollapsedPanelRailItem } from 'app/shared-
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
-    styleUrls: ['./code-editor-grid.scss'],
+    styleUrls: ['./code-editor-grid.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [ResizableDirective, FeedbackSplitComponent, NgTemplateOutlet, TumAetUiSplitterComponent, CollapsedPanelRailComponent],
     host: { '[class.code-editor-grid--fill]': 'fillHeight()' },

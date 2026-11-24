@@ -8,7 +8,7 @@ import { CollapsedPanelRailComponent } from 'app/shared-ui/components/collapsed-
 
 @Component({
     selector: 'jhi-code-editor-instructions',
-    styleUrls: ['./code-editor-instructions.scss'],
+    styleUrls: ['./code-editor-instructions.css'],
     templateUrl: './code-editor-instructions.component.html',
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, CollapsedPanelRailComponent],
 })

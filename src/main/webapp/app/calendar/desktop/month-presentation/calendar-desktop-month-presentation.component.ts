@@ -26,7 +26,7 @@ import { CalendarMonthPresentationComponent } from 'app/calendar/shared/calendar
         ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-desktop-month-presentation.component.html',
-    styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
+    styleUrls: ['./calendar-desktop-month-presentation.component.css'],
 })
 export class CalendarDesktopMonthPresentationComponent extends CalendarMonthPresentationComponent {
     readonly weekdayNameKeys = utils.getWeekdayNameKeys();

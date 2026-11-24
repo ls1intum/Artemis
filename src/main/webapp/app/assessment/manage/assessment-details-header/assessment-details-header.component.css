@@ -1,0 +1,70 @@
+:host {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+
+/* The panel header draws the line below the tabs inside itself, under them */
+
+.assessment-details-header {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: stretch;
+}
+
+/* The tabs are the kit's small ones, so they fit the 2.5rem panel header like the instructions header beside it */
+.assessment-details-header__tabs {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.assessment-details-header__tabs tumaet-ui-tab-list {
+    flex: 1 1 auto;
+}
+
+.assessment-details-header__count {
+    display: inline-block;
+    min-width: 1.25rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--body-color) 10%, transparent);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.25rem;
+    text-align: center;
+}
+
+.assessment-details-header__marker {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.assessment-details-header__add {
+    display: flex;
+    width: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    padding: 0;
+    color: var(--body-color);
+    background: transparent;
+    border: 0;
+
+    /* Like the collapse button of the panel and of the right panel of the exercise details */
+    border-left: 1px solid var(--border-color);
+}
+
+.assessment-details-header__add:hover:not(:disabled),
+.assessment-details-header__add:focus-visible {
+    color: var(--primary);
+    background: var(--hover-slightly-darker-body-bg);
+}
+
+.assessment-details-header__add:disabled {
+    opacity: 0.5;
+}

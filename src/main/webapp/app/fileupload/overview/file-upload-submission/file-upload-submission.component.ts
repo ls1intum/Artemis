@@ -43,7 +43,7 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
-    styleUrl: './file-upload-submission.component.scss',
+    styleUrl: './file-upload-submission.component.css',
     // The page gives its panel no padding, so the component adds it, unless the assessed submission panel fills the panel to
     // its edges; an exam summary has its own frame.
     host: { class: 'block', '[class.file-upload-submission--fill]': 'showsAssessedSubmission()', '[class.p-2]': '!displayedInExamSummary() && !showsAssessedSubmission()' },

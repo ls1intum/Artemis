@@ -11,7 +11,7 @@ export type HyperionStatusState = 'queued' | 'running' | 'success' | 'warning' |
 @Component({
     selector: 'jhi-hyperion-status',
     templateUrl: './hyperion-status.component.html',
-    styleUrl: './hyperion-status.component.scss',
+    styleUrl: './hyperion-status.component.css',
     host: {
         '[attr.data-slot]': '"status-dot"',
         class: 'hyperion-status inline-flex items-center gap-2 text-sm',

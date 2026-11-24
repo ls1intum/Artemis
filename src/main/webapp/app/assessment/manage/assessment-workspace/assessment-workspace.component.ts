@@ -38,7 +38,7 @@ const RAIL_HEIGHT = '2.75rem';
 @Component({
     selector: 'jhi-assessment-workspace',
     templateUrl: './assessment-workspace.component.html',
-    styleUrls: ['./assessment-workspace.component.scss'],
+    styleUrls: ['./assessment-workspace.component.css'],
     imports: [
         CdkScrollable,
         FaIconComponent,

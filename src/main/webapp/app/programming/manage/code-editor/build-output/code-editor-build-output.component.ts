@@ -27,7 +27,7 @@ import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/e
 @Component({
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
-    styleUrls: ['./code-editor-build-output.scss'],
+    styleUrls: ['./code-editor-build-output.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CollapsedPanelRailComponent],
 })
