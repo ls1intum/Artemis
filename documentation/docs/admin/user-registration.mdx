@@ -2,7 +2,7 @@
 id: user-registration
 title: User Management
 sidebar_label: User Management
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-24
 ---
 
 This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
@@ -374,6 +374,8 @@ records. The entries relevant to account state:
 
 All of them are classified as security events, so they are written to `security_audit_event` and appear under
 the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
+To see the entries of one account, type its login in full into the search field of the page, or pass it as the
+`principal` parameter of the endpoint. The login is matched exactly, which keeps the search on an index.
 `DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
 revocation itself writes none. Retention is configured separately per log; see
 [Cleanup Service](cleanup-service.mdx).
