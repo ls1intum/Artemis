@@ -26,7 +26,7 @@ import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-de
         CompetencyContributionComponent,
     ],
     templateUrl: './lecture-unit.component.html',
-    styleUrl: './lecture-unit.component.scss',
+    styleUrl: './lecture-unit.component.css',
 })
 export class LectureUnitComponent implements OnDestroy {
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;

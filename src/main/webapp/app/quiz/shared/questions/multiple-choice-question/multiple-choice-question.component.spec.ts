@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { Logger, compile } from 'sass';
+import { readFileSync } from 'node:fs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -460,12 +460,12 @@ describe('MultipleChoiceQuestionComponent', () => {
 
     // Regression test for issue #8927: KaTeX marks the output of \text and \texttt with the class "text", which the
     // answer option styling (padding and font size of the answer's own text element) used to match as well.
-    // Vitest does not apply component styles, so the component's SCSS is compiled and attached to the document here.
+    // Vitest does not apply component styles, so the stylesheet of the component is read and attached to the document here.
     describe('answer option styling', () => {
         let styleElement: HTMLStyleElement;
 
         beforeEach(() => {
-            const { css } = compile('src/main/webapp/app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component.scss', { logger: Logger.silent });
+            const css = readFileSync('src/main/webapp/app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component.css', 'utf8');
             styleElement = document.createElement('style');
             styleElement.textContent = css;
             document.head.appendChild(styleElement);
@@ -492,7 +492,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             const answerText = fixture.nativeElement.querySelector(answerTextSelector) as HTMLElement;
             const katexText = answerText.querySelector('.katex .text') as HTMLElement;
 
-            // The answer's own text element keeps its styling (this also proves that the compiled styles are applied).
+            // The answer's own text element keeps its styling (this also proves that the styles are applied).
             expect(getComputedStyle(answerText).paddingRight).toBe('8px');
             expect(getComputedStyle(answerText).fontSize).toBe('16px');
             // KaTeX text elements must not get the answer's padding. The font size cannot be asserted here: jsdom has no

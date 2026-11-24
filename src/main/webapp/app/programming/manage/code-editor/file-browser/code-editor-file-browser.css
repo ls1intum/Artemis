@@ -1,0 +1,155 @@
+/*
+ * !* ==========================================================================
+ * File browser
+ * ========================================================================== *!
+ */
+.file-browser {
+    height: 100%;
+}
+
+.file-browser .editor-panel-body {
+    overflow: auto;
+    padding: 1rem 0.5rem;
+}
+
+.file-browser .editor-panel-second-header button {
+    width: 60px;
+}
+
+/*
+ * !* ==========================================================================
+ * File browser tree
+ * ========================================================================== *!
+ */
+.file-browser ::ng-deep .treeview-container {
+    overflow-y: hidden !important;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item {
+    position: relative;
+    padding: 0.3rem 0.5rem 0.3rem 1rem;
+    margin-bottom: 2px;
+    border: none;
+    display: flex;
+    align-items: center;
+    background: transparent;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item--folder {
+    padding-left: 0.3rem;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item__fileName {
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item__input {
+    border: none;
+    padding-left: 5px;
+    background: var(--code-editor-file-browser-input-background);
+    color: var(--code-editor-file-browser-input-color);
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-label-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    margin-right: 0.35rem;
+    overflow: hidden;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-label-group .file-tree-item__fileName {
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .rename-input-wrapper {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .rename-input-wrapper .file-tree-item__input {
+    width: 100%;
+    min-width: 7rem;
+    max-width: 18rem;
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item:hover {
+    background-color: var(--code-editor-file-browser-tree-hover);
+}
+
+/* A file with changes stays marked while hovered; only the selected file shows the selection colour. */
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item.file-tree-item--changed:not(.node-selected),
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item.file-tree-item--changed:not(.node-selected):hover {
+    background-color: var(--warning);
+}
+
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item:hover .file-icons,
+.file-browser ::ng-deep .treeview-container .treeview-item .file-tree-item:focus-within .file-icons {
+    opacity: 1;
+}
+
+.file-browser ::ng-deep .treeview-container .node-selected {
+    background-color: var(--code-editor-file-browser-selected-file-background) !important;
+}
+
+.file-browser ::ng-deep .treeview-container .file-icons {
+    opacity: 0;
+    transition: opacity 100ms ease-in-out;
+    margin-left: auto;
+    flex: 0 0 auto;
+}
+
+.file-browser ::ng-deep .treeview-container .file-icons :not(:last-child) {
+    margin-right: 5px;
+}
+
+.file-browser ::ng-deep .treeview-container .file-icons button {
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0.1rem;
+    pointer-events: auto;
+}
+
+.file-browser ::ng-deep .treeview-container .file-icons button fa-icon {
+    cursor: pointer;
+}
+
+/* Problem Statement */
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry {
+    position: relative;
+}
+
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry:not(.node-selected)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--primary);
+}
+
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry:not(.node-selected) .problem-statement-icon {
+    color: var(--primary);
+}
+
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry:not(.node-selected) .file-tree-item__fileName {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry.node-selected::before {
+    display: none;
+}
+
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry.node-selected .problem-statement-icon,
+.file-browser ::ng-deep .treeview-container .file-tree-item.problem-statement-entry.node-selected .file-tree-item__fileName {
+    color: inherit;
+    font-weight: inherit;
+}

@@ -19,7 +19,7 @@ import { LinkPreviewContainerComponent } from 'app/communication/link-preview/co
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
-    styleUrls: ['./posting-content.component.scss'],
+    styleUrls: ['../communication.component.css', './posting-content.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, FaIconComponent, PostingMarkdownComponent, LinkPreviewContainerComponent, TumAetUiButtonDirective],
 })

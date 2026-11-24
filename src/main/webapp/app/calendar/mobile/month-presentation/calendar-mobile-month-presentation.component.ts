@@ -8,7 +8,7 @@ import { CalendarMonthPresentationComponent } from 'app/calendar/shared/calendar
     selector: 'jhi-calendar-mobile-month-presentation',
     imports: [CalendarDayBadgeComponent, NgTemplateOutlet],
     templateUrl: './calendar-mobile-month-presentation.component.html',
-    styleUrl: './calendar-mobile-month-presentation.component.scss',
+    styleUrl: './calendar-mobile-month-presentation.component.css',
 })
 export class CalendarMobileMonthPresentationComponent extends CalendarMonthPresentationComponent {
     onDateSelected = output<Dayjs>();

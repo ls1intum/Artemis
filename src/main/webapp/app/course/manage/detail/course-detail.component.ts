@@ -57,7 +57,7 @@ export enum DoughnutChartType {
 @Component({
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
-    styleUrls: ['./course-detail.component.scss'],
+    styleUrls: ['./course-detail.component.css'],
     imports: [
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,

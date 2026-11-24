@@ -27,7 +27,7 @@ type GenerationMode = 'free-topic' | 'competency-graph';
 @Component({
     selector: 'jhi-quiz-ai-generation-modal',
     templateUrl: './quiz-ai-generation-modal.component.html',
-    styleUrl: './quiz-ai-generation-modal.component.scss',
+    styleUrl: './quiz-ai-generation-modal.component.css',
     imports: [
         TumAetUiButtonDirective,
         TumAetUiDialogComponent,

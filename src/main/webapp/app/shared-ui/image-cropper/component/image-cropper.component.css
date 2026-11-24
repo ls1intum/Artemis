@@ -1,0 +1,198 @@
+:host {
+    display: flex;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    padding: 5px;
+    text-align: center;
+}
+
+:host > div {
+    width: 100%;
+    position: relative;
+}
+
+:host > div img.ngx-ic-source-image {
+    max-width: 100%;
+    max-height: 100%;
+    transform-origin: center;
+}
+
+:host .ngx-ic-overlay {
+    position: absolute;
+    pointer-events: none;
+    touch-action: none;
+    outline: var(--cropper-overlay-color) solid 100vw;
+    top: 0;
+    left: 0;
+}
+
+:host .ngx-ic-cropper {
+    position: absolute;
+    display: flex;
+    color: var(--tumaet-ui-muted-color);
+    background: transparent;
+    outline: var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent)) solid 100vw;
+    touch-action: none;
+}
+
+@media (orientation: portrait) {
+    :host .ngx-ic-cropper {
+        outline-width: 100vh;
+    }
+}
+
+:host .ngx-ic-cropper::after {
+    position: absolute;
+    content: '';
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    border: dashed 1px;
+    opacity: 0;
+    color: inherit;
+    z-index: 1;
+}
+
+:host .ngx-ic-cropper .ngx-ic-move {
+    width: 100%;
+    cursor: move;
+    border: 1px solid color-mix(in srgb, white 50%, transparent);
+}
+
+:host .ngx-ic-cropper:focus .ngx-ic-move {
+    border-color: dodgerblue;
+    border-width: 2px;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize {
+    position: absolute;
+    display: inline-block;
+    line-height: 6px;
+    padding: 8px;
+    opacity: 0.85;
+    z-index: 1;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize .ngx-ic-square {
+    display: inline-block;
+    background: var(--tumaet-ui-muted-color);
+    width: 6px;
+    height: 6px;
+    border: 1px solid color-mix(in srgb, white 50%, transparent);
+    box-sizing: content-box;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-topleft {
+    top: -12px;
+    left: -12px;
+    cursor: nwse-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-top {
+    top: -12px;
+    left: calc(50% - 12px);
+    cursor: ns-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-topright {
+    top: -12px;
+    right: -12px;
+    cursor: nesw-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-right {
+    top: calc(50% - 12px);
+    right: -12px;
+    cursor: ew-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-bottomright {
+    bottom: -12px;
+    right: -12px;
+    cursor: nwse-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-bottom {
+    bottom: -12px;
+    left: calc(50% - 12px);
+    cursor: ns-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-bottomleft {
+    bottom: -12px;
+    left: -12px;
+    cursor: nesw-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize.ngx-ic-left {
+    top: calc(50% - 12px);
+    left: -12px;
+    cursor: ew-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize-bar {
+    position: absolute;
+    z-index: 1;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize-bar.ngx-ic-top {
+    top: -11px;
+    left: 11px;
+    width: calc(100% - 22px);
+    height: 22px;
+    cursor: ns-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize-bar.ngx-ic-right {
+    top: 11px;
+    right: -11px;
+    height: calc(100% - 22px);
+    width: 22px;
+    cursor: ew-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize-bar.ngx-ic-bottom {
+    bottom: -11px;
+    left: 11px;
+    width: calc(100% - 22px);
+    height: 22px;
+    cursor: ns-resize;
+}
+
+:host .ngx-ic-cropper .ngx-ic-resize-bar.ngx-ic-left {
+    top: 11px;
+    left: -11px;
+    height: calc(100% - 22px);
+    width: 22px;
+    cursor: ew-resize;
+}
+
+:host .ngx-ic-cropper.ngx-ic-round {
+    outline-color: transparent;
+}
+
+:host .ngx-ic-cropper.ngx-ic-round::after {
+    border-radius: 100%;
+    box-shadow: 0 0 0 100vw var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent));
+}
+
+@media (orientation: portrait) {
+    :host .ngx-ic-cropper.ngx-ic-round::after {
+        box-shadow: 0 0 0 100vh var(--cropper-outline-color, color-mix(in srgb, white 30%, transparent));
+    }
+}
+
+:host .ngx-ic-cropper.ngx-ic-round .ngx-ic-move {
+    border-radius: 100%;
+}
+
+:host.disabled .ngx-ic-cropper .ngx-ic-resize,
+:host.disabled .ngx-ic-cropper .ngx-ic-resize-bar,
+:host.disabled .ngx-ic-cropper .ngx-ic-move {
+    display: none;
+}

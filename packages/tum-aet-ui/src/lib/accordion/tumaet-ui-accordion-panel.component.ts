@@ -28,7 +28,7 @@ import { TumAetUiAccordionComponent } from './tumaet-ui-accordion.component';
 @Component({
     selector: 'tumaet-ui-accordion-panel',
     templateUrl: './tumaet-ui-accordion-panel.component.html',
-    styleUrl: './tumaet-ui-accordion-panel.component.scss',
+    styleUrl: './tumaet-ui-accordion-panel.component.css',
     imports: [AccordionTrigger, AccordionPanel, FaIconComponent],
     host: {
         class: 'tumaet-ui-accordion-panel tumaet:block tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-content-background tumaet:text-text',

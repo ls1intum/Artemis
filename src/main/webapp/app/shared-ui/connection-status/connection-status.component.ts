@@ -10,7 +10,7 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-connection-status',
     templateUrl: './connection-status.component.html',
-    styleUrls: ['./connection-status.component.scss'],
+    styleUrls: ['./connection-status.component.css'],
     imports: [NgClass, FaIconComponent, TranslateDirective, TumAetUiTagComponent],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {

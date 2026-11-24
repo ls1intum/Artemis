@@ -94,7 +94,7 @@ import { KeyValuePipe } from '@angular/common';
             </form>
         }
     `,
-    styleUrls: ['../../programming/shared/programming-exercise-form.scss'],
+    styleUrls: ['../../programming/shared/programming-exercise-form.css'],
     imports: [
         PointsInputComponent,
         TumAetUiSelectComponent,

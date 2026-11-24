@@ -11,7 +11,7 @@ import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
     selector: 'jhi-lecture-series-draft-edit-modal',
     imports: [TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TranslateDirective],
     templateUrl: './lecture-series-draft-edit-modal.component.html',
-    styleUrl: './lecture-series-draft-edit-modal.component.scss',
+    styleUrl: './lecture-series-draft-edit-modal.component.css',
 })
 export class LectureSeriesDraftEditModalComponent {
     private translateService = inject(TranslateService);

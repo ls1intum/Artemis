@@ -16,7 +16,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
     imports: [TranslateDirective, IrisCitationTextComponent, TumAetUiButtonDirective, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
-    styleUrl: './iris-mcq-question.component.scss',
+    styleUrl: './iris-mcq-question.component.css',
 })
 export class IrisMcqQuestionComponent {
     private readonly injector = inject(Injector);

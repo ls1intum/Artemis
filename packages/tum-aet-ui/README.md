@@ -17,11 +17,11 @@ Use the Angular CLI or another build that runs Angular's linker. Zone.js is not 
 Server-side rendering is not supported.
 
 In `angular.json`, add the stylesheet to `projects.<app>.architect.build.options.styles`, after
-existing global styles. Keep your application's current `.css` or `.scss` path:
+existing global styles. Keep your application's current `.css` or `.css` path:
 
 ```json
 {
-    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.css", "@tumaet/ui-angular/styles.css"]
 }
 ```
 
@@ -136,7 +136,8 @@ Colors:
   `--tumaet-ui-button-active-overlay`; most default to semantic aliases and can be overridden
   independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
-  `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
+  `--tumaet-ui-table-striped-background`, `--tumaet-ui-table-header-background`,
+  `--tumaet-ui-table-header-hover-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
 
 Primary is the brand fill; accent is the brand foreground for content and controls. Each state

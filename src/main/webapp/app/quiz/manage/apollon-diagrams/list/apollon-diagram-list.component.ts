@@ -28,7 +28,7 @@ import {
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
-    styleUrls: ['./apollon-diagram-list.component.scss'],
+    styleUrls: ['./apollon-diagram-list.component.css'],
     providers: [ApollonDiagramService],
     imports: [
         TranslateDirective,
