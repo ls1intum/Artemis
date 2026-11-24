@@ -15,14 +15,17 @@ import org.springframework.ai.session.SessionService;
  * How the Atlas chat agent keeps its conversations in the Spring AI session memory.
  * <p>
  * A session holds everything the model saw and said, including every tool call and its result. The conversation that a user sees consists of the messages of the user and the
- * replies of the assistant only, so the readers below leave the rest out. The prompt gets the last {@link #PROMPT_HISTORY_MESSAGES} of them.
+ * replies of the assistant only, so the readers below leave the rest out. The prompt gets a window of the last {@link #PROMPT_HISTORY_EVENTS} of its events, see there.
  */
 final class AtlasChatSessions {
 
     /**
-     * How many messages of the conversation go into the prompt of the chat agent. It is the size of the window that the chat memory kept before.
+     * The size of the window of the history that goes into the prompt of the chat agent: 20 was the size of the window of the chat memory before. The window of Spring AI counts
+     * events, every message of the user and every message of the assistant, an assistant message that asks for a tool call included, and it never cuts a turn in two. A
+     * conversation without tool calls therefore keeps its last 20 messages, and one with tool calls keeps fewer messages that a user reads: a turn with one tool call takes
+     * three events for two such messages. The filter has no criterion to leave the tool calls out of the count.
      */
-    static final int PROMPT_HISTORY_MESSAGES = 20;
+    static final int PROMPT_HISTORY_EVENTS = 20;
 
     private static final Set<MessageType> CONVERSATION_TYPES = Set.of(MessageType.USER, MessageType.ASSISTANT);
 
@@ -31,13 +34,13 @@ final class AtlasChatSessions {
     }
 
     /**
-     * The history that goes into the prompt: the last messages of the user and the assistant. The tool calls and results are not part of it. A call that is left without
-     * its result, or the other way round, is kept out of the prompt by Spring AI, so the model never sees one without the other.
+     * The history that goes into the prompt: a window of the last {@link #PROMPT_HISTORY_EVENTS} events of the user and the assistant, the tool calls without their results
+     * among them. A call that is left without its result, or the other way round, is kept out of the prompt by Spring AI, so the model never sees one without the other.
      *
      * @return the filter of the history that the memory advisor reads
      */
     static EventFilter promptHistory() {
-        return EventFilter.builder().messageTypes(CONVERSATION_TYPES).lastN(PROMPT_HISTORY_MESSAGES).build();
+        return EventFilter.builder().messageTypes(CONVERSATION_TYPES).lastN(PROMPT_HISTORY_EVENTS).build();
     }
 
     /**

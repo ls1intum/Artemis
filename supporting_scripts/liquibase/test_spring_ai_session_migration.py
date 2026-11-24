@@ -35,8 +35,7 @@ class SpringAiSessionMigrationTest(unittest.TestCase):
                             ('course_1_user_1', 'internal system text', '2026-11-20 10:01:10', 4, 'SYSTEM'),
                             ('course_1_user_1', 'tool result', '2026-11-20 10:01:11', 5, 'TOOL'),
                             ('course_2_user_1', 'a question in another course', '2026-11-21 09:00:00', 0, 'USER'),
-                            ('course_2_user_1', 'a quote '' and a line
-                             break', '2026-11-21 09:00:02', 1, 'ASSISTANT'),
+                            ('course_2_user_1', 'a quote '' and a line\nbreak', '2026-11-21 09:00:02', 1, 'ASSISTANT'),
                             ('course_3_user_1', 'only a system message', '2026-11-22 09:00:00', 0, 'SYSTEM');
                     """)
                     Liquibase(workspace).apply(database, CHANGELOG)
@@ -49,7 +48,10 @@ class SpringAiSessionMigrationTest(unittest.TestCase):
                         WHERE session_id = 'course_1_user_1' ORDER BY seq;
                     """), "course_1_user_1\tUSER\tfirst question\ncourse_1_user_1\tASSISTANT\tfirst answer\n"
                           "course_1_user_1\tUSER\tsecond question\ncourse_1_user_1\tASSISTANT\tsecond answer")
-                    self.assertEqual(self.sql(database, "SELECT COUNT(*) FROM AI_SESSION_EVENT WHERE session_id = 'course_2_user_1';"), "2")
+                    # The text of a message with a quote and a line break arrives unchanged
+                    self.assertEqual(self.sql(database, """
+                        SELECT message_content FROM AI_SESSION_EVENT WHERE session_id = 'course_2_user_1' ORDER BY seq;
+                    """), "a question in another course\na quote ' and a line\nbreak")
                     self.assertEqual(self.sql(database, "SELECT COUNT(*) FROM AI_SESSION_EVENT WHERE message_type NOT IN ('USER', 'ASSISTANT');"), "0")
                     # Every event reads as a message event with an empty payload, and its id is unique
                     self.assertEqual(self.sql(database, """
@@ -80,7 +82,7 @@ class SpringAiSessionMigrationTest(unittest.TestCase):
         if database.engine.name == "postgres":
             client = ["psql", "-U", "artemis", "-d", "Artemis", "-t", "-A", "-F", "\t", "-v", "ON_ERROR_STOP=1"]
         else:
-            client = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--database", "Artemis"]
+            client = ["mysql", "--default-character-set=utf8mb4", "-u", "root", "-N", "-B", "--raw", "--database", "Artemis"]
         result = run(["docker", "exec", "-i", database.container, *client], input=query)
         self.assertEqual(result.returncode, 0, result.stderr)
         return result.stdout.strip()
