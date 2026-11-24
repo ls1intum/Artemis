@@ -42,9 +42,14 @@
                         <fa-icon [icon]="faEllipsis" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exerciseDetail.moreActions"></span>
                     </button>
                     <ng-template #moreActions
-                        ><tumaet-ui-menu
-                            ><button tumAetUiMenuItem type="button" (triggered)="exportQuizExercise(true)" data-testid="quiz-export">
-                                <fa-icon [icon]="faFileExport" /><span jhiTranslate="entity.action.export"></span></button></tumaet-ui-menu
+                        ><tumaet-ui-menu>
+                            @if (quizExercise().isAtLeastInstructor) {
+                                <button tumAetUiMenuItem type="button" [disabled]="!exportsEnabled()" (triggered)="exportQuizExercise()" data-testid="quiz-export">
+                                    <fa-icon [icon]="faFileExport" /><span jhiTranslate="entity.action.export"></span>
+                                </button>
+                            }
+                            <button tumAetUiMenuItem type="button" (triggered)="exportQuizQuestions()" data-testid="quiz-export-questions">
+                                <fa-icon [icon]="faFileExport" /><span jhiTranslate="artemisApp.quizExercise.export.exportQuestions"></span></button></tumaet-ui-menu
                     ></ng-template>
                 }
             </ng-container>
