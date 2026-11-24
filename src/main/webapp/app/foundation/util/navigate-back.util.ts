@@ -5,7 +5,8 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 function teamIdOf(submission: Submission): number | undefined {
-    return (submission.participation as StudentParticipation).team?.id;
+    // The participation of a submission is optional
+    return (submission.participation as StudentParticipation)?.team?.id;
 }
 
 /**

@@ -245,9 +245,8 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
 
     /**
      * The submission a student works on in a quiz. This is the oldest one, so every request of the student, and the quiz the client received when it started,
-     * agree on it. A student has exactly one submission per quiz; starting a quiz twice at the same moment used to be able to create a second one,
-     * and those that exist are still found here instead of failing every request of the student with a non-unique result. They are reported so
-     * that they can be looked at.
+     * agree on it. A student is meant to have exactly one submission per quiz. If there are more, they are still resolved here to the oldest instead of failing
+     * every request of the student with a non-unique result, and they are reported so that they can be looked at.
      *
      * @param exerciseId   the id of the quiz exercise
      * @param studentLogin the login of the student

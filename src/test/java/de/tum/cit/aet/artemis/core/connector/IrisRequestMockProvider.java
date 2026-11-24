@@ -458,6 +458,22 @@ public class IrisRequestMockProvider {
         });
     }
 
+    /**
+     * Mocks a Pyris that does not take the global search request, as when the request times out.
+     */
+    public void mockGlobalSearchIrisAnswerUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
+    }
+
+    /**
+     * Mocks a Pyris that answers the lecture search with a body that cannot be read.
+     */
+    public void mockSearchLecturesUnreadableAnswer() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("this is not json", MediaType.APPLICATION_JSON));
+    }
+
     public void mockGlobalSearchIrisAnswerError(HttpStatus status) {
         mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }

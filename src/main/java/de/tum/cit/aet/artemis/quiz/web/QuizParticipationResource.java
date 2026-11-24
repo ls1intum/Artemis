@@ -208,7 +208,9 @@ public class QuizParticipationResource {
                 submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
             }
             else {
-                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
+                // The oldest submission, like in every other request of the student
+                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().min(Comparator.comparing(QuizSubmission::getId))
+                        .orElseThrow();
             }
         }
 

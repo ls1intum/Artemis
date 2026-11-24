@@ -8,18 +8,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.LockModeType;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
@@ -487,38 +483,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
         submission = save(submission);
         participation.addSubmission(submission);
         return submission;
-    }
-
-    /**
-     * Takes a write lock on the row of a participation. The lock is held until the surrounding transaction ends, see {@link #initializeSubmissionIfAbsent}.
-     *
-     * @param participationId the id of the participation to lock
-     * @return the locked participation, if it exists
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT participation
-            FROM Participation participation
-            WHERE participation.id = :participationId
-            """)
-    Optional<Participation> findParticipationByIdWithWriteLock(@Param("participationId") long participationId);
-
-    /**
-     * Initializes a new submission like {@link #initializeSubmission}, unless the participation has a submission already. The participation is locked for the
-     * check and the insert, so that two requests that start the same exercise at the same moment, such as a double click or a second tab, cannot both pass the check and
-     * leave the participation with two submissions. The one that comes second sees the submission of the first and creates none.
-     *
-     * @param participation  the participation for which the submission should be initialized
-     * @param exercise       the corresponding exercise
-     * @param submissionType type for the submission to be initialized
-     * @return the new submission, or empty if the participation had a submission already
-     */
-    @Transactional // ok: the lock, the check and the insert are only correct as one unit
-    default Optional<Submission> initializeSubmissionIfAbsent(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        if (findParticipationByIdWithWriteLock(participation.getId()).isEmpty() || existsByParticipationId(participation.getId())) {
-            return Optional.empty();
-        }
-        return Optional.of(initializeSubmission(participation, exercise, submissionType));
     }
 
     /**

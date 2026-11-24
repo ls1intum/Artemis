@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.globalsearch.repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -16,6 +15,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO;
 
 /**
  * Spring Data JPA repository for {@link WeaviateOutboxEntry}.
@@ -81,21 +81,18 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
     boolean existsByEntityTypeAndEntityId(String entityType, Long entityId);
 
     /**
-     * Counts the queued rows of one origin, due or backing off. The dispatcher uses it to notice a queue that does not shrink.
+     * Counts the queued rows of one origin, due or backing off, and finds the enqueue time of the oldest. The dispatcher uses it to notice a queue that does not shrink.
+     * One query reads both, so the rows of the origin are visited once.
      *
      * @param origin the origin of the rows
-     * @return the number of queued rows
+     * @return the number of queued rows and the enqueue time of the oldest, which is {@code null} if no row is queued
      */
-    long countByOrigin(WeaviateOutboxOrigin origin);
-
-    /**
-     * Finds the enqueue time of the oldest queued row of one origin, due or backing off.
-     *
-     * @param origin the origin of the rows
-     * @return the oldest enqueue time, empty if no row is queued
-     */
-    @Query("SELECT MIN(e.createdAt) FROM WeaviateOutboxEntry e WHERE e.origin = :origin")
-    Optional<ZonedDateTime> findOldestCreatedAtByOrigin(@Param("origin") WeaviateOutboxOrigin origin);
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO(COUNT(e), MIN(e.createdAt))
+            FROM WeaviateOutboxEntry e
+            WHERE e.origin = :origin
+            """)
+    WeaviateOutboxBacklogDTO findBacklogByOrigin(@Param("origin") WeaviateOutboxOrigin origin);
 
     /**
      * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a

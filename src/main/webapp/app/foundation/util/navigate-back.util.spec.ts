@@ -34,4 +34,12 @@ describe('assessmentNavigateBack', () => {
 
         expect(router.navigateByUrl).toHaveBeenCalledWith('/course-management/3/assessment-dashboard/7');
     });
+
+    it('opens the assessment dashboard for a submission without a participation', () => {
+        vi.mocked(router.navigateByUrl).mockClear();
+
+        assessmentNavigateBack(location, router, teamExercise(), {} as Submission);
+
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/course-management/3/assessment-dashboard/7');
+    });
 });

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
@@ -101,7 +102,7 @@ public class WeaviateOutboxDispatcher {
 
     /**
      * How often the queue is inspected, and how often an unchanged backlog is reported again. The queue is only inspected
-     * from the drain, so the check costs two small queries per interval and no extra scheduled job.
+     * from the drain, so the check costs one small query per interval and no extra scheduled job.
      */
     static final Duration BACKLOG_CHECK_INTERVAL = Duration.ofMinutes(1);
 
@@ -192,10 +193,11 @@ public class WeaviateOutboxDispatcher {
     private final AtomicBoolean drainPending = new AtomicBoolean();
 
     /**
-     * Message of the most recent failed write, named in the backlog report so that it says why the queue does not shrink.
-     * Written by the drain thread, read by it as well.
+     * Why the writes for user actions currently fail, named in the backlog report so that it says why the queue does not shrink. Set by a failed write of such a row
+     * or a failed index check, and cleared as soon as such a row is written, so a backlog is never blamed on an error that has gone. Only the drain thread, which holds
+     * {@link #drainLock}, reads and writes it.
      */
-    private String lastFailureMessage;
+    private String liveFailure;
 
     /**
      * The first check comes one interval after the start, so the queue is not queried while the node still boots.
@@ -265,6 +267,8 @@ public class WeaviateOutboxDispatcher {
             }
             try {
                 if (!ensureIndexReady()) {
+                    // Nothing is written meanwhile, which is when a backlog builds up the fastest
+                    monitorBacklog(Instant.now());
                     return;
                 }
                 // Give the drain thread an authorization context, matching the previous @Async write behavior.
@@ -317,6 +321,8 @@ public class WeaviateOutboxDispatcher {
                     processEntry(entry, now, confirmedInTurn);
                 }
             }
+            // A queue that keeps filling whole batches would otherwise not be looked at before the drain ends
+            monitorBacklog(Instant.now());
         }
         while (batch.size() == outboxProperties.batchSize());
     }
@@ -490,11 +496,13 @@ public class WeaviateOutboxDispatcher {
         try {
             rebuildService.ensureIndexMatchesConfiguration();
             indexReady = true;
+            liveFailure = null;
             return true;
         }
         catch (Exception exception) {
             failedIndexChecks++;
             nextIndexCheckAt = now + indexCheckRetryDelayMillis;
+            liveFailure = describeFailure(exception);
             if (failedIndexChecks < indexCheckWarnAttempts) {
                 log.warn("Global search index check attempt {} failed; retrying in {}s. Index writes stay queued until it succeeds.", failedIndexChecks,
                         indexCheckRetryDelayMillis / 1000, exception);
@@ -560,9 +568,9 @@ public class WeaviateOutboxDispatcher {
         }
         nextBacklogCheckAt = now.plus(BACKLOG_CHECK_INTERVAL);
         try {
-            long size = outboxRepository.countByOrigin(WeaviateOutboxOrigin.LIVE);
-            Optional<ZonedDateTime> oldest = size == 0 ? Optional.empty() : outboxRepository.findOldestCreatedAtByOrigin(WeaviateOutboxOrigin.LIVE);
-            Duration age = oldest.map(createdAt -> Duration.between(createdAt.toInstant(), now)).orElse(Duration.ZERO);
+            WeaviateOutboxBacklogDTO queued = outboxRepository.findBacklogByOrigin(WeaviateOutboxOrigin.LIVE);
+            long size = queued.size();
+            Duration age = queued.oldestCreatedAt() == null ? Duration.ZERO : Duration.between(queued.oldestCreatedAt().toInstant(), now);
             boolean backlog = size >= BACKLOG_ALERT_SIZE || age.compareTo(BACKLOG_ALERT_AGE) >= 0;
             if (!backlog) {
                 if (backlogReported) {
@@ -577,19 +585,25 @@ public class WeaviateOutboxDispatcher {
             }
             backlogReported = true;
             nextBacklogReportAt = now.plus(BACKLOG_REPORT_INTERVAL);
-            String hint = lastFailureMessage != null && lastFailureMessage.contains(READ_ONLY_MARKER)
+            String hint = liveFailure != null && liveFailure.contains(READ_ONLY_MARKER)
                     ? " Weaviate has set its store to read-only, which it does when disk or memory runs short. Free capacity on the Weaviate host; the rows are written on their own afterwards."
                     : "";
             log.error("The Weaviate outbox has a backlog: {} row(s) for user actions are waiting, the oldest for {} minute(s). The search index falls behind. Last failure: {}.{}",
-                    size, age.toMinutes(), lastFailureMessage != null ? lastFailureMessage : "none since this node started", hint);
+                    size, age.toMinutes(), liveFailure != null ? liveFailure : "none recorded", hint);
         }
         catch (RuntimeException e) {
             log.warn("Could not check the Weaviate outbox backlog: {}", e.getMessage());
         }
     }
 
+    private static String describeFailure(Exception e) {
+        return e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : e.getClass().getSimpleName();
+    }
+
     private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
-        lastFailureMessage = e.getMessage();
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE) {
+            liveFailure = describeFailure(e);
+        }
         int attempt = entry.getAttempts() + 1;
         // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
         ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
@@ -633,6 +647,9 @@ public class WeaviateOutboxDispatcher {
         collapseSupersededRows(entry);
         refreshSyncLedger(entry, now, writtenContentHash);
         outboxRepository.delete(entry);
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE) {
+            liveFailure = null;
+        }
     }
 
     /**

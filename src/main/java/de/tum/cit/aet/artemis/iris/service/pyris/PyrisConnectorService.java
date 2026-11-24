@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -156,9 +157,14 @@ public class PyrisConnectorService {
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
         }
+        catch (ResourceAccessException e) {
+            // Pyris is down or too slow, which is an outage of another service and no defect of Artemis, so the stack trace is not needed.
+            // An answer that cannot be read is not this and stays a connector failure below.
+            log.warn("Pyris did not answer the lecture search: {}", e.getMessage());
+            throw new PyrisUnavailableException("Could not fetch lecture search results from Pyris");
+        }
         catch (RestClientException | IllegalArgumentException e) {
-            // Pyris being slow or down is an outage of another service, and the caller answers it. The exception is not needed to tell which one it is.
-            log.warn("Failed to search lectures in Pyris: {}", e.getMessage());
+            log.error("Failed to search lectures in Pyris", e);
             throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
         }
     }
@@ -203,6 +209,10 @@ public class PyrisConnectorService {
         }
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
+        }
+        catch (ResourceAccessException e) {
+            log.warn("Pyris did not take the async search/ask request: {}", e.getMessage());
+            throw new PyrisUnavailableException("Could not send global search Iris answer request to Pyris");
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send async search/ask request to Pyris", e);

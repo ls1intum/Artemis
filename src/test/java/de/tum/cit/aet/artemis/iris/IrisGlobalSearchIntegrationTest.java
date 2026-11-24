@@ -108,6 +108,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
                 HttpStatus.SERVICE_UNAVAILABLE);
     }
 
+    /**
+     * An answer that cannot be read is a defect of the contract with Pyris, not an outage, so it is not reported as an unavailable service.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisAnswerCannotBeRead_shouldNotBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesUnreadableAnswer();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnEmptyList() throws Exception {
@@ -520,6 +533,14 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     // ==================== /api/iris/search-answer (async, webhook-based) ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenPyrisDoesNotAnswer_shouldBeServiceUnavailable() throws Exception {
+        irisRequestMockProvider.mockGlobalSearchIrisAnswerUnreachable();
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

@@ -620,8 +620,10 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"));
         RepositoryExportOptionsDTO anonymizingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, true, true, false);
 
-        programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, participations, anonymizingOptions, Map.of());
+        File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, participations, anonymizingOptions, Map.of());
 
+        // A failed export leaves no checkout behind either, so the export has to have succeeded for the check below to say anything about the rewriting
+        assertThat(exportedArchive).as("the export produced an archive").isNotNull().isFile();
         assertThat(WindowCacheStats.getStats().getOpenByteCountPerRepository().keySet()).as("no repository of the export checkout keeps a pack file open")
                 .noneMatch(repository -> repository.contains("repo-checkout-"));
     }
