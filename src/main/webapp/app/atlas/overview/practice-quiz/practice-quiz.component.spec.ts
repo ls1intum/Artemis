@@ -3,13 +3,15 @@ import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PracticeQuizComponent } from 'app/atlas/overview/practice-quiz/practice-quiz.component';
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
 import { PracticeSessionDTO, PracticeSessionReviewDTO, PracticeSessionSummaryDTO } from 'app/atlas/overview/practice-quiz/practice-quiz.model';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 describe('PracticeQuizComponent', () => {
     let fixture: ComponentFixture<PracticeQuizComponent>;
@@ -58,6 +60,11 @@ describe('PracticeQuizComponent', () => {
                 },
                 isAdaptive: true,
                 score: 2,
+                submittedAnswer: JSON.stringify({
+                    type: 'multiple-choice',
+                    quizQuestion: { id: 101 },
+                    selectedOptions: [{ id: 201 }],
+                }),
             },
         ],
     };
@@ -74,7 +81,7 @@ describe('PracticeQuizComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PracticeQuizComponent, MockPipe(ArtemisDatePipe), MockDirective(MarkdownDirective)],
+            imports: [PracticeQuizComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe), MockComponent(MultipleChoiceQuestionComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -118,6 +125,8 @@ describe('PracticeQuizComponent', () => {
 
         expect(component.state()).toBe('QUIZ');
         expect(component.currentSession()).toEqual(mockSession);
+        expect(component.activeQuestions()).toHaveLength(1);
+        expect(component.activeQuestions()[0].id).toBe(101);
     });
 
     it('should start a new quiz session on startNewQuiz', () => {
@@ -130,19 +139,35 @@ describe('PracticeQuizComponent', () => {
 
         expect(component.state()).toBe('QUIZ');
         expect(component.currentSession()).toEqual(mockSession);
+        expect(component.activeQuestions()).toHaveLength(1);
+        expect(component.activeQuestions()[0].id).toBe(101);
     });
 
-    it('should toggle options correctly for multiple choice questions', () => {
-        component.toggleOption(101, 201, false);
-        expect(component.isOptionSelected(101, 201)).toBe(true);
+    it('should update selected options on onSelectedAnswerOptionsChange and report isAnswered', () => {
+        const optionA = { id: 201, text: 'Option A' } as AnswerOption;
+        const optionB = { id: 202, text: 'Option B' } as AnswerOption;
 
-        component.toggleOption(101, 202, false);
-        expect(component.isOptionSelected(101, 201)).toBe(true);
-        expect(component.isOptionSelected(101, 202)).toBe(true);
+        expect(component.isAnswered(101)).toBe(false);
 
-        component.toggleOption(101, 201, false);
-        expect(component.isOptionSelected(101, 201)).toBe(false);
-        expect(component.isOptionSelected(101, 202)).toBe(true);
+        component.onSelectedAnswerOptionsChange(101, [optionA]);
+        expect(component.selectedAnswerOptions()[101]).toEqual([optionA]);
+        expect(component.isAnswered(101)).toBe(true);
+
+        component.onSelectedAnswerOptionsChange(101, [optionA, optionB]);
+        expect(component.selectedAnswerOptions()[101]).toEqual([optionA, optionB]);
+    });
+
+    it('should generate question tooltip in review mode and support navigateToQuestion', () => {
+        component.setupReview(mockReview);
+
+        expect(component.questionTooltip(101, 2)).toBe('2/2 P');
+
+        const scrollSpy = vi.fn();
+        const mockEl = { scrollIntoView: scrollSpy } as unknown as HTMLElement;
+        vi.spyOn(document, 'getElementById').mockReturnValue(mockEl);
+
+        component.navigateToQuestion(0);
+        expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
     });
 
     it('should submit answers and transition to REVIEW state', () => {
@@ -150,15 +175,29 @@ describe('PracticeQuizComponent', () => {
         vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([]));
         component.ngOnInit();
 
-        component['currentSession'].set(mockSession);
-        component.toggleOption(101, 201, false);
+        component.setupQuizSession(mockSession);
+        const optionA = { id: 201, text: 'Option A' } as AnswerOption;
+        component.onSelectedAnswerOptionsChange(101, [optionA]);
 
-        vi.spyOn(practiceQuizService, 'submitSession').mockReturnValue(of(mockReview));
+        const submitSpy = vi.spyOn(practiceQuizService, 'submitSession').mockReturnValue(of(mockReview));
 
         component.submitQuiz();
 
+        expect(submitSpy).toHaveBeenCalledWith(1, 42, {
+            answers: [
+                {
+                    type: 'multiple-choice',
+                    quizQuestion: { id: 101 },
+                    selectedOptions: [{ id: 201 }],
+                },
+            ],
+        });
         expect(component.state()).toBe('REVIEW');
         expect(component.reviewSession()).toEqual(mockReview);
+        expect(component.reviewQuestions()).toHaveLength(1);
+        expect(component.reviewSelectedAnswerOptions()[101]).toHaveLength(1);
+        expect(component.reviewSelectedAnswerOptions()[101][0].id).toBe(201);
+        expect(component.questionScores()[101]).toBe(2);
         expect(component.currentSession()).toBeNull();
     });
 
@@ -172,30 +211,12 @@ describe('PracticeQuizComponent', () => {
 
         expect(component.state()).toBe('REVIEW');
         expect(component.reviewSession()).toEqual(mockReview);
+        expect(component.reviewQuestions()).toHaveLength(1);
+        expect(component.questionScores()[101]).toBe(2);
 
         component.backToOverview();
         expect(component.state()).toBe('OVERVIEW');
         expect(component.reviewSession()).toBeNull();
-    });
-
-    it('should determine whether an option was selected by the user', () => {
-        const reviewItem = {
-            question: { id: 101 } as any,
-            isAdaptive: false,
-            submittedAnswer: JSON.stringify({
-                type: 'multiple-choice',
-                quizQuestion: { id: 101 },
-                selectedOptions: [{ id: 201 }],
-            }),
-        };
-
-        expect(component.isUserSelected(reviewItem, 201)).toBe(true);
-        expect(component.isUserSelected(reviewItem, 202)).toBe(false);
-
-        // When no submittedAnswer JSON exists, review should strictly return false rather than falling back to local state
-        const fallbackItem = { question: { id: 101 } as any, isAdaptive: false };
-        component.toggleOption(101, 202, false);
-        expect(component.isUserSelected(fallbackItem, 202)).toBe(false);
-        expect(component.isUserSelected(fallbackItem, 201)).toBe(false);
+        expect(component.reviewQuestions()).toEqual([]);
     });
 });

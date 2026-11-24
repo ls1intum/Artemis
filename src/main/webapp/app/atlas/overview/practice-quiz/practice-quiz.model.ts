@@ -1,32 +1,12 @@
+import type { QuizQuestionWithoutSolution } from 'app/openapi/model/quiz-question-without-solution';
+import type { QuizQuestionWithSolution } from 'app/openapi/model/quiz-question-with-solution';
+
 export interface EntityIdRefDTO {
     id: number;
 }
 
-export interface AnswerOptionDTO {
-    id: number;
-    text?: string;
-    hint?: string;
-    isCorrect?: boolean;
-    explanation?: string;
-}
-
-export interface QuizQuestionDTO {
-    id: number;
-    title?: string;
-    text?: string;
-    points?: number;
-    scoringType?: string;
-    type: 'multiple-choice' | 'drag-and-drop' | 'short-answer' | string;
-    answerOptions?: AnswerOptionDTO[];
-    singleChoice?: boolean;
-    competencyId?: number;
-    difficulty?: string;
-    hint?: string;
-    explanation?: string;
-}
-
-export type QuizQuestionWithoutSolutionDTO = QuizQuestionDTO;
-export type QuizQuestionWithSolutionDTO = QuizQuestionDTO;
+export type QuizQuestionWithoutSolutionDTO = QuizQuestionWithoutSolution;
+export type QuizQuestionWithSolutionDTO = QuizQuestionWithSolution;
 
 export interface PracticeSessionDTO {
     id: number;
