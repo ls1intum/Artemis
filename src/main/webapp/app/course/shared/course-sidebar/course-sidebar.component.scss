@@ -15,16 +15,21 @@ $transition-color-length: 0.2s;
 
 // Displays a red circle at the top right corner of the tab item.
 // Used to indicate that there are new messages.
+// The size is explicit on both axes. A box sized by padding and font alone has the height of its text, which differs
+// between browsers, and where the link is a flex container (the collapsed sidebar, as on a phone) the box is a flex
+// item that stretches to the full height of the link and turns the circle into a tall ellipse.
 %message-block {
     position: relative;
     content: '';
+    display: inline-block;
+    flex: none;
+    align-self: flex-start;
+    width: 0.7rem;
+    height: 0.7rem;
     border-radius: 50%;
     background-color: var(--danger);
-    padding-left: 0.7rem;
-    top: -5px;
+    top: -3px;
     right: 0;
-    transform: translate(50%, -50%);
-    font-size: xx-small;
 }
 
 .newMessage::after {
@@ -109,8 +114,8 @@ $transition-color-length: 0.2s;
 }
 
 /*
- * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour is set here because a layered
- * utility would lose to the unlayered anchor colour of global.scss.
+ * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour set here replaces the link colour
+ * that `_base.scss` gives to every anchor.
  */
 .nav-link-sidebar {
     display: block;
@@ -153,9 +158,9 @@ button.nav-link-sidebar {
     color: var(--link-item-color);
 }
 
-// Overrides the hover underline from `global.scss`, because only the label span below should be underlined — the
+// Overrides the hover underline from `_base.scss`, because only the label span below should be underlined — the
 // anchor also holds the icon, so an underline on it draws a second line under the label and a dash beside the icon.
-// See the comment in `global.scss` for why the exclusions belong in one `:not()` argument list.
+// See the comment in `_base.scss` for why the exclusions belong in one `:not()` argument list.
 a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
@@ -222,4 +227,8 @@ a:not(.tumaet-ui-btn, .tab-link):hover {
     mask-repeat: no-repeat;
     mask-position: center;
     mask-size: contain;
+}
+
+.sidebar-collapsed-course-overview {
+    display: none;
 }

@@ -40,7 +40,7 @@ class DataExportCourseHomeTest extends AbstractSpringIntegrationIndependentTest 
         var rows = mapper.readTree(Files.readString(directory.resolve("course_home_visits.json")));
         assertThat(rows.size()).isEqualTo(1);
         assertThat(rows.get(0).get("courseId").asLong()).isEqualTo(course.getId());
-        assertThat(rows.get(0).get("lastSeenAt").asText()).isEqualTo(now.toString());
+        assertThat(rows.get(0).get("lastSeenAt").asString()).isEqualTo(now.toString());
         assertThat(rows.get(0).get("variantCursor").asLong()).isEqualTo(1);
         assertThat(rows.get(0).has("userId")).isFalse();
     }

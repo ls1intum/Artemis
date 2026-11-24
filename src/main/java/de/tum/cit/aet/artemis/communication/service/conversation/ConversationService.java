@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -196,8 +198,14 @@ public class ConversationService {
         var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
         var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
                 .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
-        var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
-                .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
+        // Every course member takes part in a course-wide channel, so its participants are not counted row by row but taken from the course member count below
+        var conversationIdsWithParticipantCount = conversationsOfUser.stream().filter(conversation -> !(conversation instanceof Channel channel && channel.getIsCourseWide()))
+                .map(Conversation::getId).toList();
+        Map<Long, GeneralConversationInfo> generalConversationInfos = new HashMap<>();
+        if (!conversationIdsWithParticipantCount.isEmpty()) {
+            conversationRepository.getGeneralInformationForConversations(conversationIdsWithParticipantCount)
+                    .forEach(generalInfo -> generalConversationInfos.put(generalInfo.getConversationId(), generalInfo));
+        }
 
         Integer numberOfCourseMembers = null;
         for (Channel channel : filteredChannels) {
@@ -205,7 +213,7 @@ public class ConversationService {
                 if (numberOfCourseMembers == null) {
                     numberOfCourseMembers = courseRepository.countCourseMembers(course.getId());
                 }
-                generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
+                generalConversationInfos.put(channel.getId(), new GeneralConversationInfo(channel.getId(), numberOfCourseMembers));
             }
         }
 

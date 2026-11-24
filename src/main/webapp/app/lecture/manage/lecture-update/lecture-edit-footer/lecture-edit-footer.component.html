@@ -48,7 +48,7 @@
         id="save-entity"
         data-testid="lecture-edit-save"
         size="small"
-        class="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        class="aria-disabled:opacity-60"
         [attr.aria-disabled]="isSaveBlocked()"
         [tumAetUiTooltip]="blockedReason ? (blockedReason | artemisTranslate) : ''"
         (click)="onSave()"

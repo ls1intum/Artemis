@@ -1,25 +1,26 @@
-:host {
-    display: contents;
-}
-
-.cdk-table {
-    width: 100%;
-
-    th,
-    td {
-        border-bottom-width: 1px;
-        border-bottom-style: solid;
+@layer tumaet-ui {
+    :host {
+        display: contents;
     }
 
-    tr:last-child td {
-        border-bottom-width: 0;
-    }
+    .cdk-table {
+        width: 100%;
 
-    tr.tumaet-ui-table-row-highlighted {
-        background-color: var(--tumaet-ui-highlight-background);
-        color: var(--tumaet-ui-highlight-color);
+        td {
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+        }
 
-        // Not colour alone, so the row still reads as singled out without relying on hue.
-        font-weight: 500;
+        tr:last-child td {
+            border-bottom-width: 0;
+        }
+
+        tr.tumaet-ui-table-row-highlighted {
+            background-color: var(--tumaet-ui-highlight-background);
+            color: var(--tumaet-ui-highlight-color);
+
+            // Not colour alone, so the row still reads as singled out without relying on hue.
+            font-weight: 500;
+        }
     }
 }
