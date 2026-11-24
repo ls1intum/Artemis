@@ -1,7 +1,3 @@
-/*
- * The pill that shows a count beside a label: how many feedback a file holds in the code editor's file browser, or
- * how many general feedback a tab or heading lists. Every count of feedback looks the same wherever it appears.
- */
 :host {
     /* A column, so the panel shrinks inside a host a page gave a max-height and its content scrolls instead of overflowing it */
     display: flex;

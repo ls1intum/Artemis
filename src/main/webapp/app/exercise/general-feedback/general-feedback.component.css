@@ -1,8 +1,3 @@
-/*
- * The pill that shows a count beside a label: how many feedback a file holds in the code editor's file browser, or
- * how many general feedback a tab or heading lists. Every count of feedback looks the same wherever it appears.
- */
-
 /* Inside the modeling assessment panel, which Apollon hosts, the heading takes Apollon's muted color so it matches the
    "On the diagram" heading above it; everywhere else Apollon's tokens are undefined and the Artemis role applies. */
 .general-feedback__title {
