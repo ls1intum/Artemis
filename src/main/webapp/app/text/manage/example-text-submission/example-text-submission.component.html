@@ -133,12 +133,12 @@
     <span right-header jhiTranslate="artemisApp.textAssessment.instructions"></span>
     <ng-container right-body>
         @if (state.ui === UIStates.SUBMISSION) {
-            <tumaet-ui-message severity="info" class="mb-6 block text-center">
+            <tumaet-ui-message severity="info" class="mb-6 text-center">
                 <span jhiTranslate="artemisApp.textAssessment.exampleSubmissionInstruction"></span>
             </tumaet-ui-message>
         }
         @if (state.ui === UIStates.ASSESSMENT) {
-            <tumaet-ui-message severity="info" class="mb-6 block text-center">
+            <tumaet-ui-message severity="info" class="mb-6 text-center">
                 <span jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></span>
             </tumaet-ui-message>
         }

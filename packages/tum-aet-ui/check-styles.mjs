@@ -39,18 +39,96 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
-const allowedLayers = new Set(['properties', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
+const allowedLayers = new Set(['properties', 'tumaet-ui', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
     }
-    if (atRule.name === 'layer' && !allowedLayers.has(atRule.params)) {
-        errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
+    if (atRule.name === 'layer') {
+        for (const layer of atRule.params.split(',').map((name) => name.trim())) {
+            if (!allowedLayers.has(layer)) {
+                errors.push(`the compiled stylesheet contains unexpected @layer ${layer}`);
+            }
+        }
     }
     if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tumaet-')) {
         errors.push(`the compiled stylesheet contains unnamespaced keyframes ${atRule.params}`);
     }
 });
+
+// A host overrides the package with a utility class of its own, which only works while every style of the package is in a
+// cascade layer. Outside a layer, a rule may only register or set custom properties.
+function isInLayer(node) {
+    for (let parent = node.parent; parent; parent = parent.parent) {
+        if (parent.type === 'atrule' && parent.name === 'layer') {
+            return true;
+        }
+    }
+    return false;
+}
+stylesheet.walkDecls((declaration) => {
+    const insideKeyframesOrProperty = (node) => {
+        for (let parent = node.parent; parent; parent = parent.parent) {
+            if (parent.type === 'atrule' && (parent.name.endsWith('keyframes') || parent.name === 'property')) {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (!declaration.prop.startsWith('--') && !isInLayer(declaration) && !insideKeyframesOrProperty(declaration)) {
+        errors.push(`${declaration.parent.selector ?? declaration.parent.params}: ${declaration.prop} is outside a cascade layer`);
+    }
+});
+
+// The styles of the components are compiled into the Angular package, not into the stylesheet above, so the same rule
+// is checked on their sources: everything after the `@use` lines is one block of the layer `tumaet-ui`.
+// True if the styles are exactly one `@layer tumaet-ui { … }` block: the brace that closes the block is the last character.
+function isOneLayerBlock(styles) {
+    const opening = /^@layer tumaet-ui\s*\{/.exec(styles);
+    if (!opening) {
+        return false;
+    }
+    let depth = 1;
+    for (let index = opening[0].length; index < styles.length; index++) {
+        if (styles[index] === '{') {
+            depth++;
+        } else if (styles[index] === '}' && --depth === 0) {
+            return index === styles.length - 1;
+        }
+    }
+    return false;
+}
+const componentStylePaths = runtimePaths.filter((path) => path.endsWith('.scss'));
+for (const [index, path] of runtimePaths.entries()) {
+    const source = runtimeSources[index];
+    const name = path.slice(packageRoot.length + 1);
+    if (path.endsWith('.scss')) {
+        const styles = source
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/^\s*\/\/.*$/gm, '')
+            .replace(/^\s*@(use|forward)\b.*$/gm, '')
+            .trim();
+        if (styles && !isOneLayerBlock(styles)) {
+            errors.push(`${name} has styles outside the cascade layer tumaet-ui`);
+        }
+    } else if (path.endsWith('.ts')) {
+        for (const match of source.matchAll(/\bstyles:\s*`([^`]*)`/g)) {
+            if (!/^\s*@layer tumaet-ui\s*\{/.test(match[1])) {
+                errors.push(`${name} has inline styles outside the cascade layer tumaet-ui`);
+            }
+        }
+    }
+    // Angular scopes the keyframes of a component only at the top level of its stylesheet. Inside the layer they are
+    // global names, so they need the prefix of the package.
+    for (const match of source.matchAll(/@keyframes\s+([\w-]+)/g)) {
+        if (path.endsWith('.scss') && !match[1].startsWith('tumaet-')) {
+            errors.push(`${name} declares the keyframes ${match[1]} without the tumaet- prefix`);
+        }
+    }
+}
+if (componentStylePaths.length === 0) {
+    errors.push('no component stylesheet was found to check');
+}
 
 function classNames(rule) {
     return [...rule.selector.matchAll(/(?<!\\)\.((?:\\.|[\w-])*)/g)].map((match) => match[1].replaceAll('\\', ''));
