@@ -31,7 +31,9 @@
 
     /*
      * By default, never wraps and never grows: labels collapse to icons in the consumer, and a toolbar that is still too wide scrolls
-     * sideways instead of breaking onto a second line.
+     * sideways instead of breaking onto a second line. The controls start where the table starts; the 2px keep the focus ring of the
+     * first and the last control from being clipped by the scroll container. The margin leaves air between the controls and the
+     * header of the table, outside the 40px of the toolbar.
      */
     .tumaet-ui-table-layout-toolbar {
         display: flex;
@@ -39,7 +41,8 @@
         align-items: center;
         gap: 0.5rem;
         height: 2.5rem;
-        padding: 0 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0 0.125rem;
         white-space: nowrap;
         overflow-x: auto;
         overflow-y: hidden;
