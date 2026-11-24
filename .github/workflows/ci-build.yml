@@ -86,9 +86,8 @@ jobs:
         # The client that goes into the WAR is built by `pnpm run webapp:prod`, the command that the
         # Dockerfile (through the `webapp` Gradle task) runs for a release image. This WAR is what
         # the test servers, staging and production run: staging and production are VMs that Ansible
-        # gives a WAR, so a WAR with an unminified client is what the users would get. An earlier
-        # `--optimization=false` (a workaround for an esbuild crash in April 2026) shipped exactly that,
-        # while the release images were optimized.
+        # gives a WAR, so the users get exactly the client built here. Do not build it with
+        # `--optimization=false`: the client would be unminified and split into about 150 chunks.
         #
         # The result is moved to build/webapp-dist rather than left at the Angular config's
         # default build/resources/main/static: Gradle deletes any declared task-output directory
@@ -189,10 +188,10 @@ jobs:
             exit 1
           fi
 
-          # The client in the WAR must be the optimized one. A WAR with an unminified client (built with
-          # --optimization=false from April to November 2026) went to the test servers, staging and
-          # production unnoticed: about four times the JavaScript to download, in about 150 chunks. An optimized main
-          # bundle has lines of about 800 bytes on average, an unminified one of about 60.
+          # The client in the WAR must be the optimized one: an unminified client (for example from a build with
+          # --optimization=false) is about four times the JavaScript to download, in about 150 chunks, and reaches the
+          # test servers, staging and production without anything else noticing. An optimized main bundle has lines
+          # of about 800 bytes on average, an unminified one of about 60.
           read -r main_lines main_bytes < <(unzip -p "${wars[0]}" 'WEB-INF/classes/static/main-*.js' | awk '{ bytes += length($0) + 1 } END { print NR, bytes }')
           if [ "${main_lines}" -eq 0 ] || [ $((main_bytes / main_lines)) -lt 200 ]; then
             echo "::error::The main bundle in ${wars[0]} is not minified (${main_bytes} bytes in ${main_lines} lines). Build the client with 'pnpm run webapp:prod' and without --optimization=false: the WAR is what the test servers, staging and production run."
