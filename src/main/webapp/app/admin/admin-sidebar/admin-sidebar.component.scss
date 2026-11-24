@@ -33,8 +33,7 @@
 }
 
 /*
- * Base text color for nav links. A layered `text-color` template utility would lose to the unlayered global
- * `a { color: $link-color }` rule in global.scss (unlayered beats layered), so the color must be set here.
+ * Base text color for nav links. It replaces the link colour that `_base.scss` gives to every anchor.
  */
 .nav-link-sidebar {
     color: var(--tumaet-ui-text-color);

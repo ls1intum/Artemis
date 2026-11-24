@@ -30,7 +30,7 @@
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <tumaet-ui-message severity="error" class="mt-1 block"><span jhiTranslate="artemisApp.exercise.pointsError"></span></tumaet-ui-message>
+                        <tumaet-ui-message severity="error" class="mt-1"><span jhiTranslate="artemisApp.exercise.pointsError"></span></tumaet-ui-message>
                     }
                 </div>
             </div>
@@ -53,11 +53,7 @@
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <tumaet-ui-message
-                            severity="error"
-                            class="mt-1 block"
-                            [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        >
+                        <tumaet-ui-message severity="error" class="mt-1" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                             <span jhiTranslate="artemisApp.exercise.bonusPointsError"></span>
                         </tumaet-ui-message>
                     }
@@ -92,7 +88,7 @@
             </tumaet-ui-input-group>
             @for (error of maxPenalty.errors! | keyvalue; track error) {
                 @if (maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) {
-                    <tumaet-ui-message severity="error" class="mt-1 block">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + error.key"></div>
                     </tumaet-ui-message>
                 }
@@ -107,7 +103,7 @@
                 (submissionPolicyTypeChange)="calculateFormStatus()"
             />
             @if (programmingExerciseCreationConfig().isEdit) {
-                <tumaet-ui-message severity="info" class="mt-1 block">
+                <tumaet-ui-message severity="info" class="mt-1">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                     <a [href]="editPolicyUrl()">
                         <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>

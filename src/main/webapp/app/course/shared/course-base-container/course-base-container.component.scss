@@ -59,7 +59,7 @@
             }
 
             /*
-             * The rule that makes a sidebar page fill this region lives in `global.scss`, not here: it has to style
+             * The rule that makes a sidebar page fill this region lives in `_layout.scss`, not here: it has to style
              * the page component the router inserts, which is outside this template and therefore carries no
              * `_ngcontent` attribute for the emulated encapsulation to match. See `.layout-content` there.
              */
@@ -91,7 +91,7 @@
 }
 
 /*
- * Opts the shell's links (breadcrumbs, sidebar) out of the hover underline from `global.scss` — see the comment there
+ * Opts the shell's links (breadcrumbs, sidebar) out of the hover underline from `_base.scss` — see the comment there
  * for why the exclusions belong in one `:not()` argument list.
  */
 a:not(.tumaet-ui-btn, .tab-link):hover {

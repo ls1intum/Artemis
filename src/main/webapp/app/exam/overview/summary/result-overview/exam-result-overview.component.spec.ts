@@ -698,7 +698,7 @@ describe('ExamResultOverviewComponent', () => {
                 const headers = Array.from<HTMLElement>(table().querySelectorAll('thead th'));
                 // #, Exercise, Your Points, Achievable Points, Achieved Percentage, Achievable Bonus Points
                 expect(headers).toHaveLength(6);
-                expect(headers.map((header) => header.classList.contains('text-center!'))).toEqual([false, false, true, true, true, true]);
+                expect(headers.map((header) => header.classList.contains('text-center'))).toEqual([false, false, true, true, true, true]);
 
                 const bodyCells = Array.from<HTMLElement>(table().querySelectorAll('tbody tr:first-child td'));
                 expect(bodyCells.slice(1).every((cell) => cell.classList.contains('text-center'))).toBe(true);
