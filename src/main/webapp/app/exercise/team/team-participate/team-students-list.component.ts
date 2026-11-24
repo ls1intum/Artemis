@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 @Component({
     selector: 'jhi-team-students-list',
     templateUrl: './team-students-list.component.html',
-    styleUrls: ['./team-students-list.component.scss'],
+    styleUrls: ['./team-students-list.component.css'],
     imports: [RouterLink],
 })
 export class TeamStudentsListComponent {

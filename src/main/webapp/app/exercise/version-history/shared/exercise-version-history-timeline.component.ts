@@ -29,7 +29,7 @@ interface TimelineEntryViewModel {
 @Component({
     selector: 'jhi-exercise-version-history-timeline',
     templateUrl: './exercise-version-history-timeline.component.html',
-    styleUrls: ['./exercise-version-history-timeline.component.scss'],
+    styleUrls: ['./exercise-version-history-timeline.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TranslateDirective,

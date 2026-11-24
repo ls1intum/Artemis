@@ -77,13 +77,16 @@ parameters, calls, and delegation imply association or dependency instead. Repor
 and a templateCheck only when a testsColor link is
 definitively unrelated to the element the named test diagnoses. Recommend a problem-statement-only repair unless another downstream artifact is independently wrong.
 
-Return every failed check. When a check category has no failures, return only one representative passing check for that category. Any false check is itself a blocker and need not be repeated in a finding array. Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are advisory. For adaptations, also report unrequested and missing requested changes.
+Return every failed check. When a check category has no failures, return only one representative passing check for that category. A false consistent, discoverable, or
+targetReached check is itself a blocker and need not be repeated in a finding array. A false contradicted decision refutes an allegation and is not a blocker.
+Do not assess mutation coverage in this pass. Do not treat test names or comments as proof. Missing examples and conservative scope additions are advisory.
+For adaptations, also report unrequested and missing requested changes.
 
 Respond with ONLY this complete JSON shape; every array is mandatory for this contract review:
 {"exampleChecks": [{"claim":"verbatim outcome claim","computedOutcome":"independently replayed outcome","consistent":true,"reason":"calculation"}],
  "apiChecks": [{"symbol":"exact tested public symbol","discoverable":true,"reason":"statement/template evidence"}],
  "templateChecks": [{"ownerType":"exact Design type or shared scaffold","test":"starter scaffold area","targetReached":true,"blockingCause":null,"reason":"teaching-scaffold evidence","evidenceQuote":"exact artifact quote; mandatory when targetReached is false"}],
- "contradictions": [{"requirement":"...","sourceQuote":"exact authoritative quote from INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT","evidenceArtifact":"exact artifact label, for example TEMPLATE: src/example/Thing.java","evidenceQuote":"exact quote from that conflicting artifact","reason":"why these two quotes conflict"}],
+ "contradictions": [{"requirement":"...","sourceQuote":"exact authoritative quote from INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT","evidenceArtifact":"exact artifact label, for example TEMPLATE: src/example/Thing.java","evidenceQuote":"exact quote from that artifact","contradicted":true,"reason":"final evidence-based decision about whether these two quotes conflict"}],
  "hiddenRequirements": [{"requirement":"...","sourceQuote":"exact quote from PRIMARY SOURCE REQUIREMENTS or PRODUCED PROBLEM STATEMENT","reason":"test/API evidence"}],
  "missingExamples": [{"behaviour":"...","reason":"..."}],
  "invented": [{"requirement":"...","sourceQuote":"exact quote from a produced downstream artifact that imposes it","reason":"why the INSTRUCTOR BRIEF does not support it"}],
@@ -91,8 +94,13 @@ Respond with ONLY this complete JSON shape; every array is mandatory for this co
  "missingRequestedChanges": [{"requirement":"...","reason":"..."}]}
 At most 6 exampleChecks, 8 apiChecks, 6 templateChecks, and 4 items in every other array. Prioritize blockers and group closely related symbols or tests. Every failed
 reason must name the conflicting files, symbols, or assertions and the smallest coherent repair; do not answer with generic advice. Keep passing-check reasons brief.
-Every contradiction requires both sides: sourceQuote copied verbatim from the INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT, plus evidenceArtifact set to the exact
-label of one conflicting produced artifact and evidenceQuote copied verbatim from that same artifact. Valid labels are PRODUCED PROBLEM STATEMENT, GENERATED TEST PLAN, or
+Finish adjudicating each alleged contradiction before returning JSON. Every examined hypothesis needs an explicit final contradicted boolean. Set it false when the
+produced artifacts agree, when the concern exists only inside the frozen specification, or when you retract the allegation after checking the evidence. A refuted
+hypothesis may remain in this array with contradicted=false; it will not become an instructor finding. Set contradicted=true only for an actual conflict involving a
+repairable downstream artifact. The reason must explain that final decision concisely, without intermediate debate or a proposed finding you later withdraw.
+If the evidence does not let you decide, set contradicted=null rather than guessing; the review will be reported as incomplete.
+Every checked contradiction requires both sides: sourceQuote copied verbatim from the INSTRUCTOR BRIEF or APPROVED SPECIFICATION CONTRACT, plus evidenceArtifact set to the exact
+label of the produced artifact being checked and evidenceQuote copied verbatim from that same artifact. Valid labels are PRODUCED PROBLEM STATEMENT, GENERATED TEST PLAN, or
 the exact repository-and-path label shown after a --- separator, such as TEMPLATE: src/example/Thing.java. Never report a contradiction from an inference about an absent
 file: if no conflicting downstream quote exists, omit it. Every hiddenRequirement requires sourceQuote copied verbatim from the INSTRUCTOR BRIEF, APPROVED SPECIFICATION CONTRACT, PRODUCED PROBLEM
 STATEMENT, or GENERATED TEST PLAN. Every invented finding must quote the produced statement, solution, template, tests, or test plan that imposes the unsupported

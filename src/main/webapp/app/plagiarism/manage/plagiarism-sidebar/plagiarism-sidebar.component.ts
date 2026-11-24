@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
-    styleUrls: ['./plagiarism-sidebar.component.scss'],
+    styleUrls: ['./plagiarism-sidebar.component.css'],
     templateUrl: './plagiarism-sidebar.component.html',
     imports: [FaIconComponent, TranslateDirective, NgClass, DecimalPipe, ArtemisTranslatePipe],
 })

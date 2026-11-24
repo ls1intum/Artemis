@@ -65,13 +65,13 @@
                             <span id="quiz-re-evaluate-duration-label" class="text-base font-bold" jhiTranslate="artemisApp.quizExercise.duration"></span>
                             <div class="flex items-center" role="group" aria-labelledby="quiz-re-evaluate-duration-label">
                                 <label for="quiz-duration-hours" class="sr-only" jhiTranslate="artemisApp.quizExercise.hours"></label>
-                                <input id="quiz-duration-hours" tumAetUiInput class="me-2! w-16" title="Duration" [value]="duration().hours" type="number" disabled />
+                                <input id="quiz-duration-hours" tumAetUiInput class="me-2 w-16" title="Duration" [value]="duration().hours" type="number" disabled />
                                 <span jhiTranslate="artemisApp.quizExercise.hours"></span>
                                 <label for="quiz-duration-minutes" class="sr-only" jhiTranslate="artemisApp.quizExercise.minutes"></label>
-                                <input id="quiz-duration-minutes" tumAetUiInput class="me-2! ms-2! w-16" title="Duration" [value]="duration().minutes" type="number" disabled />
+                                <input id="quiz-duration-minutes" tumAetUiInput class="me-2 ms-2 w-16" title="Duration" [value]="duration().minutes" type="number" disabled />
                                 <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
                                 <label for="quiz-duration-seconds" class="sr-only" jhiTranslate="artemisApp.quizExercise.seconds"></label>
-                                <input id="quiz-duration-seconds" tumAetUiInput class="me-2! ms-2! w-16" title="Duration" type="number" [value]="duration().seconds" disabled />
+                                <input id="quiz-duration-seconds" tumAetUiInput class="me-2 ms-2 w-16" title="Duration" type="number" [value]="duration().seconds" disabled />
                                 <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                             type="button"
                             severity="primary"
                             size="small"
-                            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                            class="aria-disabled:opacity-60"
                             (click)="onSaveClick()"
                             [tumAetUiTooltip]="invalidReasonTexts()"
                             [tumAetUiTooltipDescribesHost]="false"

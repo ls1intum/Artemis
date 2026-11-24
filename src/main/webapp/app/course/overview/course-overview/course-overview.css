@@ -1,0 +1,68 @@
+/*
+ * ==========================================================================
+ * Course Info Bar
+ * ==========================================================================
+ */
+.course-body-container {
+    position: relative;
+}
+
+.back-button {
+    cursor: pointer;
+}
+
+.exercise-row-container .control-label {
+    cursor: pointer;
+}
+
+.exercise-row-container .collapsed {
+    margin-top: 1rem;
+    border-bottom: 1px solid var(--overview-light-border-color);
+}
+
+.icon-container {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.exercise-divider {
+    height: 0;
+    width: 100%;
+    margin: 1rem 0 0.5rem;
+    border-top: 1px solid var(--overview-light-border-color);
+}
+
+canvas#complete-chart {
+    z-index: 99;
+}
+
+@media (max-width: 655px) {
+    .horizontal-scroll {
+        overflow-x: auto;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+.content-sidebar-width {
+    width: calc(100% - var(--sidebar-width) - var(--spacing-divider)) !important;
+    transition: width 0.1s 0s ease-in-out;
+}
+
+.content-width {
+    width: 100%;
+    transition: width 0.1s 0s ease-in-out;
+}

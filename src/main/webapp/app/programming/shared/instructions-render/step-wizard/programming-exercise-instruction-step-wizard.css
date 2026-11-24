@@ -1,0 +1,101 @@
+/* Same column as the rendered problem statement (see programming-exercise-instruction.css), so the task list lines up with the text below it. */
+.stepwizard-container {
+    width: 100%;
+    max-width: 90ch;
+    margin-inline: auto;
+}
+
+.stepwizard {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.stepwizard-title {
+    display: table-cell;
+    width: 1%;
+    white-space: nowrap;
+}
+
+.stepwizard-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.stepwizard-step {
+    display: table-cell;
+    text-align: center;
+    position: relative;
+}
+
+.stepwizard-step .fa {
+    vertical-align: initial;
+}
+
+.stepwizard-step button[disabled] {
+    opacity: 1 !important;
+    cursor: default;
+}
+
+.stepwizard-step .stepwizard-button {
+    cursor: default;
+    color: var(--body-color);
+    font-weight: 400;
+    vertical-align: middle;
+    user-select: none;
+    border-style: solid;
+    background-color: var(--module-bg);
+    width: 21px;
+    height: 21px;
+    text-align: center;
+    padding: 0;
+    font-size: 0.6rem;
+    line-height: 1;
+    border-radius: 15px;
+    border-width: 2px;
+    border-color: var(--gray-600);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stepwizard-step--no-result.stepwizard-button {
+    cursor: default;
+}
+
+.stepwizard-step .stepwizard-step--failed.stepwizard-button {
+    cursor: pointer;
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.stepwizard-step .stepwizard-step--success.stepwizard-button {
+    cursor: pointer;
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.stepwizard-step .stepwizard-step--no-result.stepwizard-button,
+.stepwizard-step .stepwizard-button.not-done,
+.stepwizard-step .stepwizard-step--not-executed.stepwizard-button {
+    color: var(--gray-600);
+    font-size: 0.4rem;
+}
+
+.test-passing {
+    cursor: default !important;
+}
+
+.test-passing:hover {
+    background-color: var(--programming-exercise-instruction-step-wizard-test-passing-hover-color);
+}
+
+.stepwizard-row-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-top: 3px solid var(--gray-500);
+}

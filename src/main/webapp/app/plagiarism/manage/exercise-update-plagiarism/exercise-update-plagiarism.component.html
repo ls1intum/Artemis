@@ -4,13 +4,13 @@
         tumAetUiButton
         severity="secondary"
         data-testid="plagiarism-control-toggle"
-        class="me-1 max-w-full whitespace-normal!"
+        class="me-1 max-w-full whitespace-normal"
         (click)="isCPCCollapsed = !isCPCCollapsed"
         jhiTranslate="{{ isCPCCollapsed ? 'artemisApp.plagiarism.showContinuousPlagiarismControl' : 'artemisApp.plagiarism.hideContinuousPlagiarismControl' }}"
     ></button>
 
     <jhi-help-icon placement="bottom auto" text="artemisApp.plagiarism.continuousPlagiarismControlTooltip" />
-    <tumaet-ui-tag severity="warn" rounded class="ms-1!" value="BETA" />
+    <tumaet-ui-tag severity="warn" rounded class="ms-1" value="BETA" />
 
     <div [hidden]="isCPCCollapsed">
         <div class="plagiarism-option flex items-center gap-2 py-1">

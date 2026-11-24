@@ -35,7 +35,7 @@
                 <!-- The kit menu has no submenus, so the instructions of all criteria are listed in one menu, below the title of their criterion.
                      Each criterion is a named group, so a screen reader announces the criterion when the focus enters its instructions. -->
                 <ng-template #instructionMenu>
-                    <tumaet-ui-menu class="max-h-[60vh]!">
+                    <tumaet-ui-menu class="max-h-[60vh]">
                         @for (criterion of criteriaList; track criterion) {
                             <div
                                 [attr.role]="criteriaList.length > 1 ? 'group' : null"

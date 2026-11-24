@@ -1,0 +1,22 @@
+.top-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-container jhi-alert {
+    font-size: initial;
+}
+
+.row-container {
+    display: flex;
+    align-items: center;
+}
+
+.assessment-submit-control {
+    display: inline-flex;
+}
+
+.assessment-submit-control button:disabled {
+    pointer-events: none;
+}

@@ -11,7 +11,7 @@ export interface SizeUpdate {
     selector: 'jhi-learning-path-competency-node',
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './competency-node.component.html',
-    styleUrl: './competency-node.component.scss',
+    styleUrl: './competency-node.component.css',
 })
 export class CompetencyNodeComponent implements AfterViewInit {
     private readonly element = inject(ElementRef);

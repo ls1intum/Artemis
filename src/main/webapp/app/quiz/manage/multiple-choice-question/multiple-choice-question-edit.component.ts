@@ -28,7 +28,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss', './multiple-choice-question-edit.component.scss'],
+    styleUrls: ['../exercise/quiz-exercise.css', '../../../quiz/shared/quiz.css', './multiple-choice-question-edit.component.css'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [

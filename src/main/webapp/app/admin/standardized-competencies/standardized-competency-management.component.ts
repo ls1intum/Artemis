@@ -38,7 +38,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
-    styleUrls: ['./standardized-competency-management.component.scss'],
+    styleUrls: ['./standardized-competency-management.component.css'],
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },

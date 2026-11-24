@@ -55,7 +55,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
-    styleUrls: ['./code-editor-monaco.component.scss'],
+    styleUrls: ['./code-editor-monaco.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [MonacoEditorComponent, CodeEditorHeaderComponent, CodeEditorTutorAssessmentInlineFeedbackComponent, TranslateDirective],
     providers: [RepositoryFileService],

@@ -18,7 +18,7 @@ interface LocaleNumberSyntax {
 @Component({
     selector: 'tumaet-ui-input-number',
     templateUrl: './tumaet-ui-input-number.component.html',
-    styleUrl: './tumaet-ui-input-number.component.scss',
+    styleUrl: './tumaet-ui-input-number.component.css',
     imports: [TumAetUiInputDirective, FaIconComponent, NgTemplateOutlet, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-input-number',

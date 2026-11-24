@@ -49,7 +49,7 @@ public class HyperionEffortProfileService {
         validateStagedContext(properties.getStagedContext());
         HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, properties.getMaxTurns(), properties.getMaxJobDuration(),
                 properties.getMaxTokensPerJob(), properties.isStagedGeneration(), properties.getStagedContext(), properties.getContextWindowTokens(), agentPreset(properties), null,
-                true, false);
+                true, false, repairPreset(properties.getRepairLlmPreset()));
         if (properties.getProfiles().size() > MAX_PROFILES) {
             throw new IllegalArgumentException("artemis.hyperion.agent.profiles must not configure more than " + MAX_PROFILES + " effort profiles");
         }
@@ -103,12 +103,20 @@ public class HyperionEffortProfileService {
         if (label.length() > 100) {
             throw new IllegalArgumentException("Hyperion effort profile '" + name + "': label must contain at most 100 characters");
         }
+        // Like the profile's own preset, an unset or blank repair preset inherits the agent's.
+        String profileRepairPreset = repairPreset(profile.getRepairLlmPreset());
+        String repairLlmPreset = profileRepairPreset != null ? profileRepairPreset : repairPreset(properties.getRepairLlmPreset());
         return new HyperionGenerationSettings(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, llmPreset, null,
-                engineDefaults, providerOptionsOverride);
+                engineDefaults, providerOptionsOverride, repairLlmPreset);
     }
 
     private static IllegalArgumentException invalidOption(String profileName, String message) {
         return new IllegalArgumentException("Hyperion effort profile '" + profileName + "': " + message);
+    }
+
+    /** A configured repair preset, or {@code null} when it is unset or blank; validated at startup like the agent's preset. */
+    private static @Nullable String repairPreset(@Nullable String preset) {
+        return preset == null || preset.isBlank() ? null : preset.strip();
     }
 
     /** The agent's preset; the startup validation of artemis.llm requires it whenever exercise generation is enabled. */
