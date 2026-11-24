@@ -17,7 +17,9 @@
 </button>
 <tumaet-ui-popover class="contents" #filterPopover alignment="end" [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate">
     <!-- The popover is the labelled dialog, so the content is not named a second time. -->
-    <div class="flex w-72 max-w-full flex-col gap-4" data-testid="filter-dropdown-content">
+    <!-- Capped by the viewport (the panel padding, border and margin are the 4rem) and scrolling, so that every group and Reset stay reachable on a short window. The width
+         is capped too, because overflow-y: auto clips horizontally. -->
+    <div class="flex max-h-[calc(100dvh-4rem)] w-72 max-w-[calc(100vw-4rem)] flex-col gap-4 overflow-y-auto" data-testid="filter-dropdown-content">
         @for (group of groups(); track group.labelKey) {
             @if (group.items.length > 1) {
                 <!-- A segmented group is a group of its own (the button group), so the wrapper only names the checkbox lists once. -->

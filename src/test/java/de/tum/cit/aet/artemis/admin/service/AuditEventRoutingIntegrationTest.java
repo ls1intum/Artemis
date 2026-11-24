@@ -298,9 +298,10 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         // Typed as it is recorded, the term finds both spellings of the login
         assertThat(auditEventService.findAll(logType, typedLogin, NEWEST_FIRST).getContent()).extracting(AuditEvent::getPrincipal).containsExactlyInAnyOrder(typedLogin,
                 typedLogin.toLowerCase(Locale.ROOT));
-        // Typed in lower case, it finds the lower case one only: the comparison stays an equality, which keeps the search on the index
+        // Typed in lower case, it finds the lower case one. Whether it also finds the mixed case one depends on the collation of the database (PostgreSQL compares
+        // case-sensitively, the case-insensitive collation of MySQL does not), so only the first is asserted: the comparison stays an equality, which keeps the search on the index
         assertThat(auditEventService.findAll(logType, typedLogin.toLowerCase(Locale.ROOT), NEWEST_FIRST).getContent()).extracting(AuditEvent::getPrincipal)
-                .containsExactly(typedLogin.toLowerCase(Locale.ROOT));
+                .contains(typedLogin.toLowerCase(Locale.ROOT));
     }
 
     @ParameterizedTest
