@@ -66,7 +66,7 @@ interface InstructorActionItem {
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
+    styleUrls: ['../course-overview/course-overview.css', './course-exercise-details.component.css'],
     providers: [ExerciseCacheService],
     imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
 })
@@ -165,6 +165,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // Display-only override for the quiz participation status badge, set from the live quiz view.
     readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
+
+    /**
+     * True while the student takes a running graded quiz, in live mode, synchronized or individual. The course sidebars
+     * (the exercise list and the side panels) read it and give way to the quiz, so the student can focus on it. Practice
+     * mode and a quiz that has not started or has ended do not count. It is undefined until the exercise has loaded:
+     * opening a quiz swaps this page for a new instance, and the sidebars must keep their state until the new one knows.
+     */
+    readonly focusMode = computed<boolean | undefined>(() => {
+        const exercise = this._exercise();
+        if (!exercise) {
+            return undefined;
+        }
+        return exercise.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && this.liveQuizStatus() === LiveQuizParticipationStatus.PARTICIPATING;
+    });
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();

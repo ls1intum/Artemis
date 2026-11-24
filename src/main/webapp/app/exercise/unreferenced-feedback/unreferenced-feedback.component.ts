@@ -22,7 +22,7 @@ export interface FeedbackGroup {
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
-    styleUrls: ['./unreferenced-feedback.component.scss'],
+    styleUrls: ['./unreferenced-feedback.component.css'],
     imports: [TumAetUiTagComponent, TumAetUiMessageComponent, TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {

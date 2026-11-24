@@ -51,7 +51,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./text-editor.component.scss'],
+    styleUrls: ['./text-editor.component.css'],
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,

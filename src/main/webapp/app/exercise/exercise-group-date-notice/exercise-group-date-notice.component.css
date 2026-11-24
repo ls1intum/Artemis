@@ -1,0 +1,11 @@
+.edit-group-dates-button {
+    padding: 0;
+    border: 0;
+    font: inherit;
+    background: none;
+    cursor: pointer;
+}
+
+.edit-group-dates-button:hover {
+    text-decoration: underline;
+}

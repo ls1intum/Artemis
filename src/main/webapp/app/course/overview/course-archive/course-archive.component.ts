@@ -21,7 +21,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
-    styleUrls: ['./course-archive.component.scss'],
+    styleUrls: ['./course-archive.component.css'],
     imports: [
         CourseCardHeaderComponent,
         SearchFilterComponent,

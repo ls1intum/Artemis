@@ -73,7 +73,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
 @Component({
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
-    styleUrl: './exercise-add-modal.component.scss',
+    styleUrl: './exercise-add-modal.component.css',
     imports: [TumAetUiDialogComponent, TumAetUiButtonComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -9,7 +9,7 @@ import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 @Component({
     selector: 'tumaet-ui-search-field',
     templateUrl: './tumaet-ui-search-field.component.html',
-    styleUrl: './tumaet-ui-search-field.component.scss',
+    styleUrl: './tumaet-ui-search-field.component.css',
     imports: [FaIconComponent, TumAetUiInputDirective, TumAetUiTranslatePipe],
     host: { class: 'tumaet-ui-search-field' },
     changeDetection: ChangeDetectionStrategy.OnPush,

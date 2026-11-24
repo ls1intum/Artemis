@@ -29,7 +29,7 @@ import { TumAetUiMenuItemDirective } from './tumaet-ui-menu-item.directive';
 @Component({
     selector: 'tumaet-ui-menu',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-menu.component.scss',
+    styleUrl: './tumaet-ui-menu.component.css',
     hostDirectives: [Menu],
     host: {
         // Lets the Angular Aria test harnesses (`@angular/aria/menu/testing`) find the menu.
