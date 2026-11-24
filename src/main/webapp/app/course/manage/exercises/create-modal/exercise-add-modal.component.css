@@ -14,7 +14,9 @@
     font-size: 0.9rem;
     color: var(--text-color-secondary);
     cursor: pointer;
-    transition: color 0.15s ease;
+    transition:
+        color 0.15s ease,
+        border-bottom-color 0.15s ease;
 }
 
 .tab-btn:hover {

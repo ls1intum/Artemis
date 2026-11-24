@@ -107,7 +107,14 @@ export class ThemeService {
      * Returns the theme preference stored in local storage or undefined if no preference is stored
      */
     private getStoredThemePreference(): Theme | undefined {
-        const storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        let storedIdentifier: string | undefined;
+        try {
+            storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        } catch {
+            // The storage is blocked or holds a value that is not JSON. The script of index.html follows the system in
+            // this case, and so does the service. It runs while the service is created, so it must not throw.
+            return undefined;
+        }
         const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
 
         // An unknown theme was stored. Let's clear it

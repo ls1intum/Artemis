@@ -56,9 +56,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* the warning appears and disappears without scaling */
+    .connection-warning {
+        transition: none;
+    }
+
     #pulse-icon {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 

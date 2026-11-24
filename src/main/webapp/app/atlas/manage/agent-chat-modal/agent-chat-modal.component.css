@@ -17,8 +17,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .agent-chat-typing-dot {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 

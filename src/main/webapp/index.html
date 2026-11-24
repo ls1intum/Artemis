@@ -76,8 +76,6 @@
                 "sameAs": ["https://github.com/ls1intum/Artemis", "https://docs.artemis.tum.de"]
             }
         </script>
-        <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
-             application chunk is parsed; replaced by the real shell once Angular hydrates. -->
         <script>
             // Sets the theme before the first paint, so a page in the dark theme does not start in the light one. The theme
             // service (theme.service.ts) reads the same two sources once the application runs: the stored choice of the user
@@ -97,6 +95,8 @@
                 document.documentElement.setAttribute('data-theme', theme);
             })();
         </script>
+        <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
+             application chunk is parsed; replaced by the real shell once Angular hydrates. -->
         <style>
             :root {
                 color-scheme: light dark;

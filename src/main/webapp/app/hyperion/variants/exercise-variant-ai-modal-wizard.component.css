@@ -175,7 +175,8 @@
     transition:
         box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     overflow: hidden;
 }
@@ -350,8 +351,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .generating-icon {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 
@@ -366,8 +366,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .generating-ring {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 
@@ -552,8 +551,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .variant-flow-card__pending {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 
