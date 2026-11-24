@@ -166,8 +166,13 @@ shows it live: resize it, switch the theme and sort the columns. Pages assemble 
 | Body    | rows of about 36px | The only part that scrolls, vertically and horizontally. Striping and row hover are optional.                             |
 | Footer  | at most 40px       | One line. Range and total on the left, page size and pager on the right. Omit it for lists shown completely.              |
 
-The table has no border or rounded corners of its own: it sits flat on the panel of its page, and the toolbar, the header and the
-footer are separated by lines. It is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
+The table has no border or rounded corners of its own: it sits flat on the panel of its page. The tinted header
+(`--tumaet-ui-table-header-background`) sets it apart, so there is no rule below the header or below the last row. A table
+outside the layout keeps both rules. A table with a `<tfoot>` draws a heavier rule above its footer cells instead of below the last
+row. A sortable header cell changes to `--tumaet-ui-table-header-hover-background` on hover, which differs from the row hover in both
+themes.
+
+The table is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
 leaves no empty area, and a long one keeps toolbar and footer in view whatever sits above it.
 
 ### Responsive behaviour
