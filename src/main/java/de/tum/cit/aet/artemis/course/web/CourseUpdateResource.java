@@ -240,6 +240,10 @@ public class CourseUpdateResource {
         if (courseUpdateDTO.studentWelcomeContext() != null) {
             courseConfigurationRepository.updateStudentWelcomeContext(courseId, requestedConfiguration.getStudentWelcomeContext());
         }
+        if (courseUpdateDTO.initialCommitAuthor() != null) {
+            courseConfigurationRepository.updateInitialCommitAuthor(courseId, requestedConfiguration.getInitialCommitAuthorMode(),
+                    requestedConfiguration.getInitialCommitAuthorName(), requestedConfiguration.getInitialCommitAuthorEmail());
+        }
         if (courseUpdateDTO.dataRetentionHold() != null) {
             courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }
