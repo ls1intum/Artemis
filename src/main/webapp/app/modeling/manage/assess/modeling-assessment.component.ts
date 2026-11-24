@@ -25,6 +25,7 @@ import {
     FeedbackType,
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
@@ -75,6 +76,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly feedbackService = inject(FeedbackService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -126,6 +128,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeResizeFrame?: number;
     private isUpdatingFromServer = false;
+    /** Increments with every server update, so a long feedback text that loads late never overwrites newer feedback. */
+    private feedbackGeneration = 0;
     protected readonly bottomCenterElevated = signal(false);
 
     constructor() {
@@ -549,6 +553,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const dropInfo = assessment.dropInfo as GradingInstruction | undefined;
             const instruction = dropInfo?.id ? dropInfo : undefined;
             let feedback = this.elementFeedback.get(assessment.modelElementId);
+            if (feedback && this.isUpdatingFromServer) {
+                // Apollon reports its model after each assessment the server update writes, while the ones not written yet
+                // still hold their previous content. The server's feedback is authoritative here, and nothing in that echo
+                // is an assessor's edit, so it must neither overwrite the feedback nor mark a suggestion as adapted.
+                continue;
+            }
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
                 if (scoreChanged && feedback.gradingInstruction) {
@@ -659,10 +669,37 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private handleFeedback(): void {
         const feedbacks = this.resultFeedbacks();
         if (feedbacks !== undefined) {
+            const generation = ++this.feedbackGeneration;
             this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            const truncated = this.referencedFeedbacks.filter((feedback) => feedback.id !== undefined && feedback.hasLongFeedbackText);
+            if (truncated.length === 0) {
+                this.updateApollonAssessments(this.referencedFeedbacks);
+            } else {
+                void this.showAfterLoadingLongFeedbackTexts(truncated, generation);
+            }
         }
+    }
+
+    /**
+     * A description longer than the server keeps inline arrives as a short preview, with the full text stored separately.
+     * Apollon edits the description in place, so it must receive the full text: saving an edited preview would replace
+     * the full description with it. The assessment boxes are filled once the full texts are loaded. A text that fails to
+     * load keeps its preview, which the server maps back to the full text as long as it stays unchanged.
+     */
+    private async showAfterLoadingLongFeedbackTexts(truncated: Feedback[], generation: number): Promise<void> {
+        const fullTexts = await Promise.all(truncated.map((feedback) => this.feedbackService.getLongFeedbackText(feedback.id!).catch(() => undefined)));
+        if (generation !== this.feedbackGeneration) {
+            return;
+        }
+        truncated.forEach((feedback, index) => {
+            const fullText = fullTexts[index];
+            if (fullText !== undefined) {
+                feedback.detailText = fullText;
+                feedback.hasLongFeedbackText = false;
+            }
+        });
+        this.updateApollonAssessments(this.referencedFeedbacks);
     }
 
     private updateElementFeedbackMapping(feedbacks: Feedback[]) {

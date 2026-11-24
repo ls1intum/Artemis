@@ -111,6 +111,7 @@ import {
     FeedbackCorrectionErrorType,
     FeedbackType,
 } from 'app/assessment/shared/entities/feedback.model';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -223,6 +224,7 @@ describe('ModelingAssessmentComponent', () => {
             imports: [MockModule(FormsModule), ModelingAssessmentComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisTranslatePipe),
+                MockProvider(FeedbackService),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
@@ -553,6 +555,28 @@ describe('ModelingAssessmentComponent', () => {
             expect(adapted.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
         });
 
+        it('does not let Apollon report back stale content while a server update is applied', () => {
+            const suggestion = Feedback.forModeling(1, undefined, PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            const manual = Feedback.forModeling(2, 'Instructor comment', RELATIONSHIP_ID, 'ClassUnidirectional');
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp.elementFeedback.set(RELATIONSHIP_ID, manual);
+            comp['isUpdatingFromServer'] = true;
+
+            comp.generateFeedbackFromAssessment([
+                assessmentFor({ title: 'Stale title', feedback: 'Stale detail', score: 5 }),
+                assessmentFor({ modelElementId: RELATIONSHIP_ID, title: 'Stale', feedback: 'Stale comment', score: 0 }),
+            ]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction');
+            expect(suggestion.detailText).toBe('Original detail');
+            expect(suggestion.credits).toBe(1);
+            expect(manual.text).toBe('Instructor comment');
+            expect(manual.detailText).toBeUndefined();
+            expect(manual.credits).toBe(2);
+        });
+
         it('forgets feedback for elements the tutor deleted from the diagram', () => {
             comp.elementFeedback.set(RELATIONSHIP_ID, Feedback.forModeling(1, 'Stale', RELATIONSHIP_ID, 'ClassUnidirectional'));
 
@@ -603,6 +627,52 @@ describe('ModelingAssessmentComponent', () => {
             const assessment = await showFeedback(feedbackFor(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction', 'Edited detail'));
 
             expect(assessment.feedbackSuggestion).toBe('adapted');
+        });
+
+        it('loads the full description of a long feedback before showing it for editing', async () => {
+            const longDescription = 'Extract an interface. '.repeat(80);
+            const getLongFeedbackText = vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockResolvedValue(longDescription);
+            const titled = feedbackFor('Missing abstraction', longDescription.slice(0, 300));
+            titled.id = 42;
+            titled.hasLongFeedbackText = true;
+
+            await showFeedback(titled);
+            await fixture.whenStable();
+
+            expect(getLongFeedbackText).toHaveBeenCalledWith(42);
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe(longDescription);
+            expect(titled.detailText).toBe(longDescription);
+            expect(titled.hasLongFeedbackText).toBe(false);
+        });
+
+        it('keeps the preview of a long feedback whose full text fails to load', async () => {
+            vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockRejectedValue(new Error('offline'));
+            const titled = feedbackFor('Missing abstraction', 'Preview of the description');
+            titled.id = 42;
+            titled.hasLongFeedbackText = true;
+
+            await showFeedback(titled);
+            await fixture.whenStable();
+
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Preview of the description');
+            expect(titled.hasLongFeedbackText).toBe(true);
+        });
+
+        it('ignores a long description that loads after newer feedback arrived', async () => {
+            let resolveLongText!: (text: string) => void;
+            vi.spyOn(TestBed.inject(FeedbackService), 'getLongFeedbackText').mockReturnValue(new Promise((resolve) => (resolveLongText = resolve)));
+            const stale = feedbackFor('Missing abstraction', 'Preview');
+            stale.id = 42;
+            stale.hasLongFeedbackText = true;
+            await showFeedback(stale);
+
+            fixture.componentRef.setInput('resultFeedbacks', [feedbackFor('Newer title', 'Newer description')]);
+            fixture.detectChanges();
+            resolveLongText('Full but outdated description');
+            await fixture.whenStable();
+
+            expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Newer description');
+            expect(stale.detailText).toBe('Preview');
         });
 
         it('stores a shown title and description unchanged when the box reports them back', async () => {
@@ -975,7 +1045,7 @@ describe('ModelingAssessmentComponent chrome regions', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ModelingAssessmentChromeHostComponent, ModelingAssessmentBareSlotHostComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(ArtemisTranslatePipe), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(ModelingAssessmentChromeHostComponent);
