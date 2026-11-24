@@ -40,7 +40,7 @@ let nextDatePickerId = 0;
  * which are 24px wide each and sit 36px and 8px from the end.
  */
 const INPUT_SIZE: Record<TumAetUiInputSize, string> = {
-    small: 'tumaet:text-sm tumaet:py-1.5 tumaet:ps-2.5 tumaet:pe-15',
+    small: 'tumaet:text-sm tumaet:py-1.5 tumaet:ps-2.5 tumaet:pe-16',
     large: 'tumaet:text-lg tumaet:py-2.5 tumaet:ps-3.5 tumaet:pe-17',
 };
 const INPUT_SIZE_NORMAL = 'tumaet:py-2 tumaet:ps-3 tumaet:pe-17';

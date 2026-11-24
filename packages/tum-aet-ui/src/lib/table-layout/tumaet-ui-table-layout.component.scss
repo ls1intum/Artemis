@@ -8,8 +8,9 @@
         // instead of squeezing the rows to nothing.
         max-height: max(14rem, calc(100dvh - var(--table-layout-offset, 12rem)));
         overflow: hidden;
-        border: 1px solid var(--tumaet-ui-border-color);
-        border-radius: 0.5rem;
+
+        // No frame of its own: a table sits flat on the panel of its page, which already has the corners and the background. The toolbar, the
+        // column header and the footer keep their separating lines.
         background-color: var(--tumaet-ui-content-background);
     }
 
@@ -71,10 +72,5 @@
         align-items: center;
         justify-content: center;
         background-color: color-mix(in srgb, var(--tumaet-ui-content-background) 60%, transparent);
-    }
-
-    .tumaet-ui-table-layout-toolbar-auto {
-        height: auto;
-        padding-block: 0.5rem;
     }
 }

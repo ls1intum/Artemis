@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import dayjs from 'dayjs/esm';
@@ -24,16 +24,9 @@ function build2DigitsDatePart(datePart: number) {
 }
 
 function getDate(isToday = true) {
-    let date: Date = new Date();
-    if (isToday) {
-        date.setDate(date.getDate() + 1);
-    } else {
-        if (date.getMonth() === 0) {
-            date = new Date(date.getFullYear() - 1, 11, date.getDate());
-        } else {
-            date = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
-        }
-    }
+    const date = new Date();
+    // the end of the range is tomorrow, so that today is included, and the start is a week back
+    date.setDate(date.getDate() + (isToday ? 1 : -7));
     const monthString = build2DigitsDatePart(date.getMonth() + 1);
     const dateString = build2DigitsDatePart(date.getDate());
     return `${date.getFullYear()}-${monthString}-${dateString}`;
@@ -92,24 +85,32 @@ describe('AuditsComponent', () => {
         });
     });
 
-    describe('previousMonth function', () => {
-        it('should set fromDate to previous month', () => {
+    describe('previousWeek function', () => {
+        it('should set fromDate to a week before today', () => {
             comp.ngOnInit();
             expect(comp.fromDate()).toBe(getDate(false));
         });
 
-        it('if current month is January then should set fromDate to previous year last month', () => {
+        it('if the week starts in the previous month then should set fromDate to that month', () => {
             vi.useFakeTimers();
-            vi.setSystemTime(new Date(2019, 0, 20, 0, 0, 0));
+            vi.setSystemTime(new Date(2019, 2, 3, 0, 0, 0));
             comp.ngOnInit();
-            expect(comp.fromDate()).toBe('2018-12-20');
+            expect(comp.fromDate()).toBe('2019-02-24');
         });
 
-        it('if current month is not January then should set fromDate to current year previous month', () => {
+        it('if the week starts in the previous year then should set fromDate to that year', () => {
             vi.useFakeTimers();
-            vi.setSystemTime(new Date(2019, 1, 20, 0, 0, 0));
+            vi.setSystemTime(new Date(2019, 0, 3, 0, 0, 0));
+            comp.ngOnInit();
+            expect(comp.fromDate()).toBe('2018-12-27');
+        });
+
+        it('should keep the range of a week and a day, which includes today', () => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date(2019, 0, 27, 0, 0, 0));
             comp.ngOnInit();
             expect(comp.fromDate()).toBe('2019-01-20');
+            expect(comp.toDate()).toBe('2019-01-28');
         });
     });
 
@@ -296,6 +297,34 @@ describe('AuditsComponent', () => {
             expect(query.mock.calls.at(-1)![0]).toEqual(expect.objectContaining({ principal: 'student1' }));
         });
 
+        it('shows only the response of the latest query when an older one answers late', () => {
+            const slow = new Subject<HttpResponse<Audit[]>>();
+            const fast = new Subject<HttpResponse<Audit[]>>();
+            const query = vi.spyOn(service, 'query').mockReturnValue(slow);
+            const response = (id: number, total: string) => new HttpResponse<Audit[]>({ body: [{ id } as Audit], headers: new HttpHeaders({ 'X-Total-Count': total }) });
+            comp.ngOnInit();
+            query.mockReturnValue(fast);
+            mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'student1' });
+
+            fast.next(response(2, '1'));
+            slow.next(response(1, '500'));
+
+            expect(comp.audits()).toEqual([{ id: 2 }]);
+            expect(comp.totalItems()).toBe(1);
+        });
+
+        it('keeps loading after a request failed', () => {
+            const failing = new Subject<HttpResponse<Audit[]>>();
+            const query = vi.spyOn(service, 'query').mockReturnValueOnce(failing);
+            comp.ngOnInit();
+            failing.error(new Error('failed'));
+            query.mockReturnValue(of(new HttpResponse<Audit[]>({ body: [{ id: 3 } as Audit], headers: new HttpHeaders({ 'X-Total-Count': '1' }) })));
+
+            mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'student1' });
+
+            expect(comp.audits()).toEqual([{ id: 3 }]);
+        });
+
         it('sends no principal while there is no search, so that the server returns the events of everyone', () => {
             const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
 
@@ -314,6 +343,58 @@ describe('AuditsComponent', () => {
 
             expect(comp['searchInput']()).toBe('studen');
             expect(comp.search()).toBe('stud');
+        });
+
+        it('applies a term again that was applied before the back button restored a URL without a search', () => {
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+            expect(comp.search()).toBe('student1');
+
+            // Back to the URL without a search: the page shows every entry again
+            mockActivatedRoute.setParameters({ sort: 'id,desc' });
+            comp['handleNavigation']();
+            expect(comp.search()).toBe('');
+            navigate.mockClear();
+
+            // Pasting the same login must filter again, and not be taken for what was typed before
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+
+            expect(comp.search()).toBe('student1');
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBe('student1');
+        });
+
+        it('drops a term that is still waiting when the URL replaces the search', () => {
+            comp.onSearchInput('student1');
+            vi.advanceTimersByTime(300);
+            // typing on, and before the term is applied the back button restores the page without a search
+            comp.onSearchInput('student2');
+            vi.advanceTimersByTime(100);
+            mockActivatedRoute.setParameters({ sort: 'id,desc' });
+            comp['handleNavigation']();
+            navigate.mockClear();
+
+            vi.advanceTimersByTime(1000);
+
+            // the old term must not overwrite the restored page
+            expect(comp.search()).toBe('');
+            expect(comp['searchInput']()).toBe('');
+            expect(navigate).not.toHaveBeenCalled();
+        });
+
+        it('keeps a term that is still waiting when the navigation of an earlier term arrives', () => {
+            comp.onSearchInput('stud');
+            vi.advanceTimersByTime(300);
+            comp.onSearchInput('studen');
+            // the navigation for "stud" arrives while "studen" is waiting: it must neither erase the field nor drop the waiting term
+            mockActivatedRoute.setParameters({ sort: 'id,desc', search: 'stud' });
+            comp['handleNavigation']();
+            navigate.mockClear();
+
+            vi.advanceTimersByTime(300);
+
+            expect(comp.search()).toBe('studen');
+            expect(navigate.mock.calls.at(-1)![1]!.queryParams!['search']).toBe('studen');
         });
 
         it('follows a term that the URL changes, as the back button does', () => {
@@ -740,13 +821,28 @@ describe('AuditsComponent date inputs with the real template', () => {
         vi.restoreAllMocks();
     });
 
+    it('sends the typed login to the server once the typing has settled and puts it in the URL', async () => {
+        const query = vi.spyOn(TestBed.inject(AuditsService), 'query');
+        query.mockClear();
+
+        await edit('audits-search', 'student1');
+        // the term is applied after the debounce, not on every keystroke
+        expect(navigate).not.toHaveBeenCalled();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        fixture.detectChanges();
+
+        expect(navigate.mock.calls.at(-1)![1].queryParams['search']).toBe('student1');
+        expect(query.mock.calls.at(-1)![0]).toEqual(expect.objectContaining({ principal: 'student1', page: 0 }));
+        expect(input('audits-search').value).toBe('student1');
+    });
+
     it('prefills both pickers with the default range', () => {
-        expect(input('audits-from-date').value).toBe('12.09.2026');
+        expect(input('audits-from-date').value).toBe('05.10.2026');
         expect(input('audits-to-date').value).toBe('13.10.2026');
     });
 
     it.each([
-        ['audits-from-date', '12.09.2026', 'fromDate'],
+        ['audits-from-date', '05.10.2026', 'fromDate'],
         ['audits-to-date', '13.10.2026', 'toDate'],
     ] as const)('keeps what is typed into %s while the text is not a date, and applies it once it is one', async (testId, prefilled, filter) => {
         // Deleting a digit of the prefilled date.

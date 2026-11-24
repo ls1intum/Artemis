@@ -69,7 +69,7 @@ describe('TumAetUiDatePickerComponent', () => {
         // a toolbar field: the text of a small input and less room, but still the end padding for the clear and calendar buttons
         expect(input().className).toContain('tumaet:text-sm');
         expect(input().className).toContain('tumaet:py-1.5');
-        expect(input().className).toContain('tumaet:pe-15');
+        expect(input().className).toContain('tumaet:pe-16');
         expect(input().className).not.toContain('tumaet:py-2 ');
         expect(fixture.nativeElement.classList).toContain('tumaet-ui-date-picker--small');
     });

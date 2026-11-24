@@ -8,8 +8,8 @@
         },
         "notFound": "Kein Audit gefunden",
         "search": {
-            "placeholder": "Nach Login suchen",
-            "ariaLabel": "Das Audit-Log nach Login durchsuchen, das ganze Login muss eingegeben werden"
+            "placeholder": "Nach vollständigem Login suchen",
+            "ariaLabel": "Nach vollständigem Login suchen, filtert das Audit-Log"
         },
         "filter": {
             "title": "Nach Datum filtern",

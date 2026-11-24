@@ -8,8 +8,8 @@
         },
         "notFound": "No audit found",
         "search": {
-            "placeholder": "Search by login",
-            "ariaLabel": "Search the audit log by login, the whole login has to be typed"
+            "placeholder": "Search by full login",
+            "ariaLabel": "Search by full login, filters the audit log"
         },
         "filter": {
             "title": "Filter per date",

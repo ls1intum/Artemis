@@ -26,7 +26,7 @@ type Story = StoryObj<TumAetUiDatePickerComponent>;
 
 export const Default: Story = {};
 
-/** A compact date field for a table toolbar of 40px: the label is hidden, and the field is about 34px high and 10rem wide. */
+/** A compact date field for a table toolbar of 40px: the label is hidden, and the field is about 34px high and 10rem wide at least. */
 export const SmallDateOnly: Story = {
     args: {
         size: 'small',

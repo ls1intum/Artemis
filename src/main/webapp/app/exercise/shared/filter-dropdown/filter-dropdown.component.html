@@ -16,13 +16,15 @@
     }
 </button>
 <tumaet-ui-popover class="contents" #filterPopover alignment="end" [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate">
-    <fieldset class="m-0 flex w-72 max-w-full flex-col gap-4 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
+    <!-- The popover is the labelled dialog, so the content is not named a second time. -->
+    <div class="flex w-72 max-w-full flex-col gap-4" data-testid="filter-dropdown-content">
         @for (group of groups(); track group.labelKey) {
             @if (group.items.length > 1) {
-                <div class="flex flex-col gap-2" role="group" [attr.aria-labelledby]="groupIdPrefix + $index">
+                <!-- A segmented group is a group of its own (the button group), so the wrapper only names the checkbox lists once. -->
+                <div class="flex flex-col gap-2" [attr.role]="group.segmented ? null : 'group'" [attr.aria-labelledby]="group.segmented ? null : groupIdPrefix + $index">
                     <span class="text-sm font-semibold" [id]="groupIdPrefix + $index">{{ group.labelKey | artemisTranslate }}</span>
                     @if (group.segmented) {
-                        <tumaet-ui-button-group [attr.aria-label]="group.labelKey | artemisTranslate">
+                        <tumaet-ui-button-group [attr.aria-labelledby]="groupIdPrefix + $index">
                             @for (option of segmentedOptions(group); track option.value) {
                                 <tumaet-ui-button
                                     size="small"
@@ -72,5 +74,5 @@
         >
             {{ 'artemisApp.assessment.dashboard.resetFilter' | artemisTranslate }}
         </button>
-    </fieldset>
+    </div>
 </tumaet-ui-popover>

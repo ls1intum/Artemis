@@ -39,7 +39,7 @@ describe('Participation filter toolbar', () => {
     }
 
     function panel(): HTMLElement {
-        return document.querySelector('.cdk-overlay-container fieldset') as HTMLElement;
+        return document.querySelector('.cdk-overlay-container [data-testid="filter-dropdown-content"]') as HTMLElement;
     }
 
     function resetButton(): HTMLButtonElement {

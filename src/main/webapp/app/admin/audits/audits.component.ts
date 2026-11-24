@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
+import { EMPTY, Subject, catchError, combineLatest, map, switchMap, takeUntil, timer } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
@@ -59,6 +59,9 @@ export class AuditsComponent implements OnInit {
 
     /** Audit log entries */
     readonly audits = signal<Audit[]>([]);
+
+    /** How many days back the date range starts when the page is opened. */
+    private static readonly DEFAULT_RANGE_DAYS = 7;
 
     /** How long the search field has to be left alone before its term is sent to the server. */
     private static readonly SEARCH_DEBOUNCE_MS = 300;
@@ -117,6 +120,12 @@ export class AuditsComponent implements OnInit {
 
     private readonly searchTerm = new Subject<string>();
 
+    /** Emits when the URL replaces the search, so that a term that is still waiting to be applied does not overwrite it. */
+    private readonly discardPendingSearch = new Subject<void>();
+
+    /** The queries to load. Only the response of the latest one is shown: a slow response to an older query must not replace the newer entries. */
+    private readonly loadRequest = new Subject<AuditsQuery>();
+
     /** Sort predicate */
     readonly predicate = signal('');
 
@@ -158,13 +167,32 @@ export class AuditsComponent implements OnInit {
     private readonly dateFormat = 'yyyy-MM-dd';
 
     constructor() {
-        // The term drives a request, so it is applied once the administrator stops typing.
-        this.searchTerm.pipe(debounceTime(AuditsComponent.SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed()).subscribe((term) => this.applySearch(term));
+        // The term drives a request, so it is applied once the administrator stops typing. A new term restarts the wait, and a term the URL replaced in the meantime is
+        // dropped. Terms are not de-duplicated here, because only the applied search knows what the page shows: see applySearch.
+        this.searchTerm
+            .pipe(
+                switchMap((term) =>
+                    timer(AuditsComponent.SEARCH_DEBOUNCE_MS).pipe(
+                        takeUntil(this.discardPendingSearch),
+                        map(() => term),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((term) => this.applySearch(term));
+
+        this.loadRequest
+            .pipe(
+                // a failed request is reported by the HTTP error handling, and must not end the stream for the requests that follow
+                switchMap((query) => this.auditsService.query(query).pipe(catchError(() => EMPTY))),
+                takeUntilDestroyed(),
+            )
+            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }
 
     ngOnInit(): void {
         this.toDate.set(this.today());
-        this.fromDate.set(this.previousMonth());
+        this.fromDate.set(this.previousWeek());
         this.handleNavigation();
     }
 
@@ -330,13 +358,10 @@ export class AuditsComponent implements OnInit {
         this.transition();
     }
 
-    private previousMonth(): string {
-        let date = new Date();
-        if (date.getMonth() === 0) {
-            date = new Date(date.getFullYear() - 1, 11, date.getDate());
-        } else {
-            date = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
-        }
+    /** The default start of the range: a week back keeps the first page quick on the log with the most entries, and the range can be widened. */
+    private previousWeek(): string {
+        const date = new Date();
+        date.setDate(date.getDate() - AuditsComponent.DEFAULT_RANGE_DAYS);
         return this.datePipe.transform(date, this.dateFormat)!;
     }
 
@@ -372,6 +397,7 @@ export class AuditsComponent implements OnInit {
             // the page applied itself carries that same term, and leaves the field alone, so that characters typed in the meantime are not lost.
             const search = params.get('search') ?? '';
             if (search !== this.search()) {
+                this.discardPendingSearch.next();
                 this.search.set(search);
                 this.searchInput.set(search);
             }
@@ -402,7 +428,7 @@ export class AuditsComponent implements OnInit {
         if (this.search()) {
             query.principal = this.search();
         }
-        this.auditsService.query(query).subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+        this.loadRequest.next(query);
     }
 
     private sort(): string[] {
