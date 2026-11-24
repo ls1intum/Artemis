@@ -15,7 +15,7 @@ import { safeUnescape } from 'app/foundation/util/security.util';
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
     templateUrl: './programming-exercise-instruction-task-status.component.html',
-    styleUrls: ['./programming-exercise-instruction-task-status.scss'],
+    styleUrls: ['./programming-exercise-instruction-task-status.css'],
     imports: [FaIconComponent, ArtemisTranslatePipe, SafeHtmlPipe],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {

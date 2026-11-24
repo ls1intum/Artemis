@@ -51,7 +51,7 @@ export class PanelDirective {
 @Component({
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
-    styleUrls: ['./resizable-panels.component.scss'],
+    styleUrls: ['./resizable-panels.component.css'],
     imports: [
         CdkScrollable,
         FaIconComponent,

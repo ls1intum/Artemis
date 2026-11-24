@@ -27,7 +27,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-overview',
     templateUrl: './courses.component.html',
-    styleUrls: ['./courses.component.scss'],
+    styleUrls: ['./courses.component.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

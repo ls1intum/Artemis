@@ -1,0 +1,91 @@
+/* The recipient field looks like a TUM AET UI input: it holds the selected recipients next to the search input. */
+.tag-input-container {
+    border: 1px solid var(--tumaet-ui-control-border-color);
+    background-color: var(--tumaet-ui-control-background);
+    color: var(--tumaet-ui-text-color);
+    transition: border-color 200ms;
+}
+
+.tag-input-container:hover {
+    border-color: var(--tumaet-ui-control-border-hover-color);
+}
+
+.tag-input-container:focus-within {
+    border-color: var(--tumaet-ui-focus-color);
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tag-input {
+    flex: 1;
+    min-width: 4rem;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+}
+
+.destination-option:hover {
+    background-color: var(--tumaet-ui-hover-background);
+}
+
+.destination-option.active {
+    background-color: var(--tumaet-ui-highlight-background);
+    color: var(--tumaet-ui-highlight-color);
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.left-border-line {
+    background-color: var(--communication-gray);
+    width: 0.3rem;
+    border-radius: 3px;
+    margin-right: 0.5rem;
+}
+
+.forwarded-message-container {
+    display: flex;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    border-radius: 5px;
+}
+
+.forwarded-message-container .forwarded-message-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.forwarded-message-container .forwarded-message-header {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.forwarded-message-container .forwarded-message-author {
+    font-weight: bold;
+}
+
+.forwarded-message-container .forwarded-message-body {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    max-height: 120px;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.forwarded-message-container .forwarded-message-body.expanded {
+    max-height: none;
+    -webkit-line-clamp: none;
+}

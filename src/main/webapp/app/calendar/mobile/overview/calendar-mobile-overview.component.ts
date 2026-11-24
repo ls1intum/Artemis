@@ -37,7 +37,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
-    styleUrl: './calendar-mobile-overview.component.scss',
+    styleUrl: './calendar-mobile-overview.component.css',
 })
 export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
     private readonly viewState = inject(CalendarViewStateService);

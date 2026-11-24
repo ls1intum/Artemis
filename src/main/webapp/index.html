@@ -82,9 +82,9 @@
             :root {
                 color-scheme: light dark;
             }
-            /* Apollon ships its control styles in a layer named `components`. Declared first, it stays below the element defaults, as when those were not in a layer. The full order is explained in content/scss/_base.scss. */
+            /* Apollon ships its control styles in a layer named `components`. Declared first, it stays below the element defaults, as when those were not in a layer. The full order is explained in content/css/application.css. */
             @layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
-            /* In the layer of the element defaults (content/scss/_base.scss), so the theme replaces these values once it has loaded. */
+            /* In the layer of the element defaults (content/css/base.css), so the theme replaces these values once it has loaded. */
             @layer base {
                 html,
                 body {

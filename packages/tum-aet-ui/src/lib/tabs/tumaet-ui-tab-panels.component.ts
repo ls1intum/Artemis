@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 @Component({
     selector: 'tumaet-ui-tab-panels',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-tab-panels.component.scss',
+    styleUrl: './tumaet-ui-tab-panels.component.css',
     host: {
         class: 'tumaet-ui-tab-panels',
     },

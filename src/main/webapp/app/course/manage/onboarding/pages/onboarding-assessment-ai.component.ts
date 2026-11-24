@@ -14,7 +14,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-onboarding-assessment-ai',
     templateUrl: './onboarding-assessment-ai.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     imports: [
         FormsModule,
         TranslateDirective,

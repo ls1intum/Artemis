@@ -27,7 +27,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
 @Component({
     selector: 'jhi-onboarding-general-settings',
     templateUrl: './onboarding-general-settings.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     imports: [
         FormsModule,
         ColorSelectorComponent,

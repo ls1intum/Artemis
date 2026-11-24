@@ -8,8 +8,10 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
  */
 @Component({
     selector: 'jhi-course-title-bar',
+    // The global rules of layout.css pin the controls that pages project into this bar to the height of the bar.
+    host: { class: 'title-bar-controls' },
     templateUrl: './course-title-bar.component.html',
-    styleUrls: ['./course-title-bar.component.scss'],
+    styleUrls: ['./course-title-bar.component.css'],
     imports: [NgTemplateOutlet, CourseTitleBarTitleComponent],
 })
 export class CourseTitleBarComponent {

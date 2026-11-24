@@ -1,0 +1,630 @@
+/*
+ * The light theme: the default value of every colour and size token of the application.
+ * The dark theme (dark.css) overrides the tokens that differ.
+ */
+
+:root {
+    /*
+     * === BOOTSTRAP ===
+     * Mostly default values, including them here for completeness and comparison
+     */
+
+    --white: #fff;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    --black: #000;
+    --blue: #3e8acc;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #d63384;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --primary: var(--blue);
+
+    /*
+     * Darker primary tone used for on-brand buttons/tags that sit on white/light backgrounds and
+     * need WCAG AA (≥ 4.5:1) contrast. 1f5c9a vs #fff ≈ 6.14:1.
+     */
+    --primary-dark: #1f5c9a;
+    --secondary: var(--gray-600);
+    --success: var(--green);
+    --info: var(--cyan);
+    --warning: var(--yellow);
+    --danger: var(--red);
+    --light: var(--gray-100);
+    --dark: var(--gray-900);
+    --body-color: var(--gray-900);
+    --text-body-secondary: var(--secondary);
+    --body-secondary-color: rgba(33, 37, 41, 0.75);
+    --body-bg: var(--gray-200);
+    --code-color: var(--pink);
+    --navbar-dark-color: rgba(255, 255, 255, 0.6);
+
+    /* Global colors */
+    --artemis-dark: #353d47;
+    --link-color: var(--primary);
+
+    /* Border */
+    --border-color: #dee2e6;
+
+    /* Footer */
+    --footer-bg: var(--white);
+
+    /* Sidebar */
+    --sidebar-header-footer-combined-height: 88px;
+    --sidebar-width: 235px;
+
+    /* Module and Navigationbar */
+    --module-bg: var(--white);
+    --header-height: 68px;
+    --course-image-bg: var(--body-bg);
+    --link-item-color: var(--primary);
+    --link-item-bg: var(--gray-100);
+    --sidebar-card-selected-bg: #ebf3f9;
+
+    /* Cards */
+    --card-bg: var(--white);
+    --card-border-color: var(--border-color);
+
+    /* Navbar */
+    --navbar-foreground: var(--gray-400);
+    --navbar-bg: var(--artemis-dark);
+    --navbar-breadcrumb-background: var(--body-bg);
+    --navbar-light-color: rgba(255, 255, 255, 0.6);
+    --navbar-light-active-color: var(--white);
+
+    /* Tooltip */
+    --tooltip-color: var(--white);
+
+    /* Backgrounds */
+    --dropdown-bg: var(--white);
+    --popover-bg: var(--white);
+
+    /* Exam */
+    --exam-height-offset: 88px;
+
+    /* === END BOOTSTRAP === */
+
+    /* Scrollbar */
+    --scrollbar-width: 5px;
+    --scrollbar-color: var(--gray-500);
+    --scrollbar-transition-time: 0.3s;
+
+    /* Navigation Tab Bar */
+    --tab-bar-color: var(--gray-700);
+    --tab-bar-color-hover: var(--gray-600);
+    --tab-bar-color-active: var(--primary);
+
+    /* Backgrounds */
+    --brighter-body-bg: white;
+    --hover-slightly-darker-body-bg: #f1f5f9;
+
+    /* Borders */
+    --theme-switch-box-border-color: var(--border-color);
+
+    /* Global colors */
+    --colored-btn-font: #fff;
+    --form-control-focus-background: white;
+    --form-control-color: #303030;
+    --artemis-control-background: #fff;
+    --artemis-control-border: #cbd5e1;
+    --artemis-control-border-hover: #94a3b8;
+    --artemis-control-color: #334155;
+    --artemis-control-muted: #64748b;
+    --artemis-control-disabled-background: #e2e8f0;
+    --artemis-control-disabled-color: #64748b;
+    --ng-valid-border: green;
+    --ng-invalid-border: red;
+    --editor-outline-background: #f8f9fa;
+    --result-orange: orange;
+    --result-late: gray;
+    --negative-color: #c7254e;
+    --negative-background: #f9f2f4;
+    --positive-color: green;
+    --positive-background: #f2f9f2;
+    --artemis-pre-color: #333;
+    --artemis-pre-background: #f5f5f5;
+    --artemis-pre-border: #ccc;
+    --unreferenced-feedback-background: whitesmoke;
+    --markdown-preview-editor-background: var(--module-bg);
+    --markdown-preview-red: #ca2024;
+    --markdown-preview-green: #3ea119;
+    --markdown-preview-white: #fff;
+    --markdown-preview-black: #000;
+    --markdown-preview-yellow: #fffa5c;
+    --markdown-preview-blue: #0d3cc2;
+    --markdown-preview-lila: #b05db8;
+    --markdown-preview-orange: #d86b1f;
+    --markdown-preview-blockquote: #6a737d;
+    --markdown-preview-blockquote-border: #dfe2e5;
+    --connection-status: var(--success);
+    --connection-status-disconnected: var(--danger);
+
+    /* Markdown Editor */
+    --md-wrapper-color: var(--artemis-dark);
+    --md-tab-list-bg: white;
+    --md-editor-background: white;
+    --md-resize-icon-color: rgba(0, 0, 0, 0.125);
+
+    /* Communication */
+    --communication-conversation-sidebar-muted: var(--gray-500);
+    --communication-light-gray: #979797;
+    --communication-gray: #6a737d;
+    --communication-blue: var(--link-color);
+    --communication-light-blue: #e3ecf3;
+    --communication-green: #33cd32;
+    --reaction-button-default-color: rgb(242, 242, 242);
+    --reaction-button-hover-color: rgb(255, 255, 255);
+    --reaction-button-reacted-color: var(--communication-light-blue);
+    --reaction-button-reacted-accent-color: var(--communication-blue);
+    --reaction-button-emoji-count-color: black;
+    --communication-selection-option-background: white;
+    --communication-selection-option-hover-background: var(--gray-200);
+
+    /* Component: plagiarism-case-instructor-detail-view.component.css */
+    --plagiarism-verdict-disabled-overlay-color: rgba(222, 226, 230, 0.9);
+
+    /* Component: plagiarism-inspector.component.css */
+    --plagiarism-inspector-darker-artemis-dark: #2c333b;
+
+    /* Component: course-exercise-card */
+    --course-exercise-card-background: #fefefe;
+
+    /* Component: color selector */
+    --color-selector-background: white;
+    --color-selector-border: #ced4da;
+    --color-selector-box-shadow: rgba(0, 0, 0, 0.175);
+
+    /* Student statistics: exercise-type palette for the Artemis score ring. */
+    --statistics-score-quiz-color: #17a2b8;
+    --statistics-score-programming-color: #fd7e14;
+    --statistics-score-modeling-color: #6610f2;
+    --statistics-score-text-color: #b00b6b;
+    --statistics-score-file-upload-color: #2d9c88;
+
+    /* Component: Statistics average score graph */
+    --stat-av-sc-legend-background: whitesmoke;
+
+    /* These are from graph colors */
+    --stat-av-sc-legend-critical: rgb(204, 0, 0);
+    --stat-av-sc-legend-median: rgb(127, 127, 127);
+    --stat-av-sc-legend-best: rgb(40, 164, 40);
+
+    /* Lecture media keeps a dark canvas; PDF pages keep their authored white paper in either theme. */
+    --lecture-media-background: var(--black);
+    --lecture-document-background: var(--white);
+    --lecture-scrim-color: var(--black);
+
+    /* Component: pdf-preview.component.css */
+    --pdf-preview-pdf-container-shadow: rgba(0, 0, 0, 0.1);
+    --pdf-preview-enlarged-container-overlay: rgba(0, 0, 0, 0.2);
+    --pdf-preview-date-box-title-background: var(--gray-100);
+
+    /* Programming Exercise Update */
+    --update-programming-exercise-plan-preview-box-background: rgba(0, 0, 0, 0.05);
+
+    /* Form Footer */
+    --update-footer-background: white;
+
+    /* Edit Quiz */
+    --quiz-mapping-letter-number-mixin-color: white;
+
+    /* Quiz mapping editor and statistics (the same in both themes: these colours sit on question images and white drop locations) */
+    --quiz-mapping-number-background: #696969;
+    --quiz-mapping-unlink-background: rgba(0, 0, 0, 0.5);
+    --quiz-mapping-color-0: #2c3e50;
+    --quiz-mapping-color-1: #2980b9;
+    --quiz-mapping-color-2: #c0392b;
+    --quiz-mapping-color-3: #27ae60;
+    --quiz-mapping-color-4: #f1c40f;
+    --quiz-mapping-color-5: #e67e22;
+    --quiz-mapping-color-6: #8e44ad;
+    --quiz-mapping-color-7: #1abc9c;
+    --quiz-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+    --quiz-drop-list-dragging-background: rgb(144, 238, 144);
+    --quiz-statistic-picture-background: #fefefe;
+    --quiz-statistic-drag-item-border: #696969;
+    --quiz-statistic-drag-item-background: #fafafa;
+    --quiz-statistic-letter-background: #428bca;
+    --quiz-statistic-letter-solution-background: #5cb85c;
+    --edit-quiz-footer-background: white;
+    --quiz-exercise-detail-max-score-background: whitesmoke;
+    --quiz-exercise-detail-max-score-color: black;
+    --edit-quiz-q-dnd-drop-location-background: white;
+    --edit-quiz-q-dnd-drop-location-color: black;
+    --edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
+
+    /* Quiz Exercises */
+    --quiz-drag-items-background: white;
+    --quiz-drag-item-background: #f8fafc;
+    --quiz-drag-item-border: #696969;
+    --quiz-drag-item-color: black;
+    --quiz-participation-footer-background: white;
+    --quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+    --quiz-participation-footer-dnd-background: #86ccd5;
+    --quiz-participation-footer-mc-background: #eee066;
+    --quiz-participation-footer-sa-background: #d8956c;
+    --quiz-participation-footer-changed-background: #527cd7;
+    --quiz-participation-footer-content-quiz-score-color: var(--success);
+    --quiz-participation-footer-content-quiz-score-incorrect-color: black;
+    --quiz-participation-footer-content-time-warning-color: var(--warning);
+    --quiz-participation-footer-content-time-critical-color: var(--danger);
+    --quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
+    --quiz-participation-btn-circle-light-border-color: white;
+    --quiz-participation-question-disabled-color: #696969;
+    --quiz-participation-question-disabled-background: #fafafa;
+    --quiz-participation-question-result-border-color: var(--success);
+    --quiz-participation-question-result-incorrect-border-color: var(--warning);
+    --quiz-participation-question-h2-span-color: grey;
+    --quiz-participation-question-score-result: var(--success);
+    --quiz-participation-question-score-incorrect-result: var(--warning);
+    --quiz-scoring-info-student-modal-question-correct: var(--success);
+    --quiz-scoring-info-student-modal-question-wrong: var(--warning);
+    --quiz-question-background: #fff;
+    --quiz-question-border-color: lightgrey;
+    --quiz-visual-question-border-color: var(--quiz-question-border-color);
+    --quiz-visual-answer-correct-container-color: var(--success);
+    --quiz-visual-answer-correct-container-hover-color: #afecbd;
+    --quiz-visual-answer-wrong-container-hover-color: #fae3e5;
+    --dnd-question-drop-location-background: white;
+    --dnd-question-drop-location-border-color: black;
+    --dnd-question-drop-location-results-border-color: var(--success);
+    --dnd-question-drop-location-results-background: rgb(170, 255, 170);
+    --dnd-question-drop-location-results-incorrect-border-color: var(--danger);
+    --dnd-question-drop-location-results-incorrect-background: rgb(255, 170, 170);
+    --dnd-question-drop-location-results-sample-border-color: black;
+    --dnd-question-drop-location-results-sample-background: white;
+    --dnd-question-drop-location-result-symbol-color: var(--warning);
+    --dnd-question-drop-location-result-invalid-color: var(--danger);
+    --dnd-question-drop-location-drag-item-background: white;
+    --dnd-question-dnd-items-drag-items-background: #e2e8f0;
+    --dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+    --dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
+    --sa-question-container-input-background: white;
+    --sa-question-container-input-border: #ced4da;
+    --sa-question-input-invalid-background: lightgray;
+    --mc-question-answer-option-border: var(--gray-300);
+    --mc-question-answer-option-hover-background: var(--gray-200);
+    --mc-question-answer-option-selected-background: rgba(62, 138, 204, 0.3);
+
+    /* Programming Exercises */
+    --programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
+
+    /* SGI */
+
+    --sgi-assessment-layout-zero-background: #fff2cc;
+    --sgi-assessment-layout-positive-background: #e3f0da;
+    --sgi-assessment-layout-negative-background: #fbe5d6;
+
+    /* Code Editor */
+    --code-editor-panel-header-background: var(--white);
+    --code-editor-panel-header-color: var(--body-color);
+    --code-editor-panel-header-border: var(--border-color);
+    --code-editor-file-browser-header-background: #f1f5f9;
+    --code-editor-file-browser-header-border: #ddd;
+    --code-editor-file-browser-tree-hover: #f5f5f5;
+    --code-editor-file-browser-input-background: white;
+    --code-editor-file-browser-input-color: black;
+    --code-editor-file-browser-selected-file-background: #428bca;
+    --code-editor-file-browser-badge-background: var(--code-editor-file-browser-tree-hover);
+
+    /* Monaco editor */
+    --monaco-suggest-widget-background: var(--white);
+    --monaco-editor-build-annotation-error-background: rgba(220, 53, 69, 0.2);
+    --monaco-editor-build-annotation-error-glyph: var(--danger);
+    --monaco-editor-build-annotation-warning-background: rgba(255, 193, 7, 0.2);
+    --monaco-editor-build-annotation-warning-glyph: var(--warning);
+    --monaco-editor-build-annotation-outdated-background: rgba(173, 181, 189, 0.2);
+    --monaco-editor-build-annotation-outdated-glyph: var(--gray-500);
+    --monaco-editor-diff-line-highlight: rgba(63, 185, 80, 0.4);
+    --monaco-editor-add-feedback-button-background: var(--gray-400);
+    --monaco-editor-add-feedback-button-hover-background: var(--gray-500);
+    --monaco-editor-add-feedback-button-text: var(--black);
+
+    /* Overview variables */
+    --overview-border-color: var(--border-color);
+    --overview-light-border-color: #edeff1;
+    --overview-light-background-color: rgba(237, 239, 241, 0.3);
+    --overview-blue-border-color: var(--primary);
+    --overview-tab-active-border-color: var(--artemis-dark);
+
+    /* Lecture Unit */
+    --lecture-unit-card-body-background: white;
+    --lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
+
+    /* Page ribbon (development, test server and exam test run) */
+    --page-ribbon-box-background: var(--white);
+    --page-ribbon-box-shadow: rgba(0, 0, 0, 0.1);
+    --page-ribbon-background: #a00;
+    --page-ribbon-color: var(--white);
+    --page-ribbon-shadow: rgba(0, 0, 0, 0.25);
+    --page-ribbon-text-shadow: rgba(0, 0, 0, 0.35);
+
+    /* Text Editor */
+    --text-editor-background: #f8fafc;
+    --text-editor-focus-background: #f8fafc;
+    --text-editor-color: black;
+    --text-editor-border-color: #cbd5e1;
+
+    /* Exam (Manage) */
+
+    --exercise-group-header-badge-color: var(--warning);
+
+    /* Data table */
+    --data-table-dropdown-item-selected-background-color: var(--primary);
+
+    /* Team Participation Table */
+    --team-participation-table-current-exercise-bg: #e6f5e9;
+    --team-participation-table-current-exercise-text: #155724;
+
+    /* Team Short Name */
+    --team-short-name-background: rgba(0, 0, 180, 0.05);
+    --team-short-name-color: #053d97;
+
+    /* Exam */
+    --exam-navigation-bar-background-color: #e2e8f0;
+    --exam-navigation-bar-synced-color: white;
+    --exam-navigation-bar-synced-background-color: #3e8acc;
+    --exam-navigation-bar-active-background: #276091;
+    --exam-navigation-bar-exercise-index-color: black;
+    --exam-timer-label-color: #212529;
+    --exam-timer-critical-background: var(--warning);
+    --exam-participation-footer-disconnected-background: #fff2cc;
+    --exam-update-footer-offset: 42px; /* height of the update footer (connection status) */
+
+    /* Assessment */
+    --textblock-assessment-span-hover-background: var(--gray-300);
+    --textblock-assessment-text-feedback-positive-color: var(--success);
+    --textblock-assessment-text-feedback-positive-background: var(--gray-100);
+    --textblock-assessment-text-feedback-positive-active-decoration: var(--success);
+    --textblock-assessment-text-feedback-negative-color: var(--danger);
+    --textblock-assessment-text-feedback-negative-background: var(--gray-100);
+    --textblock-assessment-text-feedback-negative-active-decoration: var(--danger);
+    --textblock-assessment-text-feedback-neutral-color: var(--gray-900);
+    --textblock-assessment-text-feedback-neutral-background: var(--gray-100);
+    --textblock-assessment-text-feedback-neutral-active-decoration: var(--gray-900);
+    --textblock-assessment-text-feedback-highlighted-color: var(--gray-900);
+    --textblock-assessment-text-feedback-highlighted-background: lightblue;
+    --textblock-assessment-textblock-feedback-editor-active-border: var(--gray-500);
+    --manual-text-selection-span-hover-background-color: var(--gray-300);
+
+    /* Alerts */
+    --artemis-alert-info-color: #0c5460;
+    --artemis-alert-info-background: #d1ecf1;
+    --artemis-alert-info-border: #1295ab;
+    --artemis-alert-danger-color: #600c0c;
+    --artemis-alert-danger-background: #f1d1d1;
+    --artemis-alert-danger-border: #bb2d3b;
+    --artemis-alert-warning-color: #604c0c;
+    --artemis-alert-warning-background: #ffe196;
+    --artemis-alert-warning-border: #cc9c12;
+    --artemis-alert-success-color: #21600c;
+    --artemis-alert-success-background: #d9f1d1;
+    --artemis-alert-success-border: #3eb058;
+    --artemis-alert-neutral-color: black;
+    --artemis-alert-neutral-background: var(--gray-300);
+    --artemis-alerts-shadow: rgba(0, 0, 0, 0.55);
+    --close-circle-color: black;
+    --close-circle-background: white;
+    --close-circle-border: rgba(93, 93, 93, 0.65);
+    --close-circle-opacity: 0.7;
+}
+
+/*
+ * The tokens of the Apollon editor. Inside `.artemis-apollon-theme` they replace the values of Apollon's own stylesheet.
+ * On the root element they only fill in what Apollon does not declare: the selector is `html`, not `:root`, so the
+ * `:root` rule of Apollon, which is loaded later, keeps winning there.
+ */
+html,
+.artemis-apollon-theme {
+    /* Apollon */
+    --apollon-primary: var(--primary);
+    --apollon-primary-foreground: var(--white);
+    --apollon-foreground: var(--body-color);
+    --apollon-secondary: var(--secondary);
+    --apollon-background: var(--module-bg);
+    --apollon-background-variant: var(--gray-100);
+    --apollon-gray: var(--gray-200);
+    --apollon-gray-variant: var(--gray-700);
+    --apollon-grid: rgba(36, 39, 36, 0.1);
+    --apollon-guide-vertical: var(--danger);
+    --apollon-guide-horizontal: var(--primary);
+    --apollon-danger: var(--danger);
+    --apollon-surface: var(--card-bg);
+    --apollon-surface-sunken: var(--gray-100);
+    --apollon-border: var(--border-color);
+    --apollon-border-subtle: var(--gray-200);
+
+    /*
+     * Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+     * inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+     * of Artemis uses — not the legacy Bootstrap --border-radius-* values, which are
+     * roughly half the size and made the editor's buttons read as visibly squarer
+     * than every other TUM AET UI button on the page.
+     */
+    --apollon-radius: var(--tumaet-ui-radius-md);
+    --apollon-radius-sm: var(--tumaet-ui-radius-sm);
+    --apollon-radius-md: var(--tumaet-ui-radius-md);
+    --apollon-radius-lg: var(--tumaet-ui-radius-md);
+    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.18);
+    --apollon-hover-neutral: rgba(33, 37, 41, 0.075);
+    --apollon-interactive-selection: var(--warning);
+    --apollon-dropzone-accent: var(--primary);
+    --apollon-dropzone-accent-fill: rgba(62, 138, 204, 0.4);
+    --apollon-on-collaboration-cursor: var(--white);
+    --apollon-assessment-positive-text: var(--artemis-alert-success-color);
+    --apollon-assessment-positive-bg: var(--artemis-alert-success-background);
+    --apollon-assessment-negative-text: var(--artemis-alert-danger-color);
+    --apollon-assessment-negative-bg: var(--artemis-alert-danger-background);
+    --apollon-assessment-zero-text: var(--artemis-alert-info-color);
+    --apollon-assessment-zero-bg: var(--artemis-alert-info-background);
+    --apollon-assessment-ungraded-text: var(--artemis-alert-neutral-color);
+    --apollon-assessment-ungraded-bg: var(--artemis-alert-neutral-background);
+    --apollon-collaboration-color-1: var(--yellow);
+    --apollon-collaboration-color-2: var(--green);
+    --apollon-collaboration-color-3: var(--blue);
+    --apollon-collaboration-color-4: var(--red);
+    --apollon-collaboration-color-5: var(--purple);
+    --apollon-collaboration-color-6: var(--teal);
+    --apollon-collaboration-color-7: var(--orange);
+    --apollon-collaboration-color-8: var(--cyan);
+    --apollon-swatch-slate: var(--gray-700);
+    --apollon-swatch-red: var(--red);
+    --apollon-swatch-orange: var(--orange);
+    --apollon-swatch-amber: var(--yellow);
+    --apollon-swatch-green: var(--green);
+    --apollon-swatch-teal: var(--teal);
+    --apollon-swatch-blue: var(--blue);
+    --apollon-swatch-violet: var(--purple);
+    --apollon-swatch-pink: var(--pink);
+    --apollon-chrome-accent: var(--apollon-primary);
+    --apollon-chrome-radius-sm: 0.15rem;
+    --apollon-chrome-radius-md: 0.25rem;
+    --apollon-chrome-radius-lg: 0.5rem;
+    --apollon-chrome-edge: 10px;
+    --apollon-chrome-gap: 12px;
+}
+
+:root {
+    /* Feedback Suggestions (Athena) */
+    --feedback-suggestions-primary: rgb(181, 78, 254);
+
+    /* Graph Colors */
+    --graph-light-grey: rgb(153, 153, 153);
+    --graph-grey: rgb(127, 127, 127);
+    --graph-dark-blue: rgb(53, 61, 71);
+    --graph-blue: rgb(93, 138, 201);
+    --graph-light-blue: rgb(135, 206, 250);
+    --graph-green: rgb(40, 164, 40);
+    --graph-red: rgb(204, 0, 0);
+    --graph-yellow: rgb(230, 174, 6);
+    --graph-black: rgb(53, 61, 71);
+
+    /* User-Management */
+    --user-management-background-color: rgba(0, 0, 0, 0.02);
+
+    /* Competency Rings */
+    --competency-rings-red: var(--red);
+    --competency-rings-red-bg: rgba(220, 53, 69, 0.2);
+    --competency-rings-green: var(--green);
+    --competency-rings-green-bg: rgba(40, 167, 69, 0.2);
+
+    /*
+     * Iris Chatbot
+     * TODO: Use standard colors
+     * Iris Theme Variables
+     */
+    --iris-primary-background: var(--white);
+    --iris-secondary-background: var(--gray-100);
+    --iris-tertiary-background: var(--gray-200);
+    --iris-accent-background: var(--gray-300);
+    --iris-label-color: var(--gray-600);
+    --iris-accent-border-color: var(--gray-500);
+    --iris-table-header-background: var(--gray-300);
+    --iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--white));
+    --iris-shadow-color: var(--black);
+
+    /* Iris Communication */
+    --tutor-suggestion-background: var(--gray-400);
+
+    /* Image Cropper */
+    --cropper-overlay-color: transparent;
+
+    /* Calendar */
+    --pastel-cyan: #90e4f1;
+    --pastel-blue: #8fbbe1;
+    --pastel-purple: #aa8fda;
+    --pastel-teal: #7eeaca;
+    --calendar-loading-overlay-background: rgba(255, 255, 255, 0.2);
+    --transcript-active-bg: #cbe0f1;
+    --transcript-active-text: #183b59;
+    --calendar-day-badge-selected: var(--gray-400);
+
+    /* Quiz Training */
+    --league-badge-bronze-color: #cd7f32;
+    --league-badge-silver-color: #c0c0c0;
+    --league-badge-gold-color: #ffd700;
+    --league-badge-diamond-color: hsl(195deg, 60%, 50%);
+    --league-badge-master-color: hsl(270deg, 60%, 50%);
+    --league-badge-star-color: #ffd700;
+    --progress-bar-background: var(--gray-300);
+
+    /* LLM Selection Popup */
+    --ai-modal-card-bg: var(--gray-100);
+    --ai-modal-cloud-bg: linear-gradient(135deg, rgba(171, 171, 171, 0.55) 0%, rgba(188, 188, 188, 0.56) 100%);
+    --ai-modal-cloud-bg-hover: linear-gradient(135deg, rgba(118, 128, 174, 0.55) 0%, rgba(128, 158, 204, 0.56) 100%);
+    --ai-modal-local-bg: linear-gradient(135deg, rgba(206, 206, 206, 0.55) 0%, rgba(223, 223, 223, 0.56) 100%);
+    --ai-modal-local-bg-hover: linear-gradient(135deg, rgba(186, 186, 186, 0.55) 0%, rgba(203, 203, 203, 0.56) 100%);
+    --ai-modal-no-ai-bg: linear-gradient(135deg, var(--gray-200) 0%, var(--gray-300) 100%);
+    --ai-modal-no-ai-bg-hover: linear-gradient(135deg, var(--gray-300) 0%, var(--gray-400) 100%);
+    --ai-modal-icons-bg: rgba(0, 0, 0, 0.03);
+    --ai-modal-description-color: var(--gray-600);
+    --ai-modal-subtitle: var(--black);
+    --ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
+
+    /*
+     * Exercise variant AI wizard
+     * Colour only — each call site keeps its own offsets and blur, so one token covers both the
+     * option-card hover lift and the smaller icon-tile depth.
+     */
+    --variant-wizard-elevation-shadow: rgba(0, 0, 0, 0.1);
+
+    /* Global search navbar (same in both themes since navbar bg is always artemis-dark) */
+    --global-search-navbar-kbd-bg: #6c757d;
+
+    /* Global search modal */
+    --global-search-modal-bg: var(--white);
+    --global-search-modal-footer-bg: rgba(108, 117, 125, 0.03);
+    --global-search-item-hover-bg: var(--gray-100);
+    --global-search-kbd-bg: var(--white);
+    --global-search-kbd-border: var(--gray-300);
+    --global-search-icon-bg: var(--gray-100);
+    --global-search-border-color: var(--gray-200);
+
+    /*
+     * Tailwind colour utilities
+     * The values behind `text-primary`, `text-color`, `text-muted-color`, `border-surface`, `bg-highlight` and the
+     * neutral `surface` ramp (`bg-surface-100`); tailwind.css maps the utilities to these variables.
+     */
+    --ui-primary: var(--primary);
+    --ui-primary-contrast: #fff;
+    --ui-text-color: #334155;
+    --ui-text-muted-color: #64748b;
+    --ui-border-color: #e2e8f0;
+    --ui-highlight-background: #ecf3fa;
+    --ui-highlight-color: #25537a;
+    --ui-emphasis-background: #f1f5f9;
+    --ui-emphasis-color: #1e293b;
+    --ui-surface-0: #fff;
+    --ui-surface-50: #f8fafc;
+    --ui-surface-100: #f1f5f9;
+    --ui-surface-200: #e2e8f0;
+    --ui-surface-300: #cbd5e1;
+    --ui-surface-400: #94a3b8;
+    --ui-surface-500: #64748b;
+    --ui-surface-600: #475569;
+    --ui-surface-700: #334155;
+    --ui-surface-800: #1e293b;
+    --ui-surface-900: #0f172a;
+    --ui-surface-950: #020617;
+
+    /* Tables of rendered markdown */
+    --markdown-table-color: var(--black);
+    --markdown-table-border-color: var(--border-color);
+
+    /* Course overview cards */
+    --overview-card-bg: #fff;
+    --overview-card-nested-bg: #f1f5f9;
+    --overview-card-hover-bg: #e2e8f0;
+}

@@ -13,8 +13,8 @@ function normalizeMigrationPath(p) {
     return p
         .replace(/^\.\/app\//, '')
         .replace(/^.*\/app\//, '')
-        .replace(/\/\*\*\/\*\.(html|scss|ts)$/, '')
-        .replace(/\.component\.(html|scss|ts)$/, '');
+        .replace(/\/\*\*\/\*\.(html|css|ts)$/, '')
+        .replace(/\.component\.(html|css|ts)$/, '');
 }
 
 const sorted = (xs) => [...xs].sort();

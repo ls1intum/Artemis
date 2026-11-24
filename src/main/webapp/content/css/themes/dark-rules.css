@@ -1,0 +1,93 @@
+/* Rules that only apply in the dark theme. Prefer a token in dark.css; add a rule here only if a token cannot express it. */
+
+/*
+ * The dark theme shows `text-primary` lighter than the brand colour. The rule is in the layer of the Tailwind
+ * utilities and has a higher specificity, so it also applies to the important form of the utility (`text-primary!`).
+ */
+@layer utilities {
+    html[data-theme='dark'] .text-primary,
+    html[data-theme='dark'] .text-primary\! {
+        color: #b7d3ec !important;
+    }
+}
+
+[data-theme='dark'] input:-webkit-autofill,
+[data-theme='dark'] input:-webkit-autofill:hover,
+[data-theme='dark'] input:-webkit-autofill:focus,
+[data-theme='dark'] input:-webkit-autofill:active {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: var(--white);
+    transition: background-color 5000s ease-in-out 0s;
+    box-shadow: inset 0 0 20px 20px var(--input-color);
+}
+
+/*
+ * Code highlighting in the markdown editor: the Monokai style of highlight.js (ported by Luigi Maselli,
+ * BSD 3-Clause licence), limited to the dark theme. The light theme imports the `vs` style of the library.
+ */
+:where([data-theme='dark']) .hljs {
+    background: #272822;
+    color: #ddd;
+}
+
+:where([data-theme='dark']) .hljs-tag,
+:where([data-theme='dark']) .hljs-keyword,
+:where([data-theme='dark']) .hljs-selector-tag,
+:where([data-theme='dark']) .hljs-literal,
+:where([data-theme='dark']) .hljs-strong,
+:where([data-theme='dark']) .hljs-number,
+:where([data-theme='dark']) .hljs-name {
+    color: #f92672;
+}
+
+:where([data-theme='dark']) .hljs-code {
+    color: #66d9ef;
+}
+
+:where([data-theme='dark']) .hljs-attribute,
+:where([data-theme='dark']) .hljs-attr,
+:where([data-theme='dark']) .hljs-symbol,
+:where([data-theme='dark']) .hljs-regexp,
+:where([data-theme='dark']) .hljs-link {
+    color: #bf79db;
+}
+
+:where([data-theme='dark']) .hljs-string,
+:where([data-theme='dark']) .hljs-bullet,
+:where([data-theme='dark']) .hljs-subst,
+:where([data-theme='dark']) .hljs-title,
+:where([data-theme='dark']) .hljs-section,
+:where([data-theme='dark']) .hljs-emphasis,
+:where([data-theme='dark']) .hljs-type,
+:where([data-theme='dark']) .hljs-built_in,
+:where([data-theme='dark']) .hljs-selector-attr,
+:where([data-theme='dark']) .hljs-selector-pseudo,
+:where([data-theme='dark']) .hljs-addition,
+:where([data-theme='dark']) .hljs-variable,
+:where([data-theme='dark']) .hljs-template-tag,
+:where([data-theme='dark']) .hljs-template-variable {
+    color: #a6e22e;
+}
+
+:where([data-theme='dark']) .hljs-title.class_,
+:where([data-theme='dark']) .hljs-class .hljs-title {
+    color: white;
+}
+
+:where([data-theme='dark']) .hljs-comment,
+:where([data-theme='dark']) .hljs-quote,
+:where([data-theme='dark']) .hljs-deletion,
+:where([data-theme='dark']) .hljs-meta {
+    color: #75715e;
+}
+
+:where([data-theme='dark']) .hljs-keyword,
+:where([data-theme='dark']) .hljs-selector-tag,
+:where([data-theme='dark']) .hljs-literal,
+:where([data-theme='dark']) .hljs-doctag,
+:where([data-theme='dark']) .hljs-title,
+:where([data-theme='dark']) .hljs-section,
+:where([data-theme='dark']) .hljs-type,
+:where([data-theme='dark']) .hljs-selector-id {
+    font-weight: bold;
+}

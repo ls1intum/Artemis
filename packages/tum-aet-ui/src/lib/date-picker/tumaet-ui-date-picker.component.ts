@@ -54,7 +54,7 @@ const INPUT_SIZE_NORMAL = 'tumaet:py-2 tumaet:ps-3 tumaet:pe-17';
 @Component({
     selector: 'tumaet-ui-date-picker',
     templateUrl: './tumaet-ui-date-picker.component.html',
-    styleUrl: './tumaet-ui-date-picker.component.scss',
+    styleUrl: './tumaet-ui-date-picker.component.css',
     host: {
         class: 'tumaet-ui-date-picker',
         '[class.tumaet-ui-date-picker--date-only]': 'dateOnly()',
