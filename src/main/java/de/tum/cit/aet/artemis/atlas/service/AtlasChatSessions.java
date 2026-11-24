@@ -14,33 +14,35 @@ import org.springframework.ai.session.SessionService;
 /**
  * How the Atlas chat agent keeps its conversations in the Spring AI session memory.
  * <p>
- * A session holds everything the model saw and said, including every tool call and its result. The conversation that a user sees consists of the messages of the user and the
- * replies of the assistant only, so the readers below leave the rest out. The prompt gets a window of the last {@link #PROMPT_HISTORY_EVENTS} of its events, see there.
+ * A session holds everything the model saw and said, including every tool call and its result. The prompt gets the whole of it, in a window of the last
+ * {@link #PROMPT_HISTORY_EVENTS} events, see there. The conversation that a user sees consists of the messages of the user and the replies of the assistant only, so
+ * {@link #conversation} leaves the tool calls and their results out.
  */
 final class AtlasChatSessions {
 
     /**
      * The size of the window of the history that goes into the prompt of the chat agent: 20 was the size of the window of the chat memory before. The window of Spring AI counts
-     * events, every message of the user and every message of the assistant, an assistant message that asks for a tool call included, and it never cuts a turn in two. A
-     * conversation without tool calls therefore keeps its last 20 messages, and one with tool calls keeps fewer messages that a user reads: a turn with one tool call takes
-     * three events for two such messages. The filter has no criterion to leave the tool calls out of the count.
+     * events, every message of the user, of the assistant and every result of a tool, and it never cuts a turn in two. A conversation without tool calls therefore keeps its last
+     * 20 messages, and one with tool calls keeps fewer messages that a user reads: a turn with one tool call takes four events for two such messages.
      */
     static final int PROMPT_HISTORY_EVENTS = 20;
 
     private static final Set<MessageType> CONVERSATION_TYPES = Set.of(MessageType.USER, MessageType.ASSISTANT);
+
+    private static final Set<MessageType> PROMPT_TYPES = Set.of(MessageType.USER, MessageType.ASSISTANT, MessageType.TOOL);
 
     private AtlasChatSessions() {
         // utility class
     }
 
     /**
-     * The history that goes into the prompt: a window of the last {@link #PROMPT_HISTORY_EVENTS} events of the user and the assistant, the tool calls without their results
-     * among them. A call that is left without its result, or the other way round, is kept out of the prompt by Spring AI, so the model never sees one without the other.
+     * The history that goes into the prompt: a window of the last {@link #PROMPT_HISTORY_EVENTS} events. Spring AI drops a tool call whose result is missing, and the other way
+     * round, and logs a warning for it, so the window takes the results with the calls: the model sees both or neither.
      *
      * @return the filter of the history that the memory advisor reads
      */
     static EventFilter promptHistory() {
-        return EventFilter.builder().messageTypes(CONVERSATION_TYPES).lastN(PROMPT_HISTORY_EVENTS).build();
+        return EventFilter.builder().messageTypes(PROMPT_TYPES).lastN(PROMPT_HISTORY_EVENTS).build();
     }
 
     /**
