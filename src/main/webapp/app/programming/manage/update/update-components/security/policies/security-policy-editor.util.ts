@@ -152,14 +152,14 @@ export function changedFileSettings(base: SecurityPolicyDocument | undefined, wo
 const TIME_UNITS: readonly string[] = ['NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'];
 
 /** The time units that suit the timeout of a test case; nanoseconds, microseconds and days do not. */
-const OFFERED_TIME_UNITS: readonly string[] = ['MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS'];
+const OFFERED_TIME_UNITS: ReadonlySet<string> = new Set(['MILLISECONDS', 'SECONDS', 'MINUTES', 'HOURS']);
 
 /**
  * @param inUse the units the policy uses; a unit that is not offered stays selectable while a policy uses it, so its value is shown as it is
  * @returns the time units a timeout field offers, smallest first
  */
 export function offeredTimeUnits(inUse: readonly (string | undefined)[]): string[] {
-    return TIME_UNITS.filter((unit) => OFFERED_TIME_UNITS.includes(unit) || inUse.includes(unit));
+    return TIME_UNITS.filter((unit) => OFFERED_TIME_UNITS.has(unit) || inUse.includes(unit));
 }
 
 /** The file extension of new policies, like the one Artemis generates. */
@@ -596,8 +596,8 @@ export function withoutCoveredTestCases(tests: readonly string[]): string[] {
  * assigns one by one instead of the class, e.g. {@code pkg.T#first} and {@code pkg.T#second} instead of {@code pkg.T}, so the release is not lost.
  */
 function applyTestChanges(tests: readonly string[], changes: { added: string[]; removed: string[] }): string[] {
-    const releasedClasses = changes.removed.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR));
-    const withoutReleasedTestCases = tests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR) || !releasedClasses.includes(testClassOf(entry)));
+    const releasedClasses = new Set(changes.removed.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR)));
+    const withoutReleasedTestCases = tests.filter((entry) => !entry.includes(TEST_CASE_SEPARATOR) || !releasedClasses.has(testClassOf(entry)));
     return applyListChanges(withoutReleasedTestCases, changes);
 }
 

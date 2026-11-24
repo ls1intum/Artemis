@@ -129,10 +129,6 @@ final class SecurityFrameworkCommitFiles {
     }
 
     /**
-     * A path whose parent is a symbolic link or a file is not found in a commit, but it is no missing file either: like in a checkout, it is an invalid
-     * path that is never repaired.
-     */
-    /**
      * @return whether the commit has a file, a directory or a link at the path
      */
     static boolean exists(Repository repository, RevTree tree, String path) throws IOException {
@@ -160,6 +156,10 @@ final class SecurityFrameworkCommitFiles {
         return false;
     }
 
+    /**
+     * A path whose parent is a symbolic link or a file is not found in a commit, but it is no missing file either: like in a checkout, it is an invalid
+     * path that is never repaired.
+     */
     private static boolean hasNonDirectoryParent(Repository repository, RevTree tree, String path) throws IOException {
         for (int slash = path.indexOf('/'); slash >= 0; slash = path.indexOf('/', slash + 1)) {
             try (TreeWalk parent = TreeWalk.forPath(repository, path.substring(0, slash), tree)) {

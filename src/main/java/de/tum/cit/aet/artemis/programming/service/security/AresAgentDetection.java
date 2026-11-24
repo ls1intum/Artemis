@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.security;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.MatchResult;
@@ -233,7 +235,7 @@ final class AresAgentDetection {
             return false;
         }
         SurefireSettings property = new SurefireSettings(
-                MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> properties.declared()[argLine.start()]).map(argLine -> argLine.group(1)).toList(),
+                MAVEN_ARG_LINE.matcher(code).results().filter(argLine -> properties.declared().get(argLine.start())).map(argLine -> argLine.group(1)).toList(),
                 properties.values().containsKey("forkCount") || properties.replaceable().contains("forkCount") ? List.of("${forkCount}") : List.of());
         SurefireSettings plugin = property.under(new SurefireSettings(plugins.stream().flatMap(declaration -> settings(withoutExecutions(declaration), MAVEN_ARG_LINE)).toList(),
                 plugins.stream().flatMap(declaration -> settings(withoutExecutions(declaration), MAVEN_FORK_COUNT)).toList()));
@@ -303,18 +305,18 @@ final class AresAgentDetection {
      *
      * @param values      the values of the properties of the POM itself
      * @param replaceable the names of the properties that a profile that can apply on its own sets, which may then replace their values
-     * @param declared    for each character of the POM whether it lies in the properties of the POM itself
+     * @param declared    the offsets of the characters of the POM that lie in the properties of the POM itself
      */
-    private record MavenProperties(Map<String, String> values, Set<String> replaceable, boolean[] declared) {
+    private record MavenProperties(Map<String, String> values, Set<String> replaceable, BitSet declared) {
     }
 
     private static MavenProperties mavenProperties(String code, boolean[] profiles) {
-        boolean[] declared = new boolean[code.length()];
+        BitSet declared = new BitSet(code.length());
         Map<String, String> values = new HashMap<>();
         Set<String> replaceable = new HashSet<>();
         MAVEN_PROPERTIES.matcher(code).results().forEach(section -> {
             if (!profiles[section.start()]) {
-                Arrays.fill(declared, section.start(), section.end(), true);
+                declared.set(section.start(), section.end());
                 MAVEN_PROPERTY.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), property.group(2)));
                 MAVEN_EMPTY_ELEMENT.matcher(section.group(1)).results().forEach(property -> values.put(property.group(1), ""));
             }
@@ -332,7 +334,7 @@ final class AresAgentDetection {
         List<String> texts = List.of(text);
         for (int round = 0; round < MAVEN_PROPERTY_DEPTH && !texts.isEmpty(); round++) {
             texts = texts.stream().flatMap(part -> MAVEN_PROPERTY_REFERENCE.matcher(part).results()).map(reference -> reference.group(1)).filter(names::add).map(values::get)
-                    .filter(value -> value != null).toList();
+                    .filter(Objects::nonNull).toList();
         }
         return names;
     }
@@ -593,11 +595,15 @@ final class AresAgentDetection {
     /** The offset of the first semicolon outside a quoted string, e.g. not the one of {@code jvmArgs '-Dseparator=;', ...}; the length if there is none. */
     private static int endOfStatement(String statement) {
         char quote = 0;
+        boolean escaped = false;
         for (int index = 0; index < statement.length(); index++) {
             char character = statement.charAt(index);
-            if (quote != 0) {
+            if (escaped) {
+                escaped = false;
+            }
+            else if (quote != 0) {
                 if (character == '\\') {
-                    index++;
+                    escaped = true;
                 }
                 else if (character == quote) {
                     quote = 0;

@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.programming.service.security.SecurityFramew
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -96,18 +94,7 @@ final class SecurityPolicyConflicts {
      */
     static void requireKnownTestCasesOfSplitClasses(Repository repository, String baseCommitHash, Map<String, SecurityTestAssignments.TestClass> testClasses,
             Map<String, String> requested) throws IOException {
-        Set<String> assignedCaseByCase = new HashSet<>();
-        for (String entry : requested.keySet()) {
-            if (entry.indexOf(SecurityTestAssignments.METHOD_SEPARATOR) >= 0) {
-                assignedCaseByCase.add(SecurityTestAssignments.testClassOf(entry));
-            }
-        }
-        List<SecurityTestAssignments.TestClass> split = new ArrayList<>();
-        for (SecurityTestAssignments.TestClass testClass : testClasses.values()) {
-            if (testClass.entries().containsKey(testClass.qualifiedName()) && assignedCaseByCase.contains(testClass.qualifiedName())) {
-                split.add(testClass);
-            }
-        }
+        List<SecurityTestAssignments.TestClass> split = splitClasses(testClasses, requested);
         ObjectId head = repository.resolve(Constants.HEAD);
         if (split.isEmpty() || (head != null && head.name().equals(baseCommitHash))) {
             return;
@@ -128,6 +115,17 @@ final class SecurityPolicyConflicts {
                 }
             }
         }
+    }
+
+    /**
+     * @param requested the requested assignments by their entry, e.g. {@code pkg.T#runs}
+     * @return the classes assigned as a whole of which the change assigns test cases one by one
+     */
+    private static List<SecurityTestAssignments.TestClass> splitClasses(Map<String, SecurityTestAssignments.TestClass> testClasses, Map<String, String> requested) {
+        Set<String> assignedCaseByCase = requested.keySet().stream().filter(entry -> entry.indexOf(SecurityTestAssignments.METHOD_SEPARATOR) >= 0)
+                .map(SecurityTestAssignments::testClassOf).collect(Collectors.toSet());
+        return testClasses.values().stream()
+                .filter(testClass -> testClass.entries().containsKey(testClass.qualifiedName()) && assignedCaseByCase.contains(testClass.qualifiedName())).toList();
     }
 
     /**

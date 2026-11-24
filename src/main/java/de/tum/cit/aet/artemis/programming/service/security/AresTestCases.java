@@ -483,9 +483,7 @@ final class AresTestCases {
         while (position < parameters.length()) {
             char character = parameters.charAt(position);
             if (character == '@') {
-                // An annotation of the parameter, with its arguments, which may contain commas.
-                Matcher name = ANNOTATION_NAME.matcher(parameters).region(position, parameters.length());
-                position = name.lookingAt() ? skipArguments(parameters, skipWhitespace(parameters, name.end())) : position + 1;
+                position = afterAnnotation(parameters, position);
                 continue;
             }
             if (character == '<') {
@@ -511,6 +509,15 @@ final class AresTestCases {
             addFormalParameter(types, parameter.toString(), resolve);
         }
         return String.join(",", types);
+    }
+
+    /**
+     * @param position the position of the {@code @} of an annotation of a parameter
+     * @return the position after the annotation with its arguments, which may contain commas; the next position if no annotation name follows
+     */
+    private static int afterAnnotation(String parameters, int position) {
+        Matcher name = ANNOTATION_NAME.matcher(parameters).region(position, parameters.length());
+        return name.lookingAt() ? skipArguments(parameters, skipWhitespace(parameters, name.end())) : position + 1;
     }
 
     /**
