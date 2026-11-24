@@ -210,6 +210,10 @@ jobs:
         with:
           node-version: '${{ env.node }}'
       - name: Download this PR's report
+        # Missing when report generation or upload failed in build-war. Job-level continue-on-error
+        # would not continue the later steps, so without this the old comment would stay up.
+        # The diff step then fails on the missing file and the comment step replaces the comment.
+        continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: chunk-eager-report
@@ -243,6 +247,8 @@ jobs:
           token: ${{ github.token }}
       - name: Download develop's report
         if: steps.resolve-develop-run.outcome == 'success'
+        # Same as the PR report download: a failure must reach the comparison-failure handler.
+        continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: chunk-eager-report
