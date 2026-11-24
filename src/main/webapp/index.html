@@ -78,6 +78,25 @@
         </script>
         <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
              application chunk is parsed; replaced by the real shell once Angular hydrates. -->
+        <script>
+            // Sets the theme before the first paint, so a page in the dark theme does not start in the light one. The theme
+            // service (theme.service.ts) reads the same two sources once the application runs: the stored choice of the user
+            // (key `artemisapp.theme.preference`, value "LIGHT" or "DARK") and otherwise the colour scheme of the system.
+            (function () {
+                var theme;
+                try {
+                    var stored = JSON.parse(localStorage.getItem('artemisapp.theme.preference'));
+                    if (stored === 'DARK') theme = 'dark';
+                    if (stored === 'LIGHT') theme = 'light';
+                } catch (e) {
+                    // no usable preference: follow the system
+                }
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
         <style>
             :root {
                 color-scheme: light dark;
@@ -95,12 +114,11 @@
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                     min-height: 100vh;
                 }
-                @media (prefers-color-scheme: dark) {
-                    html,
-                    body {
-                        background: #303030;
-                        color: #f8f9fa;
-                    }
+                /* The body colours of the dark theme (themes/dark.css), for the time before the stylesheet has loaded. */
+                html[data-theme='dark'],
+                html[data-theme='dark'] body {
+                    background: #22272e;
+                    color: #f8f9fa;
                 }
             }
             .app-boot {

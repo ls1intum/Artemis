@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { THEME_LOCAL_STORAGE_KEY, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { readFileSync } from 'node:fs';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
@@ -29,6 +30,8 @@ describe('ThemeService', () => {
             }
             throw new Error('Should not happen');
         });
+        // the service has read the colour scheme of the system when it was created above
+        windowMatchMediaSpy.mockClear();
     });
 
     afterEach(() => {
@@ -77,6 +80,30 @@ describe('ThemeService', () => {
 
         expect(service.currentTheme()).toBe(Theme.DARK);
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('keeps the theme that the script of index.html has set before the application started', () => {
+        // The user has chosen the dark theme; the script has set the attribute and the service is created afterwards.
+        localStorage.setItem(THEME_LOCAL_STORAGE_KEY, JSON.stringify('DARK'));
+        document.documentElement.setAttribute('data-theme', 'dark');
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({});
+
+        const freshService = TestBed.inject(ThemeService);
+        TestBed.tick();
+
+        expect(freshService.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        localStorage.removeItem(THEME_LOCAL_STORAGE_KEY);
+    });
+
+    it('reads the key and the values in index.html that the service stores', () => {
+        const html = readFileSync('src/main/webapp/index.html', 'utf8');
+
+        expect(html).toContain(`localStorage.getItem('${THEME_LOCAL_STORAGE_KEY}')`);
+        for (const theme of Theme.all) {
+            expect(html).toContain(`stored === '${theme.identifier}') theme = '${theme.attributeValue}'`);
+        }
     });
 
     it('applies dark OS preferences', () => {
