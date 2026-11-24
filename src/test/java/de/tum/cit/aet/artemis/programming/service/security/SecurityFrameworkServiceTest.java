@@ -1608,6 +1608,9 @@ class SecurityFrameworkServiceTest {
                     assertThat(exception.getMessage()).contains(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME);
                 });
         assertThat(Files.readString(checkout.resolve("build.gradle"))).isEqualTo(buildFile);
+        // The exercise setup keeps such a template as it is instead of failing.
+        SecurityFrameworkService.applyChoiceToTestTemplate(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+        assertThat(Files.readString(checkout.resolve("build.gradle"))).isEqualTo(buildFile);
 
         // A deactivated policy is checked again when it is activated, so the version is pinned.
         SecurityFrameworkService.applyChoiceToNewTestRepository(checkout, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, "2.2.1"));

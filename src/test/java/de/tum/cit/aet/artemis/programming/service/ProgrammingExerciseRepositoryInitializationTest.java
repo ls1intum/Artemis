@@ -11,14 +11,19 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -81,7 +86,7 @@ class ProgrammingExerciseRepositoryInitializationTest {
         creator.setLastName("Creator");
         creator.setEmail("creator@example.com");
 
-        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, false, null);
+        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, null, false, null);
 
         for (LocalVCRepositoryUri uri : uris) {
             try (Git remote = Git.open(uri.getLocalRepositoryPath(bareBase).toFile())) {
@@ -97,6 +102,60 @@ class ProgrammingExerciseRepositoryInitializationTest {
                     assertThat(checkout.getLocalPath().resolve(".vscode/launch.json")).content().contains("de.test.Client");
                     assertThat(checkout.getLocalPath().resolve(".vscode/tasks.json")).isRegularFile();
                 }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(InitialCommitAuthorMode.class)
+    void setupExerciseTemplate_authorsTheFirstCommitAsTheCourseSettingSays(InitialCommitAuthorMode mode) throws Exception {
+        Path bareBase = tempDir.resolve("bare");
+        GitService gitService = new GitService();
+        ReflectionTestUtils.setField(gitService, "localVCBasePath", bareBase);
+        ReflectionTestUtils.setField(gitService, "repoClonePath", tempDir.resolve("clones"));
+        ReflectionTestUtils.setField(gitService, "defaultBranch", "main");
+        ReflectionTestUtils.setField(gitService, "artemisGitName", "Artemis");
+        ReflectionTestUtils.setField(gitService, "artemisGitEmail", "artemis@example.com");
+        ResourceLoaderService resourceLoader = new ResourceLoaderService(new DefaultResourceLoader(), null);
+        ReflectionTestUtils.setField(resourceLoader, "templateFileSystemPath", Optional.empty());
+        MavenCentralMirrorService mirrorService = new MavenCentralMirrorService();
+        ReflectionTestUtils.setField(mirrorService, "mirrorUrl", "");
+        var service = new ProgrammingExerciseRepositoryService(gitService, null, resourceLoader, Optional.empty(), mirrorService);
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("New exercise");
+        exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+        exercise.setPackageName("de.test");
+        exercise.setStaticCodeAnalysisEnabled(false);
+        exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
+        exercise.setSolutionParticipation(new SolutionProgrammingExerciseParticipation());
+        URI baseUri = URI.create("https://artemis.example.com");
+        exercise.setTemplateRepositoryUri(new LocalVCRepositoryUri(baseUri, "ABC", "abc-exercise").toString());
+        exercise.setSolutionRepositoryUri(new LocalVCRepositoryUri(baseUri, "ABC", "abc-solution").toString());
+        exercise.setTestRepositoryUri(new LocalVCRepositoryUri(baseUri, "ABC", "abc-tests").toString());
+        var uris = List.of(exercise.getVcsTemplateRepositoryUri(), exercise.getVcsSolutionRepositoryUri(), exercise.getVcsTestRepositoryUri());
+        for (LocalVCRepositoryUri uri : uris) {
+            Git.init().setDirectory(uri.getLocalRepositoryPath(bareBase).toFile()).setBare(true).setInitialBranch("main").call().close();
+        }
+        User creator = new User();
+        creator.setFirstName("Exercise");
+        creator.setLastName("Creator");
+        creator.setEmail("creator@example.com");
+
+        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, new InitialCommitAuthorDTO(mode, "Course Team", "team@example.org"), false, null);
+
+        PersonIdent expected = switch (mode) {
+            case EXERCISE_CREATOR -> new PersonIdent(creator.getName(), "creator@example.com");
+            case PLACEHOLDER -> new PersonIdent("Artemis", "artemis@example.com");
+            case CUSTOM -> new PersonIdent("Course Team", "team@example.org");
+        };
+        for (LocalVCRepositoryUri uri : uris) {
+            try (Git remote = Git.open(uri.getLocalRepositoryPath(bareBase).toFile())) {
+                RevCommit first = remote.log().call().iterator().next();
+                assertThat(first.getAuthorIdent().getName()).as("author of %s", uri).isEqualTo(expected.getName());
+                assertThat(first.getAuthorIdent().getEmailAddress()).isEqualTo(expected.getEmailAddress());
+                assertThat(first.getCommitterIdent().getName()).isEqualTo(expected.getName());
+                assertThat(first.getCommitterIdent().getEmailAddress()).isEqualTo(expected.getEmailAddress());
             }
         }
     }

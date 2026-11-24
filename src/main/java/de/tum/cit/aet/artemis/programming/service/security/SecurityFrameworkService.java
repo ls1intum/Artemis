@@ -496,6 +496,23 @@ public class SecurityFrameworkService {
     }
 
     /**
+     * Applies the choice to the test template of a new exercise before its first commit. If the template is one the Security Framework cannot manage, e.g.
+     * because an instance overrides it, the template is kept as it is: an exception here would make the repository setup replace all repositories with
+     * empty commits. The client compares the resulting state with the choice and warns the instructor.
+     *
+     * @param repositoryRoot the working tree of the new tests repository
+     * @param choice         a validated choice
+     */
+    public static void applyChoiceToTestTemplate(Path repositoryRoot, SecurityFrameworkChoiceDTO choice) {
+        try {
+            applyChoiceToNewTestRepository(repositoryRoot, choice);
+        }
+        catch (BadRequestAlertException e) {
+            log.warn("The Security Framework choice was not applied to the test template: {}", e.getMessage());
+        }
+    }
+
+    /**
      * Pins the chosen version. The check against the template before the exercise is created compares only the fields its policy uses, so a release whose
      * rules the policy does not meet shows only once it is pinned: an active policy that the release cannot use is refused, and the build files are restored,
      * so the template stays as it is.
