@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -251,6 +253,22 @@ class AtlasAgentRoutingCoverageTest {
         var result = service.processChatMessage("Approve", 1L, "s");
         assertThat(result.message()).isEqualTo("Specialist saved");
         assertThat(result.competenciesModified()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   " })
+    void previewsOfABlankReplyAreReturnedButNotCachedUnderAnEarlierReply(String blankReply) {
+        var operation = new CompetencyOperation(null, "Java", "Language", null);
+        // The memory advisor does not store a reply without text, so the only assistant message is the one of an earlier request
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Earlier reply")));
+        when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
+            expert.previewCompetencies(1L, List.of(operation), false);
+            return blankReply;
+        });
+        var result = service.processChatMessage("Preview Java", 1L, "s");
+        assertThat(result.competencyPreviews()).singleElement().satisfies(preview -> assertThat(preview.title()).isEqualTo("Java"));
+        verify(cache, never()).storePreviewForMessage(anyString(), anyInt(), any());
+        assertThat(CompetencyExpertToolsService.getAndClearPreviews()).isEmpty();
     }
 
     @ParameterizedTest

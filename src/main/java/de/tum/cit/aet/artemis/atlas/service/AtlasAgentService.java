@@ -176,8 +176,8 @@ public class AtlasAgentService {
 
             // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
             // The current response was already added to chat memory by Spring AI's SessionMemoryAdvisor,
-            // so the index of the current response = count - 1.
-            if (hasPreviewData) {
+            // so the index of the current response = count - 1. A blank response was not added, see replyIsPersisted.
+            if (hasPreviewData && replyIsPersisted(response)) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;
                 log.debug("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
                 if (assistantIndex >= 0) {
@@ -386,7 +386,7 @@ public class AtlasAgentService {
         }
 
         // Store preview data in cache for history reconstruction
-        if (!previews.isEmpty()) {
+        if (!previews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex, new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
@@ -435,7 +435,7 @@ public class AtlasAgentService {
         List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
         // Store preview data in cache for history reconstruction
-        if (relationPreviews != null && !relationPreviews.isEmpty()) {
+        if (relationPreviews != null && !relationPreviews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex,
@@ -756,6 +756,17 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the count of assistant messages
      */
+    /**
+     * Whether the reply of an agent that ran with the session memory is an assistant message of the session. The {@code SessionMemoryAdvisor} does not store a reply without
+     * text, so the previews of that request have no message to hang on: the index of the last assistant message would be the one of an earlier reply.
+     *
+     * @param reply the text of the reply of the agent
+     * @return true if the advisor stored the reply
+     */
+    private static boolean replyIsPersisted(@Nullable String reply) {
+        return reply != null && !reply.isBlank();
+    }
+
     private int countAssistantMessages(String sessionId) {
         if (sessionService == null) {
             return 0;
