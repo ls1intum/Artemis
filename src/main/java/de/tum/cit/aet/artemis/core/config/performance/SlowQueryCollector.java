@@ -73,7 +73,7 @@ public class SlowQueryCollector {
     /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
     private final CopyOnWriteArrayList<EndpointTimingRecord> endpointTimings = new CopyOnWriteArrayList<>();
 
-    /** Set once any of the capped lists dropped an entry; the report is then incomplete. Cleared by {@link #reset()}. */
+    /** Set once a repeated-query finding was dropped, which makes the set of findings of the run incomplete. Cleared by {@link #reset()}. */
     private volatile boolean truncated;
 
     public SlowQueryCollector(SlowQueryProperties properties) {
@@ -129,7 +129,6 @@ public class SlowQueryCollector {
                 }
             }
             else {
-                truncated = true;
                 log.warn("[SlowQuery] Circuit-breaker: max {} entries reached, ignoring further slow queries", properties.getMaxRecordedQueries());
             }
         }
@@ -185,7 +184,6 @@ public class SlowQueryCollector {
             endpointTimings.add(new EndpointTimingRecord(httpMethod, httpEndpoint, testName, phase, totalDurationMs, dbTimeMs, queryCount, queries, Instant.now()));
         }
         else {
-            truncated = true;
             log.warn("[EndpointTiming] Circuit-breaker: max {} entries reached, ignoring further endpoint timings", properties.getMaxRecordedQueries());
         }
     }

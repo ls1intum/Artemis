@@ -267,18 +267,26 @@ class SlowQueryCollectorTest {
     }
 
     @Test
-    void reportIsOnlyTruncatedAfterAListReachedItsLimit() {
+    void reportIsOnlyTruncatedAfterAFindingWasDropped() {
         SlowQueryProperties properties = new SlowQueryProperties();
         properties.setMaxRecordedQueries(1);
         collector = new SlowQueryCollector(properties);
 
         query(SQL, 1);
-        assertThat(finishRequest()).isEmpty();
+        query(SQL, 2);
+        assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isFalse();
 
-        // the one allowed endpoint timing is used up, so the next request is dropped
-        query(SQL, 2);
-        collector.recordEndpointTiming("GET", ENDPOINT, "CourseStats.spec", "action", 10);
+        // the endpoint timings are full, but they hold no findings: nothing is missing from the findings
+        query(SQL, 3);
+        assertThat(finishRequest()).hasSize(1);
+        assertThat(collector.getReport(Map.of()).endpointTimings()).hasSize(1);
+        assertThat(collector.getReport(Map.of()).truncated()).isFalse();
+
+        // the one allowed finding is used up, so this one is dropped
+        query(SQL, 4);
+        query(SQL, 5);
+        assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isTrue();
 
         collector.reset();

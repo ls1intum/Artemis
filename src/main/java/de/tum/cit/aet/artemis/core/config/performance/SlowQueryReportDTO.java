@@ -19,8 +19,8 @@ import java.util.Map;
  *                               {@link EndpointTimingRecord}).
  * @param indexes            Indexes of every table, by table name (see {@link IndexCatalog}); empty if
  *                               they could not be read.
- * @param truncated          True if a list reached its size limit and dropped entries, so the report does not show every
- *                               finding of the run; a comparison against it is then incomplete.
+ * @param truncated          True if repeated-query findings were dropped because the list reached its size limit, so the
+ *                               report does not show every finding of the run; a comparison against it is then incomplete.
  */
 public record SlowQueryReportDTO(Instant generatedAt, long thresholdMs, int slowQueryCount, int repeatedQueryCount, List<SlowQueryRecord> slowQueries,
         List<RepeatedQueryFinding> repeatedQueries, List<EndpointTimingRecord> endpointTimings, Map<String, List<TableIndex>> indexes, boolean truncated) {
