@@ -29,7 +29,7 @@
                 @if (learningObject.completed) {
                     <fa-icon [icon]="faCheckCircle" class="w-full px-2 text-state-success md:w-auto" />
                 } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
-                    <tumaet-ui-tag class="ms-2!" severity="warn" size="sm">
+                    <tumaet-ui-tag class="ms-2" severity="warn" size="sm">
                         {{ 'artemisApp.learningPath.navigation.overview.nextLearningObjectOnPathLabel' | artemisTranslate }}
                     </tumaet-ui-tag>
                 }

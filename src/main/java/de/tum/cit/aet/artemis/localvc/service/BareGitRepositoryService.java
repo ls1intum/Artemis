@@ -7,6 +7,7 @@ import java.net.URI;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -43,6 +44,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -195,7 +197,7 @@ public class BareGitRepositoryService extends AbstractGitService {
      * <p>
      * The history of the source repository is not preserved; instead, a new commit is created
      * with a fresh tree built from the source repository's latest state. The commit's author and
-     * committer information is taken from the first commit of the source repository.
+     * committer information is taken from the first commit of the source repository, unless an author is given.
      * <p>
      * The additional files are written into that same commit, replacing files of the source at the same path. A copy therefore never consists of the
      * template's state followed by a second commit, and a copy that fails leaves neither behind.
@@ -206,11 +208,12 @@ public class BareGitRepositoryService extends AbstractGitService {
      * @param targetRepoUri   the URI where the new bare repository will be created
      * @param sourceBranch    the name of the branch to copy (e.g., "main" or "master")
      * @param additionalFiles the files to add to the commit, by repository-relative path with forward slashes
+     * @param author          the identity that authors and commits the new commit, or null to keep the author of the first commit of the source
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
     public Repository copyBareRepositoryWithoutHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch,
-            Map<String, byte[]> additionalFiles) throws IOException {
+            Map<String, byte[]> additionalFiles, @Nullable PersonIdent author) throws IOException {
         log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         // Closed once the copy is done: it holds an object database and its pack descriptors, and a copy runs on every exercise creation and every first start of
         // a participation, so leaving it open leaks one reader per copy for the lifetime of the node.
@@ -240,7 +243,7 @@ public class BareGitRepositoryService extends AbstractGitService {
                         // Get PersonIdent from the very first commit
                         ObjectId branchHead = sourceRepo.resolve("refs/heads/" + sourceBranch);
                         // TODO: consider to have a back up here, e.g. the first instructor of the course
-                        PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
+                        PersonIdent personIdent = author != null ? new PersonIdent(author, Instant.now()) : getFirstCommitPersonIdent(sourceRepo, branchHead);
 
                         // Walk the tree, insert blobs into target repo, and build a new tree
                         ObjectId newTreeId = addFilesToTree(inserter, buildCleanTreeFromSource(sourceRepo, inserter, headTree), additionalFiles);
@@ -252,7 +255,7 @@ public class BareGitRepositoryService extends AbstractGitService {
                         commitBuilder.setTreeId(newTreeId);
                         commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
 
-                        // Set author and committer information based on the first commit in the source repo
+                        // Set author and committer information based on the given author, or else the first commit in the source repo
                         commitBuilder.setAuthor(personIdent);
                         commitBuilder.setCommitter(personIdent);
                         ObjectId newCommitId = inserter.insert(commitBuilder);

@@ -33,9 +33,6 @@
     transform: translate(-50%, -50%);
     display: var(--quiz-overlay-display, block);
     max-width: calc(var(--quiz-overlay-max-width, 90vw) - 2rem);
-    box-shadow:
-        0 3px 6px var(--quiz-participation-overlay-shadow-near),
-        0 3px 6px var(--quiz-participation-overlay-shadow-far);
     font-size: 16px;
     text-align: center;
     font-weight: bold;

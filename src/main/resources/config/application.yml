@@ -212,6 +212,20 @@ management:
             # env-var override, e.g. testServer + testserver) on /management/info. The info.* namespace is instead exposed by DeduplicatedEnvironmentInfoContributor,
             # which performs the same binding but collapses such case-variant duplicates to the camelCase key the client consumes. Do not re-enable without removing it.
             enabled: false
+    endpoint:
+        health:
+            status:
+                # DEGRADED is reported by the optional external systems (Athena, Pyris, Hermes, Apollon, Weaviate, Sharing, Hyperion workers) when they are
+                # not available, see ConnectorHealth. Critical components (database, distributed data, websocket broker, registry) still report DOWN.
+                # The order decides the aggregate: any DOWN wins, then OUT_OF_SERVICE, then DEGRADED, and only if everything is UP the instance is UP.
+                order: DOWN, OUT_OF_SERVICE, DEGRADED, UP, UNKNOWN
+                # A configured mapping REPLACES the defaults of Spring Boot instead of extending them, so DOWN and OUT_OF_SERVICE must be listed to keep
+                # answering 503. DEGRADED answers 200, so that a container health check, a load balancer or a deployment check on /management/health does
+                # not restart or drop an instance only because an optional external system is in maintenance. HealthStatusConfigurationTest guards this.
+                http-mapping:
+                    DOWN: 503
+                    OUT_OF_SERVICE: 503
+                    DEGRADED: 200
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
@@ -488,6 +502,8 @@ eureka:
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
         healthcheck:
+            # Keep this disabled: Eureka maps a health status it does not know, such as DEGRADED (see ConnectorHealth), to UNKNOWN
+            # and would then drop the instance from discovery like a DOWN one.
             enabled: false
         fetch-registry: true
         register-with-eureka: true
