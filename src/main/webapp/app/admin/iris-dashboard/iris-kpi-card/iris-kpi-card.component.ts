@@ -8,7 +8,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiCardComponent, TranslateDirective, HelpIconComponent],
     templateUrl: './iris-kpi-card.component.html',
-    styleUrls: ['./iris-kpi-card.component.scss'],
+    styleUrls: ['./iris-kpi-card.component.css'],
 })
 export class IrisKpiCardComponent {
     /** i18n key for the card title. */

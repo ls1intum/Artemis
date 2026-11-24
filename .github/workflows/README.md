@@ -277,7 +277,7 @@ relative to the merge base with the actual PR target; missing history falls back
   unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
   its conservative CSV interface for other callers.
 - **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
-  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  and styles to their TypeScript owners, including stylesheet imports, then uses Vitest's transitive dependency
   graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
   source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
   changed source has no related specs: every changed source or resource owner must have a graph

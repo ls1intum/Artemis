@@ -30,7 +30,7 @@ import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-resu
 @Component({
     selector: 'jhi-assessment-upload-dialog',
     templateUrl: './assessment-upload-dialog.component.html',
-    styleUrls: ['./assessment-upload-dialog.component.scss'],
+    styleUrls: ['./assessment-upload-dialog.component.css'],
     imports: [
         NgClass,
         FaIconComponent,

@@ -541,6 +541,28 @@ describe('Formatted message composer', () => {
             expect(placeholder()).not.toBeNull();
         });
 
+        it.each([
+            ['1.', 'ol'],
+            ['-', 'ul'],
+        ])('hides the hint once the typed marker %s has turned into a list without text', async (marker, list) => {
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()).not.toBeNull();
+
+            const paragraph = document.createElement('p');
+            paragraph.textContent = marker;
+            editable.replaceChildren(paragraph);
+            const range = document.createRange();
+            range.setStart(paragraph.firstChild!, marker.length);
+            window.getSelection()!.removeAllRanges();
+            window.getSelection()!.addRange(range);
+            editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: ' ', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+
+            // The message of the empty list is blank, but the list marker is already drawn where the hint would be.
+            expect(editable.querySelector(`${list} > li`)).not.toBeNull();
+            expect(placeholder()).toBeNull();
+        });
+
         it.each([' ', '\n', '  \n  '])('hides the hint for content that only looks empty: %j', async (content) => {
             await emptyEditor({ conversationName: 'Katja' });
             expect(placeholder()).not.toBeNull();

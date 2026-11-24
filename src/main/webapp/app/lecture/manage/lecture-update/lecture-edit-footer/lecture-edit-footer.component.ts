@@ -14,7 +14,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-lecture-edit-footer',
     templateUrl: './lecture-edit-footer.component.html',
-    styleUrl: './lecture-edit-footer.component.scss',
+    styleUrl: './lecture-edit-footer.component.css',
     imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {

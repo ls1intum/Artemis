@@ -32,7 +32,7 @@
     @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {
         <div id="{{ 'group-' + exerciseGroup.id }}">
             <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
-                <div tumAetUiPanelHeader class="flex items-center gap-2! w-full">
+                <div tumAetUiPanelHeader class="flex items-center gap-2 w-full">
                     <div class="flex flex-col">
                         <button
                             type="button"

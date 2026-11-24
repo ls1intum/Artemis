@@ -13,7 +13,6 @@
                 [fitContainerHeight]="true"
                 [courseId]="courseId()"
                 [sidebarData]="sidebarData()"
-                searchFieldSize="small"
                 [collapseState]="sidebarCollapseState"
                 [sidebarItemAlwaysShow]="sidebarItemAlwaysShow"
                 [itemSelected]="viewMode() === 'presentations'"
@@ -88,7 +87,7 @@
                                     [empty]="studentRows().length === 0 && !isLoadingStudentRows()"
                                     [emptyTitle]="studentSearchTerm() ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'"
                                 >
-                                    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+                                    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                                         <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                             <input
                                                 id="selected-presentation-student-search-input"
@@ -161,7 +160,7 @@
                                     studentSearchTerm() || assessmentStatusFilter() !== 'all' ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'
                                 "
                             >
-                                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+                                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                                     <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                         <input
                                             id="presentation-overview-search-input"

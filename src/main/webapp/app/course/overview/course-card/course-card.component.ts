@@ -25,7 +25,7 @@ import { filter, switchMap } from 'rxjs';
 @Component({
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
-    styleUrls: ['course-card.scss'],
+    styleUrls: ['course-card.css'],
     imports: [CourseCardHeaderComponent, TumAetUiDoughnutChartComponent, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
 })
 export class CourseCardComponent {

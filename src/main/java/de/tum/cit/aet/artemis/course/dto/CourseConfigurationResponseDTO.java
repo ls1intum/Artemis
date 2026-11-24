@@ -16,10 +16,12 @@ import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
  * @param debounceWindowSecondsOverride the optional course-specific debounce override
  * @param maxDailyOrchestrationOverride the optional course-specific daily limit
  * @param studentWelcomeContext         optional instructor-authored learning guidance
+ * @param initialCommitAuthor           who authors the first commit of the repositories of new programming exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseConfigurationResponseDTO(long id, boolean gradeRelevant, boolean dataRetentionHold, boolean autoOrchestratorEnabled,
-        @Nullable Integer debounceWindowSecondsOverride, @Nullable Integer maxDailyOrchestrationOverride, @Nullable String studentWelcomeContext) {
+        @Nullable Integer debounceWindowSecondsOverride, @Nullable Integer maxDailyOrchestrationOverride, @Nullable String studentWelcomeContext,
+        InitialCommitAuthorDTO initialCommitAuthor) {
 
     /**
      * Maps the public settings without exposing cleanup timestamps or the course back-reference.
@@ -30,6 +32,6 @@ public record CourseConfigurationResponseDTO(long id, boolean gradeRelevant, boo
     public static CourseConfigurationResponseDTO of(CourseConfiguration configuration) {
         return new CourseConfigurationResponseDTO(configuration.getId(), configuration.isGradeRelevant(), configuration.isDataRetentionHold(),
                 configuration.isAutoOrchestratorEnabled(), configuration.getDebounceWindowSecondsOverride(), configuration.getMaxDailyOrchestrationOverride(),
-                configuration.getStudentWelcomeContext());
+                configuration.getStudentWelcomeContext(), InitialCommitAuthorDTO.of(configuration));
     }
 }

@@ -23,7 +23,7 @@ class GenerationWorkspaceExtractionTest {
 
     private final GenerationResources resources = new GenerationResources();
 
-    private final GenerationWorkspace workspace = new GenerationWorkspace(new SandboxBuildCommands(resources), resources);
+    private final GenerationWorkspace workspace = new GenerationWorkspace(resources);
 
     private final InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
 

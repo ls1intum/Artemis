@@ -20,7 +20,7 @@
     @if (analysisResult(); as result) {
         <!-- Quality Section -->
         <tumaet-ui-panel
-            class="rounded-none! border-x-0! border-b-0! data-[stale=true]:border-t-state-warning!"
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
             data-testid="checklist-section-quality"
             [attr.data-stale]="isSectionStale('quality')"
             [toggleable]="true"
@@ -28,7 +28,7 @@
             (collapsedChange)="toggleSection('quality')"
             [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate"
         >
-            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2!">
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
                 <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate }}</span>
                 <div class="flex items-center gap-2">
                     @if (result.qualityIssues?.length) {
@@ -273,7 +273,7 @@
 
         <!-- Estimated Learning Goals Section -->
         <tumaet-ui-panel
-            class="rounded-none! border-x-0! border-b-0! data-[stale=true]:border-t-state-warning!"
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
             data-testid="checklist-section-competencies"
             [attr.data-stale]="isSectionStale('competencies')"
             [toggleable]="true"
@@ -281,7 +281,7 @@
             (collapsedChange)="toggleSection('competencies')"
             [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate"
         >
-            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2!">
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
                 <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate }}</span>
                 <div class="flex items-center gap-2">
                     @if (result.inferredCompetencies?.length) {
@@ -473,7 +473,7 @@
 
         <!-- Difficulty Section -->
         <tumaet-ui-panel
-            class="rounded-none! border-x-0! border-b-0! data-[stale=true]:border-t-state-warning!"
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
             data-testid="checklist-section-difficulty"
             [attr.data-stale]="isSectionStale('difficulty')"
             [toggleable]="true"
@@ -481,7 +481,7 @@
             (collapsedChange)="toggleSection('difficulty')"
             [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate"
         >
-            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2!">
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
                 <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate }}</span>
                 <div class="flex items-center gap-2">
                     @if (isSectionStale('difficulty')) {

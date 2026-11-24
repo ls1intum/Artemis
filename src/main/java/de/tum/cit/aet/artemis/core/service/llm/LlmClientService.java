@@ -19,11 +19,16 @@ import org.springframework.stereotype.Service;
 
 import com.openai.azure.AzureOpenAIServiceVersion;
 import com.openai.client.OpenAIClient;
+import com.openai.core.Timeout;
+import com.openai.errors.OpenAIInvalidDataException;
+import com.openai.models.embeddings.CreateEmbeddingResponse;
+import com.openai.models.embeddings.EmbeddingCreateParams;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmEnabled;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Api;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
@@ -31,9 +36,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
- * Builds the clients and chat models of the configured LLM presets. This is the only place in Artemis that connects to an LLM provider for chat:
- * a preset with {@code api: chat-completions} gets Spring AI's {@link OpenAiChatModel}, a preset with {@code api: responses} gets the
- * {@link OpenAiResponsesChatModel}. Both carry exactly the options the preset sets and use one provider client per endpoint.
+ * Builds the clients and chat models of the configured LLM presets. This is the only place in Artemis that connects to an LLM provider, and
+ * {@code LlmClientArchitectureTest} keeps it so: a preset with {@code api: chat-completions} gets Spring AI's {@link OpenAiChatModel}, a preset
+ * with {@code api: responses} gets the {@link OpenAiResponsesChatModel}, and a preset with {@code api: embeddings} is called through
+ * {@link #embed}. All carry exactly the options the preset sets and use one provider client per endpoint. A module that needs another kind of
+ * call adds it here.
  */
 @Conditional(LlmEnabled.class)
 @Lazy
@@ -42,6 +49,8 @@ public class LlmClientService {
 
     /** Response metadata key carrying the name of the preset that made the call. */
     public static final String PRESET_METADATA_KEY = "artemis.llm.preset";
+
+    private static final Duration MAX_EMBEDDING_CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
     private final LlmProperties properties;
 
@@ -96,6 +105,39 @@ public class LlmClientService {
         Preset preset = preset(presetName);
         OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(timeout).maxRetries(maxRetries));
         return chatModel(presetName, preset, client, ObservationRegistry.NOOP);
+    }
+
+    /**
+     * Embeds texts with an embeddings preset. The call may take at most five seconds, and never more than the timeout, to connect, then the timeout
+     * for the answer. It makes no SDK retries, so the caller decides whether and when to try again. It asks for float vectors, the default of the embeddings API; without that, the
+     * SDK would ask for base64.
+     *
+     * @param presetName a configured preset with {@code api: embeddings}
+     * @param inputs     the texts to embed, in order
+     * @param timeout    the positive time limit for the answer
+     * @return the provider's response; it is not validated, so reading a field the provider left out throws an {@code OpenAIInvalidDataException}
+     * @throws IllegalArgumentException when the preset is not configured, is not an embeddings preset, or the timeout is not positive
+     */
+    public CreateEmbeddingResponse embed(String presetName, List<String> inputs, Duration timeout) {
+        if (timeout == null || !timeout.isPositive()) {
+            throw new IllegalArgumentException("The embedding timeout must be positive");
+        }
+        Preset preset = preset(presetName);
+        if (preset.api() != Api.EMBEDDINGS) {
+            throw new IllegalArgumentException("The LLM preset " + presetName + " is not an embeddings preset");
+        }
+        // as a plain HTTP client would: at most five seconds (and never more than the timeout) to connect, then the timeout for the answer
+        Duration connectTimeout = timeout.compareTo(MAX_EMBEDDING_CONNECT_TIMEOUT) < 0 ? timeout : MAX_EMBEDDING_CONNECT_TIMEOUT;
+        Timeout limits = Timeout.builder().connect(connectTimeout).read(timeout).write(timeout).request(connectTimeout.plus(timeout)).build();
+        OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(limits).maxRetries(0));
+        EmbeddingCreateParams params = EmbeddingCreateParams.builder().model(preset.model()).inputOfArrayOfStrings(inputs)
+                .encodingFormat(EmbeddingCreateParams.EncodingFormat.FLOAT).build();
+        CreateEmbeddingResponse response = client.embeddings().create(params);
+        // without response validation the SDK passes a JSON null body through
+        if (response == null) {
+            throw new OpenAIInvalidDataException("The embeddings response of preset " + presetName + " is empty");
+        }
+        return response;
     }
 
     /**

@@ -30,7 +30,7 @@ import { parseJson } from 'app/foundation/util/json.util';
     selector: 'jhi-quiz-submission-exam',
     templateUrl: './quiz-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
-    styleUrls: ['./quiz-exam-submission.component.scss'],
+    styleUrls: ['./quiz-exam-submission.component.css'],
     imports: [
         ExamExerciseHeaderComponent,
         ExerciseSaveButtonComponent,

@@ -28,7 +28,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-options',
     templateUrl: './conversation-options.component.html',
-    styleUrls: ['./conversation-options.component.scss'],
+    styleUrls: ['./conversation-options.component.css'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, RouterLink, ArtemisTranslatePipe],

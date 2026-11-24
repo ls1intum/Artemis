@@ -10,7 +10,7 @@ import { CloseCircleComponent } from 'app/shared-ui/close-circle/close-circle.co
 @Component({
     selector: 'jhi-alert-overlay',
     templateUrl: './alert-overlay.component.html',
-    styleUrls: ['./alert-overlay.component.scss'],
+    styleUrls: ['./alert-overlay.component.css'],
     imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, TumAetUiButtonDirective],
 })
 export class AlertOverlayComponent implements OnDestroy {

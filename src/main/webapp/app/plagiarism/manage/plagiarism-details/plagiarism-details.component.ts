@@ -7,7 +7,7 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
 
 @Component({
     selector: 'jhi-plagiarism-details',
-    styleUrls: ['./plagiarism-details.component.scss'],
+    styleUrls: ['./plagiarism-details.component.css'],
     templateUrl: './plagiarism-details.component.html',
     imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })

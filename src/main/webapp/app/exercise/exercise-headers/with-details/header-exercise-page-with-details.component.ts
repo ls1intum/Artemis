@@ -30,7 +30,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
-    styleUrls: ['./header-exercise-page-with-details.component.scss'],
+    styleUrls: ['./header-exercise-page-with-details.component.css'],
     imports: [
         TumAetUiTooltipDirective,
         InformationBoxComponent,

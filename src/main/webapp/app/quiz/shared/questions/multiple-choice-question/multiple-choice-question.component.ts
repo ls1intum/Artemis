@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
-    styleUrls: ['./multiple-choice-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['./multiple-choice-question.component.css', '../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, TranslateDirective, TumAetUiTooltipDirective, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })

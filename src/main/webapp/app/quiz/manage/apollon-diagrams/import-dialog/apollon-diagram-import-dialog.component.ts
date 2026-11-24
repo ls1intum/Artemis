@@ -9,7 +9,7 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
     selector: 'jhi-apollon-diagram-import-dialog',
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './apollon-diagram-import-dialog.component.html',
-    styleUrls: ['./apollon-diagram-import-dialog.component.scss'],
+    styleUrls: ['./apollon-diagram-import-dialog.component.css'],
     providers: [ApollonDiagramService],
     imports: [ApollonDiagramListComponent, ApollonDiagramDetailComponent],
 })

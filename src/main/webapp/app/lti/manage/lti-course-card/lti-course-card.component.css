@@ -1,0 +1,58 @@
+:host {
+    display: block;
+}
+
+/* As tall as the card of the course overview: the header plus the course information. */
+.lti-course-card {
+    position: relative;
+    width: 100%;
+    height: 283px;
+    min-height: 80px;
+    overflow: hidden;
+    transition: transform 0.2s linear;
+}
+
+.lti-course-card:hover {
+    transform: scale(1.012);
+    background-color: var(--hover-slightly-darker-body-bg);
+}
+
+/* Stretches over the whole card, so that a click anywhere opens the course. */
+.lti-course-card-link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.lti-course-card-header {
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+}
+
+.lti-course-card-header-row {
+    display: flex;
+    align-items: center;
+}
+
+.lti-course-card-image {
+    flex: 0 0 auto;
+    width: 16.6667%;
+}
+
+.lti-course-card-image jhi-image ::ng-deep img {
+    border-radius: 50%;
+    height: 65px;
+    width: auto;
+}
+
+.lti-course-card-title {
+    flex: 0 0 auto;
+    width: 58.3333%;
+    margin: 0 0 0.5rem;
+    padding: 0 1rem;
+    text-align: center;
+}
+
+.lti-course-card-body {
+    text-align: start;
+}
