@@ -28,7 +28,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
-// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
+// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see CSS `.action-more`), and a small
 // safety margin so a button is always collapsed slightly before it would be clipped — never shown partially.
 const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 34;
@@ -64,7 +64,7 @@ function widthOf(element: HTMLElement): number {
 @Component({
     selector: 'jhi-exercise-action-bar',
     templateUrl: './exercise-action-bar.component.html',
-    styleUrl: './exercise-action-bar.component.scss',
+    styleUrl: './exercise-action-bar.component.css',
     imports: [
         RouterLink,
         NgTemplateOutlet,

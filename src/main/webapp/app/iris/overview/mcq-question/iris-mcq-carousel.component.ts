@@ -18,7 +18,7 @@ import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
     imports: [IrisMcqQuestionComponent, TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-carousel.component.html',
-    styleUrl: './iris-mcq-carousel.component.scss',
+    styleUrl: './iris-mcq-carousel.component.css',
 })
 export class IrisMcqCarouselComponent {
     readonly faChevronLeft = faChevronLeft;

@@ -5,7 +5,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 @Component({
     selector: 'tr[jhi-build-jobs-header]',
     templateUrl: './build-jobs-header.component.html',
-    styleUrls: ['./build-jobs-table.scss'],
+    styleUrls: ['./build-jobs-table.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, HelpIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,

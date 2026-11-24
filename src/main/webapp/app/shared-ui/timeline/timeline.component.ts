@@ -44,7 +44,7 @@ type InternalTimelineItem = TimelineItem & {
     selector: 'jhi-timeline',
     imports: [FaIconComponent, TumAetUiDatePickerComponent, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './timeline.component.html',
-    styleUrl: './timeline.component.scss',
+    styleUrl: './timeline.component.css',
 })
 export class TimelineComponent {
     private translateService = inject(TranslateService);

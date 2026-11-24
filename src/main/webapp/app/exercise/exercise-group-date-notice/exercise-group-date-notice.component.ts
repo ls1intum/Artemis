@@ -7,7 +7,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-exercise-group-date-notice',
     templateUrl: './exercise-group-date-notice.component.html',
-    styleUrl: './exercise-group-date-notice.component.scss',
+    styleUrl: './exercise-group-date-notice.component.css',
     host: {
         class: 'block',
         'data-testid': 'exercise-group-date-notice',

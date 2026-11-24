@@ -1,0 +1,53 @@
+.text-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: 'problem-statement' 'team-info' 'main';
+}
+
+@media (min-width: 768px) {
+    .text-editor-grid {
+        grid-template-columns: 1fr min-content;
+        grid-template-areas: 'problem-statement team-info' 'main              team-info';
+    }
+}
+
+.text-editor-grid .grid-area-team-info {
+    justify-self: flex-start;
+}
+
+.text-editor-grid .grid-area-main {
+    grid-area: main;
+}
+
+.text-editor-textarea {
+    width: 100%;
+    max-width: 750px;
+    height: 50vh;
+    padding: 10px 12px;
+    border: 1px solid var(--text-editor-border-color);
+    border-radius: 2px;
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
+}
+
+.text-editor-textarea:focus {
+    outline: none;
+    border: 1px solid var(--artemis-dark);
+    background-color: var(--text-editor-focus-background);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--artemis-dark) 4%, transparent);
+}
+
+div.positive-feedback {
+    color: var(--textblock-assessment-text-feedback-positive-color);
+    background-color: var(--textblock-assessment-text-feedback-positive-background);
+}
+
+div.negative-feedback {
+    color: var(--textblock-assessment-text-feedback-negative-color);
+    background-color: var(--textblock-assessment-text-feedback-negative-background);
+}
+
+div.neutral-feedback {
+    color: var(--textblock-assessment-text-feedback-neutral-color);
+    background-color: var(--textblock-assessment-text-feedback-neutral-background);
+}

@@ -11,7 +11,7 @@ import { DagGraphEdge } from 'app/atlas/shared/dag-graph/dag-graph.model';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [DagGraphComponent, CourseCompetencyRelationNodeComponent, ArtemisTranslatePipe],
     templateUrl: './course-competencies-relation-graph.component.html',
-    styleUrl: './course-competencies-relation-graph.component.scss',
+    styleUrl: './course-competencies-relation-graph.component.css',
 })
 export class CourseCompetenciesRelationGraphComponent {
     readonly courseCompetencies = input.required<CourseCompetency[]>();

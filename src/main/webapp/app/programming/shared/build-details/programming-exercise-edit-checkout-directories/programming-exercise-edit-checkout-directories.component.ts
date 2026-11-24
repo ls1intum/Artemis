@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-programming-exercise-edit-checkout-directories',
     imports: [HelpIconComponent, TranslateDirective, FormsModule, ArtemisTranslatePipe, TumAetUiInputDirective, TumAetUiMessageComponent],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../programming-exercise-form.css'],
 })
 export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     programmingExercise = input.required<ProgrammingExercise>();

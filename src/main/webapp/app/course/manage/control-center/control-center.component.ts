@@ -12,7 +12,7 @@ import { AboutAthenaModalComponent } from 'app/course/manage/control-center/abou
     selector: 'jhi-control-center',
     imports: [IrisEnabledComponent, IrisLogoComponent, AthenaEnabledComponent, AthenaLogoComponent, TranslateDirective, AboutIrisModalComponent, AboutAthenaModalComponent],
     templateUrl: './control-center.component.html',
-    styleUrls: ['./control-center.component.scss'],
+    styleUrls: ['./control-center.component.css'],
 })
 export class ControlCenterComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
