@@ -2,7 +2,7 @@
 id: client-style-comparison
 title: Compare the styles of two clients
 sidebar_label: Client Style Comparison
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-24
 ---
 
 A change to a global stylesheet, to the theme tokens, to TUM AET UI or to many component stylesheets can
@@ -14,13 +14,14 @@ then in a browser.
 Use them for a change that is meant to keep the appearance, such as a refactoring of stylesheets, or to
 list what a deliberate change of a shared style touches.
 
-| Script               | What it answers                                                                 | Needs              |
-| -------------------- | ------------------------------------------------------------------------------- | ------------------ |
-| `compare-builds.mjs` | Which declarations does the build emit that it did not emit before?             | two builds         |
-| `capture.mjs`        | Which computed styles does every element of a page or dialog have?              | a running client   |
-| `diff.mjs`           | Which computed styles differ between two captures?                              | two captures       |
-| `matched-rules.mjs`  | Which rules match one element, in which cascade layer, and which of them wins?  | a running client   |
-| `cascade-audit.mjs`  | Where does a cascade layer lose although its selector is the more specific one? | a running client   |
+| Script                | What it answers                                                                 | Needs            |
+| --------------------- | ------------------------------------------------------------------------------- | ---------------- |
+| `compare-builds.mjs`  | Which declarations does the build emit that it did not emit before?             | two builds       |
+| `capture.mjs`         | Which computed styles does every element of a page or dialog have?              | a running client |
+| `diff.mjs`            | Which computed styles differ between two captures?                              | two captures     |
+| `matched-rules.mjs`   | Which rules match one element, in which cascade layer, and which of them wins?  | a running client |
+| `cascade-audit.mjs`   | Where does a cascade layer lose although its selector is the more specific one? | a running client |
+| `important-audit.mjs` | Which `!important` declarations change nothing?                                 | a running client |
 
 All scripts run with Node from the repository root after `pnpm install`. Each of them prints its usage with `--help`.
 
@@ -102,13 +103,13 @@ differs:
 Each line is one change of one property on one kind of element, with the number of states that show it
 and three of them. Read the list from the top: one cause usually explains many lines.
 
-| Option                 | Script       | Effect                                                                     |
-| ---------------------- | ------------ | -------------------------------------------------------------------------- |
-| `--only <text,text>`   | both         | Limits the run to the states whose name contains a text: `--only m0,o1`    |
-| `--themes light`       | `capture`    | Captures one theme                                                         |
-| `--geometry`           | `diff`       | Also compares width and height, which follow from the data on many pages   |
-| `--limit <n>`          | `diff`       | Prints more than the first 80 groups                                       |
-| `--out <directory>`    | both         | Stores the captures elsewhere                                              |
+| Option               | Script    | Effect                                                                   |
+| -------------------- | --------- | ------------------------------------------------------------------------ |
+| `--only <text,text>` | both      | Limits the run to the states whose name contains a text: `--only m0,o1`  |
+| `--themes light`     | `capture` | Captures one theme                                                       |
+| `--geometry`         | `diff`    | Also compares width and height, which follow from the data on many pages |
+| `--limit <n>`        | `diff`    | Prints more than the first 80 groups                                     |
+| `--out <directory>`  | both      | Stores the captures elsewhere                                            |
 
 Two captures of the same client are not always identical. Expect differences on pages that show the
 current time or a countdown, on pages whose data changes between the runs (build queue, metrics, health)
@@ -157,6 +158,31 @@ layer and an example element. Selectors are matched without the pseudo-classes a
 (`:hover`, `[aria-disabled]`, `[data-state]`), so the hover and disabled styles of an element are covered
 although the script never hovers it. This makes the list an upper bound: confirm an entry with
 `matched-rules.mjs` or in the developer tools before you change a stylesheet because of it.
+
+## Find `!important` declarations that are no longer needed
+
+Many `!important` declarations date from the time before the cascade layers, when a component had to
+outrank the stylesheet of a library. A rule outside the layers now wins against every rule in a layer
+without it. `important-audit.mjs` shows which declarations this applies to:
+
+```bash
+node supporting_scripts/client/style-comparison/important-audit.mjs --base http://localhost:9002 --course 42
+```
+
+The script visits the same pages and overlays as `capture.mjs`. On each of them it takes the priority
+from one `!important` declaration at a time and checks whether the computed style of an element that the
+rule matches changes. The report has three groups:
+
+- **changes nothing**: the rule matched elements, and none of them changed. These are the candidates.
+- **needed**: at least one element changed. The report names it and the page.
+- **matched no element**: the script cannot judge the declaration. This is the case for rules of a state
+  (`:hover`), of a print or narrow layout, and of content that the course does not have.
+  Animations and transitions are in this group too, because the capture switches them off.
+
+The first group is listed; `--all` lists the other two as well. A candidate is not a proof. Before you
+remove the priority, check that nothing sets the same property on the element in a state the script
+does not reach: a hover or focus rule, an inline style that the component binds or a library sets while
+dragging, or an `!important` declaration in a cascade layer, which outranks every normal declaration.
 
 ## What the scripts do not cover
 

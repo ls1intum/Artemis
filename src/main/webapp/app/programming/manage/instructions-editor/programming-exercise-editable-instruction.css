@@ -31,7 +31,7 @@
 
 .editable-instruction-container .markdown-editor-wrapper {
     /* override scoped styling */
-    background-color: var(--markdown-preview-editor-background) !important;
+    background-color: var(--markdown-preview-editor-background);
 }
 
 .editable-instruction-container .instructions__content__markdown,
