@@ -103,8 +103,8 @@ jobs:
       - name: Determine coverage scope from upstream run metadata
         id: coverage-scope
         if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
-        # Read the exact run attempt's CI Summary marker and artifact names/expiration from
-        # GitHub metadata; never trust or execute a scope file supplied by a fork.
+        # Read the test scope and result from the exact run attempt's CI Summary marker, and
+        # validate artifact names and expiration using GitHub metadata.
         continue-on-error: true
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
@@ -183,7 +183,7 @@ jobs:
           COVERAGE_TABLE: ${{ steps.coverage.outputs.coverage_table }}
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           TEST_SCOPE: ${{ steps.coverage-scope.outputs.test_scope || 'unavailable' }}
-          TEST_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TEST_CONCLUSION: ${{ steps.coverage-scope.outputs.test_conclusion || 'unknown' }}
           TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
           POST_AUTHOR_COMMENT: 'true'
         with:

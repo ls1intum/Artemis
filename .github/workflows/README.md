@@ -56,7 +56,7 @@ ci.yml                                                            (single entry 
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 ├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
-├── security        ── uses security-scans.yml    (PRs against develop and develop pushes; Semgrep, gitleaks, OSV, Trivy)
+├── security        ── uses security-scans.yml    (develop pushes and PRs against develop with changes outside documentation/; Semgrep, gitleaks, OSV, Trivy)
 ├── android         ── uses test-android.yml      (only with the repository variable ANDROID_E2E=true; non-fork, non-draft, build-relevant; self-hosted Android runner)
 ├── pr-title                        (pull requests; module prefix of the title; also runs on title edits)
 │

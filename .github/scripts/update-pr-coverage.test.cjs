@@ -122,11 +122,11 @@ function availabilityScript() {
     assert.ok(script, 'Expected a trusted helper invocation');
     return script[1];
 }
-function summary(scope) {
+function summary(scope, result) {
     return {
         name: 'CI Summary',
         status: 'completed',
-        steps: scope === undefined ? [] : [{ name: `Test validation scope: ${scope}`, status: 'completed', conclusion: 'success' }],
+        steps: scope === undefined ? [] : [{ name: `Test validation scope: ${scope}${result ? ` (${result})` : ''}`, status: 'completed', conclusion: 'success' }],
     };
 }
 const fullArtifacts = [
@@ -205,6 +205,22 @@ describe('fork reporter run scope', () => {
     it('accepts a successful full-suite fallback only with complete artifacts', async () => {
         const result = await availability(fullArtifacts, {}, 'success', { jobs: [summary('full')] });
         assert.equal(result.test_scope, 'full');
+    });
+    it('publishes full coverage when an advisory job fails after the tests pass', async () => {
+        const result = await availability(fullArtifacts, {}, 'failure', { jobs: [summary('full', 'success')] });
+        assert.equal(result.test_scope, 'full');
+        assert.equal(result.test_conclusion, 'success');
+    });
+    it('reports the affected tests result independently of advisory failures', async () => {
+        const result = await availability([], {}, 'failure', { jobs: [summary('affected', 'success')] });
+        assert.equal(result.test_scope, 'affected');
+        assert.equal(result.test_conclusion, 'success');
+    });
+    it('requires successful tests before using full-suite artifacts', async () => {
+        const result = await availability(fullArtifacts, {}, 'failure', { jobs: [summary('full', 'failure')] });
+        assert.equal(result.test_scope, 'unavailable');
+        assert.equal(result.test_conclusion, 'failure');
+        assert.equal(result.requests.length, 1);
     });
     it('requires full-scope artifacts even with an explicit successful full marker', async () => {
         const result = await availability([], {}, 'success', { jobs: [summary('full')] });
