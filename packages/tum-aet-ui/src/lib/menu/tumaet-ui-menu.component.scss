@@ -1,10 +1,12 @@
-:host {
-    // The CDK positions the overlay; keep the surface from stretching to the overlay's flexible width.
-    box-sizing: border-box;
-    max-height: inherit;
-    overflow: auto;
+@layer tumaet-ui {
+    :host {
+        // The CDK positions the overlay; keep the surface from stretching to the overlay's flexible width.
+        box-sizing: border-box;
+        max-height: inherit;
+        overflow: auto;
 
-    &:focus-visible {
-        outline: none;
+        &:focus-visible {
+            outline: none;
+        }
     }
 }

@@ -109,8 +109,8 @@ $transition-color-length: 0.2s;
 }
 
 /*
- * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour is set here because a layered
- * utility would lose to the unlayered anchor colour of global.scss.
+ * A sidebar entry: a link, the toggle of the "more" menu, or an action. The colour set here replaces the link colour
+ * that `_base.scss` gives to every anchor.
  */
 .nav-link-sidebar {
     display: block;
@@ -153,9 +153,9 @@ button.nav-link-sidebar {
     color: var(--link-item-color);
 }
 
-// Overrides the hover underline from `global.scss`, because only the label span below should be underlined — the
+// Overrides the hover underline from `_base.scss`, because only the label span below should be underlined — the
 // anchor also holds the icon, so an underline on it draws a second line under the label and a dash beside the icon.
-// See the comment in `global.scss` for why the exclusions belong in one `:not()` argument list.
+// See the comment in `_base.scss` for why the exclusions belong in one `:not()` argument list.
 a:not(.tumaet-ui-btn, .tab-link):hover {
     text-decoration: none !important;
 }
@@ -222,4 +222,8 @@ a:not(.tumaet-ui-btn, .tab-link):hover {
     mask-repeat: no-repeat;
     mask-position: center;
     mask-size: contain;
+}
+
+.sidebar-collapsed-course-overview {
+    display: none;
 }

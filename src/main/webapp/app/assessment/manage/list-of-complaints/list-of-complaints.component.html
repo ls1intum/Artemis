@@ -24,7 +24,7 @@
                     severity="primary"
                 >
                     @if (isLoadingAllComplaints()) {
-                        <tumaet-ui-progress-spinner class="h-4 w-4" [ariaLabel]="'loading' | artemisTranslate" />
+                        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
                     }
                     <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAll"></span>
                 </button>
@@ -63,7 +63,7 @@
                   : 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests'
         "
     >
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             @if (!loading()) {
                 <tumaet-ui-checkbox
                     name="showAddressedComplaint"

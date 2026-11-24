@@ -171,7 +171,6 @@ class SpringAiCourseHomeClientTest {
         // a preset's model carries OpenAI options, into which the chat client merges the request options
         ChatModel model = mock(ChatModel.class);
         when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
-        when(model.getDefaultOptions()).thenReturn(OpenAiChatOptions.builder().build());
         return model;
     }
 

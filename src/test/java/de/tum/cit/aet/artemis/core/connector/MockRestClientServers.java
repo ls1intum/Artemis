@@ -27,8 +27,8 @@ import org.springframework.test.web.client.UnorderedRequestExpectationManager;
 import org.springframework.web.client.RestClient;
 
 /**
- * Lets a test mock the remote server of a {@link RestClient} bean, with the {@link MockRestServiceServer} that the request mock providers
- * already use for a {@code RestTemplate}.
+ * Lets a test mock the remote server of a {@link RestClient} bean, with a {@link MockRestServiceServer}, which the request mock providers
+ * use to describe the expected requests and the responses.
  * <p>
  * A {@code MockRestServiceServer} can only be bound to a {@link RestClient.Builder}, while the application context only holds the
  * finished client, and the services keep a reference to that client. This post-processor therefore rebuilds every {@link RestClient} bean

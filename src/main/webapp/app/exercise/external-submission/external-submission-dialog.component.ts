@@ -27,6 +27,7 @@ import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/ex
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
+    styleUrl: './external-submission-dialog.component.scss',
     imports: [
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,

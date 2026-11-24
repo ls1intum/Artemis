@@ -35,6 +35,9 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
@@ -118,6 +121,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ExerciseConfigurationService exerciseConfigurationService;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -152,7 +157,8 @@ public class ProgrammingExerciseCreationUpdateService {
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
             TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
-            ExerciseConfigurationService exerciseConfigurationService) {
+            ExerciseConfigurationService exerciseConfigurationService, CourseConfigurationRepository courseConfigurationRepository) {
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -176,6 +182,21 @@ public class ProgrammingExerciseCreationUpdateService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
+    }
+
+    /**
+     * The setting of the course of the exercise that says who authors the first commit of its repositories.
+     *
+     * @param programmingExercise the exercise that is created
+     * @return the setting, or null if the course cannot be resolved or has no configuration, which leaves the exercise creator as the author
+     */
+    @Nullable
+    private InitialCommitAuthorDTO findInitialCommitAuthor(ProgrammingExercise programmingExercise) {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null || course.getId() == null) {
+            return null;
+        }
+        return courseConfigurationRepository.findByCourseId(course.getId()).map(InitialCommitAuthorDTO::of).orElse(null);
     }
 
     /**
@@ -268,7 +289,8 @@ public class ProgrammingExerciseCreationUpdateService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
-            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator, emptyRepositories);
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator,
+                    findInitialCommitAuthor(savedProgrammingExercise), emptyRepositories);
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
