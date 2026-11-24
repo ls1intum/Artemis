@@ -6012,7 +6012,7 @@ components:
           items:
             type: string
             enum: [EASY, MEDIUM, HARD]
-      required: [competencyIds]
+      required: [competencyIds, count]
     CreateOrUpdateTutorialGroupSessionRequest:
       type: object
       properties:

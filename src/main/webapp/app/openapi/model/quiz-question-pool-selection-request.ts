@@ -18,7 +18,7 @@ export interface QuizQuestionPoolSelectionRequest {
     /** Ids of the lecture units to draw from; every linked unit when absent */
     lectureUnitIds?: Array<number>;
     /** Number of questions to draw */
-    count?: number;
+    count: number;
     /** Question types to draw; every type when absent */
     questionTypes?: Array<QuizQuestionPoolSelectionRequestQuestionTypesEnum>;
     /** Difficulties to draw; every difficulty when absent */
