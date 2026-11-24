@@ -136,7 +136,8 @@ Colors:
   `--tumaet-ui-button-active-overlay`; most default to semantic aliases and can be overridden
   independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
-  `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
+  `--tumaet-ui-table-striped-background`, `--tumaet-ui-table-header-background`,
+  `--tumaet-ui-table-header-hover-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
 
 Primary is the brand fill; accent is the brand foreground for content and controls. Each state

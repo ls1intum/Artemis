@@ -15,7 +15,7 @@
  * 1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
  * 1200       this container: kit dialogs and everything the kit opens above them
  * 100000     alert overlay
- * `delete-dialog-layering.spec.ts` compiles the default theme, which includes this file, and checks that a confirmation opened from inside a kit dialog
+ * `delete-dialog-layering.spec.ts` reads this file and checks that a confirmation opened from inside a kit dialog
  * (delete button in the presentation edit dialog) stacks above it.
  */
 .cdk-overlay-container {
@@ -40,6 +40,25 @@ a[tumAetUiButton].disabled {
  */
 .apollon-editor label {
     margin-bottom: 0;
+}
+
+/*
+ * Apollon renders its popovers (the edit popup of an element, selects, color pickers) in a Base UI portal under <body>.
+ * That portal is unpositioned and has no z-index, so a popover opened from an editor inside a kit dialog is painted behind
+ * the dialog: the overlay container above is appended to <body> too (to <html> only while an element is fullscreen) and
+ * sits at z-index 1200, and the dialog hides the popover without any error. This puts the portal one layer above the
+ * overlay container, still below the alert overlay, and hands pointer events back to its children so the transparent
+ * layer never swallows a click.
+ */
+body > [data-base-ui-portal] {
+    position: fixed;
+    z-index: 1201;
+    inset: 0;
+    pointer-events: none;
+}
+
+body > [data-base-ui-portal] > * {
+    pointer-events: auto;
 }
 
 /*

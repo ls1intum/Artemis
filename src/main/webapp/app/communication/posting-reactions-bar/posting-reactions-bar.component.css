@@ -48,6 +48,25 @@
     background: var(--reaction-button-reacted-color);
 }
 
+/*
+ * The edit action is a kit button for its colour, but it sits among the pills above and must have their metrics. Without
+ * this it kept the padding of a small kit button, was taller than the other actions and shifted the whole row.
+ */
+.reaction-edit-button {
+    box-sizing: border-box;
+    height: 1.2rem;
+    padding-block: 0;
+    padding-inline: 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.reaction-edit-button fa-icon {
+    display: inline-flex;
+    justify-content: center;
+}
+
 .search-result-in-answers-info {
     color: var(--artemis-alert-info-color);
     background: var(--artemis-alert-info-background);

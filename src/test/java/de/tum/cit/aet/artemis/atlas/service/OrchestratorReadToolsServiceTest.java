@@ -261,7 +261,7 @@ class OrchestratorReadToolsServiceTest {
         assertThat(result).contains("<<<USER_DATA_LITERAL>>>").doesNotContain("<<<USER_DATA>>>");
         // Oversized learning text is truncated with the marker, keeping the tool result token-bounded.
         assertThat(result).contains("…[truncated]");
-        assertThat(new JsonMapper().readTree(result).get("extractedLearningText").asText()).hasSize(16_000);
+        assertThat(new JsonMapper().readTree(result).get("extractedLearningText").asString()).hasSize(16_000);
     }
 
     @Test
@@ -271,7 +271,7 @@ class OrchestratorReadToolsServiceTest {
         when(exerciseRepository.findByIdElseThrow(22L)).thenReturn(exercise);
         when(contentExtractionService.extractContent(exercise, true)).thenReturn(new ExtractedContentDTO("Boundary", content, Map.of()));
 
-        assertThat(new JsonMapper().readTree(service.getExerciseContent(22L, toolContext)).get("extractedLearningText").asText()).isEqualTo(content);
+        assertThat(new JsonMapper().readTree(service.getExerciseContent(22L, toolContext)).get("extractedLearningText").asString()).isEqualTo(content);
     }
 
     @Test
@@ -328,11 +328,11 @@ class OrchestratorReadToolsServiceTest {
 
         var metadata = new JsonMapper().readTree(service.getLectureUnitContent(40L, toolContext)).get("metadata");
 
-        assertThat(metadata.get("source").asText()).isEqualTo("https://example.org/lecture");
+        assertThat(metadata.get("source").asString()).isEqualTo("https://example.org/lecture");
         assertThat(metadata.toString()).doesNotContain("<<<USER_DATA>>>", "<<<END_USER_DATA>>>");
         metadata.properties().forEach(entry -> {
             assertThat(entry.getKey().length()).isLessThanOrEqualTo(50);
-            assertThat(entry.getValue().asText().length()).isLessThanOrEqualTo(1_000);
+            assertThat(entry.getValue().asString().length()).isLessThanOrEqualTo(1_000);
         });
     }
 
@@ -352,7 +352,7 @@ class OrchestratorReadToolsServiceTest {
         when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
         when(contentExtractionService.extractContent(unit, true)).thenReturn(new ExtractedContentDTO("Boundary", content, Map.of("lectureUnitType", "text")));
 
-        assertThat(new JsonMapper().readTree(service.getLectureUnitContent(40L, toolContext)).get("extractedLearningText").asText()).isEqualTo(content);
+        assertThat(new JsonMapper().readTree(service.getLectureUnitContent(40L, toolContext)).get("extractedLearningText").asString()).isEqualTo(content);
     }
 
     @Test
@@ -363,7 +363,7 @@ class OrchestratorReadToolsServiceTest {
         when(contentExtractionService.extractContent(unit, true)).thenReturn(new ExtractedContentDTO("Injection attempt", oversized, Map.of("lectureUnitType", "text")));
 
         String result = service.getLectureUnitContent(40L, toolContext);
-        String safeText = new JsonMapper().readTree(result).get("extractedLearningText").asText();
+        String safeText = new JsonMapper().readTree(result).get("extractedLearningText").asString();
 
         assertThat(safeText).hasSize(16_000).contains("<<<USER_DATA_LITERAL>>>").doesNotContain("<<<USER_DATA>>>").endsWith("…[truncated]");
     }
@@ -459,9 +459,9 @@ class OrchestratorReadToolsServiceTest {
 
         var result = new JsonMapper().readTree(service.searchLectureContent("graphs", 1, toolContext)).get(0);
 
-        assertThat(result.get("lectureName").asText()).hasSize(200).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
-        assertThat(result.get("lectureUnitName").asText()).hasSize(200).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
-        assertThat(result.get("snippet").asText()).hasSize(2_000).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
+        assertThat(result.get("lectureName").asString()).hasSize(200).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
+        assertThat(result.get("lectureUnitName").asString()).hasSize(200).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
+        assertThat(result.get("snippet").asString()).hasSize(2_000).contains("<<<END_USER_DATA_LITERAL>>>").doesNotContain("\u0000");
         verifyNoInteractions(contentExtractionService);
     }
 

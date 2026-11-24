@@ -21,11 +21,17 @@
     }
 
     .tumaet-ui-sort-icon {
-        display: inline-block;
+        /*
+         * A flex box, so the svg is centred in the square. As an inline box, the svg sat on the text baseline
+         * of the host's line box (its `vertical-align: -0.125em`) and hung below the centre of the label.
+         */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         width: calc(var(--tumaet-ui-spacing) * 3.5);
         height: calc(var(--tumaet-ui-spacing) * 3.5);
         margin-inline-start: calc(var(--tumaet-ui-spacing) * 2);
-        vertical-align: middle;
+        line-height: 1;
         flex-shrink: 0;
     }
 }

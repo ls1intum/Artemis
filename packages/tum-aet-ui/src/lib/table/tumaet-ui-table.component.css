@@ -7,7 +7,6 @@
         width: 100%;
     }
 
-    .cdk-table th,
     .cdk-table td {
         border-bottom-width: 1px;
         border-bottom-style: solid;

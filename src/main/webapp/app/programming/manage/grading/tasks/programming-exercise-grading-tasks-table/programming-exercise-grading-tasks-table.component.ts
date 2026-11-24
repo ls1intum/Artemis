@@ -56,6 +56,11 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     readonly isSaving = signal(false);
     readonly tasks = signal<ProgrammingExerciseTask[]>([]);
     readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
+    /**
+     * Incremented whenever the tasks or their test cases are changed in place: when the points are recalculated and when the test cases are sorted. The task objects keep
+     * their identity then, so the OnPush task rows would not notice; passing the revision to every row makes all of them render the new state.
+     */
+    readonly rowsRevision = signal(0);
 
     currentSort: Sort | undefined;
 
@@ -81,6 +86,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     updateTasks = () => {
         this.tasks.set(this.taskService.updateTasks());
+        this.rowsRevision.update((revision) => revision + 1);
     };
 
     toggleShowInactiveTestsShown = () => {
@@ -153,6 +159,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
         }
         sortedTasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
         this.tasks.set(sortedTasks);
+        // the test cases of each task were sorted in place, which no row sees without it
+        this.rowsRevision.update((revision) => revision + 1);
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {

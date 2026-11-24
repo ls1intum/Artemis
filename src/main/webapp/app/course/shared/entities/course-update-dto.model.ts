@@ -1,6 +1,7 @@
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { Course } from './course.model';
+import type { InitialCommitAuthor } from './course-configuration.model';
 import type { CourseInformationSharingConfiguration, Language } from './course.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
@@ -133,6 +134,8 @@ export interface CourseUpdateDTO extends CourseCreateDTO {
     courseInformationSharingMessagingCodeOfConduct?: string;
     onboardingDone: boolean;
     dataRetentionHold: boolean;
+    /** Who authors the first commit of the repositories of new programming exercises; left out, the server keeps the stored choice. */
+    initialCommitAuthor?: InitialCommitAuthor;
 }
 
 /**
@@ -148,5 +151,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         onboardingDone: course.onboardingDone ?? false,
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+        initialCommitAuthor: course.courseConfiguration?.initialCommitAuthor,
     });
 }

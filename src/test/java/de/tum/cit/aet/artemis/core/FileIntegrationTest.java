@@ -361,6 +361,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
+     * The last segment of a student version URL only suggests a file name: the file is resolved by the unit id, so a name with a space or colon is served like any other, and
+     * a segment that tries to leave the directory is never used to read another file.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetStudentVersionIgnoresTheSuggestedFilenameAndRejectsTraversal() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        long attachmentVideoUnitId = attachment.getAttachmentVideoUnit().getId();
+        String studentUrl = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/";
+
+        assertThat(request.get(studentUrl + "Slide%20Set%204%3A%20Memory_uP%20I.pdf", HttpStatus.OK, byte[].class)).isEqualTo(content);
+
+        request.get(studentUrl + "..%2F..%2F..%2Fetc%2Fpasswd", HttpStatus.BAD_REQUEST, byte[].class);
+        request.get(studentUrl + "%2E%2E/%2E%2E/etc/passwd", HttpStatus.BAD_REQUEST, byte[].class);
+    }
+
+    /**
      * The same for a course icon, where the two spellings differ in the position of the id segment rather than in one word.
      */
     @Test
