@@ -38,7 +38,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
-    styleUrls: ['./conversation-member-row.component.scss'],
+    styleUrls: ['./conversation-member-row.component.css'],
     host: {
         '[class.active]': 'isCurrentUser()',
     },

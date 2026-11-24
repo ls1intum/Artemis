@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-course-competency-relation-node',
     imports: [TranslateDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-competency-relation-node.component.html',
-    styleUrl: './course-competency-relation-node.component.scss',
+    styleUrl: './course-competency-relation-node.component.css',
 })
 export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
     private readonly element = inject(ElementRef);

@@ -14,7 +14,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-connection-warning',
     templateUrl: './connection-warning.component.html',
-    styleUrls: ['./connection-warning.component.scss'],
+    styleUrls: ['./connection-warning.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, CloseCircleComponent, NgClass],
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {

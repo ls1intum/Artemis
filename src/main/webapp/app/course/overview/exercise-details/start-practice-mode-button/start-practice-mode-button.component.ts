@@ -20,7 +20,7 @@ let nextTeamHintId = 0;
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
-    styleUrls: ['./start-practice-mode-button.component.scss'],
+    styleUrls: ['./start-practice-mode-button.component.css'],
     imports: [
         ExerciseActionButtonComponent,
         FeatureToggleDirective,

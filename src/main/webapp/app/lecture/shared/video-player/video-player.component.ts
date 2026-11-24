@@ -22,7 +22,7 @@ const TRANSCRIPT_SCROLL_DEFER_MS = 10_000;
     standalone: true,
     imports: [TumAetUiButtonDirective, CommonModule, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './video-player.component.html',
-    styleUrls: ['./video-player.component.scss'],
+    styleUrls: ['./video-player.component.css'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Reference to the <video> element in the template */

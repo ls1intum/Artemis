@@ -196,6 +196,14 @@ describe('SidebarComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('shows the search field in the compact size', () => {
+        fixture.detectChanges();
+
+        const searchFilter = fixture.debugElement.query(By.directive(SearchFilterComponent));
+        expect(searchFilter).not.toBeNull();
+        expect((searchFilter.componentInstance as SearchFilterComponent).size()).toBe('small');
+    });
+
     it('should filter sidebar items based on search criteria', () => {
         fixture.componentRef.setInput('sidebarData', {
             groupByCategory: true,

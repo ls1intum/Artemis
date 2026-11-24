@@ -26,7 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-credential-revocation-settings',
     templateUrl: './credential-revocation-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     imports: [TranslateDirective, FormsModule, TumAetUiCheckboxComponent, DeleteButtonDirective, TumAetUiButtonDirective],
 })
 export class CredentialRevocationSettingsComponent implements OnDestroy {

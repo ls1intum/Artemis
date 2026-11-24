@@ -12,7 +12,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 @Component({
     selector: 'jhi-general-feedback',
     templateUrl: './general-feedback.component.html',
-    styleUrl: './general-feedback.component.scss',
+    styleUrl: './general-feedback.component.css',
     imports: [TranslateDirective, UnifiedFeedbackComponent],
 })
 export class GeneralFeedbackComponent {

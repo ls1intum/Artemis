@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
@@ -37,7 +37,7 @@ class ResizeObserverMock {
         >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
-            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
+            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed()">Iris Content</ng-template>
         </jhi-resizable-panels>
     `,
     imports: [ResizablePanelsComponent, PanelDirective],
@@ -45,7 +45,7 @@ class ResizeObserverMock {
 class ResizablePanelsTestComponent {
     protected readonly faAlignLeft = faAlignLeft;
     protected readonly faComment = faComment;
-    irisStartsCollapsed = false;
+    readonly irisStartsCollapsed = signal(false);
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
     leftMinSizePercent = 0;
@@ -72,7 +72,7 @@ describe('ResizablePanelsComponent', () => {
 
     const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false) => {
         fixture = TestBed.createComponent(ResizablePanelsTestComponent);
-        fixture.componentInstance.irisStartsCollapsed = irisStartsCollapsed;
+        fixture.componentInstance.irisStartsCollapsed.set(irisStartsCollapsed);
         fixture.componentInstance.useViewportWidthForCollapse = useViewportWidthForCollapse;
         fixture.detectChanges();
         return fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
@@ -203,6 +203,103 @@ describe('ResizablePanelsComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
         expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[role="tab"][aria-selected="true"]'));
+    });
+
+    describe('requested collapsed state', () => {
+        const setStartsCollapsed = (value: boolean) => {
+            fixture.componentInstance.irisStartsCollapsed.set(value);
+            fixture.detectChanges();
+        };
+
+        it('opens the right panels again when the request turns from collapsed to not collapsed', () => {
+            const component = createFixture(true);
+            expect(component.isRightPanelCollapsed()).toBe(true);
+
+            setStartsCollapsed(false);
+
+            expect(component.isRightPanelCollapsed()).toBe(false);
+        });
+
+        it('collapses the right panels when the request arrives after the first render', () => {
+            const component = createFixture(false);
+            expect(component.isRightPanelCollapsed()).toBe(false);
+
+            setStartsCollapsed(true);
+
+            expect(component.isRightPanelCollapsed()).toBe(true);
+        });
+
+        it('lets the user open the panels during the request without the request closing them again', () => {
+            const component = createFixture(true);
+
+            component.expandRightPanel();
+            fixture.detectChanges();
+            expect(component.isRightPanelCollapsed()).toBe(false);
+
+            setStartsCollapsed(false);
+            setStartsCollapsed(true);
+            expect(component.isRightPanelCollapsed()).toBe(false);
+        });
+
+        it('stops following the request after the user collapsed the panels by hand', () => {
+            const component = createFixture(false);
+
+            component.collapseRightPanel();
+            fixture.detectChanges();
+            setStartsCollapsed(true);
+            setStartsCollapsed(false);
+
+            expect(component.isRightPanelCollapsed()).toBe(true);
+        });
+
+        it('stops following the request after a drag that snapped the panels closed', () => {
+            const component = createFixture(false);
+
+            component['onResizeEnd']([100, 0]);
+            setStartsCollapsed(true);
+            setStartsCollapsed(false);
+
+            expect(component.isRightPanelCollapsed()).toBe(true);
+        });
+
+        it('moves the keyboard focus from the closing panel to the rail when the request collapses it', async () => {
+            createFixture(false);
+            fixture.nativeElement.querySelector('input').focus();
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('input'));
+
+            setStartsCollapsed(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]'));
+        });
+
+        it('leaves the focus alone when the request collapses the panels while it is elsewhere', async () => {
+            createFixture(false);
+            const outside = document.createElement('button');
+            document.body.append(outside);
+            outside.focus();
+
+            setStartsCollapsed(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(document.activeElement).toBe(outside);
+            outside.remove();
+        });
+
+        it('moves the keyboard focus from the rail to the reopened tab when the request ends', async () => {
+            createFixture(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]').focus();
+
+            setStartsCollapsed(false);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[role="tab"][aria-selected="true"]'));
+        });
     });
 
     it('snaps the right panel closed when it is dragged below the collapse threshold', () => {

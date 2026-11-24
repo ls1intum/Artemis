@@ -23,7 +23,7 @@ export interface CollapsedPanelRailItem {
 @Component({
     selector: 'jhi-collapsed-panel-rail',
     templateUrl: './collapsed-panel-rail.component.html',
-    styleUrls: ['./collapsed-panel-rail.component.scss'],
+    styleUrls: ['./collapsed-panel-rail.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { '[class.collapsed-panel-rail--horizontal]': "orientation() === 'horizontal'" },
     imports: [FaIconComponent, ArtemisTranslatePipe],

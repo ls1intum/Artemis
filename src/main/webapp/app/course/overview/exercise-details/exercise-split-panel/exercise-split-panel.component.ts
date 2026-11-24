@@ -129,6 +129,13 @@ export class ExerciseSplitPanelComponent {
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
     readonly titleBarShowsPills = input<boolean>(false);
+    /**
+     * Keeps the side panels collapsed while it is true, for example while a quiz runs, and opens them when it ends. The student
+     * can still open them by hand. A manual collapse or expand of the right panel of this split panel, also before the quiz
+     * starts, ends the automatic behaviour for this instance: a student's own choice is never overridden, so the panels then
+     * neither collapse for the quiz nor open again afterwards.
+     */
+    readonly collapseSidePanels = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route

@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-form-footer',
     templateUrl: 'form-footer.component.html',
-    styleUrls: ['form-footer.component.scss'],
+    styleUrls: ['form-footer.component.css'],
     imports: [
         TumAetUiTagComponent,
         SwitchEditModeButtonComponent,

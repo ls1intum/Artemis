@@ -25,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-teams-import-dialog',
     templateUrl: './teams-import-dialog.component.html',
-    styleUrls: ['./teams-import-dialog.component.scss'],
+    styleUrls: ['./teams-import-dialog.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiRadioButtonComponent,

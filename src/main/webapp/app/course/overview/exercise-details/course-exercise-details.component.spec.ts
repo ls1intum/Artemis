@@ -1394,6 +1394,49 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.liveQuizStatus()).toBeUndefined();
         });
 
+        describe('focus mode', () => {
+            const runningQuiz = () => {
+                vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+                comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizBatches: [{ started: true }] } as unknown as Exercise });
+            };
+
+            it('should not know yet before the exercise has loaded, so the sidebars keep their state', () => {
+                expect(comp.focusMode()).toBeUndefined();
+            });
+
+            it('should focus while the student takes a running graded quiz', () => {
+                runningQuiz();
+
+                expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.PARTICIPATING);
+                expect(comp.focusMode()).toBe(true);
+            });
+
+            it.each([LiveQuizParticipationStatus.NOT_STARTED, LiveQuizParticipationStatus.SUBMITTED, LiveQuizParticipationStatus.MISSED, undefined])(
+                'should not focus for the live quiz status %s',
+                (status) => {
+                    runningQuiz();
+                    comp.onLiveQuizStatusChange(status);
+
+                    expect(comp.focusMode()).toBe(false);
+                },
+            );
+
+            it('should not focus in practice mode', () => {
+                runningQuiz();
+                comp.participationMode.set('practice');
+
+                expect(comp.focusMode()).toBe(false);
+            });
+
+            it('should not focus on an exercise that is not a quiz', () => {
+                vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+                comp.handleNewExercise({ exercise: { type: ExerciseType.PROGRAMMING } as unknown as Exercise });
+                comp.onLiveQuizStatusChange(LiveQuizParticipationStatus.PARTICIPATING);
+
+                expect(comp.focusMode()).toBe(false);
+            });
+        });
+
         it('should show the submitted quiz in the graded participation and leave the practice participation alone', () => {
             const graded = { id: 1, testRun: false, submissions: [{ id: 10, submitted: false }] } as unknown as StudentParticipation;
             const practice = { id: 2, testRun: true, submissions: [{ id: 20, submitted: true }] } as unknown as StudentParticipation;

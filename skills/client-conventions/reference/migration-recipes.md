@@ -187,13 +187,13 @@ For a component, prefer the TUM AET UI variant over a utility class on plain mar
 ## A Tailwind utility that has no effect
 
 Tailwind utilities live in a CSS layer, so unlayered CSS wins over them. The element defaults of
-`_base.scss` are in an earlier layer and lose to a utility; the cases below still turn a
+`base.css` are in an earlier layer and lose to a utility; the cases below still turn a
 correct-looking utility into a no-op. Lint and unit tests
 do not catch them; open the screen and read the computed style.
 
 | Case                                              | Symptom                                 | Fix     |
 | ------------------------------------------------- | --------------------------------------- | ------- |
-| Rule in the SCSS of the component, e.g. `p { … }` | `mt-6` on the paragraph changes nothing | `mt-6!` |
+| Rule in the stylesheet of the component, e.g. `p { … }` | `mt-6` on the paragraph changes nothing | `mt-6!` |
 
 The styles of TUM AET UI are in the layer `tumaet-ui`, below the utilities: a utility on a TUM AET UI
 component (`text-state-danger` on a menu item, `p-0` on a button) applies without the modifier.

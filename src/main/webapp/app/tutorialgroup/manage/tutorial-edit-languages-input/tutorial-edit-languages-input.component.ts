@@ -11,7 +11,7 @@ import { TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-a
     selector: 'jhi-tutorial-edit-languages-input',
     imports: [TumAetUiFormFieldComponent, TumAetUiInputDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './tutorial-edit-languages-input.component.html',
-    styleUrl: './tutorial-edit-languages-input.component.scss',
+    styleUrl: './tutorial-edit-languages-input.component.css',
 })
 export class TutorialEditLanguagesInputComponent implements OnDestroy {
     private overlay = inject(Overlay);

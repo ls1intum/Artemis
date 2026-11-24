@@ -1,0 +1,34 @@
+:host {
+    max-width: 100%;
+}
+
+.student-group {
+    padding: 3px 0;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+/* show custom thinner scrollbar for Webkit-based browsers */
+.student-group::-webkit-scrollbar-track {
+    border-radius: 4px;
+    background-color: var(--tumaet-ui-control-background);
+}
+
+.student-group::-webkit-scrollbar {
+    height: 4px;
+}
+
+.student-group::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: var(--tumaet-ui-muted-color);
+}
+
+.team-list-item.student-group-item {
+    padding: 0.175rem 0.75rem;
+    white-space: nowrap;
+}
+
+.team-list-item.student-group-item.has-error {
+    color: var(--artemis-alert-danger-color);
+    background-color: var(--artemis-alert-danger-background);
+}

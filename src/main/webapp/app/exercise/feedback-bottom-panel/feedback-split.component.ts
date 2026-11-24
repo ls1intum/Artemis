@@ -31,7 +31,7 @@ const DEFAULT_SIZES = [68, 32];
 @Component({
     selector: 'jhi-feedback-split',
     templateUrl: './feedback-split.component.html',
-    styleUrls: ['./feedback-split.component.scss'],
+    styleUrls: ['./feedback-split.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiSplitterComponent, NgTemplateOutlet],
     host: { '[class.feedback-split--stacked]': 'stacked()' },

@@ -86,7 +86,7 @@ export type Table = 'testCases' | 'codeAnalysis';
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
-    styleUrls: ['./programming-exercise-configure-grading.scss'],
+    styleUrls: ['./programming-exercise-configure-grading.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
     imports: [

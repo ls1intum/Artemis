@@ -10,7 +10,7 @@ let nextDisclosureId = 0;
 @Component({
     selector: 'jhi-apollon-rail-disclosure',
     templateUrl: './apollon-rail-disclosure.component.html',
-    styleUrls: ['./apollon-rail-disclosure.component.scss'],
+    styleUrls: ['./apollon-rail-disclosure.component.css'],
     imports: [ArtemisTranslatePipe, FaIconComponent, ResizableDirective],
     host: {
         class: 'apollon-rail-disclosure nopan nodrag nowheel',

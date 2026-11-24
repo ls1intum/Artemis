@@ -22,7 +22,7 @@ function toId(value: string | undefined): number | undefined {
 @Component({
     selector: 'jhi-course-iris',
     templateUrl: './course-iris.component.html',
-    styleUrls: ['./course-iris.component.scss'],
+    styleUrls: ['./course-iris.component.css'],
     imports: [CourseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
