@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { faCancel, faCheck, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
@@ -80,6 +80,10 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
+    /** Every FAQ of the course, whatever the search and the filters show. The actions column depends on it, so it does not come and go while the student types. */
+    private readonly allFaqs = signal<Faq[]>([]);
+    /** Without any row action (a tutor sees none on accepted FAQs) the table has no empty column at its end. */
+    protected readonly hasRowActions = computed(() => this.isAtLeastInstructor() || this.allFaqs().some((faq) => faq.faqState !== FaqState.ACCEPTED));
     private managementAudience = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -137,6 +141,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs?.filter((faq) => faq.id !== faqId);
+        this.allFaqs.set(this.faqs ?? []);
         this.hasFaqs.set((this.faqs?.length ?? 0) > 0);
         this.refreshFaqList(this.searchInput.getValue());
         this.sortRows();
@@ -182,6 +187,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         request.pipe(map((res: HttpResponse<Faq[]>) => res.body ?? [])).subscribe({
             next: (res: Faq[]) => {
                 this.faqs = res;
+                this.allFaqs.set(res);
                 this.hasFaqs.set(res.length > 0);
                 this.refreshFaqList(this.searchInput.getValue());
                 this.sortRows();
