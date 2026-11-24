@@ -51,7 +51,9 @@ jhi-image + h2 {
     text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
     flex-shrink: 0;
 }
 
@@ -103,6 +105,13 @@ jhi-image + h2 {
 
 .explore-animate {
     animation: exploreSlideIn 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .explore-animate {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes exploreSlideIn {

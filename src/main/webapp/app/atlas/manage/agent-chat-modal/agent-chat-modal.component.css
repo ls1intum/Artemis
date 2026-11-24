@@ -15,6 +15,12 @@
     animation: agent-chat-typing 1.4s infinite ease-in-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .agent-chat-typing-dot {
+        animation: none;
+    }
+}
+
 .agent-chat-typing-dot:nth-child(2) {
     animation-delay: 0.2s;
 }
