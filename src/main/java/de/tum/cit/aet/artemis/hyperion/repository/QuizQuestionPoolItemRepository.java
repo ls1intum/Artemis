@@ -69,7 +69,9 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     @Query("""
             SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO(item.id, item.competencyId, item.difficulty)
             FROM QuizQuestionPoolItem item
+                JOIN LectureUnit lu ON item.lectureUnitId = lu.id
             WHERE item.course.id = :courseId
+                AND (lu.releaseDate IS NULL OR lu.releaseDate <= CURRENT_TIMESTAMP)
                 AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
                 AND item.accepted = TRUE
                 AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED
@@ -89,7 +91,9 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     @Query("""
             SELECT item
             FROM QuizQuestionPoolItem item
+                JOIN LectureUnit lu ON item.lectureUnitId = lu.id
             WHERE item.course.id = :courseId
+                AND (lu.releaseDate IS NULL OR lu.releaseDate <= CURRENT_TIMESTAMP)
                 AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
                 AND item.accepted = TRUE
                 AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED
@@ -108,8 +112,10 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     @Query("""
             SELECT item
             FROM QuizQuestionPoolItem item
+                JOIN LectureUnit lu ON item.lectureUnitId = lu.id
             WHERE item.course.id = :courseId
                 AND item.competencyId = :competencyId
+                AND (lu.releaseDate IS NULL OR lu.releaseDate <= CURRENT_TIMESTAMP)
                 AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
                 AND item.accepted = TRUE
                 AND item.reviewState != de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.EXCLUDED

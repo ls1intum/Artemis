@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -13,8 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeQuestionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionReviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionSummaryDTO;
@@ -34,11 +36,15 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
-class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
+class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
 
     private static final String TEST_PREFIX = "practicequiztest";
 
@@ -48,9 +54,20 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
     @Autowired
     private FeatureToggleService featureToggleService;
 
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
     private Course course;
 
     private QuizQuestionPoolItem poolItem1;
+
+    private QuizQuestionPoolItem poolItemUnreleased;
 
     @BeforeEach
     void initTestCase() {
@@ -65,6 +82,12 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
         // Create practice-eligible questions in the AI question pool
         poolItem1 = createPoolItem(0, "Item 1 Title", "Item 1 Text", competency.getId(), lectureUnit.getId());
         createPoolItem(1, "Item 2 Title", "Item 2 Text", competency.getId(), lectureUnit.getId());
+
+        // Create an unreleased lecture unit with a pool item to test that future-dated units are excluded
+        TextUnit unreleasedUnit = lectureUtilService.createTextUnit(lecture);
+        unreleasedUnit.setReleaseDate(ZonedDateTime.now().plusDays(7));
+        lectureUnitRepository.save(unreleasedUnit);
+        poolItemUnreleased = createPoolItem(2, "Item Unreleased", "Text", competency.getId(), unreleasedUnit.getId());
     }
 
     @AfterEach
@@ -106,7 +129,8 @@ class PracticeQuizIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(sessionDTO.questions()).isNotEmpty();
 
         long sessionId = sessionDTO.id();
-        // Verify question explanation is hidden in practice session DTO
+        // Verify question explanation is hidden in practice session DTO and unreleased unit questions are excluded
+        assertThat(sessionDTO.questions()).extracting(PracticeQuestionDTO::id).doesNotContain(poolItemUnreleased.getId());
         assertThat(sessionDTO.questions().getFirst().explanation()).isNull();
 
         // 2. Check current in-progress session
