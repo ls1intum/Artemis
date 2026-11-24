@@ -299,7 +299,7 @@ function treeLines(d, modulesPerImport) {
 
 // The fold spans every column, so a closed fold is one clean line under its route.
 function foldRow(d, modulesPerImport, open = false) {
-    if (d.imports.length === 0) return '';
+    if (d.skipped || d.imports.length === 0) return ''; // a skipped route has no imports to show
     return `<tr><td colspan="6"><details${open ? ' open' : ''}><summary>${importNames(d)}</summary>\n<pre>\n${treeLines(d, modulesPerImport)}\n</pre>\n</details></td></tr>`;
 }
 
