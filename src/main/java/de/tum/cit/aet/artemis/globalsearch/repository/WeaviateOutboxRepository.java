@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.repository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 
 /**
  * Spring Data JPA repository for {@link WeaviateOutboxEntry}.
@@ -77,6 +79,23 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
      * @return {@code true} if a row for this entity is already queued
      */
     boolean existsByEntityTypeAndEntityId(String entityType, Long entityId);
+
+    /**
+     * Counts the queued rows of one origin, due or backing off. The dispatcher uses it to notice a queue that does not shrink.
+     *
+     * @param origin the origin of the rows
+     * @return the number of queued rows
+     */
+    long countByOrigin(WeaviateOutboxOrigin origin);
+
+    /**
+     * Finds the enqueue time of the oldest queued row of one origin, due or backing off.
+     *
+     * @param origin the origin of the rows
+     * @return the oldest enqueue time, empty if no row is queued
+     */
+    @Query("SELECT MIN(e.createdAt) FROM WeaviateOutboxEntry e WHERE e.origin = :origin")
+    Optional<ZonedDateTime> findOldestCreatedAtByOrigin(@Param("origin") WeaviateOutboxOrigin origin);
 
     /**
      * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a

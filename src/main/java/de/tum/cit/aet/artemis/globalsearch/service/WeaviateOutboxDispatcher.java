@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
@@ -86,6 +89,28 @@ public class WeaviateOutboxDispatcher {
      * backlog does not emit one warning per row per retry.
      */
     private static final int MAX_WARN_ATTEMPTS = 3;
+
+    /**
+     * Retrying does not help when Weaviate itself refuses writes, for example because it switched its store to read-only
+     * under disk or memory pressure. Rows then pile up and the search index falls behind, so a queue that is this old or
+     * this large is reported at {@code ERROR}. Only rows written for user actions count: reconcile rows can be numerous by design.
+     */
+    static final Duration BACKLOG_ALERT_AGE = Duration.ofMinutes(15);
+
+    static final long BACKLOG_ALERT_SIZE = 1000;
+
+    /**
+     * How often the queue is inspected, and how often an unchanged backlog is reported again. The queue is only inspected
+     * from the drain, so the check costs two small queries per interval and no extra scheduled job.
+     */
+    static final Duration BACKLOG_CHECK_INTERVAL = Duration.ofMinutes(1);
+
+    static final Duration BACKLOG_REPORT_INTERVAL = Duration.ofMinutes(15);
+
+    /**
+     * Text of the Weaviate error that marks its store as read-only.
+     */
+    private static final String READ_ONLY_MARKER = "read-only";
 
     /**
      * Drain and retry tuning, bound from {@code artemis.weaviate.outbox}.
@@ -166,6 +191,21 @@ public class WeaviateOutboxDispatcher {
      */
     private final AtomicBoolean drainPending = new AtomicBoolean();
 
+    /**
+     * Message of the most recent failed write, named in the backlog report so that it says why the queue does not shrink.
+     * Written by the drain thread, read by it as well.
+     */
+    private String lastFailureMessage;
+
+    /**
+     * The first check comes one interval after the start, so the queue is not queried while the node still boots.
+     */
+    private Instant nextBacklogCheckAt = Instant.now().plus(BACKLOG_CHECK_INTERVAL);
+
+    private Instant nextBacklogReportAt = Instant.MIN;
+
+    private boolean backlogReported;
+
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
             SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties,
             WeaviateEmbeddingProperties embeddingProperties, SearchableEntityEmbeddingClient embeddingClient, SearchableEntityIndexRebuildService rebuildService,
@@ -232,6 +272,7 @@ public class WeaviateOutboxDispatcher {
                 while (drainPending.getAndSet(false)) {
                     drainAllDueRows();
                 }
+                monitorBacklog(Instant.now());
             }
             catch (Exception e) {
                 // The database was unavailable while reading or recording. Give up for now; the next tick retries.
@@ -506,7 +547,49 @@ public class WeaviateOutboxDispatcher {
         confirmWrite(entry, now, writtenContentHash);
     }
 
+    /**
+     * Reports a queue of rows for user actions that Weaviate does not take. Called from the drain with the lock held, at most once
+     * per {@link #BACKLOG_CHECK_INTERVAL}. A backlog is reported when it is first seen and then every {@link #BACKLOG_REPORT_INTERVAL};
+     * the end of it is reported once. A failing check never disturbs the drain.
+     *
+     * @param now the current time
+     */
+    void monitorBacklog(Instant now) {
+        if (now.isBefore(nextBacklogCheckAt)) {
+            return;
+        }
+        nextBacklogCheckAt = now.plus(BACKLOG_CHECK_INTERVAL);
+        try {
+            long size = outboxRepository.countByOrigin(WeaviateOutboxOrigin.LIVE);
+            Optional<ZonedDateTime> oldest = size == 0 ? Optional.empty() : outboxRepository.findOldestCreatedAtByOrigin(WeaviateOutboxOrigin.LIVE);
+            Duration age = oldest.map(createdAt -> Duration.between(createdAt.toInstant(), now)).orElse(Duration.ZERO);
+            boolean backlog = size >= BACKLOG_ALERT_SIZE || age.compareTo(BACKLOG_ALERT_AGE) >= 0;
+            if (!backlog) {
+                if (backlogReported) {
+                    log.info("The Weaviate outbox backlog is gone: {} row(s) for user actions are waiting", size);
+                    backlogReported = false;
+                    nextBacklogReportAt = Instant.MIN;
+                }
+                return;
+            }
+            if (now.isBefore(nextBacklogReportAt)) {
+                return;
+            }
+            backlogReported = true;
+            nextBacklogReportAt = now.plus(BACKLOG_REPORT_INTERVAL);
+            String hint = lastFailureMessage != null && lastFailureMessage.contains(READ_ONLY_MARKER)
+                    ? " Weaviate has set its store to read-only, which it does when disk or memory runs short. Free capacity on the Weaviate host; the rows are written on their own afterwards."
+                    : "";
+            log.error("The Weaviate outbox has a backlog: {} row(s) for user actions are waiting, the oldest for {} minute(s). The search index falls behind. Last failure: {}.{}",
+                    size, age.toMinutes(), lastFailureMessage != null ? lastFailureMessage : "none since this node started", hint);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not check the Weaviate outbox backlog: {}", e.getMessage());
+        }
+    }
+
     private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
+        lastFailureMessage = e.getMessage();
         int attempt = entry.getAttempts() + 1;
         // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
         ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
