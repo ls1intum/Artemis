@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.core.connector;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -423,6 +425,14 @@ public class IrisRequestMockProvider {
             requestConsumer.accept(dto);
             return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
         });
+    }
+
+    /**
+     * Mocks a Pyris that does not answer the lecture search, as when the request times out.
+     */
+    public void mockSearchLecturesUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
     }
 
     public void mockSearchLecturesError(HttpStatus status) {

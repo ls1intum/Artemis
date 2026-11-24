@@ -95,6 +95,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(response.get(1).lectureUnit().id()).isEqualTo(2L);
     }
 
+    /**
+     * A Pyris that does not answer is an outage of another service, so the request is answered as unavailable instead of failing with an unhandled error.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisDoesNotAnswer_shouldBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesUnreachable();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnEmptyList() throws Exception {

@@ -157,7 +157,8 @@ public class PyrisConnectorService {
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to search lectures in Pyris", e);
+            // Pyris being slow or down is an outage of another service, and the caller answers it. The exception is not needed to tell which one it is.
+            log.warn("Failed to search lectures in Pyris: {}", e.getMessage());
             throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
         }
     }

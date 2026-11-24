@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.IrisSearchScopeService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
@@ -109,7 +111,13 @@ public class IrisGlobalSearchResource {
         if (scope.searchesNothing()) {
             return ResponseEntity.ok(List.of());
         }
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
+        try {
+            return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
+        }
+        catch (PyrisConnectorException e) {
+            // Pyris is not reachable or too slow. That is no defect of this request, so it is answered as an unavailable service instead of an unhandled error.
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
     }
 
     /**
