@@ -1,10 +1,9 @@
 .unreferenced-feedback {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.5rem; /* Reduced overall spacing */
+    padding-top: 0.5rem;
 }
-
-/* Reduced overall spacing */
 
 /* A flex column item stretches to the parent's full width by default; without this the button became a
    full-width bar instead of the compact, content-sized button it was before. */
