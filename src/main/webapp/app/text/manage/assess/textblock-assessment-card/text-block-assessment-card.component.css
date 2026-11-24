@@ -1,0 +1,66 @@
+span {
+    white-space: pre-wrap;
+}
+
+span.clickable {
+    cursor: pointer;
+}
+
+span:hover.clickable {
+    background: var(--textblock-assessment-span-hover-background);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+span.highlighted {
+    color: var(--textblock-assessment-text-feedback-highlighted-color);
+    background-color: var(--textblock-assessment-text-feedback-highlighted-background);
+}
+
+span.text-with-feedback {
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+span.text-with-feedback.active {
+    text-decoration-line: underline;
+}
+
+span.text-with-feedback.positive-feedback {
+    color: var(--textblock-assessment-text-feedback-positive-color);
+    background-color: var(--textblock-assessment-text-feedback-positive-background);
+}
+
+span.text-with-feedback.positive-feedback.active {
+    text-decoration-style: double;
+    text-decoration-color: var(--textblock-assessment-text-feedback-positive-active-decoration);
+}
+
+span.text-with-feedback.negative-feedback {
+    color: var(--textblock-assessment-text-feedback-negative-color);
+    background-color: var(--textblock-assessment-text-feedback-negative-background);
+}
+
+span.text-with-feedback.negative-feedback.active {
+    text-decoration-style: wavy;
+    text-decoration-color: var(--textblock-assessment-text-feedback-negative-active-decoration);
+}
+
+span.text-with-feedback.neutral-feedback {
+    color: var(--textblock-assessment-text-feedback-neutral-color);
+    background-color: var(--textblock-assessment-text-feedback-neutral-background);
+}
+
+span.text-with-feedback.neutral-feedback.active {
+    text-decoration-style: dashed;
+    text-decoration-color: var(--textblock-assessment-text-feedback-neutral-active-decoration);
+}
+
+jhi-text-block-feedback-editor {
+    margin-top: 1rem;
+    border-width: 0;
+}
+
+jhi-text-block-feedback-editor.active {
+    border: 2px var(--textblock-assessment-textblock-feedback-editor-active-border) solid;
+}

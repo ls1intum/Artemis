@@ -1,0 +1,63 @@
+.edit-sa-question .short-answer-question-display {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.edit-sa-question .short-answer-question-display__element {
+    display: inline-flex;
+}
+
+.edit-sa-question .short-answer-question-display .short-answer-question-container {
+    display: inline-block;
+    position: relative;
+}
+
+.edit-sa-question .short-answer-question-display .short-answer-question-container__input {
+    border: 1px solid var(--sa-question-container-input-border);
+    line-height: 35px;
+    margin-bottom: 10px;
+}
+
+.edit-sa-question .short-answer-question-display .short-answer-question-container__div-input {
+    background-color: var(--sa-question-container-input-background);
+    border: 1px solid var(--sa-question-container-input-border);
+    padding: 2px 3px;
+    width: 170px;
+    height: 40px;
+}
+
+.edit-sa-question .sa-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.edit-sa-question .sa-slider-group input[type='range'] {
+    cursor: pointer;
+    width: 5rem;
+}
+
+.edit-sa-question .sa-slider-value {
+    min-width: 3rem;
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+.edit-sa-question .question-card-header {
+    width: 100%;
+    padding: 15px 5px 5px;
+}
+
+.edit-sa-question .question-card-header .question-collapse {
+    width: 3.25rem;
+}
+
+.edit-sa-question .question-card-header-reevaluation {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+}
+
+.edit-sa-question .question-card-header-reevaluation .question-collapse {
+    width: 3.25rem;
+}

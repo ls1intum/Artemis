@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['./short-answer-question.component.css', '../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, TumAetUiTooltipDirective, TumAetUiButtonComponent, TranslateDirective, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })

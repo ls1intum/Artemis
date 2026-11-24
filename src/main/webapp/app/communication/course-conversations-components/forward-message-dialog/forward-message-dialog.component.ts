@@ -56,7 +56,7 @@ let nextDestinationListboxId = 0;
 @Component({
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
-    styleUrls: ['./forward-message-dialog.component.scss'],
+    styleUrls: ['./forward-message-dialog.component.css'],
     imports: [
         ArtemisTranslatePipe,
         ProfilePictureComponent,

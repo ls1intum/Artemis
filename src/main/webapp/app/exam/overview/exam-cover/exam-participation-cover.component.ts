@@ -28,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
-    styleUrls: ['./exam-participation-cover.scss'],
+    styleUrls: ['./exam-participation-cover.css'],
     imports: [
         NgTemplateOutlet,
         TumAetUiButtonDirective,

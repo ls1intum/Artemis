@@ -8,7 +8,7 @@ import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/bu
 @Component({
     selector: 'jhi-feature-activation',
     templateUrl: './feature-activation.component.html',
-    styleUrls: ['./feature-activation.component.scss'],
+    styleUrls: ['./feature-activation.component.css'],
     imports: [ButtonComponent, TranslateDirective, FaIconComponent, TumAetUiCardComponent],
 })
 export class FeatureActivationComponent {

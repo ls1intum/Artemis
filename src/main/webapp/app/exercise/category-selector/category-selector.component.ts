@@ -13,7 +13,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 @Component({
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',
-    styleUrls: ['./category-selector.component.scss'],
+    styleUrls: ['./category-selector.component.css'],
     imports: [TumAetUiAutoCompleteComponent, FormsModule, FaIconComponent, ColorSelectorComponent, ArtemisTranslatePipe],
 })
 export class CategorySelectorComponent {

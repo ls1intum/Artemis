@@ -1,0 +1,12 @@
+.course-competencies-graph-container #arrow {
+    stroke: var(--body-color);
+    fill: var(--body-color);
+}
+
+.course-competencies-graph-container .selected {
+    stroke: var(--primary);
+}
+
+.course-competencies-graph-container .text-path {
+    fill: var(--body-color);
+}

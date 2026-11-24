@@ -1,18 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { Logger, compileString } from 'sass';
+import { readThemeTokens } from 'test/helpers/theme-tokens';
 
 /**
  * Contrast guard for the highlight that a hovered message gets in the dark theme, and a parity guard for the communication
  * tokens of both themes. The light theme is only checked for a visible highlight and readable message text: its link, grey
  * and inline code colours are below AA on the highlight already and are not part of this guard.
  *
- * The tokens are not re-typed here. Both theme variable files are compiled with the same `generate-css-vars` mixin that
- * produces `theme-default.css` and `theme-dark.css`, so a change to a value in `_dark-variables.scss` (or to a `lighten()`
- * step it is derived from) is what these assertions see. The colours they check are the ones a message renders: the primary
+ * The tokens are not re-typed here. They are read from the theme stylesheets (`themes/light.css`, `themes/dark.css`) with
+ * their references to other tokens resolved, so a change to a value in `dark.css` (or to a token it is derived from) is
+ * what these assertions see. The colours they check are the ones a message renders: the primary
  * text, the secondary text of the role label, links, inline code, block quotes and the muted grey of the "edited" label.
  */
-const THEME_DIRECTORY = 'src/main/webapp/content/scss/themes';
-
 /** WCAG 2.x AA contrast for normal-sized text. */
 const AA_TEXT = 4.5;
 
@@ -36,18 +34,6 @@ const MESSAGE_TEXT_TOKENS: Record<string, string> = {
 };
 
 type Rgba = [number, number, number, number];
-
-function compileThemeTokens(variablesModule: 'default-variables' | 'dark-variables'): Map<string, string> {
-    const { css } = compileString(`@use '${THEME_DIRECTORY}/generate-css-vars';\nhtml { @include generate-css-vars.generate('${variablesModule}'); }`, {
-        loadPaths: [process.cwd()],
-        logger: Logger.silent,
-    });
-    const tokens = new Map<string, string>();
-    for (const [, name, value] of css.matchAll(/--([\w-]+):\s*([^;]+);/g)) {
-        tokens.set(name, value.trim());
-    }
-    return tokens;
-}
 
 function parseChannel(channel: string, scale: number): number {
     return channel.endsWith('%') ? (parseFloat(channel) / 100) * scale : parseFloat(channel);
@@ -104,7 +90,7 @@ function contrastRatio(first: Rgba, second: Rgba): number {
 
 describe('Communication message highlight contrast', () => {
     describe('dark theme', () => {
-        const tokens = compileThemeTokens('dark-variables');
+        const tokens = readThemeTokens('dark');
         const messageBackground = tokenColor(tokens, 'module-bg');
         const highlight = over(tokenColor(tokens, 'communication-selection-option-hover-background'), messageBackground);
 
@@ -132,7 +118,7 @@ describe('Communication message highlight contrast', () => {
     });
 
     describe('light theme', () => {
-        const tokens = compileThemeTokens('default-variables');
+        const tokens = readThemeTokens('light');
         const messageBackground = tokenColor(tokens, 'module-bg');
         const highlight = over(tokenColor(tokens, 'communication-selection-option-hover-background'), messageBackground);
 
@@ -147,12 +133,14 @@ describe('Communication message highlight contrast', () => {
 });
 
 describe('Communication theme tokens', () => {
-    it('should define every communication token in the dark theme too, so that none falls back to its light value', () => {
-        const light = compileThemeTokens('default-variables');
-        const dark = compileThemeTokens('dark-variables');
-        const communicationTokens = [...light.keys()].filter((name) => name.startsWith('communication-') || name.startsWith('reaction-button-'));
+    it('should give the surfaces of a message a value of their own in the dark theme, so that none falls back to its light value', () => {
+        const light = readThemeTokens('light');
+        const dark = readThemeTokens('dark');
+        const surfaces = ['communication-selection-option-hover-background', 'module-bg', 'body-color'];
 
-        expect(communicationTokens).toContain('communication-selection-option-hover-background');
-        expect(communicationTokens.filter((name) => !dark.has(name))).toEqual([]);
+        for (const name of surfaces) {
+            expect(light.has(name), `--${name} is not a token of the light theme`).toBe(true);
+            expect(dark.get(name), `--${name} has the same value in both themes`).not.toBe(light.get(name));
+        }
     });
 });

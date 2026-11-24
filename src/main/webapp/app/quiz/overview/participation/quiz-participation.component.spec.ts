@@ -757,6 +757,8 @@ describe('QuizParticipationComponent - live mode', () => {
         ['live', false, false, 0, false, LiveQuizParticipationStatus.PARTICIPATING],
         ['live', false, true, -100, false, LiveQuizParticipationStatus.SUBMITTED],
         ['live', false, false, -1, true, LiveQuizParticipationStatus.MISSED],
+        ['live', false, false, -1, false, LiveQuizParticipationStatus.MISSED],
+        ['live', true, false, -1, false, LiveQuizParticipationStatus.NOT_STARTED],
     ])('should emit the live quiz status from syncSubmitState', (mode, waiting, submitted, remaining, quizEnded, expected) => {
         component.mode.set(mode as string);
         component.quizExercise.set({ id: 1, quizEnded: quizEnded as boolean } as QuizExercise);

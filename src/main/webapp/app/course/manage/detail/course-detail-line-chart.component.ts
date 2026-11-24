@@ -26,7 +26,7 @@ export enum SwitchTimeSpanDirection {
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
-    styleUrls: ['./course-detail-line-chart.component.scss'],
+    styleUrls: ['./course-detail-line-chart.component.css'],
     imports: [
         RouterLink,
         TranslateDirective,
