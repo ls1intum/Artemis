@@ -181,7 +181,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     ],
     host: { '[class.jhi-table-view-fill]': 'resolvedOptions().fill' },
     templateUrl: './table-view.html',
-    styleUrl: './table-view.scss',
+    styleUrl: './table-view.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class TableViewComponent<T> {

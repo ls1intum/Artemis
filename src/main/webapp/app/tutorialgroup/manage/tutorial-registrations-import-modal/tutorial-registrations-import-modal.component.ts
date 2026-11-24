@@ -42,7 +42,7 @@ interface ImportResult {
         ArtemisTranslatePipe,
     ],
     templateUrl: './tutorial-registrations-import-modal.component.html',
-    styleUrl: './tutorial-registrations-import-modal.component.scss',
+    styleUrl: './tutorial-registrations-import-modal.component.css',
 })
 export class TutorialRegistrationsImportModalComponent {
     private translateService = inject(TranslateService);

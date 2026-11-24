@@ -36,7 +36,7 @@ interface FeedbackStyleTick {
 @Component({
     selector: 'jhi-athena-settings-update',
     templateUrl: './athena-settings-update.component.html',
-    styleUrl: './athena-settings-update.component.scss',
+    styleUrl: './athena-settings-update.component.css',
     host: { class: 'block' },
     imports: [
         CourseTitleBarTitleComponent,

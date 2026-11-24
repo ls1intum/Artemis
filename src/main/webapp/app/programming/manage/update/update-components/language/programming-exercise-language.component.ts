@@ -21,7 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         FormsModule,

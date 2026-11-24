@@ -27,7 +27,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
-    styleUrl: './build-agent-summary.component.scss',
+    styleUrl: './build-agent-summary.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTableLayoutComponent,

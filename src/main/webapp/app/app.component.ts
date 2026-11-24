@@ -24,7 +24,7 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
 @Component({
     selector: 'jhi-app',
     templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
+    styleUrls: ['./app.component.css'],
     imports: [
         AlertOverlayComponent,
         CdkScrollable,

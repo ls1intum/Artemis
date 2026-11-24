@@ -16,7 +16,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 @Component({
     selector: 'jhi-posting-summary',
     templateUrl: './posting-summary.component.html',
-    styleUrls: ['./posting-summary.component.scss'],
+    styleUrls: ['./posting-summary.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,

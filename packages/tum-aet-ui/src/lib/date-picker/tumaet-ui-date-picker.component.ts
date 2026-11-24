@@ -43,7 +43,7 @@ let nextDatePickerId = 0;
 @Component({
     selector: 'tumaet-ui-date-picker',
     templateUrl: './tumaet-ui-date-picker.component.html',
-    styleUrl: './tumaet-ui-date-picker.component.scss',
+    styleUrl: './tumaet-ui-date-picker.component.css',
     host: {
         class: 'tumaet-ui-date-picker',
         '[class.tumaet-ui-date-picker--date-only]': 'dateOnly()',

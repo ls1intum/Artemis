@@ -6,7 +6,7 @@ import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises
     selector: 'jhi-exercise-unit',
     templateUrl: './exercise-unit.component.html',
     encapsulation: ViewEncapsulation.None,
-    styleUrls: ['./exercise-unit.component.scss'],
+    styleUrls: ['./exercise-unit.component.css'],
     imports: [CourseExerciseRowComponent],
     host: { class: 'exercise-unit' },
 })

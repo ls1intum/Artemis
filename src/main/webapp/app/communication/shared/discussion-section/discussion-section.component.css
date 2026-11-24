@@ -1,0 +1,85 @@
+.postings-container {
+    display: flex;
+    height: 100%;
+    margin-left: auto;
+}
+
+.postings-container .back-instruction {
+    font-size: 12px;
+}
+
+.expanded-discussion {
+    width: calc(var(--spacing-divider) + 370px);
+}
+
+.expanded-discussion .discussion-card {
+    display: flex;
+    flex-direction: column;
+    width: inherit;
+    min-width: 370px;
+    border: 2px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-sm);
+    background-color: var(--tumaet-ui-content-background);
+}
+
+.expanded-discussion .discussion-card .discussion-card-header {
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 15px;
+    border-radius: 0.25em 0.25em 0 0;
+    background-color: transparent;
+    border-bottom: 2px solid var(--tumaet-ui-border-color);
+}
+
+.expanded-discussion .discussion-card .items-container {
+    max-height: 700px;
+    overflow-y: auto;
+}
+
+.collapsed-discussion {
+    width: 38px;
+    justify-content: start;
+    flex-flow: column nowrap;
+    border: 2px solid var(--tumaet-ui-border-color);
+    border-radius: 0.25em 0 0 0.25em;
+
+    /* No divider is rendered while collapsed, so the bar keeps the distance a divider has. */
+    margin-left: var(--spacing-divider);
+    cursor: pointer;
+}
+
+.collapsed-discussion span {
+    writing-mode: vertical-rl;
+    margin: auto;
+}
+
+.collapsed-discussion .expand-postings-icon {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    place-self: center;
+}
+
+.collapsed-discussion .spacer {
+    flex: 1;
+    width: 100%;
+}
+
+@media screen and (max-width: 832px) {
+    .expanded-discussion {
+        max-width: 230px !important;
+
+        /* The divider is hidden here, so the card keeps the distance a divider has. */
+        margin-left: var(--spacing-divider);
+    }
+
+    .expanded-discussion .draggable-left {
+        display: none;
+    }
+
+    .expanded-discussion .discussion-card {
+        width: inherit;
+        min-width: 230px;
+    }
+}

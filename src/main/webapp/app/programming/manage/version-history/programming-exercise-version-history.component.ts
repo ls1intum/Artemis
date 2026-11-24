@@ -15,7 +15,7 @@ import { Subscription, finalize } from 'rxjs';
 @Component({
     selector: 'jhi-programming-exercise-version-history',
     templateUrl: './programming-exercise-version-history.component.html',
-    styleUrls: ['./programming-exercise-version-history.component.scss'],
+    styleUrls: ['./programming-exercise-version-history.component.css'],
     imports: [
         TranslateDirective,
         TumAetUiMessageComponent,
