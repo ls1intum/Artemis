@@ -88,9 +88,13 @@ export class SplitTranslateLoader implements TranslateLoader {
     /* The first pointer or key press of the visitor starts the download. Until then, or until the router leaves the slice routes,
        the upgrade stays pending. */
     private scheduleUpgradeOnInteraction(lang: string): void {
-        if (!this.claimUpgrade(lang)) {
-            return;
+        if (this.claimUpgrade(lang)) {
+            this.armInteractionUpgrade(lang);
         }
+    }
+
+    /* Registers the listeners of the interaction trigger. They remove themselves when one of them fires, and when the loader is destroyed. */
+    private armInteractionUpgrade(lang: string): void {
         const stopListening = new AbortController();
         this.destroyRef.onDestroy(() => stopListening.abort());
         const upgrade = () => {
@@ -167,8 +171,12 @@ export class SplitTranslateLoader implements TranslateLoader {
                 this.inFlightUpgrades.delete(lang);
                 this.fullyLoadedLangs.delete(lang);
                 // Re-queue so the next NavigationEnd (or the next getTranslation call for
-                // this language) can actually retry the upgrade.
+                // this language) can actually retry the upgrade. On the sign-in page the next
+                // interaction retries as well: the listeners of the failed attempt have fired.
                 this.pendingUpgrades.add(lang);
+                if (normalizePath(window.location.pathname) === SIGN_IN_PATH) {
+                    this.armInteractionUpgrade(lang);
+                }
             },
         });
     }

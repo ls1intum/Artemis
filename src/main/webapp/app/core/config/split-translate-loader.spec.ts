@@ -111,6 +111,22 @@ describe('SplitTranslateLoader', () => {
             httpMock.expectNone(isFullBundle);
         });
 
+        it('fetches the full bundle again with the next interaction after a failed fetch', async () => {
+            await hydrateSignInSlice();
+
+            document.dispatchEvent(new Event('pointerdown'));
+            httpMock.expectOne(isFullBundle).flush('', { status: 500, statusText: 'Server Error' });
+            httpMock.expectNone(isFullBundle);
+
+            document.dispatchEvent(new Event('keydown'));
+
+            httpMock.expectOne(isFullBundle).flush({ home: {}, artemisApp: {} });
+            expect(translateServiceMock.setTranslation).toHaveBeenCalledWith('en', { home: {}, artemisApp: {} }, false);
+            // the successful retry is the last one
+            document.dispatchEvent(new Event('pointerdown'));
+            httpMock.expectNone(isFullBundle);
+        });
+
         it('does not treat the automatic focus of the username field as an interaction', async () => {
             await hydrateSignInSlice();
 

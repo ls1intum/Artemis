@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
 import { runViteOverrideCheck } from '../check-vite-override.mjs';
+import { LANDING_NAMESPACES } from './i18n-slice.mjs';
 
 // Runs on every `ng serve` and every client build: a vite version that does not match what
 // @angular/build expects breaks the dev server silently (blank page), so fail here instead.
@@ -72,30 +73,6 @@ fs.writeFileSync(path.resolve(repoRoot, 'src', 'main', 'webapp', 'app', 'core', 
 const groups = [
     { folder: './src/main/webapp/i18n/en', output: './src/main/webapp/i18n/en.json', landingOutput: './src/main/webapp/i18n/en-landing.json' },
     { folder: './src/main/webapp/i18n/de', output: './src/main/webapp/i18n/de.json', landingOutput: './src/main/webapp/i18n/de-landing.json' },
-];
-
-// The landing and the sign-in page need `landing` (components), `global` (menu/ribbon, footer), `home` (sign-in form) and `login`
-// (sign-in errors), and the few keys of other namespaces that the sign-in page, its alerts and its passkey flow show. An entry is a
-// namespace or a path into one (`error.http`): `artemisApp` alone is most of the catalog. Keep this list narrow: shipping extra keys here bloats
-// the initial i18n request that blocks LCP. A key that is missing here shows up as `translation-not-found[...]` until the full
-// catalog has loaded, so add the keys of a component that the sign-in page shows.
-// `SplitTranslateLoader` (app/core/config/split-translate-loader.ts) decides which routes start from this slice.
-const LANDING_NAMESPACES = [
-    'landing',
-    'global',
-    'home',
-    'login',
-    'entity.action',
-    'error.http',
-    'artemisApp.alerts',
-    'artemisApp.error',
-    'artemisApp.git',
-    'artemisApp.legal.imprint.title',
-    'artemisApp.legal.privacy',
-    'artemisApp.lti.ltiSuccessLoginRequired',
-    'artemisApp.outdatedAction',
-    'artemisApp.outdatedAlert',
-    'artemisApp.userSettings.passkeySettingsPage.error',
 ];
 
 const isObject = (obj) => obj && typeof obj === 'object';
