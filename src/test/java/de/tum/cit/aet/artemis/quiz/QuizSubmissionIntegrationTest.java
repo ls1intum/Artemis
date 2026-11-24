@@ -1403,6 +1403,25 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         }
 
         /**
+         * The live save and the batch join work on the submission of the graded participation. A practice submission of the same student, even an older one, belongs to
+         * a participation of its own and is not taken for it.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testFindByExerciseIdAndStudentLogin_ignoresAnOlderPracticeSubmission() {
+            QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+            String login = TEST_PREFIX + "student2";
+            participationUtilService.addSubmission(quizExercise, new QuizSubmission(), login);
+            StudentParticipation practiceParticipation = (StudentParticipation) participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            practiceParticipation.setTestRun(true);
+            participationRepository.saveAndFlush(practiceParticipation);
+            QuizSubmission graded = (QuizSubmission) participationUtilService.addSubmission(quizExercise, new QuizSubmission(), login);
+            assertThat(graded.getParticipation().getId()).isNotEqualTo(practiceParticipation.getId());
+
+            assertThat(quizSubmissionTestRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), login)).get().extracting(QuizSubmission::getId).isEqualTo(graded.getId());
+        }
+
+        /**
          * The result calculation after the quiz grades the submission the student saved, the oldest one, and sends the student that one only: the client shows the
          * first submission of the pushed participation, which must be the one that has the result.
          */

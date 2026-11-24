@@ -226,7 +226,8 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     Set<QuizSubmission> findAllByQuizBatchAndStudentLogin(@Param("quizBatchId") Long quizBatchId, @Param("studentLogin") String studentLogin);
 
     /**
-     * All submissions a student has for a quiz, the oldest first. A student has exactly one, which {@link #findByExerciseIdAndStudentLogin} relies on;
+     * All submissions a student has for a quiz in the participation that is graded, the oldest first. Practice submissions are not among them: they belong to a
+     * participation of their own that is marked as a test run. A student has exactly one, which {@link #findByExerciseIdAndStudentLogin} relies on;
      * this reads all of them so that a student with more can be told apart from one without.
      *
      * @param exerciseId   the id of the quiz exercise
@@ -239,6 +240,7 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
                 LEFT JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :studentLogin
+                AND participation.testRun = FALSE
             ORDER BY submission.id ASC
             """)
     List<QuizSubmission> findAllByExerciseIdAndStudentLoginOrderById(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);

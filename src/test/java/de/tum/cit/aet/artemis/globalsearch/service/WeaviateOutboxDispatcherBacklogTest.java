@@ -249,6 +249,22 @@ class WeaviateOutboxDispatcherBacklogTest {
     }
 
     @Test
+    void testMonitorBacklog_aWriteForAnotherEntityDoesNotHideTheFailure() {
+        failOneWrite(READ_ONLY_FAILURE);
+        WeaviateOutboxEntry other = WeaviateOutboxEntry.forUpsert(COURSE, 2L, WeaviateOutboxOrigin.LIVE);
+        other.setId(2L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(other)).thenReturn(List.of());
+        doReturn(Optional.empty()).when(searchableEntityWeaviateService).applyOutboxEntry(other);
+        dispatcher.drain();
+
+        Instant now = Instant.now().plus(Duration.ofHours(1));
+        queue(1, now.minus(Duration.ofMinutes(40)));
+        dispatcher.monitorBacklog(now);
+
+        assertThat(errors()).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains(READ_ONLY_FAILURE));
+    }
+
+    @Test
     void testMonitorBacklog_aFailureIsForgottenOnceTheQueueIsEmpty() {
         Instant start = Instant.now().plus(Duration.ofHours(1));
         failOneWrite(READ_ONLY_FAILURE);

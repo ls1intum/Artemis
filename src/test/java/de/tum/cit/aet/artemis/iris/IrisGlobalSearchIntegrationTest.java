@@ -109,6 +109,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
+     * A Pyris that stops sending the body of its answer is as unavailable as one that does not answer at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisStopsSendingTheBody_shouldBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesBodyTimesOut();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    /**
      * An answer that cannot be read is a defect of the contract with Pyris, not an outage, so it is not reported as an unavailable service.
      */
     @Test

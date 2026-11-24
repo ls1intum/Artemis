@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -132,6 +133,20 @@ public class PyrisConnectorService {
     }
 
     /**
+     * Whether a failed request failed in the transport, for example a connection that could not be made or a read that timed out, as opposed to an answer that was
+     * received and could not be used. The client reports a transport failure while reading the headers as a {@link ResourceAccessException}, but one while reading the
+     * body as a plain {@link RestClientException} whose cause is the {@link IOException}, so the causes are looked at as well.
+     */
+    private static boolean isTransportFailure(Exception exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ResourceAccessException || cause instanceof IOException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Searches for lecture units in Pyris using a query string.
      *
      * @param query            the search query
@@ -157,13 +172,13 @@ public class PyrisConnectorService {
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
         }
-        catch (ResourceAccessException e) {
-            // Pyris is down or too slow, which is an outage of another service and no defect of Artemis, so the stack trace is not needed.
-            // An answer that cannot be read is not this and stays a connector failure below.
-            log.warn("Pyris did not answer the lecture search: {}", e.getMessage());
-            throw new PyrisUnavailableException("Could not fetch lecture search results from Pyris");
-        }
         catch (RestClientException | IllegalArgumentException e) {
+            // Pyris is down or too slow, which is an outage of another service and no defect of Artemis, so the stack trace is not needed. A connection that fails
+            // while the body is read is one as well. An answer that cannot be read is not and stays a connector failure.
+            if (isTransportFailure(e)) {
+                log.warn("Pyris did not answer the lecture search: {}", e.getMessage());
+                throw new PyrisUnavailableException("Could not fetch lecture search results from Pyris");
+            }
             log.error("Failed to search lectures in Pyris", e);
             throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
         }
