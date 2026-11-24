@@ -7,6 +7,7 @@
      The full border colour keeps them readable, and the card's own outline takes it too, so the card stands out from the
      grey of the panel it sits in. */
     --unified-feedback-divider: var(--border-color);
+
     min-width: min(320px, 100%);
     max-width: 720px;
     border-radius: 0.375rem;
@@ -123,6 +124,7 @@
     border-left: 1px solid var(--border-color);
     opacity: 0.6;
 }
+
 .unified-feedback-criterion-remove:hover,
 .unified-feedback-criterion-remove:focus-within {
     opacity: 1;
@@ -138,9 +140,11 @@
     justify-content: space-between;
     gap: 0.5rem;
     margin-bottom: 0.75rem;
+
     /* Editable mode's title is a growing textarea (can wrap to multiple lines), so its row must top-align
      instead of vertically centering the points input/toolbar against it. Read-only mode keeps centering. */
 }
+
 .unified-feedback-header:has(.unified-feedback-title-input) {
     align-items: flex-start;
 }
@@ -153,6 +157,7 @@
     overflow: hidden;
     flex: 1 1 auto;
 }
+
 .unified-feedback-header-left:has(.unified-feedback-title-input) {
     align-items: flex-start;
 }
@@ -234,20 +239,25 @@
     margin-bottom: 0;
     color: var(--body-color);
 }
+
 .unified-feedback-text br {
     margin-bottom: 0.25rem;
 }
+
 .unified-feedback-text p {
     margin-bottom: 0.25rem;
 }
+
 .unified-feedback-text p:last-child {
     margin-bottom: 0;
 }
+
 .unified-feedback-text ul,
 .unified-feedback-text ol {
     margin-bottom: 0.25rem;
     padding-left: 1.5rem;
 }
+
 .unified-feedback-text li {
     margin-bottom: 0.25rem;
 }
@@ -259,17 +269,21 @@
     white-space: nowrap;
     border-radius: 999px;
     padding: 0.15rem 0.6rem;
+
     /* Color and background follow the sign of the points value directly, not the surrounding card state color.
      Reuses the same tinted alert tokens the card states draw from, so both stay visually consistent. */
 }
+
 .unified-feedback-points--positive {
     color: var(--artemis-alert-success-color);
     background: var(--artemis-alert-success-background);
 }
+
 .unified-feedback-points--negative {
     color: var(--artemis-alert-danger-color);
     background: var(--artemis-alert-danger-background);
 }
+
 .unified-feedback-points--neutral {
     color: var(--artemis-alert-info-color);
     background: var(--artemis-alert-info-background);
@@ -302,15 +316,19 @@
     resize: none;
     overflow: hidden;
 }
+
 .unified-feedback-title-input:focus,
 .unified-feedback-title-input:focus-visible {
     background: var(--card-bg);
 }
+
 .unified-feedback-title-input {
     /* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
 }
+
 .unified-feedback-title-input:focus-visible {
     outline: 2px solid var(--body-color);
+
     /* Drawn inside the box: the header around the title hides what overflows it, which cut the ring on three sides */
     outline-offset: -2px;
 }
@@ -339,6 +357,7 @@
     color: var(--text-body-secondary);
     padding: 0;
 }
+
 .unified-feedback-icon-btn:hover {
     background: color-mix(in srgb, var(--body-color) 8%, transparent);
 }
@@ -363,17 +382,21 @@
     background: var(--card-bg);
     color: var(--body-color);
 }
+
 .unified-feedback-detail-input:focus,
 .unified-feedback-detail-input:focus-visible {
     background: var(--card-bg);
 }
+
 .unified-feedback-detail-input {
     /* The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one */
 }
+
 .unified-feedback-detail-input:focus-visible {
     outline: 2px solid var(--body-color);
     outline-offset: 0;
 }
+
 .unified-feedback-detail-input.unified-feedback-detail-input-missing {
     border-left: 3px solid var(--danger);
 }
@@ -395,6 +418,7 @@
 .unified-feedback-correction-status-label--correct {
     color: var(--success);
 }
+
 .unified-feedback-correction-status-label--incorrect {
     color: var(--danger);
 }
