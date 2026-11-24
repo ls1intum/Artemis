@@ -77,6 +77,11 @@ export class ExerciseImportFromFileComponent {
         const exerciseDetails = strFromU8(zipEntries[jsonFiles[0]]);
 
         const exerciseJson = parseJson<Exercise>(exerciseDetails);
+        if (Array.isArray(exerciseJson)) {
+            // The questions export of a quiz is a list of questions, which has no type to compare.
+            this.alertService.error('artemisApp.exercise.importFromFile.questionsExport');
+            return;
+        }
         if (exerciseJson.type !== exerciseType) {
             this.alertService.error('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
             return;
