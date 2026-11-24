@@ -24,6 +24,7 @@ import java.util.Set;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.storage.file.WindowCacheStats;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -606,6 +607,23 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
                 });
             }
         }
+    }
+
+    /**
+     * The checkout directory of an export lies on a shared file system, where a file that is still open cannot be deleted: it is renamed to a hidden .nfs file
+     * that keeps the directory from being removed. Every step that rewrites a repository closes it when it is done, which is one close too many, so the handles
+     * opened after the first close were never released. The export has to leave no pack file of its checkout open.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExportStudentRepositoriesToZipFile_whenRewriting_leavesNoRepositoryOfTheCheckoutOpen() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"));
+        RepositoryExportOptionsDTO anonymizingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, true, true, false);
+
+        programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, participations, anonymizingOptions, Map.of());
+
+        assertThat(WindowCacheStats.getStats().getOpenByteCountPerRepository().keySet()).as("no repository of the export checkout keeps a pack file open")
+                .noneMatch(repository -> repository.contains("repo-checkout-"));
     }
 
     @Test
