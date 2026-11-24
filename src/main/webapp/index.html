@@ -41,7 +41,10 @@
              video is only used on the landing page. The poster is only used there as well, so every other
              route skips it: on a slow connection a high-priority image competes with the scripts of the page. -->
         <script>
-            if (location.pathname === '/') {
+            (function () {
+                if (location.pathname !== '/') {
+                    return;
+                }
                 var poster = document.createElement('link');
                 poster.rel = 'preload';
                 poster.as = 'image';
@@ -49,7 +52,7 @@
                 poster.type = 'image/webp';
                 poster.fetchPriority = 'high';
                 document.head.appendChild(poster);
-            }
+            })();
         </script>
         <link rel="preload" as="image" href="/public/images/logo.svg" type="image/svg+xml" />
         <link rel="icon" type="image/svg+xml" sizes="any" href="logo/favicon.svg" />

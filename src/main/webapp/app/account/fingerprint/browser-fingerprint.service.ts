@@ -78,6 +78,10 @@ export class BrowserFingerprintService {
             .then((fingerprintAgent: { get: () => Promise<GetResult> }) => fingerprintAgent.get())
             .then((result) => {
                 this.browserFingerprint.next(result.visitorId);
+            })
+            .catch(() => {
+                // The library is a separate file, which can fail to load (a stale tab after a deployment, a content blocker, a bad connection).
+                // The fingerprint then stays unset: requests go without it, as they do before the library has loaded.
             });
     }
 

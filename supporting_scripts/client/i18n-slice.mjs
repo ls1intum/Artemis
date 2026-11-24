@@ -35,4 +35,5 @@ export const LANDING_NAMESPACES = [
     'artemisApp.outdatedAlert',
     'artemisApp.theme',
     'artemisApp.userSettings.passkeySettingsPage.error',
+    'artemisApp.userSettings.setupPasskeyModal',
 ];

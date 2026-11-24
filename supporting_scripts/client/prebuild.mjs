@@ -22,11 +22,6 @@ runViteOverrideCheck();
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '../..');
 process.chdir(repoRoot);
-const languagesHash = await hashElement(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'), {
-    algo: 'md5',
-    encoding: 'hex',
-    files: { include: ['*.json'] },
-});
 
 // =====================
 // Environment variables
@@ -56,15 +51,6 @@ function inferVersion() {
 // --develop flag is used to enable debug mode
 const args = process.argv.slice(2);
 const developFlag = args.includes('--develop');
-const environmentConfig = `// Don't change this file manually, it will be overwritten by the build process!
-export const __DEBUG_INFO_ENABLED__ = ${developFlag};
-export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
-// The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
-// If you use an API server, in \`prod\` mode, you will need to enable CORS
-// (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
-export const I18N_HASH = '${languagesHash.hash}';
-`;
-fs.writeFileSync(path.resolve(repoRoot, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 
 // =====================
 // i18n merging
@@ -136,6 +122,23 @@ for (const group of groups) {
     }
 }
 
+// The hash that the client appends to the URLs of the catalog and of the slice, which browsers cache for a long time. It is computed after
+// the merge, so that it covers the generated files: a change of the slice alone, without a change of a source file, changes it as well.
+const languagesHash = await hashElement(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'), {
+    algo: 'md5',
+    encoding: 'hex',
+    files: { include: ['*.json'] },
+});
+const environmentConfig = `// Don't change this file manually, it will be overwritten by the build process!
+export const __DEBUG_INFO_ENABLED__ = ${developFlag};
+export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
+// The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
+// If you use an API server, in \`prod\` mode, you will need to enable CORS
+// (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
+export const I18N_HASH = '${languagesHash.hash}';
+`;
+fs.writeFileSync(path.resolve(repoRoot, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
+
 // ==================================================
 // Vendor stylesheets that embed their fonts
 // ==================================================
@@ -156,8 +159,20 @@ const VENDOR_STYLESHEETS = [
 const FONT_EXTENSIONS = { 'font/woff2': 'woff2', 'font/woff': 'woff', 'font/ttf': 'ttf', 'font/otf': 'otf' };
 const EMBEDDED_FONT = /url\((['"]?)data:(font\/(?:woff2|woff|ttf|otf));base64,([A-Za-z0-9+/=]+)\1\)/g;
 
-fs.rmSync(VENDOR_STYLESHEET_DIRECTORY, { recursive: true, force: true });
-fs.mkdirSync(path.join(VENDOR_STYLESHEET_DIRECTORY, 'fonts'), { recursive: true });
+/*
+ * Writes a file only when its content differs. The generated files are the input of `ng serve`, which rebuilds and reloads when one changes:
+ * a script that runs `prebuild` (`pnpm test`, `pnpm run compile`) next to a running server must not touch files that did not change.
+ */
+function writeIfChanged(file, content) {
+    const data = Buffer.from(content);
+    if (!fs.existsSync(file) || !fs.readFileSync(file).equals(data)) {
+        fs.writeFileSync(file, data);
+    }
+}
+
+const vendorFontDirectory = path.join(VENDOR_STYLESHEET_DIRECTORY, 'fonts');
+fs.mkdirSync(vendorFontDirectory, { recursive: true });
+const vendorFonts = new Set();
 for (const stylesheet of VENDOR_STYLESHEETS) {
     const css = fs.readFileSync(stylesheet.source, 'utf8');
     let fontCount = 0;
@@ -165,7 +180,8 @@ for (const stylesheet of VENDOR_STYLESHEETS) {
         const font = Buffer.from(base64, 'base64');
         // Named after the content, so a font that two stylesheets share is written once and a changed font gets a new name.
         const fileName = `${crypto.createHash('sha1').update(font).digest('hex').slice(0, 12)}.${FONT_EXTENSIONS[mimeType]}`;
-        fs.writeFileSync(path.join(VENDOR_STYLESHEET_DIRECTORY, 'fonts', fileName), font);
+        writeIfChanged(path.join(vendorFontDirectory, fileName), font);
+        vendorFonts.add(fileName);
         fontCount++;
         return `url(./fonts/${fileName})`;
     });
@@ -173,7 +189,13 @@ for (const stylesheet of VENDOR_STYLESHEETS) {
         // A stylesheet without embedded fonts, or with another encoding of them, makes this step obsolete or wrong: it must not pass silently.
         throw new Error(`${stylesheet.source} embeds no fonts as data URIs. Remove it from VENDOR_STYLESHEETS in supporting_scripts/client/prebuild.mjs.`);
     }
-    fs.writeFileSync(path.join(VENDOR_STYLESHEET_DIRECTORY, stylesheet.output), externalized);
+    writeIfChanged(path.join(VENDOR_STYLESHEET_DIRECTORY, stylesheet.output), externalized);
+}
+// A font of an earlier version of a vendor stylesheet is not referenced any more.
+for (const fileName of fs.readdirSync(vendorFontDirectory)) {
+    if (!vendorFonts.has(fileName)) {
+        fs.rmSync(path.join(vendorFontDirectory, fileName));
+    }
 }
 
 /*

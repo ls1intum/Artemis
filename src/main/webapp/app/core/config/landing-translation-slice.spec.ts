@@ -22,6 +22,7 @@ const SHELL_FILES = [
     'app/core/theme/theme-switch.component.html',
     'app/shared-ui/connection-warning/connection-warning.component.html',
     'app/core/loading-notification/loading-notification.component.ts',
+    'app/course/overview/setup-passkey-modal/setup-passkey-modal.component.html',
     'app/account/user/settings/credentials/passkey-settings/webauthn.service.ts',
 ];
 

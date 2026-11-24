@@ -26,7 +26,7 @@
         }
     }
     <!-- Global Search Modal -->
-    @if (globalSearchEnabled() && showSkeleton() && !isShownViaLti() && (!isExamStarted() || isTestRunExam())) {
+    @if (globalSearchEnabled() && isAuthenticated() && showSkeleton() && !isShownViaLti() && (!isExamStarted() || isTestRunExam())) {
         @defer {
             <jhi-global-search-modal />
         }
