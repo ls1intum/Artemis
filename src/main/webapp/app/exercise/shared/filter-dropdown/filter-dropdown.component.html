@@ -12,7 +12,8 @@
     <fa-icon [icon]="faFilter" />
     <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.filter"></span>
     @if (activeFilters().length) {
-        <tumaet-ui-tag size="sm" severity="info" [rounded]="true" [value]="'' + activeFilters().length" data-testid="filter-dropdown-count" />
+        <!-- inline-flex, so that the host is as high as its 20px tag and not as the 24px line of the button text, which would make the button higher than the search field. -->
+        <tumaet-ui-tag class="inline-flex" size="sm" severity="info" [rounded]="true" [value]="'' + activeFilters().length" data-testid="filter-dropdown-count" />
     }
 </button>
 <tumaet-ui-popover class="contents" #filterPopover alignment="end" [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate">
