@@ -114,9 +114,12 @@
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                     min-height: 100vh;
                 }
-                /* The body colours of the dark theme (themes/dark.css), for the time before the stylesheet has loaded. */
-                html[data-theme='dark'],
-                html[data-theme='dark'] body {
+                /*
+                 * The body colours of the dark theme (themes/dark.css), for the time before the stylesheet has loaded.
+                 * `:where()` keeps the specificity of a single element selector, so the `body` rule of base.css replaces them like the light ones.
+                 */
+                html:where([data-theme='dark']),
+                :where(html[data-theme='dark']) body {
                     background: #22272e;
                     color: #f8f9fa;
                 }

@@ -49,9 +49,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* No animation at all: with a short duration the icon and the message would still wait for their delay and then pop in. */
     .system-notification .left-slide-in {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
+        animation: none;
     }
 }
 

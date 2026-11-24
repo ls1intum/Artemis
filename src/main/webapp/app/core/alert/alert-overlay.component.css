@@ -82,6 +82,15 @@
     animation: alert-slide-out 0.25s ease-in forwards;
 }
 
+/* A short duration, not `animation: none`: the removal of the element waits for the end of the animation. */
+@media (prefers-reduced-motion: reduce) {
+    .alert-leaving,
+    .alert-leaving > * {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes alert-height-out {
     to {
         max-height: 0;
