@@ -188,6 +188,16 @@ jobs:
             echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
             exit 1
           fi
+
+          # The client in the WAR must be the optimized one. A WAR with an unminified client (built with
+          # --optimization=false from April to November 2026) went to the test servers, staging and
+          # production unnoticed: about four times the JavaScript to download, in about 150 chunks. An optimized main
+          # bundle has lines of about 800 bytes on average, an unminified one of about 60.
+          read -r main_lines main_bytes < <(unzip -p "${wars[0]}" 'WEB-INF/classes/static/main-*.js' | awk '{ bytes += length($0) + 1 } END { print NR, bytes }')
+          if [ "${main_lines}" -eq 0 ] || [ $((main_bytes / main_lines)) -lt 200 ]; then
+            echo "::error::The main bundle in ${wars[0]} is not minified (${main_bytes} bytes in ${main_lines} lines). Build the client with 'pnpm run webapp:prod' and without --optimization=false: the WAR is what the test servers, staging and production run."
+            exit 1
+          fi
       - name: Upload Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
