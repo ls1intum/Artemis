@@ -197,7 +197,8 @@ public class WeaviateOutboxDispatcher {
     /**
      * Why the writes for user actions currently fail, named in the backlog report so that it says why the queue does not shrink. Set by a failed write of such a row
      * or a failed index check. It is cleared when the row it comes from is written or superseded, or when no such row is queued any more, so a backlog is never
-     * blamed on an error that has gone, and a write for another entity does not hide it. Only the drain thread, which holds {@link #drainLock}, reads and writes it.
+     * blamed on an error that has gone, and neither a write for another entity nor one of an older row for the same entity hides it. Only the drain thread, which holds
+     * {@link #drainLock}, reads and writes it.
      */
     private String liveFailure;
 
@@ -205,6 +206,12 @@ public class WeaviateOutboxDispatcher {
      * What {@link #liveFailure} comes from: the entity of the row that failed, or {@link #INDEX_CHECK_FAILURE_SOURCE}.
      */
     private String liveFailureSource;
+
+    /**
+     * The id of the row that failed, or {@code null} for the index check. A row supersedes the rows of the same entity with a smaller id, so only a row with this id
+     * or a larger one ends the failure.
+     */
+    private Long liveFailureRowId;
 
     /**
      * The first check comes one interval after the start, so the queue is not queried while the node still boots.
@@ -511,6 +518,7 @@ public class WeaviateOutboxDispatcher {
             nextIndexCheckAt = now + indexCheckRetryDelayMillis;
             liveFailure = describeFailure(exception);
             liveFailureSource = INDEX_CHECK_FAILURE_SOURCE;
+            liveFailureRowId = null;
             if (failedIndexChecks < indexCheckWarnAttempts) {
                 log.warn("Global search index check attempt {} failed; retrying in {}s. Index writes stay queued until it succeeds.", failedIndexChecks,
                         indexCheckRetryDelayMillis / 1000, exception);
@@ -611,6 +619,7 @@ public class WeaviateOutboxDispatcher {
     private void forgetLiveFailure() {
         liveFailure = null;
         liveFailureSource = null;
+        liveFailureRowId = null;
     }
 
     /**
@@ -628,6 +637,7 @@ public class WeaviateOutboxDispatcher {
         if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE) {
             liveFailure = describeFailure(e);
             liveFailureSource = failureSource(entry);
+            liveFailureRowId = entry.getId();
         }
         int attempt = entry.getAttempts() + 1;
         // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
@@ -672,7 +682,7 @@ public class WeaviateOutboxDispatcher {
         collapseSupersededRows(entry);
         refreshSyncLedger(entry, now, writtenContentHash);
         outboxRepository.delete(entry);
-        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE && failureSource(entry).equals(liveFailureSource)) {
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE && failureSource(entry).equals(liveFailureSource) && liveFailureRowId != null && entry.getId() >= liveFailureRowId) {
             forgetLiveFailure();
         }
     }

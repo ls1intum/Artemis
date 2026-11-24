@@ -265,6 +265,28 @@ class WeaviateOutboxDispatcherBacklogTest {
     }
 
     @Test
+    void testMonitorBacklog_aWriteOfAnOlderRowForTheSameEntityDoesNotHideTheFailure() {
+        // Row 11 failed and stays queued; row 10 of the same entity is written afterwards, which does not supersede row 11
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        newer.setId(11L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(newer)).thenReturn(List.of());
+        when(outboxRepository.findDueBackgroundForDispatch(any(), anyInt())).thenReturn(List.of());
+        when(searchableEntityWeaviateService.applyOutboxEntry(newer)).thenThrow(new IllegalStateException(READ_ONLY_FAILURE));
+        dispatcher.drain();
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        older.setId(10L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(older)).thenReturn(List.of());
+        doReturn(Optional.empty()).when(searchableEntityWeaviateService).applyOutboxEntry(older);
+        dispatcher.drain();
+
+        Instant now = Instant.now().plus(Duration.ofHours(1));
+        queue(1, now.minus(Duration.ofMinutes(40)));
+        dispatcher.monitorBacklog(now);
+
+        assertThat(errors()).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains(READ_ONLY_FAILURE));
+    }
+
+    @Test
     void testMonitorBacklog_aFailureIsForgottenOnceTheQueueIsEmpty() {
         Instant start = Instant.now().plus(Duration.ofHours(1));
         failOneWrite(READ_ONLY_FAILURE);
