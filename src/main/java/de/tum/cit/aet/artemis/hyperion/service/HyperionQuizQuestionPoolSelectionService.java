@@ -78,7 +78,9 @@ public class HyperionQuizQuestionPoolSelectionService {
             item.setLastSelectedAt(now);
             item.setUpdatedAt(now);
         }
-        itemRepository.saveAll(drawn);
+        if (!drawn.isEmpty()) {
+            itemRepository.recordSelection(drawn.stream().map(QuizQuestionPoolItem::getId).toList(), now);
+        }
         List<Long> empty = competencyIds.stream().filter(competencyId -> eligible.stream().noneMatch(item -> item.getCompetencyId().equals(competencyId))).toList();
         return new Selection(drawn, empty);
     }

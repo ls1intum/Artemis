@@ -322,6 +322,23 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     int updateReviewState(@Param("itemId") long itemId, @Param("reviewState") QuizQuestionReviewState reviewState, @Param("now") ZonedDateTime now);
 
     /**
+     * Records a draw into a quiz on the given items: increments their selection count and sets their last selection and update time. Every
+     * other column, including the review decision, keeps its stored value.
+     *
+     * @param itemIds the drawn items
+     * @param now     the time of the draw
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE QuizQuestionPoolItem item
+            SET item.selectionCount = item.selectionCount + 1, item.lastSelectedAt = :now, item.updatedAt = :now
+            WHERE item.id IN :itemIds
+            """)
+    int recordSelection(@Param("itemIds") Collection<Long> itemIds, @Param("now") ZonedDateTime now);
+
+    /**
      * Deletes the items of a lecture unit that do not carry the given review state, so that approved items can be kept while the rest goes.
      *
      * @param courseId      the course

@@ -14,7 +14,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -128,9 +127,8 @@ class HyperionQuizQuestionPoolSelectionServiceTest {
         assertThat(first.getLastSelectedAt()).isNotNull();
         assertThat(second.getSelectionCount()).isZero();
         assertThat(second.getLastSelectedAt()).isNull();
-        ArgumentCaptor<List<QuizQuestionPoolItem>> saved = ArgumentCaptor.captor();
-        verify(itemRepository).saveAll(saved.capture());
-        assertThat(saved.getValue()).containsExactly(first);
+        verify(itemRepository).recordSelection(eq(List.of(1L)), any(ZonedDateTime.class));
+        verify(itemRepository, never()).saveAll(any());
     }
 
     @Test

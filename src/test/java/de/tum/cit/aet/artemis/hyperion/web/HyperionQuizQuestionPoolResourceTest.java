@@ -829,6 +829,20 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
+    void shouldKeepAnExclusionMadeWhileADrawIsRecorded() {
+        QuizQuestionPoolItem item = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        QuizQuestionPoolItem drawn = itemRepository.findByIdElseThrow(item.getId());
+        itemRepository.updateReviewState(item.getId(), QuizQuestionReviewState.EXCLUDED, ZonedDateTime.now());
+
+        itemRepository.recordSelection(List.of(drawn.getId()), ZonedDateTime.now());
+
+        QuizQuestionPoolItem stored = itemRepository.findByIdElseThrow(item.getId());
+        assertThat(stored.getReviewState()).isEqualTo(QuizQuestionReviewState.EXCLUDED);
+        assertThat(stored.getSelectionCount()).isEqualTo(1);
+        assertThat(stored.getLastSelectedAt()).isNotNull();
+    }
+
+    @Test
     void shouldOfferTheEligibleQuestionsAndTheirCountsThroughTheModuleApi() {
         QuizQuestionPoolItem approved = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
         QuizQuestionPoolItem unreviewed = saveJudgedItem(QuizQuestionGenerationType.MULTIPLE_CHOICE, 2, QuizQuestionReviewState.PENDING, true, false);
