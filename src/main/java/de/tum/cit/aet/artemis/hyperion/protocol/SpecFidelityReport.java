@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -46,14 +48,10 @@ public record SpecFidelityReport(@JsonInclude List<Finding> findings) {
         WEAK_TEST_ORACLE,
         /**
          * A complete contract-breaking implementation passed the generated suite while an independently authored counterexample passed on the pristine solution and failed on
-         * that implementation. Environment-proven, so it may drive an autonomous repair.
+         * that implementation. Environment-proven, so it drives an autonomous repair whatever the outcome of the pre-freeze reviews: an inconclusive or objecting reviewer
+         * qualifies only its own findings, not executed evidence.
          */
         EXECUTABLE_WEAK_TEST_ORACLE,
-        /**
-         * Execution proved that a generated suite accepts an implementation that violates the frozen specification, but the pre-freeze review did not approve that specification.
-         * The evidence is retained for the instructor without autonomously strengthening grading for a contract that may itself be wrong.
-         */
-        EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL,
         /**
          * The student task structure and starter scaffold disagree: provided code fails outside a student-owned seam, a required API is missing, one implementation seam is split
          * into test-shaped tasks, student work has no task/TODO anchor, stub documentation is missing or differs between solution and template, or the statement duplicates the
@@ -93,14 +91,22 @@ public record SpecFidelityReport(@JsonInclude List<Finding> findings) {
         CONCEPT_ADMISSION_FINDING
     }
 
-    /** One spec-fidelity gap: {@code requirement} names it in the instructor's own terms, {@code detail} explains what to do about it. */
+    /**
+     * One spec-fidelity gap: {@code requirement} names it in the instructor's own terms, {@code detail} explains what to do about it.
+     *
+     * @param location where in a generated repository the gap is, set only by producers that know it exactly; {@code null} anchors the finding at the problem statement
+     */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record Finding(Kind kind, @JsonInclude String requirement, @JsonInclude String detail) {
+    public record Finding(Kind kind, @JsonInclude String requirement, @JsonInclude String detail, @Nullable Location location) {
 
         public Finding {
             if (kind == null) {
                 throw new IllegalArgumentException("Finding kind is required");
             }
+        }
+
+        public Finding(Kind kind, String requirement, String detail) {
+            this(kind, requirement, detail, null);
         }
 
         @JsonIgnore
@@ -110,10 +116,30 @@ public record SpecFidelityReport(@JsonInclude List<Finding> findings) {
                         ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP,
                         UNENFORCEABLE_TECHNIQUE_RULE, EXECUTABLE_EVIDENCE_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, SPECIFICATION_REVIEW_FINDING, CONCEPT_ADMISSION_FINDING ->
                     true;
-                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,
-                        CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
-                    false;
+                case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, CONTRACT_WITNESS_AVAILABLE, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE -> false;
             };
+        }
+    }
+
+    /**
+     * A line range in one file of a generated repository.
+     *
+     * @param repository the repository holding the file
+     * @param path       the repository-relative file path
+     * @param startLine  the first line, 1-based
+     * @param endLine    the last line, 1-based and not before {@code startLine}
+     */
+    public record Location(Repository repository, String path, int startLine, int endLine) {
+
+        public Location {
+            if (repository == null || path == null || path.isBlank() || path.startsWith("/") || path.contains("..") || startLine < 1 || endLine < startLine) {
+                throw new IllegalArgumentException("A finding location needs a repository, a relative path, and a valid line range");
+            }
+        }
+
+        /** The generated repositories a finding can point into. */
+        public enum Repository {
+            TEMPLATE, SOLUTION, TESTS
         }
     }
 

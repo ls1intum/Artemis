@@ -47,6 +47,11 @@ class WorkerAdvisoryAccountingStopTest {
 
     private static final String SOURCE = "package example; public class Scheduler { public int choose() { return 1; } }";
 
+    private static final String WITNESS_RESPONSE = """
+            {"witnesses":[{"rule":"R1","testName":"checksChoice","wrongBehavior":"chooses a more expensive request",
+            "code":"@org.junit.jupiter.api.Test void checksChoice() { org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose()); }"}]}
+            """;
+
     private enum Failure {
         MISSING_USAGE, INDETERMINATE, DELIVERY
     }
@@ -93,7 +98,7 @@ class WorkerAdvisoryAccountingStopTest {
     @Test
     void knownRejectedMutantRequestPropagatesWithoutAccountingStop() {
         ChatModel model = model();
-        when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build()).thenReturn(accounted("{\"witnesses\":[]}"));
+        when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build()).thenReturn(accounted(WITNESS_RESPONSE));
         var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
         });
         var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
@@ -102,10 +107,24 @@ class WorkerAdvisoryAccountingStopTest {
         assertThatThrownBy(() -> critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop))
                 .isInstanceOf(BadRequestException.class);
         assertThat(stop.getAsBoolean()).isFalse();
-        assertThat(critic.authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).isEmpty();
+        assertThat(critic.authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).hasSize(1);
 
         verify(model, times(2)).call(any(Prompt.class));
         assertThat(recorder.snapshot().modelCalls()).isEqualTo(1);
+        assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
+        assertThat(stop.getAsBoolean()).isFalse();
+    }
+
+    @Test
+    void aWitnessProposalCorrectionIsMeteredWithoutStoppingAuthoring() {
+        ChatModel model = model();
+        when(model.call(any(Prompt.class))).thenReturn(accounted("{\"witnesses\":[]}", "empty-witness-response"), accounted(WITNESS_RESPONSE, "corrected-witness-response"));
+        var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
+        });
+        var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
+
+        assertThat(critic(model).authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).hasSize(1);
+        assertThat(recorder.snapshot().modelCalls()).isEqualTo(2);
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
         assertThat(stop.getAsBoolean()).isFalse();
     }
@@ -133,7 +152,11 @@ class WorkerAdvisoryAccountingStopTest {
     }
 
     private static ChatResponse accounted(String text) {
-        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", "request", 10, 2, 0L, null), null).getMetadata();
+        return accounted(text, "request");
+    }
+
+    private static ChatResponse accounted(String text, String requestId) {
+        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("reviewer", requestId, 10, 2, 0L, null), null).getMetadata();
         return new ChatResponse(List.of(new Generation(new AssistantMessage(text))), metadata);
     }
 }

@@ -33,7 +33,7 @@
                                 "
                                 (click)="onPanelClick(exam.id!, $event)"
                             >
-                                <div tumAetUiPanelHeader class="flex items-center gap-2! min-w-0 mr-2 flex-1 cursor-pointer select-none">
+                                <div tumAetUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
                                     @if (isRealExam(exam)) {
                                         <fa-icon [icon]="faGraduationCap" [tumAetUiTooltip]="'artemisApp.examManagement.testExam.realExam' | artemisTranslate" />
                                     } @else if (exam.examMode === ExamMode.TEST) {

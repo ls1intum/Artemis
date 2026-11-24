@@ -43,7 +43,7 @@
                                     (click)="downloadFile(filePathUrl)"
                                     jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"
                                 ></button>
-                                <tumaet-ui-tag class="ms-2!" severity="info" size="sm" [value]="attachmentExtension(filePathUrl) | uppercase" />
+                                <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="attachmentExtension(filePathUrl) | uppercase" />
                             </div>
                         }
                     </div>
@@ -58,7 +58,7 @@
         <!--Feedbacks-->
         <div class="mt-4 flex flex-col">
             @if (invalidError()) {
-                <tumaet-ui-message class="mb-4 block w-2/3" severity="error" [text]="invalidError()! | artemisTranslate" />
+                <tumaet-ui-message class="mb-4 w-2/3" severity="error" [text]="invalidError()! | artemisTranslate" />
             }
             @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback

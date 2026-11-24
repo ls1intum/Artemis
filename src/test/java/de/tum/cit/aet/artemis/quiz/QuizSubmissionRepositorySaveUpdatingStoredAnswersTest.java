@@ -20,9 +20,9 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DeadlockLoserDataAccessException;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
@@ -96,7 +96,7 @@ class QuizSubmissionRepositorySaveUpdatingStoredAnswersTest {
 
     @Test
     void repeatsAfterALockConflict() {
-        doThrow(new DeadlockLoserDataAccessException("deadlock", new SQLException("deadlock"))).doReturn(submission).when(repository).save(any());
+        doThrow(new CannotAcquireLockException("deadlock", new SQLException("deadlock"))).doReturn(submission).when(repository).save(any());
 
         assertThat(repository.saveUpdatingStoredAnswers(submission, null)).isSameAs(submission);
 
