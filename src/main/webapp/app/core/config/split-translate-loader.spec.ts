@@ -50,14 +50,100 @@ describe('SplitTranslateLoader', () => {
         await expect(translationPromise).resolves.toEqual({ landing: { hero: { title: 'Hello' } } });
     });
 
-    it('fetches the full bundle immediately on non-landing routes', async () => {
-        window.history.replaceState(null, '', '/sign-in');
+    it('fetches the full bundle immediately on routes that are not served from the slice', async () => {
+        window.history.replaceState(null, '', '/courses');
 
         const translationPromise = firstValueFrom(loader.getTranslation('en'));
         const req = httpMock.expectOne((r) => r.url.startsWith('i18n/en.json'));
         req.flush({ everything: true });
 
         await expect(translationPromise).resolves.toEqual({ everything: true });
+    });
+
+    describe('on the sign-in route', () => {
+        const isFullBundle = (r: { url: string }) => r.url.startsWith('i18n/en.json');
+
+        async function hydrateSignInSlice(path = '/sign-in'): Promise<void> {
+            window.history.replaceState(null, '', path);
+            const translationPromise = firstValueFrom(loader.getTranslation('en'));
+            httpMock.expectOne((r) => r.url.startsWith('i18n/en-landing.json')).flush({ home: {} });
+            await translationPromise;
+        }
+
+        it('fetches the slice instead of the full bundle', async () => {
+            await hydrateSignInSlice();
+
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it('serves the slice for the sign-in route with a trailing slash', async () => {
+            await hydrateSignInSlice('/sign-in/');
+
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it('does not fetch the full bundle while the visitor only looks at the page', async () => {
+            await hydrateSignInSlice();
+
+            // Neither the idle timer of the landing page nor any other timer starts the download
+            vi.advanceTimersByTime(60_000);
+
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it.each(['pointerdown', 'keydown'])('fetches the full bundle with the first %s of the visitor', async (eventType) => {
+            await hydrateSignInSlice();
+
+            document.dispatchEvent(new Event(eventType));
+
+            httpMock.expectOne(isFullBundle).flush({ home: {}, artemisApp: {} });
+            expect(translateServiceMock.setTranslation).toHaveBeenCalledWith('en', { home: {}, artemisApp: {} }, false);
+        });
+
+        it('fetches the full bundle once, however many interactions follow', async () => {
+            await hydrateSignInSlice();
+
+            document.dispatchEvent(new Event('pointerdown'));
+            document.dispatchEvent(new Event('keydown'));
+            document.dispatchEvent(new Event('pointerdown'));
+
+            httpMock.expectOne(isFullBundle).flush({});
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it('does not treat the automatic focus of the username field as an interaction', async () => {
+            await hydrateSignInSlice();
+
+            document.dispatchEvent(new Event('focusin'));
+
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it('keeps the slice when the router stays on the sign-in route', async () => {
+            await hydrateSignInSlice();
+
+            routerEvents.next(new NavigationEnd(1, '/sign-in', '/sign-in?redirectUrl=%2Fcourses'));
+
+            httpMock.expectNone(isFullBundle);
+        });
+
+        it('fetches the full bundle when the router leaves the sign-in route', async () => {
+            await hydrateSignInSlice();
+
+            routerEvents.next(new NavigationEnd(1, '/sign-in', '/courses'));
+
+            httpMock.expectOne(isFullBundle).flush({});
+        });
+
+        it('does not fetch the full bundle again for an interaction after the router upgrade ran', async () => {
+            await hydrateSignInSlice();
+            routerEvents.next(new NavigationEnd(1, '/sign-in', '/courses'));
+            httpMock.expectOne(isFullBundle).flush({});
+
+            document.dispatchEvent(new Event('pointerdown'));
+
+            httpMock.expectNone(isFullBundle);
+        });
     });
 
     it('schedules a background upgrade to the full bundle after landing hydration', async () => {

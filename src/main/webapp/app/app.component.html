@@ -27,6 +27,8 @@
     }
     <!-- Global Search Modal -->
     @if (globalSearchEnabled() && showSkeleton() && !isShownViaLti() && (!isExamStarted() || isTestRunExam())) {
-        <jhi-global-search-modal />
+        @defer {
+            <jhi-global-search-modal />
+        }
     }
 </div>
