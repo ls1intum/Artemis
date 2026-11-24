@@ -22,7 +22,10 @@
     border-radius: 16px;
     padding: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
     border: 2px solid transparent;
     flex: 1 1 250px;
     display: flex;

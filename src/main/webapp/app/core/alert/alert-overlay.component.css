@@ -18,9 +18,23 @@
         alert-margin-in 0.35s ease-in-out forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .alert-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .alert-entering > * {
     transform: translateX(120%);
     animation: alert-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert-entering > * {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes alert-height-in {
@@ -138,6 +152,13 @@
     animation: 0.4s highlight;
     animation-delay: 0.6s;
     animation-iteration-count: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host .alert-wrap .alert-inner .left .ng-fa-icon {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 :host .alert-wrap .alert-inner .time-bar {

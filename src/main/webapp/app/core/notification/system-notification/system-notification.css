@@ -9,6 +9,13 @@
     transform-origin: top;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .system-notification {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .system-notification.info {
     color: var(--artemis-alert-info-color);
     background: var(--artemis-alert-info-background);
@@ -39,6 +46,13 @@
 .system-notification .left-slide-in {
     animation: 0.5s cubic-bezier(0.16, 1, 0.3, 1) left-slide-in;
     animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .system-notification .left-slide-in {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 .system-notification .notification-icon {

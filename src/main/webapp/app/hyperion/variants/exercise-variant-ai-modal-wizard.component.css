@@ -32,7 +32,11 @@
     font-weight: 600;
     color: var(--text-body-secondary);
     background: var(--module-bg);
-    transition: all 0.3s ease;
+    transition:
+        border-color 0.3s ease,
+        background 0.3s ease,
+        color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .wiz-step-label {
@@ -168,7 +172,10 @@
     text-align: center;
     cursor: pointer;
     background: var(--module-bg);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     overflow: hidden;
 }
@@ -341,6 +348,13 @@
     animation: pulse-icon 1.4s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .generating-icon {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .generating-ring {
     position: absolute;
     inset: 0;
@@ -348,6 +362,13 @@
     border: 2.5px solid var(--secondary);
     opacity: 0.35;
     animation: ring-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .generating-ring {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes pulse-icon {
@@ -529,6 +550,13 @@
     animation: pulse-icon 1.4s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .variant-flow-card__pending {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .placement-options {
     display: flex;
     flex-direction: column;
@@ -543,7 +571,9 @@
     border: 1px solid var(--border-color);
     border-radius: 0.6rem;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
 }
 
 .placement-option:hover {

@@ -86,6 +86,13 @@
     background: var(--tumaet-ui-text-color);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .typing-indicator > div {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .typing-indicator .bounce1 {
     animation-delay: -0.32s;
 }

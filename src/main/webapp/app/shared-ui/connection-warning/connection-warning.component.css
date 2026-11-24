@@ -9,7 +9,10 @@
     transform: scale(0);
     margin: 0;
     cursor: pointer;
-    transition: all 0.3s;
+    transition:
+        max-width 0.3s,
+        transform 0.3s,
+        margin 0.3s;
 }
 
 .connection-warning.disconnected {
@@ -50,6 +53,13 @@
     animation-iteration-count: 60;
     transform-origin: center;
     pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #pulse-icon {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes pulse {
