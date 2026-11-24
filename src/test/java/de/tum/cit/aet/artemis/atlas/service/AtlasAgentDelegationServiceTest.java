@@ -2,13 +2,13 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -22,7 +22,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -31,6 +30,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.session.SessionService;
 
 /**
  * Unit tests for the shared {@link AtlasAgentDelegationService} harness: system-prompt assembly,
@@ -45,18 +45,18 @@ class AtlasAgentDelegationServiceTest {
     @Mock
     private AtlasPromptTemplateService templateService;
 
-    @Mock
-    private ChatMemory chatMemory;
+    private SessionService sessionService;
 
     @BeforeEach
     void setUp() {
         // Since Spring AI 2.0.0-M6 the ChatClient merges request options into the model's default options, which must be non-null.
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        sessionService = spy(AtlasSessionTestSupport.newSessionService());
     }
 
     private AtlasAgentDelegationService newService(boolean withMemory) {
         ChatClient chatClient = ChatClient.create(chatModel);
-        return new AtlasAgentDelegationService(chatClient, chatClient, chatClient, templateService, withMemory ? chatMemory : null);
+        return new AtlasAgentDelegationService(chatClient, chatClient, chatClient, templateService, withMemory ? sessionService : null);
     }
 
     private static String systemTextOf(Prompt prompt) {
@@ -76,26 +76,24 @@ class AtlasAgentDelegationServiceTest {
     }
 
     @Test
-    void delegateToAgent_withMemoryEnabled_engagesChatMemory() {
+    void delegateToAgent_withMemoryEnabled_keepsTheConversationInTheSession() {
         when(templateService.render(anyString(), anyMap())).thenReturn("SYSTEM");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("reply")))));
 
         newService(true).delegateToAgent("/prompts/atlas/agent_system_prompt.st", "hi", 1L, "course_1_user_1", true, null);
 
-        // The MessageChatMemoryAdvisor reads history before and writes it after the round.
-        verify(chatMemory).get("course_1_user_1");
-        verify(chatMemory).add(anyString(), anyList());
+        // The SessionMemoryAdvisor reads history before and writes the user message and the reply during the round.
+        assertThat(sessionService.getMessages("course_1_user_1")).extracting(Message::getText).containsExactly("hi", "reply");
     }
 
     @Test
-    void delegateToAgent_withSaveToMemoryFalse_doesNotTouchChatMemory() {
+    void delegateToAgent_withSaveToMemoryFalse_doesNotTouchTheSessionMemory() {
         when(templateService.render(anyString(), anyMap())).thenReturn("SYSTEM");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("reply")))));
 
         newService(true).delegateToAgent("/prompts/atlas/competency_expert_system_prompt.st", "brief", 1L, "course_1_user_1", false, null);
 
-        verify(chatMemory, never()).get(anyString());
-        verify(chatMemory, never()).add(anyString(), anyList());
+        verifyNoInteractions(sessionService);
     }
 
     @Test
@@ -113,9 +111,8 @@ class AtlasAgentDelegationServiceTest {
         assertThat(response).isSameAs(expected);
         // No course-id breadcrumb is appended for the orchestrator — the prompt is passed verbatim.
         assertThat(systemTextOf(promptCaptor.getValue())).startsWith("ORCHESTRATOR PROMPT").contains("Shared run budget: 0/256");
-        // Orchestrator runs with chat memory OFF regardless of whether a ChatMemory bean exists.
-        verify(chatMemory, never()).get(anyString());
-        verify(chatMemory, never()).add(anyString(), anyList());
+        // Orchestrator runs with session memory OFF regardless of whether a SessionService bean exists.
+        verifyNoInteractions(sessionService);
     }
 
     @Test
@@ -129,7 +126,7 @@ class AtlasAgentDelegationServiceTest {
         when(orchestratorModel.call(any(Prompt.class))).thenReturn(orchestratorResponse);
         when(workerModel.call(any(Prompt.class))).thenReturn(workerResponse);
         AtlasAgentDelegationService service = new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(orchestratorModel), ChatClient.create(workerModel),
-                templateService, chatMemory);
+                templateService, sessionService);
 
         assertThat(service.delegateOrchestratorRound("SYSTEM", "work", new HashMap<>(), ignored -> {
         })).isSameAs(orchestratorResponse);

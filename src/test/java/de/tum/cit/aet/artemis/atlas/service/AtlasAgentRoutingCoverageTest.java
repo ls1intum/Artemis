@@ -22,10 +22,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.session.SessionService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
@@ -42,8 +42,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentRoutingCoverageTest {
 
-    @Mock
-    private ChatMemory memory;
+    private SessionService memory;
 
     @Mock
     private AtlasAgentDelegationService delegation;
@@ -60,6 +59,7 @@ class AtlasAgentRoutingCoverageTest {
 
     @BeforeEach
     void setUp() {
+        memory = AtlasSessionTestSupport.newSessionService();
         var surface = new AtlasToolSurface(mock(ToolCallbackProvider.class));
         service = new AtlasAgentService(memory, delegation, surface, surface, surface, surface, plans, cache, new AtlasAgentPreviewService(memory));
         expert = new CompetencyExpertToolsService(JsonObjectMapper.get(), null, null, cache);
@@ -94,7 +94,7 @@ class AtlasAgentRoutingCoverageTest {
     void assistantApprovalMarkerDelegatesToExpertAndClearsPendingOperations() {
         var operation = new CompetencyOperation(5L, "Java", "Language", CompetencyTaxonomy.APPLY);
         when(cache.getCachedPendingCompetencyOperations("s")).thenReturn(List.of(operation));
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("Created")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Created")));
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
             if (call.getArgument(0, String.class).contains("competency_expert")) {
                 expert.previewCompetencies(1L, List.of(operation), true);
@@ -119,7 +119,7 @@ class AtlasAgentRoutingCoverageTest {
     @EnumSource(AgentType.class)
     void approvalContinuesPlanWithAgentSpecificBriefAndPreviousResults(AgentType nextAgent) {
         var operation = new CompetencyOperation(5L, "Java", "Language", CompetencyTaxonomy.APPLY);
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("Created")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Created")));
         when(plans.hasPlan("s")).thenReturn(true);
         var previous = List.of(new StepResult(List.of(5L, 6L), "Created Java"), new StepResult(List.of(), "Reviewed"));
         when(plans.completeStepAndGetNext(eq("s"), any())).thenReturn(Optional.of(new NextStepContext(nextAgent, "Teach Java", previous, 8L, "Classes")));
@@ -180,10 +180,12 @@ class AtlasAgentRoutingCoverageTest {
 
     @Test
     void historySkipsInternalMessagesButKeepsPreviewIndexAligned() {
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("TOPICS: internal"), new AssistantMessage("ACTION: internal"),
-                new AssistantMessage("x REQUIREMENTS: y CONSTRAINTS: z CONTEXT: internal"), new AssistantMessage("[CREATE_APPROVED_COMPETENCY]"),
-                new UserMessage("[CREATE_APPROVED_EXERCISE_MAPPING]:{}"), new AssistantMessage("MULTI-STEP PLAN CONTINUATION internal"), new SystemMessage("system"),
-                new UserMessage("Visible"), new AssistantMessage("Answer")));
+        // A session does not store system messages, so none is among them
+        AtlasSessionTestSupport.givenConversation(memory, "s",
+                List.of(new AssistantMessage("TOPICS: internal"), new AssistantMessage("ACTION: internal"),
+                        new AssistantMessage("x REQUIREMENTS: y CONSTRAINTS: z CONTEXT: internal"), new AssistantMessage("[CREATE_APPROVED_COMPETENCY]"),
+                        new UserMessage("[CREATE_APPROVED_EXERCISE_MAPPING]:{}"), new AssistantMessage("MULTI-STEP PLAN CONTINUATION internal"), new UserMessage("Visible"),
+                        new AssistantMessage("Answer")));
         var relation = new CompetencyRelationPreviewDTO(3L, 1L, "A", 2L, "B", RelationType.EXTENDS, false);
         when(cache.getPreviewHistory("s")).thenReturn(Map.of(5, new AtlasAgentSessionCacheService.MessagePreviewData(null, List.of(relation), null, null)));
         var history = service.getConversationHistoryAsDTO("s");
@@ -196,7 +198,7 @@ class AtlasAgentRoutingCoverageTest {
         var preview = new ExerciseCompetencyMappingDTO(8L, "Classes", List.of(), false);
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenReturn("Preview");
         when(cache.getCachedExerciseMappingPreview("s")).thenReturn(preview);
-        when(memory.get("s")).thenReturn(List.of(new UserMessage("Map"), new AssistantMessage("Preview")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new UserMessage("Map"), new AssistantMessage("Preview")));
         var result = service.processChatMessage("Map", 1L, "s");
         assertThat(result.exerciseMappingPreview()).isSameAs(preview);
         var captured = ArgumentCaptor.forClass(AtlasAgentSessionCacheService.MessagePreviewData.class);
@@ -255,7 +257,7 @@ class AtlasAgentRoutingCoverageTest {
     @ValueSource(booleans = { false, true })
     void competencyPreviewsAreReturnedAndCachedOnlyWhenAssistantMessageExists(boolean hasAssistantMessage) {
         var operation = new CompetencyOperation(null, "Java", "Language", null);
-        when(memory.get("s")).thenReturn(hasAssistantMessage ? List.of(new AssistantMessage("Preview")) : List.of());
+        AtlasSessionTestSupport.givenConversation(memory, "s", hasAssistantMessage ? List.of(new AssistantMessage("Preview")) : List.of());
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
             expert.previewCompetencies(1L, List.of(operation), false);
             return "Preview";
@@ -269,7 +271,7 @@ class AtlasAgentRoutingCoverageTest {
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void relationApprovalCachesActualPreviewAndCompletesPlanWithCreatedRelationIds(boolean batch) {
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("Saved")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Saved")));
         when(plans.hasPlan("s")).thenReturn(true);
         when(plans.completeStepAndGetNext(eq("s"), any())).thenReturn(Optional.empty());
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
@@ -292,7 +294,7 @@ class AtlasAgentRoutingCoverageTest {
 
     @Test
     void mapperContinuationReturnsRelationPreviewAndPersistsCombinedHistory() {
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("Saved")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Saved")));
         when(plans.hasPlan("s")).thenReturn(true);
         when(plans.completeStepAndGetNext(eq("s"), any())).thenReturn(Optional.of(new NextStepContext(AgentType.COMPETENCY_MAPPER, "Map Java", List.of(), null, null)));
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
@@ -304,14 +306,13 @@ class AtlasAgentRoutingCoverageTest {
         var result = service.processChatMessage("[CREATE_APPROVED_EXERCISE_MAPPING]", 1L, "s");
         assertThat(result.relationPreviews()).singleElement().satisfies(relation -> assertThat(relation.relationId()).isEqualTo(5L));
         assertThat(result.message()).isEqualTo("Saved\n\n---\n\nContinuing to next step...\n\nMapping preview");
-        var added = ArgumentCaptor.forClass(AssistantMessage.class);
-        verify(memory).add(eq("s"), added.capture());
-        assertThat(added.getValue().getText()).isEqualTo(result.message());
+        // The reply of the first step was there already, the combined reply of both steps follows it
+        assertThat(memory.getMessages("s")).extracting(Message::getText).containsExactly("Saved", result.message());
     }
 
     @Test
     void ordinaryMessageReturnsRelationGraphPreviewAndCachesItsExactPayload() {
-        when(memory.get("s")).thenReturn(List.of(new AssistantMessage("Preview")));
+        AtlasSessionTestSupport.givenConversation(memory, "s", List.of(new AssistantMessage("Preview")));
         when(delegation.delegateToAgent(anyString(), anyString(), eq(1L), eq("s"), anyBoolean(), any())).thenAnswer(call -> {
             populateRelationPreview(false);
             return "Preview";

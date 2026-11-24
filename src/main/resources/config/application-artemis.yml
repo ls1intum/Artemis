@@ -358,14 +358,12 @@ artemis:
   weaviate:
     enabled: false
 
-# Spring AI: only the chat memory of the Atlas chat agent; models and endpoints are configured under artemis.llm.
+# Spring AI: only the session memory of the Atlas chat agent; models and endpoints are configured under artemis.llm.
 spring:
   ai:
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
-      memory:
-        max-messages: 20 # Maximum number of messages to retain in conversation history per session
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:
