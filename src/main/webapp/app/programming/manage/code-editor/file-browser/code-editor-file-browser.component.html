@@ -1,7 +1,7 @@
-<div data-testid="cardFiles" class="card file-browser" [style.height]="collapsed() ? '250px' : '100%'">
+<div data-testid="cardFiles" class="editor-panel file-browser" [style.height]="collapsed() ? '250px' : '100%'">
     <div
-        class="card-header code-editor-panel-header d-flex justify-content-center"
-        [class.d-none]="!showHeader()"
+        class="editor-panel-header code-editor-panel-header flex justify-center"
+        [class.hidden]="!showHeader()"
         (click)="toggleEditorCollapse($event)"
         [attr.aria-expanded]="!collapsed()"
         #keyboardAction2
@@ -11,7 +11,7 @@
         (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     >
-        <h3 class="card-title justify-content-center">
+        <h3 class="editor-panel-title justify-center">
             @if (!collapsed()) {
                 <span>
                     <fa-icon [icon]="faFolderOpen" />
@@ -27,16 +27,20 @@
                 </span>
             }
         </h3>
-        <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
+        <fa-icon class="ms-auto cursor-pointer" [icon]="faChevronLeft" />
     </div>
     <!-- Root actions -->
     @if (!displayOnly()) {
-        <div class="card-second-header">
+        <div class="editor-panel-second-header">
             <button
                 type="button"
                 id="create_file_root"
                 [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
-                class="btn"
+                tumAetUiButton
+                variant="outlined"
+                severity="secondary"
+                data-button-intent="utility"
+                data-button-intent-reason="Toolbar icon of the file browser, kept neutral next to the file tree"
                 (click)="setCreatingFileInRoot(FileType.FILE)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
             >
@@ -47,7 +51,12 @@
                 type="button"
                 id="create_folder_root"
                 [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
-                class="btn ms-2"
+                tumAetUiButton
+                variant="outlined"
+                severity="secondary"
+                data-button-intent="utility"
+                data-button-intent-reason="Toolbar icon of the file browser, kept neutral next to the file tree"
+                class="ms-2"
                 (click)="setCreatingFileInRoot(FileType.FOLDER)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
             >
@@ -58,7 +67,10 @@
                 type="button"
                 id="compress_tree"
                 [disabled]="isLoadingFiles()"
-                class="btn ms-auto"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                class="ms-auto"
                 (click)="toggleTreeCompress()"
                 title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
             >
@@ -67,7 +79,7 @@
         </div>
     }
     <!-- File Tree -->
-    <div class="card-body">
+    <div class="editor-panel-body">
         <!-- Root level create file/folder tree element -->
         @if (creatingFile() && creatingFile()![0] === '') {
             <jhi-code-editor-file-browser-create-node
@@ -82,7 +94,7 @@
         }
         <!-- Loading files indicator -->
         @if (isLoadingFiles()) {
-            <div class="text-center lead text-body-secondary pt-2">
+            <div class="text-center text-lg font-light text-muted-color pt-2">
                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                 <span jhiTranslate="artemisApp.editor.loadingFiles"></span>
             </div>
@@ -92,6 +104,12 @@
         <jhi-code-editor-status #status [editorState]="editorState()" [commitState]="commitState()" />
     }
 </div>
+<jhi-code-editor-file-browser-delete
+    [(visible)]="deleteDialogVisible"
+    [fileNameToDelete]="fileToDelete()?.fileName"
+    [fileType]="fileToDelete()?.fileType"
+    (fileDeleted)="onFileDeleted($event)"
+/>
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->

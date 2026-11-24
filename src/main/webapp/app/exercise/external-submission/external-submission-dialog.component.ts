@@ -4,7 +4,9 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { HttpResponse } from '@angular/common/http';
+import type { Result as ResultResponse } from 'app/openapi/model/result';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbackRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { Observable } from 'rxjs';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,6 +27,7 @@ import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/ex
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
+    styleUrl: './external-submission-dialog.component.scss',
     imports: [
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,
@@ -40,6 +43,7 @@ import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/ex
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);
+    private resultApi = inject(ResultApi);
     private readonly dialogRef = inject(TumAetUiDialogRef);
     private eventManager = inject(EventManager);
 
@@ -101,14 +105,20 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise(), student, this.result));
+        this.subscribeToSaveResponse(
+            this.resultApi.createResultForExternalSubmission(this.exercise().id!, student.login, {
+                score: this.result.score,
+                rated: this.result.rated,
+                feedbacks: this.result.feedbacks.map(toFeedbackRequest),
+            }),
+        );
     }
 
     /**
      * If http request is successful, pass it to onSaveSuccess, otherwise call onSaveError.
-     * @param { Observable<HttpResponse<Result>> } result - Observable of Http request
+     * @param { Observable<ResultResponse> } result - Observable of Http request
      */
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
+    private subscribeToSaveResponse(result: Observable<ResultResponse>) {
         result.subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
@@ -117,10 +127,10 @@ export class ExternalSubmissionDialogComponent implements OnInit {
 
     /**
      * Close modal window, indicate saving is done and broadcast that manual result is added.
-     * @param { HttpResponse<Result> } result - Result of successful http request
+     * @param { ResultResponse } result - Result of successful http request
      */
-    onSaveSuccess(result: HttpResponse<Result>) {
-        this.dialogRef.close(result.body);
+    onSaveSuccess(result: ResultResponse) {
+        this.dialogRef.close(result);
         this.isSaving.set(false);
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }

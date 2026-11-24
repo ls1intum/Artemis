@@ -2,7 +2,7 @@
     <jhi-course-title-bar-title title="artemisApp.iris.settings.title" />
     <!-- Unsaved-changes badge: shown only while there are pending edits -->
     @if (settings() && isDirty()) {
-        <span class="ms-4!">
+        <span class="ms-4">
             <tumaet-ui-tag severity="warn" data-testid="iris-settings-unsaved">
                 <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                 <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
@@ -60,7 +60,7 @@
                                     <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.supportLevel.title"></h6>
                                     <small class="iris-card-subtitle text-muted-color" jhiTranslate="artemisApp.iris.settings.supportLevel.help"></small>
 
-                                    <div class="iris-slider-wrapper mt-4!" [class.handle-popping]="handlePopping()" [style.--iris-slider-value]="supportLevelSliderValue()">
+                                    <div class="iris-slider-wrapper mt-4" [class.handle-popping]="handlePopping()" [style.--iris-slider-value]="supportLevelSliderValue()">
                                         <!-- Clickable tick marks at the start, middle and end of the track -->
                                         @for (tick of supportLevelTicks; track tick.value) {
                                             <button
@@ -155,7 +155,7 @@
                                         id="customInstructions"
                                         data-testid="iris-settings-custom-instructions"
                                         tumAetUiInput
-                                        class="mt-2 max-h-56 w-full resize-none overflow-y-auto rounded-lg text-sm"
+                                        class="mt-2 max-h-56 w-full overflow-y-auto"
                                         rows="4"
                                         [ngModel]="settingsValue.customInstructions"
                                         (ngModelChange)="updateCustomInstructions($event)"
@@ -164,16 +164,18 @@
                                         placeholder="{{ 'artemisApp.iris.settings.additionalGuidelinesPlaceholder' | artemisTranslate }}"
                                     ></textarea>
                                     <div class="flex justify-end">
-                                        <small class="text-sm text-muted-color"> {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }} </small>
+                                        <small class="leading-[calc(1.25/0.875)] text-muted-color">
+                                            {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}
+                                        </small>
                                     </div>
                                 </div>
 
                                 <!-- Proactive mechanisms card -->
                                 <div class="iris-card">
-                                    <h6 class="iris-card-title mb-4!" jhiTranslate="artemisApp.iris.settings.proactiveHelp"></h6>
+                                    <h6 class="iris-card-title mb-4" jhiTranslate="artemisApp.iris.settings.proactiveHelp"></h6>
 
                                     <!-- Proactive struggle detection -->
-                                    <div class="mb-6! iris-toggle-line">
+                                    <div class="mb-6 iris-toggle-line">
                                         <tumaet-ui-toggle-switch
                                             class="shrink-0"
                                             inputId="proactiveStruggleEnabled"
@@ -184,12 +186,12 @@
                                         />
                                         <label for="proactiveStruggleEnabled">
                                             <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
-                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
+                                            <small class="block leading-[calc(1.25/0.875)] text-muted-color" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></small>
                                         </label>
                                     </div>
 
                                     @if (!struggleAvailable()) {
-                                        <div class="iris-info-banner mb-6!" role="note">
+                                        <div class="iris-info-banner mb-6" role="note">
                                             <fa-icon [icon]="faLightbulb" />
                                             <span jhiTranslate="artemisApp.iris.settings.proactiveStruggleUnavailable"></span>
                                         </div>
@@ -206,12 +208,15 @@
                                         />
                                         <label for="legacyBuildTriggersEnabled">
                                             <strong jhiTranslate="artemisApp.iris.settings.legacyBuildTriggers"></strong>
-                                            <small class="block text-sm text-muted-color" jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"></small>
+                                            <small
+                                                class="block leading-[calc(1.25/0.875)] text-muted-color"
+                                                jhiTranslate="artemisApp.iris.settings.legacyBuildTriggersHelp"
+                                            ></small>
                                         </label>
                                     </div>
 
                                     @if (bothProactiveMechanismsActive()) {
-                                        <tumaet-ui-message severity="warn" class="mt-6!">
+                                        <tumaet-ui-message severity="warn" class="mt-6">
                                             <span jhiTranslate="artemisApp.iris.settings.bothProactiveActiveWarning"></span>
                                         </tumaet-ui-message>
                                     }
@@ -260,14 +265,14 @@
                             <p class="text-muted-color" jhiTranslate="artemisApp.iris.settings.adminOnly"></p>
 
                             <!-- Pipeline Variant -->
-                            <div class="mb-4!">
-                                <label for="variant" class="block mb-1">
+                            <div class="mb-4">
+                                <label for="variant" class="mb-1">
                                     <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
                                 </label>
                                 <tumaet-ui-select
                                     inputId="variant"
                                     data-testid="iris-settings-variant"
-                                    class="block w-full"
+                                    class="w-full"
                                     [options]="pipelineVariantOptions"
                                     [ngModel]="settingsValue.variant"
                                     (ngModelChange)="updateVariant($event)"
@@ -276,13 +281,13 @@
                             </div>
 
                             <!-- Rate Limit Overrides -->
-                            <div class="mb-4!">
-                                <label class="block mb-1">
+                            <div class="mb-4">
+                                <label class="mb-1">
                                     <strong jhiTranslate="artemisApp.iris.settings.rateLimit"></strong>
                                 </label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6!">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label for="rateLimitRequests" class="block mb-1" jhiTranslate="artemisApp.iris.settings.rateLimitRequests"></label>
+                                        <label for="rateLimitRequests" class="mb-1" jhiTranslate="artemisApp.iris.settings.rateLimitRequests"></label>
                                         <tumaet-ui-input-number
                                             inputId="rateLimitRequests"
                                             [fluid]="true"
@@ -299,7 +304,7 @@
                                         }
                                     </div>
                                     <div>
-                                        <label for="rateLimitTimeframe" class="block mb-1" jhiTranslate="artemisApp.iris.settings.rateLimitTimeframe"></label>
+                                        <label for="rateLimitTimeframe" class="mb-1" jhiTranslate="artemisApp.iris.settings.rateLimitTimeframe"></label>
                                         <tumaet-ui-input-number
                                             inputId="rateLimitTimeframe"
                                             [fluid]="true"
@@ -367,7 +372,7 @@
 }
 
 @if (isLoading()) {
-    <div class="flex justify-center my-12!">
+    <div class="flex justify-center my-12">
         <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.iris.settings.loading' | artemisTranslate" />
     </div>
 }

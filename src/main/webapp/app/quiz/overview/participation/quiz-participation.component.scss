@@ -33,13 +33,9 @@
     transform: translate(-50%, -50%);
     display: var(--quiz-overlay-display, block);
     max-width: calc(var(--quiz-overlay-max-width, 90vw) - 2rem);
-    box-shadow:
-        0 3px 6px rgba(0, 0, 0, 0.16),
-        0 3px 6px rgba(0, 0, 0, 0.23);
     font-size: 16px;
     text-align: center;
     font-weight: bold;
-    border-color: var(--quiz-participation-quiz-is-over-border-color);
 
     // Needs to be higher than the z-index of the sticky-top class
     z-index: 1030;
@@ -64,12 +60,6 @@
 .stepwizardquiz {
     max-height: calc(100vh - var(--header-height) - var(--exam-height-offset) - var(--exam-update-footer-offset));
     overflow-y: auto;
-
-    &__step {
-        .btn {
-            cursor: help;
-        }
-    }
 }
 
 .quiz-refresh-overlay {
@@ -98,56 +88,37 @@
     }
 }
 
-.btn-circle.btn-circle {
+/* The round button of a question: its color tells the question type, and it changes once the question has an answer. */
+.quiz-nav-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     width: 30px;
     height: 30px;
-    text-align: center;
-    font-size: 12px;
-    font-family: Arial, Helvetica, sans-serif;
+    padding: 0;
+    border: 1px solid var(--quiz-participation-btn-circle-light-border-color);
     border-radius: 15px;
-    border-spacing: 5px;
-    padding: 6px 0;
+    color: var(--tumaet-ui-text-color);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    cursor: help;
 
-    &.btn-light {
-        border-color: var(--quiz-participation-btn-circle-light-border-color);
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
     }
 
     @media (max-width: 990px) {
         width: 23px;
         height: 23px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        .fa {
-            font-size: 10px;
-        }
+        font-size: 10px;
     }
 
     @media (max-width: 767.98px) {
         width: 16px;
         height: 16px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        .fa {
-            font-size: 6px;
-        }
-    }
-}
-
-@media (max-width: 990px) {
-    .btn-circle.btn-circle {
-        width: 23px;
-        height: 23px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        .fa {
-            font-size: 10px;
-        }
+        font-size: 6px;
     }
 }
 

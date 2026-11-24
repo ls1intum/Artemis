@@ -1,4 +1,4 @@
-<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-6! mb-2"></h2>
+<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-6 mb-2"></h2>
 <tumaet-ui-table-layout
     [empty]="filteredAndSortedCompetencies().length === 0"
     [emptyTitle]="'artemisApp.' + competencyType() + (courseCompetencies().length ? '.manage.noSearchResults' : '.manage.empty')"

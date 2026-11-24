@@ -28,8 +28,8 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeStepApi } from 'app/openapi/api/grade-step-api';
+import type { Grade } from 'app/openapi/model/grade';
 import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
@@ -419,7 +419,7 @@ describe('CourseStatisticsComponent', () => {
     it('should not ask the server to match a grade when no scores are stored for the course', () => {
         // getScoreByScoreType returns NaN for a missing CourseScores, and match-grade-step?gradePercentage=NaN is
         // a request the server can only reject
-        const gradeSpy = vi.spyOn(TestBed.inject(GradingService), 'matchPercentageToGradeStep');
+        const gradeSpy = vi.spyOn(TestBed.inject(GradeStepApi), 'getGradeStepByPercentageForCourse');
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1, title: 'Course 1' } as Course);
 
         comp.ngOnInit();
@@ -433,15 +433,15 @@ describe('CourseStatisticsComponent', () => {
         const secondLoad = new Subject<CourseExercisesForOverviewDTO>();
         const firstCourseUpdates = new Subject<Course>();
         const secondCourseUpdates = new Subject<Course>();
-        const firstGrade = new Subject<GradeDTO>();
-        const secondGrade = new Subject<GradeDTO>();
+        const firstGrade = new Subject<Grade>();
+        const secondGrade = new Subject<Grade>();
         (TestBed.inject(ActivatedRoute) as any).parent.parent.params = params.asObservable();
         const loadSpy = vi.spyOn(TestBed.inject(CourseOverviewExercisesService), 'loadIfNeeded').mockImplementation((courseId) => (courseId === 1 ? firstLoad : secondLoad));
         const courseUpdatesSpy = vi
             .spyOn(courseStorageService, 'subscribeToCourseUpdates')
             .mockImplementation((courseId) => (courseId === 1 ? firstCourseUpdates : secondCourseUpdates));
         vi.spyOn(courseStorageService, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
-        const gradeSpy = vi.spyOn(TestBed.inject(GradingService), 'matchPercentageToGradeStep').mockReturnValueOnce(firstGrade).mockReturnValueOnce(secondGrade);
+        const gradeSpy = vi.spyOn(TestBed.inject(GradeStepApi), 'getGradeStepByPercentageForCourse').mockReturnValueOnce(firstGrade).mockReturnValueOnce(secondGrade);
 
         // The mocked loader bypasses the storage the real one writes to; without scores the relative score is NaN and
         // the grade lookup is correctly skipped, which is not what this test is about
@@ -493,8 +493,8 @@ describe('CourseStatisticsComponent', () => {
 
         expect(comp.course()?.id).toBe(2);
         expect(comp.course()?.title).not.toBe('Stale course');
-        expect(gradeSpy).toHaveBeenNthCalledWith(1, expect.any(Number), 1);
-        expect(gradeSpy).toHaveBeenNthCalledWith(2, 0, 2);
+        expect(gradeSpy).toHaveBeenNthCalledWith(1, 1, expect.any(Number));
+        expect(gradeSpy).toHaveBeenNthCalledWith(2, 2, 0);
         expect(secondGrade.observed).toBe(true);
         expect(loadSpy).toHaveBeenCalledTimes(2);
         expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);
@@ -690,16 +690,54 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="statistics-type-totals-explanation"]')).toBeNull();
     });
 
-    it('keeps the required presentation count distinct from advanced presentation points', () => {
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 3 });
-        fixture.detectChanges();
-        comp.overallPresentationScore.set(2);
-        comp.reachablePresentationPoints.set(0);
+    it('shows the current and required presentation scores in the overall points card', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 2 });
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'get');
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.totalPresentationScore');
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.presentationScoreBonus');
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.courseOverview.statistics.achievablePresentationPoints');
+        const scoreCard: HTMLElement = fixture.nativeElement.querySelector('[aria-labelledby="statistics-score-title"]');
+        const presentationScoreKey = 'artemisApp.courseOverview.statistics.currentPresentationScore';
+        expect(scoreCard.textContent).toContain(presentationScoreKey);
+        expect(scoreCard.textContent).not.toContain('artemisApp.courseOverview.statistics.bonus');
+        expect(translate).toHaveBeenCalledWith(presentationScoreKey, { current: 0, required: 2 });
+
+        comp.gradingScaleExists.set(true);
+        comp.isBonus.set(true);
+        comp.gradeDTO.set({ gradeName: '0', isPassingGrade: false, gradeType: 'BONUS' });
+        comp.overallPresentationScore.set(1);
+        fixture.detectChanges();
+
+        expect(scoreCard.textContent).toContain('artemisApp.courseOverview.statistics.bonus');
+        expect(scoreCard.textContent).toContain(presentationScoreKey);
+        expect(translate).toHaveBeenCalledWith(presentationScoreKey, { current: 1, required: 2 });
+        expect(fixture.nativeElement.querySelector('details').textContent).not.toContain(presentationScoreKey);
+    });
+
+    it('shows earned and attainable graded presentation points below the current grade', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 0 });
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'get');
+        fixture.detectChanges();
+
+        const scoreCard: HTMLElement = fixture.nativeElement.querySelector('[aria-labelledby="statistics-score-title"]');
+        const gradedPresentationPointsKey = 'artemisApp.courseOverview.statistics.gradedPresentationPoints';
+        expect(scoreCard.textContent).not.toContain(gradedPresentationPointsKey);
+
+        comp.reachablePresentationPoints.set(10);
+        fixture.detectChanges();
+
+        expect(scoreCard.textContent).toContain(gradedPresentationPointsKey);
+        expect(translate).toHaveBeenCalledWith(gradedPresentationPointsKey, { earned: 0, attainable: 10 });
+
+        comp.gradingScaleExists.set(true);
+        comp.gradeDTO.set({ gradeName: '2.7', isPassingGrade: true, gradeType: 'GRADE' });
+        comp.overallPresentationScore.set(6);
+        fixture.detectChanges();
+
+        expect(translate).toHaveBeenCalledWith(gradedPresentationPointsKey, { earned: 6, attainable: 10 });
+        const presentationPoints = scoreCard.querySelector(`[jhiTranslate="${gradedPresentationPointsKey}"]`);
+        expect(presentationPoints?.previousElementSibling?.textContent).toContain('artemisApp.courseOverview.statistics.grade');
+        expect(scoreCard.textContent).not.toContain('artemisApp.courseOverview.statistics.currentPresentationScore');
+        expect(fixture.nativeElement.querySelector('details').textContent).not.toContain(gradedPresentationPointsKey);
     });
 
     it('should set the course after being notified about a course update', () => {

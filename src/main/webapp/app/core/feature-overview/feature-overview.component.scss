@@ -1,6 +1,5 @@
-// Layout and spacing are Tailwind utilities in the template. What stays here are rules Bootstrap's unlayered Reboot
-// would otherwise win over a layered utility (heading, paragraph and list margins, heading sizes, button chrome) and the
-// shared card look of the About page.
+// Layout and spacing are Tailwind utilities in the template. What stays here are heading, paragraph and list margins,
+// heading sizes, button chrome and the shared card look of the About page.
 .feature-overview {
     background: var(--module-bg);
     border: 1px solid var(--border-color);

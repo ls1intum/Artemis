@@ -8,12 +8,15 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -63,7 +66,7 @@ class BareGitRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_copiesTheStateOfTheSourceBranch() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of())) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of(), null)) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the copy has the branch that was copied").isNotNull();
         }
 
@@ -73,13 +76,43 @@ class BareGitRepositoryCopyTest {
     }
 
     @Test
+    void copyBareRepositoryWithoutHistory_withoutAnAuthor_keepsTheAuthorOfTheFirstCommitOfTheSource() throws Exception {
+        seedRepository("abc-exercise", "template");
+
+        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of(), null).close();
+
+        RevCommit commit = headCommitOf("abc-student1");
+        assertThat(commit.getAuthorIdent().getName()).isEqualTo("Artemis");
+        assertThat(commit.getAuthorIdent().getEmailAddress()).isEqualTo("artemis@example.com");
+    }
+
+    @Test
+    void copyBareRepositoryWithoutHistory_withAnAuthor_authorsAndCommitsAsThatIdentityNow() throws Exception {
+        seedRepository("abc-exercise", "template");
+        long before = System.currentTimeMillis() / 1000 * 1000;
+
+        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of(),
+                new PersonIdent("Course Team", "team@university.example", Instant.parse("2001-01-01T00:00:00Z"), ZoneOffset.UTC)).close();
+
+        RevCommit commit = headCommitOf("abc-student1");
+        assertThat(commit.getAuthorIdent().getName()).isEqualTo("Course Team");
+        assertThat(commit.getAuthorIdent().getEmailAddress()).isEqualTo("team@university.example");
+        assertThat(commit.getCommitterIdent().getName()).isEqualTo("Course Team");
+        assertThat(commit.getCommitterIdent().getEmailAddress()).isEqualTo("team@university.example");
+        // the identity is the author, the time is the time of the copy and not the time the identity was created
+        assertThat(commit.getAuthorIdent().getWhenAsInstant().toEpochMilli()).isGreaterThanOrEqualTo(before);
+        // the repository holds the one commit that a copy without history consists of
+        assertThat(commit.getParentCount()).isZero();
+    }
+
+    @Test
     void copyBareRepositoryWithoutHistory_withAdditionalFiles_writesThemIntoTheSingleCommit() throws Exception {
         seedRepository("abc-exercise", "template");
         ObjectId templateHead = branchHeadOf("abc-exercise");
 
         bareGitRepositoryService
                 .copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH,
-                        Map.of(".vscode/eduide.json", "{ \"level\": \"expert\" }".getBytes(StandardCharsets.UTF_8), "README.md", "replaced".getBytes(StandardCharsets.UTF_8)))
+                        Map.of(".vscode/eduide.json", "{ \"level\": \"expert\" }".getBytes(StandardCharsets.UTF_8), "README.md", "replaced".getBytes(StandardCharsets.UTF_8)), null)
                 .close();
 
         assertThat(readFileFromBranchHead("abc-student1", ".vscode/eduide.json")).as("a file in a directory the source does not have is added")
@@ -108,7 +141,7 @@ class BareGitRepositoryCopyTest {
         }
 
         try (Repository copy = withHistory ? bareGitRepositoryService.copyBareRepositoryWithHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch)
-                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch, Map.of())) {
+                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch, Map.of(), null)) {
             assertThat(copy.resolve(Constants.HEAD)).as("HEAD resolves to the copied commit").isNotNull().isEqualTo(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
             assertThat(copy.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).extracting(ref -> ref.getName()).containsExactly(Constants.R_HEADS + DEFAULT_BRANCH);
         }
@@ -132,7 +165,7 @@ class BareGitRepositoryCopyTest {
         seedRepository("abc-exercise", "template");
 
         assertThatExceptionOfType(IOException.class)
-                .isThrownBy(() -> bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch", Map.of()))
+                .isThrownBy(() -> bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch", Map.of(), null))
                 .withMessageContaining("no-such-branch");
 
         // A failed copy that leaves an unborn repository behind is what a concurrent request would delete while the copy
@@ -146,7 +179,7 @@ class BareGitRepositoryCopyTest {
         seedRepository("abc-student1", "already copied by the other request");
         ObjectId headBeforeTheCopy = branchHeadOf("abc-student1");
 
-        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of())) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of(), null)) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the repository that is already there is handed back").isEqualTo(headBeforeTheCopy);
         }
 
@@ -172,7 +205,7 @@ class BareGitRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_leavesNothingBesidesTheRepositoriesInTheProject() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of()).close();
+        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of(), null).close();
 
         try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
             assertThat(entries.map(entry -> entry.getFileName().toString())).as("a completed copy does not leave a working directory behind")
@@ -209,6 +242,12 @@ class BareGitRepositoryCopyTest {
             clone.push().setRefSpecs(new RefSpec("HEAD:" + Constants.R_HEADS + branch)).call();
         }
         FileUtils.deleteDirectory(seed.toFile());
+    }
+
+    private RevCommit headCommitOf(String repositorySlug) throws IOException {
+        try (org.eclipse.jgit.lib.Repository repository = open(repositorySlug); RevWalk walk = new RevWalk(repository)) {
+            return walk.parseCommit(repository.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
+        }
     }
 
     private String headTargetOf(String repositorySlug) throws IOException {

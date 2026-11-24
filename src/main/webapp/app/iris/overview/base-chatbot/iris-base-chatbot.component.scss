@@ -722,3 +722,14 @@ cdk-global-scrollblock {
         opacity: 1;
     }
 }
+
+// Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
+// (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
+// the user's clicks reach the real UI element. Overlays opened from that target, such as the
+// context picker, render in the CDK overlay container, which already stacks above the tour.
+:host-context(body[data-onboarding-active-step='1']) [data-onboarding-target='context-selector'],
+:host-context(body[data-onboarding-active-step='2']) [data-onboarding-target='suggestion-chips'],
+:host-context(body[data-onboarding-active-step='3']) [data-onboarding-target='info-icon'] {
+    position: relative;
+    z-index: 1053;
+}

@@ -8,8 +8,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { Task } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
@@ -24,7 +23,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 ProgrammingExerciseInstructionService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -59,9 +58,9 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(steps).toHaveLength(2);
 
         // BubbleSort has a failed icon.
-        expect(steps[0].query(By.css('.text-danger'))).not.toBeNull();
+        expect(steps[0].query(By.css('.text-state-danger'))).not.toBeNull();
         // MergeSort has a success icon.
-        expect(steps[1].query(By.css('.text-success'))).not.toBeNull();
+        expect(steps[1].query(By.css('.text-state-success'))).not.toBeNull();
     });
 
     it('should not show any icons for empty tasks list', () => {

@@ -1,11 +1,14 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { startWith } from 'rxjs';
-import { TumAetUiCheckboxComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiSelectComponent,
+} from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -22,10 +25,10 @@ import { generateCourseShortName } from 'app/foundation/util/semester-utils';
         ArtemisTranslatePipe,
         TumAetUiDatePickerComponent,
         DatePickerControlDirective,
-        ButtonModule,
-        InputTextModule,
-        TextareaModule,
-        SelectModule,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
         TumAetUiCheckboxComponent,
     ],
 })

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Observable, Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -18,12 +18,15 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -50,6 +53,7 @@ describe('QuizExercise Management Buttons Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
             ],
         })
@@ -92,25 +96,43 @@ describe('QuizExercise Management Buttons Component', () => {
         expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledOnce();
     });
 
-    it('should export quiz', () => {
+    it('should export the questions of the quiz', () => {
         vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'exportQuiz');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
-        comp.exportQuizExercise(true);
+        comp.exportQuizQuestions();
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith([], true, 'Quiz Exercise');
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledOnce();
     });
 
-    it('should export quiz with exportAll false', () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
-        vi.spyOn(quizExerciseService, 'exportQuiz');
+    it('should export the whole quiz exercise in the format that the import from file reads', () => {
+        const response = new HttpResponse<Blob>({ body: new Blob(['zip']), headers: new HttpHeaders({ filename: 'Quiz Exercise.zip' }) });
+        const exportToFile = vi.spyOn(exerciseService, 'exportToFile').mockReturnValue(of(response));
+        const exportQuestions = vi.spyOn(quizExerciseService, 'exportQuiz');
+        const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
-        comp.exportQuizExercise(false);
-        expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith([], false, 'Quiz Exercise');
+        comp.exportQuizExercise();
+
+        expect(exportToFile).toHaveBeenCalledExactlyOnceWith(quizExercise);
+        expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
+        expect(exportQuestions).not.toHaveBeenCalled();
+    });
+
+    it('should show an error if the export of the whole quiz exercise fails', () => {
+        vi.spyOn(exerciseService, 'exportToFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        comp.ngOnInit();
+        comp.exportQuizExercise();
+
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.exportFailed');
+        expect(downloadSpy).not.toHaveBeenCalled();
     });
 
     it('should evaluate quiz exercise successfully', () => {
@@ -241,14 +263,14 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
-    it('exports an exam quiz through the exam details endpoint', () => {
+    it('exports the questions of an exam quiz through the exam details endpoint', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         const service = TestBed.inject(QuizExerciseService);
         const examFind = vi.spyOn(service, 'findForExam').mockReturnValue(of(quizExercise));
         const courseFind = vi.spyOn(service, 'find');
         const exportSpy = vi.spyOn(service, 'exportQuiz').mockImplementation(() => {});
-        comp.exportQuizExercise(true);
+        comp.exportQuizQuestions();
         expect(examFind).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
         expect(courseFind).not.toHaveBeenCalled();
         expect(exportSpy).toHaveBeenCalledExactlyOnceWith([], true, quizExercise.title);
@@ -528,8 +550,9 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
             ],
         }).overrideComponent(QuizExerciseManageButtonsComponent, {
             remove: { imports: [CreateVariantWithAiButtonComponent] },
@@ -538,22 +561,51 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
     });
 
-    it('groups the variant with editing and keeps export in a one-entry menu', async () => {
+    async function openMoreActions(isAtLeastInstructor: boolean) {
         const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), {
             id: 456,
             isAtLeastTutor: true,
             isAtLeastEditor: true,
+            isAtLeastInstructor,
             isEditable: true,
         });
         fixture.componentRef.setInput('quizExercise', quiz);
         fixture.componentRef.setInput('isDetailPage', true);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
         fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
         await fixture.whenStable();
+    }
+
+    it('groups the variant with editing in the actions', () => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true, isAtLeastEditor: true, isEditable: true });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
+    });
+
+    it('offers an instructor the exercise export and the question export', async () => {
+        await openMoreActions(true);
+        expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(2);
+        const exportItem = document.querySelector<HTMLButtonElement>('tumaet-ui-menu [data-testid="quiz-export"]')!;
+        expect(exportItem.textContent).toContain('entity.action.export');
+        expect(exportItem.getAttribute('aria-disabled')).not.toBe('true');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')?.textContent).toContain('artemisApp.quizExercise.export.exportQuestions');
+    });
+
+    it('offers an editor only the question export, because the server exports a whole exercise for instructors only', async () => {
+        await openMoreActions(false);
         expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(1);
-        expect(document.querySelector('tumaet-ui-menu')?.textContent).toContain('entity.action.export');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')).toBeNull();
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')).not.toBeNull();
+    });
+
+    it('disables the exercise export while the exports are switched off, and keeps the question export', async () => {
+        await TestBed.inject(FeatureToggleService).setFeatureToggleState(FeatureToggle.Exports, false);
+        await openMoreActions(true);
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')!.getAttribute('aria-disabled')).toBe('true');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')!.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('shows reset and delete only in the instructor administration section', () => {

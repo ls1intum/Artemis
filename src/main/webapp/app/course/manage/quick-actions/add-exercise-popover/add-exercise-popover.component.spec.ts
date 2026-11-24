@@ -10,8 +10,6 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('AddExercisePopoverComponent', () => {
     let component: AddExercisePopoverComponent;
@@ -23,7 +21,6 @@ describe('AddExercisePopoverComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
@@ -38,13 +35,15 @@ describe('AddExercisePopoverComponent', () => {
     });
 
     it('should show popover when showPopover is invoked', () => {
-        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'show');
-        component.showPopover(new Event('click'));
-        expect(modalSpy).toHaveBeenCalledOnce();
+        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'open');
+        const trigger = document.createElement('button');
+        trigger.addEventListener('click', (event) => component.showPopover(event));
+        trigger.click();
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(trigger);
     });
 
     it('should hide popover when hidePopover is invoked', () => {
-        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'hide');
+        const modalSpy = vi.spyOn(component.addExercisePopover()!, 'close');
         component.hidePopover();
         expect(modalSpy).toHaveBeenCalledOnce();
     });

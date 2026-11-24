@@ -101,7 +101,7 @@
     [cdkConnectedOverlayViewportMargin]="8"
 >
     <div
-        class="message-resource-picker message-suggestions rounded-md p-2 shadow-md"
+        class="message-resource-picker message-suggestions rounded-md p-2! shadow-md"
         [class.message-emoji-picker]="picker() === 'emoji'"
         tabindex="-1"
         role="dialog"
@@ -158,7 +158,7 @@
                             [id]="listId + '-' + index"
                             data-testid="message-resource-option"
                             [attr.aria-selected]="index === active()"
-                            class="message-suggestion flex cursor-pointer items-center justify-between gap-4 rounded-sm px-2 py-1"
+                            class="message-suggestion flex cursor-pointer items-center justify-between gap-6 rounded-sm px-2 py-1"
                             (click)="choose(item)"
                             (keydown.enter)="choose(item); $event.stopPropagation()"
                             (mouseenter)="activate(index)"

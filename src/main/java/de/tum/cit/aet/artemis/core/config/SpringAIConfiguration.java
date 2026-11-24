@@ -1,18 +1,12 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.util.List;
-
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
@@ -24,16 +18,13 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Configuration for Spring AI chat clients.
- * This configuration is enabled when either Atlas or Hyperion modules are enabled.
- * Manual configuration without auto-configuration.
+ * The chat memory of Spring AI, enabled when either Atlas or Hyperion is enabled. Chat models come from the LLM presets, see
+ * {@link de.tum.cit.aet.artemis.core.service.llm.LlmClientService}.
  */
 @Configuration
 @Conditional(SpringAIConfiguration.SpringAIEnabled.class)
 @Lazy
 public class SpringAIConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
 
     private final int maxMessages;
 
@@ -67,30 +58,6 @@ public class SpringAIConfiguration {
     @Lazy
     public ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository) {
         return MessageWindowChatMemory.builder().chatMemoryRepository(chatMemoryRepository).maxMessages(maxMessages).build();
-    }
-
-    /**
-     * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
-     * Includes memory advisor for conversation context retention.
-     *
-     * @param chatModels chat models that can be used (optional)
-     * @return a configured ChatClient with default options, or null if model is not available
-     */
-    @Bean
-    @Lazy
-    public ChatClient chatClient(List<ChatModel> chatModels) {
-        if (chatModels == null || chatModels.isEmpty()) {
-            return null;
-        }
-
-        for (ChatModel model : chatModels) {
-            log.info("Found chat model {} with options {}", model.getClass().getSimpleName(), model.getOptions());
-        }
-        ChatModel chatModel = chatModels.getFirst(); // Use the first available model
-        ChatClient.Builder builder = ChatClient.builder(chatModel);
-
-        return builder.build();
     }
 
     /**

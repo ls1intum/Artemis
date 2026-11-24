@@ -1,0 +1,25 @@
+@layer tumaet-ui {
+    // Width and height are left to the layout classes of the host on purpose.
+    :host {
+        display: block;
+        border-radius: 0.25rem;
+        background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 10%, transparent);
+        animation: tumaet-ui-skeleton-pulse 1.2s ease-in-out infinite;
+    }
+
+    :host(.tumaet-ui-skeleton-circle) {
+        border-radius: 9999px;
+    }
+
+    @keyframes tumaet-ui-skeleton-pulse {
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :host {
+            animation: none;
+        }
+    }
+}

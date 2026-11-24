@@ -39,7 +39,7 @@
                                     severity="secondary"
                                     variant="text"
                                     size="small"
-                                    class="p-0"
+                                    class="p-0!"
                                     (click)="downloadFile(filePathUrl)"
                                     jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"
                                 ></button>
@@ -56,9 +56,9 @@
             </jhi-resizeable-container>
         }
         <!--Feedbacks-->
-        <div class="mt-4! flex flex-col">
+        <div class="mt-4 flex flex-col">
             @if (invalidError()) {
-                <tumaet-ui-message class="mb-4! block w-2/3" severity="error" [text]="invalidError()! | artemisTranslate" />
+                <tumaet-ui-message class="mb-4 w-2/3" severity="error" [text]="invalidError()! | artemisTranslate" />
             }
             @if (result() && result()!.id) {
                 <jhi-unreferenced-feedback
@@ -78,7 +78,7 @@
         @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
             <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
         } @else if (!loadingInitialSubmission()) {
-            <div class="mt-6! flex flex-wrap items-center justify-center gap-4!">
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
                 <tumaet-ui-message severity="warn">
                     <span jhiTranslate="artemisApp.fileUploadAssessment.notFound"></span>
                 </tumaet-ui-message>

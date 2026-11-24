@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -956,7 +957,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
         exam.setVisibleDate(ZonedDateTime.now().minusHours(2));
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         exam = examRepository.save(exam);
 
         // Register all 4 students

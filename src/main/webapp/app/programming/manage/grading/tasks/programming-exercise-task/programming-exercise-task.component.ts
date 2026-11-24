@@ -8,14 +8,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.scss'],
-    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, Tooltip, PointsInputComponent],
+    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, TumAetUiTooltipDirective, TumAetUiInputDirective, PointsInputComponent],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
     private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
@@ -24,6 +24,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     readonly task = input.required<ProgrammingExerciseTask>();
     readonly openSubject = input.required<Subject<boolean>>();
     readonly isExamExercise = input<boolean>();
+    /** Changes whenever the (mutated in place) task or its test cases were recalculated or sorted, so that this OnPush row renders them again. */
+    readonly rowsRevision = input<number>();
 
     readonly updateTasksEvent = output<void>();
 

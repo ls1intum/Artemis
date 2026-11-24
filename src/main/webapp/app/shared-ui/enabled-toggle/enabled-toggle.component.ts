@@ -58,7 +58,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
             .enabled-toggle-group {
                 display: flex;
-                border: 1px solid var(--p-content-border-color);
+                border: 1px solid var(--tumaet-ui-border-color);
                 border-radius: 0.625rem;
                 overflow: hidden;
             }
@@ -79,8 +79,8 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
                 padding: 0.5rem 1rem;
                 border: none;
-                background: var(--overview-card-nested-bg, var(--p-content-background));
-                color: var(--p-text-muted-color);
+                background: var(--overview-card-nested-bg, var(--tumaet-ui-content-background));
+                color: var(--tumaet-ui-muted-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 cursor: pointer;
@@ -92,7 +92,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                 }
 
                 &:first-child {
-                    border-right: 1px solid var(--p-content-border-color);
+                    border-right: 1px solid var(--tumaet-ui-border-color);
                 }
 
                 &--active-on {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditOnlineUnitComponent } from 'app/lecture/manage/lecture-units/edit-online-unit/edit-online-unit.component';
@@ -8,8 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,7 +27,7 @@ describe('EditOnlineUnitComponent', () => {
         await TestBed.configureTestingModule({
             imports: [],
             providers: [
-                MockProvider(OnlineUnitService),
+                MockProvider(OnlineUnitApi),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -94,28 +93,19 @@ describe('EditOnlineUnitComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
-        const onlineUnitOfResponse = new OnlineUnit();
-        onlineUnitOfResponse.id = 1;
-        onlineUnitOfResponse.name = 'test';
-        onlineUnitOfResponse.releaseDate = dayjs().year(2010).month(3).date(5);
-        onlineUnitOfResponse.description = 'lorem ipsum';
-        onlineUnitOfResponse.source = 'https://www.example.com';
+        const releaseDate = dayjs().year(2010).month(3).date(5);
+        const onlineUnitOfResponse = { id: 1, name: 'test', releaseDate: releaseDate.toISOString(), description: 'lorem ipsum', source: 'https://www.example.com', type: 'online' };
 
-        const response: HttpResponse<OnlineUnit> = new HttpResponse({
-            body: onlineUnitOfResponse,
-            status: 200,
-        });
-
-        const findByIdStub = vi.spyOn(onlineUnitService, 'findById').mockReturnValue(of(response));
+        const findByIdStub = vi.spyOn(onlineUnitApi, 'getOnlineUnit').mockReturnValue(of(onlineUnitOfResponse));
         editOnlineUnitComponentFixture.detectChanges();
         const onlineUnitFormComponent: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         editOnlineUnitComponentFixture.detectChanges(); // onInit
-        expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(editOnlineUnitComponent.onlineUnit).toMatchObject({ id: 1, name: 'test', source: 'https://www.example.com' });
+        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
         expect(editOnlineUnitComponent.formData().name).toEqual(onlineUnitOfResponse.name);
-        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
+        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(releaseDate);
         expect(editOnlineUnitComponent.formData().description).toEqual(onlineUnitOfResponse.description);
         expect(editOnlineUnitComponent.formData().source).toEqual(onlineUnitOfResponse.source);
         expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData());
@@ -123,46 +113,31 @@ describe('EditOnlineUnitComponent', () => {
 
     it('should send PUT request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
-        const onlineUnitInDatabase: OnlineUnit = new OnlineUnit();
-        onlineUnitInDatabase.id = 1;
-        onlineUnitInDatabase.name = 'test';
-        onlineUnitInDatabase.releaseDate = dayjs().year(2010).month(3).date(5);
-        onlineUnitInDatabase.description = 'lorem ipsum';
-        onlineUnitInDatabase.source = 'https://www.example.com';
-
-        const findByIdResponse: HttpResponse<OnlineUnit> = new HttpResponse({
-            body: onlineUnitInDatabase,
-            status: 200,
-        });
-        const findByIdStub = vi.spyOn(onlineUnitService, 'findById').mockReturnValue(of(findByIdResponse));
+        const releaseDate = dayjs().year(2010).month(3).date(5);
+        const onlineUnitInDatabase = { id: 1, name: 'test', releaseDate: releaseDate.toISOString(), description: 'lorem ipsum', source: 'https://www.example.com', type: 'online' };
+        const findByIdStub = vi.spyOn(onlineUnitApi, 'getOnlineUnit').mockReturnValue(of(onlineUnitInDatabase));
 
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitInDatabase);
+        expect(editOnlineUnitComponent.onlineUnit).toMatchObject({ id: 1, name: 'test' });
 
-        const changedUnit: OnlineUnit = {
-            ...onlineUnitInDatabase,
-            name: 'Changed',
-        };
+        const changedUnit = { ...onlineUnitInDatabase, name: 'Changed' };
 
-        const updateResponse: HttpResponse<OnlineUnit> = new HttpResponse({
-            body: changedUnit,
-            status: 200,
-        });
-        const updatedStub = vi.spyOn(onlineUnitService, 'update').mockReturnValue(of(updateResponse));
+        const updatedStub = vi.spyOn(onlineUnitApi, 'updateOnlineUnit').mockReturnValue(of(changedUnit));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         const textUnitForm: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit({
             name: changedUnit.name,
             description: changedUnit.description,
-            releaseDate: changedUnit.releaseDate,
+            releaseDate,
             source: changedUnit.source,
         });
 
-        expect(updatedStub).toHaveBeenCalledTimes(1);
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledWith(1, expect.objectContaining({ id: 1, name: 'Changed', releaseDate: releaseDate.toISOString(), source: 'https://www.example.com' }));
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         navigateSpy.mockRestore();
     });

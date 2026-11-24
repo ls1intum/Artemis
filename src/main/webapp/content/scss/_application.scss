@@ -1,0 +1,13 @@
+// The global styles of the application, in the order in which they are loaded. Both themes import this file, so the
+// colour variables in these files take the values of the theme.
+// A rule belongs here only if a component stylesheet cannot hold it. Prefer Tailwind utilities and component stylesheets.
+@import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+// The element defaults (body, headings, links, tables, form controls) that every page builds on.
+@import 'src/main/webapp/content/scss/base';
+@import 'src/main/webapp/content/scss/third-party';
+@import 'src/main/webapp/content/scss/rendered-content';
+@import 'src/main/webapp/content/scss/layout';
+@import 'src/main/webapp/content/scss/shared-classes';
+@import 'src/main/webapp/content/scss/print';

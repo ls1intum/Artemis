@@ -1,8 +1,8 @@
 <!-- Exactly 40px (border included) on every page, with or without an action and however long the title is, so the pages do not jump when switching between them. -->
-<div #row class="mb-3! flex h-10 shrink-0 items-center justify-between gap-4! border-b border-(--border-color)" data-testid="exam-exercise-header">
+<div #row class="mb-3 flex h-10 shrink-0 items-center justify-between gap-4 border-b border-(--border-color)" data-testid="exam-exercise-header">
     <div #titleGroup class="flex min-w-0 flex-1 items-center gap-2">
         <ng-content select="[headerLeading]" />
-        <h3 class="m-0! min-w-0 truncate text-lg! leading-tight! font-semibold!" data-testid="exam-exercise-title">
+        <h3 class="m-0 min-w-0 truncate text-lg leading-tight font-semibold" data-testid="exam-exercise-title">
             @if (exercise(); as exercise) {
                 <span>{{ exercise.exerciseGroup?.title }}</span>
                 <span

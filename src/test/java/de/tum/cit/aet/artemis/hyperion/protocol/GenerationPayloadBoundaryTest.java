@@ -27,8 +27,8 @@ class GenerationPayloadBoundaryTest {
     @ValueSource(strings = { "profile", "turns", "tokens", "duration", "negativeDuration", "window", "weightZero", "weightNegative", "weightTooLarge", "weightNaN", "context" })
     void resolvedParametersRejectUnboundedOrUnusableRunBudgets(String field) {
         assertThatThrownBy(() -> new GenerationParameters(field.equals("profile") ? "p".repeat(65) : "profile", field.equals("turns") ? 0 : 10, field.equals("tokens") ? 0 : 1000,
-                field.equals("duration") ? null : field.equals("negativeDuration") ? Duration.ofSeconds(-1) : Duration.ofMinutes(5), field.equals("window") ? 0 : 64000, null, null,
-                null, null, null, false, field.equals("context") ? "OTHER" : "FRESH", null, switch (field) {
+                field.equals("duration") ? null : field.equals("negativeDuration") ? Duration.ofSeconds(-1) : Duration.ofMinutes(5), field.equals("window") ? 0 : 64000,
+                "testpreset", false, field.equals("context") ? "OTHER" : "FRESH", switch (field) {
                     case "weightZero" -> 0;
                     case "weightNegative" -> -1;
                     case "weightTooLarge" -> 1.01;
@@ -54,7 +54,7 @@ class GenerationPayloadBoundaryTest {
                 GenerationToolchain.JAVA_GRADLE, null);
         assertThat(brief.problemStatement()).hasSize(65536);
         assertThat(brief.sourceBrief()).hasSize(65536);
-        var parameters = new GenerationParameters(null, 1, 1, Duration.ofSeconds(1), 1, null, null, null, null, null, false, "FRESH", null, 1);
+        var parameters = new GenerationParameters(null, 1, 1, Duration.ofSeconds(1), 1, "testpreset", false, "FRESH", 1);
         assertThat(parameters.effortProfile()).isEmpty();
         assertThat(parameters.cachedInputTokenWeight()).isEqualTo(1);
     }
@@ -63,7 +63,7 @@ class GenerationPayloadBoundaryTest {
     @ValueSource(strings = { "identity", "brief", "parameters", "seed", "deadline", "grading", "image", "mutableImage" })
     void assignmentRequiresCompleteAuthorityAndImmutableImage(String field) {
         var brief = new ExerciseBrief("Title", "short", "de.example", null, "Generate", ExerciseBrief.Mode.GENERATE);
-        var parameters = new GenerationParameters("", 1, 1, Duration.ofSeconds(1), 64000, null, null, null, null, null, false, "FRESH");
+        var parameters = new GenerationParameters("", 1, 1, Duration.ofSeconds(1), 64000, "testpreset", false, "FRESH", 0.5);
         assertThatThrownBy(() -> new GenerationAssignment(field.equals("identity") ? null : identity, field.equals("brief") ? null : brief,
                 field.equals("parameters") ? null : parameters, field.equals("seed") ? null : snapshot, field.equals("deadline") ? null : Instant.now(),
                 field.equals("image") ? null : field.equals("mutableImage") ? "latest" : "sha256:" + "a".repeat(64),
@@ -128,7 +128,7 @@ class GenerationPayloadBoundaryTest {
             default -> null;
         };
         assertThatThrownBy(() -> new ProviderUsageUpdate.Call(field.equals("model") ? "x".repeat(1025) : "model", field.equals("request") ? "x".repeat(1025) : null,
-                field.equals("input") ? -1 : 10, field.equals("output") ? -1 : 2, cachedTokens)).isInstanceOf(IllegalArgumentException.class)
+                field.equals("input") ? -1 : 10, field.equals("output") ? -1 : 2, cachedTokens, null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid provider usage metadata");
     }
 }
