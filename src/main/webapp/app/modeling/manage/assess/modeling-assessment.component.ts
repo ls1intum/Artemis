@@ -556,20 +556,26 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
                 feedback.credits = assessment.score;
                 if (Feedback.isFeedbackSuggestion(feedback)) {
-                    // Apollon merges the suggestion's title and description into one field; keep the
-                    // suggestion title in `text` (rewriting its prefix to adapted on the first edit) and
-                    // route the assessor's edits into detailText only.
+                    // A suggestion keeps its title in `text` behind the suggestion marker and its description in
+                    // `detailText`. Apollon shows both, so the assessor's edits to either go there, and the first
+                    // edit (title, description or points) rewrites the marker to adapted.
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+                    const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
+                    // Clearing the title shows Apollon's default title; the suggestion keeps its own.
+                    const editedTitle = this.ownTitleOf(assessment);
+                    const titleChanged = editedTitle !== undefined && editedTitle !== originalTitle;
                     if (alreadyAdapted) {
                         if (assessment.feedback !== undefined) {
                             feedback.detailText = assessment.feedback;
                         }
+                        if (titleChanged) {
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + editedTitle;
+                        }
                     } else {
                         const lastShown = this.shownInApollon.get(assessment.modelElementId);
                         const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
-                        if (textChanged || scoreChanged) {
-                            const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
+                        if (textChanged || titleChanged || scoreChanged) {
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + (titleChanged ? editedTitle : originalTitle);
                             if (textChanged && assessment.feedback !== undefined) {
                                 feedback.detailText = assessment.feedback;
                                 this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
@@ -578,7 +584,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
-                    feedback.text = assessment.feedback;
+                    this.applyTitleAndDescription(feedback, assessment);
                 }
                 if (instruction?.id) {
                     feedback.gradingInstruction = instruction;
@@ -587,13 +593,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
             } else {
-                feedback = Feedback.forModeling(
-                    assessment.score,
-                    assessment.feedback,
-                    assessment.modelElementId,
-                    this.referenceTypeFor(assessment),
-                    assessment.dropInfo as DropInfo,
-                );
+                feedback = Feedback.forModeling(assessment.score, undefined, assessment.modelElementId, this.referenceTypeFor(assessment), assessment.dropInfo as DropInfo);
+                this.applyTitleAndDescription(feedback, assessment);
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -609,6 +610,45 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
+    }
+
+    /**
+     * Stores the title and description of an Apollon assessment box in a manual feedback, the way Artemis keeps titled
+     * feedback for every exercise type (and sends it to Athena): `text` holds the title and `detailText` the description.
+     * Without a title of its own, the description stays in `text` and `detailText` stays empty, so the feedback keeps the
+     * shape it always had. A title without a description becomes the comment, since an empty description is not kept.
+     */
+    private applyTitleAndDescription(feedback: Feedback, assessment: Assessment): void {
+        const title = this.ownTitleOf(assessment);
+        const description = assessment.feedback?.length ? assessment.feedback : undefined;
+        if (title !== undefined && description !== undefined) {
+            feedback.text = title;
+            feedback.detailText = description;
+        } else {
+            feedback.text = title ?? assessment.feedback;
+            feedback.detailText = undefined;
+        }
+    }
+
+    /** The title the assessor gave an assessment box, or undefined while it shows Apollon's default title. */
+    private ownTitleOf(assessment: Assessment): string | undefined {
+        const title = assessment.title?.trim();
+        return title ? title : undefined;
+    }
+
+    /**
+     * The title and description an Apollon assessment box shows for a feedback: the inverse of
+     * {@link applyTitleAndDescription}, and of the suggestion handling in {@link generateFeedbackFromAssessment}.
+     */
+    private apollonContentOf(feedback: Feedback): { title?: string; description: string } {
+        if (Feedback.isFeedbackSuggestion(feedback)) {
+            const title = this.stripSuggestionPrefix(feedback.text ?? '');
+            return { title: title || undefined, description: feedback.detailText ?? '' };
+        }
+        if (Feedback.hasDetailText(feedback)) {
+            return { title: feedback.text || undefined, description: feedback.detailText! };
+        }
+        return { description: feedback.text ?? '' };
     }
 
     /** Apollon's assessment type is a generic node/edge/member kind, not the UML model type stored in a feedback reference. */
@@ -667,13 +707,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         try {
             const assessments = feedbacks.map((feedback): Assessment => {
-                const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
-                this.shownInApollon.set(feedback.referenceId!, feedbackContent);
+                const { title, description } = this.apollonContentOf(feedback);
+                this.shownInApollon.set(feedback.referenceId!, description);
                 return {
                     modelElementId: feedback.referenceId!,
                     elementType: feedback.referenceType!,
                     score: feedback.credits ?? 0,
-                    feedback: feedbackContent,
+                    title,
+                    feedback: description,
+                    feedbackSuggestion: this.feedbackSuggestionOf(feedback),
                     label: this.calculateLabel(feedback),
                     labelColor: this.calculateLabelColor(feedback),
                     correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
@@ -752,6 +794,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             description: correctionStatusDescription,
             status: correctionStatus,
         };
+    }
+
+    /** Marks an AI feedback suggestion, and whether the assessor has adapted it, so Apollon can badge the box. */
+    private feedbackSuggestionOf(feedback: Feedback): Assessment['feedbackSuggestion'] {
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
+            return undefined;
+        }
+        return feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER) ? 'adapted' : 'suggested';
     }
 
     private stripSuggestionPrefix(text: string): string {

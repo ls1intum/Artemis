@@ -485,12 +485,134 @@ describe('ModelingAssessmentComponent', () => {
             expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBeUndefined();
         });
 
+        it('stores a title the tutor gave the box in text and its description in detailText', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: '  Missing abstraction ', feedback: 'Extract an interface.' })]);
+
+            expect(created.text).toBe('Missing abstraction');
+            expect(created.detailText).toBe('Extract an interface.');
+        });
+
+        it('keeps the description in text while the box shows the default title', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Looks right' })]);
+
+            expect(created.text).toBe('Looks right');
+            expect(created.detailText).toBeUndefined();
+        });
+
+        it('keeps a title without a description as the comment', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: '' })]);
+
+            expect(created.text).toBe('Missing abstraction');
+            expect(created.detailText).toBeUndefined();
+        });
+
+        it('moves the description back into text when the tutor clears the title', () => {
+            const titled = Feedback.forModeling(1, 'Missing abstraction', PACKAGE_ID, 'Package');
+            titled.detailText = 'Extract an interface.';
+            comp.elementFeedback.set(PACKAGE_ID, titled);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: '', feedback: 'Extract an interface.' })]);
+
+            expect(titled.text).toBe('Extract an interface.');
+            expect(titled.detailText).toBeUndefined();
+        });
+
+        it('marks an accepted suggestion as adapted with the title the tutor gave it, keeping its description', () => {
+            const suggestion = Feedback.forModeling(1, undefined, PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing interface', feedback: 'Original detail' })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing interface');
+            expect(suggestion.detailText).toBe('Original detail');
+        });
+
+        it('leaves an accepted suggestion untouched while its own title is shown unchanged', () => {
+            const suggestion = Feedback.forModeling(1, undefined, PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: 'Original detail' })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction');
+        });
+
+        it('keeps the title of an adapted suggestion when the tutor clears the title field', () => {
+            const adapted = Feedback.forModeling(1, undefined, PACKAGE_ID, 'Package');
+            adapted.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction';
+            adapted.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, adapted);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail' })]);
+
+            expect(adapted.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+        });
+
         it('forgets feedback for elements the tutor deleted from the diagram', () => {
             comp.elementFeedback.set(RELATIONSHIP_ID, Feedback.forModeling(1, 'Stale', RELATIONSHIP_ID, 'ClassUnidirectional'));
 
             comp.generateFeedbackFromAssessment([assessmentFor()]);
 
             expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(false);
+        });
+    });
+
+    describe('showing feedback in the assessment boxes', () => {
+        const showFeedback = async (feedback: Feedback) => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+            fixture.componentRef.setInput('resultFeedbacks', [feedback]);
+            fixture.detectChanges();
+            await waitForApollonInitialization();
+            return comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+        };
+        const feedbackFor = (text: string | undefined, detailText?: string) => {
+            const feedback = Feedback.forModeling(1, text, RELATIONSHIP_ID, 'ClassUnidirectional');
+            feedback.detailText = detailText;
+            return feedback;
+        };
+
+        it('shows a titled feedback with its title and description', async () => {
+            const assessment = await showFeedback(feedbackFor('Missing abstraction', 'Extract an interface.'));
+
+            expect(assessment.title).toBe('Missing abstraction');
+            expect(assessment.feedback).toBe('Extract an interface.');
+            expect(assessment.feedbackSuggestion).toBeUndefined();
+        });
+
+        it('shows a feedback without detail text as a description under the default title', async () => {
+            const assessment = await showFeedback(feedbackFor('Looks right'));
+
+            expect(assessment.title).toBeUndefined();
+            expect(assessment.feedback).toBe('Looks right');
+        });
+
+        it('shows a suggestion with its own title and marks it as a suggestion', async () => {
+            const assessment = await showFeedback(feedbackFor(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction', 'Extract an interface.'));
+
+            expect(assessment.title).toBe('Missing abstraction');
+            expect(assessment.feedback).toBe('Extract an interface.');
+            expect(assessment.feedbackSuggestion).toBe('suggested');
+        });
+
+        it('marks an adapted suggestion as adapted', async () => {
+            const assessment = await showFeedback(feedbackFor(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction', 'Edited detail'));
+
+            expect(assessment.feedbackSuggestion).toBe('adapted');
+        });
+
+        it('stores a shown title and description unchanged when the box reports them back', async () => {
+            const titled = feedbackFor('Missing abstraction', 'Extract an interface.');
+            await showFeedback(titled);
+
+            const [stored] = comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
+
+            expect(stored.text).toBe('Missing abstraction');
+            expect(stored.detailText).toBe('Extract an interface.');
         });
     });
 
