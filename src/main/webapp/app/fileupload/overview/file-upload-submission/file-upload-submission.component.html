@@ -16,7 +16,7 @@
                             @if (fileUploadExercise()?.filePattern; as filePattern) {
                                 @for (extension of filePattern.split(','); track extension) {
                                     <div class="inline-block">
-                                        <tumaet-ui-tag class="ms-1!" severity="info" size="sm" [value]="extension | uppercase" />
+                                        <tumaet-ui-tag class="ms-1" severity="info" size="sm" [value]="extension | uppercase" />
                                     </div>
                                 }
                             }
@@ -51,7 +51,7 @@
                             ></button>
                         }
                         @if (submittedFileExtension()) {
-                            <tumaet-ui-tag class="ms-2!" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
+                            <tumaet-ui-tag class="ms-2" severity="info" size="sm" [value]="submittedFileExtension() | uppercase" />
                         }
                     </div>
                 </div>

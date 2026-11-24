@@ -89,8 +89,7 @@ describe('TumAetUiListComponent', () => {
             host.inline.set(true);
             fixture.detectChanges();
 
-            // The direction is a package style: an application utility class cannot override it, because the
-            // package stylesheet is unlayered and loads after the application's.
+            // The direction is a package style, set by a class of the package.
             expect(entries()[0].className).toContain('tumaet:flex-row');
             expect(entries()[0].className).not.toContain('tumaet:flex-col');
         });

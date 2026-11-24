@@ -195,6 +195,32 @@ describe('FileService', () => {
 
             expect(newWindowMock.location.href).toBe('http://example.com/files/Lecture%20Slides.pdf?version=4');
         });
+
+        it('should keep a colon in the attachment name', () => {
+            const newWindowMock = { location: { href: '' } } as Window;
+            vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
+
+            fileService.downloadFileByAttachmentName('http://example.com/files/attachment.pdf', 'Slide Set 4: Memory', 1);
+
+            expect(newWindowMock.location.href).toBe('http://example.com/files/Slide%20Set%204%3A%20Memory.pdf?version=1');
+        });
+
+        it.each(['Memory/uP I', 'Memory\\uP I', '100% done', 'a;b', '../../etc/passwd', '..\\..\\secret'])(
+            'should not put a character into the URL that the server rejects or reads as a path segment: %s',
+            (downloadName) => {
+                const newWindowMock = { location: { href: '' } } as Window;
+                vi.spyOn(window, 'open').mockReturnValue(newWindowMock);
+
+                fileService.downloadFileByAttachmentName('http://example.com/files/student/attachment.pdf', downloadName, 1);
+
+                const url = new URL(newWindowMock.location.href);
+                // the name stays one path segment below the unchanged directory and carries no encoded slash, backslash, percent sign or semicolon
+                expect(url.pathname).toMatch(/^\/files\/student\/[^/]+\.pdf$/);
+                expect(url.pathname).not.toMatch(/%(2f|5c|25|3b)/i);
+                expect(url.pathname).not.toContain('..%2F');
+                expect(url.search).toBe('?version=1');
+            },
+        );
     });
 
     describe('addAttachmentVersionToUrl', () => {

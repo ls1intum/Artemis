@@ -107,6 +107,7 @@
                 "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
                 "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
                 "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "questionsExport": "Das Zip-Archiv enthält die Fragen eines Quiz, keine Quiz-Aufgabe. Importiere es im Quiz-Editor mit \"Fragen importieren (JSON/Zip)\" oder importiere ein Zip-Archiv, das du mit \"Export\" in der Aufgabenübersicht eines Quiz heruntergeladen hast.",
                 "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
                 "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
                 "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."

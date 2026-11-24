@@ -12,7 +12,7 @@
         }
     </div>
     @if (!examTimeLineView()) {
-        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The important spelling beats the padding of the kit. -->
+        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The utilities override the padding of the kit. -->
         <div class="flex shrink-0 items-center gap-4 [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!">
             <jhi-exam-timer
                 [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
