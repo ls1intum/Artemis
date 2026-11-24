@@ -71,9 +71,16 @@ export class HealthComponent implements OnInit, OnDestroy {
         this.websocketStatusSubscription?.unsubscribe();
     }
 
-    getBadgeSeverity(statusState: HealthStatus): 'success' | 'danger' {
+    /**
+     * DEGRADED marks an optional external system that is not available while the core of Artemis keeps working, so it gets a warning
+     * and not the danger of a failed critical component.
+     */
+    getBadgeSeverity(statusState: HealthStatus): 'success' | 'warn' | 'danger' {
         if (statusState === 'UP') {
             return 'success';
+        }
+        if (statusState === 'DEGRADED') {
+            return 'warn';
         }
         return 'danger';
     }

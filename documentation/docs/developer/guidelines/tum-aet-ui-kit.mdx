@@ -224,8 +224,13 @@ reload cycle.
 The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-aet-ui/README.md)
 documents stylesheet loading, token semantics, dark mode, and host styling.
 
-Artemis loads `@tumaet/ui-angular/styles.css` after application styles. Its unlayered stylesheet
-overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
+Artemis loads `@tumaet/ui-angular/styles.css` after application styles. The package keeps all its styles
+in cascade layers: the components in `tumaet-ui`, the theme defaults in `tumaet-ui-theme` and the overlay
+styles of Angular CDK in `tumaet-ui-cdk`. Artemis declares these layers after its element defaults (`base`)
+in `content/scss/_base.scss` and in the boot styles of `index.html`; its Tailwind utilities (`utilities`)
+follow from `tailwind.css`. A component therefore overrides
+an element default, and a utility class on a component overrides the component. The unlayered stylesheet
+of Artemis overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
 configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
 mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
 

@@ -171,7 +171,7 @@
         @for (card of cards(); track card.id) {
             <div class="exercise-card-host">
                 <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
-                    <div tumAetUiPanelHeader class="flex items-center gap-2! w-full">
+                    <div tumAetUiPanelHeader class="flex items-center gap-2 w-full">
                         @if (isGroup() && card.group) {
                             <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
                         } @else if (card.icon) {

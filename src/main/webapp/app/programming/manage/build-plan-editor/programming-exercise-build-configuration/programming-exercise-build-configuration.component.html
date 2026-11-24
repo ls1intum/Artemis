@@ -71,7 +71,7 @@
                 (ngModelChange)="onNetworkChange($event)"
             />
             @if (network() === 'none') {
-                <tumaet-ui-message severity="warn" class="mb-2 block" data-testid="network-none-warning">
+                <tumaet-ui-message severity="warn" class="mb-2" data-testid="network-none-warning">
                     <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.disableNetworkAccessWarning"></span>
                 </tumaet-ui-message>
             }

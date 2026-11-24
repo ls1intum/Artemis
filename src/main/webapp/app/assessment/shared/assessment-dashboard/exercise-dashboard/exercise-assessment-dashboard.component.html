@@ -309,7 +309,7 @@
             <div class="flex">
                 <div class="min-w-0 grow">
                     @if (tutorParticipationStatus() === REVIEWED_INSTRUCTIONS && !isTestRun()) {
-                        <tumaet-ui-message class="flex flex-wrap gap-y-2" role="alert" severity="warn">
+                        <tumaet-ui-message class="flex-wrap gap-y-2" role="alert" severity="warn">
                             <span
                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.totalExampleSubmissions"
                                 [translateValues]="{
@@ -424,7 +424,7 @@
                         <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></span></tumaet-ui-message>
                     }
                     @if (assessmentNotPossibleYetReason(); as assessmentNotPossibleYet) {
-                        <tumaet-ui-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-4">
+                        <tumaet-ui-message severity="info" id="assessment-not-possible-yet" class="items-center gap-1 mb-4">
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </tumaet-ui-message>
                     }

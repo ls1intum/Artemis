@@ -13,7 +13,7 @@
             @if (plagiarismCase.verdict) {
                 <section>
                     @if (plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION) {
-                        <tumaet-ui-message severity="error" class="mb-4 block" data-testid="plagiarism-case-verdict-message">
+                        <tumaet-ui-message severity="error" class="mb-4" data-testid="plagiarism-case-verdict-message">
                             <div>
                                 <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></h5>
                                 <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
@@ -21,7 +21,7 @@
                         </tumaet-ui-message>
                     }
                     @if (plagiarismCase.verdict === plagiarismVerdict.WARNING) {
-                        <tumaet-ui-message severity="error" class="mb-4 block" data-testid="plagiarism-case-verdict-message">
+                        <tumaet-ui-message severity="error" class="mb-4" data-testid="plagiarism-case-verdict-message">
                             <div>
                                 <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></h5>
                                 <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
@@ -40,7 +40,7 @@
                                 !posts[0].answers?.length &&
                                 (!plagiarismCase.createdByContinuousPlagiarismControl || (plagiarismCase.createdByContinuousPlagiarismControl && isAfterDueDate()))
                             ) {
-                                <tumaet-ui-message severity="warn" class="my-2 block" data-testid="plagiarism-case-reply-hint">
+                                <tumaet-ui-message severity="warn" class="my-2" data-testid="plagiarism-case-reply-hint">
                                     <div>
                                         @if (posts[0].creationDate) {
                                             <h5

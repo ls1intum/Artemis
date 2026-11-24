@@ -342,6 +342,15 @@ management:
             exposure:
                 include: ["artemismetrics"]
     endpoint:
+        health:
+            status:
+                # Tests shadow the production application.yml: keep the status ranking and HTTP mapping of the main file (see ConnectorHealth),
+                # so that an aggregate health test sees DEGRADED as production does. HealthStatusConfigurationTest guards the values of the main file.
+                order: DOWN, OUT_OF_SERVICE, DEGRADED, UP, UNKNOWN
+                http-mapping:
+                    DOWN: 503
+                    OUT_OF_SERVICE: 503
+                    DEGRADED: 200
         artemismetrics:
             access: read_only
     info:

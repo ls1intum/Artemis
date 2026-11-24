@@ -11,7 +11,7 @@
                     id="lecture-unit-toggle-button"
                     (click)="toggleCollapse()"
                     [attr.aria-expanded]="!isCollapsed()"
-                    class="lecture-unit-toggle-button flex min-w-0 flex-1 items-center justify-start! border-0! p-0! text-left! focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="lecture-unit-toggle-button min-w-0 flex-1 items-center justify-start border-0 p-0! text-left focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                     <fa-icon class="me-3" size="lg" [icon]="icon()" />
                     <span
@@ -23,7 +23,7 @@
                     @if (!isVisibleToStudents()) {
                         <tumaet-ui-tag
                             severity="warn"
-                            class="mx-2!"
+                            class="mx-2"
                             tumAetUiTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
                             [value]="'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate"
                         />
