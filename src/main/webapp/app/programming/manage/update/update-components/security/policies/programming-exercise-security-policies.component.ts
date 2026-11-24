@@ -1082,8 +1082,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
         const isCurrent = () => request === this.reviewRequests && this.reviewOpen();
         this.reviewPreview.set(undefined);
         if (this.problems().length) {
-            // The problems show in the review; the server would refuse the preview of an incomplete change anyway.
-            this.reviewPreview.set({ verdict: SecurityVersionCompatibilityVerdict.UNVERIFIED, files: [], frameworkVersion: this.shownVersion() });
+            // The problems show in the review; the server would refuse the preview of an incomplete change anyway, so the version is not checked yet.
+            this.reviewPreview.set({ files: [], frameworkVersion: this.shownVersion() });
             return;
         }
         this.securityService.previewPolicies(this.exerciseId(), change).subscribe({

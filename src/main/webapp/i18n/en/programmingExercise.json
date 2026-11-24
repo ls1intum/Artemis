@@ -1067,6 +1067,7 @@
                         "compatible": "Checked against the pinned version {{ version }}: every field in these files is supported.",
                         "incompatibleShort": "The pinned version {{ version }} does not support every field in these files.",
                         "unverified": "Version {{ version }} is not listed in the compatibility manifest, so Artemis cannot check whether it accepts every field.",
+                        "versionUnchecked": "Artemis checks whether version {{ version }} accepts the policies once the problems above are fixed.",
                         "back": "Back to Editing",
                         "commitAndPush": "Save Changes",
                         "securitySettings": "security settings",

@@ -67,6 +67,21 @@ describe('SecurityReviewDialogComponent', () => {
         expect(comp.blocked()).toBe(true);
     });
 
+    it('says that the version is checked once the problems are fixed instead of showing a verdict without a check', () => {
+        const verdictLine = () => fixture.nativeElement.ownerDocument.querySelector('[data-testid="security-review-verdict"]');
+        const uncheckedLine = () => fixture.nativeElement.ownerDocument.querySelector('[data-testid="security-review-version-unchecked"]');
+        expect(verdictLine()?.textContent).toContain('artemisApp.programmingExercise.security.advanced.review.compatible');
+        expect(uncheckedLine()).toBeNull();
+
+        fixture.componentRef.setInput('problems', ['Stress has no test case.']);
+        fixture.componentRef.setInput('preview', { files: [], frameworkVersion: '2.2.1' });
+        fixture.detectChanges();
+
+        expect(verdictLine()).toBeNull();
+        expect(uncheckedLine()?.textContent).toContain('artemisApp.programmingExercise.security.advanced.review.versionUnchecked');
+        expect(uncheckedLine()?.textContent).not.toContain('unverified');
+    });
+
     it('commits a split only once its released test cases are listed, and asks for them again on Retry', () => {
         let retries = 0;
         comp.assignmentsRetry.subscribe(() => retries++);

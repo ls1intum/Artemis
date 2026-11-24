@@ -422,6 +422,8 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.problems()).toEqual(['artemisApp.programmingExercise.security.advanced.problem.noTests']);
         expect(comp.reviewOpen()).toBe(true);
         expect(service.previewPolicies).not.toHaveBeenCalled();
+        // The version is not checked for an incomplete change, so the review must not claim that the manifest does not list it.
+        expect(comp.reviewPreview()).toEqual({ files: [], frameworkVersion: '2.2.1' });
     });
 
     it('requires tests only of the policies the commit writes', () => {

@@ -169,22 +169,29 @@
             <span [jhiTranslate]="prefix + 'createsCommit'"></span>
         </div>
         @if (preview(); as rendered) {
-            <div class="sp-info-line" data-testid="security-review-verdict">
-                @switch (rendered.verdict) {
-                    @case (SecurityVersionCompatibilityVerdict.COMPATIBLE) {
-                        <fa-icon [icon]="faCheck" />
-                        <span>{{ prefix + 'compatible' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+            @if (!rendered.verdict) {
+                <div class="sp-info-line" data-testid="security-review-version-unchecked">
+                    <fa-icon [icon]="faCircleInfo" />
+                    <span>{{ prefix + 'versionUnchecked' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                </div>
+            } @else {
+                <div class="sp-info-line" data-testid="security-review-verdict">
+                    @switch (rendered.verdict) {
+                        @case (SecurityVersionCompatibilityVerdict.COMPATIBLE) {
+                            <fa-icon [icon]="faCheck" />
+                            <span>{{ prefix + 'compatible' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                        }
+                        @case (SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
+                            <fa-icon [icon]="faTriangleExclamation" />
+                            <span>{{ prefix + 'incompatibleShort' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                        }
+                        @default {
+                            <fa-icon [icon]="faTriangleExclamation" />
+                            <span>{{ prefix + 'unverified' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
+                        }
                     }
-                    @case (SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
-                        <fa-icon [icon]="faTriangleExclamation" />
-                        <span>{{ prefix + 'incompatibleShort' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
-                    }
-                    @default {
-                        <fa-icon [icon]="faTriangleExclamation" />
-                        <span>{{ prefix + 'unverified' | artemisTranslate: { version: rendered.frameworkVersion ?? '' } }}</span>
-                    }
-                }
-            </div>
+                </div>
+            }
         }
     </div>
     <ng-template #footer>

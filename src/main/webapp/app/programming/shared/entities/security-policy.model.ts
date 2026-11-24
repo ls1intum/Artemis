@@ -184,7 +184,8 @@ export interface SecurityPolicyPreviewFile {
 export interface SecurityPolicyPreview {
     files?: SecurityPolicyPreviewFile[];
     frameworkVersion?: string;
-    verdict: SecurityVersionCompatibilityVerdict;
+    /** Whether the version accepts the policies; absent while the change has problems, because the version is checked only for a complete change. */
+    verdict?: SecurityVersionCompatibilityVerdict;
     problems?: string[];
 }
 

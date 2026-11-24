@@ -1067,6 +1067,7 @@
                         "compatible": "Gegen die festgelegte Version {{ version }} geprüft: Jedes Feld in diesen Dateien wird unterstützt.",
                         "incompatibleShort": "Die festgelegte Version {{ version }} unterstützt nicht jedes Feld in diesen Dateien.",
                         "unverified": "Version {{ version }} steht nicht im Kompatibilitätsverzeichnis, daher kann Artemis nicht prüfen, ob sie jedes Feld akzeptiert.",
+                        "versionUnchecked": "Artemis prüft, ob Version {{ version }} die Richtlinien akzeptiert, sobald die Probleme oben behoben sind.",
                         "back": "Zurück zum Bearbeiten",
                         "commitAndPush": "Änderungen speichern",
                         "securitySettings": "security settings",
