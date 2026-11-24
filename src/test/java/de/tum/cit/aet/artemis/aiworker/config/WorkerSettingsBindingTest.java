@@ -80,7 +80,7 @@ class WorkerSettingsBindingTest {
         InspectImageCmd inspect = mock();
         InspectImageResponse image = mock();
         String imageId = "sha256:" + "b".repeat(64);
-        when(docker.inspectImageCmd("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1")).thenReturn(inspect);
+        when(docker.inspectImageCmd("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2")).thenReturn(inspect);
         when(inspect.exec()).thenReturn(image);
         when(image.getId()).thenReturn(imageId);
         new ApplicationContextRunner().withUserConfiguration(SettingsConfiguration.class, WorkerSandboxConfiguration.class).withBean(DockerClient.class, () -> docker)
@@ -95,16 +95,16 @@ class WorkerSettingsBindingTest {
                     }
                 }).withPropertyValues("AI_WORKER_ID=worker-1").run(context -> {
                     assertThat(context).hasNotFailed();
-                    assertThat(context.getBean(WorkerSettings.class).image()).isEqualTo("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1");
+                    assertThat(context.getBean(WorkerSettings.class).image()).isEqualTo("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2");
                     assertThat(context.getBean(SandboxPolicyDTO.class).image()).isEqualTo(imageId);
                 });
     }
 
     @Test
     void acceptsAConfiguredVersionedImage() {
-        runner.withPropertyValues("artemis.aiworker.image=ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2").run(context -> {
+        runner.withPropertyValues("artemis.aiworker.image=ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-3").run(context -> {
             assertThat(context).hasNotFailed();
-            assertThat(context.getBean(WorkerSettings.class).image()).isEqualTo("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2");
+            assertThat(context.getBean(WorkerSettings.class).image()).isEqualTo("ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-3");
         });
     }
 
