@@ -14,7 +14,7 @@ import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-exercise-version-history-layout',
     templateUrl: './exercise-version-history-layout.component.html',
-    styleUrls: ['./exercise-version-history-layout.component.scss'],
+    styleUrls: ['./exercise-version-history-layout.component.css'],
     imports: [TumAetUiSplitterComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

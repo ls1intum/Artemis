@@ -107,7 +107,7 @@ function positiveRouteId(value: string | null): number | undefined {
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
-    styleUrl: './presentation-assessment-management.component.scss',
+    styleUrl: './presentation-assessment-management.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,

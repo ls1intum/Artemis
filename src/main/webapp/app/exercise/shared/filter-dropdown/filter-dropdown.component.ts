@@ -32,7 +32,7 @@ export interface FilterGroup {
         TumAetUiButtonGroupComponent,
         TumAetUiTooltipDirective,
     ],
-    styleUrls: ['./filter-dropdown.component.scss'],
+    styleUrls: ['./filter-dropdown.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilterDropdownComponent {

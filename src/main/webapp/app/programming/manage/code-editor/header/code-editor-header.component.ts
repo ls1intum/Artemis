@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-code-editor-header',
     templateUrl: './code-editor-header.component.html',
-    styleUrl: './code-editor-header.component.scss',
+    styleUrl: './code-editor-header.component.css',
     imports: [
         TumAetUiButtonDirective,
         TumAetUiInputDirective,

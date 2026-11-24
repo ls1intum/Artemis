@@ -11,7 +11,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
-    styleUrl: './lti-course-card.component.scss',
+    styleUrl: './lti-course-card.component.css',
     imports: [RouterLink, ImageComponent, TranslateDirective, ArtemisDatePipe, TumAetUiCardComponent],
 })
 export class LtiCourseCardComponent {

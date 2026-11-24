@@ -1,0 +1,169 @@
+.edit-dnd-question .drag-items {
+    background: white !important;
+}
+
+.edit-dnd-question .drag-items .drag-item:has(.drag-item-text-limit) {
+    height: auto;
+    padding: 134px 4px 20px;
+}
+
+.edit-dnd-question .drag-items .drag-item .drag-item-text-field {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    width: 158px;
+    height: 98px;
+}
+
+.edit-dnd-question .drag-items .drag-item .drag-item-text-field textarea {
+    top: 0;
+    height: calc(100% - 1.75rem);
+}
+
+.edit-dnd-question .drag-items .drag-item img {
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+    width: auto !important;
+    margin: auto;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+}
+
+.edit-dnd-question .resize {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: mediumpurple;
+}
+
+.edit-dnd-question .resize.top {
+    top: -3px;
+}
+
+.edit-dnd-question .resize.middle {
+    top: calc(50% - 3px);
+    cursor: col-resize;
+}
+
+.edit-dnd-question .resize.bottom {
+    bottom: -3px;
+}
+
+.edit-dnd-question .resize.left {
+    left: -3px;
+}
+
+.edit-dnd-question .resize.center {
+    left: calc(50% - 3px);
+    cursor: row-resize;
+}
+
+.edit-dnd-question .resize.right {
+    right: -3px;
+}
+
+.edit-dnd-question .resize.top.left,
+.edit-dnd-question .resize.bottom.right {
+    cursor: nwse-resize;
+}
+
+.edit-dnd-question .resize.top.right,
+.edit-dnd-question .resize.bottom.left {
+    cursor: nesw-resize;
+}
+
+.edit-dnd-question .dimensions,
+.edit-dnd-question .invalid {
+    position: absolute;
+    left: 2px;
+    bottom: 0;
+    font-size: 14px;
+}
+
+.edit-dnd-question .drag-item-file {
+    display: flex;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.edit-dnd-question .background-area {
+    position: relative;
+    margin: auto;
+    user-select: none;
+}
+
+.edit-dnd-question .background-area img {
+    max-width: 100%;
+}
+
+.edit-dnd-question .background-area .click-layer {
+    cursor: crosshair !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+}
+
+/* medium-purple dotted drop-location */
+.edit-dnd-question .background-area .click-layer .drop-location {
+    align-items: center;
+    border: 1px dashed mediumpurple;
+    cursor: move;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    position: absolute;
+    background: var(--edit-quiz-q-dnd-drop-location-background);
+    color: var(--edit-quiz-q-dnd-drop-location-color);
+}
+
+.edit-dnd-question .background-area .click-layer .drop-location:hover {
+    background: var(--edit-quiz-q-dnd-drop-location-hover-bg);
+}
+
+.edit-dnd-question .background-area .click-layer.disabled {
+    cursor: not-allowed !important;
+}
+
+.edit-dnd-question .drop-location-buttons {
+    position: absolute;
+    top: 1%;
+    right: 1%;
+}
+
+.edit-dnd-question .placeholder-dnd {
+    max-height: 160px;
+    max-width: 160px;
+}
+
+.edit-dnd-question .placeholder-dnd img {
+    max-height: 100%;
+    max-width: 100%;
+    height: 100%;
+    width: 100%;
+}
+
+.edit-dnd-question .question-card-header {
+    width: 100%;
+    padding: 15px 5px 5px;
+}
+
+.edit-dnd-question .question-card-header .question-collapse {
+    width: 3.25rem;
+}
+
+.edit-dnd-question .question-card-header-reevaluation {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+}
+
+.edit-dnd-question .question-card-header-reevaluation .question-collapse {
+    width: 3.25rem;
+}

@@ -1,0 +1,170 @@
+---
+id: client-style-comparison
+title: Compare the styles of two clients
+sidebar_label: Client Style Comparison
+last_reviewed: 2026-11-23
+---
+
+A change to a global stylesheet, to the theme tokens, to TUM AET UI or to many component stylesheets can
+alter a page that its author never opens. Unit tests do not notice this, because jsdom performs no
+layout and applies no cascade layers. The scripts in `supporting_scripts/client/style-comparison` show
+such a change: they compare the styles of the client before and after it, first in the build output and
+then in a browser.
+
+Use them for a change that is meant to keep the appearance, such as a refactoring of stylesheets, or to
+list what a deliberate change of a shared style touches.
+
+| Script               | What it answers                                                                 | Needs              |
+| -------------------- | ------------------------------------------------------------------------------- | ------------------ |
+| `compare-builds.mjs` | Which declarations does the build emit that it did not emit before?             | two builds         |
+| `capture.mjs`        | Which computed styles does every element of a page or dialog have?              | a running client   |
+| `diff.mjs`           | Which computed styles differ between two captures?                              | two captures       |
+| `matched-rules.mjs`  | Which rules match one element, in which cascade layer, and which of them wins?  | a running client   |
+| `cascade-audit.mjs`  | Where does a cascade layer lose although its selector is the more specific one? | a running client   |
+
+All scripts run with Node from the repository root after `pnpm install`. Each of them prints its usage with `--help`.
+
+## Compare two builds
+
+This is the fast check: it needs no server and no data, and it covers every stylesheet, including those of
+pages that are hard to reach.
+
+1. Build the client of the base branch and of your branch, each in its own worktree:
+   `pnpm run webapp:build`. The output is in `build/resources/main/static`.
+2. Compare the two directories:
+
+```bash
+node supporting_scripts/client/style-comparison/compare-builds.mjs \
+    ../artemis-base/build/resources/main/static build/resources/main/static
+```
+
+The script reads the global stylesheet and the styles of the components, which the build embeds in the
+JavaScript chunks. It prints the declarations that only one of the builds has, as one line per declaration
+with its selector and the at-rules around it. No output besides the two counts means that both builds
+style the client alike. A declaration that moved to another position in the same stylesheet is not
+reported; the comparison in the browser shows whether the order mattered.
+
+## Compare two running clients
+
+The browser comparison shows what the build comparison cannot: the result of the cascade for the
+elements that are really on a page.
+
+### Set up
+
+Both clients have to show the same data, so they use one server. Start the server once, then serve the
+client of the base branch and of your branch on two ports. Each worktree needs `pnpm install` and, once,
+`pnpm run prebuild -- --develop`:
+
+```bash
+# in the worktree of the base branch
+pnpm exec ng serve --port 9001
+# in the worktree of your branch
+pnpm exec ng serve --port 9002
+```
+
+Both use `config/client/proxy.conf.mjs`, which forwards the requests to the server on port 8080. Do not
+edit `src/main/webapp` while a capture runs: the reload of the development client changes the page under
+the script.
+
+The scripts log in as the administrator and the first student of the
+[E2E setup](/developer/e2e-testing-playwright) (`artemis_admin`, `artemis_test_user_1`). For other users,
+set `STYLE_COMPARISON_ADMIN_USERNAME`, `STYLE_COMPARISON_ADMIN_PASSWORD`,
+`STYLE_COMPARISON_STUDENT_USERNAME` and `STYLE_COMPARISON_STUDENT_PASSWORD`. Use a local database only: the scripts open dialogs for deleting data, and
+although they close them again, they do not belong on a shared system.
+
+The pages are those of one course, which you pass with `--course`. The more content the course has, the
+more pages the capture reaches: one exercise of each type, a lecture, an exam, FAQs, a tutorial group and
+some messages. The demo course of the [`demo` profile](/developer/setup#demo-data-optional) is a start. The
+script looks up the content through the REST API and names the pages it has to leave out.
+
+### Capture and compare
+
+```bash
+node supporting_scripts/client/style-comparison/capture.mjs before --base http://localhost:9001 --course 42
+node supporting_scripts/client/style-comparison/capture.mjs after --base http://localhost:9002 --course 42
+node supporting_scripts/client/style-comparison/diff.mjs before after
+```
+
+`capture.mjs` opens about 120 pages of the administration, the course management and the course overview
+and 14 dialogs and menus, each in the light and in the dark theme. For every element it records
+46 computed properties: spacing, typography, colours, borders, layout and visibility. The captures are
+JSON files in `build/style-comparison/<label>`; `--screenshots` adds an image of every state.
+
+`diff.mjs` matches the elements of the two captures by their position in the document and groups what
+differs:
+
+```text
+226 states compared, 2 distinct differences
+  14  <button> padding-top: 4px -> 6px   class="tumaet-ui-btn"   [m04-exercises-light, m09-exams-light, p01-prog-detail-light]
+   2  <a> color: rgb(62, 138, 204) -> rgb(31, 92, 154)   class="nav-link"   [s01-courses-dark, s02-exercises-dark]
+```
+
+Each line is one change of one property on one kind of element, with the number of states that show it
+and three of them. Read the list from the top: one cause usually explains many lines.
+
+| Option                 | Script       | Effect                                                                     |
+| ---------------------- | ------------ | -------------------------------------------------------------------------- |
+| `--only <text,text>`   | both         | Limits the run to the states whose name contains a text: `--only m0,o1`    |
+| `--themes light`       | `capture`    | Captures one theme                                                         |
+| `--geometry`           | `diff`       | Also compares width and height, which follow from the data on many pages   |
+| `--limit <n>`          | `diff`       | Prints more than the first 80 groups                                       |
+| `--out <directory>`    | both         | Stores the captures elsewhere                                              |
+
+Two captures of the same client are not always identical. Expect differences on pages that show the
+current time or a countdown, on pages whose data changes between the runs (build queue, metrics, health)
+and where the number of elements differs, which `diff.mjs` lists separately. Capture the base twice when
+in doubt, and treat what differs between these two runs as noise.
+
+### Find the cause of a difference
+
+`matched-rules.mjs` prints the rules that match one element for the properties in question, with the
+cascade layer of each rule. Run it against both clients and compare:
+
+```bash
+node supporting_scripts/client/style-comparison/matched-rules.mjs --base http://localhost:9002 \
+    --url /course-management/42/exams --selector '.tumaet-ui-btn' --properties padding,height
+```
+
+```text
+class="tumaet-ui-btn tumaet-ui-btn-small"
+[tumaet-ui] .tumaet-ui-btn[_ngcontent-ng-c12] { padding: calc(var(--tumaet-ui-spacing) * 2) }
+[no layer] :is(.page-top-bar, .title-bar-controls) .tumaet-ui-btn { padding-block: 0; height: var(--title-bar-content-height) }
+computed: padding: 0px 12px; height: 28px
+```
+
+A rule outside the cascade layers wins over every rule in a layer, a later layer over an earlier one; the
+order of the layers is in `content/css/application.css`. See
+[Styling](/developer/guidelines/client-development#styling).
+
+## Audit a cascade layer
+
+`cascade-audit.mjs` answers a question that arises when styles move into a cascade layer or out of it:
+where does the layer lose although its selector is the more specific one? Those are the places whose
+appearance depends on the layer and not on the selectors.
+
+```bash
+node supporting_scripts/client/style-comparison/cascade-audit.mjs --base http://localhost:9002 --course 42 --layer tumaet-ui
+```
+
+The script visits the same pages as `capture.mjs`. On each of them it reads every rule of the loaded
+stylesheets and reports two kinds of conflict for the elements that the layer styles:
+
+- **`FLIP`**: a declaration outside the layers wins with a less specific or an earlier selector.
+- **`UTIL`**: a Tailwind utility wins, and no declaration outside the layers would settle the property.
+
+The report groups the conflicts by the winning rule and names the properties, the losing rules of the
+layer and an example element. Selectors are matched without the pseudo-classes and attributes of a state
+(`:hover`, `[aria-disabled]`, `[data-state]`), so the hover and disabled styles of an element are covered
+although the script never hovers it. This makes the list an upper bound: confirm an entry with
+`matched-rules.mjs` or in the developer tools before you change a stylesheet because of it.
+
+## What the scripts do not cover
+
+- Pages that need a state the course does not have, such as a running quiz or an exam in conduction, and
+  everything behind an interaction other than the dialogs in `pages.mjs`. Add a page or an overlay there
+  when you change a feature that the list does not reach.
+- Pseudo-elements, the contents of SVG images and of the Monaco editor, and print styles.
+- Narrow viewports: the capture uses a width of 1440 pixels.
+
+A clean comparison shows that the listed pages render alike. It does not replace opening the screens you
+changed.

@@ -26,7 +26,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         IncludedInOverallScorePickerComponent,

@@ -31,7 +31,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-discussion-section',
     templateUrl: './discussion-section.component.html',
-    styleUrls: ['./discussion-section.component.scss'],
+    styleUrls: ['../../communication.component.css', './discussion-section.component.css'],
     imports: [
         FontAwesomeModule,
         InfiniteScrollDirective,

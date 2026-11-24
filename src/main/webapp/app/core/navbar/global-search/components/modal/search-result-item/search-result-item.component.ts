@@ -92,7 +92,7 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
     standalone: true,
     imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective, TumAetUiTagComponent],
     templateUrl: './search-result-item.component.html',
-    styleUrls: ['./search-result-item.component.scss'],
+    styleUrls: ['./search-result-item.component.css'],
 })
 export class SearchResultItemComponent {
     protected readonly faBook = faBook;

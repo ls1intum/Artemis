@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
             }
         </div>
     `,
-    styleUrls: ['./stepper.component.scss'],
+    styleUrls: ['./stepper.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StepperComponent {

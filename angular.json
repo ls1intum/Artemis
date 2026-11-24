@@ -7,7 +7,7 @@
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
-                    "style": "scss"
+                    "style": "css"
                 },
                 "@schematics/angular:application": {
                     "strict": true
@@ -58,13 +58,6 @@
                         "browser": "src/main/webapp/app/app.main.ts",
                         "polyfills": [],
                         "tsConfig": "tsconfig.json",
-                        "inlineStyleLanguage": "scss",
-                        "stylePreprocessorOptions": {
-                            "includePaths": ["."],
-                            "sass": {
-                                "silenceDeprecations": ["color-functions", "global-builtin", "import", "if-function"]
-                            }
-                        },
                         "assets": [
                             "src/main/webapp/content",
                             "src/main/webapp/logo/favicon.svg",
@@ -111,14 +104,9 @@
                             }
                         ],
                         "styles": [
-                            "src/main/webapp/content/scss/themes/theme-default.scss",
+                            "src/main/webapp/content/css/application.css",
                             "src/main/webapp/tailwind.css",
                             "@tumaet/ui-angular/styles.css",
-                            {
-                                "bundleName": "theme-dark",
-                                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
-                                "inject": false
-                            },
                             "node_modules/monaco-editor/min/vs/editor/editor.main.css",
                             "node_modules/@tumaet/apollon/dist/assets/style.css"
                         ],
