@@ -24,6 +24,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     readonly task = input.required<ProgrammingExerciseTask>();
     readonly openSubject = input.required<Subject<boolean>>();
     readonly isExamExercise = input<boolean>();
+    /** Changes whenever the (mutated in place) task or its test cases were recalculated or sorted, so that this OnPush row renders them again. */
+    readonly rowsRevision = input<number>();
 
     readonly updateTasksEvent = output<void>();
 

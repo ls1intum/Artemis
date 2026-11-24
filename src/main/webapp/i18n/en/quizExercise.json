@@ -127,6 +127,7 @@
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "export": "Export",
+                "exportQuestions": "Export questions",
                 "questionTitle": "Short question Title",
                 "quizExerciseTitle": "Quiz Exercise Title"
             },

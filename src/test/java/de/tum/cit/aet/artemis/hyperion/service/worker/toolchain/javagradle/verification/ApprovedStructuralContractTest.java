@@ -233,9 +233,9 @@ class ApprovedStructuralContractTest {
         JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
         assertThat(oracle.at("/genericApi/parameterCount").asInt()).isEqualTo(1);
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("method:get[]:$0", "method:values[]:List<$0>", "method:replace[$0[]]:void", "constructor:[$0]");
-        assertThat(oracle.at("/methods/0/returnType").asText()).isEqualTo("Object");
-        assertThat(oracle.at("/methods/2/parameters/0").asText()).isEqualTo("Object[]");
-        assertThat(oracle.at("/constructors/0/parameters/0").asText()).isEqualTo("Object");
+        assertThat(oracle.at("/methods/0/returnType").asString()).isEqualTo("Object");
+        assertThat(oracle.at("/methods/2/parameters/0").asString()).isEqualTo("Object[]");
+        assertThat(oracle.at("/constructors/0/parameters/0").asString()).isEqualTo("Object");
     }
 
     @Test
@@ -475,7 +475,7 @@ class ApprovedStructuralContractTest {
         assertThat(oracle.at("/0/class/isInterface").asBoolean()).isFalse();
         assertThat(oracle.at("/0/class/isEnum").asBoolean()).isFalse();
         assertThat(oracle.at("/0/class/isAbstract").asBoolean()).isFalse();
-        assertThat(oracle.at("/0/constructors/0/modifiers/0").asText()).isEqualTo("public");
+        assertThat(oracle.at("/0/constructors/0/modifiers/0").asString()).isEqualTo("public");
     }
 
     @Test
@@ -580,7 +580,7 @@ class ApprovedStructuralContractTest {
                 """, "src/Elevator.java", "package seededexercise; public class Elevator {}"))).isEmpty();
 
         JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise", Set.of("DispatchStrategy")));
-        assertThat(oracle.at("/0/methods/0/parameters/0").asText()).isEqualTo("List");
+        assertThat(oracle.at("/0/methods/0/parameters/0").asString()).isEqualTo("List");
     }
 
     @Test
