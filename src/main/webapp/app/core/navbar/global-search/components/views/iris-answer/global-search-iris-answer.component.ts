@@ -96,7 +96,7 @@ function sameIds(first: number[], second: number[]): boolean {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, GlobalSearchIrisHandoffComponent],
     templateUrl: './global-search-iris-answer.component.html',
-    styleUrls: ['./global-search-iris-answer.component.scss'],
+    styleUrls: ['./global-search-iris-answer.component.css'],
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);

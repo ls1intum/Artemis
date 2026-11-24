@@ -57,7 +57,7 @@ import { MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
 @Component({
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
-    styleUrls: ['course-management-container.component.scss'],
+    styleUrls: ['../../shared/course-base-container/course-base-container.component.css', 'course-management-container.component.css'],
     providers: [CourseConversationsService],
     imports: [
         CdkScrollable,

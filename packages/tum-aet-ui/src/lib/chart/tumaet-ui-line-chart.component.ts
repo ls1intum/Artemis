@@ -50,7 +50,7 @@ let nextLineChartId = 0;
 @Component({
     selector: 'tumaet-ui-line-chart',
     templateUrl: './tumaet-ui-line-chart.component.html',
-    styleUrl: './tumaet-ui-line-chart.component.scss',
+    styleUrls: ['./tumaet-ui-chart.layout.css', './tumaet-ui-line-chart.component.css'],
     imports: [
         TumAetUiChartClipPathComponent,
         TumAetUiChartCanvasDirective,

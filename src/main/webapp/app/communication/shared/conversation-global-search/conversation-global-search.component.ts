@@ -53,7 +53,7 @@ enum UserSearchStatus {
 @Component({
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
-    styleUrls: ['./conversation-global-search.component.scss'],
+    styleUrls: ['./conversation-global-search.component.css'],
     imports: [
         FormsModule,
         ButtonComponent,

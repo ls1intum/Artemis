@@ -21,7 +21,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
     selector: 'jhi-course-notification-setting-specification-card',
     imports: [TranslateDirective, CourseNotificationComponent, FormsModule, TumAetUiToggleSwitchComponent, ArtemisTranslatePipe],
     templateUrl: './course-notification-setting-specification-card.component.html',
-    styleUrls: ['./course-notification-setting-specification-card.component.scss'],
+    styleUrls: ['./course-notification-setting-specification-card.component.css'],
 })
 export class CourseNotificationSettingSpecificationCardComponent {
     readonly settingSpecification = input.required<CourseNotificationSettingSpecification>();

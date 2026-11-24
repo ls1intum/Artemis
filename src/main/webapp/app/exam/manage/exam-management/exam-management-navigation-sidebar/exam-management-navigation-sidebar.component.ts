@@ -19,7 +19,7 @@ import { TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-ang
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
     templateUrl: './exam-management-navigation-sidebar.component.html',
-    styleUrls: ['./exam-management-navigation-sidebar.component.scss'],
+    styleUrls: ['./exam-management-navigation-sidebar.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CourseTitleBarTitleComponent,

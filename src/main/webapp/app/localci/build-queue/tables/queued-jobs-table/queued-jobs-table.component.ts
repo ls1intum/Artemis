@@ -13,7 +13,7 @@ import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui
 @Component({
     selector: 'jhi-queued-jobs-table',
     templateUrl: './queued-jobs-table.component.html',
-    styleUrls: ['../build-jobs-table.scss', './queued-jobs-table.component.scss'],
+    styleUrl: '../build-jobs-table.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiTableLayoutComponent, BuildJobRowComponent, BuildJobsHeaderComponent, TumAetUiTableDirective],
 })

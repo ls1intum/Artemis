@@ -44,7 +44,7 @@ export interface UpdateTutorialGroupSessionData {
         ArtemisTranslatePipe,
     ],
     templateUrl: './tutorial-session-create-or-edit-modal.component.html',
-    styleUrl: './tutorial-session-create-or-edit-modal.component.scss',
+    styleUrl: './tutorial-session-create-or-edit-modal.component.css',
 })
 export class TutorialSessionCreateOrEditModalComponent {
     private translateService = inject(TranslateService);

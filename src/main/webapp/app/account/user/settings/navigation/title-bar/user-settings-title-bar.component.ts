@@ -4,7 +4,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-user-settings-title-bar',
     templateUrl: './user-settings-title-bar.component.html',
-    styleUrl: './user-settings-title-bar.component.scss',
+    styleUrl: './user-settings-title-bar.component.css',
     imports: [TranslateDirective],
 })
 export class UserSettingsTitleBarComponent {

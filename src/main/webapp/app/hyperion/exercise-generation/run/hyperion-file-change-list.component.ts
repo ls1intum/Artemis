@@ -31,7 +31,7 @@ interface RepoGroup {
 @Component({
     selector: 'jhi-hyperion-file-change-list',
     templateUrl: './hyperion-file-change-list.component.html',
-    styleUrl: './hyperion-file-change-list.component.scss',
+    styleUrl: './hyperion-file-change-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, HyperionEmptyComponent, TumAetUiTagComponent],
 })

@@ -31,14 +31,6 @@ export default defineConfig({
             '@tumaet/ui-angular': path.resolve(repoRoot, 'packages/tum-aet-ui/dist'),
         },
     },
-    css: {
-        preprocessorOptions: {
-            scss: {
-                loadPaths: [repoRoot],
-                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
-            },
-        },
-    },
     plugins: [angular({ jit: true, fastCompile: true, tsconfig: path.resolve(repoRoot, 'tsconfig.json') })],
     test: {
         name: 'monaco-integration',

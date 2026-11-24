@@ -83,7 +83,7 @@ interface ReactionMetaDataMap {
 @Component({
     selector: 'jhi-posting-reactions-bar',
     templateUrl: './posting-reactions-bar.component.html',
-    styleUrls: ['./posting-reactions-bar.component.scss'],
+    styleUrls: ['../communication.component.css', './posting-reactions-bar.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiTooltipDirective,
