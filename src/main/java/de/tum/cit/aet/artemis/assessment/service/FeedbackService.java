@@ -96,7 +96,6 @@ public class FeedbackService {
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(originalFeedback.getCredits(), 0.0));
         feedback.setText(originalFeedback.getText());
-        feedback.setTitleGenerated(originalFeedback.isTitleGenerated());
 
         if (originalFeedback.isPositive() == null) {
             feedback.setPositiveViaCredits();

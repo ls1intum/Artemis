@@ -3,12 +3,7 @@
         @if ((inferredReference() && showReference()) || linkedCriterionTitle()) {
             <div class="unified-feedback-reference">
                 @if (inferredReference() && showReference()) {
-                    @if (referenceType()) {
-                        <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
-                    }
-                    <span #referenceText class="unified-feedback-reference-text" [tumAetUiTooltip]="referenceTooltip() || referenceTruncated() ? inferredReference()! : ''">{{
-                        inferredReference()
-                    }}</span>
+                    <span class="unified-feedback-reference-text" [tumAetUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
                 }
                 @if (linkedCriterionTitle()) {
                     <span class="unified-feedback-criterion" data-testid="linked-criterion">

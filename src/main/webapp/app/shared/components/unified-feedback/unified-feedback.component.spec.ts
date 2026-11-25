@@ -140,20 +140,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredReference()).toBe('Explicit Ref');
     });
 
-    it('should repeat the reference as a tooltip unless the consumer turns it off and it fits', () => {
+    it('should repeat the reference as a tooltip', () => {
         fixture.componentRef.setInput('reference', 'Lines 7-11');
         fixture.detectChanges();
-        const chip = () => fixture.debugElement.query(By.css('.unified-feedback-reference-text')).injector.get(TumAetUiTooltipDirective);
-        expect(chip().content()).toBe('Lines 7-11');
-
-        fixture.componentRef.setInput('referenceTooltip', false);
-        fixture.detectChanges();
-        expect(chip().content()).toBe('');
-
-        // A narrow card cuts the reference off, so the tooltip repeats it after all
-        component.referenceTruncated.set(true);
-        fixture.detectChanges();
-        expect(chip().content()).toBe('Lines 7-11');
+        const chip = fixture.debugElement.query(By.css('.unified-feedback-reference-text')).injector.get(TumAetUiTooltipDirective);
+        expect(chip.content()).toBe('Lines 7-11');
     });
 
     it('should repeat a read-only title as a tooltip only once it is cut off', () => {
@@ -952,9 +943,9 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
     });
 
-    /** Binds a feedback as a reopened assessment does: its stored title, points and whether the title was generated. */
-    const openSaved = (title: string, credits: number, titleGenerated: boolean): Feedback => {
-        const saved = { text: title, credits, titleGenerated } as Feedback;
+    /** Binds a feedback as a reopened assessment does: its stored title and points. */
+    const openSaved = (title: string, credits: number): Feedback => {
+        const saved = { text: title, credits } as Feedback;
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', saved);
         component.feedbackTitle.set(title);
@@ -963,38 +954,27 @@ describe('UnifiedFeedbackComponent', () => {
         return saved;
     };
 
-    it('should keep a saved generated title following the points, e.g. once an assessment is reopened', () => {
-        openSaved('artemisApp.feedback.type.feedback', 0, true);
+    it('should keep a saved default title following the points, e.g. once an assessment is reopened', () => {
+        openSaved('artemisApp.feedback.type.feedback', 0);
 
         component.onCreditsChange(-0.5);
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
-    it('should keep a saved typed title that reads like the default when the points change after reopening', () => {
-        openSaved('artemisApp.feedback.type.positive', 2, false);
+    it('should keep a typed title when only the points change', () => {
+        openSaved('artemisApp.feedback.type.positive', 2);
 
+        component.onTitleInput('Good interface');
         component.onCreditsChange(-1);
         fixture.detectChanges();
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
+        expect(component.feedbackTitle()).toBe('Good interface');
     });
 
-    it.each(['artemisApp.feedback.type.feedback', 'artemisApp.feedback.type.positive'])('should keep the typed title %s when only the points change', (typedTitle) => {
-        const saved = openSaved('artemisApp.feedback.type.positive', 2, true);
-
-        component.onTitleInput(typedTitle);
-        component.onCreditsChange(-1);
-        fixture.detectChanges();
-        expect(component.feedbackTitle()).toBe(typedTitle);
-        // saved with the feedback, so the title also stays after reopening
-        expect(saved.titleGenerated).toBe(false);
-    });
-
-    it('should mark a filled-in default title as generated on the feedback, and let it follow the points again once the assessor cleared it', () => {
-        const saved = openSaved('Good interface', 2, false);
+    it('should let a cleared title follow the points again', () => {
+        openSaved('Good interface', 2);
 
         component.onTitleInput('');
         component.applyDefaultTitleIfEmpty();
-        expect(saved.titleGenerated).toBe(true);
         component.onCreditsChange(-1);
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
@@ -1022,18 +1002,11 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);
     });
 
-    it('should flag a missing description on a referenced feedback only when the consumer requires one', () => {
+    it('should not flag a missing description on a referenced feedback', () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { reference: 'file:src/Main.java_line:3' } as Feedback);
         component.feedbackDetail.set(undefined);
         fixture.detectChanges();
-        expect(component.isDetailMissing()).toBe(false);
-
-        fixture.componentRef.setInput('detailRequired', true);
-        fixture.detectChanges();
-        expect(component.isDetailMissing()).toBe(true);
-
-        component.feedbackDetail.set('The loop never terminates.');
         expect(component.isDetailMissing()).toBe(false);
     });
 
@@ -1143,15 +1116,6 @@ describe('UnifiedFeedbackComponent', () => {
 
             expect(component.linkedCriterionTitle()).toBeUndefined();
             expect(chip()).toBeNull();
-        });
-
-        it('should show the chip on a read-only feedback of an assessor when asked to', () => {
-            fixture.componentRef.setInput('showLinkedCriterion', true);
-            fixture.componentRef.setInput('feedback', linkedFeedback());
-            fixture.detectChanges();
-
-            expect(chip()?.textContent).toContain('Encapsulation');
-            expect(chip()?.querySelector('jhi-confirm-icon')).toBeNull();
         });
 
         it('should offer to remove the link only while the feedback can be edited', () => {

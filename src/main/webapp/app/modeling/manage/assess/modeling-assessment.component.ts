@@ -547,20 +547,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
-        for (let assessment of assessments) {
+        for (const assessment of assessments) {
             const instruction = this.gradingInstructionOf(assessment);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
-                // shortcut: Apollon 5.5.0 drops a title that reads like a default when the points change, though every
-                // title Artemis hands it was typed; keep it and show it again until Apollon stops doing that.
-                const droppedTitle = scoreChanged && assessment.title === undefined ? this.titleShownInApollon(feedback) : undefined;
-                if (droppedTitle) {
-                    const restored = cloneWith(assessment, { title: droppedTitle });
-                    assessment = restored;
-                    // Deferred, so Apollon's own update finishes before the title is written back.
-                    void Promise.resolve().then(() => this.apollonEditor?.addOrUpdateAssessment(restored));
-                }
                 // Linking a grading instruction to the element or removing it in Apollon is an edit like any other.
                 const instructionChanged = feedback.gradingInstruction?.id !== instruction?.id;
                 if (scoreChanged && feedback.gradingInstruction) {
@@ -590,8 +581,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         const titleChanged = lastShownTitle !== undefined && title !== lastShownTitle;
                         const detailChanged = lastShownDetail !== undefined && detail !== lastShownDetail;
                         if (titleChanged || detailChanged || scoreChanged || instructionChanged) {
-                            // A generated title is left out of Apollon (see updateApollonAssessments), so it follows the score.
-                            const newTitle = titleChanged ? title : feedback.titleGenerated ? '' : this.stripSuggestionPrefix(feedback.text ?? '');
+                            // A default title is left out of Apollon (see updateApollonAssessments), so it follows the score.
+                            const newTitle = titleChanged ? title : (this.titleShownInApollon(feedback) ?? '');
                             this.applyTitle(feedback, newTitle, assessment.score, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
                             if (titleChanged) {
                                 this.shownTitleInApollon.set(assessment.modelElementId, title);
@@ -704,8 +695,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         try {
             const assessments = feedbacks.map((feedback): Assessment => {
                 const isSuggestion = Feedback.isFeedbackSuggestion(feedback);
-                // `text` is a title once the feedback has a body of its own, a description or the feedback of a grading
-                // instruction (Feedback.isTextTitle). Older modeling feedback (saved before Apollon had a title field)
+                // `text` is a title once the feedback has a description of its own (Feedback.isTextTitle). Older modeling feedback (saved before Apollon had a title field)
                 // has its whole comment in `text` alone, which stays the description, as in the student view. A
                 // suggestion's `text` is always a title (Athena's own, prefixed with its accepted/adapted state) once
                 // that prefix is stripped.
@@ -828,25 +818,19 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * The title Artemis hands Apollon for a feedback. A generated title is left out, so Apollon shows the default for
-     * the current points as its placeholder; a suggestion's title is its `text` without the state prefix.
+     * The title Artemis hands Apollon for a feedback. A title that reads like a points-based default is left out, so Apollon
+     * shows the default for the current points as its placeholder; a suggestion's title is its `text` without the state prefix.
      */
     private titleShownInApollon(feedback: Feedback): string | undefined {
-        if (feedback.titleGenerated) {
-            return undefined;
-        }
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            return this.stripSuggestionPrefix(feedback.text ?? '');
-        }
-        return Feedback.isTextTitle(feedback) ? feedback.text : undefined;
+        const title = Feedback.isFeedbackSuggestion(feedback) ? this.stripSuggestionPrefix(feedback.text ?? '') : Feedback.isTextTitle(feedback) ? feedback.text : undefined;
+        return Feedback.isDefaultTitle(title, (key) => this.translateService.instant(key)) ? undefined : title;
     }
 
     /**
      * A feedback never keeps an empty title: a missing one is saved as the points-based default the unified
      * feedback editor offers ("Positive", "Needs Revision" or "Feedback"), so the student sees the same heading.
-     * A title the tutor typed in Apollon is kept, even one that reads like a default. A generated one is marked as such
-     * (see {@link Feedback.titleGenerated}), is never written back into Apollon's title field and so follows the score
-     * on each emit, as in the unified feedback editor.
+     * A default title is never written back into Apollon's title field and so follows the score on each emit, as in the
+     * unified feedback editor; a typed title that reads like a default is treated the same way.
      *
      * @param feedback the feedback to write the title to
      * @param title    the title from Apollon, empty when the tutor left it empty
@@ -854,8 +838,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * @param prefix   the suggestion state the title is stored with, if any
      */
     private applyTitle(feedback: Feedback, title: string, score: number | undefined, prefix = ''): void {
-        feedback.titleGenerated = !title.trim();
-        feedback.text = prefix + (feedback.titleGenerated ? this.translateService.instant(Feedback.getDefaultTitleKey(score)) : title);
+        feedback.text = prefix + (title.trim() ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score)));
     }
 
     /**

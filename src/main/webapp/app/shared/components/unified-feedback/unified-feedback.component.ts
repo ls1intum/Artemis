@@ -118,9 +118,8 @@ export class UnifiedFeedbackComponent {
             this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
 
-        // The title and the reference and criterion chips repeat themselves in a tooltip once a narrow card cuts them off
+        // The title and the criterion chip repeat themselves in a tooltip once a narrow card cuts them off
         this.observeTruncation(() => [this.titleText()?.nativeElement], this.titleTruncated);
-        this.observeTruncation(() => [this.referenceText()?.nativeElement], this.referenceTruncated);
         this.observeTruncation(() => [this.criterionTitle()?.nativeElement, this.gradingScaleSegment()?.nativeElement], this.linkedCriterionTruncated);
 
         // The points choose the default title, and they can change from outside the points field (e.g. a dropped
@@ -139,17 +138,9 @@ export class UnifiedFeedbackComponent {
     type = input<FeedbackType | undefined>(undefined);
     title = input<string | undefined>(undefined);
     reference = input<string | undefined>(undefined);
-    // Plain label shown before the reference chip (e.g. "Attribute"), matching how Apollon's own
-    // feedback popup separates the element's type from its highlighted name chip.
-    referenceType = input<string | undefined>(undefined);
-    // Whether the reference chip always repeats its text as a tooltip, e.g. for a modeling element name. A short reference,
-    // such as the "Lines 7-11" of programming inline feedback, turns it off; it is still repeated once the chip cuts it off.
-    referenceTooltip = input<boolean>(true);
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
-    /** Whether a read-only feedback names the criterion it is linked to. An editable one always does; a student view never should. */
-    showLinkedCriterion = input<boolean>(false);
 
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
@@ -160,12 +151,6 @@ export class UnifiedFeedbackComponent {
      */
     titleEditable = input<boolean>(true);
     highlightDifferences = input<boolean>(false);
-    /**
-     * Whether a referenced feedback is also flagged when its description is missing. Unreferenced feedback always is;
-     * a consumer whose referenced feedback cannot be saved without a description (e.g. programming inline feedback)
-     * turns this on so the assessor sees why saving is blocked.
-     */
-    detailRequired = input<boolean>(false);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
@@ -180,9 +165,6 @@ export class UnifiedFeedbackComponent {
     private readonly titleText = viewChild<ElementRef<HTMLElement>>('titleText');
     /** Whether a read-only feedback cuts off its title, which its tooltip then repeats in full. */
     readonly titleTruncated = signal(false);
-    private readonly referenceText = viewChild<ElementRef<HTMLElement>>('referenceText');
-    /** Whether the reference chip cuts off the reference, which its tooltip then repeats in full. */
-    readonly referenceTruncated = signal(false);
     private readonly criterionTitle = viewChild<ElementRef<HTMLElement>>('criterionTitle');
     private readonly gradingScaleSegment = viewChild<ElementRef<HTMLElement>>('gradingScaleSegment');
     /** Whether the criterion chip cuts off the criterion's name or its grading scale, which its tooltip then repeats in full. */
@@ -299,8 +281,7 @@ export class UnifiedFeedbackComponent {
 
     /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     isDetailMissing(): boolean {
-        const detailRequired = this.detailRequired() || !this.feedback()?.reference;
-        return this.editable() && detailRequired && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
+        return this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
     }
 
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
@@ -333,7 +314,7 @@ export class UnifiedFeedbackComponent {
     linkedCriterionTitle(): string | undefined {
         const instruction = this.feedback()?.gradingInstruction;
         // Only the assessor sees which criterion a feedback is linked to, never the student.
-        if (!instruction || !(this.editable() || this.showLinkedCriterion())) {
+        if (!instruction || !this.editable()) {
             return undefined;
         }
         return this.gradingInstructionSelectionService.criterionTitleOf(instruction) ?? this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterionFallback');
@@ -411,9 +392,6 @@ export class UnifiedFeedbackComponent {
 
     readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
 
-    /** Whether the title was generated, for a consumer that passes no {@link feedback}, which otherwise records it (see {@link Feedback.titleGenerated}). */
-    private titleGeneratedWithoutFeedback = false;
-
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
         for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
@@ -461,7 +439,6 @@ export class UnifiedFeedbackComponent {
 
     onTitleInput(value: string): void {
         const title = Feedback.withinLength(value, this.displayTitle(), this.TITLE_MAX_LENGTH);
-        this.setTitleGenerated(false);
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${title}`);
     }
 
@@ -478,18 +455,16 @@ export class UnifiedFeedbackComponent {
         if (!this.isTitleEditable() || this.displayTitle().trim() || isTyping) {
             return;
         }
-        this.setTitleGenerated(true);
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${this.defaultTitlePlaceholder()}`);
     }
 
     /**
-     * Keeps a generated title in line with the points, which choose it. Whether the title was generated is stored with the
-     * feedback, so this also holds once a new inline feedback is re-rendered after its first commit, or when an assessment
-     * is reopened, while a title the assessor typed always stays, even one that reads like a default. An untouched
-     * (accepted) suggestion is never rewritten, so opening one does not mark it adapted.
+     * Keeps a default title in line with the points, which choose it. A title counts as generated when it reads like one of the
+     * defaults, so this also holds once a new inline feedback is re-rendered after its first commit, or when an assessment is
+     * reopened. An untouched (accepted) suggestion is never rewritten, so opening one does not mark it adapted.
      */
     private refreshDefaultTitle(): void {
-        if (!this.isTitleEditable() || !this.isTitleGenerated() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+        if (!this.isTitleEditable() || !this.isDefaultTitleShown() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return;
         }
         const defaultTitle = this.defaultTitlePlaceholder();
@@ -498,19 +473,8 @@ export class UnifiedFeedbackComponent {
         }
     }
 
-    private isTitleGenerated(): boolean {
-        const feedback = this.feedback();
-        return feedback ? !!feedback.titleGenerated : this.titleGeneratedWithoutFeedback;
-    }
-
-    /** Recorded on the feedback itself, like an unlinked grading instruction, so it is saved and survives a re-render. */
-    private setTitleGenerated(generated: boolean): void {
-        const feedback = this.feedback();
-        if (feedback) {
-            feedback.titleGenerated = generated;
-        } else {
-            this.titleGeneratedWithoutFeedback = generated;
-        }
+    private isDefaultTitleShown(): boolean {
+        return Feedback.isDefaultTitle(this.displayTitle().trim(), (key) => this.artemisTranslatePipe.transform(key));
     }
 
     /**

@@ -22,11 +22,10 @@ class AssessmentInputMappingTest {
         instruction.setId(12L);
         instruction.setCredits(3.0);
         var dto = new FeedbackDTO(34L, "Feedback", "preview", true, "reference", 2.0, true, FeedbackType.MANUAL, Visibility.AFTER_DUE_DATE, GradingInstructionDTO.of(instruction),
-                null, true);
+                null);
         var feedback = dto.toAssessmentFeedback("Full long feedback text");
         assertThat(feedback.getId()).isEqualTo(34L);
         assertThat(feedback.getDetailText()).isEqualTo("Full long feedback text");
-        assertThat(feedback.isTitleGenerated()).isTrue();
         assertThat(feedback.getCredits()).isEqualTo(2.0);
         assertThat(feedback.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
         assertThat(feedback.getGradingInstruction()).isNotSameAs(instruction);

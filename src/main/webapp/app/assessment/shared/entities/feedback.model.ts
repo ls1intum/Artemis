@@ -76,8 +76,6 @@ export class Feedback implements BaseEntity {
     public text?: string;
     public detailText?: string;
     public hasLongFeedbackText?: boolean;
-    /** Whether Artemis filled in {@link text} as the points-based default title, which then follows the points, rather than the assessor typing it. */
-    public titleGenerated?: boolean;
     public reference?: string;
     public credits?: number;
     public type?: FeedbackType;
@@ -197,16 +195,21 @@ export class Feedback implements BaseEntity {
 
     /**
      * Whether `text` holds the feedback's title rather than its comment. It is a title once the feedback has a
-     * description, even an empty one, or the feedback of its grading instruction; feedback written before titles
-     * existed never set `detailText` and kept its whole comment in `text`, which is then shown as the body under a
-     * default title.
+     * description, even an empty one; feedback written before titles existed never set `detailText` and kept its
+     * whole comment in `text`, which is then shown as the body under a default title, also when a grading
+     * instruction supplies feedback of its own.
      */
     public static isTextTitle(that: Feedback): boolean {
-        return that.detailText != undefined || !!that.gradingInstruction?.feedback;
+        return that.detailText != undefined;
     }
 
     /** Translation keys of the points-based default titles a feedback gets when its title is left empty. */
     public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
+
+    /** Whether the title is one of the points-based defaults in the current language, which then follows the points. */
+    public static isDefaultTitle(title: string | undefined, translate: (key: string) => string): boolean {
+        return !!title && Feedback.DEFAULT_TITLE_KEYS.some((key) => translate(key) === title);
+    }
 
     /**
      * Applies a field's character limit the way `maxlength` does for typing, also to values that bypass it (e.g. set by

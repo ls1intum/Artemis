@@ -383,7 +383,6 @@ describe('ModelingAssessmentComponent', () => {
     it('should leave a saved generated title to Apollon as its placeholder, and let it follow the points', () => {
         const saved: Feedback = {
             text: 'artemisApp.feedback.type.positive',
-            titleGenerated: true,
             detailText: 'Looks right',
             referenceId: RELATIONSHIP_ID,
             reference: 'reference',
@@ -402,26 +401,31 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.needsRevision');
     });
 
-    it('should show a saved typed title that reads like the default as the title, and keep it when the score changes', () => {
-        const saved: Feedback = {
-            text: 'artemisApp.feedback.type.positive',
-            titleGenerated: false,
-            detailText: 'Looks right',
+    it('should keep the comment of legacy feedback with a rubric instruction as its description when saved and reopened', () => {
+        const legacy: Feedback = {
+            text: 'Consider extracting a common superclass.',
+            gradingInstruction: { id: 7, credits: 1, feedback: 'Rubric feedback' } as any,
             referenceId: RELATIONSHIP_ID,
             reference: 'reference',
             credits: 1,
         };
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.detectChanges();
-        fixture.componentRef.setInput('resultFeedbacks', [saved]);
+        fixture.componentRef.setInput('resultFeedbacks', [legacy]);
         fixture.detectChanges();
 
         const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
-        expect(assessment.title).toBe('artemisApp.feedback.type.positive');
+        expect(assessment.title).toBeUndefined();
+        expect(assessment.feedback).toBe('Consider extracting a common superclass.');
 
-        comp.generateFeedbackFromAssessment([{ ...assessment, score: -1 }]);
-        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.positive');
-        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.titleGenerated).toBe(false);
+        // Saving moves the comment into the description and reopening shows it there
+        comp.generateFeedbackFromAssessment([{ ...assessment, score: 1 }]);
+        const saved = comp.elementFeedback.get(RELATIONSHIP_ID)!;
+        expect(saved.detailText).toBe('Consider extracting a common superclass.');
+        const reloaded: Feedback = { text: saved.text, detailText: saved.detailText, referenceId: RELATIONSHIP_ID, reference: 'reference', credits: saved.credits };
+        fixture.componentRef.setInput('resultFeedbacks', [reloaded]);
+        fixture.detectChanges();
+        expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Consider extracting a common superclass.');
     });
 
     it('should show the comment of feedback saved before Apollon had a title as its description', () => {
@@ -498,60 +502,15 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.credits).toBe(1);
             // Without a title the heading is the points-based default; the comment stays the description
             expect(created.text).toBe('artemisApp.feedback.type.positive');
-            expect(created.titleGenerated).toBe(true);
             expect(created.detailText).toBe('Looks right');
         });
 
-        it('keeps a title the tutor typed in Apollon, even one that reads like a default, and lets a missing title follow the score', () => {
+        it('keeps a title the tutor typed in Apollon, and lets a missing title follow the score', () => {
             const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction' })]);
             expect(created.text).toBe('Missing abstraction');
 
-            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'artemisApp.feedback.type.feedback', score: -1 })]);
-            expect(created.text).toBe('artemisApp.feedback.type.feedback');
-            expect(created.titleGenerated).toBe(false);
-
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, score: -1 })]);
             expect(created.text).toBe('artemisApp.feedback.type.needsRevision');
-        });
-
-        it('keeps a typed title that Apollon drops when only the points change, and shows it in Apollon again', async () => {
-            fixture.componentRef.setInput('umlModel', makeMockModel());
-            fixture.detectChanges();
-            const addOrUpdate = vi.spyOn(comp.apollonEditor!, 'addOrUpdateAssessment');
-            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'artemisApp.feedback.type.positive', score: 2 })]);
-
-            // Apollon clears a title that reads like a default together with the points change
-            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, score: -1 })]);
-            expect(created.text).toBe('artemisApp.feedback.type.positive');
-            expect(created.titleGenerated).toBe(false);
-            expect(created.credits).toBe(-1);
-            await Promise.resolve();
-            expect(addOrUpdate).toHaveBeenCalledWith(expect.objectContaining({ modelElementId: PACKAGE_ID, title: 'artemisApp.feedback.type.positive', score: -1 }));
-        });
-
-        it.each([
-            ['accepted', FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER],
-            ['adapted', FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER],
-        ])('keeps the typed title of a reopened %s suggestion that Apollon drops when only the points change', async (_state, prefix) => {
-            fixture.componentRef.setInput('umlModel', makeMockModel());
-            fixture.detectChanges();
-            const suggestion = Feedback.forModeling(2, undefined, PACKAGE_ID, 'Package');
-            suggestion.text = prefix + 'artemisApp.feedback.type.positive';
-            suggestion.titleGenerated = false;
-            suggestion.detailText = 'Original detail';
-            comp.elementFeedback.set(PACKAGE_ID, suggestion);
-            // Reopening the saved assessment hands the typed title to Apollon
-            comp['updateApollonAssessments']([suggestion]);
-            const addOrUpdate = vi.spyOn(comp.apollonEditor!, 'addOrUpdateAssessment');
-
-            // Apollon clears a title that reads like a default together with the points change
-            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: -1 })]);
-
-            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
-            expect(suggestion.titleGenerated).toBe(false);
-            expect(suggestion.credits).toBe(-1);
-            await Promise.resolve();
-            expect(addOrUpdate).toHaveBeenCalledWith(expect.objectContaining({ modelElementId: PACKAGE_ID, title: 'artemisApp.feedback.type.positive', score: -1 }));
         });
 
         it('references an element by its UML type, not by the kind Apollon reports', () => {
@@ -646,7 +605,6 @@ describe('ModelingAssessmentComponent', () => {
             // Apollon emits a cleared title as undefined
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: 1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
-            expect(suggestion.titleGenerated).toBe(true);
 
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: -1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.needsRevision');

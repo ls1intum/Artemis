@@ -34,14 +34,6 @@
     overflow: hidden;
 }
 
-.unified-feedback-reference-label {
-    color: var(--body-color);
-    opacity: 0.7;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    flex-shrink: 0;
-}
-
 /* Matches Apollon's own [data-slot="assessment-name-chip"]: a tinted highlight around the element's
    name instead of a monospace "code" look, so the reference reads the same in both places. */
 .unified-feedback-reference-text {
