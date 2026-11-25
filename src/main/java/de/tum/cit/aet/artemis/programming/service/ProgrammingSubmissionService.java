@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -52,6 +50,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
@@ -107,9 +106,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            TeamAssessmentService teamAssessmentService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository,
+                teamAssessmentService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.asyncBuildTriggerService = asyncBuildTriggerService;
@@ -531,23 +532,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
-    /** Checks submission state and deadlines only when starting a new team assessment. */
-    private void checkTeamSubmissionDeadline(Submission submission) {
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && !participation.isTestRun()) {
-            if (!Boolean.TRUE.equals(submission.isSubmitted())) {
-                throw new AccessForbiddenException("The team's submission has not been submitted.");
-            }
-            var buildAndTestDate = ((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate();
-            if (buildAndTestDate != null && buildAndTestDate.isAfter(ZonedDateTime.now(ZoneOffset.UTC))) {
-                throw new AccessForbiddenException("The build and test date has not passed yet.");
-            }
-            if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
-                throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
-            }
-        }
-    }
-
     // TODO SE: explain in what context this method is even called
 
     /**
@@ -562,8 +546,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
-        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
-        checkTeamSubmissionDeadline(submission);
+        teamAssessmentService.checkCanAssessElseThrow(submission, true);
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -579,9 +562,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        if (submission.getParticipation().getExercise().isTeamMode()) {
-            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
-        }
+        // Create a new manual result and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);

@@ -4,6 +4,7 @@ import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, 
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -290,6 +291,11 @@ export class TeamParticipationTableComponent implements OnInit {
         // Non-Submitted exercises can not be assessed
         if (!submission || !submission.submitted) {
             return true;
+        }
+        // The server starts a new team assessment only once the team's deadline and, for programming exercises, the build and test date have passed, also for instructors
+        if (this.assessmentAction(submission) === AssessmentAction.START) {
+            const buildAndTestDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate;
+            return (!!exercise.dueDate && !hasExerciseDueDatePassed(exercise, submission.participation)) || (!!buildAndTestDate && dayjs().isBefore(buildAndTestDate));
         }
         // Exercises without due date can be assessed
         if (!exercise.dueDate) {

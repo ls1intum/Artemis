@@ -32,7 +32,7 @@
                         [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds()"
                     />
                     <p>
-                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status! | artemisTranslate }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
 
                     @if (canOfferManualAssessmentUpload()) {
@@ -349,8 +349,7 @@
 
                                     @if (stats.toReview.done >= stats.toReview.total) {
                                         <ul>
-                                            @for (row of exampleReviewRows(); track row.submission; let i = $index) {
-                                                @let exampleSubmission = row.submission;
+                                            @for (exampleSubmission of exampleSubmissionsToReview(); track exampleSubmission; let i = $index) {
                                                 <li>
                                                     <button
                                                         type="button"
@@ -362,7 +361,7 @@
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (row.completed) {
+                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
                                                         <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
@@ -398,8 +397,7 @@
 
                                     @if (stats.toAssess.done >= stats.toAssess.total) {
                                         <ul>
-                                            @for (row of exampleAssessmentRows(); track row.submission; let i = $index) {
-                                                @let exampleSubmission = row.submission;
+                                            @for (exampleSubmission of exampleSubmissionsToAssess(); track exampleSubmission; let i = $index) {
                                                 <li>
                                                     <button
                                                         type="button"
@@ -411,7 +409,7 @@
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
-                                                    @if (row.completed) {
+                                                    @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
                                                         <fa-icon class="text-state-success" [icon]="faCheckCircle" />
                                                     }
                                                 </li>
@@ -597,7 +595,7 @@
                                                                             <span jhiTranslate="artemisApp.result.assessor"></span>: {{ assessor.name || assessor.login }}
                                                                         </span>
                                                                     }
-                                                                    @if (((isTestRun() && complaints().length === 0) || !isTestRun()) && row.canContinue) {
+                                                                    @if (((isTestRun() && complaints().length === 0) || !isTestRun()) && row.canOpen) {
                                                                         <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                             @if (submission && row.isDraft) {
                                                                                 <a
@@ -713,8 +711,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (row of complaintRows(); track row.entry; let i = $index) {
-                                            @let submissionWithComplaint = row.entry;
+                                        @for (submissionWithComplaint of submissionsWithComplaints(); track submissionWithComplaint; let i = $index) {
                                             <tr>
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
@@ -730,8 +727,8 @@
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         &gt;=
                                                     }
-                                                    {{ row.responseTime | artemisDurationFromSeconds: true }}
-                                                    @if (row.highlight) {
+                                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                                    @if (complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
                                                             class="text-state-warning"
@@ -753,11 +750,13 @@
                                                 <td>
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <a
-                                                            [class.pointer-events-none]="row.locked"
-                                                            [routerLink]="row.locked ? null : row.link"
-                                                            [attr.aria-disabled]="row.locked || null"
-                                                            [attr.tabindex]="row.locked ? -1 : null"
-                                                            [queryParams]="row.queryParams"
+                                                            [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(submissionWithComplaint.complaint) ? null : getAssessmentLink(submissionWithComplaint.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(submissionWithComplaint.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(submissionWithComplaint.complaint) ? -1 : null"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
                                                             data-testid="evaluate-complaint"
                                                             tumAetUiButton
                                                             severity="success"
@@ -767,7 +766,13 @@
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
                                                         </a>
                                                     } @else {
-                                                        <a [routerLink]="row.link" [queryParams]="row.queryParams" tumAetUiButton severity="primary" size="small">
+                                                        <a
+                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            tumAetUiButton
+                                                            severity="primary"
+                                                            size="small"
+                                                        >
                                                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                                             {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
                                                         </a>
@@ -822,8 +827,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (row of moreFeedbackRows(); track row.entry; let i = $index) {
-                                            @let moreFeedbackRequest = row.entry;
+                                        @for (moreFeedbackRequest of submissionsWithMoreFeedbackRequests(); track moreFeedbackRequest; let i = $index) {
                                             <tr>
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
@@ -834,8 +838,8 @@
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         &gt;=
                                                     }
-                                                    {{ row.responseTime | artemisDurationFromSeconds: true }}
-                                                    @if (row.highlight) {
+                                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                                    @if (complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)) {
                                                         <fa-icon
                                                             [icon]="faExclamationTriangle"
                                                             class="text-state-warning"
@@ -854,11 +858,13 @@
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <a
-                                                            [class.pointer-events-none]="row.locked"
-                                                            [routerLink]="row.locked ? null : row.link"
-                                                            [attr.aria-disabled]="row.locked || null"
-                                                            [attr.tabindex]="row.locked ? -1 : null"
-                                                            [queryParams]="row.queryParams"
+                                                            [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(moreFeedbackRequest.complaint) ? null : getAssessmentLink(moreFeedbackRequest.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(moreFeedbackRequest.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(moreFeedbackRequest.complaint) ? -1 : null"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                                             tumAetUiButton
                                                             severity="success"
                                                             size="small"
@@ -869,8 +875,8 @@
                                                     } @else {
                                                         <button
                                                             type="button"
-                                                            [routerLink]="row.link"
-                                                            [queryParams]="row.queryParams"
+                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                                             tumAetUiButton
                                                             severity="primary"
                                                             size="small"

@@ -362,7 +362,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
-        exerciseDueDatePassed();
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 

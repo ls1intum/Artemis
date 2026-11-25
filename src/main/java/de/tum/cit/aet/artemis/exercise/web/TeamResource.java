@@ -6,9 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -44,7 +41,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -65,11 +61,8 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
-import de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
@@ -77,12 +70,11 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * REST controller for managing Teams.
@@ -133,17 +125,13 @@ public class TeamResource {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final SubmissionRepository submissionRepository;
-
-    private final ResultRepository resultRepository;
+    private final TeamAssessmentService teamAssessmentService;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository) {
-        this.resultRepository = resultRepository;
-        this.submissionRepository = submissionRepository;
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, TeamAssessmentService teamAssessmentService) {
+        this.teamAssessmentService = teamAssessmentService;
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -397,30 +385,7 @@ public class TeamResource {
             throw new BadRequestAlertException("The exercise is not a course team exercise", "exercise", "notTeamExercise");
         }
         submissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
-        submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, null);
-        User user = userRepository.getUserWithAuthorities();
-        Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
-        List<TeamAssessmentQueueEntryDTO> participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
-        Map<Long, AssessmentQueueSubmissionDTO> submissions = new HashMap<>();
-        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        if (!(exercise instanceof ProgrammingExercise programmingExercise)
-                || programmingExercise.areManualResultsAllowed() && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
-                        || !programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now))) {
-            List<AssessmentQueueSubmissionDTO> candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, now, teamOwnerId);
-            candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
-        }
-        List<Long> existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
-        if (!existingIds.isEmpty()) {
-            submissionRepository.findTeamQueueMetadata(existingIds).forEach(submission -> submissions.putIfAbsent(submission.participationId(), submission));
-        }
-        List<Long> selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
-        List<AssessmentQueueResultDTO> results = selectedIds.isEmpty() ? List.of() : resultRepository.findTeamQueueResults(selectedIds);
-        Map<Long, List<AssessmentQueueResultDTO>> resultsBySubmission = results.stream().collect(Collectors.groupingBy(AssessmentQueueResultDTO::submissionId));
-        return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
-            AssessmentQueueSubmissionDTO submission = submissions.get(entry.participationId());
-            return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(),
-                    submission.toResponse(resultsBySubmission.getOrDefault(submission.id(), List.of())));
-        }).toList());
+        return ResponseEntity.ok(teamAssessmentService.getAssessmentQueue(exercise, correctionRound));
     }
 
     /**

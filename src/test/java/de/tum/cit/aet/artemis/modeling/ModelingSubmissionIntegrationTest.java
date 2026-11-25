@@ -660,7 +660,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission() throws Exception {
-        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -677,7 +676,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getModelSubmission_queryCount() throws Exception {
-        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
         final Long submissionId = submission.getId();

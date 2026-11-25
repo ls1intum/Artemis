@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -74,7 +74,7 @@ public class SubmissionService {
 
     private static final String ENTITY_NAME = "submission";
 
-    protected final ExerciseDateService exerciseDateService;
+    private final ExerciseDateService exerciseDateService;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -102,11 +102,13 @@ public class SubmissionService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    protected final TeamAssessmentService teamAssessmentService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, TeamAssessmentService teamAssessmentService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -121,6 +123,7 @@ public class SubmissionService {
         this.athenaApi = athenaApi;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.teamAssessmentService = teamAssessmentService;
     }
 
     /**
@@ -653,7 +656,10 @@ public class SubmissionService {
     }
 
     /**
-     * Rejects negative rounds; callers validate the upper bound using the fully loaded exercise.
+     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
+     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
+     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
+     * necessarily have its exam loaded.
      *
      * @param correctionRound the correction round to check
      * @throws BadRequestAlertException if the correction round is negative
@@ -665,7 +671,9 @@ public class SubmissionService {
     }
 
     /**
-     * Creates or locks an assessment, requiring the selected team participation's deadline to pass for a new result.
+     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
+     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * A completed assessment of a course team exercise is returned unchanged, so that its tutor can reopen it without claiming it.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -674,19 +682,10 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
-        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        if (result == null && submission.getParticipation().getExercise().isTeamMode() && !submission.getParticipation().getExercise().isExamExercise()
-                && !(submission.getParticipation() instanceof StudentParticipation practice && practice.isTestRun() && practice.getTeam().isEmpty())
-                && ExerciseDateService.getDueDate(submission.getParticipation()).filter(ZonedDateTime.now(ZoneOffset.UTC)::isBefore).isPresent()) {
-            throw new AccessForbiddenException("The submission deadline has not passed yet.");
-        }
-        if (submission.getParticipation().getExercise().isTeamMode() && result != null && result.getCompletionDate() != null) {
+        teamAssessmentService.checkCanAssessElseThrow(submission, result == null);
+        if (result != null && result.getCompletionDate() != null && submission.getParticipation().getExercise().isTeamMode()) {
             return result;
-        }
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && result == null) {
-            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
@@ -825,10 +824,20 @@ public class SubmissionService {
     }
 
     /**
-     * Checks the exam-wide assessment start time, including grace periods and the configured programming build/test date.
-     * Uses the latest individual exam end date, rather than the opened participation's end date.
-     * No-op for course exercises, test-run participations, and exams without assessment dates.
-     * Course exercise deadlines are checked by {@link #checkIfExerciseDueDateIsReached}.
+     * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
+     * student and, for programming exercises, that the tests have run once more on the final submissions.
+     * <p>
+     * This is the shared gate every endpoint that opens an assessment goes through, for all exercise types: without it
+     * tutors can start grading while students are still working, and would grade a submission the student then replaces
+     * (see issue #13358). It is a no-op for course exercises (they are covered by
+     * {@link #checkIfExerciseDueDateIsReached}) and for instructor test runs, which happen before the exam starts and
+     * must stay assessable.
+     * <p>
+     * NOTE: the check is exam-wide, i.e. based on the latest individual end date of all student exams, not on the
+     * individual student behind the given participation. Granting one student more working time therefore postpones
+     * assessment of the whole exercise. For test exams the latest individual end date is derived from the start of the
+     * availability window rather than from each attempt, so the gate opens earlier than the last attempt can end; test
+     * exams cannot be assessed anyway, as they are validated to zero correction rounds.
      *
      * @param exercise      the exercise whose submission a tutor wants to assess
      * @param participation the participation the submission belongs to, or {@code null} if no specific participation is

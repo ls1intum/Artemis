@@ -11,7 +11,7 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -30,8 +30,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Observable, interval, of } from 'rxjs';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Observable, of } from 'rxjs';
 import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -140,24 +139,24 @@ const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, 
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
-    readonly complaintService = inject(ComplaintService);
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly alertService = inject(AlertService);
-    private readonly translateService = inject(TranslateService);
-    private readonly accountService = inject(AccountService);
-    private readonly route = inject(ActivatedRoute);
-    private readonly tutorParticipationApi = inject(TutorParticipationApi);
-    private readonly submissionService = inject(SubmissionService);
-    private readonly textSubmissionService = inject(TextSubmissionService);
-    private readonly modelingSubmissionService = inject(ModelingSubmissionService);
-    private readonly fileUploadSubmissionService = inject(FileUploadSubmissionService);
-    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly router = inject(Router);
-    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private readonly sortService = inject(SortService);
-    private readonly datePipe = inject(ArtemisDatePipe);
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly teamService = inject(TeamService);
+    complaintService = inject(ComplaintService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+    private route = inject(ActivatedRoute);
+    private tutorParticipationApi = inject(TutorParticipationApi);
+    private submissionService = inject(SubmissionService);
+    private textSubmissionService = inject(TextSubmissionService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private router = inject(Router);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private sortService = inject(SortService);
+    private datePipe = inject(ArtemisDatePipe);
+    private destroyRef = inject(DestroyRef);
+    private teamService = inject(TeamService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -333,6 +332,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsLink = signal<(string | number)[]>(undefined!);
     readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
 
+    // One row per displayed submission, so that the template binds values instead of calling methods.
+    readonly submissionRowsByRound = computed(() =>
+        this.correctionRoundIndices().map((correctionRound) => {
+            const toRow = (submission: Submission, unassessed: boolean) => ({
+                submission,
+                team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
+                result: getSubmissionResultByCorrectionRound(submission, correctionRound),
+                canOpen: this.canOpenTeamAssessment(submission, correctionRound),
+                isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
+                link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
+            });
+            return {
+                unassessed: this.getUnassessedSubmissionsForRound(correctionRound).map((submission) => toRow(submission, true)),
+                assessed: (this.assessedSubmissionsByRound()[correctionRound] ?? []).map((submission) => toRow(submission, false)),
+                showSubmissions: this.showSubmissionsForRound(correctionRound),
+                queryParams: this.getAssessmentQueryParams(correctionRound),
+            };
+        }),
+    );
+
     // Icons
     faSpinner = faSpinner;
     faQuestionCircle = faQuestionCircle;
@@ -367,48 +386,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
-    readonly completedExampleSubmissionIds = computed(() => new Set(this.exampleSubmissionsCompletedByTutor().map((submission) => submission.id)));
-    readonly exampleReviewRows = computed(() => this.exampleSubmissionsToReview().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })));
-    readonly exampleAssessmentRows = computed(() =>
-        this.exampleSubmissionsToAssess().map((submission) => ({ submission, completed: this.hasBeenCompletedByTutor(submission.id!) })),
-    );
-
-    readonly submissionRowsByRound = computed(() =>
-        this.correctionRoundIndices().map((correctionRound) => {
-            const toRow = (submission: Submission, unassessed: boolean) => ({
-                submission,
-                team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
-                result: getSubmissionResultByCorrectionRound(submission, correctionRound),
-                canContinue: this.canContinueTeamTextAssessment(submission, correctionRound),
-                isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
-                link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
-            });
-            return {
-                unassessed: this.getUnassessedSubmissionsForRound(correctionRound).map((submission) => toRow(submission, true)),
-                assessed: (this.assessedSubmissionsByRound()[correctionRound] ?? []).map((submission) => toRow(submission, false)),
-                showSubmissions: this.showSubmissionsForRound(correctionRound),
-                queryParams: this.getAssessmentQueryParams(correctionRound),
-            };
-        }),
-    );
-
-    // Complaint ages and expiring locks must update even when no new queue data arrives.
-    private readonly complaintClock = toSignal(interval(1000));
-    readonly complaintRows = computed(() => this.buildComplaintRows(this.submissionsWithComplaints()));
-    readonly moreFeedbackRows = computed(() => this.buildComplaintRows(this.submissionsWithMoreFeedbackRequests()));
-
-    private buildComplaintRows(entries: SubmissionWithComplaintDTO[]) {
-        this.complaintClock();
-        return entries.map((entry) => ({
-            entry,
-            locked: this.isComplaintLocked(entry.complaint),
-            link: this.getAssessmentLink(entry.submission),
-            queryParams: this.getComplaintQueryParams(entry.complaint),
-            responseTime: this.complaintService.getResponseTimeInSeconds(entry.complaint),
-            highlight: this.complaintService.shouldHighlightComplaint(entry.complaint),
-        }));
-    }
-
     ngOnInit(): void {
         this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -526,7 +503,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 const tutorParticipation = exercise.tutorParticipations![0];
                 this.tutorParticipation.set(tutorParticipation);
                 this.tutorParticipationStatus.set(tutorParticipation.status!);
-                if (exercise.exampleSubmissions?.length) {
+                if (exercise.exampleSubmissions && exercise.exampleSubmissions.length > 0) {
                     this.exampleSubmissionsToReview.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial));
                     this.exampleSubmissionsToAssess.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial));
                 }
@@ -751,21 +728,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
         } else {
             // TODO: This could be one generic endpoint.
-            const exerciseType = this.exercise().type;
-            switch (exerciseType) {
+            switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                case ExerciseType.MODELING:
-                case ExerciseType.FILE_UPLOAD: {
-                    const service = {
-                        [ExerciseType.TEXT]: this.textSubmissionService,
-                        [ExerciseType.MODELING]: this.modelingSubmissionService,
-                        [ExerciseType.FILE_UPLOAD]: this.fileUploadSubmissionService,
-                    }[exerciseType];
                     submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? service.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : service.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
+                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
-                }
+                case ExerciseType.MODELING:
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
+                    break;
+                case ExerciseType.FILE_UPLOAD:
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
+                    break;
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
@@ -976,16 +954,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param exampleSubmissionId Id of the example submission which to check for completion
      */
     hasBeenCompletedByTutor(exampleSubmissionId: number) {
-        return this.completedExampleSubmissionIds().has(exampleSubmissionId);
+        return this.exampleSubmissionsCompletedByTutor().filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
     }
 
     private onError(error: string) {
         this.alertService.error(error);
     }
 
-    /** Matches the text editor's draft lock without changing other exercise types. */
-    canContinueTeamTextAssessment(submission: Submission, correctionRound: number): boolean {
-        if (!this.exercise().teamMode || this.isTestRun() || this.exercise().type !== ExerciseType.TEXT) {
+    /**
+     * Whether the user may open the team assessment of a submission. A tutor cannot open a draft that another user holds, which the assessment editors refuse as well.
+     * @param submission      the displayed submission
+     * @param correctionRound the displayed correction round
+     */
+    private canOpenTeamAssessment(submission: Submission, correctionRound: number): boolean {
+        if (!this.exercise().teamMode || this.isTestRun()) {
             return true;
         }
         const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
@@ -1086,8 +1068,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param submission
      */
     getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
-        const matchingSubmission = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
-        const submissionToView = matchingSubmission ? deepClone(matchingSubmission) : undefined;
+        const submissionToView = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
             if (submissionToView.results) {
                 submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);

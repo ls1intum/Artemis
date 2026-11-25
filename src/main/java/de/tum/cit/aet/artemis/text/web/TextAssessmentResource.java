@@ -442,7 +442,6 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         else {
             // in case no resultId is set we get result by correctionRound
-            authCheckService.checkTeamAssessmentAccessElseThrow(textSubmission);
             result = textSubmission.getResultForCorrectionRound(correctionRound);
 
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
@@ -453,6 +452,10 @@ public class TextAssessmentResource extends AssessmentResource {
                         .build();
             }
 
+            if (result == null && exercise.isTeamMode()) {
+                // team tutors start the assessment of a selected submission here instead of through the random selection, which checks the limit
+                textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+            }
             textSubmission = textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission.getId(), correctionRound);
             // reconnect with participation
             textSubmission.setParticipation(participation);

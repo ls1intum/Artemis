@@ -10,6 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TeamParticipationTableComponent } from 'app/exercise/team/team-participation-table/team-participation-table.component';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -311,6 +312,17 @@ describe('TeamParticipationTableComponent', () => {
             submission5,
         );
         expect(expectedAssessmentActionButtonDisabled).toBe(false);
+    });
+
+    it('Check disabled assessment button for a new assessment before due date as instructor', () => {
+        const unassessedSubmission = { id: 6, submitted: true, submissionDate: dayjs().subtract(10, 'minutes') } as Submission;
+        expect(comp.isAssessmentButtonDisabled({ ...exercise5, isAtLeastInstructor: true }, unassessedSubmission)).toBe(true);
+    });
+
+    it('Check disabled assessment button for a new programming assessment before the build and test date', () => {
+        const unassessedSubmission = { id: 7, submitted: true, submissionDate: dayjs().subtract(10, 'minutes') } as Submission;
+        const programmingExercise = { ...exercise3, type: ExerciseType.PROGRAMMING, buildAndTestStudentSubmissionsAfterDueDate: dayjs().add(5, 'minutes') } as ProgrammingExercise;
+        expect(comp.isAssessmentButtonDisabled(programmingExercise, unassessedSubmission)).toBe(true);
     });
 
     it('currentExerciseSubmissions only includes the submission of the current exercise, not other exercises in the team course', () => {
