@@ -82,7 +82,7 @@
     -webkit-line-clamp: 5;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: max-height 0.3s ease;
 }
 
 .forwarded-message-container .forwarded-message-body.expanded {

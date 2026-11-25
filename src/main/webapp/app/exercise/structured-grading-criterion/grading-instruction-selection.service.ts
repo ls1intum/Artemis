@@ -1,5 +1,18 @@
 import { Service, Signal, computed, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+/**
+ * A grading instruction as it is dragged onto an assessment. It also names its criterion, which an instruction does not
+ * carry itself, because Apollon's assessment box shows that title on the instruction it links.
+ */
+export type GradingInstructionWithCriterionTitle = GradingInstruction & { criterionTitle?: string };
+
+/** The instruction without the criterion title it carries for display, so that the title is never stored with a feedback. */
+export function withoutCriterionTitle({ criterionTitle: _criterionTitle, ...instruction }: GradingInstructionWithCriterionTitle): GradingInstruction {
+    return instruction;
+}
 
 /**
  * Contract fulfilled by the feedback list of an assessment editor.
@@ -47,6 +60,7 @@ export class GradingInstructionSelectionService {
         const instruction = this.armedInstruction();
         return instruction !== undefined && this.canApplyInstruction(instruction);
     });
+    private readonly criteria = signal<readonly GradingCriterion[]>([]);
 
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
@@ -106,6 +120,25 @@ export class GradingInstructionSelectionService {
             reservations.delete(owner);
         }
         this.reservedInstructions.set(reservations);
+    }
+
+    /** Called by the grading instructions panel with the criteria of the open assessment, so that an instruction can be named by its criterion. */
+    setCriteria(criteria: readonly GradingCriterion[]): void {
+        this.criteria.set(criteria);
+    }
+
+    /** The title of the criterion the instruction belongs to, if the grading instructions panel lists it. */
+    criterionTitleOf(instruction: GradingInstruction): string | undefined {
+        if (instruction.id === undefined) {
+            return undefined;
+        }
+        const criterion = this.criteria().find((candidate) => candidate.structuredGradingInstructions?.some((listed) => listed.id === instruction.id));
+        return criterion?.title?.trim() || undefined;
+    }
+
+    /** The instruction together with the title of its criterion, the way Apollon's assessment box shows a linked instruction. */
+    withCriterionTitle(instruction: GradingInstruction): GradingInstructionWithCriterionTitle {
+        return cloneWith(instruction, { criterionTitle: this.criterionTitleOf(instruction) });
     }
 
     isApplied(instruction: GradingInstruction): boolean {

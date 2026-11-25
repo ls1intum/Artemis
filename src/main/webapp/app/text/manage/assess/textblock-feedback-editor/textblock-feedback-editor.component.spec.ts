@@ -185,7 +185,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
-        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{"id":1,"credits":1}') } } as unknown as Event;
         component.connectFeedbackWithInstruction(mockEvent);
 
         // then
@@ -229,7 +229,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
         //@ts-ignore
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{"id":1,"credits":1}') } } as unknown as Event;
 
         component.connectFeedbackWithInstruction(mockEvent);
 

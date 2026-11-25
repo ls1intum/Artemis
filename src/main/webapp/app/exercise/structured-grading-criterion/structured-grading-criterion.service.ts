@@ -1,7 +1,11 @@
 import { Service, inject } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import {
+    GradingInstructionSelectionService,
+    GradingInstructionWithCriterionTitle,
+    withoutCriterionTitle,
+} from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
 
@@ -33,9 +37,9 @@ export class StructuredGradingCriterionService {
         if (!data) {
             return false;
         }
-        let instruction: GradingInstruction | null;
+        let instruction: GradingInstructionWithCriterionTitle | null;
         try {
-            instruction = parseJson<GradingInstruction | null>(data);
+            instruction = parseJson<GradingInstructionWithCriterionTitle | null>(data);
         } catch (err) {
             // Something unrelated was dropped, so the data is no instruction JSON.
             if (err instanceof SyntaxError) {
@@ -47,7 +51,8 @@ export class StructuredGradingCriterionService {
         if (typeof instruction !== 'object' || instruction === null || instruction.id === undefined) {
             return false;
         }
-        return this.applyInstructionToFeedback(feedback, instruction);
+        // The criterion title only travels with the drag for Apollon and is never stored with the feedback.
+        return this.applyInstructionToFeedback(feedback, withoutCriterionTitle(instruction));
     }
 
     /**

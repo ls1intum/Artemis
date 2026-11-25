@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import {
+    GradingInstructionSelectionHost,
+    GradingInstructionSelectionService,
+    GradingInstructionWithCriterionTitle,
+    withoutCriterionTitle,
+} from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
 describe('GradingInstructionSelectionService', () => {
     let service: GradingInstructionSelectionService;
@@ -19,6 +25,22 @@ describe('GradingInstructionSelectionService', () => {
             unapplyOneInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
+    });
+
+    it('should name an instruction by the criterion the grading instructions panel lists it under', () => {
+        service.setCriteria([
+            { title: '  Associations ', structuredGradingInstructions: [{ id: 1 }, { id: 3 }] } as GradingCriterion,
+            { title: 'Classes', structuredGradingInstructions: [{ id: 2 }] } as GradingCriterion,
+        ]);
+
+        expect(service.criterionTitleOf({ id: 3 } as GradingInstruction)).toBe('Associations');
+        expect(service.withCriterionTitle({ id: 2, credits: 1 } as GradingInstruction)).toEqual({ id: 2, credits: 1, criterionTitle: 'Classes' });
+        expect(service.criterionTitleOf({ id: 4 } as GradingInstruction)).toBeUndefined();
+        expect(service.criterionTitleOf({} as GradingInstruction)).toBeUndefined();
+    });
+
+    it('should leave out the criterion title when an instruction is stored', () => {
+        expect(withoutCriterionTitle({ id: 1, credits: 2, criterionTitle: 'Associations' } as GradingInstructionWithCriterionTitle)).toEqual({ id: 1, credits: 2 });
     });
 
     it('should report nothing as selectable or applied without a registered host', () => {

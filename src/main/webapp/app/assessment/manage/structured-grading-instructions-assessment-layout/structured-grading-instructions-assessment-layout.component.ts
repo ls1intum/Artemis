@@ -1,6 +1,6 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnDestroy, computed, inject, input, viewChildren } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, viewChildren } from '@angular/core';
 import { faCrosshairs, faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -61,6 +61,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     faPlus = faPlus;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
+
+    constructor() {
+        effect(() => this.selectionService.setCriteria(this.criteria() ?? []));
+    }
 
     /**
      * Preserve the instructor's rubric order in the assessment editor.
@@ -163,8 +167,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             event.preventDefault();
             return;
         }
-        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
-        event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
+        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon, which shows
+        // the title of the instruction's criterion on the assessment it links.
+        event.dataTransfer?.setData('text/plain', JSON.stringify(this.selectionService.withCriterionTitle(instruction)));
     }
     /** An assessment shows one instruction list; once it is gone, nothing would show which instruction is armed. */
     ngOnDestroy(): void {

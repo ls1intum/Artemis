@@ -2,7 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-23
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -324,7 +324,7 @@ Ares 2 is a JUnit extension for easy and secure Java testing on Artemis.
 The Java and Kotlin test templates use Ares 2 and contain a security policy file (`SecurityPolicy.yaml`, in the root of the test repository) that is referenced by the `@Policy` annotation of the test classes.
 Add every new test class to `theFollowingClassesAreTestClasses` in this policy and allow additional resources (e.g. package imports of libraries used in the exercise) in `theFollowingResourceAccessesArePermitted`.
 Exercises that were created before the introduction of Ares 2 keep their stored Docker image and keep working with Ares 1 (`artemis-java-test-sandbox`).
-The new default Docker images for Java (`ls1tum/artemis-maven-template:java25-5`) and Kotlin (`ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1`) do not contain the dependencies of Ares 1 anymore, and Ares 1 does not run on Java 25, because it relies on the Java security manager.
+The new default Docker images for Java (`ls1tum/artemis-maven-template:java25-7`) and Kotlin (`ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.1`) do not contain the dependencies of Ares 1 anymore, and Ares 1 does not run on Java 25, because it relies on the Java security manager.
 
 Main features:
 

@@ -37,6 +37,13 @@
     animation: notification-scale-in 0.2s ease-out forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .notification-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes notification-scale-in {
     from {
         transform: scale(0);
@@ -58,6 +65,13 @@
     transform: scale(1);
     opacity: 1;
     animation: notification-scale-out 0.2s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notification-leaving {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes notification-scale-out {

@@ -77,6 +77,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(card.querySelector('[data-testid="arm-instruction"]')).toBeNull();
     });
 
+    it('should hand over the title of the criterion with a dragged instruction', () => {
+        const instruction = { id: 5, credits: 1, feedback: 'Correct association' } as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [{ title: 'Associations', structuredGradingInstructions: [instruction] }]);
+        fixture.detectChanges();
+        const dataTransfer = { setData: vi.fn() };
+
+        comp.drag({ dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent, instruction);
+
+        expect(dataTransfer.setData).toHaveBeenCalledOnce();
+        expect(JSON.parse(dataTransfer.setData.mock.calls[0][1])).toEqual({ id: 5, credits: 1, feedback: 'Correct association', criterionTitle: 'Associations' });
+    });
+
     it('shows the instruction, feedback wording and signed points in each card', async () => {
         const instruction = { id: 1, feedback: 'Tutor feedback', instructionDescription: 'Assessment instruction', credits: 1 } as GradingInstruction;
         fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
