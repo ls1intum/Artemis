@@ -207,7 +207,7 @@
                 loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP ? 'artemisApp.pages.tutorialGroupDetail.sessionsEmptyDescription' : undefined
             "
         >
-            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <span class="flex-1"></span>
                 @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
                     <button tumAetUiButton size="small" type="button" data-testid="new-session-button" (click)="openSessionModal()">

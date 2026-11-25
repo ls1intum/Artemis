@@ -128,13 +128,13 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
-// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.scss); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.css); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
 const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
 
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.css', './course-conversations.component.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [CommunicationService, LinkifyService, LinkPreviewService],
     imports: [

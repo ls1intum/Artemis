@@ -32,7 +32,7 @@ let nextMenuGroupId = 0;
         </div>
         <ng-content />
     `,
-    styleUrl: './tumaet-ui-menu-group.component.scss',
+    styleUrl: './tumaet-ui-menu-group.component.css',
     host: {
         role: 'group',
         class: 'tumaet-ui-menu-group tumaet:flex tumaet:flex-col',

@@ -40,7 +40,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
-    styleUrls: ['./exercise-groups.component.scss'],
+    styleUrls: ['./exercise-groups.component.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

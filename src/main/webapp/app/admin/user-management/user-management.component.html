@@ -20,7 +20,7 @@
     </div>
     @if (users(); as userList) {
         <tumaet-ui-table-layout [loading]="loadingSearchResult()" [empty]="userList.length === 0 && !loadingSearchResult()">
-            <form tumAetUiTableToolbar [formGroup]="userSearchForm" class="flex min-w-0 flex-1 items-center gap-2!">
+            <form tumAetUiTableToolbar [formGroup]="userSearchForm" class="flex min-w-0 flex-1 items-center gap-2">
                 <input
                     tumAetUiInput
                     tumAetUiInputSize="small"

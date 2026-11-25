@@ -19,7 +19,7 @@ interface FeatureCard {
 @Component({
     selector: 'jhi-about-iris-modal',
     templateUrl: './about-iris-modal.component.html',
-    styleUrl: './about-iris-modal.component.scss',
+    styleUrl: './about-iris-modal.component.css',
     imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

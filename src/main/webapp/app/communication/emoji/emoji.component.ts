@@ -6,7 +6,7 @@ import { EmojiUtils } from 'app/communication/emoji/emoji.utils';
 @Component({
     selector: 'jhi-emoji',
     templateUrl: './emoji.component.html',
-    styleUrls: ['./emoji.component.scss'],
+    styleUrls: ['./emoji.component.css'],
     imports: [EmojiModule],
 })
 export class EmojiComponent {

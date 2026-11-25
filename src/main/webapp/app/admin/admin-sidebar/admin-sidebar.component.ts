@@ -53,7 +53,7 @@ export interface AdminSidebarGroup {
 @Component({
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
-    styleUrls: ['./admin-sidebar.component.scss'],
+    styleUrls: ['./admin-sidebar.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective, RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },

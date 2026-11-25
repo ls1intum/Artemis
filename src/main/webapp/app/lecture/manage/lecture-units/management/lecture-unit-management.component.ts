@@ -63,7 +63,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
 @Component({
     selector: 'jhi-lecture-unit-management',
     templateUrl: './lecture-unit-management.component.html',
-    styleUrls: ['./lecture-unit-management.component.scss'],
+    styleUrls: ['./lecture-unit-management.component.css'],
     imports: [
         TranslateDirective,
         IngestionStatusBadgeComponent,

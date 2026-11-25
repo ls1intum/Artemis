@@ -35,7 +35,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
-    styleUrls: ['./conversation-header.component.scss'],
+    styleUrls: ['./conversation-header.component.css'],
     imports: [
         FaIconComponent,
         ChannelIconComponent,

@@ -105,7 +105,7 @@ const BUDGET_LEVEL_KEY: Record<HyperionBudgetLevel, string> = {
 @Component({
     selector: 'jhi-hyperion-run-usage',
     templateUrl: './hyperion-run-usage.component.html',
-    styleUrl: './hyperion-run-usage.component.scss',
+    styleUrl: './hyperion-run-usage.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiTagComponent],
 })

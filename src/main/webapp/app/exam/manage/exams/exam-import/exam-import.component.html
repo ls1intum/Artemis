@@ -2,7 +2,7 @@
     <!-- State 1: Selection of an exam for import -->
     @if (!exam()) {
         <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
-            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <input
                     tumAetUiInput
                     tumAetUiInputSize="small"

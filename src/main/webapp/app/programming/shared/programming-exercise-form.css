@@ -1,0 +1,7 @@
+.label-preview {
+    font-size: 9pt;
+}
+
+.preview-box {
+    background: var(--update-programming-exercise-plan-preview-box-background);
+}

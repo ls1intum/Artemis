@@ -28,7 +28,7 @@ interface Day {
     selector: 'jhi-calendar-events-per-day-section',
     imports: [CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
-    styleUrl: './calendar-events-per-day-section.component.scss',
+    styleUrl: './calendar-events-per-day-section.component.css',
 })
 export class CalendarEventsPerDaySectionComponent {
     // amount of pixels in 1rem

@@ -34,7 +34,7 @@ export enum ExamConductionState {
 @Component({
     selector: 'jhi-exam-status',
     templateUrl: './exam-status.component.html',
-    styleUrls: ['./exam-status.component.scss'],
+    styleUrls: ['./exam-status.component.css'],
     imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class ExamStatusComponent implements OnDestroy {

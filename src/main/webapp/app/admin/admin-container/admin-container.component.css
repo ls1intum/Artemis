@@ -1,0 +1,4 @@
+.admin-layout {
+    height: calc(100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider) - var(--shell-top-spacing, 0px));
+    padding-top: var(--spacing-divider);
+}

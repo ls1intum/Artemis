@@ -20,7 +20,7 @@
                         type="button"
                         tumAetUiButton
                         variant="outlined"
-                        class="flex! min-h-40 w-full min-w-0 flex-col gap-2! border-2! border-dashed! p-3! text-center! whitespace-normal! sm:p-6!"
+                        class="flex! min-h-40 w-full min-w-0 flex-col gap-2 border-2 border-dashed p-3! text-center whitespace-normal sm:p-6!"
                         data-testid="file-upload-field"
                         [attr.aria-controls]="'fileUploadInput-' + exercise().id"
                         [disabled]="uploading()"
@@ -85,7 +85,7 @@
                         jhiTranslate="artemisApp.fileUploadSubmission.download"
                     ></button>
                     @if (submittedFileExtension()) {
-                        <tumaet-ui-tag class="ms-2!" severity="info">{{ submittedFileExtension() | uppercase }}</tumaet-ui-tag>
+                        <tumaet-ui-tag class="ms-2" severity="info">{{ submittedFileExtension() | uppercase }}</tumaet-ui-tag>
                     }
                 </div>
             }

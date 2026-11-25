@@ -1,0 +1,32 @@
+/* `fill`: the host passes the height of its flex-column parent on to the layout frame. */
+jhi-table-view.jhi-table-view-fill {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+jhi-table-view tr[data-disabled] {
+    opacity: 0.6;
+}
+
+jhi-table-view .jhi-frozen-left,
+jhi-table-view .jhi-frozen-right {
+    position: sticky;
+    z-index: 1;
+    background: var(--tumaet-ui-content-background);
+}
+
+jhi-table-view .jhi-frozen-left {
+    left: 0;
+}
+
+jhi-table-view .jhi-frozen-right {
+    right: 0;
+}
+
+jhi-table-view thead .jhi-frozen-left,
+jhi-table-view thead .jhi-frozen-right {
+    z-index: 11;
+}

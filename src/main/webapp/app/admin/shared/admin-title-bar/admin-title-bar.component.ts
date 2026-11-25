@@ -5,8 +5,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 @Component({
     selector: 'jhi-admin-title-bar',
+    // The global rules of layout.css pin the controls that pages project into this bar to the height of the bar.
+    host: { class: 'title-bar-controls' },
     templateUrl: './admin-title-bar.component.html',
-    styleUrl: './admin-title-bar.component.scss',
+    styleUrl: './admin-title-bar.component.css',
     imports: [NgTemplateOutlet, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
