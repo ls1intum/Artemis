@@ -638,16 +638,10 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Determines whether a given exercise will be included into course score calculation
+     * Determines whether a given exercise's score is included in course score calculations.
      * <p>
-     * The requirement that has to be fulfilled for every exercise: It has to be included in score.
-     * The base case: An exercise that is not an automatically assessed programming exercise
-     * -> include in maxPointsInCourse after due date.
-     * Edge case 1: An automatically assessed programming exercise without test runs after the due date
-     * -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
-     * Edge case 2: An automatically assessed programming exercise with test runs after the due date
-     * -> include in maxPointsInCourse after the final test run is over, not immediately after release because
-     * the test run after due date is important for the final course score (hidden tests).
+     * Inclusion depends only on the course score setting. Due dates and completion of the final test run affect whether
+     * points count as reachable, which is evaluated separately by {@link #isAssessmentDone(ExerciseCourseScoreDTO)}.
      *
      * @param exercise the exercise whose involvement should be determined
      */

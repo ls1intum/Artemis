@@ -219,20 +219,21 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
-        exerciseRepository.save(exercise);
+        // Keep this test focused on the excluded exercise instead of contributions from the fixture's other exercises.
+        exerciseList.stream().skip(1).forEach(otherExercise -> otherExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED));
+        exerciseRepository.saveAll(exerciseList);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(course));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        // Four of the five exercises remain included after excluding the first one.
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(20.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.maxPoints()).isZero();
+        assertThat(totalCourseScores.reachablePoints()).isZero();
         assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(1.6);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(8.0);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(32.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
+        assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
 
         assertThat(courseForDashboard.participationResults().size()).isEqualTo(5);
     }
