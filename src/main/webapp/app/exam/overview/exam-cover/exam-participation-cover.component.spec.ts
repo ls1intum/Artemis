@@ -507,9 +507,13 @@ describe('ExamParticipationCoverComponent start window', () => {
 
         // The instructor postpones the exam, so that the start is outside of the window again.
         fixture.componentRef.setInput('exam', createExam(EXAM_START_WAIT_TIME_MINUTES + 30));
-        await vi.advanceTimersByTimeAsync(2000);
+        await fixture.whenStable();
+        // A new exam resets the confirmation, which alone would disable the button: confirm again so that only the start window decides.
+        component.confirmed = true;
         await fixture.whenStable();
 
+        // No timer is advanced, so the polling interval cannot be the one that noticed the postponement.
+        expect(component.startWindowOpen()).toBe(false);
         expect(startButton().disabled).toBe(true);
     });
 
