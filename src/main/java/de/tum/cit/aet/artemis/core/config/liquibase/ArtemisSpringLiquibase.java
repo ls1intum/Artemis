@@ -7,9 +7,9 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -200,11 +200,22 @@ public class ArtemisSpringLiquibase extends SpringLiquibase {
         return liquibase;
     }
 
+    /**
+     * Creates the DataSource for a Liquibase connection that is configured separately from the application's.
+     * <p>
+     * The URL is the only required property; the user and the password default to those of the application.
+     * A separate connection lets the migrations run with settings of their own, for example a longer
+     * {@code statement_timeout} than the application sessions, through the URL.
+     * <p>
+     * The DataSource does not pool. A pool would keep its idle connections open for as long as the application
+     * runs, although Liquibase only needs a connection while the migrations run, and nothing here would close it.
+     * Without a pool every connection is opened for the migration and really closed when Liquibase is done.
+     */
     private static DataSource createNewDataSource(LiquibaseProperties liquibaseProperties, DataSourceProperties dataSourceProperties) {
         String url = liquibaseProperties.getUrl();
         String user = liquibaseProperties.getUser() != null ? liquibaseProperties.getUser() : dataSourceProperties.getUsername();
         String password = liquibaseProperties.getPassword() != null ? liquibaseProperties.getPassword() : dataSourceProperties.getPassword();
 
-        return DataSourceBuilder.create().url(url).username(user).password(password).build();
+        return new DriverManagerDataSource(url, user, password);
     }
 }
