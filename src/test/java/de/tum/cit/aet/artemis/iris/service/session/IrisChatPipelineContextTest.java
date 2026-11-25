@@ -226,7 +226,7 @@ class IrisChatPipelineContextTest {
     }
 
     @ParameterizedTest
-    @EnumSource(IrisSolutionChoice.class)
+    @EnumSource(value = IrisSolutionChoice.class, names = { "TRY_MYSELF", "SHOW_SOLUTION" })
     void programmingReferenceIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice) {
         var exercise = prepareProgrammingReferenceContext();
         appendChoice(choice);
@@ -247,7 +247,7 @@ class IrisChatPipelineContextTest {
     }
 
     @ParameterizedTest
-    @EnumSource(IrisSolutionChoice.class)
+    @EnumSource(value = IrisSolutionChoice.class, names = { "TRY_MYSELF", "SHOW_SOLUTION" })
     void textReferenceIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice) {
         var exercise = new TextExercise();
         exercise.setId(30L);
@@ -270,20 +270,49 @@ class IrisChatPipelineContextTest {
         }
     }
 
-    @Test
-    void messageAfterADeliveredSolutionIsItsExplanationWithoutTheReference() {
+    @ParameterizedTest
+    @EnumSource(value = IrisSolutionChoice.class, names = { "SUMMARIZE", "SKIP_SUMMARY" })
+    void summaryChoicesAreTheirStepsWithoutTheReference(IrisSolutionChoice choice) {
         prepareProgrammingReferenceContext();
-        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
-        var answer = new IrisMessage();
-        answer.setSender(IrisMessageSender.LLM);
-        answer.addContent(new IrisTextMessageContent("Here is the solution. Why does the loop start at 1?"));
-        var explanation = new IrisMessage();
-        explanation.setSender(IrisMessageSender.USER);
-        explanation.addContent(new IrisTextMessageContent("Because the first element is the start value."));
-        session.getMessages().addAll(List.of(answer, explanation));
+        appendChoice(choice);
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(choice == IrisSolutionChoice.SUMMARIZE ? IrisSolutionStep.SUMMARIZE : null);
+        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+    }
+
+    @Test
+    void messageAfterTheSummaryRequestIsItsExplanationWithoutTheReference() {
+        prepareProgrammingReferenceContext();
+        appendChoice(IrisSolutionChoice.SUMMARIZE);
+        session.getMessages().addAll(List.of(message(IrisMessageSender.LLM, "In short, the loop compares neighbours. Why does it start at 1?"),
+                message(IrisMessageSender.USER, "Because the first element is the start value.")));
         var result = runChatPipeline();
         assertThat(result.solutionStep()).isEqualTo(IrisSolutionStep.EXPLAIN_SOLUTION);
         assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisSolutionStep.class, names = { "OFFER_REPLY", "SUMMARY_REPLY" })
+    void typedReplyToAnOfferIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step) {
+        prepareProgrammingReferenceContext();
+        appendOffer(step == IrisSolutionStep.OFFER_REPLY ? SOLUTION_CHOICES : SUMMARY_CHOICES);
+        session.getMessages().add(message(IrisMessageSender.USER, "yes"));
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(step);
+        assertThat(result.programmingExercise().solutionRepository().isEmpty()).isEqualTo(step == IrisSolutionStep.SUMMARY_REPLY);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisSolutionChoice.class, names = { "SUMMARIZE", "SKIP_SUMMARY" })
+    void messageAfterATypedSummaryChoiceIsAnExplanationOnlyIfItAccepted(IrisSolutionChoice choice) {
+        prepareProgrammingReferenceContext();
+        appendOffer(SUMMARY_CHOICES);
+        session.getMessages().add(message(IrisMessageSender.USER, "ok"));
+        var answer = message(IrisMessageSender.LLM, "Then explain in your own words: why does it start at 1?");
+        answer.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, choice)));
+        session.getMessages().addAll(List.of(answer, message(IrisMessageSender.USER, "The loop skips the first element.")));
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(choice == IrisSolutionChoice.SUMMARIZE ? IrisSolutionStep.EXPLAIN_SOLUTION : null);
     }
 
     @Test
@@ -314,16 +343,29 @@ class IrisChatPipelineContextTest {
         return exercise;
     }
 
+    private static final List<IrisSolutionChoice> SOLUTION_CHOICES = List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION);
+
+    private static final List<IrisSolutionChoice> SUMMARY_CHOICES = List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY);
+
     private void appendChoice(IrisSolutionChoice choice) {
-        var offer = new IrisMessage();
-        offer.setId(10L);
-        offer.setSender(IrisMessageSender.LLM);
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, session.getMode(), session.getEntityId())));
-        var action = new IrisMessage();
-        action.setId(11L);
-        action.setSender(IrisMessageSender.USER);
+        appendOffer(SOLUTION_CHOICES.contains(choice) ? SOLUTION_CHOICES : SUMMARY_CHOICES);
+        var action = message(IrisMessageSender.USER, "Show me the complete solution");
         action.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, choice)));
-        session.getMessages().addAll(List.of(offer, action));
+        session.getMessages().add(action);
+    }
+
+    private void appendOffer(List<IrisSolutionChoice> choices) {
+        var offer = message(IrisMessageSender.LLM, "Trying it yourself is worth it here.");
+        offer.setId(10L);
+        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, session.getMode(), session.getEntityId(), choices)));
+        session.getMessages().add(offer);
+    }
+
+    private static IrisMessage message(IrisMessageSender sender, String text) {
+        var message = new IrisMessage();
+        message.setSender(sender);
+        message.addContent(new IrisTextMessageContent(text));
+        return message;
     }
 
     @Test

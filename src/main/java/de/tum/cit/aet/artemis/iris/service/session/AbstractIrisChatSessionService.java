@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqOptionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -270,6 +271,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             }
             if (statusUpdate.solutionOffer() != null) {
                 message.addContent(IrisJsonMessageContent.of(statusUpdate.solutionOffer()));
+            }
+            // A typed reply to an offer: the answer records the choice Pyris read from it, as a click would, so the next step and the offer's buttons follow it.
+            if (statusUpdate.solutionChoice() != null && job.userMessageId() != null) {
+                irisMessageRepository.findPreviousVisibleMessageId(job.userMessageId())
+                        .ifPresent(offerId -> message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(offerId, statusUpdate.solutionChoice()))));
             }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.

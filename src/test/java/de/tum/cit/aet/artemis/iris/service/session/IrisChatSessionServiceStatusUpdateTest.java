@@ -46,9 +46,11 @@ import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -359,6 +361,34 @@ class IrisChatSessionServiceStatusUpdateTest {
         // The live view still gets the whole run.
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), eq(wholeRun), eq(4),
                 isNull());
+    }
+
+    @Test
+    void choiceReadFromATypedReplyIsStoredForTheOfferTheReplyAnswers() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, 11L, null);
+        stubJobLock(job);
+        when(irisMessageRepository.findPreviousVisibleMessageId(11L)).thenReturn(Optional.of(10L));
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(12L);
+            return message;
+        });
+        var statusUpdate = new PyrisChatStatusUpdateDTO("Here is the solution.", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, true, null, null, null,
+                null, IrisSolutionChoice.SHOW_SOLUTION);
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        assertThat(IrisSolutionChoiceDTO.in(messageCaptor.getValue())).contains(IrisSolutionChoice.SHOW_SOLUTION);
+        assertThat(messageCaptor.getValue().getContent().stream().filter(content -> content instanceof IrisJsonMessageContent)
+                .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionChoiceDTO.class)))
+                .containsExactly(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION));
     }
 
     @Test

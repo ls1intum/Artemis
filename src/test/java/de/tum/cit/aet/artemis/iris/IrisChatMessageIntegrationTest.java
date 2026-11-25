@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,7 +176,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var session = createSessionForUser(mode, "student1");
         var offer = new IrisMessage();
         offer.addContent(new IrisTextMessageContent("Choose how to continue"));
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, mode, session.getEntityId())));
+        offer.addContent(IrisJsonMessageContent
+                .of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, mode, session.getEntityId(), List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION))));
         var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
         var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
                 new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
@@ -196,6 +198,25 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.BAD_REQUEST);
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).hasSize(messages.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void declinedSummary_isStoredWithoutAskingIris() throws Exception {
+        var session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Here is the solution. Want to summarize it in your own words?"));
+        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, session.getEntityId(),
+                List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY))));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        mockChatResponse(_ -> pipelineDone.set(true));
+
+        request.postWithoutResponseBody(messagesUrl(session), new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "No thanks", null)), null, Map.of(), null, null,
+                null, new IrisSolutionChoiceRequestDTO(savedOffer.getId(), IrisSolutionChoice.SKIP_SUMMARY)), HttpStatus.CREATED);
+
+        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(2)).until(() -> !pipelineDone.get());
+        var userMessage = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast();
+        assertThat(IrisSolutionChoiceDTO.in(userMessage)).contains(IrisSolutionChoice.SKIP_SUMMARY);
     }
 
     @Test

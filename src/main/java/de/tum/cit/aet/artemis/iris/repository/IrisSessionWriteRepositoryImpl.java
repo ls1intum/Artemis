@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
@@ -66,12 +65,13 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
             throw new BadRequestException("This solution offer is no longer open");
         }
         var context = sessions.findContextById(sessionId).orElseThrow(() -> new BadRequestException("A solution choice requires a chat session"));
-        var offer = irisMessageRepository.findByIdElseThrow(choice.offerMessageId()).getContent().stream()
-                .filter(content -> IrisSolutionOfferDTO.TYPE.equals(IrisMessageContentTypeDTO.typeOf(content)))
-                .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionOfferDTO.class)).findFirst()
+        var offer = IrisSolutionOfferDTO.in(irisMessageRepository.findByIdElseThrow(choice.offerMessageId()))
                 .orElseThrow(() -> new BadRequestException("The message contains no solution offer"));
         if (offer.chatMode() != context.chatMode() || offer.entityId() != context.entityId()) {
             throw new BadRequestException("The solution offer belongs to a different chat context");
+        }
+        if (!offer.choices().contains(choice.choice())) {
+            throw new BadRequestException("The solution offer does not offer this choice");
         }
         message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(choice.offerMessageId(), choice.choice())));
         return appendInCurrentTransaction(sessionId, message, IrisMessageSender.USER);

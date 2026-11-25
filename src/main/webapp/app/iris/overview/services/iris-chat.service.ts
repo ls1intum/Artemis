@@ -402,6 +402,8 @@ export class IrisChatService implements OnDestroy {
                 }
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
+                // The server records a declined summary without asking Iris, so no answer follows.
+                if (solutionChoice?.choice === 'SKIP_SUMMARY') this.closePendingRunGeneration();
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {

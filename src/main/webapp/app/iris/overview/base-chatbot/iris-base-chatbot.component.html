@@ -370,6 +370,7 @@
                                                 />
                                             } @else if (isSolutionOffer(content)) {
                                                 <jhi-iris-solution-choice
+                                                    [choices]="offeredChoices(content)"
                                                     [disabled]="!canChooseSolution(message)"
                                                     [selected]="selectedSolutionChoice(message)"
                                                     (choice)="onSolutionChoice(message, $event)"
@@ -377,6 +378,9 @@
                                             } @else if (content.type === IrisMessageContentType.TEXT) {
                                                 <div [class]="messageHasMcq(message) ? 'mcq-intro-text' : 'bubble-left'">
                                                     <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
+                                                    @if (endsWithSummaryInvitation(message, content)) {
+                                                        <span data-testid="iris-summary-offer" jhiTranslate="artemisApp.iris.solutionChoice.summaryOffer"></span>
+                                                    }
                                                 </div>
                                             }
                                         }

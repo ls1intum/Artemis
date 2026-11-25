@@ -1172,6 +1172,19 @@ describe('IrisChatService', () => {
             expect(service.awaitingAnswer()).toBe(true);
         });
 
+        it.each([
+            ['SKIP_SUMMARY', false],
+            ['SUMMARIZE', true],
+        ] as const)('guard: after the %s choice awaitingAnswer is %s, because only a declined summary gets no answer', async (choice, awaiting) => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            vi.spyOn(httpService, 'createMessage').mockReturnValue(of({ body: mockUserMessageWithContent('No thanks') } as HttpResponse<IrisMessageResponseDTO>));
+
+            await firstValueFrom(service.sendMessage('No thanks', {}, undefined, { offerMessageId: 10, choice }));
+
+            expect(service.awaitingAnswer()).toBe(awaiting);
+        });
+
         it('guard: awaitingAnswer clears on assistant MESSAGE and the persisted trail stays on the message', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);

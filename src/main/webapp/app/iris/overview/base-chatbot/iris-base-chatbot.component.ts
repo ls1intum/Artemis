@@ -42,7 +42,15 @@ import {
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { IrisSolutionChoiceComponent } from 'app/iris/overview/solution-choice/iris-solution-choice.component';
-import { IrisSolutionChoice, isSolutionOffer, solutionChoiceForOffer } from 'app/iris/shared/entities/iris-solution-choice.model';
+import {
+    IrisSolutionChoice,
+    SOLUTION_CHOICE_LABEL_KEYS,
+    isClickedChoiceMessage,
+    isSolutionOffer,
+    offeredChoices,
+    offersSummary,
+    solutionChoiceForOffer,
+} from 'app/iris/shared/entities/iris-solution-choice.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
@@ -242,6 +250,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
     protected readonly isSolutionOffer = isSolutionOffer;
+    protected readonly offeredChoices = offeredChoices;
+
+    /** The fixed invitation to summarize ends the last text of an answer that offers the summary, so it reads as part of the answer. */
+    protected endsWithSummaryInvitation(message: IrisMessage, content: IrisMessageContent): boolean {
+        return (
+            message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) &&
+            message.content.filter((entry) => entry.type === IrisMessageContentType.TEXT).at(-1) === content
+        );
+    }
     protected selectedSolutionChoice(message: IrisMessage): IrisSolutionChoice | undefined {
         return solutionChoiceForOffer(this.rawMessages(), message.id);
     }
@@ -256,7 +273,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
         if (message.id === undefined || !this.canChooseSolution(message)) return;
-        const label = this.translateService.instant(`artemisApp.iris.solutionChoice.${choice === 'TRY_MYSELF' ? 'tryMyself' : 'showSolution'}`);
+        const label = this.translateService.instant(SOLUTION_CHOICE_LABEL_KEYS[choice]);
         const provider = this.contextProvider();
         this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).subscribe();
     }
@@ -827,7 +844,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return deepClone(rawMessages);
+        // A click answers right away; its message stays stored for the server and Iris but is not shown.
+        return deepClone(rawMessages.filter((message) => !isClickedChoiceMessage(message)));
     }
 
     protected isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {

@@ -3,7 +3,10 @@
         "iris": {
             "solutionChoice": {
                 "tryMyself": "Try it myself with help",
-                "showSolution": "Show me the complete solution"
+                "showSolution": "Show me the complete solution",
+                "summarize": "Yes, I'll summarize it",
+                "skipSummary": "No thanks",
+                "summaryOffer": "Try to summarize this solution in your own words now. Even a short summary helps you check that it makes sense to you."
             },
             "onboarding": {
                 "title": "Meet Iris",

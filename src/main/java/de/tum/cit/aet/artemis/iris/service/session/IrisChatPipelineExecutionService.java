@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionStep;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -193,7 +195,8 @@ public class IrisChatPipelineExecutionService {
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
             List<IrisMessageContextDTO> context, @Nullable IrisSolutionStep solutionStep) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
-        boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION;
+        // A typed reply may choose the solution, which Pyris only learns from the reply, so it needs the reference already.
+        boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION || solutionStep == IrisSolutionStep.OFFER_REPLY;
 
         // Base data shared across all chat modes (course chat is the baseline)
         long courseLoadStart = System.nanoTime();
@@ -276,21 +279,46 @@ public class IrisChatPipelineExecutionService {
     }
 
     /**
-     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only appendSolutionChoice writes one, after validating its offer.
-     * The message after a delivered solution answers the request to explain that solution.
+     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only appendSolutionChoice writes one after validating
+     * its offer, and only the result of a typed reply to an offer, with the choice Pyris read from it.
+     * <ul>
+     * <li>A clicked choice on the latest message is that step.</li>
+     * <li>A message right after an offer, without a click, is a typed reply to it.</li>
+     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution.</li>
+     * </ul>
      */
     private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session) {
-        var studentMessages = session.getMessages().stream().filter(message -> message.getSender() == IrisMessageSender.USER).toList();
-        if (studentMessages.isEmpty()) {
+        var messages = session.getMessages().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
+        int latest = lastStudentMessageBefore(messages, messages.size());
+        if (latest < 0) {
             return null;
         }
-        var latestChoice = IrisSolutionChoiceDTO.in(studentMessages.getLast());
+        var latestChoice = IrisSolutionChoiceDTO.in(messages.get(latest));
         if (latestChoice.isPresent()) {
-            return latestChoice.get() == IrisSolutionChoice.SHOW_SOLUTION ? IrisSolutionStep.SHOW_SOLUTION : IrisSolutionStep.TRY_MYSELF;
+            return switch (latestChoice.get()) {
+                case TRY_MYSELF -> IrisSolutionStep.TRY_MYSELF;
+                case SHOW_SOLUTION -> IrisSolutionStep.SHOW_SOLUTION;
+                case SUMMARIZE -> IrisSolutionStep.SUMMARIZE;
+                case SKIP_SUMMARY -> null;
+            };
         }
-        boolean followsSolution = studentMessages.size() > 1
-                && IrisSolutionChoiceDTO.in(studentMessages.get(studentMessages.size() - 2)).orElse(null) == IrisSolutionChoice.SHOW_SOLUTION;
-        return followsSolution ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
+        var answeredOffer = latest > 0 ? IrisSolutionOfferDTO.in(messages.get(latest - 1)) : Optional.<IrisSolutionOfferDTO>empty();
+        if (answeredOffer.isPresent()) {
+            return answeredOffer.get().offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
+        }
+        int previous = lastStudentMessageBefore(messages, latest);
+        boolean followsSummary = previous >= 0
+                && messages.subList(previous, latest).stream().map(IrisSolutionChoiceDTO::in).anyMatch(choice -> choice.orElse(null) == IrisSolutionChoice.SUMMARIZE);
+        return followsSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
+    }
+
+    private static int lastStudentMessageBefore(List<IrisMessage> messages, int end) {
+        for (int index = end - 1; index >= 0; index--) {
+            if (messages.get(index).getSender() == IrisMessageSender.USER) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

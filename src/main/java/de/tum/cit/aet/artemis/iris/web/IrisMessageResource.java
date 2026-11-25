@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -171,7 +172,10 @@ public class IrisMessageResource {
         var uncommittedFiles = requestDTO.uncommittedFiles();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
+        // Declining the summary only records the choice: Iris has nothing to say to it.
+        if (solutionChoice == null || solutionChoice.choice() != IrisSolutionChoice.SKIP_SUMMARY) {
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
+        }
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));

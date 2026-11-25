@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.ws.rs.BadRequestException;
@@ -57,7 +58,8 @@ class IrisSolutionChoiceRepositoryTest {
         lenient().when(sessions.findContextById(1L)).thenReturn(Optional.of(new IrisSessionContextDAO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L, 7L)));
         offer = new IrisMessage();
         offer.setId(10L);
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L)));
+        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L,
+                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION))));
         lenient().when(messages.findByIdElseThrow(10L)).thenReturn(offer);
         repository = new IrisSessionWriteRepositoryImpl(provider, messages);
     }
@@ -93,6 +95,14 @@ class IrisSolutionChoiceRepositoryTest {
         when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(10L));
         when(sessions.findContextById(1L)).thenReturn(Optional.of(new IrisSessionContextDAO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 99L, 7L)));
         assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, IrisSolutionChoice.TRY_MYSELF)))
+                .isInstanceOf(BadRequestException.class);
+        verify(messages, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void rejectsAChoiceTheOfferDoesNotOffer() {
+        when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(10L));
+        assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, IrisSolutionChoice.SUMMARIZE)))
                 .isInstanceOf(BadRequestException.class);
         verify(messages, never()).saveAndFlush(any());
     }

@@ -13,16 +13,21 @@ describe('IrisSolutionChoiceComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(IrisSolutionChoiceComponent);
+        fixture.componentRef.setInput('choices', ['TRY_MYSELF', 'SHOW_SOLUTION']);
         fixture.detectChanges();
     });
 
-    it.each([
-        ['iris-try-myself', 'TRY_MYSELF'],
-        ['iris-show-solution', 'SHOW_SOLUTION'],
-    ])('emits an explicit action for %s', (testId, choice) => {
+    it.each(['TRY_MYSELF', 'SHOW_SOLUTION'])('emits an explicit action for %s', (choice) => {
         const emit = vi.spyOn(fixture.componentInstance.choice, 'emit');
-        fixture.nativeElement.querySelector(`[data-testid="${testId}"]`).click();
+        fixture.nativeElement.querySelector(`[data-testid="iris-choice-${choice}"]`).click();
         expect(emit).toHaveBeenCalledExactlyOnceWith(choice);
+    });
+
+    it('shows the buttons of the offer in its order', () => {
+        fixture.componentRef.setInput('choices', ['SUMMARIZE', 'SKIP_SUMMARY']);
+        fixture.detectChanges();
+        const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
+        expect(buttons.map((button) => button.getAttribute('data-testid'))).toEqual(['iris-choice-SUMMARIZE', 'iris-choice-SKIP_SUMMARY']);
     });
 
     it('disables both buttons while another answer is pending or the offer is stale', () => {
@@ -38,12 +43,12 @@ describe('IrisSolutionChoiceComponent', () => {
         expect(emit).not.toHaveBeenCalled();
     });
 
-    it('restores the selection and prevents changing an already consumed offer', () => {
+    it('keeps only the chosen button, pressed and disabled, so an offer cannot be answered twice', () => {
         fixture.componentRef.setInput('selected', 'SHOW_SOLUTION');
         fixture.detectChanges();
-        const selected: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="iris-show-solution"]');
+        const selected: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="iris-choice-SHOW_SOLUTION"]');
         expect(selected.getAttribute('aria-pressed')).toBe('true');
         expect(selected.disabled).toBe(true);
-        expect(fixture.nativeElement.querySelector('[data-testid="iris-try-myself"]').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-choice-TRY_MYSELF"]')).toBeNull();
     });
 });
