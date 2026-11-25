@@ -339,7 +339,6 @@ def summarize_problem(problem: dict, indexes: dict = None) -> dict:
         # the biggest single repeat, not the sum: a delete cascade issues many small repeats that one fix would not remove
         avoidable=queries[0]["avoidable"],
         endpoints=sorted(endpoint_avoidable, key=lambda e: (-endpoint_avoidable[e], e)),
-        methods=sorted({g["method"] or "?" for g in groups}),
         tests=sorted(set().union(*(g["tests"] for g in groups))),
         phases=sorted({r["phase"] for q in queries for r in q["requests"] if r.get("phase") in ("action", "setup")}),
         static_matches=sorted({i for g in groups for i in g.get("static_matches", [])}),
@@ -611,11 +610,6 @@ h1 { margin-bottom: 4px; }
 details.how-to-read { margin: 0 0 24px; font-size: 13px; color: var(--muted); }
 details.how-to-read summary { cursor: pointer; }
 details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
-.stats { display: flex; gap: 16px; margin: 0 0 32px; flex-wrap: wrap; }
-.stat-tile { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 160px; }
-.stat-value { display: block; font-size: 28px; font-weight: 700; }
-.stat-label { display: block; font-size: 13px; color: var(--muted); }
-.stat-sub { display: block; font-size: 12px; color: var(--muted); }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
 .tab-btn { appearance: none; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 6px; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .tab-btn:hover { color: var(--fg); }
@@ -626,9 +620,10 @@ details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { cursor: pointer; user-select: none; white-space: nowrap; color: var(--muted); font-weight: 600; }
-th:hover { color: var(--fg); }
-th::after { content: "\\21C5"; opacity: .35; margin-left: 4px; font-size: 11px; }
+th { white-space: nowrap; color: var(--muted); font-weight: 600; }
+table.sortable th { cursor: pointer; user-select: none; }
+table.sortable th:hover { color: var(--fg); }
+table.sortable th::after { content: "\\21C5"; opacity: .35; margin-left: 4px; font-size: 11px; }
 tr:hover td { background: var(--row-hover); }
 tr.sev-high td:first-child { border-left: 4px solid var(--sev-high); }
 tr.sev-medium td:first-child { border-left: 4px solid var(--sev-medium); }
@@ -643,8 +638,9 @@ td.sql-cell summary { cursor: pointer; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .badge-new { background: color-mix(in srgb, var(--new) 18%, transparent); color: var(--new); }
 .badge-existing { background: rgba(107, 114, 128, .12); color: var(--muted); }
-.phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
-.phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
+.phase-action { background: var(--muted); color: var(--bg); }
+.phase-setup { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+td .badge { margin: 0 4px 2px 0; }
 table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 12px; }
 table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .static-badge { display: inline-block; margin-top: 4px; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: var(--sql-keyword); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
@@ -659,10 +655,6 @@ table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .sql-placeholder { color: var(--sql-placeholder); font-weight: 600; }
 .problem-controls { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
 .problem-controls .filter-box { margin: 0; flex: 1 1 240px; }
-.filter-chip { appearance: none; border: 1px solid var(--border); background: var(--tile-bg); color: var(--fg); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
-.filter-chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
-.filter-chip.only-chip[aria-pressed="false"] { opacity: 1; text-decoration: none; }
-.filter-chip.only-chip[aria-pressed="true"] { border-color: var(--new); color: var(--new); }
 .section-note { max-width: 820px; line-height: 1.5; }
 .problem-cards { display: grid; gap: 14px; margin-bottom: 32px; }
 .problem-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
@@ -781,43 +773,21 @@ document.addEventListener('click', function (e) {
     if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
-// Repeated queries: the search box and the chips filter cards and rows together. A chip that is
-// pressed includes its problems; "only new" narrows to new ones instead.
+// Repeated queries: the search box filters the rows.
 (function () {
     var panel = document.getElementById('panel-repeated-queries');
     var search = panel && panel.querySelector('.problem-search');
     if (!search) return;
     var problems = Array.prototype.slice.call(panel.querySelectorAll('.problem'));
-    var excluded = { category: {}, phase: {}, method: {} };
-    var onlyNew = false;
-    var onlyScan = false;
-    function apply() {
+    search.addEventListener('input', function () {
         var query = search.value.toLowerCase();
         var shown = 0;
         problems.forEach(function (el) {
-            var phases = el.dataset.phases ? el.dataset.phases.split(' ') : [];
-            var methods = el.dataset.methods.split(' ');
-            var visible = !excluded.category[el.dataset.category]
-                && (phases.length === 0 || phases.some(function (p) { return !excluded.phase[p]; }))
-                && !(excluded.method.DELETE && methods.every(function (m) { return m === 'DELETE'; }))
-                && (!onlyNew || el.dataset.new === 'true')
-                && (!onlyScan || el.dataset.index === 'scan')
-                && (!query || el.textContent.toLowerCase().indexOf(query) !== -1);
+            var visible = !query || el.textContent.toLowerCase().indexOf(query) !== -1;
             el.classList.toggle('filtered-out', !visible);
             if (visible) shown++;
         });
         document.getElementById('problems-empty').hidden = shown > 0;
-    }
-    search.addEventListener('input', apply);
-    panel.querySelectorAll('.filter-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            var pressed = chip.getAttribute('aria-pressed') !== 'true';
-            chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-            if (chip.dataset.filter === 'new') onlyNew = pressed;
-            else if (chip.dataset.filter === 'scan') onlyScan = pressed;
-            else excluded[chip.dataset.filter][chip.dataset.value] = !pressed;
-            apply();
-        });
     });
 })();
 """
@@ -862,9 +832,9 @@ def html_sql_cell(sql: str) -> str:
 def html_phase(phase: str) -> str:
     """setup = test fixture traffic (page.request/context.request), action = what the browser page did."""
     if phase == "action":
-        return '<span class="badge phase-action">action</span>'
+        return '<span class="badge phase-action" title="Issued by the browser page during the test, like a real user">action</span>'
     if phase == "setup":
-        return '<span class="badge phase-setup">setup</span>'
+        return '<span class="badge phase-setup" title="Issued by the test itself to prepare data">setup</span>'
     return '<span class="muted">?</span>'
 
 
@@ -880,7 +850,6 @@ def capped_note(hidden: int, what: str) -> str:
     return f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden} more {what} not shown</p>' if hidden > 0 else ""
 
 
-TOP_PROBLEMS = 20
 FOOT_ITEMS_SHOWN = 3
 
 
@@ -967,15 +936,10 @@ def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str
     return "".join(tags)
 
 
-def problem_attributes(p: dict) -> str:
-    return (f'data-category="{p["category"]}" data-phases="{" ".join(p["phases"])}" data-methods="{html.escape(" ".join(p["methods"]))}" '
-            f'data-new="{"true" if p["is_new"] else "false"}" data-index="{p["index_state"]}"')
-
-
 def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
     anchor_kind = {"function": "Method", "endpoint": "Endpoint", "insert": "Table"}[p["kind"]]
     endpoints = f'Seen at {len(p["endpoints"])} endpoint{"" if len(p["endpoints"]) == 1 else "s"}'
-    return (f'<article class="problem problem-card cat-{p["category"]}" {problem_attributes(p)}>'
+    return (f'<article class="problem-card cat-{p["category"]}">'
             f'<div class="problem-head"><span class="problem-rank">#{rank}</span>'
             f'<div class="problem-anchor"><span class="anchor-kind">{anchor_kind}</span><code>{html.escape(p["anchor"])}</code></div>'
             f'<div class="problem-impact"><span class="impact-value">{p["avoidable"]}</span><span class="impact-label">avoidable queries<br>per request</span></div></div>'
@@ -992,7 +956,7 @@ def problem_row_html(p: dict, rank: int, static_findings: list, has_baseline: bo
         what = f'{count} caller{"" if count == 1 else "s"}'
     else:
         what = f'{count} quer{"y" if count == 1 else "ies"}'
-    return (f'<tr class="problem" {problem_attributes(p)}>'
+    return (f'<tr class="problem">'
             f'<td class="num muted">#{rank}</td>'
             f'<td class="num"><strong>{p["avoidable"]}</strong></td>'
             f'<td>{problem_tags_html(p, static_findings, has_baseline)}</td>'
@@ -1009,35 +973,12 @@ def problem_table_html(problems: list, first_rank: int, static_findings: list, h
             f'<th>Shape</th><th>Where to fix</th><th>Tests</th></tr></thead><tbody>{rows}</tbody></table></div>')
 
 
-def build_problems_html(problems: list, static_findings: list, has_baseline: bool, has_indexes: bool) -> str:
+def build_problems_html(problems: list, static_findings: list, has_baseline: bool) -> str:
     if not problems:
         return '<p class="ok">✅ No query ran more than once within a request.</p>'
-    ordered = loops_before_inserts(problems)
-    loops = [p for p in ordered if p["category"] != "insert"]
-    inserts = ordered[len(loops):]
-    top, rest = loops[:TOP_PROBLEMS], loops[TOP_PROBLEMS:]
-    chips = "".join(f'<button type="button" class="filter-chip" data-filter="category" data-value="{c}" aria-pressed="true">{label}</button>'
-                    for c, label in CATEGORY_LABELS.items())
-    chips += ('<button type="button" class="filter-chip" data-filter="phase" data-value="action" aria-pressed="true">action</button>'
-              '<button type="button" class="filter-chip" data-filter="phase" data-value="setup" aria-pressed="true">setup</button>'
-              '<button type="button" class="filter-chip" data-filter="method" data-value="DELETE" aria-pressed="true" title="problems seen only at DELETE endpoints">DELETE</button>')
-    if has_baseline:
-        chips += '<button type="button" class="filter-chip only-chip" data-filter="new" aria-pressed="false">only new</button>'
-    if has_indexes:
-        chips += '<button type="button" class="filter-chip only-chip" data-filter="scan" aria-pressed="false">only ⚠ not indexed</button>'
-    parts = [f'<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…">{chips}</div>']
-    if top:
-        parts.append(f'<h2>Top {len(top)} problems</h2><p class="muted section-note">Ranked by the biggest repeat: the executions one fix would save in a single request.</p>'
-                     f'<div class="problem-cards">{"".join(problem_card_html(p, i + 1, static_findings, has_baseline) for i, p in enumerate(top))}</div>')
-    if rest:
-        parts.append(f'<h2>All other problems <span class="muted">({len(rest)})</span></h2>{problem_table_html(rest, len(top) + 1, static_findings, has_baseline)}')
-    if inserts:
-        parts.append(f'<h2>Row-by-row inserts <span class="muted">({len(inserts)})</span></h2>'
-                     '<p class="muted section-note">Rows inserted one statement at a time: either <code>save()</code> in a loop, or one <code>save()</code>/<code>saveAll()</code> '
-                     'that Hibernate cannot batch because the database generates the ids. The SQL does not tell the two apart, so these are listed apart from the loops.</p>'
-                     f'{problem_table_html(inserts, 1, static_findings, has_baseline)}')
-    parts.append('<p id="problems-empty" class="muted" hidden>No problem matches the filters.</p>')
-    return "\n".join(parts)
+    return ('<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…"></div>'
+            f'{problem_table_html(loops_before_inserts(problems), 1, static_findings, has_baseline)}'
+            '<p id="problems-empty" class="muted" hidden>No problem matches the filters.</p>')
 
 
 def static_location(f: dict) -> str:
@@ -1104,13 +1045,7 @@ def build_new_findings_html(problems: list, static_findings: list) -> str:
 def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
     has_baseline = baseline is not None
     title = report_title(phase)
-    has_indexes = bool(report.get("indexes"))
     problems = build_problems(groups, report.get("indexes"))
-    n_plus_one = sum(1 for p in problems if p["category"] == "n_plus_one")
-    duplicates = sum(1 for p in problems if p["category"] in ("duplicate_one_place", "duplicate_several_places"))
-    inserts = sum(1 for p in problems if p["category"] == "insert")
-    confirmed = sum(1 for p in problems if p["static_matches"])
-    not_indexed = sum(1 for p in problems if p["index_state"] == "scan")
     run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
     if has_baseline:
         new_count = sum(1 for p in problems if p["is_new"]) + sum(1 for f in static_findings if f.get("is_new"))
@@ -1145,23 +1080,15 @@ more than once in one request, either with different parameters (<strong>N+1</st
 statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
 load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
 for the very same code. A query marked ⚠ <strong>not indexed</strong> has no index that starts with the columns it filters on, so once the
-table is large every repetition reads all of it; this comes from the database's indexes, not from timing.</p></details>
-<div class="stats">
-<div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
-<div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
-<div class="stat-tile"><span class="stat-value">{inserts}</span><span class="stat-label">Row-by-row insert</span><span class="stat-sub">one statement per row</span></div>
-{f'<div class="stat-tile"><span class="stat-value">{not_indexed}</span><span class="stat-label">Not indexed</span><span class="stat-sub">a repeated query has no index for its filter</span></div>' if has_indexes else ""}
-<div class="stat-tile"><span class="stat-value">{confirmed}</span><span class="stat-label">Confirmed statically</span><span class="stat-sub">a static rule flags the same code</span></div>
-<div class="stat-tile"><span class="stat-value">{len(static_findings)}</span><span class="stat-label">Static findings</span><span class="stat-sub">from the source scan</span></div>
-</div>
-
+table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>action</strong> and <strong>setup</strong> say where a
+request came from: the browser page acting like a user, or the test's own API calls that prepare data. Findings in <strong>action</strong> requests are the ones a user would see.</p></details>
 <div class="tabs" role="tablist">
 {new_tab}<button class="tab-btn{"" if has_baseline else " active"}" type="button" role="tab" aria-selected="{"false" if has_baseline else "true"}" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
 </div>
 
 {new_panel}<section class="tab-panel" id="panel-repeated-queries" role="tabpanel"{" hidden" if has_baseline else ""}>
-{build_problems_html(problems, static_findings, has_baseline, has_indexes)}
+{build_problems_html(problems, static_findings, has_baseline)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
 {build_static_findings_table_html(static_findings, has_baseline)}

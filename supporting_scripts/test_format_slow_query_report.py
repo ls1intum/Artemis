@@ -342,7 +342,7 @@ class HtmlTest(unittest.TestCase):
         groups = report.group_repeated_queries([repeated(), repeated(normalizedSql="insert into result (id) values (?)")])
         report.link_static_confirmations(groups, [LOOP_FINDING])
         page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [LOOP_FINDING], None)
-        for fragment in ('class="problem problem-card cat-n_plus_one"', "Row-by-row inserts", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
+        for fragment in ('<tr class="problem">', "Row-by-row insert", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
             self.assertIn(fragment, page)
 
     def test_with_a_baseline_the_report_opens_on_the_new_findings(self):
@@ -368,13 +368,19 @@ class HtmlTest(unittest.TestCase):
         self.assertNotIn("panel-new", page)
         self.assertIn('aria-selected="true" aria-controls="panel-repeated-queries"', page)
 
-    def test_only_problems_beyond_the_top_ones_are_rows(self):
-        findings = [repeated(callerMethod=f"Service{i}.run", executions=50 - i) for i in range(report.TOP_PROBLEMS + 3)]
-        groups = report.group_repeated_queries(findings)
+    def test_every_problem_is_a_row_of_one_table_and_cards_are_only_on_the_new_tab(self):
+        old = repeated()
+        new = repeated(callerMethod="NewService.loop")
+        insert = repeated(normalizedSql="insert into result (id) values (?)")
+        baseline = report.collect_keys(report.group_repeated_queries([old]), [])
+        groups = report.group_repeated_queries([old, new, insert])
         report.link_static_confirmations(groups, [])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None)
-        self.assertEqual(page.count('<article class="problem '), report.TOP_PROBLEMS)
-        self.assertEqual(page.count('<tr class="problem"'), 3)
+        report.mark_new(groups, [], baseline)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], baseline)
+        repeated_panel = page[page.index('id="panel-repeated-queries"'):page.index('id="panel-static-findings"')]
+        self.assertEqual(repeated_panel.count('<tr class="problem">'), 3)
+        self.assertNotIn("<article", repeated_panel)
+        self.assertEqual(page.count("<article"), 2)
 
     def test_a_duplicate_from_many_places_folds_them_one_per_line(self):
         sites = [{"repositoryMethod": f"Repository{i}.load", "callerMethod": f"Service{i}.delete"} for i in range(5)]
