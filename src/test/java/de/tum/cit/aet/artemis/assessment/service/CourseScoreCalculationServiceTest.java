@@ -219,7 +219,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
-        exerciseRepository.save(exercise);
+        // Keep this test focused on the excluded exercise instead of contributions from the fixture's other exercises.
+        exerciseList.stream().skip(1).forEach(otherExercise -> otherExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED));
+        exerciseRepository.saveAll(exerciseList);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -267,19 +269,19 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(25.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(25.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
-        assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(6.6);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(26.4);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(26.4);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
-        assertThat(programmingExerciseScores.maxPoints()).isZero();
-        assertThat(programmingExerciseScores.reachablePoints()).isZero();
-        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(programmingExerciseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isEqualTo(1.0);
+        assertThat(programmingExerciseScores.studentScores().relativeScore()).isEqualTo(20.0);
+        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isEqualTo(20.0);
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
@@ -308,12 +310,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
-        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(37.5);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(40.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(40.0);
+        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(15.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(21.6);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(54.0);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(54.0);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();
@@ -575,6 +577,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     /** Builds an in-memory participation for the given exercise carrying a single rated result with the given score. */
     private static StudentParticipation ratedParticipation(TextExercise exercise, double score) {
         StudentParticipation participation = new StudentParticipation();
+        participation.setId(exercise.getId());
         participation.setExercise(exercise);
         TextSubmission submission = new TextSubmission();
         Result result = ParticipationFactory.generateResult(true, score);
