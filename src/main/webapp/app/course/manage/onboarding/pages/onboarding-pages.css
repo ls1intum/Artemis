@@ -42,7 +42,9 @@
     font-size: 0.8rem;
     text-decoration: none;
     white-space: nowrap;
-    transition: all 0.2s ease;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
     flex-shrink: 0;
 }
 
@@ -132,7 +134,10 @@
     background: var(--overview-card-nested-bg, var(--body-bg));
     color: var(--text-body-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .feature-toggle .toggle-btn:first-child {

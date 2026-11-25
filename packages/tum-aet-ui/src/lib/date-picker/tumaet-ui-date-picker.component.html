@@ -74,8 +74,8 @@
                 (blur)="onBlur(dateInput.value)"
                 (click)="onFieldClick()"
                 (keydown.arrowdown)="openFromInput($event)"
-                class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:py-2 tumaet:ps-3 tumaet:pe-17 tumaet:text-text tumaet:placeholder:text-muted tumaet:disabled:bg-disabled-background tumaet:disabled:text-disabled tumaet:disabled:opacity-100 tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
-                [class]="showErrorBorder() ? 'tumaet:border-state-danger' : 'tumaet:border-control-border'"
+                class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:text-text tumaet:placeholder:text-muted tumaet:disabled:bg-disabled-background tumaet:disabled:text-disabled tumaet:disabled:opacity-100 tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                [class]="inputClasses()"
             />
             @if (showClear() && !disabled()) {
                 <button
