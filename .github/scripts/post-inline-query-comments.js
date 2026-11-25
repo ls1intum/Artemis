@@ -8,6 +8,8 @@
 const fs = require('fs');
 
 const MARKER = /<!-- query-inline:([0-9a-f]+) -->/;
+// the account the workflow token posts as; anyone else's comment can contain a marker, e.g. in a quote
+const BOT_LOGIN = 'github-actions[bot]';
 
 /**
  * The lines of the new version of a file that a unified diff shows (added and unchanged lines).
@@ -54,12 +56,14 @@ function anchorable(comments, files) {
 
 /**
  * Splits the comments into what to post, which of the earlier comments to rewrite because their
- * text changed (an edit does not notify anyone) and which to delete.
+ * text changed (an edit does not notify anyone) and which to delete. Only the bot's own comments
+ * are ever rewritten or deleted.
  * @param {{key: string, body: string}[]} desired the comments that should exist
- * @param {{id: number, body: string}[]} existing the review comments already on the pull request
+ * @param {{id: number, body: string, user?: {login: string}}[]} existing the review comments already on the pull request
  */
 function plan(desired, existing) {
     const ours = existing
+        .filter((c) => c.user?.login === BOT_LOGIN)
         .map((c) => ({ id: c.id, body: c.body, key: MARKER.exec(c.body || '')?.[1] }))
         .filter((c) => c.key);
     const wanted = new Map(desired.map((c) => [c.key, c]));

@@ -33,11 +33,14 @@ test('a comment moves to its fallback line when its own line is not in the diff'
     assert.deepEqual(anchorable(comments, files).map((c) => [c.key, c.line]), [['a', 12], ['c', 11]]);
 });
 
+const bot = { login: 'github-actions[bot]' };
+const human = { login: 'a-reviewer' };
+
 test('a re-run posts new findings, keeps current ones and deletes the ones that are gone', () => {
     const existing = [
-        { id: 1, body: 'text <!-- query-inline:aaaa -->' },
-        { id: 2, body: 'text <!-- query-inline:bbbb -->' },
-        { id: 3, body: 'a human comment' },
+        { id: 1, user: bot, body: 'text <!-- query-inline:aaaa -->' },
+        { id: 2, user: bot, body: 'text <!-- query-inline:bbbb -->' },
+        { id: 3, user: bot, body: 'a bot comment without a marker' },
     ];
     const result = plan([{ key: 'aaaa', body: 'text <!-- query-inline:aaaa -->' }, { key: 'cccc', body: 'new' }], existing);
     assert.deepEqual(result.post.map((c) => c.key), ['cccc']);
@@ -46,11 +49,23 @@ test('a re-run posts new findings, keeps current ones and deletes the ones that 
 });
 
 test('a current comment whose text changed is rewritten in place', () => {
-    const existing = [{ id: 7, body: 'old <!-- query-inline:aaaa -->' }];
+    const existing = [{ id: 7, user: bot, body: 'old <!-- query-inline:aaaa -->' }];
     const result = plan([{ key: 'aaaa', body: 'new <!-- query-inline:aaaa -->' }], existing);
     assert.deepEqual(result.post, []);
     assert.deepEqual(result.update, [{ id: 7, body: 'new <!-- query-inline:aaaa -->' }]);
     assert.deepEqual(result.remove, []);
+});
+
+test('a comment of someone else that contains a marker is never rewritten or deleted', () => {
+    const quoted = [
+        { id: 8, user: human, body: '> <!-- query-inline:aaaa -->\nI disagree' },
+        { id: 9, user: { login: 'another-app[bot]' }, body: 'quoting <!-- query-inline:bbbb -->' },
+        { id: 10, user: null, body: 'a deleted account <!-- query-inline:cccc -->' },
+    ];
+    assert.deepEqual(plan([], quoted), { post: [], update: [], remove: [] });
+    // a quote does not stand in for the bot's comment either: the finding is still posted
+    const wanted = { key: 'aaaa', body: 'finding <!-- query-inline:aaaa -->' };
+    assert.deepEqual(plan([wanted], quoted), { post: [wanted], update: [], remove: [] });
 });
 
 test('findings are posted as one review; a rejected review falls back to single comments', async () => {
@@ -75,7 +90,10 @@ test('findings are posted as one review; a rejected review falls back to single 
 
 function recordingGithub(calls) {
     return {
-        paginate: async (fn) => (fn.name === 'listFiles' ? [{ filename: 'src/A.java', patch }] : [{ id: 7, body: 'old <!-- query-inline:aaaa -->' }]),
+        paginate: async (fn) => (fn.name === 'listFiles' ? [{ filename: 'src/A.java', patch }] : [
+            { id: 7, user: bot, body: 'old <!-- query-inline:aaaa -->' },
+            { id: 8, user: human, body: '> old <!-- query-inline:aaaa -->' },
+        ]),
         rest: { pulls: {
             listFiles: function listFiles() {},
             listReviewComments: function listReviewComments() {},

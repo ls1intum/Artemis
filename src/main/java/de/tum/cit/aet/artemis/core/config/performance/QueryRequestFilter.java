@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -41,6 +42,9 @@ public class QueryRequestFilter implements Filter {
     /** Request header set by the Playwright fixture: {@code "action"} for what the browser page issued, {@code "setup"} for the test's own API calls. */
     static final String PLAYWRIGHT_PHASE_HEADER = "X-Playwright-Phase";
 
+    /** The part of a Git request's path that names one project and repository: {@code /git/<project key>/<repository>.git}. */
+    private static final Pattern GIT_REPOSITORY_PATH = Pattern.compile("^/git/[^/]+/[^/]+\\.git(?=/|$)");
+
     private final QueryCollector collector;
 
     public QueryRequestFilter(QueryCollector collector) {
@@ -54,16 +58,26 @@ public class QueryRequestFilter implements Filter {
         }
         finally {
             if (request instanceof HttpServletRequest httpRequest) {
-                // The resolved route template ("/api/admin/courses/{courseId}"), not the raw URI, or
-                // every path-variable value would be an endpoint of its own. It is set by the handler
-                // mapping, so it is only available once the request has completed; a request that
-                // never resolved to a handler (e.g. a 404) falls back to the raw URI.
-                Object routeTemplate = httpRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-                String httpEndpoint = routeTemplate != null ? routeTemplate.toString() : httpRequest.getRequestURI();
-                collector.finishRequest(httpRequest.getMethod(), httpEndpoint, testName(httpRequest), httpRequest.getHeader(PLAYWRIGHT_PHASE_HEADER));
+                collector.finishRequest(httpRequest.getMethod(), endpoint(httpRequest), testName(httpRequest), httpRequest.getHeader(PLAYWRIGHT_PHASE_HEADER));
             }
             collector.resetRequestState();
         }
+    }
+
+    /**
+     * The endpoint a finding is reported under: the route, not the raw URI, or every path-variable value would be an endpoint of its own and a finding
+     * would never match the one of another run.
+     * <p>
+     * The route template ("/api/admin/courses/{courseId}") is set by the handler mapping, so it is only available once the request has completed. Git
+     * requests are served by their own servlet and have none, so the names in their path are replaced here. Any other request without a handler, such
+     * as a 404, keeps the raw URI.
+     */
+    private static String endpoint(HttpServletRequest request) {
+        Object routeTemplate = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (routeTemplate != null) {
+            return routeTemplate.toString();
+        }
+        return GIT_REPOSITORY_PATH.matcher(request.getRequestURI()).replaceFirst("/git/{projectKey}/{repository}.git");
     }
 
     static String testName(HttpServletRequest request) {
