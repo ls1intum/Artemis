@@ -102,6 +102,7 @@ Then run the guard tests listed in `reference/artemis-traps.md`, and:
 - **Run the full E2E suite, single node and multi-node.** Cluster formation and passkeys fail only
   across nodes. See [e2e-pr-check](../e2e-pr-check/SKILL.md).
 - **Build the Docker image** in CI. It depends on what the Boot tooling extracts from the archive.
+- **Check the E2E query report** of the run: see [query-report](../query-report/SKILL.md).
 
 State which of these you did not run.
 
