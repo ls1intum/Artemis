@@ -18,18 +18,18 @@ import org.springframework.web.servlet.HandlerMapping;
 /**
  * Covers the filter that turns a request's queries into findings and clears its per-request state.
  */
-class SlowQueryRequestFilterTest {
+class QueryRequestFilterTest {
 
     private static final String SQL = "select * from participation where exercise_id=?";
 
-    private SlowQueryCollector collector;
+    private QueryCollector collector;
 
-    private SlowQueryRequestFilter filter;
+    private QueryRequestFilter filter;
 
     @BeforeEach
     void setUp() {
-        collector = new SlowQueryCollector(new SlowQueryProperties());
-        filter = new SlowQueryRequestFilter(collector);
+        collector = new QueryCollector(new QueryProperties());
+        filter = new QueryRequestFilter(collector);
     }
 
     private void queryOnce(long signature) {
@@ -40,8 +40,8 @@ class SlowQueryRequestFilterTest {
     void aRequestThatRepeatedAQueryIsReportedUnderItsRouteTemplate() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/courses/7");
         request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "/api/courses/{courseId}");
-        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "A%20test");
-        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_PHASE_HEADER, "setup");
+        request.addHeader(QueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "A%20test");
+        request.addHeader(QueryRequestFilter.PLAYWRIGHT_PHASE_HEADER, "setup");
         FilterChain chain = (req, res) -> {
             queryOnce(1);
             queryOnce(2);

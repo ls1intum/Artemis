@@ -263,7 +263,8 @@ jobs:
       - name: Query checker tests
         run: |
           python supporting_scripts/test_find_slow_queries.py
-          python supporting_scripts/test_format_slow_query_report.py
+          python supporting_scripts/test_format_query_report.py
+          python supporting_scripts/test_analyze_query_report.py
       - name: Query quality check
         run: |
           set -Eeuo pipefail

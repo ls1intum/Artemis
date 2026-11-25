@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration properties for the runtime repeated-query detector.
+ * Configuration properties for the runtime query detector.
  * Bound from the {@code artemis.performance} namespace; the defaults below apply unless a property overrides them.
  * Only active when the {@code e2e-performance} Spring profile is enabled.
  */
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
 @Lazy
 @ConfigurationProperties(prefix = "artemis.performance")
-public class SlowQueryProperties {
+public class QueryProperties {
 
     /**
      * Circuit-breaker: stop recording after this many entries to prevent OOM on runaway queries.

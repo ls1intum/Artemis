@@ -20,7 +20,7 @@ import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 
 /**
  * JDBC-level query execution listener, plugged into the datasource-proxy wrapper. It hands every
- * statement that runs within an HTTP request to the {@link SlowQueryCollector}, as normalised SQL
+ * statement that runs within an HTTP request to the {@link QueryCollector}, as normalised SQL
  * plus a signature of its bound values, which tells an N+1 (same template, different values) apart
  * from a duplicate (same template, same values).
  * <p>
@@ -29,7 +29,7 @@ import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 @Component
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
 @Lazy
-public class SlowQueryListener implements QueryExecutionListener {
+public class QueryListener implements QueryExecutionListener {
 
     private static final Pattern LITERAL_STRINGS = Pattern.compile("'[^']*'");
 
@@ -43,9 +43,9 @@ public class SlowQueryListener implements QueryExecutionListener {
 
     private static final Pattern WHITESPACE_RUNS = Pattern.compile("\\s+");
 
-    private final SlowQueryCollector collector;
+    private final QueryCollector collector;
 
-    public SlowQueryListener(SlowQueryCollector collector) {
+    public QueryListener(QueryCollector collector) {
         this.collector = collector;
     }
 
@@ -81,7 +81,7 @@ public class SlowQueryListener implements QueryExecutionListener {
                 // hashed in parameter-index order, so the result depends on which value is bound to
                 // which parameter but not on the order of the calls; deepHashCode also covers byte[]
                 List<ParameterSetOperation> ordered = new ArrayList<>(parameterSet);
-                ordered.sort(Comparator.comparing(SlowQueryListener::parameterIndex));
+                ordered.sort(Comparator.comparing(QueryListener::parameterIndex));
                 long setHash = 0;
                 for (ParameterSetOperation operation : ordered) {
                     setHash = setHash * 31 + Arrays.deepHashCode(operation.getArgs());

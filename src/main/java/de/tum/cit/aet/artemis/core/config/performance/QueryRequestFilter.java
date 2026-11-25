@@ -22,7 +22,7 @@ import org.springframework.web.servlet.HandlerMapping;
 
 /**
  * Servlet filter that turns the queries of each HTTP request into repeated-query findings and then
- * clears the per-request counters of the {@link SlowQueryCollector}, so that a query run once per
+ * clears the per-request counters of the {@link QueryCollector}, so that a query run once per
  * request is never counted as repeated across requests.
  * <p>
  * Runs with the highest precedence, so it wraps every other filter: the findings cover the whole
@@ -33,7 +33,7 @@ import org.springframework.web.servlet.HandlerMapping;
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
 @Lazy
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class SlowQueryRequestFilter implements Filter {
+public class QueryRequestFilter implements Filter {
 
     /** Request header set by the Playwright {@code baseFixtures.ts} fixture: the test title, percent-encoded because header values must be ASCII. */
     static final String PLAYWRIGHT_TEST_HEADER = "X-Playwright-Test-Name";
@@ -41,9 +41,9 @@ public class SlowQueryRequestFilter implements Filter {
     /** Request header set by the Playwright fixture: {@code "action"} for what the browser page issued, {@code "setup"} for the test's own API calls. */
     static final String PLAYWRIGHT_PHASE_HEADER = "X-Playwright-Phase";
 
-    private final SlowQueryCollector collector;
+    private final QueryCollector collector;
 
-    public SlowQueryRequestFilter(SlowQueryCollector collector) {
+    public QueryRequestFilter(QueryCollector collector) {
         this.collector = collector;
     }
 

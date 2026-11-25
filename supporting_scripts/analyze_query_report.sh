@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# analyze_slow_queries_runtime.sh
+# analyze_query_report.sh
 #
-# Reads the runtime slow-query report written by Playwright's global teardown
+# Reads the runtime query report written by Playwright's global teardown
 # (src/test/playwright/init/global-teardown.ts) and delegates to
-# format_slow_query_report.py to produce a Markdown summary for PR commenting.
+# format_query_report.py to produce a Markdown summary for PR commenting.
 #
 # The report is NOT fetched from a live server here: by the time this CI step runs, the
 # Artemis server container has already been torn down (docker compose stops the whole stack
@@ -12,18 +12,18 @@
 # because the whole repo is bind-mounted into the Playwright container.
 #
 # Usage (called by the CI steps in ci-e2e.yml):
-#   bash supporting_scripts/analyze_slow_queries_runtime.sh
+#   bash supporting_scripts/analyze_query_report.sh
 #
 # Outputs:
-#   slow-query-report.html   – full, sortable, self-contained HTML report (uploaded as the CI artifact)
-#   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
-#   slow-query-keys.json     – this run's finding keys (uploaded by develop runs as the baseline)
+#   query-report.html   – full, sortable, self-contained HTML report (uploaded as the CI artifact)
+#   query-summary.md    – Markdown summary (top 20 per section) for the PR comment
+#   query-keys.json     – this run's finding keys (uploaded by develop runs as the baseline)
 #
 # Env, set by the CI steps: E2E_TESTS_OUTCOME, the outcome of the test step. Anything but "success" keeps
 # the report but withholds the baseline keys and the inline comments. Under GitHub Actions a missing
 # value counts as not successful.
 #
-# Input, optional: slow-query-baseline.zip, the latest develop run's "Slow Query Baseline"
+# Input, optional: query-baseline.zip, the latest develop run's "Query Baseline"
 # artifact, downloaded by the preceding CI step.
 #
 # Also runs find_slow_queries.py --json here (a second, independent invocation from the one
@@ -37,30 +37,30 @@
 
 set -euo pipefail
 
-REPORT_SOURCE="src/test/playwright/test-reports/slow-query-report.json"
-REPORT_HTML="slow-query-report.html"
-REPORT_MD="slow-query-summary.md"
+REPORT_SOURCE="src/test/playwright/test-reports/query-report.json"
+REPORT_HTML="query-report.html"
+REPORT_MD="query-summary.md"
 STATIC_FINDINGS="static-findings.json"
-KEYS_FILE="slow-query-keys.json"
-INLINE_COMMENTS="slow-query-inline-comments.json"
-BASELINE_ZIP="slow-query-baseline.zip"
-BASELINE_DIR="slow-query-baseline"
+KEYS_FILE="query-keys.json"
+INLINE_COMMENTS="query-inline-comments.json"
+BASELINE_ZIP="query-baseline.zip"
+BASELINE_DIR="query-baseline"
 BASELINE_KEYS="${BASELINE_DIR}/${KEYS_FILE}"
 
 # self-hosted runners keep their workspace between runs; never let a previous run's keys be uploaded
 # or its inline comments be posted (a missing comments file means "no complete comparison")
 rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"
 
-echo "=== Slow-Query Report Collection ==="
+echo "=== Query Report Collection ==="
 echo "Source: ${REPORT_SOURCE}"
 
 if [ ! -s "${REPORT_SOURCE}" ]; then
-    echo "⚠️  No slow-query report found at ${REPORT_SOURCE}."
+    echo "⚠️  No query report found at ${REPORT_SOURCE}."
     echo "⚠️  Either the e2e-performance Spring profile was not active, or the global-teardown hook"
     echo "⚠️  could not reach the admin endpoint before the server stopped."
-    echo "## ⚠️ Slow Query Report Unavailable" > "${REPORT_MD}"
+    echo "## ⚠️ Query Report Unavailable" > "${REPORT_MD}"
     echo "" >> "${REPORT_MD}"
-    echo "Could not find a slow-query report. Make sure the \`e2e-performance\` Spring profile is active." >> "${REPORT_MD}"
+    echo "Could not find a query report. Make sure the \`e2e-performance\` Spring profile is active." >> "${REPORT_MD}"
     exit 0
 fi
 
@@ -100,15 +100,15 @@ fi
 # full untruncated HTML report to a file (for the CI artifact), and this run's finding keys
 # (uploaded by develop runs as the next baseline).
 # ------------------------------------------------------------------
-if ! python3 supporting_scripts/format_slow_query_report.py \
+if ! python3 supporting_scripts/format_query_report.py \
     "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" --inline-out "${INLINE_COMMENTS}" \
     --tests-outcome "${E2E_TESTS_OUTCOME:-${GITHUB_ACTIONS:+unknown}}" --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
     # never upload partial keys as a baseline or post a partial summary
-    echo "⚠️  Formatting the slow-query report failed."
+    echo "⚠️  Formatting the query report failed."
     rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"
-    echo "## ⚠️ Slow Query Report Unavailable" > "${REPORT_MD}"
+    echo "## ⚠️ Query Report Unavailable" > "${REPORT_MD}"
     echo "" >> "${REPORT_MD}"
-    echo "Formatting the slow-query report failed; see the job log." >> "${REPORT_MD}"
+    echo "Formatting the query report failed; see the job log." >> "${REPORT_MD}"
     exit 0
 fi
 

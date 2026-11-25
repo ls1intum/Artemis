@@ -1,14 +1,15 @@
 """Tests for the grouping, static confirmation and baseline comparison of the E2E query report.
 
-Run: python3 supporting_scripts/test_format_slow_query_report.py
+Run: python3 supporting_scripts/test_format_query_report.py
 """
 
+import json
 from pathlib import Path
 import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import format_slow_query_report as report  # noqa: E402
+import format_query_report as report  # noqa: E402
 
 
 def repeated(test="A.spec", executions=3, **overrides):
@@ -334,6 +335,40 @@ class IndexLookupTest(unittest.TestCase):
         problems = report.build_problems(groups, INDEXES)
         self.assertEqual([(p["anchor"], p["index_state"]) for p in problems], [("B.run", "scan"), ("A.run", "indexed")])
         self.assertEqual({p["index_state"] for p in report.build_problems(groups)}, {""})
+
+
+SERVER_REPORT = Path(__file__).resolve().parent / "tests" / "fixtures" / "query-report.json"
+
+
+class ServerReportContractTest(unittest.TestCase):
+    """SERVER_REPORT holds the field names of the report the server sends; QueryReportContractTest checks the
+    server against it, so a field that the formatter fails to read cannot go unnoticed on either side."""
+
+    def setUp(self):
+        self.data = json.loads(SERVER_REPORT.read_text(encoding="utf-8"))
+        self.groups = report.group_repeated_queries(self.data["repeatedQueries"])
+        self.problems = {p["anchor"]: p for p in report.build_problems(self.groups, self.data["indexes"])}
+
+    def test_a_loop_keeps_its_code_location_endpoint_test_phase_and_index(self):
+        loop = self.problems["ResultService.loadAll"]
+        query = loop["queries"][0]
+        self.assertEqual(loop["category"], "n_plus_one")
+        self.assertEqual((query["sourceFile"], query["line"]), ("src/main/java/de/tum/cit/aet/artemis/assessment/service/ResultService.java", 142))
+        self.assertEqual(loop["endpoints"], ["GET /api/assessment/exercises/{exerciseId}/results"])
+        self.assertEqual((loop["tests"], loop["phases"]), (["Results.spec: opens the list"], ["action"]))
+        self.assertEqual((query["executions"], query["distinct"], loop["index_state"]), (2, 2, "indexed"))
+
+    def test_a_duplicate_across_places_lists_each_place(self):
+        duplicate = self.problems["GET /api/assessment/exercises/{exerciseId}/results"]
+        self.assertEqual(duplicate["category"], "duplicate_several_places")
+        self.assertEqual(sorted(duplicate["queries"][0]["call_sites"]),
+                         ["CourseRepository.findById ← ExamService.update", "CourseRepository.findById ← ExerciseService.update"])
+
+    def test_both_the_comment_and_the_page_render_the_report(self):
+        baseline = report.collect_keys([], [])
+        report.mark_new(self.groups, [], baseline)
+        self.assertIn("2 new repeated-query problems", report.build_report(self.data, self.groups, [], baseline))
+        self.assertIn("ResultService.loadAll", report.build_html_report(self.data, self.groups, [], baseline))
 
 
 class HtmlTest(unittest.TestCase):
