@@ -8,7 +8,7 @@ import {
 } from '@tumaet/ui-angular';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -59,6 +59,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     faCompress = faCompress;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
+
+    constructor() {
+        effect(() => this.selectionService.setCriteria(this.criteria() ?? []));
+    }
 
     /**
      * Preserve the instructor's rubric order in the assessment editor.
@@ -187,8 +191,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             event.preventDefault();
             return;
         }
-        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
-        event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
+        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon, which shows
+        // the title of the instruction's criterion on the assessment it links.
+        event.dataTransfer?.setData('text/plain', JSON.stringify(this.selectionService.withCriterionTitle(instruction)));
     }
     /**
      * disables drag if on readOnly mode
