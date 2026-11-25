@@ -683,7 +683,7 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
-        teamAssessmentService.checkCanAssessElseThrow(submission, result == null);
+        teamAssessmentService.checkCanAssessElseThrow(submission, result == null || result.getAssessmentType() == null);
         if (result != null && result.getCompletionDate() != null && submission.getParticipation().getExercise().isTeamMode()) {
             return result;
         }
