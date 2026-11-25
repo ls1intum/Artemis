@@ -7,10 +7,15 @@ last_reviewed: 2026-11-03
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import timeline from './assets/timeline.png';
+import trailerInstructor from './assets/trailer-instructor.mp4';
 
 Artemis runs online exams end to end: you build one, students sit it in the browser, your team assesses it, and
 results and grades are published on dates you set. Everything an exam needs is in Artemis, so nothing has to be
 carried between systems.
+
+This one-minute trailer gives an overview of the workflow, from planning an exam to grading and statistics:
+
+<video controls preload="metadata" src={trailerInstructor} title="Exams for instructors" style={{width: '100%', borderRadius: '8px'}} />
 
 <Image src={timeline} alt="The stages of an Artemis online exam, from creation to complaints" size={ImageSize.large} caption="The lifecycle of an Artemis online exam" />
 
