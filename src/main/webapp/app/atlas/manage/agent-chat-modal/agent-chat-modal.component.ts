@@ -58,7 +58,7 @@ export interface AgentChatModalData {
         TumAetUiTagComponent,
     ],
     templateUrl: './agent-chat-modal.component.html',
-    styleUrl: './agent-chat-modal.component.scss',
+    styleUrl: './agent-chat-modal.component.css',
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     private readonly dialogRef = inject(TumAetUiDialogRef);

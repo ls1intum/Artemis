@@ -41,7 +41,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    styleUrls: ['./result.component.scss'],
+    styleUrls: ['./result.component.css'],
     imports: [
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,

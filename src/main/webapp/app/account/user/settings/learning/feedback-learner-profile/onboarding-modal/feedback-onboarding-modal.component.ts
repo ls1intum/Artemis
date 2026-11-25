@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
-    styleUrls: ['./feedback-onboarding-modal.component.scss'],
+    styleUrls: ['./feedback-onboarding-modal.component.css'],
     imports: [CommonModule, TextResultComponent, TranslateDirective, TumAetUiButtonComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class FeedbackOnboardingModalComponent {

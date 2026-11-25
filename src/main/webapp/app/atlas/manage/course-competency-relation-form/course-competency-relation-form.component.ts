@@ -16,7 +16,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
-    styleUrl: './course-competency-relation-form.component.scss',
+    styleUrl: './course-competency-relation-form.component.css',
     imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, FormsModule, TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent],
 })
 export class CourseCompetencyRelationFormComponent {

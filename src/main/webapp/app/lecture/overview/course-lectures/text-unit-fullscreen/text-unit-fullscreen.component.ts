@@ -28,7 +28,7 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
     selector: 'jhi-text-unit-fullscreen',
     imports: [FaIconComponent, RouterLink, TranslateDirective, TumAetUiButtonDirective],
     templateUrl: './text-unit-fullscreen.component.html',
-    styleUrl: './text-unit-fullscreen.component.scss',
+    styleUrl: './text-unit-fullscreen.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class TextUnitFullscreenComponent implements OnInit {

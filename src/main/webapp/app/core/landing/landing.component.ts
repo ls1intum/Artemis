@@ -31,6 +31,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         TranslateDirective,
     ],
     templateUrl: './landing.component.html',
-    styleUrls: ['./landing.component.scss'],
+    styleUrls: ['./landing.component.css'],
 })
 export class LandingComponent {}

@@ -45,7 +45,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-build-overview',
     templateUrl: './build-overview.component.html',
-    styleUrl: './build-overview.component.scss',
+    styleUrl: './build-overview.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTableLayoutComponent,

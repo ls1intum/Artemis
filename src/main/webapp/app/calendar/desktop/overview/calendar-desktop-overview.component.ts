@@ -50,7 +50,7 @@ interface FilterOptionAndMetadata {
         ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
-    styleUrl: './calendar-desktop-overview.component.scss',
+    styleUrl: './calendar-desktop-overview.component.css',
 })
 export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent {
     private readonly viewState = inject(CalendarViewStateService);

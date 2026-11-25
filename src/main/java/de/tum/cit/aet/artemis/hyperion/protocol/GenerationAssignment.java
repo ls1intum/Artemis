@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GenerationAssignment(ExecutionIdentity identity, ExerciseBrief brief, GenerationParameters parameters, WorkspaceSnapshot seed, Instant authoringDeadline,
         String imageDigest, GradingContext gradingContext) {
+
+    /** Existing coordinator window for finishing verification after authoring has stopped. */
+    public static final Duration AUTHORING_DRAIN_WINDOW = Duration.ofMinutes(5);
 
     private static final Pattern IMAGE_DIGEST = Pattern.compile("sha256:[a-f0-9]{64}");
 

@@ -1,0 +1,16 @@
+.manual-text-selection-area {
+    white-space: pre-wrap;
+}
+
+span:hover,
+span:focus {
+    background: var(--manual-text-selection-span-hover-background-color);
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: default;
+}
+
+.indicator {
+    background-color: color-mix(in srgb, var(--warning) 10%, transparent);
+    z-index: 999;
+}

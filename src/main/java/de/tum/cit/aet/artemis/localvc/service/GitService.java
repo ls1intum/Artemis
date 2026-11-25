@@ -39,6 +39,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -80,12 +81,6 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.repo-clone-path}")
     private Path repoClonePath;
-
-    @Value("${artemis.git.name}")
-    private String artemisGitName;
-
-    @Value("${artemis.git.email}")
-    private String artemisGitEmail;
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -311,13 +306,23 @@ public class GitService extends AbstractGitService {
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).setTransportConfigCallback(_ -> {
+                    // The first fetch must finish GC before callers can copy or delete this checkout.
+                    try (Git initializedCheckout = Git.open(localPath.toFile())) {
+                        var config = initializedCheckout.getRepository().getConfig();
+                        config.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+                        config.save();
+                    }
+                    catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
                 if (selectCloneBranch) {
                     clone.setBranch(defaultBranch);
                 }
                 cloneWithoutSymbolicLinks(clone);
             }
-            catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
+            catch (IOException | UncheckedIOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 // 'deleteQuietly' also returns false when there was nothing to delete (JGit's CloneCommand already cleans up
@@ -445,11 +450,22 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public String commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
+        return commitAndPushAs(repo, message, emptyCommit, user != null ? new PersonIdent(user.getName(), user.getEmail()) : getPlaceholderIdentity());
+    }
+
+    /**
+     * Commits as the given identity, at the time of the commit, and pushes it to the remote.
+     *
+     * @param repo        Local Repository Object.
+     * @param message     Commit Message
+     * @param emptyCommit whether the git service should also produce an empty commit
+     * @param identity    The identity that commits and authors
+     * @return the id of the commit that was created
+     */
+    public String commitAndPushAs(Repository repo, String message, boolean emptyCommit, PersonIdent identity) throws GitAPIException {
         return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
-            String name = user != null ? user.getName() : artemisGitName;
-            String email = user != null ? user.getEmail() : artemisGitEmail;
             try (Git git = new Git(repo)) {
-                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(identity.getName(), identity.getEmailAddress()).call();
                 log.debug("commitAndPush -> Push {}", repo.getLocalPath());
                 setRemoteUrl(repo);
                 pushCommand(git).call();

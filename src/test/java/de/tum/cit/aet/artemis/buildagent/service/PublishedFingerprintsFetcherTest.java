@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -97,6 +99,43 @@ class PublishedFingerprintsFetcherTest {
             // fetch does not check the scheme, which get() does, so that a plain server can be used here
             return new PublishedFingerprintsFetcher(URI.create("http://127.0.0.1:" + server.getAddress().getPort())).fetch(Duration.ofSeconds(5)).stream().sorted()
                     .collect(Collectors.joining(","));
+        }
+        finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void theTransferOfABodyThatDripsPastTheDeadlineIsCancelled() throws Exception {
+        // Returning at the deadline is not enough: the exchange must also stop reading, which the server sees as a closed connection
+        CountDownLatch clientGone = new CountDownLatch(1);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            exchange.sendResponseHeaders(200, 1000);
+            try {
+                for (int i = 0; i < 200; i++) {
+                    exchange.getResponseBody().write('{');
+                    exchange.getResponseBody().flush();
+                    Thread.sleep(25);
+                }
+            }
+            catch (IOException e) {
+                clientGone.countDown();
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            finally {
+                exchange.close();
+            }
+        });
+        server.start();
+        try {
+            var fetcher = new PublishedFingerprintsFetcher(URI.create("http://127.0.0.1:" + server.getAddress().getPort()));
+
+            assertThat(fetcher.fetch(Duration.ofMillis(300))).isEmpty();
+
+            assertThat(clientGone.await(3, TimeUnit.SECONDS)).as("the fetcher closed the connection after the deadline").isTrue();
         }
         finally {
             server.stop(0);

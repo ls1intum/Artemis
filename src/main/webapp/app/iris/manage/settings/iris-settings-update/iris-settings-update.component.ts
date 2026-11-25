@@ -59,7 +59,7 @@ interface SaveSettingsOptions {
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    styleUrl: './iris-settings-update.component.scss',
+    styleUrl: './iris-settings-update.component.css',
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

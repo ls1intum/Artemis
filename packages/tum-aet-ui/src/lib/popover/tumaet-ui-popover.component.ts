@@ -41,7 +41,7 @@ export type TumAetUiPopoverOpenOn = 'click' | 'hover';
 @Component({
     selector: 'tumaet-ui-popover',
     templateUrl: './tumaet-ui-popover.component.html',
-    styleUrl: './tumaet-ui-popover.component.scss',
+    styleUrl: './tumaet-ui-popover.component.css',
     imports: [A11yModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

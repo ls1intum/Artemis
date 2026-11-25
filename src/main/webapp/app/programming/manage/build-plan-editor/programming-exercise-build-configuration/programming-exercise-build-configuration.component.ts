@@ -31,7 +31,7 @@ const NOT_LOADED = Symbol('docker flags not loaded');
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
-    styleUrls: ['../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,

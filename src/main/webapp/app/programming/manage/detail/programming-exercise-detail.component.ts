@@ -81,7 +81,7 @@ import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
-    styleUrls: ['./programming-exercise-detail.component.scss'],
+    styleUrls: ['./programming-exercise-detail.component.css'],
     imports: [
         HyperionRunLinkComponent,
         TranslateDirective,

@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
     selector: 'jhi-course-notification-bubble',
     imports: [CommonModule],
     templateUrl: './course-notification-bubble.component.html',
-    styleUrls: ['./course-notification-bubble.component.scss'],
+    styleUrls: ['./course-notification-bubble.component.css'],
 })
 export class CourseNotificationBubbleComponent {
     totalAmount = input.required<number>();
