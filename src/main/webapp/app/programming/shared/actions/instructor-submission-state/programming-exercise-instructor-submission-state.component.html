@@ -58,7 +58,9 @@
             [attr.aria-label]="'artemisApp.participation.triggerOptions' | artemisTranslate"
         >
             <fa-icon [icon]="faRedo" />
-            <span>{{ 'artemisApp.participation.triggerOptions' | artemisTranslate }}</span>
+            <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{
+                'artemisApp.participation.triggerOptions' | artemisTranslate
+            }}</span>
             <fa-icon [icon]="faChevronDown" />
         </button>
         <tumaet-ui-popover class="contents" #triggerPopover [ariaLabel]="'artemisApp.participation.triggerOptions' | artemisTranslate">

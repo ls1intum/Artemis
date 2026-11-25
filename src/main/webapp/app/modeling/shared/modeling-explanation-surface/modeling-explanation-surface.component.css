@@ -113,6 +113,12 @@
         background-color 120ms ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .modeling-explanation-surface__resizer::after {
+        transition: none;
+    }
+}
+
 .modeling-explanation-surface__resizer:hover::after,
 .modeling-explanation-surface__resizer:focus-visible::after {
     background: color-mix(in srgb, var(--apollon-chrome-text) 72%, transparent);

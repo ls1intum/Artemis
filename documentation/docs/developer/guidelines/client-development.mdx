@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-24
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -895,12 +895,14 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 ```
 
 - The toolbar is at most 40px high and never wraps. It holds only the table's own controls: search, filter, bulk and
-  create actions. Hide button labels below `md` and keep an icon. Filter forms and explanations stay above the frame.
+  create actions. Hide button labels below `md` and keep an icon. A filter that needs more than one control (for example a
+  date range) is a compact control in the toolbar too: use `size="small"` fields, or put the groups in a popover as the
+  participation page does. Explanations stay above the table.
 - The column header is always 30px high and sticks to the top of the scrolling body. Keep header text on one line.
 - Only the body scrolls, in both directions. The footer is at most 40px high, shows the range ("1–50 of 1,284") and a
   slim pager on one line, and adapts to the width of the table, so it also works inside dialogs. Skip it for lists that
   are shown completely.
-- The frame is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
+- The table has no frame of its own and sits flat on the panel of its page. It is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
   so content above the table needs no manual offset. Where that cannot work, for example several frames stacked on one
   page, set `--table-layout-offset` (the height of everything around the table) to switch to a viewport based cap, or pass
   `fill` inside a parent that provides a height.
@@ -956,6 +958,10 @@ only resolves `@import`, runs Tailwind and adds the vendor prefixes that the sup
   before their own: `styleUrls: ['../build-jobs-table.css', './finished-jobs-table.component.css']`.
   Rules that several features need and that no component owns belong in `layout.css` or `shared-classes.css`,
   behind a class, as the controls of a title bar are (`title-bar-controls`).
+- **Do not import a stylesheet from TypeScript.** The build leaves CSS that a JavaScript module imports out of the
+  bundles (`loader` in `angular.json`): the modules of the Monaco editor import their CSS, and the build used to write
+  an unused copy of it next to every lazy chunk. A library that needs its stylesheet gets an `@import` in
+  `application.css` or an entry in `styles` of `angular.json`, as Monaco has.
 - **Do not write vendor prefixes** next to the standard property. The build adds `-webkit-user-select` and the
   like from the list of supported browsers in `.browserslistrc`. A property that exists only with a prefix
   (`-webkit-line-clamp`) stays as it is.
