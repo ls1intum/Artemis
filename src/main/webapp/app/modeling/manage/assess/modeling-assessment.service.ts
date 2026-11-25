@@ -16,8 +16,8 @@ type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 export const MAX_FEEDBACK_TEXT_LENGTH = 500;
 
 /**
- * The longest description an assessor can write. The server keeps a description up to this length inline; a longer one
- * comes back as a short preview, which the assessment boxes would then edit in place of the full text.
+ * The longest description an assessor can write in an assessment box of the diagram. The server keeps a description up to
+ * this length inline; a longer one comes back as a short preview, which the box would then edit in place of the full text.
  */
 const MAX_FEEDBACK_DESCRIPTION_LENGTH = 1000;
 
@@ -123,9 +123,9 @@ export class ModelingAssessmentService {
     }
 
     /**
-     * Checks if the feedback text and detail text of every feedback item is within its maximum length. An AI feedback suggestion
-     * keeps the longer limit of the generated description. Returns true if the length of the texts is valid or if there is no
-     * feedback, false otherwise.
+     * Checks if the feedback text and detail text of every feedback item is within its maximum length. A manual description of a
+     * diagram element has to stay inline; general feedback and AI feedback suggestions keep the longer limit. Returns true if the
+     * length of the texts is valid or if there is no feedback, false otherwise.
      */
     isFeedbackTextValid(feedback: Feedback[]): boolean {
         if (!feedback) {
@@ -135,7 +135,12 @@ export class ModelingAssessmentService {
             (feedbackItem) =>
                 (!feedbackItem.text || feedbackItem.text.length <= MAX_FEEDBACK_TEXT_LENGTH) &&
                 (!feedbackItem.detailText ||
-                    feedbackItem.detailText.length <= (Feedback.isFeedbackSuggestion(feedbackItem) ? this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH : MAX_FEEDBACK_DESCRIPTION_LENGTH)),
+                    feedbackItem.detailText.length <= (this.isEditedInAssessmentBox(feedbackItem) ? MAX_FEEDBACK_DESCRIPTION_LENGTH : this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH)),
         );
+    }
+
+    /** Whether the assessor writes this feedback's description in an assessment box of the diagram. */
+    private isEditedInAssessmentBox(feedback: Feedback): boolean {
+        return feedback.reference != undefined && !Feedback.isFeedbackSuggestion(feedback);
     }
 }

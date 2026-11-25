@@ -368,10 +368,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
-        if (!this.modelingAssessmentService.isFeedbackTextValid(this.assessments())) {
-            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
-            return;
-        }
         const assessment = this.captureAssessmentSave();
         this.saveRequests.next(() => this.saveAssessment(assessment));
     }
@@ -387,6 +383,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         }
         if (!this.hasValidFeedbackScores(assessment.feedbacks)) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            return EMPTY;
+        }
+        if (!this.modelingAssessmentService.isFeedbackTextValid(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return EMPTY;
         }
         const current = this.exampleSubmission();
