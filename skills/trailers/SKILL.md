@@ -12,8 +12,8 @@ scene reference (`kind`, `cam`, `spots`).
 
 ## When a trailer needs work
 
-- **A PR changes a screenshot a trailer uses.** Search for the file name in `render_trailer.py` and
-  `supporting_scripts/trailer/storyboards/`. The trailers change in the same PR, not in a follow-up.
+- **A PR changes a screenshot a trailer uses.** Search for the file name in `render_trailer.py` and in
+  the module storyboards (`storyboards/<module>.py` next to it). The trailers change in the same PR, not in a follow-up.
 - **A PR changes UI that a trailer shows.** Check the affected scenes and captions.
 - **A module has none yet.** Add it as described below.
 
