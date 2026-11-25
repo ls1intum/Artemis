@@ -582,12 +582,12 @@ async function runServerTests(modules, options) {
     const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
     const modulesArg = modules.join(',');
 
-    log(`Running: ${gradleWrapper} test -DincludeModules=${modulesArg} jacocoTestReport -x webapp`, options);
+    log(`Running: ${gradleWrapper} test -DincludeModules=${modulesArg} -Dzonky.test.database.type=H2 jacocoTestReport -x webapp`, options);
 
     try {
         // Use spawnSync with argument array for safety
         // maxBuffer is set to 50MB to handle large test outputs (default is 1MB which can cause the process to be killed)
-        const gradleResult = spawnSync(gradleWrapper, ['test', `-DincludeModules=${modulesArg}`, 'jacocoTestReport', '-x', 'webapp'], {
+        const gradleResult = spawnSync(gradleWrapper, ['test', `-DincludeModules=${modulesArg}`, '-Dzonky.test.database.type=H2', 'jacocoTestReport', '-x', 'webapp'], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
