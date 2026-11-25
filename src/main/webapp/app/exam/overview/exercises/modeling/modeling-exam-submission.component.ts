@@ -25,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-modeling-submission-exam',
     templateUrl: './modeling-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: ModelingExamSubmissionComponent }],
-    styleUrls: ['./modeling-exam-submission.component.scss'],
+    styleUrls: ['./modeling-exam-submission.component.css'],
     // change deactivation must be triggered manually
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [

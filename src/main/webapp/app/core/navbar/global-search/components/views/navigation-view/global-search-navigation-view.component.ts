@@ -40,7 +40,7 @@ import { SEARCH_RESULTS_LISTBOX_ID, searchResultOptionDomId } from 'app/core/nav
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiSkeletonComponent],
     templateUrl: './global-search-navigation-view.component.html',
-    styleUrls: ['./global-search-navigation-view.component.scss'],
+    styleUrls: ['./global-search-navigation-view.component.css'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {

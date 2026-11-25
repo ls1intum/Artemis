@@ -23,7 +23,7 @@ import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-sta
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss'],
+    styleUrls: ['./quiz-point-statistic.component.css'],
     imports: [FaIconComponent, TranslateDirective, TumAetUiBarChartComponent, TumAetUiButtonDirective, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {

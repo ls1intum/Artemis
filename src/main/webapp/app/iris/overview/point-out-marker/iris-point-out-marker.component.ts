@@ -25,7 +25,7 @@ interface PointOutMarker {
 @Component({
     selector: 'jhi-iris-point-out-marker',
     templateUrl: './iris-point-out-marker.component.html',
-    styleUrl: './iris-point-out-marker.component.scss',
+    styleUrl: './iris-point-out-marker.component.css',
     imports: [TumAetUiButtonDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -15,7 +15,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
-    styleUrls: ['./course-management-statistics.component.scss'],
+    styleUrls: ['./course-management-statistics.component.css'],
     imports: [
         StatisticsSpanSelectorComponent,
         DocumentationButtonComponent,

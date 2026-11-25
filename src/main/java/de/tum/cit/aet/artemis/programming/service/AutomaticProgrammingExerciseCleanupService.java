@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationRepositoryUriDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
@@ -140,46 +141,42 @@ public class AutomaticProgrammingExerciseCleanupService {
 
     private void cleanStudentParticipationsRepositoriesInCourseExercises(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
         log.info("Search for courses exercises with due date from {} until {}", earliestDate, latestDate);
-        // Get all relevant participation ids
-        Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        var start = System.currentTimeMillis();
-        Page<String> repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, pageable);
-        log.debug("Query to find {} student participations in course exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
-        log.info("Found {} student participations in courses exercises to clean local student repositories in {} batches.", repositoryUriPage.getTotalElements(),
-                repositoryUriPage.getTotalPages());
-        if (repositoryUriPage.getTotalElements() > 0) {
-            repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
-            while (!repositoryUriPage.isLast()) {
-                start = System.currentTimeMillis();
-                repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate,
-                        repositoryUriPage.nextPageable());
-                log.debug("Query to {} find student participations in course exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
-                repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
-            }
-            log.info("Finished cleaning local student repositories in course exercises");
-        }
+        cleanStudentRepositoriesInBatches("course exercises", afterId -> programmingExerciseStudentParticipationRepository
+                .findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, afterId, Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE)));
     }
 
     private void cleanStudentParticipationsRepositoriesInExamExercises(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
         log.info("Search for exam exercises with due date from {} until {}", earliestDate, latestDate);
-        // Get all relevant participation ids
-        Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        var start = System.currentTimeMillis();
-        Page<String> repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, pageable);
-        log.debug("Query to find {} student participations in exam exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
-        log.info("Found {} student participations in exam exercises to clean local student repositories in {} batches.", repositoryUriPage.getTotalElements(),
-                repositoryUriPage.getTotalPages());
-        if (repositoryUriPage.getTotalElements() > 0) {
-            repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
-            while (!repositoryUriPage.isLast()) {
-                start = System.currentTimeMillis();
-                repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate,
-                        repositoryUriPage.nextPageable());
-                log.debug("Query to find {} student participations in exam exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
-                repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
+        cleanStudentRepositoriesInBatches("exam exercises", afterId -> programmingExerciseStudentParticipationRepository
+                .findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, afterId, Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE)));
+    }
+
+    /**
+     * Removes the local student repositories batch by batch. Every batch continues after the last participation id of the previous one (keyset pagination), so the
+     * database neither counts all rows for each batch nor reads and discards the rows of the earlier batches, and no participation is skipped or visited twice.
+     *
+     * @param description what is cleaned, for the log
+     * @param nextBatch   loads the batch of participations with an id greater than the given one, ordered by id
+     */
+    private void cleanStudentRepositoriesInBatches(String description, LongFunction<List<ParticipationRepositoryUriDTO>> nextBatch) {
+        long afterId = 0;
+        long cleaned = 0;
+        int batches = 0;
+        List<ParticipationRepositoryUriDTO> batch;
+        do {
+            var start = System.currentTimeMillis();
+            batch = nextBatch.apply(afterId);
+            log.debug("Query to find {} student participations in {} took {} ms", batch.size(), description, System.currentTimeMillis() - start);
+            batch.forEach(participation -> deleteLocalRepositoryByUriString(participation.repositoryUri()));
+            if (!batch.isEmpty()) {
+                afterId = batch.getLast().participationId();
+                cleaned += batch.size();
+                batches++;
             }
-            log.info("Finished cleaning local student repositories in exam exercises");
+            // a batch that is not full was the last one
         }
+        while (batch.size() == STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
+        log.info("Cleaned the local student repositories of {} student participations in {} in {} batches", cleaned, description, batches);
     }
 
     private void deleteLocalRepositoryByUriString(String uri) {

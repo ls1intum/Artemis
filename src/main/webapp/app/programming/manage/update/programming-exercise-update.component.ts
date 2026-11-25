@@ -98,7 +98,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../shared/programming-exercise-form.css'],
     providers: [HyperionGenerationActivityFacade, TumAetUiConfirmationService],
     imports: [
         TumAetUiButtonDirective,

@@ -9,7 +9,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
 @Component({
     selector: 'jhi-question-statistics-chart',
     templateUrl: './question-statistics-chart.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.css'],
     imports: [TumAetUiBarChartComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'contents' },

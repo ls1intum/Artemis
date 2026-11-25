@@ -47,7 +47,7 @@ export enum BonusStrategyDiscreteness {
 @Component({
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
-    styleUrls: ['./bonus.component.scss'],
+    styleUrls: ['./bonus.component.css'],
     imports: [
         SafeHtmlPipe,
         GradeStepBoundsPipe,

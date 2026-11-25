@@ -17,7 +17,7 @@ import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
-    styleUrls: ['./exam-exercise-overview-page.scss'],
+    styleUrls: ['./exam-exercise-overview-page.css'],
     imports: [ExamExerciseHeaderComponent, TranslateDirective, FaIconComponent, TumAetUiTableDirective, TumAetUiTooltipDirective, UpdatingResultComponent, ArtemisTranslatePipe],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit {

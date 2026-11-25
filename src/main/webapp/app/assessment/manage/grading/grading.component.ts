@@ -94,7 +94,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
 @Component({
     selector: 'jhi-grading',
     templateUrl: './grading.component.html',
-    styleUrls: ['./grading.component.scss'],
+    styleUrls: ['./grading.component.css'],
     imports: [
         TranslateDirective,
         GradingInfoModalComponent,

@@ -49,7 +49,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['./post.component.scss', './../communication.component.scss'],
+    styleUrls: ['./post.component.css', './../communication.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         SavedPostingBannerComponent,
