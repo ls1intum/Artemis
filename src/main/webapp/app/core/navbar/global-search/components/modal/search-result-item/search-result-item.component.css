@@ -2,7 +2,10 @@
 .search-result-item {
     border-bottom: 1px solid var(--global-search-border-color);
     border-left: 3px solid transparent;
-    transition: all 0.15s ease-in-out;
+    transition:
+        background-color 0.15s ease-in-out,
+        border-left-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
 }
 
 .search-result-item:last-child {
