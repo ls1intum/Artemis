@@ -6,7 +6,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, SearchTermPageableSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 @Service()
@@ -39,10 +39,7 @@ export class OrganizationManagementService {
             })
             .pipe(
                 tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map(toPageableResult),
             );
     }
 
@@ -148,7 +145,7 @@ export class OrganizationManagementService {
                 },
                 observe: 'response',
             })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -169,7 +166,7 @@ export class OrganizationManagementService {
                 },
                 observe: 'response',
             })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+            .pipe(map(toPageableResult));
     }
 
     /**
@@ -198,12 +195,7 @@ export class OrganizationManagementService {
                 params: { loginOrName, pageIndex, pageSize },
                 observe: 'response',
             })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+            .pipe(map(toPageableResult));
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

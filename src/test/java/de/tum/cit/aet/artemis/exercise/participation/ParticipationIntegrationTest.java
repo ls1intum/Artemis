@@ -47,6 +47,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -89,7 +91,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSubmissionResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
@@ -2425,22 +2426,22 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         String examUrl = "/api/exercise/exercises/" + examExercise.getId() + "/participations/page";
         String courseUrl = "/api/exercise/exercises/" + courseExercise.getId() + "/participations/page";
         request.getList(examUrl, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         request.getList(examUrl + "/for-exam", HttpStatus.OK, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         request.getList(courseUrl, HttpStatus.OK, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         request.getList(courseUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         userUtilService.unenrollUserFromCourseByRole(user, examExercise.getExam().getCourse(), CourseRole.INSTRUCTOR);
         request.getList(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         userUtilService.enrollUserInCourse(user, examExercise.getExam().getCourse(), CourseRole.TEACHING_ASSISTANT);
         request.getList(examUrl, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
         request.getList(examUrl + "/for-exam", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
-                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All")));
     }
 
     /**
@@ -2457,7 +2458,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var teamParticipation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
         var practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
 
-        var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var search = new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
         var page = request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 
@@ -3205,7 +3206,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         userUtilService.changeUser(TEST_PREFIX + staffLogin);
         var participation = createParticipationForAnonymityTest(teamMode);
         String url = "/api/exercise/exercises/" + participation.getExercise().getId() + "/participations/";
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var search = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All");
         var management = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(management).hasSize(1);
         assertThat(management.getFirst().participationId()).isEqualTo(participation.getId());
@@ -3221,7 +3222,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void anonymousParticipationListsRejectIdentityQueries(String endpoint, String searchTerm, String sortedColumn) throws Exception {
         var participation = createParticipationForAnonymityTest(false);
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, sortedColumn, searchTerm, "All", null, null);
+        var search = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, sortedColumn, searchTerm, "All");
         request.getList("/api/exercise/exercises/" + participation.getExercise().getId() + "/participations/" + endpoint, HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
@@ -3275,14 +3276,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise.setDueDate(dueDateOffset == 0 ? null : ZonedDateTime.now().plusDays(dueDateOffset));
         exerciseRepository.save(exercise);
         String url = "/api/exercise/exercises/" + exercise.getId() + "/participations/";
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var search = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All");
         var page = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
         assertThat(page).hasSize(1);
         assertThat(page.getFirst().repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
         assertThat(page.getFirst().participantIdentifier()).isEqualTo(anonymous ? null : participation.getParticipantIdentifier());
         var direct = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
         assertThat(direct.repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
-        var identitySearch = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", TEST_PREFIX + "student1", "All", null, null);
+        var identitySearch = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", TEST_PREFIX + "student1", "All");
         request.getList(url + "page", anonymous ? HttpStatus.FORBIDDEN : HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(identitySearch));
     }
 
@@ -3295,7 +3296,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = participationRepo.save(ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, quiz, student));
         String url = "/api/exercise/exercises/" + quiz.getId() + "/participations/";
 
-        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", student.getLogin(), "All", null, null);
+        var search = new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", student.getLogin(), "All");
         var page = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
 
         assertThat(page).hasSize(1);
@@ -3351,8 +3352,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             managementUrl = "/api/exercise/exercises/" + textExercise.getId() + "/participations/page";
         }
 
-        private ParticipationSearchDTO buildParticipationSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
-            return new ParticipationSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp, null, null);
+        private PagedSearchDTO buildParticipationSearch(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) {
+            return new PagedSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp);
         }
 
         @Test
@@ -3376,8 +3377,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
             assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId(), manualFailure.getId());
 
-            search = new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "", "Successful,Unsuccessful,Manual,Automatic,NoPracticeMode", 50, 100);
-            var page = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isOk())
+            search = new PagedSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "", "Successful,Unsuccessful,Manual,Automatic,NoPracticeMode");
+            var page = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(searchMappingWithScoreRange(search, 50, 100))).andExpect(status().isOk())
                     .andReturn();
             assertThat(page.getResponse().getHeader("X-Total-Count")).isEqualTo("2");
             results = request.getObjectMapper().readValue(page.getResponse().getContentAsString(),
@@ -3565,8 +3566,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             r2.setAssessmentType(AssessmentType.AUTOMATIC);
             resultRepository.save(r2);
 
-            var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", 50, 100);
-            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            var search = new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, searchMappingWithScoreRange(search, 50, 100));
             assertThat(results).hasSize(1);
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
         }
@@ -3585,9 +3586,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         @CsvSource({ "50,60,0", "80,90,1", "90,100,0" })
         void getParticipationsPage_scoreRangeUsesLatestUntypedResult(int lower, int upper, int expectedCount) throws Exception {
             var participation = createParticipationWithLatestUntypedResult();
-            var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", lower, upper);
+            var search = new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
 
-            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, searchMappingWithScoreRange(search, lower, upper));
 
             assertThat(results).hasSize(expectedCount).allSatisfy(row -> {
                 assertThat(row.participationId()).isEqualTo(participation.getId());
@@ -3788,11 +3789,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
 
             var page0 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
-                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                    pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 2, SortingOrder.ASCENDING, "id", "", "All")));
             assertThat(page0).hasSize(2);
 
             var page1 = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class,
-                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All", null, null)));
+                    pageableSearchUtilService.searchMapping(new PagedSearchDTO(1, 2, SortingOrder.ASCENDING, "id", "", "All")));
             assertThat(page1).hasSize(1);
         }
 
@@ -3879,7 +3880,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             }
         }
 
-        private Listing list(ParticipationSearchDTO search) throws Exception {
+        private Listing list(PagedSearchDTO search) throws Exception {
             MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search)))
                     .andExpect(status().isOk()).andReturn();
             List<ParticipationManagementDTO> rows = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
@@ -3888,7 +3889,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
 
         private Listing list(String searchTerm, String filterProp, String sortedColumn, SortingOrder order) throws Exception {
-            return list(new ParticipationSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp, null, null));
+            return list(new PagedSearchDTO(0, 50, order, sortedColumn, searchTerm, filterProp));
         }
 
         private ParticipationManagementDTO row(Listing listing, StudentParticipation participation) {
@@ -4148,9 +4149,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         @Test
         void paginationTotalCountsTeamRowsAndPracticeRows() throws Exception {
-            var firstPage = list(new ParticipationSearchDTO(0, 2, SortingOrder.ASCENDING, "participantName", "", "All", null, null));
-            var secondPage = list(new ParticipationSearchDTO(1, 2, SortingOrder.ASCENDING, "participantName", "", "All", null, null));
-            var thirdPage = list(new ParticipationSearchDTO(2, 2, SortingOrder.ASCENDING, "participantName", "", "All", null, null));
+            var firstPage = list(new PagedSearchDTO(0, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
+            var secondPage = list(new PagedSearchDTO(1, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
+            var thirdPage = list(new PagedSearchDTO(2, 2, SortingOrder.ASCENDING, "participantName", "", "All"));
 
             assertThat(firstPage.rows()).hasSize(2);
             assertThat(secondPage.rows()).hasSize(2);
@@ -4166,8 +4167,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         @Test
         void paginationOfASearchCountsTheMatchingRowsOnly() throws Exception {
-            var firstPage = list(new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "student", "All", null, null));
-            var secondPage = list(new ParticipationSearchDTO(1, 1, SortingOrder.ASCENDING, "id", "student", "All", null, null));
+            var firstPage = list(new PagedSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "student", "All"));
+            var secondPage = list(new PagedSearchDTO(1, 1, SortingOrder.ASCENDING, "id", "student", "All"));
 
             assertThat(firstPage.total()).isEqualTo("5");
             assertThat(secondPage.total()).isEqualTo("5");
@@ -4198,9 +4199,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void tutorsMayNotSearchOrSortByIdentity() throws Exception {
-            for (var search : List.of(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student4", "All", null, null),
-                    new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All", null, null),
-                    new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantIdentifier", "", "All", null, null))) {
+            for (var search : List.of(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student4", "All"),
+                    new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All"),
+                    new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "participantIdentifier", "", "All"))) {
                 request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isForbidden());
             }
         }
@@ -4208,16 +4209,16 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void studentsMayNotListTheParticipations() throws Exception {
-            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
-                    .params(pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null))))
+            request.performMvcRequest(
+                    MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
                     .andExpect(status().isForbidden());
         }
 
         @Test
         @WithMockUser(username = OTHER_INSTRUCTOR_LOGIN, roles = "USER")
         void instructorsOfAnotherCourseMayNotListTheParticipations() throws Exception {
-            request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl)
-                    .params(pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null))))
+            request.performMvcRequest(
+                    MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All"))))
                     .andExpect(status().isForbidden());
         }
 
@@ -4228,7 +4229,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var individualUrl = "/api/exercise/exercises/" + textExercise.getId() + "/participations/page";
 
             var result = request.getList(individualUrl, HttpStatus.OK, ParticipationManagementDTO.class,
-                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All", null, null)));
+                    pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "participantName", "", "All")));
 
             assertThat(result).extracting(ParticipationManagementDTO::participationId).containsExactly(graded.getId(), practice.getId());
             assertThat(result).extracting(ParticipationManagementDTO::studentLogin).containsExactly(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
@@ -4236,7 +4237,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             assertThat(result).extracting(ParticipationManagementDTO::teamId).containsOnlyNulls();
 
             var searched = request.getList(individualUrl, HttpStatus.OK, ParticipationManagementDTO.class,
-                    pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student2", "NoSubmissions", null, null)));
+                    pageableSearchUtilService.searchMapping(new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "student2", "NoSubmissions")));
             assertThat(searched).extracting(ParticipationManagementDTO::participationId).containsExactly(practice.getId());
         }
     }
@@ -4273,4 +4274,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(unchanged.getExercise().getId()).isEqualTo(foreign.getId());
     }
 
+    private LinkedMultiValueMap<String, String> searchMappingWithScoreRange(PagedSearchDTO search, int scoreRangeLower, int scoreRangeUpper) {
+        var params = pageableSearchUtilService.searchMapping(search);
+        params.add("scoreRangeLower", String.valueOf(scoreRangeLower));
+        params.add("scoreRangeUpper", String.valueOf(scoreRangeUpper));
+        return params;
+    }
 }

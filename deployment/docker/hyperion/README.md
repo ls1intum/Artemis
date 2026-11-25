@@ -30,7 +30,7 @@ for other workloads. Keep the worker process in an isolated VM.
 ## Offline Java build image (Gradle and Maven)
 
 This image has an independent toolchain version, like the build agents' build images.
-The worker's shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1`.
+The worker's shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2`.
 It reuses a cached image or pulls it when missing, then uses the immutable local image ID.
 Normal Artemis upgrades and PR builds use the same default; no per-commit image is required.
 
