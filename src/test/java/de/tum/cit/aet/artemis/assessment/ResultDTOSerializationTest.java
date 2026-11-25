@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 
 class ResultDTOSerializationTest {
@@ -47,30 +45,5 @@ class ResultDTOSerializationTest {
         String json = objectMapper.writeValueAsString(ResultDTO.of(result));
 
         assertThat(json).doesNotContain("correctionRound");
-    }
-
-    /**
-     * A modeling assessment box with a title but no description has the title in {@code text} and an empty detail text, which the client tells
-     * apart from a feedback without a detail text.
-     */
-    @Test
-    void shouldKeepAnEmptyDetailText() throws Exception {
-        Feedback feedback = new Feedback();
-        feedback.setText("Missing abstraction");
-        feedback.setDetailText("");
-
-        String json = objectMapper.writeValueAsString(FeedbackDTO.of(feedback));
-
-        assertThat(json).contains("\"detailText\":\"\"");
-    }
-
-    @Test
-    void shouldOmitAMissingDetailText() throws Exception {
-        Feedback feedback = new Feedback();
-        feedback.setText("Looks right");
-
-        String json = objectMapper.writeValueAsString(FeedbackDTO.of(feedback));
-
-        assertThat(json).doesNotContain("detailText");
     }
 }

@@ -499,11 +499,11 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.detailText).toBeUndefined();
         });
 
-        it('keeps a title without a description as a title with an empty detail text', () => {
+        it('keeps a title without a description as the comment', () => {
             const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: '' })]);
 
             expect(created.text).toBe('Missing abstraction');
-            expect(created.detailText).toBe('');
+            expect(created.detailText).toBeUndefined();
         });
 
         it('moves the description back into text when the tutor clears the title', () => {
@@ -606,13 +606,6 @@ describe('ModelingAssessmentComponent', () => {
             expect(assessment.feedbackSuggestion).toBeUndefined();
         });
 
-        it('shows a title with an empty detail text as the title, without a description', async () => {
-            const assessment = await showFeedback(feedbackFor('Missing abstraction', ''));
-
-            expect(assessment.title).toBe('Missing abstraction');
-            expect(assessment.feedback).toBe('');
-        });
-
         it('shows a feedback without detail text as a description under the default title', async () => {
             const assessment = await showFeedback(feedbackFor('Looks right'));
 
@@ -663,22 +656,6 @@ describe('ModelingAssessmentComponent', () => {
             const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
             expect(assessment.title).toBeUndefined();
             expect(assessment.feedback).toBe(longDescription);
-        });
-
-        it('keeps a title without a description through saving and showing it again', async () => {
-            const [saved] = comp.generateFeedbackFromAssessment([
-                { modelElementId: RELATIONSHIP_ID, elementType: 'ClassUnidirectional', score: 1, title: 'Missing abstraction', feedback: '' } as any,
-            ]);
-            const reloaded = feedbackFor(saved.text, saved.detailText);
-            const assessment = await showFeedback(reloaded);
-
-            expect(assessment.title).toBe('Missing abstraction');
-            expect(assessment.feedback).toBe('');
-
-            const [stored] = comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
-
-            expect(stored.text).toBe('Missing abstraction');
-            expect(stored.detailText).toBe('');
         });
     });
 
