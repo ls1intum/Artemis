@@ -19,6 +19,7 @@ The guide is in the developer documentation:
 | `lib.mjs`                     | Shared helpers: options, login, the recorded properties                          |
 | `cascade-audit-browser.mjs`   | The part of the cascade audit that runs in the page                              |
 | `important-audit-browser.mjs` | The part of the `!important` audit that runs in the page                         |
+| `important-audit-report.mjs`  | The part of the `!important` audit that sorts the declarations into groups       |
 
 Run a script with `--help` to see its usage, for example:
 

@@ -171,15 +171,21 @@ node supporting_scripts/client/style-comparison/important-audit.mjs --base http:
 
 The script visits the same pages and overlays as `capture.mjs`. On each of them it takes the priority
 from one `!important` declaration at a time and checks whether the computed style of an element that the
-rule matches changes. The report has three groups:
+rule matches changes. The report has four groups:
 
 - **changes nothing**: the rule matched elements, and none of them changed. These are the candidates.
 - **needed**: at least one element changed. The report names it and the page.
 - **matched no element**: the script cannot judge the declaration. This is the case for rules of a state
   (`:hover`), of a print or narrow layout, and of content that the course does not have.
-  Animations and transitions are in this group too, because the capture switches them off.
+  Animations and transitions are in this group too, because the capture switches them off. So are
+  declarations in a container query that change no element, because the script cannot tell whether the
+  query applies, and values that contain `var()` in a shorthand such as `padding`, which the page cannot
+  read back.
+- **ambiguous**: the same selector and property occur more than once, for example in a print rule, in
+  the stylesheet of another component or in a shorthand and one of its longhands. The browser
+  reports them together, so the script does not judge them.
 
-The first group is listed; `--all` lists the other two as well. A candidate is not a proof. Before you
+The first group is listed; `--all` lists the other three as well. A candidate is not a proof. Before you
 remove the priority, check that nothing sets the same property on the element in a state the script
 does not reach: a hover or focus rule, an inline style that the component binds or a library sets while
 dragging, or an `!important` declaration in a cascade layer, which outranks every normal declaration.
