@@ -186,6 +186,7 @@ jobs:
         with:
           tests-outcome: ${{ steps.run-tests-phase1.outcome }}
           artifact-name: Query Report Phase 1
+          publish-baseline: 'true'  # demo: PR runs upload their keys, so one can be pinned as the baseline
 
       - name: E2E Teardown
         id: teardown
@@ -660,6 +661,7 @@ jobs:
         with:
           tests-outcome: ${{ steps.run-tests-all-pr.outcome }}
           artifact-name: Query Report All PR
+          publish-baseline: 'true'  # demo: PR runs upload their keys, so one can be pinned as the baseline
 
       - name: E2E Teardown
         id: teardown
