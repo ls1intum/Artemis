@@ -60,6 +60,8 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -211,6 +213,28 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exerciseDetailsIncludeAthenaResultBeforeAssessmentDueDate() throws Exception {
+        var now = ZonedDateTime.now();
+        programmingExercise.setReleaseDate(now.minusDays(1));
+        programmingExercise.setAssessmentDueDate(now.plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        var athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(2), submission);
+        var manualResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now.minusMinutes(1), submission);
+
+        var details = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+
+        assertThat(details.exercise().studentParticipations()).singleElement().satisfies(participation -> {
+            assertThat(participation.id()).isEqualTo(programmingExerciseStudentParticipation.getId());
+            assertThat(participation.submissions()).singleElement().satisfies(actualSubmission -> {
+                assertThat(actualSubmission.id()).isEqualTo(submission.getId());
+                assertThat(actualSubmission.results()).extracting(DetailedResultDTO::id).contains(athenaResult.getId()).doesNotContain(manualResult.getId());
+            });
+        });
     }
 
     @Test

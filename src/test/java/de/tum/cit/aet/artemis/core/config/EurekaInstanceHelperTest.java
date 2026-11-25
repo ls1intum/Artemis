@@ -115,7 +115,7 @@ class EurekaInstanceHelperTest {
         when(eureka.getApplicationInfoManager()).thenReturn(manager);
         var sdkHelper = helper(mock(DiscoveryClient.class), Optional.of(eureka), new MockEnvironment());
         for (int port : List.of(5703, 5704)) {
-            info.setIsDirty(false);
+            info.unsetIsDirty(Long.MAX_VALUE);
             sdkHelper.registerHazelcastAddress("192.0.2.10", port);
             assertThat(metadata).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port));
             assertThat(info.getMetadata()).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port)).containsEntry("profile", "core")

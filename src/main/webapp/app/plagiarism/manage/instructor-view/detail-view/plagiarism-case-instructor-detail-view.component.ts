@@ -52,7 +52,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
-    styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
+    styleUrls: ['./plagiarism-case-instructor-detail-view.component.css'],
     providers: [CommunicationService, CourseConversationsService, LinkPreviewService, LinkifyService],
     imports: [
         PlagiarismCaseHeaderComponent,

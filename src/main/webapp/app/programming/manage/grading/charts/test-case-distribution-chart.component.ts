@@ -19,7 +19,7 @@ export type TestCaseColors = {
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
-    styleUrls: ['./sca-category-distribution-chart.scss'],
+    styleUrls: ['./sca-category-distribution-chart.css'],
     templateUrl: './test-case-distribution-chart.component.html',
     imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })

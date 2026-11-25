@@ -51,7 +51,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 @Component({
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
-    styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
+    styleUrls: ['./tutorial-groups-registration-import-dialog.component.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

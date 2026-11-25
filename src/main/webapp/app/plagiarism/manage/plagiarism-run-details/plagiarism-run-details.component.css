@@ -1,0 +1,46 @@
+:host {
+    display: block;
+    overflow-y: auto;
+}
+
+.plagiarism-run-details {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.plagiarism-run-details-stats {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.plagiarism-run-details-stats-item {
+    display: flex;
+    flex-direction: column;
+    width: 180px;
+    margin-right: 1rem;
+}
+
+.plagiarism-run-details-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.plagiarism-run-details-item:not(:last-child) {
+    margin-bottom: 1rem;
+}
+
+.plagiarism-run-details-label {
+    margin-bottom: 0.25rem;
+}
+
+.plagiarism-run-details-info {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+:host::ng-deep.tick {
+    font-weight: bold;
+}

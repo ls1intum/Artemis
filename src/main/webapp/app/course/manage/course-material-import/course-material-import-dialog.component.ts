@@ -45,7 +45,7 @@ type DialogStep = 'selectCourse' | 'selectOptions';
         ArtemisTranslatePipe,
     ],
     templateUrl: './course-material-import-dialog.component.html',
-    styleUrl: './course-material-import-dialog.component.scss',
+    styleUrl: './course-material-import-dialog.component.css',
 })
 export class CourseMaterialImportDialogComponent {
     private readonly translateService = inject(TranslateService);

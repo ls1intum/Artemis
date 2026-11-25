@@ -1,5 +1,0 @@
-// The row of the logged-in user stays highlighted, as the list item it sits in was.
-:host(.active) {
-    background-color: var(--tumaet-ui-highlight-background);
-    color: var(--tumaet-ui-highlight-color);
-}

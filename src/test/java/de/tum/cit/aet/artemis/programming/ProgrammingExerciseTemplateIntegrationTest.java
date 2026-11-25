@@ -44,7 +44,6 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
-import org.apache.maven.shared.utils.Os;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -118,7 +117,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
 
         try {
-            String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
+            String mvnExecutable = System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows") ? "mvn.cmd" : "mvn";
             var lines = runProcess(new ProcessBuilder(mvnExecutable, "-version"));
             String prefix = "maven home:";
             Optional<String> home = lines.stream().filter(line -> line.toLowerCase(Locale.ROOT).startsWith(prefix)).findFirst();

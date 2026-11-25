@@ -14,7 +14,7 @@ export const POINTS_MAX_FRACTION_DIGITS = 3;
 @Component({
     selector: 'jhi-points-input',
     templateUrl: './points-input.component.html',
-    styleUrl: './points-input.component.scss',
+    styleUrl: './points-input.component.css',
     imports: [FormsModule, TumAetUiInputNumberComponent],
     host: {
         '[class.jhi-points-input-fluid]': 'fluid()',

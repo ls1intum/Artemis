@@ -47,7 +47,7 @@ export type PlagiarismCheckState = {
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
-    styleUrls: ['./plagiarism-inspector.component.scss'],
+    styleUrls: ['./plagiarism-inspector.component.css'],
     templateUrl: './plagiarism-inspector.component.html',
     imports: [
         FaIconComponent,

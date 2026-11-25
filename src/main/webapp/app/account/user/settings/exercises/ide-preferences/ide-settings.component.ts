@@ -24,7 +24,7 @@ import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.mod
 @Component({
     selector: 'jhi-ide-preferences',
     templateUrl: './ide-settings.component.html',
-    styleUrls: ['./ide-settings.scss'],
+    styleUrls: ['./ide-settings.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

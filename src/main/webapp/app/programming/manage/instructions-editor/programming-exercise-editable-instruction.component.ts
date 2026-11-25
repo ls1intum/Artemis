@@ -68,7 +68,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
-    styleUrls: ['./programming-exercise-editable-instruction.scss'],
+    styleUrls: ['./programming-exercise-editable-instruction.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         MarkdownEditorMonacoComponent,

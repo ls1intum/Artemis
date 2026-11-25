@@ -45,9 +45,9 @@ describe('TUM AET UI form controls carry their own root class', () => {
     });
 
     it('is what the application stylesheet excludes the controls by', () => {
-        const globalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
+        const globalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/css/base.css'), 'utf8');
 
-        expect(globalStyles, 'global.scss no longer excludes TUM AET UI controls from the JHipster validity accent').toContain(":not([class*='tumaet-ui-'])");
+        expect(globalStyles, 'base.css no longer excludes TUM AET UI controls from the JHipster validity accent').toContain(":not([class*='tumaet-ui-'])");
     });
 
     it.each(controls)('$selector puts its own class on its host', ({ selector, classTokens }) => {

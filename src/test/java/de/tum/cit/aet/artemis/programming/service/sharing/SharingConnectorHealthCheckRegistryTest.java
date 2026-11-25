@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationIndependentTest {
@@ -54,7 +55,7 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    void shouldReportHealthDownWhenSharingPlatformIsDisconnected() throws Exception {
+    void shouldReportHealthDegradedWhenSharingPlatformIsDisconnected() throws Exception {
         // given
         sharingPlatformMockProvider.mockStatus(false);
 
@@ -62,6 +63,6 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
         final Health health = sharingHealthIndicator.health();
 
         // then
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
     }
 }

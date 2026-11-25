@@ -37,7 +37,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 @Component({
     selector: 'jhi-course-users-selector',
     templateUrl: './course-users-selector.component.html',
-    styleUrls: ['./course-users-selector.component.scss'],
+    styleUrls: ['./course-users-selector.component.css'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

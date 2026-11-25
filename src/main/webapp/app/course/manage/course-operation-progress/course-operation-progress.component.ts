@@ -16,7 +16,7 @@ const UPDATE_BUFFER_MS = 150;
     standalone: true,
     imports: [CommonModule, FaIconComponent, TumAetUiDialogComponent, TumAetUiProgressBarComponent, TumAetUiMessageComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-operation-progress.component.html',
-    styleUrls: ['./course-operation-progress.component.scss'],
+    styleUrls: ['./course-operation-progress.component.css'],
 })
 export class CourseOperationProgressComponent {
     private translateService = inject(TranslateService);
