@@ -123,6 +123,8 @@ import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { APOLLON_FULLSCREEN_FRAME_CLASS } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
 function createV4ModelWithNodes(): UMLModel {
     const v3Model = deepClone(testClassDiagram as any);
@@ -339,7 +341,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         const assessment = Object.values(comp.apollonEditor!.model.assessments)[0];
-        expect(assessment.dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        expect(assessment.dropInfo).toEqual(mockFeedbackWithGradingInstruction.gradingInstruction);
     });
 
     it('should update element counts', async () => {
@@ -477,12 +479,46 @@ describe('ModelingAssessmentComponent', () => {
         });
 
         it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {
-            const instruction = { id: 7 } as any;
-            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: instruction })]);
-            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBe(instruction);
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: { id: 7 } })]);
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toEqual({ id: 7 });
 
             comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: undefined })]);
             expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBeUndefined();
+        });
+
+        it('stores a linked grading instruction without the criterion title Apollon shows on it', () => {
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: { id: 7, credits: 1, criterionTitle: 'Associations' } })]);
+
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toEqual({ id: 7, credits: 1 });
+        });
+
+        it('does not store the feedback Apollon copies from a linked grading instruction as a comment', () => {
+            const dropInfo = { id: 7, credits: 1, feedback: 'Correct association' };
+
+            const [linked] = comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo, feedback: 'Correct association' })]);
+            expect(linked.text).toBeUndefined();
+            expect(linked.detailText).toBeUndefined();
+
+            const [titled] = comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo, title: 'Associations', feedback: 'Correct association' })]);
+            expect(titled.text).toBe('Associations');
+            expect(titled.detailText).toBe('');
+
+            const [commented] = comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo, feedback: 'Name the role as well.' })]);
+            expect(commented.text).toBe('Name the role as well.');
+            expect(commented.gradingInstruction).toEqual(dropInfo);
+        });
+
+        it('marks an accepted suggestion as adapted when the tutor links a grading instruction to it', () => {
+            const suggestion = Feedback.forModeling(1, undefined, PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: 'Original detail', dropInfo: { id: 7, credits: 1 } })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(suggestion.gradingInstruction).toEqual({ id: 7, credits: 1 });
         });
 
         it('stores a title the tutor gave the box in text and its description in detailText', () => {
@@ -625,6 +661,42 @@ describe('ModelingAssessmentComponent', () => {
             const assessment = await showFeedback(feedbackFor(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction', 'Edited detail'));
 
             expect(assessment.feedbackSuggestion).toBe('adapted');
+        });
+
+        it('shows a linked grading instruction with the title of its criterion', async () => {
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([
+                { title: 'Associations', structuredGradingInstructions: [{ id: 7 } as GradingInstruction] } as GradingCriterion,
+            ]);
+            const linked = feedbackFor('Name the role as well.');
+            linked.gradingInstruction = { id: 7, credits: 1, feedback: 'Correct association' } as GradingInstruction;
+
+            const assessment = await showFeedback(linked);
+
+            expect(assessment.dropInfo).toEqual({ id: 7, credits: 1, feedback: 'Correct association', criterionTitle: 'Associations' });
+            expect(assessment.feedback).toBe('Name the role as well.');
+        });
+
+        it('shows the feedback of a linked grading instruction in the box of a feedback without a comment', async () => {
+            const linked = feedbackFor(undefined);
+            linked.gradingInstruction = { id: 7, credits: 1, feedback: 'Correct association' } as GradingInstruction;
+
+            const assessment = await showFeedback(linked);
+
+            expect(assessment.title).toBeUndefined();
+            expect(assessment.feedback).toBe('Correct association');
+        });
+
+        it('shows the feedback of a linked grading instruction while the tutor wrote no comment, and keeps it out of the comment', async () => {
+            // Until now, Apollon's copy of the instruction's feedback was stored as the comment.
+            const linked = feedbackFor('Correct association');
+            linked.gradingInstruction = { id: 7, credits: 1, feedback: 'Correct association' } as GradingInstruction;
+
+            const assessment = await showFeedback(linked);
+            expect(assessment.feedback).toBe('Correct association');
+
+            const [stored] = comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
+            expect(stored.text).toBeUndefined();
+            expect(stored.gradingInstruction).toEqual({ id: 7, credits: 1, feedback: 'Correct association' });
         });
 
         it('keeps a title entered before the comment when the feedback comes back while editing', async () => {

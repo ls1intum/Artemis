@@ -1226,22 +1226,28 @@ describe('ModelingSubmissionComponent', () => {
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
         });
 
-        it('shows the title of an assessment box above its comment, and only where the comment text leaves it out', () => {
+        it('shows the title of an assessment box above its comment', () => {
             createModelingSubmissionComponent();
             const title = (feedback: Partial<Feedback>) => comp['feedbackTitle'](feedback as Feedback);
+            const instruction = { feedback: 'Use interfaces' } as GradingInstruction;
 
             expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
             expect(title({ text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
+            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: instruction })).toBe('Missing abstraction');
             expect(title({ text: 'Looks right' })).toBeUndefined();
+            expect(title({ text: 'Name the role as well.', gradingInstruction: instruction })).toBeUndefined();
             expect(title({ detailText: 'A long comment without a title' })).toBeUndefined();
-            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: { feedback: 'Use interfaces' } as any })).toBeUndefined();
-            expect(
-                title({
-                    text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction',
-                    detailText: 'Extract an interface.',
-                    gradingInstruction: { feedback: 'Use interfaces' } as any,
-                }),
-            ).toBe('Missing abstraction');
+        });
+
+        it('lists a titled feedback with a grading instruction as the title above the instruction and the comment', () => {
+            createModelingSubmissionComponent();
+            const feedback = { text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: { feedback: 'Use interfaces' } } as Feedback;
+
+            const title = comp['feedbackTitle'](feedback);
+
+            expect(title).toBe('Missing abstraction');
+            // The row's text, as the template builds it: without `text` once the title is shown above it.
+            expect(comp.buildFeedbackTextForReview(feedback, !title)).toBe('Use interfaces<br>Extract an interface.');
         });
     });
 
