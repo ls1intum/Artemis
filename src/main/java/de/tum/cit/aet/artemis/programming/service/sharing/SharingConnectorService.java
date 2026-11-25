@@ -1,13 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
+
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +26,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
@@ -184,10 +186,10 @@ public class SharingConnectorService {
         return installationName;
     }
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
-    public SharingConnectorService(@Qualifier("sharingRestTemplate") RestTemplate restTemplate, TaskScheduler taskScheduler) {
-        this.restTemplate = restTemplate;
+    public SharingConnectorService(@Qualifier("sharingRestClient") RestClient restClient, TaskScheduler taskScheduler) {
+        this.restClient = restClient;
         this.taskScheduler = taskScheduler;
     }
 
@@ -307,7 +309,7 @@ public class SharingConnectorService {
             apiKey = matcher.group(1);
         }
 
-        boolean success = Objects.equals(sharingApiKey, apiKey);
+        boolean success = sharingApiKey != null && MessageDigest.isEqual(hashSha256(sharingApiKey), hashSha256(apiKey));
         if (!success) {
             lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
         }
@@ -343,7 +345,7 @@ public class SharingConnectorService {
      * Requests a reinitialization from the Sharing Platform.
      * <p>
      * Package-private for tests. If {@code artemis.sharing.serverurl} is configured, sends a
-     * {@code GET /api/pluginIF/v0.1/reInitialize?apiKey=...} call using the configured {@link RestTemplate}.
+     * {@code GET /api/pluginIF/v0.1/reInitialize?apiKey=...} call using the configured {@link RestClient}.
      * Records success or failure in health history and logs warnings on failure.
      * </p>
      */
@@ -354,7 +356,7 @@ public class SharingConnectorService {
             String reInitUrlWithApiKey = UriComponentsBuilder.fromUriString(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
             try {
-                boolean success = Boolean.TRUE.equals(restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class));
+                boolean success = Boolean.TRUE.equals(restClient.get().uri(reInitUrlWithApiKey).retrieve().body(Boolean.class));
                 if (!success) {
                     log.warn("The request for connector reinitialization from Sharing Platform was not successful");
                     lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful."));

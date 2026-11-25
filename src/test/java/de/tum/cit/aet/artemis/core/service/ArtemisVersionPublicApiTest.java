@@ -22,7 +22,7 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -34,7 +34,7 @@ class ArtemisVersionPublicApiTest {
     @NullAndEmptySource
     @ValueSource(strings = { "unknown", "invalid", "V10.0", "10.1" })
     void currentVersionComparisonNeverInventsUpdatesForUnknownOrMalformedVersions(String current) {
-        RestTemplate rest = new RestTemplate();
+        RestClient.Builder rest = RestClient.builder();
         var server = MockRestServiceServer.bindTo(rest).build();
         server.expect(requestTo(RELEASES_URL)).andRespond(withSuccess(releases(release("V10.1", "notes")), MediaType.APPLICATION_JSON));
         var result = service(rest, new ConcurrentMapCacheManager(), current).getVersionInfo();
@@ -47,7 +47,7 @@ class ArtemisVersionPublicApiTest {
     @ParameterizedTest
     @MethodSource("releaseNotes")
     void releaseNotesFollowFirstLineAndFiveHundredCharacterDisplayLimit(String notes, String expected) {
-        RestTemplate rest = new RestTemplate();
+        RestClient.Builder rest = RestClient.builder();
         var server = MockRestServiceServer.bindTo(rest).build();
         server.expect(requestTo(RELEASES_URL)).andExpect(header("Accept", "application/vnd.github+json")).andExpect(header("User-Agent", "Artemis-Version-Check"))
                 .andRespond(withSuccess(releases(release("10.1", notes)), MediaType.APPLICATION_JSON));
@@ -68,7 +68,7 @@ class ArtemisVersionPublicApiTest {
 
     @Test
     void releaseFilteringIgnoresNullEntriesAndTagsAndRefreshEvictsStaleCache() {
-        RestTemplate rest = new RestTemplate();
+        RestClient.Builder rest = RestClient.builder();
         var server = MockRestServiceServer.bindTo(rest).build();
         var invalidTag = release(null, "invalid");
         var draft = release("99.0", "draft");
@@ -90,7 +90,7 @@ class ArtemisVersionPublicApiTest {
     @ParameterizedTest
     @ValueSource(strings = { "", "null", "[]", "server-error" })
     void missingReleasePayloadAndTransportErrorsReturnOnlyCurrentVersion(String payload) {
-        RestTemplate rest = new RestTemplate();
+        RestClient.Builder rest = RestClient.builder();
         var server = MockRestServiceServer.bindTo(rest).build();
         var expectation = server.expect(requestTo(RELEASES_URL));
         if (payload.equals("server-error")) {
@@ -109,8 +109,8 @@ class ArtemisVersionPublicApiTest {
         server.verify();
     }
 
-    private ArtemisVersionService service(RestTemplate rest, org.springframework.cache.CacheManager cache, String current) {
-        var service = new ArtemisVersionService(rest, cache);
+    private ArtemisVersionService service(RestClient.Builder rest, org.springframework.cache.CacheManager cache, String current) {
+        var service = new ArtemisVersionService(rest.build(), cache);
         ReflectionTestUtils.setField(service, "currentVersion", current);
         return service;
     }

@@ -12,9 +12,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,8 +34,16 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricLevel;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricScale;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricLevelRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -130,6 +141,15 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
+    @Autowired
+    private PresentationRubricCriterionRepository presentationRubricCriterionRepository;
+
+    @Autowired
+    private PresentationRubricLevelRepository presentationRubricLevelRepository;
+
+    @Autowired
+    private PresentationRubricRatingRepository presentationRubricRatingRepository;
 
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
@@ -461,13 +481,58 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
         }
 
         private PresentationAssessment createAssessment(String title) {
+            return createAssessment(title, PresentationGradingMethod.SCORE);
+        }
+
+        private PresentationAssessment createAssessment(String title, PresentationGradingMethod gradingMethod) {
             var assessment = new PresentationAssessment();
             assessment.setCourse(testCourse);
             assessment.setTitle(title);
-            assessment.setMaxPoints(20.0);
+            assessment.setGradingMethod(gradingMethod);
+            assessment.setMaxPoints(gradingMethod == PresentationGradingMethod.SCORE ? 20.0 : null);
             assessment = presentationAssessmentRepository.save(assessment);
             createdAssessments.add(assessment);
             return assessment;
+        }
+
+        /** A rubric with three criteria of different weights and scales: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */
+        private List<PresentationRubricCriterion> createRubric(PresentationAssessment assessment) {
+            return List.of(createCriterion(assessment, 0, "Content", 50, PresentationRubricScale.FIVE_POINT),
+                    createCriterion(assessment, 1, "Delivery", 30, PresentationRubricScale.THREE_POINT),
+                    createCriterion(assessment, 2, "Slides", 20, PresentationRubricScale.FIVE_POINT));
+        }
+
+        private PresentationRubricCriterion createCriterion(PresentationAssessment assessment, int position, String name, int weight, PresentationRubricScale scale) {
+            var criterion = new PresentationRubricCriterion();
+            criterion.setPresentationAssessment(assessment);
+            criterion.setPosition(position);
+            criterion.setName(name);
+            criterion.setWeight(weight);
+            criterion.setScale(scale);
+            criterion = presentationRubricCriterionRepository.save(criterion);
+            for (int levelPosition = 0; levelPosition < scale.getLevelCount(); levelPosition++) {
+                var level = new PresentationRubricLevel();
+                level.setCriterion(criterion);
+                level.setPosition(levelPosition);
+                presentationRubricLevelRepository.save(level);
+            }
+            return criterion;
+        }
+
+        private void rate(PresentationAssessmentInstance instance, PresentationRubricCriterion criterion, int levelPosition, String comment) {
+            var rating = new PresentationRubricRating();
+            rating.setInstance(instance);
+            rating.setCriterion(criterion);
+            rating.setLevel(presentationRubricLevelRepository.findAllByCriterionIdInOrderByPosition(List.of(criterion.getId())).get(levelPosition));
+            rating.setComment(comment);
+            presentationRubricRatingRepository.save(rating);
+        }
+
+        private List<CSVRecord> readRecords(String fileName) throws IOException {
+            try (var reader = Files.newBufferedReader(workingDirectory.resolve(fileName));
+                    var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).get())) {
+                return csvParser.getRecords();
+            }
         }
 
         @Test
@@ -517,6 +582,75 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
                 assertThat(records.getFirst().get("result_points")).isEmpty();
                 assertThat(records.getFirst().get("remark")).isEmpty();
             }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationAssessmentsListsTheResultOfEveryGradingMethod() throws IOException {
+            var passFailInstance = createInstance(testUser, createAssessment("Pass/fail talk", PresentationGradingMethod.PASS_FAIL), null, null);
+            passFailInstance.setPassed(false);
+            presentationAssessmentInstanceRepository.save(passFailInstance);
+            createInstance(testUser, createAssessment("Score talk", PresentationGradingMethod.SCORE), null, 12.0);
+            var rubricInstance = createInstance(testUser, createAssessment("Rubric talk", PresentationGradingMethod.RUBRIC), null, null);
+            rubricInstance.setRubricScore(72.5);
+            presentationAssessmentInstanceRepository.save(rubricInstance);
+
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            var recordsByTitle = readRecords("presentation_assessments.csv").stream().collect(Collectors.toMap(record -> record.get("presentation_title"), Function.identity()));
+            assertThat(recordsByTitle).containsOnlyKeys("Pass/fail talk", "Score talk", "Rubric talk");
+            assertResult(recordsByTitle.get("Pass/fail talk"), "PASS_FAIL", "", "", "false", "");
+            assertResult(recordsByTitle.get("Score talk"), "SCORE", "20.0", "12.0", "", "");
+            assertResult(recordsByTitle.get("Rubric talk"), "RUBRIC", "", "", "", "72.5");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationRubricRatings() throws IOException {
+            userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
+            User otherUser = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+            var assessment = createAssessment("Rubric talk", PresentationGradingMethod.RUBRIC);
+            List<PresentationRubricCriterion> criteria = createRubric(assessment);
+            var instance = createInstance(testUser, assessment, null, null);
+            // Rated in reverse order, so that the export has to sort them by the rubric
+            rate(instance, criteria.get(2), 1, "Too much text");
+            rate(instance, criteria.get(1), 2, null);
+            rate(instance, criteria.get(0), 3, "Clear structure");
+            var otherInstance = createInstance(otherUser, assessment, null, null);
+            rate(otherInstance, criteria.get(0), 0, "Comment about somebody else");
+
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            assertThat(Files.readString(workingDirectory.resolve("presentation_rubric_ratings.csv"))).doesNotContain("Comment about somebody else");
+            var records = readRecords("presentation_rubric_ratings.csv");
+            assertThat(records).extracting(record -> record.get("course_title")).containsOnly(testCourse.getTitle());
+            assertThat(records).extracting(record -> record.get("presentation_title")).containsOnly("Rubric talk");
+            assertThat(records).extracting(record -> record.get("presentation_date")).allMatch(date -> date.startsWith("2026-01-15T10:30"));
+            assertThat(records).extracting(record -> record.get("criterion_name")).containsExactly("Content", "Delivery", "Slides");
+            assertThat(records).extracting(record -> record.get("weight")).containsExactly("50", "30", "20");
+            assertThat(records).extracting(record -> record.get("scale")).containsExactly("FIVE_POINT", "THREE_POINT", "FIVE_POINT");
+            // Levels are stored from position 0 but exported from value 1, as they are shown
+            assertThat(records).extracting(record -> record.get("level_value")).containsExactly("4", "3", "2");
+            assertThat(records).extracting(record -> record.get("comment")).containsExactly("Clear structure", "", "Too much text");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportPresentationAssessmentsWithoutRubricRatingsCreatesNoRatingFile() throws IOException {
+            createInstance(testUser, createAssessment("Score talk"), null, 12.0);
+
+            dataExportPresentationAssessmentService.createPresentationAssessmentExport(testUser.getId(), workingDirectory);
+
+            assertThat(workingDirectory.resolve("presentation_assessments.csv")).exists();
+            assertThat(workingDirectory.resolve("presentation_rubric_ratings.csv")).doesNotExist();
+        }
+
+        private void assertResult(CSVRecord record, String gradingMethod, String maxPoints, String resultPoints, String passed, String rubricScore) {
+            assertThat(record.get("grading_method")).isEqualTo(gradingMethod);
+            assertThat(record.get("max_points")).isEqualTo(maxPoints);
+            assertThat(record.get("result_points")).isEqualTo(resultPoints);
+            assertThat(record.get("passed")).isEqualTo(passed);
+            assertThat(record.get("rubric_score")).isEqualTo(rubricScore);
         }
 
         @Test

@@ -10,7 +10,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 @Component({
     selector: 'jhi-exercise-save-button',
     templateUrl: './exercise-save-button.component.html',
-    styleUrls: ['./exercise-save-button.component.scss'],
+    styleUrls: ['./exercise-save-button.component.css'],
     imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExerciseSaveButtonComponent {

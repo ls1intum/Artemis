@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
@@ -18,6 +19,7 @@ import org.springframework.security.web.webauthn.registration.WebAuthnRegistrati
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
@@ -39,17 +41,23 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
     public ArtemisWebAuthnRegistrationFilter(@NonNull UserCredentialRepository userCredentials, @NonNull WebAuthnRelyingPartyOperations rpOptions,
-            MailSendingService mailSendingService, UserRepository userRepository, GlobalNotificationSettingService globalNotificationSettingService) {
+            MailSendingService mailSendingService, UserRepository userRepository, GlobalNotificationSettingService globalNotificationSettingService,
+            SessionFreshnessService sessionFreshnessService) {
         super(userCredentials, rpOptions);
         this.mailSendingService = mailSendingService;
         this.userRepository = userRepository;
         this.globalNotificationSettingService = globalNotificationSettingService;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
      * Processes HTTP requests that pass through this filter.
-     * Extends the parent implementation to send notification emails when a passkey is registered successfully.
+     * Extends the parent implementation to send notification emails when a passkey is registered successfully, and to refuse a
+     * registration from a session that was established before the account's credentials last changed: a passkey is a permanent
+     * credential, so a session that survived a password reset must not be able to add one.
      *
      * @param request     The HTTP servlet request
      * @param response    The HTTP servlet response
@@ -59,6 +67,10 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (isWebAuthnRegistrationRequest(request) && !sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication())) {
+            SessionOutdatedResponse.write(response);
+            return;
+        }
         super.doFilterInternal(request, response, filterChain);
 
         if (isWebAuthnRegistrationRequest(request) && response.getStatus() == HttpStatus.OK.value()) {

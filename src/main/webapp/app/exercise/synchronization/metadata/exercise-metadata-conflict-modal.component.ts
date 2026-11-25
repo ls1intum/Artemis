@@ -58,7 +58,7 @@ export interface ExerciseMetadataConflictModalData {
 @Component({
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
-    styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
+    styleUrls: ['./exercise-metadata-conflict-modal.component.css'],
     imports: [NgTemplateOutlet, NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, TumAetUiButtonComponent, TumAetUiTableDirective],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {
@@ -259,10 +259,15 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.branchRegex', key: 'branchRegex' },
         ] as const;
 
-        return entries.map((entry) => ({
-            labelKey: entry.labelKey,
-            value: config ? config[entry.key] : undefined,
-        }));
+        const buildTimeWindow = config?.advancedSettings?.buildTimeWindow;
+        return [
+            ...entries.map((entry) => ({
+                labelKey: entry.labelKey,
+                value: config ? config[entry.key] : undefined,
+            })),
+            { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.buildTimeWindowStart', value: buildTimeWindow?.start },
+            { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.buildTimeWindowEnd', value: buildTimeWindow?.end },
+        ];
     }
 
     /**

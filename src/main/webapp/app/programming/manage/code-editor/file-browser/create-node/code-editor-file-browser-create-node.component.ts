@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -8,8 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
-    styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
-    providers: [NgbModal],
+    styleUrls: ['./code-editor-file-browser-create-node.component.css'],
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {

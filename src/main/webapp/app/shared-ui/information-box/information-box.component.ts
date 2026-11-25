@@ -56,7 +56,7 @@ export type InformationBoxLayout = 'stacked' | 'inline';
     imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, TumAetUiTooltipDirective],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',
-    styleUrls: ['./information-box.component.scss'],
+    styleUrls: ['./information-box.component.css'],
 })
 export class InformationBoxComponent {
     informationBoxData = input<InformationBox>();
@@ -76,7 +76,7 @@ export class InformationBoxComponent {
             case 'secondary':
                 return 'text-muted-color';
             default:
-                return 'text-(--tumaet-ui-text-color)';
+                return 'text-color';
         }
     });
 }

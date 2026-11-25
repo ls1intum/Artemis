@@ -20,7 +20,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 @Component({
     selector: 'jhi-exam-live-event',
     templateUrl: './exam-live-event.component.html',
-    styleUrls: ['./exam-live-event.component.scss'],
+    styleUrls: ['./exam-live-event.component.css'],
     imports: [NgClass, TumAetUiButtonDirective, TranslateDirective, FaIconComponent, WorkingTimeChangeComponent, ArtemisDatePipe, ArtemisTranslatePipe, MarkdownDirective],
 })
 export class ExamLiveEventComponent {

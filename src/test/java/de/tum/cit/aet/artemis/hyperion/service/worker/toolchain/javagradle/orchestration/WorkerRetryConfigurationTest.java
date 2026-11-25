@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -16,23 +17,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
-import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.convert.ApplicationConversionService;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.OpenAIClientAsync;
 import com.openai.errors.InternalServerException;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationAssignment;
@@ -49,21 +42,19 @@ import okhttp3.ResponseBody;
 
 class WorkerRetryConfigurationTest {
 
+    /**
+     * The preset's retries override the endpoint's. The SDK honours the effective value, and exercise generation refuses any preset that retries, because a
+     * retried request is billed without a response the worker can account for.
+     */
     @ParameterizedTest
-    @CsvSource({ "0, 2, 2, INCOMPLETE", "1, 0, 1, COMPLETE", "0, , 1, COMPLETE", "0, 3, 1, COMPLETE", "1, , 2, INCOMPLETE" })
-    void sdkRequestsAndWorkerAccountingUseTheSameRetryPrecedence(int common, Integer chat, int firstRequests, AccountingState expected) {
+    @CsvSource({ "0, , 1", "2, 0, 1", "0, 2, 2", "2, , 2" })
+    void sdkRequestsAndTheWorkerUseTheEffectiveRetriesOfThePreset(int endpointRetries, Integer presetRetries, int firstRequests) {
         var requests = new AtomicInteger();
         SandboxApi sandbox = mock(SandboxApi.class);
         when(sandbox.forExecution(any())).thenReturn(mock(InteractiveSandbox.class));
-        var runner = new ApplicationContextRunner().withInitializer(context -> {
-            context.getEnvironment().setActiveProfiles("aiworker");
-            context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance());
-        }).withConfiguration(AutoConfigurations.of(OpenAiChatAutoConfiguration.class, ToolCallingAutoConfiguration.class))
-                .withUserConfiguration(JavaGradleGenerationAdapterService.class).withBean(SandboxApi.class, () -> sandbox)
-                .withBean(JsonMapper.class, () -> JsonMapper.builder().build()).withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
-                .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=test-key",
-                        "spring.ai.openai.base-url=https://example.invalid/v1", "spring.ai.openai.chat.model=test-model", "spring.ai.openai.timeout=2s",
-                        "spring.ai.openai.max-retries=" + common)
+        var runner = WorkerLlmTestContext.runner().withBean(SandboxApi.class, () -> sandbox).withBean(JsonMapper.class, () -> JsonMapper.builder().build())
+                .withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
+                .withPropertyValues("artemis.llm.endpoints.test.timeout=2s", "artemis.llm.endpoints.test.max-retries=" + endpointRetries)
                 .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
                     boolean first = requests.incrementAndGet() == 1;
                     // Return before proceed, including SDK retries: no network is used.
@@ -75,41 +66,42 @@ class WorkerRetryConfigurationTest {
                     return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(first ? 500 : 200).message(first ? "Error" : "OK")
                             .body(ResponseBody.create(body, MediaType.get("application/json"))).build();
                 }));
-        if (chat != null) {
-            runner = runner.withPropertyValues("spring.ai.openai.chat.max-retries=" + chat);
+        if (presetRetries != null) {
+            runner = runner.withPropertyValues("artemis.llm.presets.testpreset.max-retries=" + presetRetries);
         }
         runner.run(context -> {
             assertThat(context).hasNotFailed();
-            var model = context.getBean(OpenAiChatModel.class);
-            try {
-                if (firstRequests == 1) {
-                    assertThatThrownBy(() -> model.call(new Prompt("test"))).isInstanceOf(InternalServerException.class);
-                    assertThat(requests).hasValue(1);
-                    assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
-                }
-                else {
-                    assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
-                }
-                assertThat(requests).hasValue(2);
+            var model = context.getBean(LlmClientService.class).chatModel("testpreset");
+            if (firstRequests == 1) {
+                assertThatThrownBy(() -> model.call(new Prompt("test"))).isInstanceOf(InternalServerException.class);
+                assertThat(requests).hasValue(1);
+                assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
+            }
+            else {
+                assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
+            }
+            assertThat(requests).hasValue(2);
 
-                // Generate through the real adapter, stopping before any sandbox/model work. Its real recorder reports the bound retry policy.
-                var result = context.getBean(JavaGradleGenerationAdapterService.class).generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
+            // Generate through the real adapter, stopping before any sandbox or model work.
+            var adapter = context.getBean(JavaGradleGenerationAdapterService.class);
+            if (firstRequests == 1) {
+                var result = adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
                 });
-                assertThat(result.accountingState()).isEqualTo(expected);
+                assertThat(result.accountingState()).isEqualTo(AccountingState.COMPLETE);
                 assertThat(result.usage().modelCalls()).isZero();
-                assertThat(requests).hasValue(2);
             }
-            finally {
-                ((OpenAIClient) ReflectionTestUtils.getField(model, "openAiClient")).close();
-                ((OpenAIClientAsync) ReflectionTestUtils.getField(model, "openAiClientAsync")).close();
+            else {
+                assertThatIllegalStateException().isThrownBy(() -> adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
+                })).withMessageContaining("max-retries 0");
             }
+            assertThat(requests).hasValue(2);
         });
     }
 
     private static GenerationAssignment assignment() {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID());
         var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
-        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
+        var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, "testpreset", true, "CONTINUOUS", 0.5);
         return new GenerationAssignment(identity, brief, parameters, new WorkspaceSnapshot(List.of()), Instant.MAX, "sha256:" + "a".repeat(64),
                 new GradingContext(false, Set.of(), Set.of()));
     }

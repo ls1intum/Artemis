@@ -5,7 +5,8 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
-import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
+import { toBonus } from 'app/assessment/shared/util/bonus-response.util';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
@@ -21,13 +22,13 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
-    styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
+    styleUrls: ['../grading-key-overview/grading-key-overview.css'],
     imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
 })
 export class GradingKeyTableComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private gradingService = inject(GradingService);
-    private bonusService = inject(BonusService);
+    private bonusApi = inject(BonusApi);
     private scoresStorageService = inject(ScoresStorageService);
 
     readonly purpose = input<'student' | 'management'>('student');
@@ -93,9 +94,9 @@ export class GradingKeyTableComponent implements OnInit {
             return this.gradingService.findGradeSteps(courseId, examId, this.purpose());
         } else {
             // examId must be present if forBonus is true.
-            return this.bonusService.findBonusForExam(courseId, examId!, true).pipe(
+            return this.bonusApi.getBonusForExam(courseId, examId!, true).pipe(
                 map((bonusResponse) => {
-                    const source = bonusResponse.body?.sourceGradingScale;
+                    const source = toBonus(bonusResponse).sourceGradingScale;
                     if (!source) {
                         return undefined;
                     }

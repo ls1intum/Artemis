@@ -1,26 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { provideTranslateService } from '@ngx-translate/core';
 
 describe('FeedbackDetailChannelModalComponent', () => {
     let fixture: ComponentFixture<FeedbackDetailChannelModalComponent>;
     let component: FeedbackDetailChannelModalComponent;
-    let activeModal: NgbActiveModal;
-    let modalService: NgbModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FeedbackDetailChannelModalComponent],
-            providers: [NgbActiveModal, NgbModal, FormBuilder, provideTranslateService()],
+            providers: [FormBuilder, provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackDetailChannelModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
-        modalService = TestBed.inject(NgbModal);
 
         fixture.componentRef.setInput('feedbackDetail', {
             detailTexts: ['Sample feedback'],
@@ -40,16 +35,28 @@ describe('FeedbackDetailChannelModalComponent', () => {
         expect(component.form.valid).toBe(false);
     });
 
-    it('should call activeModal.close when closeModal is triggered', () => {
-        const closeSpy = vi.spyOn(activeModal, 'close');
+    it('should emit closed when closeModal is triggered', () => {
+        const closedSpy = vi.fn();
+        component.closed.subscribe(closedSpy);
         component.closeModal();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closedSpy).toHaveBeenCalledOnce();
     });
 
-    it('should call activeModal.dismiss when dismissModal is triggered', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+    it('should emit closed when dismissModal is triggered', () => {
+        const closedSpy = vi.fn();
+        component.closed.subscribe(closedSpy);
         component.dismissModal();
-        expect(dismissSpy).toHaveBeenCalledOnce();
+        expect(closedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show the confirmation dialog and resolve with its answer', async () => {
+        const confirmation = component.handleModal();
+        fixture.detectChanges();
+        expect(component.isConfirmModalOpen()).toBe(true);
+        const confirmButton = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).at(-1)!;
+        confirmButton.click();
+        await expect(confirmation).resolves.toBe(true);
+        expect(component.isConfirmModalOpen()).toBe(false);
     });
 
     it('should open confirmation modal and emit formSubmitted on successful confirmation', async () => {
@@ -144,8 +151,9 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should not open confirmation modal if form is invalid', async () => {
-        const modalSpy = vi.spyOn(modalService, 'open');
+        const modalSpy = vi.spyOn(component, 'handleModal');
         await component.submitForm(true);
-        expect(modalSpy).not.toHaveBeenCalledOnce();
+        expect(modalSpy).not.toHaveBeenCalled();
+        expect(component.isConfirmModalOpen()).toBe(false);
     });
 });

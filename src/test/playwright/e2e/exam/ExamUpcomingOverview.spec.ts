@@ -4,6 +4,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
+import { ExamMode } from '../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/course/shared/entities/course.model';
 
@@ -49,7 +50,7 @@ test.describe('Exam upcoming overview', { tag: '@slow' }, () => {
         const testExam = await examAPIRequests.createExam({
             course,
             title: `Test exam ${uid}`,
-            testExam: true,
+            examMode: ExamMode.TEST,
             visibleDate: dayjs(),
             startDate: dayjs().add(2, 'days'),
             endDate: dayjs().add(5, 'days'),
@@ -98,7 +99,7 @@ test.describe('Exam upcoming overview', { tag: '@slow' }, () => {
 
         // Mode, course and dates of a row.
         await expect(rowOf(sooner).getByTestId('exam-mode-tag')).toHaveText(/^\s*Exam\s*$/);
-        await expect(rowOf(testExam).getByTestId('exam-mode-tag')).toHaveText(/^\s*Test Exam\s*$/);
+        await expect(rowOf(testExam).getByTestId('exam-mode-tag')).toHaveText(/^\s*Practice Exam\s*$/);
         await expect(rowOf(sooner)).toContainText(course.title!);
         await expect(rowOf(sooner)).toContainText(dayjs(sooner.startDate as any).format('MMM D, YYYY'));
         await expect(rowOf(sooner)).toContainText(dayjs(sooner.endDate as any).format('MMM D, YYYY'));

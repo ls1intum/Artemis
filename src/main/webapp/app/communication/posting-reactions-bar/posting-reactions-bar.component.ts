@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -11,8 +11,7 @@ import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
@@ -56,6 +55,15 @@ interface ReactionEvent {
 }
 
 /**
+ * what the forward message dialog hands back when the user confirms the forwarding
+ */
+interface ForwardMessageSelection {
+    channels: Conversation[];
+    users: UserPublicInfoDTO[];
+    messageContent: string;
+}
+
+/**
  * represents the amount of users that reacted
  * hasReacted indicates if the currently logged-in user is among those counted users
  */
@@ -75,10 +83,11 @@ interface ReactionMetaDataMap {
 @Component({
     selector: 'jhi-posting-reactions-bar',
     templateUrl: './posting-reactions-bar.component.html',
-    styleUrls: ['./posting-reactions-bar.component.scss'],
+    styleUrls: ['../communication.component.css', './posting-reactions-bar.component.css'],
     imports: [
         TumAetUiButtonDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
+        TumAetUiTagComponent,
         EmojiComponent,
         CdkOverlayOrigin,
         FaIconComponent,
@@ -98,7 +107,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     private communicationService = inject(CommunicationService);
     private accountService = inject(AccountService);
     private conversationService = inject(ConversationService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private courseConversationsService = inject(CourseConversationsService);
     private courseSidebarService = inject(CourseSidebarService);
 
@@ -612,12 +622,13 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         }
                     });
 
-                    // Open the forward message dialog using PrimeNG DialogService
-                    const ref = this.dialogService.open(
+                    // The dialog renders its own header, so the kit dialog only supplies the accessible name, and it is a form dialog.
+                    // The dialog reads the data through TumAetUiDialogConfig while it initialises, so it is passed here and never assigned afterwards.
+                    const ref = this.dialogService.open<ForwardMessageDialogComponent, ForwardMessageSelection>(
                         ForwardMessageDialogComponent,
                         cloneWith(defaultFirstLayerDialogOptions, {
-                            closable: false,
-                            focusOnShow: false,
+                            autoFocus: 'first-tabbable',
+                            ariaLabel: this.translateService.instant('artemisApp.communication.forward.forwardMessage'),
                             data: {
                                 users: [],
                                 channels: this.channels,
@@ -627,7 +638,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         }),
                     );
 
-                    ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
+                    ref.onClose.subscribe(async (selection) => {
                         if (selection) {
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);

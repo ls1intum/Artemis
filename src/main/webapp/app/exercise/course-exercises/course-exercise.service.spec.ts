@@ -27,7 +27,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { UMLDiagramType } from '@tumaet/apollon';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';

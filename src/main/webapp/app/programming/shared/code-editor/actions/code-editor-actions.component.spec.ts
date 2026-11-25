@@ -14,17 +14,19 @@ import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/m
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 // Cartesian product helper function
 const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
@@ -55,17 +57,17 @@ describe('CodeEditorActionsComponent', () => {
     let commitStub: ReturnType<typeof vi.spyOn>;
     let pullStub: ReturnType<typeof vi.spyOn>;
     let resetRepositoryStub: ReturnType<typeof vi.spyOn>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let conflictStateService: CodeEditorConflictStateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
+            imports: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -89,13 +91,38 @@ describe('CodeEditorActionsComponent', () => {
         commitStub = vi.spyOn(codeEditorRepositoryService, 'commit');
         pullStub = vi.spyOn(codeEditorRepositoryService, 'pull');
         resetRepositoryStub = vi.spyOn(codeEditorRepositoryService, 'resetRepository');
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         conflictStateService = TestBed.inject(CodeEditorConflictStateService);
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    describe('repository link', () => {
+        const setRouteParams = (params: Record<string, number | string>) => {
+            (TestBed.inject(ActivatedRoute) as unknown as MockActivatedRoute).setParameters(params);
+            comp.ngOnInit();
+        };
+
+        it('should link the repository of a repository id', () => {
+            setRouteParams({ courseId: 1, exerciseId: 2, repositoryType: 'TEMPLATE', repositoryId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'programming-exercises', '2', 'repository', 'TEMPLATE', '3']);
+        });
+
+        it('should link the repository of the participation of a student opened from the participations page', () => {
+            setRouteParams({ courseId: 1, exerciseId: 2, participationId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'programming-exercises', '2', 'repository', 'USER', '3']);
+        });
+
+        it('should link the repository of an exam exercise with the exercise group before the exam in the right place', () => {
+            setRouteParams({ courseId: 1, examId: 4, exerciseGroupId: 5, exerciseId: 2, participationId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'exams', '4', 'exercise-groups', '5', 'programming-exercises', '2', 'repository', 'USER', '3']);
+        });
     });
 
     it('should show refresh and submit button without any inputs', () => {
@@ -311,6 +338,63 @@ describe('CodeEditorActionsComponent', () => {
         commitButton.nativeElement.click();
         commitObservable.error({ error: { detail: 'submitAfterReachingSubmissionLimit' } });
         expect(onErrorSpy).toHaveBeenNthCalledWith(6, 'submitAfterReachingSubmissionLimit');
+    });
+
+    describe('commit with a build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const commitAt = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean } = {}) => {
+            vi.useFakeTimers();
+            vi.setSystemTime(now.toDate());
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.isAtLeastEditor = options.isAtLeastEditor ?? false;
+            exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            const participation = new ProgrammingExerciseStudentParticipation();
+            participation.exercise = exercise;
+            fixture.componentRef.setInput('participation', participation);
+            comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+            comp.editorState.set(EditorState.CLEAN);
+            comp.isBuilding.set(false);
+            fixture.detectChanges();
+            commitStub.mockReturnValue(of(null));
+            comp.commit();
+        };
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it.each([
+            ['before', windowStart.subtract(1, 'minute')],
+            ['after', windowEnd.add(1, 'minute')],
+        ])('should tell that the commit was not built and not show a build %s the window', (_, now) => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(now);
+
+            expect(infoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.editor.committedOutsideBuildWindow');
+            expect(comp.isBuilding()).toBe(false);
+            expect(comp.commitState()).toBe(CommitState.CLEAN);
+        });
+
+        it('should expect a build inside the window', () => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(windowStart.add(1, 'minute'));
+
+            expect(infoSpy).not.toHaveBeenCalled();
+            expect(comp.isBuilding()).toBe(true);
+        });
+
+        it('should expect a build for editors and instructors outside the window', () => {
+            const infoSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+
+            commitAt(windowEnd.add(1, 'day'), { isAtLeastEditor: true });
+
+            expect(infoSpy).not.toHaveBeenCalled();
+            expect(comp.isBuilding()).toBe(true);
+        });
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', async () => {

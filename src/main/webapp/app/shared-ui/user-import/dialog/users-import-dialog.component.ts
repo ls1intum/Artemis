@@ -1,9 +1,7 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { DialogModule } from 'primeng/dialog';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { TableModule } from 'primeng/table';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -26,9 +24,19 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-users-import-dialog',
     templateUrl: './users-import-dialog.component.html',
-    styleUrls: ['./users-import-dialog.component.scss'],
+    styleUrls: ['./users-import-dialog.component.css'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, TumAetUiButtonDirective, TableModule, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        HelpIconComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -50,6 +58,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     readonly usersToImport = signal<StudentDTO[]>([]);
     readonly examUsersToImport = signal<ExamUserDTO[]>([]);
+    readonly previewUsers = computed<ExamUserDTO[]>(() => (this.examUserMode() ? this.examUsersToImport() : this.usersToImport()));
     notFoundUsers: Partial<StudentDTO>[] = [];
     rejectedStaffUsers: Partial<StudentDTO>[] = [];
 

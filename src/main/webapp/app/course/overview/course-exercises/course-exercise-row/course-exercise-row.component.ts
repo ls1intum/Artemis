@@ -14,7 +14,7 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { SubmissionResultStatusComponent } from '../../submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from '../../exercise-details/student-actions/exercise-details-student-actions.component';
 import { NgClass } from '@angular/common';
@@ -28,11 +28,11 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
-    styleUrls: ['./course-exercise-row.scss'],
+    styleUrls: ['./course-exercise-row.css'],
     imports: [
         RouterLink,
         FaIconComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         SubmissionResultStatusComponent,
         ExerciseDetailsStudentActionsComponent,
         NgClass,
@@ -186,7 +186,7 @@ export class CourseExerciseRowComponent implements OnInit {
         }
         const remainingDays = date.diff(dayjs(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
-            return 'text-danger';
+            return 'text-state-danger';
         }
         return undefined;
     }

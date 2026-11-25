@@ -2,6 +2,8 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectCompon
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
+import { toBonus, toBonusRequest } from 'app/assessment/shared/util/bonus-response.util';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,7 +46,7 @@ export enum BonusStrategyDiscreteness {
 @Component({
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
-    styleUrls: ['./bonus.component.scss'],
+    styleUrls: ['./bonus.component.css'],
     imports: [
         SafeHtmlPipe,
         GradeStepBoundsPipe,
@@ -68,6 +70,7 @@ export enum BonusStrategyDiscreteness {
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);
+    private bonusApi = inject(BonusApi);
     private gradingService = inject(GradingService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -158,9 +161,9 @@ export class BonusComponent implements OnInit {
         this.examId = Number(paramMap.get('examId'));
 
         forkJoin([
-            this.bonusService.findBonusForExam(this.courseId, this.examId).pipe(
+            this.bonusApi.getBonusForExam(this.courseId, this.examId).pipe(
                 tap((bonusResponse) => {
-                    this.setBonus(bonusResponse.body || new Bonus());
+                    this.setBonus(bonusResponse ? toBonus(bonusResponse) : new Bonus());
                 }),
                 catchError((error) => {
                     if (error?.status === 404) {
@@ -318,8 +321,8 @@ export class BonusComponent implements OnInit {
     save(): void {
         this.isLoading.set(true);
         const saveObservable = this.bonus.id
-            ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
-            : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
+            ? this.bonusApi.updateBonus(this.courseId, this.examId, this.bonus.id, toBonusRequest(this.bonus))
+            : this.bonusApi.createBonusForExam(this.courseId, this.examId, toBonusRequest(this.bonus));
 
         saveObservable
             .pipe(
@@ -328,7 +331,7 @@ export class BonusComponent implements OnInit {
                 }),
             )
             .subscribe((bonusResponse) => {
-                this.bonus.id = bonusResponse.body?.id;
+                this.bonus.id = bonusResponse.id;
                 this.commitBonus();
             });
     }
@@ -338,7 +341,7 @@ export class BonusComponent implements OnInit {
             return;
         }
         this.isLoading.set(true);
-        this.bonusService
+        this.bonusApi
             .deleteBonus(this.courseId, this.examId, this.bonus.id)
             .pipe(
                 finalize(() => {
@@ -346,8 +349,8 @@ export class BonusComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (bonusResponse) => {
-                    this.setBonus(bonusResponse.body || new Bonus());
+                next: () => {
+                    this.setBonus(new Bonus());
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => this.dialogErrorSource.next(error.message),

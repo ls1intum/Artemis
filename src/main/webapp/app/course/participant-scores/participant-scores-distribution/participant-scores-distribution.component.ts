@@ -20,7 +20,7 @@ interface ChartClickEvent {
 @Component({
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
-    styleUrls: ['./participant-score-distribution.component.scss'],
+    styleUrls: ['./participant-score-distribution.component.css'],
     imports: [TumAetUiBarChartComponent, TranslateDirective, HelpIconComponent],
 })
 export class ParticipantScoresDistributionComponent implements OnInit {

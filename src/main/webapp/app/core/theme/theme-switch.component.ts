@@ -1,70 +1,42 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
-
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { Placement } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+export type ThemeSwitchPopoverPlacement = 'bottom' | 'bottom-right';
+
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
  * Additionally, allows to switch themes by clicking it.
- * Shows a popover with additional options.
+ * Shows a popover with additional options while the toggle is hovered or focused.
  */
 @Component({
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
-    styleUrls: ['theme-switch.component.scss'],
-    imports: [NgbPopover, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['theme-switch.component.css'],
+    imports: [FormsModule, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiToggleSwitchComponent, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ThemeSwitchComponent implements OnInit {
+export class ThemeSwitchComponent {
     private readonly themeService = inject(ThemeService);
 
     protected readonly faSync = faSync;
 
-    popoverPlacement = input.required<Placement>();
-    popover = viewChild.required<NgbPopover>('popover');
+    /** Below the toggle: centred, or with its right edge on the toggle's where the toggle sits near the window edge. */
+    popoverPlacement = input.required<ThemeSwitchPopoverPlacement>();
 
     isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
     isSyncedWithOS = computed(() => this.themeService.userPreference() === undefined);
-
-    closeTimeout: ReturnType<typeof setTimeout> | undefined;
-
-    ngOnInit() {
-        // Workaround as we can't dynamically change the "autoClose" property on popovers
-        fromEvent(window, 'click').subscribe((e) => {
-            const popoverContentElement = document.getElementById('theme-switch-popover-content');
-            if (this.popover().isOpen() && !popoverContentElement?.contains(e.target as Node)) {
-                this.closePopover();
-            }
-        });
-    }
-
-    openPopover() {
-        this.popover().open();
-        clearTimeout(this.closeTimeout);
-    }
-
-    closePopover() {
-        clearTimeout(this.closeTimeout);
-        this.popover().close();
-    }
-
-    mouseLeave() {
-        clearTimeout(this.closeTimeout);
-        this.closeTimeout = setTimeout(() => this.closePopover(), 250);
-    }
 
     /**
      * Changes the theme to the currently not active theme.
      */
     toggleTheme() {
         this.themeService.applyThemePreference(this.isDarkTheme() ? Theme.LIGHT : Theme.DARK);
-        setTimeout(() => this.openPopover(), 250);
     }
 
     /**

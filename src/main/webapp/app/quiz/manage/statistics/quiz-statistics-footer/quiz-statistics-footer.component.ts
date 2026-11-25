@@ -1,6 +1,7 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { ConnectedPosition } from '@angular/cdk/overlay';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -11,31 +12,33 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 import { quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
+    styleUrls: ['./quiz-statistics-footer.component.css', '../../../shared/quiz.css'],
     imports: [
         TumAetUiButtonDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         FaIconComponent,
         TranslateDirective,
-        NgbDropdownMenu,
         RouterLink,
         NgClass,
         JhiConnectionStatusComponent,
         TruncatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
@@ -56,6 +59,13 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly question = signal<QuizQuestion>(undefined!);
+    /** Root of the statistic routes of the quiz, which differ between course and exam quizzes. */
+    readonly statisticBaseUrl = computed(() => (this.quizExercise() ? this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise()) : undefined));
+    /** The footer sits at the bottom of the viewport, so the menu opens above its trigger. */
+    protected readonly menuAbovePositions: ConnectedPosition[] = [
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+    ];
     questionIdParam!: number; // set in ngOnInit() from the route params before loadQuiz() reads it
     // timer
     readonly waitingForQuizStart = signal(false);
@@ -65,6 +75,21 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     // Icons
     farListAlt = faListAlt;
+    faChevronDown = faChevronDown;
+
+    /** The route segment of the statistic of the given question. */
+    questionStatisticSegment(question: QuizQuestion): string | undefined {
+        switch (question.type) {
+            case QuizQuestionType.MULTIPLE_CHOICE:
+                return 'mc-question-statistic';
+            case QuizQuestionType.DRAG_AND_DROP:
+                return 'dnd-question-statistic';
+            case QuizQuestionType.SHORT_ANSWER:
+                return 'sa-question-statistic';
+            default:
+                return undefined;
+        }
+    }
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective } from 'ng-mocks';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -13,13 +11,9 @@ describe('ThemeSwitchComponent', () => {
     let fixture: ComponentFixture<ThemeSwitchComponent>;
     let themeService: ThemeService;
 
-    let openSpy: ReturnType<typeof vi.spyOn>;
-    let closeSpy: ReturnType<typeof vi.spyOn>;
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ThemeSwitchComponent, MockDirective(NgbPopover)],
-            declarations: [],
+            imports: [ThemeSwitchComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
@@ -34,26 +28,25 @@ describe('ThemeSwitchComponent', () => {
         fixture = TestBed.createComponent(ThemeSwitchComponent);
         component = fixture.componentInstance;
 
-        openSpy = vi.spyOn(component.popover(), 'open');
-        closeSpy = vi.spyOn(component.popover(), 'close');
-
-        fixture.componentRef.setInput('popoverPlacement', ['bottom']);
+        fixture.componentRef.setInput('popoverPlacement', 'bottom');
+        fixture.detectChanges();
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        fixture.destroy();
+        vi.restoreAllMocks();
+    });
 
-    it('theme toggles correctly', async () => {
-        vi.useFakeTimers();
+    const toggle = (): HTMLElement => fixture.nativeElement.querySelector('.toggle-popover-wrapper');
+    const popoverContent = () => document.getElementById('theme-switch-popover-content');
+
+    it('theme toggles correctly', () => {
         const applyThemePreferenceSpy = vi.spyOn(themeService, 'applyThemePreference');
 
-        component.toggleTheme();
+        toggle().click();
 
         expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.DARK);
-
         expect(component.isDarkTheme()).toBe(true);
-        await vi.advanceTimersByTimeAsync(250);
-        expect(openSpy).toHaveBeenCalledOnce();
-        vi.useRealTimers();
     });
 
     it('os sync toggles correctly', () => {
@@ -69,21 +62,27 @@ describe('ThemeSwitchComponent', () => {
         expect(component.isSyncedWithOS()).toBe(true);
     });
 
-    it('opens and closes the popover', () => {
-        component.openPopover();
-        expect(openSpy).toHaveBeenCalledOnce();
-        component.closePopover();
-        expect(closeSpy).toHaveBeenCalledOnce();
+    it('shows the popover while the toggle is hovered and keeps it open on a click on the toggle', () => {
+        expect(popoverContent()).toBeNull();
+
+        toggle().dispatchEvent(new Event('pointerenter'));
+        fixture.detectChanges();
+        expect(popoverContent()).not.toBeNull();
+        expect(toggle().getAttribute('aria-expanded')).toBe('true');
+
+        toggle().click();
+        fixture.detectChanges();
+        expect(toggle().getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('closes on mouse leave after 200ms', async () => {
-        vi.useFakeTimers();
-        component.openPopover();
-        expect(openSpy).toHaveBeenCalledOnce();
-        component.mouseLeave();
-        expect(closeSpy).not.toHaveBeenCalled();
-        await vi.advanceTimersByTimeAsync(250);
-        expect(closeSpy).toHaveBeenCalledOnce();
-        vi.useRealTimers();
+    it('switches the sync with the operating system from the popover', async () => {
+        const applyThemePreferenceSpy = vi.spyOn(themeService, 'applyThemePreference');
+        toggle().dispatchEvent(new Event('focus'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        popoverContent()!.querySelector<HTMLInputElement>('input')!.click();
+
+        expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.LIGHT);
     });
 });

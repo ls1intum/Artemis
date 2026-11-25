@@ -1,13 +1,14 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, model, output } from '@angular/core';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject, model, output } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Dayjs } from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export class CourseCompetencyImportSettings {
@@ -20,11 +21,23 @@ export class CourseCompetencyImportSettings {
 
 @Component({
     selector: 'jhi-import-course-competencies-settings',
-    imports: [NgbTooltipModule, CommonModule, FontAwesomeModule, TumAetUiDatePickerComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        NgTemplateOutlet,
+        FormsModule,
+        FontAwesomeModule,
+        TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     templateUrl: './import-course-competencies-settings.component.html',
-    styleUrl: './import-course-competencies-settings.component.scss',
 })
 export class ImportCourseCompetenciesSettingsComponent {
+    private readonly translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
+
     protected readonly faQuestionCircle = faQuestionCircle;
 
     readonly importSettings = model.required<CourseCompetencyImportSettings>();
@@ -35,6 +48,15 @@ export class ImportCourseCompetenciesSettingsComponent {
     readonly importLectures = computed(() => this.importSettings().importLectures);
     readonly referenceDate = computed(() => this.importSettings().referenceDate);
     readonly isReleaseDate = computed(() => this.importSettings().isReleaseDate);
+
+    /** What the reference date stands for, translated again when the language changes. */
+    protected readonly referenceDateTypeOptions = computed(() => {
+        this.languageChange();
+        return [
+            { value: true, label: this.translateService.instant('artemisApp.courseCompetency.importSettings.referenceDateType.releaseDate') },
+            { value: false, label: this.translateService.instant('artemisApp.courseCompetency.importSettings.referenceDateType.dueDate') },
+        ];
+    });
 
     protected toggleImportSetting(setting: keyof CourseCompetencyImportSettings): void {
         this.importSettings.update((settings) => cloneWith(settings, { [setting]: !settings[setting] }));
@@ -47,8 +69,7 @@ export class ImportCourseCompetenciesSettingsComponent {
         );
     }
 
-    protected setReferenceDateType(event: Event): void {
-        const target = event.target as HTMLInputElement;
-        this.importSettings.update((settings) => cloneWith(settings, { isReleaseDate: parseJson<boolean>(target.value) }));
+    protected setReferenceDateType(isReleaseDate: boolean | null | undefined): void {
+        this.importSettings.update((settings) => cloneWith(settings, { isReleaseDate: isReleaseDate ?? undefined }));
     }
 }

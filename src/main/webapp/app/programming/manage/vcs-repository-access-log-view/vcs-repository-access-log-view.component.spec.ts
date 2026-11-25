@@ -102,7 +102,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
     it('uses the shared compact scrolling table and sorts newest first', () => {
         createComponent();
-        expect(table().options()).toMatchObject({ lazy: false, scrollable: true, scrollHeight: 'flex', initialSortField: 'timestamp', initialSortOrder: -1 });
+        expect(table().options()).toMatchObject({ lazy: false, fill: true, initialSortField: 'timestamp', initialSortOrder: -1 });
         expect(fixture.nativeElement.querySelector('table[tumAetUiTable]')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('tumaet-ui-paginator')).toBeTruthy();
         expect(cells('author').map((cell) => cell.textContent?.trim())).toEqual(['Bob, bob@example.org', 'Alice, alice@example.org']);
@@ -196,16 +196,54 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         expect(fixture.nativeElement.textContent).toContain(`${translationPrefix}empty`);
     });
 
-    it('renders and searches a build agent without an email or user ID', async () => {
-        vi.useFakeTimers();
-        participationLog.mockReturnValue(of([{ ...entries[0], userId: undefined, name: 'Build agent artemis-build-agent-1 (build job 42)', email: undefined }]));
-        createComponent();
-        expect(cells('author')[0].textContent).toContain('artemis-build-agent-1');
-        expect(fixture.nativeElement.textContent).not.toContain('undefined');
-        table().onGlobalSearch('build job 42');
-        await vi.advanceTimersByTimeAsync(300);
-        fixture.detectChanges();
-        expect(cells('author')).toHaveLength(1);
+    describe('build agent access', () => {
+        const buildAgentEntry: VcsAccessLogDTO = {
+            ...entries[0],
+            id: 3,
+            userId: undefined,
+            name: 'Build agent artemis-build-agent-1 (build job 42)',
+            email: undefined,
+            buildAgent: true,
+            repositoryActionType: 'PULL',
+            authenticationMechanism: 'BUILD_JOB_TOKEN',
+        };
+
+        function toggleBuildAgents(include: boolean) {
+            fixture.debugElement.query(By.css('[data-testid="include-build-agents-toggle"]')).triggerEventHandler('changed', include);
+            fixture.detectChanges();
+        }
+
+        it('hides the access of build agents until they are asked for', () => {
+            participationLog.mockReturnValue(of([...entries, buildAgentEntry]));
+            createComponent();
+            expect(cells('author').map((cell) => cell.textContent?.trim())).toEqual(['Bob, bob@example.org', 'Alice, alice@example.org']);
+
+            toggleBuildAgents(true);
+            expect(cells('author')).toHaveLength(3);
+            expect(fixture.nativeElement.textContent).toContain('artemis-build-agent-1');
+
+            toggleBuildAgents(false);
+            expect(cells('author')).toHaveLength(2);
+        });
+
+        it('keeps showing an entry without a user that is not a build agent, such as a deleted account', () => {
+            participationLog.mockReturnValue(of([{ ...entries[0], userId: undefined, buildAgent: false }]));
+            createComponent();
+            expect(cells('author')).toHaveLength(1);
+        });
+
+        it('renders and searches a build agent without an email or user ID', async () => {
+            vi.useFakeTimers();
+            participationLog.mockReturnValue(of([buildAgentEntry]));
+            createComponent();
+            toggleBuildAgents(true);
+            expect(cells('author')[0].textContent).toContain('artemis-build-agent-1');
+            expect(fixture.nativeElement.textContent).not.toContain('undefined');
+            table().onGlobalSearch('build job 42');
+            await vi.advanceTimersByTimeAsync(300);
+            fixture.detectChanges();
+            expect(cells('author')).toHaveLength(1);
+        });
     });
 
     it('shows loading, clears stale rows and cancels the previous request when the repository changes', () => {

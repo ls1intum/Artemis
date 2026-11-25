@@ -3,8 +3,14 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewCh
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import dayjs from 'dayjs/esm';
@@ -31,15 +37,17 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-re-evaluate.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     imports: [
         TranslateDirective,
         FaIconComponent,
         FormsModule,
-        NgbTooltip,
         TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
         TumAetUiTooltipDirective,
         TumAetUiDatePickerComponent,
         IncludedInOverallScorePickerComponent,

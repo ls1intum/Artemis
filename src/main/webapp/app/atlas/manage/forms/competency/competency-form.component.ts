@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
@@ -11,8 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
-    styleUrls: ['./competency-form.component.scss'],
-    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
+    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective, TumAetUiButtonDirective],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent {
     formData = input<CourseCompetencyFormData>({

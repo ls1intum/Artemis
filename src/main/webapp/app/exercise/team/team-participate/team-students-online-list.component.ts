@@ -19,7 +19,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
-    styleUrls: ['./team-students-online-list.component.scss'],
+    styleUrls: ['./team-students-online-list.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TumAetUiButtonDirective, NgClass, FaIconComponent, TumAetUiTooltipDirective],
 })

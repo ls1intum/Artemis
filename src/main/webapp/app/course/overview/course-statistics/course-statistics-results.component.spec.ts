@@ -8,7 +8,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 

@@ -26,6 +26,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
+import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -64,9 +65,9 @@ interface InstructorActionItem {
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
+    styleUrls: ['../course-overview/course-overview.css', './course-exercise-details.component.css'],
     providers: [ExerciseCacheService],
-    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent],
+    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
@@ -163,6 +164,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // Display-only override for the quiz participation status badge, set from the live quiz view.
     readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
+
+    /**
+     * True while the student takes a running graded quiz, in live mode, synchronized or individual. The course sidebars
+     * (the exercise list and the side panels) read it and give way to the quiz, so the student can focus on it. Practice
+     * mode and a quiz that has not started or has ended do not count. It is undefined until the exercise has loaded:
+     * opening a quiz swaps this page for a new instance, and the sidebars must keep their state until the new one knows.
+     */
+    readonly focusMode = computed<boolean | undefined>(() => {
+        const exercise = this._exercise();
+        if (!exercise) {
+            return undefined;
+        }
+        return exercise.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && this.liveQuizStatus() === LiveQuizParticipationStatus.PARTICIPATING;
+    });
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
@@ -293,7 +308,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         this.loadExercise();
                     }
 
-                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
+                    this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId, this.courseId);
                 });
         }
     }
@@ -764,10 +779,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return merged;
         });
         this._studentParticipations.set(updatedParticipations);
-    }
-
-    exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'bg-success' : 'bg-info';
     }
 
     /**

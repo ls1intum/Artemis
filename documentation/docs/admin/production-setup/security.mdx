@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-19
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -75,6 +75,8 @@ ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync w
 Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
 
 ### Build Agent Authentication
+
+Which components may connect to each other, and how to check that your network follows this, is described in the [network model](/admin/production-setup/network-model).
 
 Build agents clone repositories from the core nodes. A clone is only served when the caller is a known agent, is calling from an address that agent is connected from, and is asking for a repository it currently has a build job for.
 
@@ -165,7 +167,7 @@ artemis:
 
 <Callout variant={CalloutVariant.warning}>
     `trusted-proxies` is the narrower of **two** filters, not the only one. Artemis runs with
-    `server.forward-headers-strategy: native`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
+    `server.request.header.forwarded.strategy: web-server`, so Tomcat's `RemoteIpValve` already resolves `X-Forwarded-For` for any
     peer matching `server.tomcat.remoteip.internal-proxies`, which defaults to the private ranges
     (`10/8`, `172.16/12`, `192.168/16`, `127/8`, link-local). The addresses whose forwarding headers are believed are
     therefore the **union** of that regex and `trusted-proxies`.
@@ -307,6 +309,21 @@ uses. Docker applies a subnet only when it creates a network, so run `docker com
     the credential pair stays, because Jenkins is not an Artemis build agent and has neither a key nor a build job.
 </Callout>
 
+#### Host key of the SSH server
+
+A build agent that clones over SSH checks the host key of the core node. It reads the SHA-256 fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints` (the same values that users see on the page for SSH keys) and compares the fingerprint of the key it is shown with them. The agent reaches the endpoint at `artemis.version-control.url`, below the path of that URL if it has one. It reads the fingerprints only over `https`: with an `http` URL it does not ask for them at all, as fingerprints from an unprotected channel would prove nothing, and treats them as not readable (see the table below). It keeps the fingerprints for five minutes and reads them again before it refuses a key, so a host key that you replaced on the core nodes is accepted without restarting the agents. The endpoint lists every host key of the core node, also several keys of one algorithm, so you can add the new key before you remove the old one. A core node keeps what it has read from its key files for 30 seconds, so a key that you add or remove is published within that time. Whether the SSH server itself presents a changed key without a restart depends on the setting: with a directory as `ssh-host-key-path` it reads the key files for every SSH session, with a single key file it keeps that key until it restarts, so restart the core node after you replace that file. An agent that cannot read the fingerprints does not ask again for 30 seconds and logs one warning in that time.
+
+The agent does not read a `known_hosts` file for the core node, so an entry there, including a revoked one, has no effect. To stop trusting a host key, remove it from the host keys of the core node, and restart the core node if it uses a single key file (see above). The core node stops publishing the key within 30 seconds. An agent keeps the fingerprints that it has read for five minutes, and for as long as it cannot read new ones, so it can accept a removed key for that time after its last successful read.
+
+If the fingerprint is none of the published ones, the clone fails and the log of the build agent names the host and the fingerprints. This does not depend on any setting. If the agent cannot read the fingerprints, because `artemis.version-control.url` does not reach a core node or the core node publishes none, the setting `artemis.version-control.ssh-host-key-verification` on the build agent decides:
+
+| Value | Behavior when the fingerprints cannot be read |
+|-------|-----------------------------------------------|
+| `if-available` (default) | The clone continues and the agent logs a warning. This is how agents behaved before the host key was checked. |
+| `required` | The clone fails. |
+
+The table applies when the agent has no fingerprints cached. Fingerprints that the agent read before stay valid when a later refresh fails, also after the five minutes: while the core node cannot be reached, a key from the cached list is still accepted in both modes, and another key is refused in both modes. Use `required` once every agent reaches the endpoint over `https`. With several core nodes behind a load balancer, give all of them the same host key (`artemis.version-control.ssh-host-key-path`), otherwise the agent sees fingerprints of different nodes.
+
 ### Database Credentials
 
 The database services used by `deployment/docker/artemis-prod-postgres.yml` and `deployment/docker/artemis-prod-mysql.yml` extend the shared `deployment/docker/postgres.yml`/`deployment/docker/mysql.yml` service definitions, which default to `deployment/docker/postgres/default.env` and `deployment/docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
@@ -427,6 +444,19 @@ To allow users to clone their programming exercises via SSH in the integrated co
 
 Follow the next steps to create and manage SSH key pairs, distribute them across multiple nodes via Ansible, configure the system to use these keys, and adapt Nginx to enable SSH routing.
 
+### Connection and push limits
+
+Each LocalVC node allows up to 128 simultaneous SSH sessions per client IP address. Set
+`artemis.version-control.ssh-max-sessions-per-address` to change this limit; a value of zero or less
+disables it. Clients behind the same campus gateway share an allowance. Behind a load balancer,
+configure [trusted PROXY protocol sources](#build-agent-authentication) so the limit uses the original
+client address instead of grouping every connection under the load balancer's address.
+
+LocalVC accepts at most 100 MiB of packed data per push and 20 MiB per Git object over HTTP or SSH.
+The objects of a rejected push are discarded immediately. A server restart can leave temporary
+`incoming-*` directories inside bare repositories. On nodes with the `scheduling` and `localvc`
+profiles, the cleanup job removes directories older than one day at 04:15 server time.
+
 
 ### Generate Key Pairs
 
@@ -484,6 +514,48 @@ address, whose forwarded headers Artemis uses. Otherwise, add these origins to `
 `jhipster.cors.allowed-origin-patterns`. This allows them to call the REST API as well. The server logs every refused
 connection request with its origin.
 
+## Embedding in Other Pages and API Documentation
+
+Artemis tells browsers not to show its pages inside a frame of another site. It sends `X-Frame-Options: DENY` and the
+`frame-ancestors 'none'` directive of the Content Security Policy. The policy also restricts the document base to
+Artemis itself (`base-uri 'self'`).
+
+The [LTI module](/instructor/integrations/lti-configuration) is the exception. Learning management systems launch Artemis in a frame, so
+the LTI configuration removes `X-Frame-Options` while the module is enabled. As long as no LTI platform is configured and no origin is listed below, no `frame-ancestors` directive is sent. The same holds when no usable origin remains, because every platform address yields none and the list below is empty.
+
+Artemis derives the sites that may embed it from the LTI platforms that you configure. The origin (scheme, host and port) of the issuer and of the authorization address of every platform is added
+to the directive, so that after the first platform the policy is `frame-ancestors 'self'` followed by these origins. Artemis reads the platforms again at most once a minute, when a request arrives, so a new platform
+takes effect with the next successful read and without a restart. If a read fails after an earlier one succeeded, the origins of the earlier read stay in effect. If the platforms cannot be read at all yet, for example because the database is not reachable during the first request after the start, no site may embed
+Artemis until a read succeeds, except those that `artemis.security.frame-ancestors` lists, which stay effective. After a failed read, the next one is tried a minute later. An origin that a platform needs but that is not part of these two addresses has to be listed explicitly: Canvas, for example, authorizes at a central
+address, and Blackboard Learn uses the issuer `https://blackboard.com` and an authorization address at `developer.blackboard.com`, while the pages that embed Artemis come from the address of your
+institution. Artemis logs a warning when it cannot derive any origin from a platform. To list further origins, or to restrict the embedding without LTI, set:
+
+```yaml
+artemis:
+  security:
+    # Comma separated origins, scheme://host[:port], with an optional leading `*.` wildcard
+    frame-ancestors: https://lms.example.org
+```
+
+With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. The origins of the LTI platforms are added to the ones listed here. An entry that is not of
+that form stops the server at startup.
+
+The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are switched off by default
+(`springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled`). Only where you switch them on, the paths are reachable
+without a login. On a server where they are off, a request to these paths needs a signed-in user like any other path.
+
+## Hosts of Images in Markdown
+
+Posts, problem statements, announcements and other markdown can show images from any web address. To limit the hosts that images may be loaded from, list them in the setting `info.allowedImageHosts` of the core nodes:
+
+```yaml
+info:
+    # Comma separated host names, quoted so that an entry that starts with `*` is read as text. A leading `*.` stands for every subdomain.
+    allowedImageHosts: "images.example.org, *.cdn.example.org"
+```
+
+The setting is empty by default, which allows every host. Once it holds a host, Artemis shows images of the listed hosts, of the own host of the server (`server.url`), relative addresses and inline `data:` images. The server does not keep inline `data:` images in the problem statements that it renders itself (`api/exercise/problem-statement/render`), whatever the setting holds, because its HTML sanitizer removes their address before this policy applies. The client also always allows the host name of the page that shows the markdown, which can differ from the host name in `server.url` when users reach Artemis under another name: list every host name that both have to accept. An image of any other host is not loaded: the client removes its address when it renders the markdown, and the server removes the image from the problem statements that it renders itself (`api/exercise/problem-statement/render`). A host name has to match exactly, so list `example.org` and `*.example.org` separately if you want both. A host name with special characters can be listed as it is written or in its ASCII form (`xn--...`). The list limits the address that the markdown names. It does not limit where a listed host sends the browser: an image that a listed host passes on to another host is loaded from there. The client receives the list with the other public settings of the server (`management/info`), so a change takes effect after a restart of the core nodes and a reload of the page.
+
 ## Rate Limiting
 
 Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
@@ -510,7 +582,15 @@ artemis:
     authentication-requests-per-minute: 30
     git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    email-address-check-requests-per-minute: 300
+    failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
+    service-credential-failure-requests-per-minute: 30
+    apollon-conversion-requests-per-minute: 10 # per signed-in user
+    quiz-batch-join-requests-per-minute: 10 # per signed-in user
+    programming-build-trigger-requests-per-minute: 10 # per signed-in user
+    course-request-requests-per-minute: 5 # per signed-in user
+    re-evaluation-requests-per-minute: 6 # per signed-in user
 ```
 
 ### Where It Is Enforced
@@ -520,7 +600,13 @@ artemis:
 - Password reset (request reset link + actual password change)
 - Login options lookup (the identifier step of the login form, in its own bucket so that consuming it does not
   reduce the number of logins a shared address can perform)
+- Email address check (the lookup that the registration form and the account settings send while an address is typed, in its own bucket so that typing does not use up the
+  allowance of registration itself)
 - Username/password login
+- Failed username/password logins of one account. Every wrong password, and every login name that does not exist, spends a token of the login name that was tried,
+  independent of the client address, and a login name whose budget is empty is answered with **429** before its password is checked. The budget is `failed-login-requests-per-minute`
+  (10 by default) and it refills continuously, so this is a throttle and not a lock: the owner of an account that someone else tries to guess waits a few seconds, and
+  guessing is held to that rate however many addresses it comes from. Successful logins spend nothing. Because the check does not depend on the address, addresses in `exempt-addresses` are subject to it as well
 - WebAuthn authentication
 - Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
     - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too. A password is charged one token before it is checked and receives it back when it is correct, for the `/info/refs` request as well as for the requests that follow it. A regular clone or push with the correct password is therefore not charged, and it completes even where the limit is a single request. Wrong passwords keep their token.
@@ -531,10 +617,32 @@ artemis:
   **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
   With a login limit of your own, the git limit is a separate 30 on top of it.
   Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
+- Re-evaluation of all results of a programming exercise and the update of an exercise with a re-evaluation, in one bucket of their own, `re-evaluation-requests-per-minute`. It is counted per signed-in user and not per client address, so instructors who share an address do not draw on each other's budget. The default is 6 per minute, which is far above what an instructor needs, because the request recalculates and saves every latest result of the exercise.
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
+- Requests of signed-in users that start a comparatively expensive operation, counted per user instead of per client address, each in a bucket of its own: the conversion of a modeling diagram to a PDF document (`apollon-conversion-requests-per-minute`), joining a quiz batch with its password (`quiz-batch-join-requests-per-minute`, every attempt counts), the manual build of a programming exercise participation (`programming-build-trigger-requests-per-minute`) and sending a course request (`course-request-requests-per-minute`)
+- Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
 
 ### Client Address of Git Requests
 
 The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.
+
+The other limits in this section, the check of internal endpoints and the address that is stored in an exam session use the same address: the one that Tomcat resolved for the request. Artemis does not read address headers itself, so what a client
+sends in `X-Forwarded-For` or a similar header only counts when it comes through one of your proxies. Make sure that the first reverse proxy in front of Artemis replaces the header with the address of the connection it accepted (`proxy_set_header X-Forwarded-For $remote_addr;` in nginx), as the nginx configuration of the repository does, and does not append to what the client sent. Tomcat believes an entry that a client wrote into the header when the client itself is in a private network.
+By default, Tomcat believes forwarding headers from every private address. Restrict `server.tomcat.remoteip.internal-proxies` to your own proxies, and keep other hosts of the private network from reaching Artemis directly, so that only the proxies can name an address for a request.
+If your reverse proxy reaches Artemis from a public address, or from an IPv6 address that is not in the private range, name it in `server.tomcat.remoteip.internal-proxies` as well. The property takes a regular expression and replaces the default list, so include the ranges that you still need. A proxy that is in front of your own proxy, such as a CDN or a central load balancer, belongs in `server.tomcat.remoteip.trusted-proxies`. The setting `artemis.continuous-integration.build-agent-network.trusted-proxies` applies to Git over HTTP only. If a proxy is not named, every client has the address of the proxy, and all clients share one budget of the rate limits and one address in their exam sessions.
+
+### Internal Endpoints
+
+Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
+The shipped default allows every address (`::/0` and `0.0.0.0/0`), so that a first installation works. Under the `prod` profile, Artemis logs a warning at startup for as long as the list still admits every address. Restrict it to the addresses of the components that call Artemis:
+
+```yaml
+artemis:
+  security:
+    internal:
+      allowed-cidrs:
+        - 10.0.0.0/24
+```
+

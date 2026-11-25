@@ -32,7 +32,7 @@ export enum ExerciseButtonStatus {
     selector: 'jhi-exam-navigation-sidebar',
     imports: [ArtemisTranslatePipe, FontAwesomeModule, TumAetUiButtonDirective, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './exam-navigation-sidebar.component.html',
-    styleUrl: './exam-navigation-sidebar.component.scss',
+    styleUrl: './exam-navigation-sidebar.component.css',
 })
 export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     private sidebarEventService = inject(SidebarEventService);

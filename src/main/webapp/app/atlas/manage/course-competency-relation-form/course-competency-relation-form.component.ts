@@ -3,27 +3,30 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 
 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { getErrorMessage } from 'app/foundation/util/global.utils';
+import { getCurrentLocaleSignal, getErrorMessage } from 'app/foundation/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CommonModule } from '@angular/common';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
-    styleUrl: './course-competency-relation-form.component.scss',
-    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule],
+    styleUrl: './course-competency-relation-form.component.css',
+    imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, FormsModule, TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent],
 })
 export class CourseCompetencyRelationFormComponent {
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faSpinner = faSpinner;
-
-    protected readonly competencyRelationType = CompetencyRelationType;
 
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
@@ -47,6 +50,17 @@ export class CourseCompetencyRelationFormComponent {
     });
 
     readonly showCircularDependencyError = computed(() => this.headCompetencyId() && !this.selectableHeadCourseCompetencyIds().includes(this.headCompetencyId()!));
+
+    protected readonly relationTypeOptions = computed(() => {
+        this.currentLocale();
+        return Object.values(CompetencyRelationType).map((value) => ({
+            value,
+            label: this.translateService.instant(`artemisApp.courseCompetency.relations.relationTypes.${value}`),
+        }));
+    });
+
+    /** The select cannot grey out an option, so a head that would close a cycle is left out; the one already chosen stays to be shown. */
+    protected readonly headOptions = computed(() => this.courseCompetencies().filter(({ id }) => this.isCourseCompetencySelectable(id!) || id === this.headCompetencyId()));
 
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));

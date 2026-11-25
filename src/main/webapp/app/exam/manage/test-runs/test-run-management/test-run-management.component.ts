@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
@@ -18,6 +19,7 @@ import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-de
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -26,6 +28,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiMessageComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTooltipDirective,
@@ -50,6 +53,7 @@ import {
         TumAetUiTableSortableColumnComponent,
         TumAetUiTooltipDirective,
         CreateTestRunModalComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class TestRunManagementComponent implements OnInit {
@@ -176,4 +180,7 @@ export class TestRunManagementComponent implements OnInit {
     sortRows() {
         this.testRuns.set([...this.sortService.sortByProperty(this.testRuns(), this.predicate(), this.ascending())]);
     }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
 }

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import java.io.ObjectStreamConstants;
+import java.util.List;
 
 import org.redisson.client.codec.BaseCodec;
 import org.redisson.client.codec.Codec;
@@ -9,6 +10,8 @@ import org.redisson.client.protocol.Encoder;
 import org.redisson.codec.Kryo5Codec;
 import org.redisson.codec.SerializationCodec;
 
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter.FilteringClassLoader;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -36,6 +39,11 @@ import io.netty.buffer.ByteBuf;
  * remembered, and each value moves to the new format the first time any node rewrites it.
  *
  * <p>
+ * Both formats only create the types of the {@link DistributedDataTypeFilter}. Class names are resolved through a class
+ * loader that refuses the others before they are loaded, which restricts what is read without changing any byte that
+ * is written, so mixed-version deployments keep working.
+ *
+ * <p>
  * Note for operators: an older node cannot read a map value this codec has rewritten, so roll a Redis-backed
  * deployment forward rather than back. Keys, sets, queues and topics are unaffected in both directions.
  */
@@ -47,8 +55,22 @@ public class BackwardCompatibleSerializationCodec extends BaseCodec {
 
     private final Decoder<Object> mapValueDecoder;
 
+    private final DistributedDataTypeFilter typeFilter;
+
+    /**
+     * Creates a codec that reads the default list of types Artemis stores.
+     */
     public BackwardCompatibleSerializationCodec() {
-        this(new SerializationCodec(), new Kryo5Codec());
+        this(DistributedDataTypeFilter.withAdditional(List.of()));
+    }
+
+    /**
+     * Creates a codec that only creates the types the filter allows, in both formats it reads. Writing is not affected.
+     *
+     * @param typeFilter the types that may be read
+     */
+    public BackwardCompatibleSerializationCodec(DistributedDataTypeFilter typeFilter) {
+        this(defaultClassLoader(), typeFilter);
     }
 
     /**
@@ -58,20 +80,34 @@ public class BackwardCompatibleSerializationCodec extends BaseCodec {
      * @param classLoader the class loader to resolve value classes with
      */
     public BackwardCompatibleSerializationCodec(ClassLoader classLoader) {
-        this(new SerializationCodec(classLoader), new Kryo5Codec(classLoader));
+        this(classLoader, DistributedDataTypeFilter.withAdditional(List.of()));
+    }
+
+    private BackwardCompatibleSerializationCodec(ClassLoader classLoader, DistributedDataTypeFilter typeFilter) {
+        this(new FilteringClassLoader(classLoader != null ? classLoader : defaultClassLoader(), typeFilter), typeFilter);
+    }
+
+    private BackwardCompatibleSerializationCodec(FilteringClassLoader filteringClassLoader, DistributedDataTypeFilter typeFilter) {
+        this(new SerializationCodec(filteringClassLoader), new Kryo5Codec(filteringClassLoader), typeFilter);
+    }
+
+    private static ClassLoader defaultClassLoader() {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        return contextClassLoader != null ? contextClassLoader : BackwardCompatibleSerializationCodec.class.getClassLoader();
     }
 
     /**
      * Constructor used by Redisson's {@link BaseCodec#copy(ClassLoader, Object)} to rebind an existing instance.
      *
      * @param classLoader the class loader to resolve value classes with
-     * @param codec       the instance being copied, whose configuration is not needed because this codec carries none
+     * @param codec       the instance being copied, whose type filter is kept
      */
     public BackwardCompatibleSerializationCodec(ClassLoader classLoader, BackwardCompatibleSerializationCodec codec) {
-        this(classLoader);
+        this(classLoader, codec.typeFilter);
     }
 
-    private BackwardCompatibleSerializationCodec(Codec mapValueFormat, Codec legacyFormat) {
+    private BackwardCompatibleSerializationCodec(Codec mapValueFormat, Codec legacyFormat, DistributedDataTypeFilter typeFilter) {
+        this.typeFilter = typeFilter;
         this.mapValueFormat = mapValueFormat;
         this.legacyFormat = legacyFormat;
         this.mapValueDecoder = (buf, state) -> startsWithJavaSerializationHeader(buf) ? mapValueFormat.getValueDecoder().decode(buf, state)

@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +28,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -118,6 +122,10 @@ public class LocalVCServletService {
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
+    private final long maxRepositorySizeMb;
+
+    private final long maxTestsAndSolutionRepositorySizeMb;
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, RepositoryAccessService repositoryAccessService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -125,7 +133,8 @@ public class LocalVCServletService {
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
             LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -144,6 +153,8 @@ public class LocalVCServletService {
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.maxRepositorySizeMb = maxRepositorySizeMb;
+        this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
 
     /**
@@ -205,7 +216,17 @@ public class LocalVCServletService {
         // the requests that never need it (a staff token, a failed credential) still do not pay for it.
         Supplier<ProgrammingExerciseParticipation> participationForRepository = participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exercise.exerciseId());
 
-        var authenticated = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        AuthenticatedUser authenticated;
+        try {
+            authenticated = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        }
+        catch (LocalVCAuthException | AuthenticationException e) {
+            // A request without a password is the first request of an operation, because git waits to be asked, and is no attempt. Every other rejection of the credentials is.
+            if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
+                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, repositoryAction);
+            }
+            throw e;
+        }
         User user = authenticated.user();
         request.setAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE, authenticated.mechanism());
 
@@ -214,17 +235,16 @@ public class LocalVCServletService {
             repositoryAccessService.checkHasAccessToOfflineIDEElseThrow(exercise, user);
         }
         catch (AccessForbiddenException e) {
+            log.warn("User {} may not use an offline IDE for the repository {}", user.getLogin(), localVCRepositoryUri);
+            saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise.exerciseId(), localVCRepositoryUri, user, repositoryAction);
             throw new LocalVCForbiddenException(e);
         }
 
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
-            // Only create the preliminary access log on /info/refs requests.
-            // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
-            // via PreUploadHook / processNewPush rather than creating a duplicate.
-            if (request.getRequestURI().endsWith("/info/refs")) {
-                accessLogRecorder.savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation, authenticated.mechanism());
-            }
+            // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
+            // another, so here only who this request is for is remembered.
+            accessLogRecorder.rememberSubjectHTTPS(request, user, optionalParticipation, authenticated.mechanism());
         }
         catch (LocalVCForbiddenException e) {
             log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
@@ -256,11 +276,14 @@ public class LocalVCServletService {
         try {
             var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
                     participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId));
-            var commitHash = repositoryResolver.getCommitHash(localVCRepositoryUri);
+            // A request that advertises the references is refused before the repository is reached, so the entry carries no commit. That is what lets the log tell it from a
+            // transfer that was refused after an advertisement was stored, see VcsAccessLogOperations.
+            boolean refusedBeforeAdvertisement = context instanceof AuthenticationContext.Request(var request) && "GET".equals(request.getMethod());
+            var commitHash = refusedBeforeAdvertisement ? "" : repositoryResolver.getCommitHash(localVCRepositoryUri);
             var authenticationMechanism = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.getId(), action, authenticationMechanism, commitHash, ipAddress));
         }
         catch (Exception e) {
             log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());
@@ -480,6 +503,43 @@ public class LocalVCServletService {
         return getBuildConfigOrThrow(projectKey).isAllowBranching();
     }
 
+    /**
+     * Returns the maximum size of the files of a repository, which a push must not exceed. Template repositories and student repositories (and everything that is not a tests or
+     * solution repository) have a smaller limit than tests and solution repositories.
+     *
+     * @param repository the repository that receives the push
+     * @return the limit in bytes, or {@link Long#MAX_VALUE} if the limit is disabled by configuration
+     */
+    public long getMaxRepositorySizeBytes(Repository repository) {
+        String repositoryTypeOrUserName = repositoryResolver.parseRepositoryUri(repository.getDirectory().toPath()).getRepositoryTypeOrUserName();
+        boolean isTestsOrSolutionRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+        long limitInMegabytes = isTestsOrSolutionRepository ? maxTestsAndSolutionRepositorySizeMb : maxRepositorySizeMb;
+        return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
+    }
+
+    /** The longest branch name that is matched against the branch expression of an exercise. */
+    private static final int MAX_BRANCH_NAME_LENGTH = 255;
+
+    private static final int MAX_COMPILED_BRANCH_REGEXES = 1000;
+
+    /** The compiled expression, or empty if the expression is not supported or not valid. The verdict is kept, so that it is logged once per expression. */
+    private static final Cache<String, Optional<Pattern>> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+
+    private static Optional<Pattern> compileBranchRegex(String branchRegex) {
+        if (!BranchRegexSyntax.isSupported(branchRegex)) {
+            log.warn("The branch regex '{}' of an exercise uses syntax that is not supported and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Pattern.compile(branchRegex));
+        }
+        catch (PatternSyntaxException e) {
+            log.warn("The branch regex '{}' of an exercise is not a valid regular expression and matches no branch name", branchRegex);
+            return Optional.empty();
+        }
+    }
+
     public static enum BranchingStatus {
         BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
     }
@@ -501,15 +561,18 @@ public class LocalVCServletService {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
-        Pattern pattern;
-        try {
-            pattern = Pattern.compile(buildConfig.getBranchRegex());
-        }
-        catch (PatternSyntaxException e) {
+        if (branchName.length() > MAX_BRANCH_NAME_LENGTH) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
         }
 
-        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        // The expression is checked and compiled once and then reused by the following pushes
+        String branchRegex = buildConfig.getBranchRegex();
+        Optional<Pattern> pattern = COMPILED_BRANCH_REGEXES.get(branchRegex, LocalVCServletService::compileBranchRegex);
+        if (pattern.isEmpty()) {
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        return TimeBoundedRegexMatcher.matches(pattern.get(), branchName) ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {

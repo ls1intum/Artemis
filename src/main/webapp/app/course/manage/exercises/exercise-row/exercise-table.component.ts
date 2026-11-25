@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -33,6 +33,7 @@ import { ProgrammingExerciseParticipationType } from 'app/programming/shared/ent
 import { programmingExerciseResultWarning } from 'app/programming/manage/status/programming-exercise-result-warning.util';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { ActionsColumnWidth } from 'app/exercise/exercise-action-bar/actions-column-width';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
@@ -84,10 +85,11 @@ interface ExerciseRow {
 @Component({
     selector: 'jhi-exercise-table',
     templateUrl: './exercise-table.component.html',
-    styleUrl: './exercise-table.component.scss',
+    styleUrl: './exercise-table.component.css',
     // Floor the actions column at the widest quiz-button + ellipsis width its rows report, so the main buttons
-    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons.
-    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
+    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons. Size it to the widest
+    // row's buttons, so the leftover width goes to the other columns.
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
         RouterLink,
         FormsModule,
@@ -112,6 +114,8 @@ interface ExerciseRow {
 })
 export class ExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     protected readonly faBars = faBars;
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -212,7 +216,7 @@ export class ExerciseTableComponent {
 
     /**
      * Largest actions-column width (px) any row reported, so the shared column fits the widest quiz row. Grows only: a
-     * stale floor makes the table scroll sooner but never clips. Stays 0 without quiz buttons, keeping the SCSS default.
+     * stale floor makes the table scroll sooner but never clips. Stays 0 without quiz buttons, keeping the CSS default.
      */
     private readonly maxQuizActionsMinWidth = signal(0);
     /** CSS value for the actions-column floor, or undefined when no quiz buttons are present. */
@@ -220,6 +224,16 @@ export class ExerciseTableComponent {
         const width = this.maxQuizActionsMinWidth();
         return width > 0 ? `${width}px` : undefined;
     });
+
+    /** Sizes the actions column to the widest current row's buttons. */
+    protected readonly actionsColumn = new ActionsColumnWidth(computed(() => this.rows().map((row) => row.exercise.id!)));
+    /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
+    readonly actionsWidthVar = this.actionsColumn.cssWidth;
+
+    constructor() {
+        // The table fills the host, so the host's width is the one the percentage refers to.
+        afterNextRender(() => this.destroyRef.onDestroy(this.actionsColumn.observe(this.host.nativeElement)));
+    }
 
     onQuizActionsMinWidth(width: number): void {
         if (width > this.maxQuizActionsMinWidth()) {

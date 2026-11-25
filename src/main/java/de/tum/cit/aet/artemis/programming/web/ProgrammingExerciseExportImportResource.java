@@ -224,9 +224,8 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         // Map the request onto a transient exercise at the boundary; everything below keeps working on entities.
-        // Unlike the two other import paths, this one never resolves the posted competency links: it copies an exercise
-        // of another course, competencies are course-specific, and the entity handler cleared them here too. Binding
-        // them would also produce detached entity errors for serialized competencies of the source instance.
+        // The request does not bind the competency links itself: they need managed competencies, which are resolved once the
+        // role in the target course is checked.
         ProgrammingExercise newExercise = newExerciseRequest.toEntity();
         // The build configuration is a row of its own that names the exercise, so it is bound next to it. The import
         // falls back to the source exercise's configuration when the request carries none.
@@ -237,6 +236,7 @@ public class ProgrammingExerciseExportImportResource {
 
         newExercise.validateGeneralSettings();
         programmingExerciseValidationService.validateBuildConfigSize(newBuildConfig);
+        programmingExerciseValidationService.validateDockerImageRegistry(newBuildConfig);
 
         final User user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
@@ -245,6 +245,11 @@ public class ProgrammingExerciseExportImportResource {
 
         // Validate course settings
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
+
+        // The client drops the competencies of the source exercise, which belong to the source course, and lets the author pick competencies of the target course instead.
+        // They are carried on the new exercise as references: the import resolves them before its first write, skipping those of another course,
+        // then binds them to the imported exercise once it has an id.
+        newExercise.getCompetencyLinks().addAll(CompetencyExerciseLinkService.toTransientLinks(newExerciseRequest, newExercise, ENTITY_NAME));
 
         final var originalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(sourceExerciseId)
@@ -257,6 +262,10 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateProgrammingSettings(buildConfigToValidate);
         programmingExerciseValidationService.validatePackageName(newExercise);
         programmingExerciseValidationService.validateDockerFlags(buildConfigToValidate);
+        // a window of the source exercise is not taken over, so only a window supplied with the request has to be valid
+        if (newBuildConfig != null) {
+            programmingExerciseValidationService.validateBuildTimeWindow(newExercise, newBuildConfig);
+        }
         validateStaticCodeAnalysisSettings(newExercise, buildConfigToValidate);
 
         var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
@@ -301,8 +310,8 @@ public class ProgrammingExerciseExportImportResource {
         catch (Exception exception) {
             log.error(exception.getMessage(), exception);
 
-            boolean isExceptionWithTranslationKeys = exception instanceof HttpStatusException;
-            if (isExceptionWithTranslationKeys) {
+            // Input references rejected by preflight retain their client-error status instead of becoming an import failure.
+            if (exception instanceof HttpStatusException || exception instanceof EntityNotFoundException) {
                 throw exception;
             }
             if (exception instanceof VersionControlException && exception.getCause() instanceof LargeObjectException) {

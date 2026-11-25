@@ -10,21 +10,22 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-mode',
     templateUrl: './programming-exercise-mode.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         ProgrammingExerciseDifficultyComponent,
         TeamConfigFormGroupComponent,
         FormsModule,
         FaIconComponent,
-        NgbTooltip,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
         ArtemisTranslatePipe,
     ],

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -6,7 +6,7 @@ import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -14,11 +14,13 @@ import { MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants'
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
+    ImportAllCourseCompetenciesModalData,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
@@ -35,10 +37,12 @@ import { getErrorMessage } from 'app/foundation/util/global.utils';
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    styleUrl: './competency-management.component.scss',
+    styleUrl: './competency-management.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
         CompetencyManagementTableComponent,
         TranslateDirective,
         FontAwesomeModule,
@@ -52,7 +56,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
@@ -160,15 +165,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     protected openCourseCompetenciesRelationModal(): void {
         this.dialogService.open(CourseCompetenciesRelationModalComponent, {
-            style: { width: '90vw', maxWidth: '90rem' },
-            modal: true,
+            ariaLabel: this.translateService.instant('artemisApp.courseCompetency.manage.editRelationsButton'),
+            showHeader: false,
+            size: 'full',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
-            showHeader: false,
-            styleClass: 'course-competencies-relation-graph-modal',
             data: {
                 courseId: this.courseId(),
                 courseCompetencies: this.courseCompetencies(),
@@ -180,21 +182,18 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      * Opens a modal for selecting a course to import all competencies from.
      */
     async openImportAllModal() {
-        const dialogRef = this.dialogService.open(ImportAllCourseCompetenciesModalComponent, {
-            style: { width: '90vw', maxWidth: '50rem' },
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            resizable: false,
-            showHeader: false,
-            data: { courseId: this.courseId() },
-        });
-        if (!dialogRef) {
-            return;
-        }
-        const importResults: ImportAllCourseCompetenciesResult | undefined = await firstValueFrom(dialogRef.onClose, { defaultValue: undefined });
+        const dialogRef = this.dialogService.open<ImportAllCourseCompetenciesModalComponent, ImportAllCourseCompetenciesResult, ImportAllCourseCompetenciesModalData>(
+            ImportAllCourseCompetenciesModalComponent,
+            {
+                header: this.translateService.instant('artemisApp.courseCompetency.importAll.title'),
+                size: 'medium',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+                data: { courseId: this.courseId() },
+            },
+        );
+        const importResults = await firstValueFrom(dialogRef.onClose, { defaultValue: undefined });
         if (!importResults) {
             return;
         }
@@ -243,15 +242,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     openCourseCompetencyExplanation(): void {
         this.dialogService.open(CourseCompetencyExplanationModalComponent, {
-            style: { width: '90vw', maxWidth: '90rem' },
-            modal: true,
+            ariaLabel: this.translateService.instant('artemisApp.courseCompetency.manage.helpButton'),
+            showHeader: false,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
-            showHeader: false,
-            styleClass: 'course-competency-explanation-modal',
         });
     }
 
@@ -261,14 +257,12 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
      */
     protected openAgentChatModal(): void {
         this.dialogService.open(AgentChatModalComponent, {
-            style: { width: '90vw', maxWidth: '50rem' },
-            modal: true,
+            ariaLabel: 'AI Assistant',
+            showHeader: false,
+            size: 'medium',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            draggable: false,
-            resizable: false,
-            showHeader: false,
             data: {
                 courseId: this.courseId(),
                 onCompetencyChanged: () => this.loadCourseCompetencies(this.courseId()),

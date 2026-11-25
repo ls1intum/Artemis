@@ -15,7 +15,7 @@ import { buildJobWaitingTime } from './build-job-waiting-time.util';
 @Component({
     selector: 'tr[jhi-build-job-row]',
     templateUrl: './build-job-row.component.html',
-    styleUrls: ['./build-jobs-table.scss'],
+    styleUrls: ['./build-jobs-table.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [RouterLink, SlicePipe, FaIconComponent, TumAetUiButtonComponent, TumAetUiTooltipDirective, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,

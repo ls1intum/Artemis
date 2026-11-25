@@ -383,16 +383,36 @@ describe('Formatted message composer', () => {
 
         it('shows the longer hint below the editor on a wide line and the short one on a narrow line', () => {
             const hint = () => element('message-editor-hint').textContent!.trim();
+            const wide = 'artemisApp.communication.formattedEditor.hintTriggers artemisApp.communication.formattedEditor.hintShort';
+            const narrow = 'artemisApp.communication.formattedEditor.hintShort';
             measure(1000);
-            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+            expect(hint()).toBe(wide);
             measure(300);
-            expect(hint()).toBe('artemisApp.communication.formattedEditor.hintShort');
+            expect(hint()).toBe(narrow);
             measure(479);
-            expect(hint()).toBe('artemisApp.communication.formattedEditor.hintShort');
+            expect(hint()).toBe(narrow);
             measure(480);
-            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+            expect(hint()).toBe(wide);
             measure(0);
-            expect(hint()).toBe('artemisApp.communication.formattedEditor.hint');
+            expect(hint()).toBe(wide);
+        });
+
+        it('shows in the tooltip only what the visible hint leaves out', () => {
+            const triggers = 'artemisApp.communication.formattedEditor.hintTriggers';
+            const short = 'artemisApp.communication.formattedEditor.hintShort';
+            const details = 'artemisApp.communication.formattedEditor.hintDetails';
+            const tooltip = () => measured.debugElement.query(By.css('[data-testid="message-editor-help"]')).injector.get(TumAetUiTooltipDirective).content() as string;
+
+            measure(1000);
+            // The wide line already shows the triggers and the short hint, so the tooltip adds the details only.
+            expect(tooltip()).toBe(details);
+            expect(tooltip()).not.toContain(triggers);
+            expect(tooltip()).not.toContain(short);
+
+            measure(300);
+            // The narrow line shows the short hint only, so the tooltip adds the triggers and the details.
+            expect(tooltip()).toBe(`${triggers} ${details}`);
+            expect(tooltip()).not.toContain(short);
         });
 
         it('lets the buttons of the bar wrap one by one and shows its dividers only on a wide line', () => {
@@ -521,6 +541,28 @@ describe('Formatted message composer', () => {
             expect(placeholder()).not.toBeNull();
         });
 
+        it.each([
+            ['1.', 'ol'],
+            ['-', 'ul'],
+        ])('hides the hint once the typed marker %s has turned into a list without text', async (marker, list) => {
+            await emptyEditor({ conversationName: 'Katja' });
+            expect(placeholder()).not.toBeNull();
+
+            const paragraph = document.createElement('p');
+            paragraph.textContent = marker;
+            editable.replaceChildren(paragraph);
+            const range = document.createRange();
+            range.setStart(paragraph.firstChild!, marker.length);
+            window.getSelection()!.removeAllRanges();
+            window.getSelection()!.addRange(range);
+            editable.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: ' ', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+
+            // The message of the empty list is blank, but the list marker is already drawn where the hint would be.
+            expect(editable.querySelector(`${list} > li`)).not.toBeNull();
+            expect(placeholder()).toBeNull();
+        });
+
         it.each([' ', '\n', '  \n  '])('hides the hint for content that only looks empty: %j', async (content) => {
             await emptyEditor({ conversationName: 'Katja' });
             expect(placeholder()).not.toBeNull();
@@ -549,10 +591,12 @@ describe('Formatted message composer', () => {
         const hint = fixture.nativeElement.querySelector('[data-testid="message-editor-hint"]') as HTMLElement;
         const help = fixture.nativeElement.querySelector('[data-testid="message-editor-help"]') as HTMLButtonElement;
 
-        // The visible text is one of two short sentences, and screen readers get the full text as the description of the editor instead.
-        expect(hint.textContent!.trim()).toMatch(/formattedEditor\.hint(Short)?$/);
+        // The visible text ends with the short hint, and screen readers get all three parts as the description of the editor instead.
+        expect(hint.textContent!.trim()).toMatch(/formattedEditor\.hintShort$/);
         expect(hint.getAttribute('aria-hidden')).toBe('true');
         const description = fixture.nativeElement.querySelector(`[id="${editable.getAttribute('aria-describedby')}"]`) as HTMLElement;
+        expect(description.textContent).toContain('artemisApp.communication.formattedEditor.hintTriggers');
+        expect(description.textContent).toContain('artemisApp.communication.formattedEditor.hintShort');
         expect(description.textContent).toContain('artemisApp.communication.formattedEditor.hintDetails');
         expect(help.getAttribute('aria-label')).toBe('artemisApp.communication.formattedEditor.help');
         expect(fixture.debugElement.queryAll(By.directive(TumAetUiTooltipDirective)).map((debugElement) => debugElement.nativeElement)).toContain(help);

@@ -1,6 +1,6 @@
-<div class="flex flex-col gap-4" data-testid="quiz-question-pool-item-list">
+<div class="flex flex-col gap-6" data-testid="quiz-question-pool-item-list">
     @if (inProgressCount() > 0 || failedCount() > 0) {
-        <p class="m-0 flex flex-wrap gap-4 text-sm text-muted-color">
+        <p class="m-0 flex flex-wrap gap-6 text-sm text-muted-color">
             @if (inProgressCount() > 0) {
                 <span
                     data-testid="pool-list-in-progress"
@@ -15,7 +15,7 @@
     }
 
     @if (needsReviewViews().length) {
-        <section class="flex flex-col gap-3" data-testid="pool-section-needs-review">
+        <section class="flex flex-col gap-4" data-testid="pool-section-needs-review">
             @if (showSectionHeadings()) {
                 <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: needsReviewViews().length }"></p>
             }
@@ -36,7 +36,7 @@
     }
 
     @if (acceptedViews().length) {
-        <section class="flex flex-col gap-3" data-testid="pool-section-accepted">
+        <section class="flex flex-col gap-4" data-testid="pool-section-accepted">
             @if (showSectionHeadings()) {
                 <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.accepted" [translateValues]="{ count: acceptedViews().length }"></p>
             }
@@ -56,7 +56,7 @@
     }
 
     @if (rejectedViews().length) {
-        <section class="flex flex-col gap-3" data-testid="pool-section-rejected">
+        <section class="flex flex-col gap-4" data-testid="pool-section-rejected">
             @if (showSectionHeadings()) {
                 <p
                     class="m-0 font-semibold text-muted-color"

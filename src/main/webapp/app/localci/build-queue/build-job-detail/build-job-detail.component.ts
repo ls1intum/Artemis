@@ -30,7 +30,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-build-job-detail',
     templateUrl: './build-job-detail.component.html',
-    styleUrl: './build-job-detail.component.scss',
+    styleUrl: './build-job-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
@@ -315,6 +315,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         // First try to get from buildAgent object (for running jobs)
         if (job.buildAgent?.displayName || job.buildAgent?.name) {
             return job.buildAgent.displayName || job.buildAgent.name;
+        }
+        // The course view of a finished job carries the display name instead of the address
+        if (job.buildAgentDisplayName) {
+            return job.buildAgentDisplayName;
         }
         // For finished jobs, try to resolve address to displayName using online agents
         if (job.buildAgentAddress) {

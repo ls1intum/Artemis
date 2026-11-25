@@ -9,7 +9,7 @@ import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { NgClass } from '@angular/common';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
@@ -19,9 +19,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['./short-answer-question.component.css', '../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
+    imports: [NgClass, TumAetUiTooltipDirective, TumAetUiButtonComponent, TranslateDirective, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionComponent {
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);

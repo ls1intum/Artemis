@@ -8,7 +8,7 @@ public class GeneralConversationInfo {
 
     private final long conversationId;
 
-    private int numberOfParticipants;
+    private final int numberOfParticipants;
 
     public GeneralConversationInfo(long conversationId, long numberOfParticipants) {
         this.conversationId = conversationId;
@@ -21,9 +21,5 @@ public class GeneralConversationInfo {
 
     public int getNumberOfParticipants() {
         return numberOfParticipants;
-    }
-
-    public void setNumberOfParticipants(int numberOfParticipants) {
-        this.numberOfParticipants = numberOfParticipants;
     }
 }

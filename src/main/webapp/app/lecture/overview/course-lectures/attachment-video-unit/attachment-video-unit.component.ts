@@ -98,7 +98,7 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
         FormsModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
-    styleUrl: './attachment-video-unit.component.scss',
+    styleUrl: './attachment-video-unit.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
@@ -733,7 +733,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
-                map((dto) => dto?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
+                map((transcription) => transcription?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({

@@ -32,7 +32,8 @@ import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { Message } from 'primeng/message';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
@@ -40,7 +41,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 @Component({
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css', 'programming-exercise-information.component.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,
@@ -58,7 +59,10 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         KeyValuePipe,
         RemoveKeysPipe,
         TableViewComponent,
-        Message,
+        ArtemisTranslatePipe,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -1,6 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -25,8 +24,8 @@ interface StepWizardStep {
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
     templateUrl: './programming-exercise-instruction-step-wizard.component.html',
-    styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
-    imports: [TranslateDirective, NgbTooltip, FaIconComponent],
+    styleUrls: ['./programming-exercise-instruction-step-wizard.css'],
+    imports: [TranslateDirective, TumAetUiTooltipDirective, FaIconComponent],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent {
     private dialogService = inject(TumAetUiDialogService);

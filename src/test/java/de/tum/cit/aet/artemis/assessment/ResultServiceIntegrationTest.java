@@ -26,6 +26,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -58,6 +60,8 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -209,6 +213,28 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exerciseDetailsIncludeAthenaResultBeforeAssessmentDueDate() throws Exception {
+        var now = ZonedDateTime.now();
+        programmingExercise.setReleaseDate(now.minusDays(1));
+        programmingExercise.setAssessmentDueDate(now.plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        var athenaResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(2), submission);
+        var manualResult = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, now.minusMinutes(1), submission);
+
+        var details = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+
+        assertThat(details.exercise().studentParticipations()).singleElement().satisfies(participation -> {
+            assertThat(participation.id()).isEqualTo(programmingExerciseStudentParticipation.getId());
+            assertThat(participation.submissions()).singleElement().satisfies(actualSubmission -> {
+                assertThat(actualSubmission.id()).isEqualTo(submission.getId());
+                assertThat(actualSubmission.results()).extracting(DetailedResultDTO::id).contains(athenaResult.getId()).doesNotContain(manualResult.getId());
+            });
+        });
     }
 
     @Test
@@ -1220,6 +1246,54 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    private static Stream<Arguments> feedbackTextsWithErrorCategory() {
+        return Stream.of(Arguments.of("Ares Security Error (Reason: Student-Code; Stage: Execution): Illegal file access", "Ares Error"),
+                Arguments.of("java.lang.SecurityException: Ares Security Error (Reason: Student-Code; Stage: Execution): Illegal file access", "Ares Error"),
+                Arguments.of("Ares Sicherheitsfehler (Grund: Student-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("Ares-Sicherheitsfehler (Grund: Ares-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("java.lang.SecurityException: Ares Sicherheitsfehler (Grund: Student-Code; Phase: Ausführung): Unerlaubter Dateizugriff", "Ares Error"),
+                Arguments.of("Unwanted statement found:\n - In src/Main.java:\n   - For-Statement was found", "AST Error"),
+                Arguments.of("Unerwünschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerw\u0308nschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerwu\u0308nschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerwartet: gewünschte Anweisung gefunden", "Student Error"), Arguments.of("Unerwxnschte Anweisung gefunden", "Student Error"),
+                Arguments.of("java.lang.SecurityException: do not use System.exit(int)", "Student Error"), Arguments.of("expected: <3> but was: <4>", "Student Error"));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("feedbackTextsWithErrorCategory")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetFeedbackDetailsClassifiesAndFiltersByErrorCategory(String feedbackText, String expectedCategory) throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, feedbackText);
+        String path = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details";
+
+        FeedbackAnalysisResponseDTO response = request.get(path, HttpStatus.OK, FeedbackAnalysisResponseDTO.class, feedbackDetailsParams(""));
+        assertThat(response.feedbackDetails().getResultsOnPage()).singleElement().extracting(FeedbackDetailDTO::errorCategory).isEqualTo(expectedCategory);
+
+        for (String category : response.errorCategories()) {
+            FeedbackAnalysisResponseDTO filteredResponse = request.get(path, HttpStatus.OK, FeedbackAnalysisResponseDTO.class, feedbackDetailsParams(category));
+            assertThat(filteredResponse.totalItems()).as("feedback filtered by %s", category).isEqualTo(category.equals(expectedCategory) ? 1 : 0);
+        }
+    }
+
+    private static MultiValueMap<String, String> feedbackDetailsParams(String errorCategory) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "1");
+        params.add("pageSize", "10");
+        params.add("sortedColumn", "count");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("searchTerm", "");
+        params.add("filterTasks", "");
+        params.add("filterTestCases", "");
+        params.add("filterOccurrence", "");
+        params.add("filterErrorCategories", errorCategory);
+        params.add("groupFeedback", "false");
+        return params;
     }
 
     @Test

@@ -19,6 +19,7 @@ import {
     TumAetUiMessageComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
 } from '@tumaet/ui-angular';
 import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
@@ -50,7 +51,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 @Component({
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
-    styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
+    styleUrls: ['./tutorial-groups-registration-import-dialog.component.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,
@@ -64,6 +65,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
         TumAetUiMessageComponent,
         TumAetUiSelectButtonComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {

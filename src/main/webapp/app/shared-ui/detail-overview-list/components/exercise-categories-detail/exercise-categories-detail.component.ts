@@ -5,7 +5,7 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 @Component({
     selector: 'jhi-exercise-categories-detail',
     templateUrl: 'exercise-categories-detail.component.html',
-    styleUrls: ['exercise-categories-detail.component.scss'],
+    styleUrls: ['exercise-categories-detail.component.css'],
     imports: [NoDataComponent],
 })
 export class ExerciseCategoriesDetailComponent {

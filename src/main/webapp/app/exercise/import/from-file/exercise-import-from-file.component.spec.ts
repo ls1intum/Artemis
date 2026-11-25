@@ -17,12 +17,12 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
-import dayjs from 'dayjs/esm';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
@@ -282,6 +282,21 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
 
+    it('should name the questions export of a quiz as the problem if the file holds a list of questions', async () => {
+        alertServiceSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        const zip = new ZipBuilder();
+        zip.file('Quiz.json', JSON.stringify([{ type: 'multiple-choice', title: 'Question' }]));
+        zip.file('q0_background.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.questionsExport');
+        expect(openImportSpy).not.toHaveBeenCalled();
+    });
+
     it('should set exercise attributes and open import dialog', async () => {
         const openImportSpy = vi.spyOn(component, 'openImport');
         fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
@@ -412,6 +427,25 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+    });
+
+    it('should convert the build time window of an export to dayjs objects', async () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        const progEx = new ProgrammingExercise(undefined, undefined);
+        progEx.id = 556;
+        progEx.type = ExerciseType.PROGRAMMING;
+        progEx.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs('2026-10-01T10:00:00Z'), end: dayjs('2026-10-01T12:00:00Z') } };
+
+        const zip = new ZipBuilder();
+        zip.file('exercise.json', JSON.stringify(progEx));
+        component.fileForImport.set((await zip.generateBlob()) as any);
+
+        await component.uploadExercise();
+
+        const window = (component.exercise as ProgrammingExercise).buildConfig!.advancedSettings!.buildTimeWindow!;
+        expect(dayjs.isDayjs(window.start)).toBe(true);
+        expect(window.start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window.end!.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
     });
 
     it('should import exercise correctly even if categories are missing', async () => {

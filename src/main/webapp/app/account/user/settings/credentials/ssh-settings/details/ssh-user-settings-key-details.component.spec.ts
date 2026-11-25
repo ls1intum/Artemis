@@ -19,7 +19,7 @@ describe('SshUserSettingsComponent', () => {
     let comp: SshUserSettingsKeyDetailsComponent;
     const mockKey = 'mock-key';
     const invalidKeyFormat = 'invalidKeyFormat';
-    const keyAlreadyExists = 'keyAlreadyExists';
+    const keyNotAccepted = 'keyNotAccepted';
     const mockedUserSshKeys = {
         id: 3,
         publicKey: mockKey,
@@ -96,7 +96,7 @@ describe('SshUserSettingsComponent', () => {
             status: 400,
         });
         const httpError2 = new HttpErrorResponse({
-            error: { errorKey: keyAlreadyExists },
+            error: { errorKey: keyNotAccepted },
             status: 400,
         });
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
@@ -111,7 +111,20 @@ describe('SshUserSettingsComponent', () => {
         comp.saveSshKey();
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
-        expect(alertServiceMock.error).toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.userSettings.sshSettingsPage.keyNotAccepted');
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it.each([{ errorKey: 'keyExpiryDateInPast' }, { errorKey: 'tooManyKeys' }])('should show the message of the error $errorKey', ({ errorKey }) => {
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey }, status: 400 })));
+        comp.ngOnInit();
+        comp.displayedSshKey = mockKey;
+        comp.displayedExpiryDate.set(dayjs().add(1, 'day'));
+        comp.displayedKeyLabel = 'label';
+
+        comp.saveSshKey();
+
+        expect(alertServiceMock.error).toHaveBeenCalledWith(`artemisApp.userSettings.sshSettingsPage.${errorKey}`);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 

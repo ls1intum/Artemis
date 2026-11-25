@@ -1,41 +1,35 @@
-<div class="d-flex justify-content-center align-items-center bg-light p-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10 col-lg-8">
-            <div class="card shadow">
-                <div class="card-body p-4 p-md-5">
-                    <div class="text-center mb-4">
-                        <h3>
-                            <fa-icon [icon]="faLock" />
-                            <span jhiTranslate="global.menu.admin.loginWithPasskeyToUseAdminFeatures"></span>
-                        </h3>
-                    </div>
-                    @if (!accountService.isLoggedInWithPasskey()) {
-                        <p class="text-wrap text-break mw-100" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-                        <div class="alert alert-info mb-4" role="alert">
-                            <strong>
-                                <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
-                            </strong>
-                        </div>
-                    } @else {
-                        <p class="text-wrap text-break mw-100">
-                            <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.start"></span>
-                            <a routerLink="/user-settings/credentials" class="text-decoration-none">
-                                <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"></span>
-                                <fa-icon [icon]="faArrowUpRightFromSquare" />
-                            </a>
-                            <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.end"></span>
-                        </p>
-                        <div class="alert alert-warning mb-4" role="alert">
-                            <p class="text-wrap text-break mw-100" jhiTranslate="global.menu.admin.passkeyNotYetApproved"></p>
-                        </div>
-                    }
-                    @if (!accountService.askToSetupPasskey()) {
-                        <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" [shouldSubmit]="false" />
-                    } @else {
-                        <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" [shouldSubmit]="false" />
-                    }
-                </div>
+<div class="flex items-center justify-center bg-surface-hover p-6">
+    <div class="w-full max-w-[1140px] px-2 md:w-5/6 lg:w-2/3 lg:max-w-[760px]">
+        <div class="rounded-lg border border-(--border-color) bg-surface-raised p-6 shadow md:p-12">
+            <div class="mb-6 text-center">
+                <h3>
+                    <fa-icon [icon]="faLock" />
+                    <span jhiTranslate="global.menu.admin.loginWithPasskeyToUseAdminFeatures"></span>
+                </h3>
             </div>
+            @if (!accountService.isLoggedInWithPasskey()) {
+                <p class="max-w-full whitespace-normal wrap-break-word" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+                <tumaet-ui-message severity="info" class="mb-6">
+                    <strong class="wrap-break-word" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></strong>
+                </tumaet-ui-message>
+            } @else {
+                <p class="max-w-full whitespace-normal wrap-break-word">
+                    <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.start"></span>
+                    <a routerLink="/user-settings/credentials" class="no-underline!">
+                        <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"></span>
+                        <fa-icon [icon]="faArrowUpRightFromSquare" />
+                    </a>
+                    <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.end"></span>
+                </p>
+                <tumaet-ui-message severity="warn" class="mb-6">
+                    <span class="wrap-break-word" jhiTranslate="global.menu.admin.passkeyNotYetApproved"></span>
+                </tumaet-ui-message>
+            }
+            @if (!accountService.askToSetupPasskey()) {
+                <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" [shouldSubmit]="false" />
+            } @else {
+                <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" [shouldSubmit]="false" />
+            }
         </div>
     </div>
 </div>

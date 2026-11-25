@@ -12,7 +12,7 @@
             (onCommitStateChange)="onCommitStateChange($event)"
             (onFileChanged)="onFileChanged()"
         >
-            <div submissionPolicy class="ps-4!">
+            <div submissionPolicy class="ps-4">
                 <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" />
             </div>
             <div editorTitleActions>
@@ -62,9 +62,9 @@
 @if (!exercise().allowOnlineEditor && exercise().allowOfflineIde) {
     <div>
         <!-- The title row can take the toolbar over (see jhi-exam-exercise-header): the wrapper, which holds the margins, then takes no room. -->
-        <div class="my-6! ms-1 [&:not(:has(*))]:hidden">
-            <div #offlineToolbar class="flex items-center justify-between gap-6!" data-testid="programming-toolbar">
-                <div class="flex items-center gap-6!">
+        <div class="my-6 ms-1 [&:not(:has(*))]:hidden">
+            <div #offlineToolbar class="flex items-center justify-between gap-6" data-testid="programming-toolbar">
+                <div class="flex items-center gap-6">
                     <jhi-exercise-details-student-actions
                         data-testid="exam-programming-code"
                         [exercise]="exercise()"
@@ -74,9 +74,9 @@
                     />
                     <jhi-programming-submission-policy-status [exercise]="exercise()" [submissionCount]="submissionCount()" class="grow" />
                 </div>
-                <div class="flex items-center gap-6!">
+                <div class="flex items-center gap-6">
                     @if (repositoryIsLocked) {
-                        <jhi-code-editor-repository-is-locked class="me-1" />
+                        <jhi-code-editor-repository-is-locked class="me-1!" />
                     }
                     @if (studentParticipation()) {
                         <jhi-updating-result

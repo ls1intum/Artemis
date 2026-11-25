@@ -131,7 +131,7 @@ describe('GlobalSearchModalComponent keyboard integration', () => {
         vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300);
         fixture.detectChanges();
         expect(ask).toHaveBeenCalledOnce();
-        return fixture.nativeElement.querySelector('[data-testid="iris-answer-retry"]') as HTMLButtonElement;
+        return document.querySelector('[data-testid="iris-answer-retry"]') as HTMLButtonElement;
     }
 
     it('keeps a selected course chip while native Iris retry handles Enter', () => {

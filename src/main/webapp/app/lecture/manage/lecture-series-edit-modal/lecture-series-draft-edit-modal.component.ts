@@ -11,7 +11,7 @@ import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
     selector: 'jhi-lecture-series-draft-edit-modal',
     imports: [TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TranslateDirective],
     templateUrl: './lecture-series-draft-edit-modal.component.html',
-    styleUrl: './lecture-series-draft-edit-modal.component.scss',
+    styleUrl: './lecture-series-draft-edit-modal.component.css',
 })
 export class LectureSeriesDraftEditModalComponent {
     private translateService = inject(TranslateService);
@@ -32,9 +32,9 @@ export class LectureSeriesDraftEditModalComponent {
 
     open(draft: LectureDraft) {
         this.lectureDraft = draft;
-        this.title.set(draft.dto.title);
-        this.startDate.set(draft.dto.startDate);
-        this.endDate.set(draft.dto.endDate);
+        this.title.set(draft.title);
+        this.startDate.set(draft.startDate);
+        this.endDate.set(draft.endDate);
         this.show.set(true);
     }
 
@@ -47,10 +47,9 @@ export class LectureSeriesDraftEditModalComponent {
         this.show.set(false);
         const draft = this.lectureDraft;
         if (draft) {
-            const dto = draft.dto;
-            dto.title = this.title().trim();
-            dto.startDate = this.startDate();
-            dto.endDate = this.endDate();
+            draft.title = this.title().trim();
+            draft.startDate = this.startDate();
+            draft.endDate = this.endDate();
             draft.state = LectureDraftState.EDITED;
         }
         this.clearInputFields();

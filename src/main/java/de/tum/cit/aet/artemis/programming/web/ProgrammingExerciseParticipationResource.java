@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticip
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.VcsAccessLogOperations;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_CORE)
@@ -138,13 +140,16 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            RepositoryAccessService repositoryAccessService, UserRepository userRepository) {
+            RepositoryAccessService repositoryAccessService, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -186,7 +191,9 @@ public class ProgrammingExerciseParticipationResource {
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
-        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
+        // the editor tells the student why a push is not built, which needs the build time window of the exercise
+        ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.ofForStudent(participation.getProgrammingExercise(),
+                programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(participation.getProgrammingExercise().getId()));
         var response = ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs);
         return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
@@ -319,12 +326,15 @@ public class ProgrammingExerciseParticipationResource {
      * Check if the participation has a result yet.
      *
      * @param participationId of the participation to check.
-     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false, 404 if the participation can't be found or 403 if the user is not allowed to
+     *         access the participation.
      */
     @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
@@ -418,6 +428,9 @@ public class ProgrammingExerciseParticipationResource {
 
         LocalVCRepositoryUri sourceUri;
         if (gradedParticipationId != null) {
+            if (gradedParticipationId.equals(participationId)) {
+                throw new BadRequestAlertException("The repository cannot be reset to itself", ENTITY_NAME, "gradedParticipationIsTarget");
+            }
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             // the access check comes first, so that a caller who may not read the participation gets the same answer wherever it belongs to
             repositoryAccessService.checkAccessRepositoryElseThrow(gradedParticipation, user, exercise, RepositoryActionType.READ);
@@ -434,12 +447,21 @@ public class ProgrammingExerciseParticipationResource {
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
+        // like a push, the reset is kept in the repository but not built outside the build time window, otherwise the reset commit would be graded
+        if (isBuildOutsideTimeWindow(participation, ZonedDateTime.now())) {
+            return ResponseEntity.ok().build();
+        }
+
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
                         "Cannot trigger build because neither the Jenkins nor the LocalCI profile are active. This is a misconfiguration if you want to use programming exercises"))
                 .triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
+    }
+
+    private boolean isBuildOutsideTimeWindow(ProgrammingExerciseStudentParticipation participation, ZonedDateTime instant) {
+        return submissionService.findBuildTimeWindowExcluding(participation, instant).isPresent();
     }
 
     /**
@@ -484,7 +506,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         log.info("Fetching VCS access logs for participation ID: {}", participationId);
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participationId);
-        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        var vcsAccessLogDTOs = VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogs).stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
@@ -714,7 +736,7 @@ public class ProgrammingExerciseParticipationResource {
         var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
 
         List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
-        var vcsAccessLogDTOs = vcsAccessLogs.stream().map(VcsAccessLogDTO::of).toList();
+        var vcsAccessLogDTOs = VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogs).stream().map(VcsAccessLogDTO::of).toList();
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 

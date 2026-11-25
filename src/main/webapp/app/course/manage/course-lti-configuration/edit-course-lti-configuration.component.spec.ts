@@ -3,7 +3,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,7 +25,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -70,7 +68,6 @@ describe('Edit Course LTI Configuration Component', () => {
             .overrideComponent(EditCourseLtiConfigurationComponent, {
                 set: {
                     imports: [
-                        NgbNavModule,
                         MockModule(ReactiveFormsModule),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
@@ -225,7 +222,7 @@ describe('Edit Course LTI Configuration Component', () => {
             fixture.detectChanges();
             const transitionSpy = vi.spyOn(comp, 'transition').mockImplementation(() => {});
 
-            comp.onPageChange({ page: 2 } as PaginatorState);
+            comp.onPageChange(2);
 
             expect(comp.page()).toBe(3);
             expect(transitionSpy).toHaveBeenCalledOnce();

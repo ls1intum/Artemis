@@ -46,6 +46,7 @@ import { canCreateNewMessageInConversation } from 'app/communication/conversatio
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 interface PostGroup {
     author: User | undefined;
@@ -72,7 +73,7 @@ const NEW_MESSAGES_LINE_MARGIN_PX = 8;
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
-    styleUrls: ['./conversation-messages.component.scss'],
+    styleUrls: ['./conversation-messages.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,
@@ -83,6 +84,7 @@ const NEW_MESSAGES_LINE_MARGIN_PX = 8;
         PostCreateEditModalComponent,
         MessageInlineInputComponent,
         ButtonComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {

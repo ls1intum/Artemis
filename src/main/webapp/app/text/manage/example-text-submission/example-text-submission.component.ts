@@ -1,8 +1,11 @@
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
@@ -33,15 +36,14 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import { toExampleSubmission, toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-
-type ExampleSubmissionResponseType = EntityResponseType;
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    styleUrls: ['./example-text-submission.component.scss'],
+    styleUrls: ['./example-text-submission.component.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,
@@ -54,15 +56,21 @@ type ExampleSubmissionResponseType = EntityResponseType;
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
     ],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private translateService = inject(TranslateService);
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly isNewSubmission = signal(false);
     areNewAssessments = true;
@@ -93,6 +101,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
+
+    protected readonly trainingModeOptions = computed(() => {
+        this.languageChange();
+        return [
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.readAndConfirm'), value: ExampleSubmissionMode.READ_AND_CONFIRM },
+            { label: this.artemisTranslatePipe.transform('artemisApp.exampleSubmission.assessCorrectly'), value: ExampleSubmissionMode.ASSESS_CORRECTLY },
+        ];
+    });
     readonly referencedBlocksInExampleSubmission = signal<string[]>([]);
 
     // Icons
@@ -167,8 +183,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         }
         this.state.edit();
 
-        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body!;
+        this.exampleSubmissionApi.getExampleSubmission(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse) => {
+            this.exampleSubmission = toExampleSubmission(exampleSubmissionResponse);
             this.submission = this.exampleSubmission.submission;
             await this.fetchExampleResult();
             if (this.toComplete()) {
@@ -243,9 +259,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         newExampleSubmission.exercise = this.exercise;
         newExampleSubmission.usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
 
-        this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
-            next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
+        this.exampleSubmissionApi.createExampleSubmission(this.exerciseId, toExampleSubmissionRequest(newExampleSubmission)).subscribe({
+            next: (exampleSubmissionResponse) => {
+                this.exampleSubmission = toExampleSubmission(exampleSubmissionResponse);
                 this.exampleSubmission.exercise = this.exercise;
                 this.exampleSubmissionId = this.exampleSubmission.id!;
                 this.submission = this.exampleSubmission.submission;
@@ -275,30 +291,30 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    saveSubmissionIfNeeded(): Observable<ExampleSubmissionResponseType> {
+    saveSubmissionIfNeeded(): Observable<unknown> {
         // If there are no unsaved changes, no need for server call
         if (!this.unsavedSubmissionChanges()) {
-            return of(new HttpResponse<ExampleSubmission>());
+            return of(undefined);
         }
 
-        return this.exampleSubmissionService.update(this.exampleSubmissionForNetwork(), this.exerciseId).pipe(
+        return this.exampleSubmissionApi.updateExampleSubmission(this.exerciseId, toExampleSubmissionRequest(this.exampleSubmissionForNetwork())).pipe(
             tap((exampleSubmissionResponse) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.exampleSubmission = toExampleSubmission(exampleSubmissionResponse);
                 this.unsavedSubmissionChanges.set(false);
             }),
         );
     }
 
     public async startAssessment(): Promise<void> {
-        this.exampleSubmissionService
-            .prepareForAssessment(this.exerciseId, this.exampleSubmissionId)
+        this.exampleSubmissionApi
+            .prepareExampleAssessment(this.exerciseId, this.exampleSubmissionId)
             .pipe(
                 mergeMap(() => {
-                    return this.exampleSubmissionService.get(this.exampleSubmissionId);
+                    return this.exampleSubmissionApi.getExampleSubmission(this.exampleSubmissionId);
                 }),
             )
-            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body!;
+            .subscribe((exampleSubmissionResponse) => {
+                this.exampleSubmission = toExampleSubmission(exampleSubmissionResponse);
                 this.submission = this.exampleSubmission.submission;
 
                 const newResult = new Result();
@@ -380,7 +396,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             return;
         }
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationApi, this.alertService, this);
         command.assessExampleSubmission(this.exampleSubmissionForNetwork(), this.exerciseId);
     }
 
@@ -444,7 +460,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
      */
     readAndUnderstood(): void {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
+        this.tutorParticipationApi.assessExampleSubmissionForTutorParticipation(this.exerciseId, toExampleSubmissionRequest(this.exampleSubmission)).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             void this.back();
         });

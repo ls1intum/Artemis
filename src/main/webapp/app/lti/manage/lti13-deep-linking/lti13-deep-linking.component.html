@@ -1,51 +1,41 @@
 <div [hidden]="!isLinking()" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
-    <div class="modal-header">
-        <div class="col d-flex flex-row pt-3 pb-1">
-            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
+    <div class="flex shrink-0 items-center justify-between border-b border-border p-4">
+        <div class="flex flex-1 flex-row pt-4 pb-1">
+            <h4 class="mb-0" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
                 Select content from course {{ course()?.title }}
             </h4>
             <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip" />
         </div>
     </div>
-    <div class="modal-body">
-        <div class="dropdown-container">
-            <!-- exercise dropdown -->
-            <div ngbDropdown class="dropdown-section">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.exercises"></span>
+    <div class="flex-auto p-4">
+        <div class="flex flex-col gap-4">
+            <!-- exercise popover -->
+            <div>
+                <button tumAetUiButton severity="secondary" type="button" data-testid="lti-exercises-toggle" [tumAetUiPopoverTrigger]="exercisesPopover">
+                    <span jhiTranslate="artemisApp.lti.contentSelectionTable.exercises"></span>
+                    <fa-icon [icon]="faChevronDown" />
                 </button>
 
-                <div ngbDropdownMenu>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="thead-dark">
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                    <th class="d-md-table-cell"></th>
-                                    <th jhiSortBy="id">
-                                        id
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="type" jhiTranslate="artemisApp.exercise.type">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="title" jhiTranslate="artemisApp.exercise.title">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="includedInOverallScore" jhiTranslate="artemisApp.exercise.includedInOverallScore">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
+                <tumaet-ui-popover #exercisesPopover [ariaLabel]="'artemisApp.lti.contentSelectionTable.exercises' | artemisTranslate">
+                    <div class="max-h-[min(28rem,60dvh)] overflow-auto">
+                        <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th [tumAetUiSortableColumn]="'id'">id</th>
+                                    <th [tumAetUiSortableColumn]="'type'"><span jhiTranslate="artemisApp.exercise.type"></span></th>
+                                    <th [tumAetUiSortableColumn]="'title'"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                                    <th [tumAetUiSortableColumn]="'includedInOverallScore'"><span jhiTranslate="artemisApp.exercise.includedInOverallScore"></span></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @for (exercise of exercises(); track exercise) {
                                     <tr id="exercise-{{ exercise.id }}">
-                                        <td class="d-md-table-cell">
-                                            <input
-                                                [attr.aria-label]="'accessibility.selectExercise' | artemisTranslate: { title: exercise.title }"
-                                                class="form-check-input"
-                                                type="checkbox"
-                                                (change)="selectExercise(exercise.id)"
-                                                [ngModel]="isExerciseSelected(exercise.id)"
+                                        <td>
+                                            <tumaet-ui-checkbox
+                                                [ariaLabel]="'accessibility.selectExercise' | artemisTranslate: { title: exercise.title }"
+                                                [checked]="!!isExerciseSelected(exercise.id)"
+                                                (changed)="selectExercise(exercise.id)"
                                             />
                                         </td>
                                         <td>{{ exercise.id ? exercise.id : '' }}</td>
@@ -63,51 +53,43 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="checkbox-container">
-                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header"></span>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header"></span>
                         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.selector" />
-                        <input
-                            [attr.aria-label]="'artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header' | artemisTranslate"
-                            class="form-check-input"
-                            type="checkbox"
-                            (change)="activateExerciseGrouping()"
-                            [ngModel]="isExerciseGroupingActive()"
+                        <tumaet-ui-checkbox
+                            [ariaLabel]="'artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header' | artemisTranslate"
+                            [checked]="isExerciseGroupingActive()"
+                            (changed)="activateExerciseGrouping()"
                         />
                     </div>
-                </div>
+                </tumaet-ui-popover>
             </div>
 
-            <!-- lecture dropdown -->
-            <div ngbDropdown class="dropdown-section">
-                <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
+            <!-- lecture popover -->
+            <div>
+                <button tumAetUiButton severity="secondary" type="button" data-testid="lti-lectures-toggle" [tumAetUiPopoverTrigger]="lecturesPopover">
+                    <span jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
+                    <fa-icon [icon]="faChevronDown" />
                 </button>
 
-                <div ngbDropdownMenu>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="thead-dark">
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                    <th class="d-md-table-cell"></th>
-                                    <th jhiSortBy="id">
-                                        id
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="title" jhiTranslate="artemisApp.lecture.title">
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
+                <tumaet-ui-popover #lecturesPopover [ariaLabel]="'artemisApp.lti.contentSelectionTable.lectures' | artemisTranslate">
+                    <div class="max-h-[min(28rem,60dvh)] overflow-auto">
+                        <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th [tumAetUiSortableColumn]="'id'">id</th>
+                                    <th [tumAetUiSortableColumn]="'title'"><span jhiTranslate="artemisApp.lecture.title"></span></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @for (lecture of lectures(); track lecture) {
                                     <tr id="lecture-{{ lecture.id }}">
-                                        <td class="d-md-table-cell">
-                                            <input
-                                                [attr.aria-label]="'accessibility.selectLecture' | artemisTranslate: { title: lecture.title }"
-                                                class="form-check-input"
-                                                type="checkbox"
-                                                (change)="selectLecture(lecture.id)"
-                                                [ngModel]="isLectureSelected(lecture.id)"
+                                        <td>
+                                            <tumaet-ui-checkbox
+                                                [ariaLabel]="'accessibility.selectLecture' | artemisTranslate: { title: lecture.title }"
+                                                [checked]="!!isLectureSelected(lecture.id)"
+                                                (changed)="selectLecture(lecture.id)"
                                             />
                                         </td>
                                         <td>{{ lecture.id ? lecture.id : '' }}</td>
@@ -117,67 +99,55 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="checkbox-container">
-                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header"></span>
+                    <div class="mt-2 flex items-center gap-2">
+                        <span jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header"></span>
                         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.selector" />
-                        <input
-                            [attr.aria-label]="'artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header' | artemisTranslate"
-                            class="form-check-input"
-                            type="checkbox"
-                            (change)="activateLectureGrouping()"
-                            [ngModel]="isLectureGroupingActive()"
+                        <tumaet-ui-checkbox
+                            [ariaLabel]="'artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header' | artemisTranslate"
+                            [checked]="isLectureGroupingActive()"
+                            (changed)="activateLectureGrouping()"
                         />
                     </div>
-                </div>
+                </tumaet-ui-popover>
             </div>
         </div>
     </div>
 
-    <div class="lti-competency-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
+    <div class="lti-competency-selector flex items-center gap-2 px-4 pb-4">
+        <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
-        <input
-            [attr.aria-label]="'artemisApp.lti.contentSelectionTable.competencies.header' | artemisTranslate"
-            class="form-check-input"
-            type="checkbox"
-            (change)="enableCompetency()"
-            [ngModel]="isCompetencySelected()"
+        <tumaet-ui-checkbox
+            [ariaLabel]="'artemisApp.lti.contentSelectionTable.competencies.header' | artemisTranslate"
+            [checked]="isCompetencySelected()"
+            (changed)="enableCompetency()"
         />
     </div>
 
-    <div class="lti-learning-path-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
+    <div class="lti-learning-path-selector flex items-center gap-2 px-4 pb-4">
+        <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
-        <input
-            [attr.aria-label]="'artemisApp.lti.contentSelectionTable.learningPaths.header' | artemisTranslate"
-            class="form-check-input"
-            type="checkbox"
-            (change)="enableLearningPath()"
-            [ngModel]="isLearningPathSelected()"
+        <tumaet-ui-checkbox
+            [ariaLabel]="'artemisApp.lti.contentSelectionTable.learningPaths.header' | artemisTranslate"
+            [checked]="isLearningPathSelected()"
+            (changed)="enableLearningPath()"
         />
     </div>
 
-    <div class="lti-iris-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
+    <div class="lti-iris-selector flex items-center gap-2 px-4 pb-4">
+        <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
-        <input
-            [attr.aria-label]="'artemisApp.lti.contentSelectionTable.iris.header' | artemisTranslate"
-            class="form-check-input"
-            type="checkbox"
-            (change)="enableIris()"
-            [ngModel]="isIrisSelected()"
-        />
+        <tumaet-ui-checkbox [ariaLabel]="'artemisApp.lti.contentSelectionTable.iris.header' | artemisTranslate" [checked]="isIrisSelected()" (changed)="enableIris()" />
     </div>
 
-    <div class="modal-footer">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-3">
         <div>
             @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected() || isLearningPathSelected() || isIrisSelected()) {
-                <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
+                <button type="submit" tumAetUiButton severity="success" (click)="sendDeepLinkRequest()">
+                    <span jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
                 </button>
             } @else {
-                <button type="submit" class="btn btn-success disabled">
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.selectToLink"></span>
+                <button type="submit" tumAetUiButton severity="success" disabled>
+                    <span jhiTranslate="artemisApp.lti13.deepLinking.selectToLink"></span>
                 </button>
             }
         </div>

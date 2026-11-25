@@ -35,7 +35,7 @@ let nextSummaryId = 0;
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
-    styleUrls: ['./delete-dialog.component.scss'],
+    styleUrls: ['./delete-dialog.component.css'],
     imports: [
         FormsModule,
         TranslateDirective,
@@ -75,6 +75,8 @@ export class DeleteDialogComponent implements OnInit {
     entitySummary = signal<EntitySummary | undefined>({});
     categorizedEntitySummary = signal<EntitySummaryCategory[] | undefined>(undefined);
     isLoadingSummary = signal(false);
+    // The summary lists two items per row (label and value each), but a table in which no category has a second item per row only needs one pair of columns
+    readonly summaryColumnCount = computed(() => (this.categorizedEntitySummary()?.some((category) => this.getItemPairs(category.items).some((pair) => pair.length > 1)) ? 4 : 2));
     // warn when the summary lists a lot of data, so nobody deletes an entity with much student work by accident
     readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedEntitySummary()));
 
