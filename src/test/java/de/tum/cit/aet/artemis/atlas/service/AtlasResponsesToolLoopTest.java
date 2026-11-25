@@ -2,12 +2,17 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.functionCall;
 import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.message;
+import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.reasoning;
 import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.response;
 import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.withUsage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -24,9 +29,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.session.CreateSessionRequest;
+import org.springframework.ai.session.DefaultSessionService;
+import org.springframework.ai.session.jdbc.JdbcSessionRepository;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.function.FunctionToolCallback;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 import com.openai.client.OpenAIClient;
 import com.openai.core.JsonField;
@@ -35,6 +52,7 @@ import com.openai.errors.OpenAIInvalidDataException;
 import com.openai.models.responses.Response;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseFunctionToolCall;
+import com.openai.models.responses.ResponseInputItem;
 import com.openai.models.responses.ResponseOutputItem;
 import com.openai.services.blocking.ResponseService;
 
@@ -43,7 +61,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 
 /**
- * Verifies Atlas orchestration, flavor stripping and per-response usage accounting over the Responses adapter.
+ * Verifies Atlas chat, orchestration, flavor stripping and per-response usage accounting over the Responses adapter.
  */
 @ExtendWith(MockitoExtension.class)
 class AtlasResponsesToolLoopTest {
@@ -57,6 +75,96 @@ class AtlasResponsesToolLoopTest {
     @BeforeEach
     void setUp() {
         lenient().when(openAIClient.responses()).thenReturn(responseService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void interactiveChatReplaysTextFromJdbcAndReadsOnlyRecentHistory(boolean useTool) {
+        EmbeddedDatabase database = new EmbeddedDatabaseBuilder().generateUniqueName(true).setType(EmbeddedDatabaseType.H2)
+                .addScript("classpath:org/springframework/ai/session/jdbc/schema-h2.sql").build();
+        try {
+            var jdbc = new HistoryReadCountingJdbcTemplate(database);
+            var repository = JdbcSessionRepository.builder().jdbcTemplate(jdbc).build();
+            var sessions = DefaultSessionService.builder().sessionRepository(repository).build();
+            String sessionId = "course_42_user_7";
+            sessions.findOrCreate(CreateSessionRequest.builder().id(sessionId).build());
+            for (int turn = 0; turn < 15; turn++) {
+                sessions.appendMessage(sessionId, new UserMessage("question " + turn));
+                sessions.appendMessage(sessionId, new AssistantMessage("answer " + turn));
+            }
+            // Exercise a turn with two replies and provider metadata stored by an earlier build.
+            String earlierReply = "earlier plan reply";
+            sessions.appendMessage(sessionId, AssistantMessage.builder().content(earlierReply)
+                    .properties(Map.of(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY, List.of(ResponseOutputItem.ofMessage(message(earlierReply))))).build());
+
+            var reasoning = reasoning("encrypted-reasoning");
+            var toolCall = functionCall();
+            var firstReply = response(List.of(ResponseOutputItem.ofMessage(message("first reply"))), "first-reply");
+            var followUpReply = response(List.of(ResponseOutputItem.ofMessage(message("follow-up reply"))), "follow-up-reply");
+            if (useTool) {
+                var toolRequest = response(List.of(ResponseOutputItem.ofReasoning(reasoning), ResponseOutputItem.ofFunctionCall(toolCall)), "tool-call");
+                when(responseService.create(any(ResponseCreateParams.class))).thenReturn(toolRequest, firstReply, followUpReply);
+            }
+            else {
+                when(responseService.create(any(ResponseCreateParams.class))).thenReturn(firstReply, followUpReply);
+            }
+
+            var templateService = mock(AtlasPromptTemplateService.class);
+            when(templateService.render(anyString(), anyMap())).thenReturn("System prompt");
+            var client = ChatClient.create(new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), "gpt-test"));
+            var service = new AtlasAgentDelegationService(client, client, client, templateService, sessions);
+            var lookup = FunctionToolCallback.<Map<String, Object>, String>builder("lookup", input -> "lookup result").inputType(Map.class).build();
+            var tools = ToolCallbackProvider.from(lookup);
+
+            assertThat(service.delegateToAgent("prompt", "first question", 42L, sessionId, true, tools)).isEqualTo("first reply");
+            assertThat(service.delegateToAgent("prompt", "follow-up question", 42L, sessionId, true, tools)).isEqualTo("follow-up reply");
+            // Each request reads 20 events plus the missing user message of the oldest turn.
+            assertThat(jdbc.historyReadSizes).containsExactly(20, 1, 20, 1);
+
+            var requests = ArgumentCaptor.forClass(ResponseCreateParams.class);
+            verify(responseService, times(useTool ? 3 : 2)).create(requests.capture());
+            List<ResponseInputItem> firstInput = requests.getAllValues().getFirst().input().orElseThrow().asResponse();
+            assertThat(firstInput).hasSize(23);
+            assertThat(firstInput.get(1).asEasyInputMessage().content().asTextInput()).isEqualTo("question 5");
+            assertThat(firstInput.get(21).asEasyInputMessage().content().asTextInput()).isEqualTo(earlierReply);
+            if (useTool) {
+                List<ResponseInputItem> continuation = requests.getAllValues().get(1).input().orElseThrow().asResponse();
+                assertThat(continuation.get(23).reasoning()).hasValue(reasoning);
+                assertThat(continuation.get(24).functionCall()).hasValue(toolCall);
+                assertThat(continuation.getLast().asFunctionCallOutput().callId()).hasValue("call-1");
+            }
+            List<ResponseInputItem> followUp = requests.getValue().input().orElseThrow().asResponse();
+            assertThat(followUp).hasSize(23).allSatisfy(item -> assertThat(item.easyInputMessage()).isPresent());
+            assertThat(followUp.get(21).asEasyInputMessage().content().asTextInput()).isEqualTo("first reply");
+            assertThat(followUp.getLast().asEasyInputMessage().content().asTextInput()).isEqualTo("follow-up question");
+
+            List<Message> stored = sessions.getMessages(sessionId);
+            assertThat(stored).hasSize(35);
+            assertThat(stored.get(30).getMetadata()).containsKey(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY);
+            assertThat(stored.subList(31, 35)).extracting(Message::getText).containsExactly("first question", "first reply", "follow-up question", "follow-up reply");
+            assertThat(stored.subList(31, 35)).allSatisfy(entry -> assertThat(entry.getMetadata()).doesNotContainKey(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY));
+        }
+        finally {
+            database.shutdown();
+        }
+    }
+
+    private static class HistoryReadCountingJdbcTemplate extends JdbcTemplate {
+
+        private final List<Integer> historyReadSizes = new ArrayList<>();
+
+        HistoryReadCountingJdbcTemplate(EmbeddedDatabase database) {
+            super(database);
+        }
+
+        @Override
+        public <T> List<T> query(String sql, RowMapper<T> rowMapper, Object... args) {
+            List<T> rows = super.query(sql, rowMapper, args);
+            if (sql.contains("FROM AI_SESSION_EVENT e")) {
+                historyReadSizes.add(rows.size());
+            }
+            return rows;
+        }
     }
 
     @Test

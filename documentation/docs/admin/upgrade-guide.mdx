@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-25
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -209,7 +209,7 @@ This release moves to Spring Boot 4.2, which renamed `server.forward-headers-str
 
 ### 10.8: Atlas Chat History in Spring AI Session Tables
 
-The chat agent of Atlas keeps its conversations in the session memory of Spring AI (`AI_SESSION`, `AI_SESSION_EVENT` and `AI_SESSION_INDEX`) now, because Spring AI deprecated its chat memory for removal. The migration creates the tables and copies the conversations of the former table `spring_ai_chat_memory` on PostgreSQL and MySQL, so no one loses a conversation. Nothing else changes for the instructors, apart from one thing: the history that the agent shows is no longer cut to the last 20 messages. The agent still reads a window of the last 20 messages when it answers. The window counts a tool call of the agent as a message and never cuts a turn in two, so a conversation in which the agent used tools keeps fewer messages.
+The Atlas chat agent stores conversation text in Spring AI session tables (`AI_SESSION`, `AI_SESSION_EVENT` and `AI_SESSION_INDEX`). The migration copies existing user and assistant messages from `spring_ai_chat_memory` on PostgreSQL and MySQL. Instructors see the full conversation. Each request loads the last 20 messages for the model and includes the start of the oldest turn when the window lands mid-turn. Tool calls and their results stay in memory for the duration of the request.
 
 The former table stays in the database and is not written any more. A later release drops it. The setting `spring.ai.chat.memory.max-messages` is not read any more. The sessions do not expire: a session has an expiry date ten years ahead, and nothing deletes sessions.
 

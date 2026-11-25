@@ -6,43 +6,45 @@ import java.util.Set;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.session.CreateSessionRequest;
 import org.springframework.ai.session.EventFilter;
 import org.springframework.ai.session.SessionEvent;
 import org.springframework.ai.session.SessionService;
 
 /**
- * How the Atlas chat agent keeps its conversations in the Spring AI session memory.
- * <p>
- * A session holds everything the model saw and said, including every tool call and its result. The prompt gets the whole of it, in a window of the last
- * {@link #PROMPT_HISTORY_EVENTS} events, see there. The conversation that a user sees consists of the messages of the user and the replies of the assistant only, so
- * {@link #conversation} leaves the tool calls and their results out.
+ * Stores the Atlas chat transcript and prepares the recent conversation text for a new turn.
  */
 final class AtlasChatSessions {
 
     /**
-     * The size of the window of the history that goes into the prompt of the chat agent: 20 was the size of the window of the chat memory before. The window of Spring AI counts
-     * events, every message of the user, of the assistant and every result of a tool, and it never cuts a turn in two. A conversation without tool calls therefore keeps its last
-     * 20 messages, and one with tool calls keeps fewer messages that a user reads: a turn with one tool call takes four events for two such messages.
+     * The prompt window size. Spring AI extends the window to the beginning of a turn when necessary.
      */
-    static final int PROMPT_HISTORY_EVENTS = 20;
+    private static final int PROMPT_HISTORY_MESSAGES = 20;
 
     private static final Set<MessageType> CONVERSATION_TYPES = Set.of(MessageType.USER, MessageType.ASSISTANT);
-
-    private static final Set<MessageType> PROMPT_TYPES = Set.of(MessageType.USER, MessageType.ASSISTANT, MessageType.TOOL);
 
     private AtlasChatSessions() {
         // utility class
     }
 
     /**
-     * The history that goes into the prompt: a window of the last {@link #PROMPT_HISTORY_EVENTS} events. Spring AI drops a tool call whose result is missing, and the other way
-     * round, and logs a warning for it, so the window takes the results with the calls: the model sees both or neither.
+     * Reads the prompt history once and records the incoming user message before invoking the model.
      *
-     * @return the filter of the history that the memory advisor reads
+     * @param sessionService the session memory
+     * @param sessionId      the required id of the conversation
+     * @param text           the incoming user message
+     * @return the recent conversation as plain text messages, in chronological order
      */
-    static EventFilter promptHistory() {
-        return EventFilter.builder().messageTypes(PROMPT_TYPES).lastN(PROMPT_HISTORY_EVENTS).build();
+    static List<Message> startTurn(SessionService sessionService, String sessionId, String text) {
+        sessionService.findOrCreate(CreateSessionRequest.builder().id(sessionId).build());
+        // The JDBC repository applies lastN in SQL for the log view. The active view loads the entire uncompacted log.
+        EventFilter filter = EventFilter.builder().messageTypes(CONVERSATION_TYPES).lastN(PROMPT_HISTORY_MESSAGES).build();
+        List<Message> history = conversation(sessionService, sessionId, filter).stream().map(AtlasChatSessions::plainText).toList();
+        if (!text.isBlank()) {
+            sessionService.appendMessage(sessionId, new UserMessage(text));
+        }
+        return history;
     }
 
     /**
@@ -53,7 +55,10 @@ final class AtlasChatSessions {
      * @return the messages, empty when the session does not exist
      */
     static List<Message> conversation(SessionService sessionService, String sessionId) {
-        EventFilter filter = EventFilter.builder().messageTypes(CONVERSATION_TYPES).build();
+        return conversation(sessionService, sessionId, EventFilter.builder().messageTypes(CONVERSATION_TYPES).build());
+    }
+
+    private static List<Message> conversation(SessionService sessionService, String sessionId, EventFilter filter) {
         return sessionService.getEvents(sessionId, filter).stream().filter(SessionEvent::hasMessage).map(SessionEvent::getMessage).filter(AtlasChatSessions::isConversationMessage)
                 .toList();
     }
@@ -73,5 +78,10 @@ final class AtlasChatSessions {
     private static boolean isConversationMessage(Message message) {
         // An assistant message that asks for tool calls is part of the tool loop, not of what the user reads
         return !(message instanceof AssistantMessage assistantMessage && assistantMessage.hasToolCalls());
+    }
+
+    private static Message plainText(Message message) {
+        // A session written by an earlier build can contain provider-specific metadata that JDBC decodes as plain maps.
+        return message instanceof AssistantMessage ? new AssistantMessage(message.getText()) : new UserMessage(message.getText());
     }
 }

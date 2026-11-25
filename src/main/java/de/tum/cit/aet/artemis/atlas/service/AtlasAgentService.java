@@ -175,8 +175,7 @@ public class AtlasAgentService {
                     response != null ? response.length() : 0);
 
             // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
-            // The current response was already added to chat memory by Spring AI's SessionMemoryAdvisor,
-            // so the index of the current response = count - 1. A blank response was not added, see replyIsPersisted.
+            // Delegation has already stored a nonblank response, so its index is count - 1.
             if (hasPreviewData && replyIsPersisted(response)) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;
                 log.debug("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
@@ -750,23 +749,21 @@ public class AtlasAgentService {
     }
 
     /**
-     * Counts the number of assistant messages currently in chat memory for the given session.
-     * Used to determine the index for storing preview data in the preview history cache.
-     *
-     * @param sessionId the session ID
-     * @return the count of assistant messages
-     */
-    /**
-     * Whether the reply of an agent that ran with the session memory is an assistant message of the session. The {@code SessionMemoryAdvisor} does not store a reply without
-     * text, so the previews of that request have no message to hang on: the index of the last assistant message would be the one of an earlier reply.
+     * Whether delegation stored a reply in the session. Blank replies have no preview index.
      *
      * @param reply the text of the reply of the agent
-     * @return true if the advisor stored the reply
+     * @return true if delegation stored the reply
      */
     private static boolean replyIsPersisted(@Nullable String reply) {
         return reply != null && !reply.isBlank();
     }
 
+    /**
+     * Counts the assistant messages in the session for indexing the preview history.
+     *
+     * @param sessionId the session ID
+     * @return the count of assistant messages
+     */
     private int countAssistantMessages(String sessionId) {
         if (sessionService == null) {
             return 0;

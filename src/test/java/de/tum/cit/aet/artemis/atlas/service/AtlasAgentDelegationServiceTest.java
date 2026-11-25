@@ -82,7 +82,6 @@ class AtlasAgentDelegationServiceTest {
 
         newService(true).delegateToAgent("/prompts/atlas/agent_system_prompt.st", "hi", 1L, "course_1_user_1", true, null);
 
-        // The SessionMemoryAdvisor reads history before and writes the user message and the reply during the round.
         assertThat(sessionService.getMessages("course_1_user_1")).extracting(Message::getText).containsExactly("hi", "reply");
     }
 

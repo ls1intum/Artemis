@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.session.CreateSessionRequest;
 import org.springframework.ai.session.DefaultSessionService;
 import org.springframework.ai.session.InMemorySessionRepository;
-import org.springframework.ai.session.SessionEvent;
 import org.springframework.ai.session.SessionService;
 
 class AtlasChatSessionsTest {
@@ -30,36 +30,28 @@ class AtlasChatSessionsTest {
     }
 
     @Test
-    void promptHistoryKeepsAToolCallTogetherWithItsResult() {
+    void startTurnReplaysPlainTextFromEarlierSessions() {
         appendTurnWithToolCall("List the competencies", "call-1", "Here are the competencies");
 
-        List<MessageType> types = promptHistoryTypes();
+        List<Message> history = AtlasChatSessions.startTurn(sessionService, SESSION_ID, "Follow-up");
 
-        assertThat(types).containsExactly(MessageType.USER, MessageType.ASSISTANT, MessageType.TOOL, MessageType.ASSISTANT);
+        assertThat(history).extracting(Message::getText).containsExactly("List the competencies", "Here are the competencies");
+        assertThat(history.getLast().getMetadata()).doesNotContainKey("provider-output");
+        assertThat(sessionService.getMessages(SESSION_ID).getLast().getText()).isEqualTo("Follow-up");
     }
 
     @Test
-    void promptHistoryWindowCountsEveryEventAndNeverSplitsAToolCall() {
-        for (int turn = 0; turn < 10; turn++) {
-            appendTurnWithToolCall("question " + turn, "call-" + turn, "answer " + turn);
-        }
-
-        List<MessageType> types = promptHistoryTypes();
-
-        assertThat(types).hasSizeLessThanOrEqualTo(AtlasChatSessions.PROMPT_HISTORY_EVENTS);
-        assertThat(types.stream().filter(type -> type == MessageType.TOOL).count()).isEqualTo(types.stream().filter(type -> type == MessageType.USER).count());
-        assertThat(types.getFirst()).isEqualTo(MessageType.USER);
-        assertThat(types.getLast()).isEqualTo(MessageType.ASSISTANT);
-    }
-
-    @Test
-    void promptHistoryOfAConversationWithoutToolCallsKeepsItsLastMessages() {
+    void startTurnReadsTheMostRecentMessagesInOrder() {
         for (int turn = 0; turn < 15; turn++) {
             sessionService.appendMessage(SESSION_ID, new UserMessage("question " + turn));
             sessionService.appendMessage(SESSION_ID, new AssistantMessage("answer " + turn));
         }
 
-        assertThat(promptHistoryTypes()).hasSize(AtlasChatSessions.PROMPT_HISTORY_EVENTS);
+        List<Message> history = AtlasChatSessions.startTurn(sessionService, SESSION_ID, "Next question");
+
+        assertThat(history).hasSize(20);
+        assertThat(history.getFirst().getText()).isEqualTo("question 5");
+        assertThat(history.getLast().getText()).isEqualTo("answer 14");
     }
 
     @Test
@@ -79,17 +71,12 @@ class AtlasChatSessionsTest {
         assertThat(AtlasChatSessions.conversation(sessionService, "course_9_user_9")).extracting(Message::getText).containsExactly("Hello");
     }
 
-    private List<MessageType> promptHistoryTypes() {
-        return sessionService.getEvents(SESSION_ID, AtlasChatSessions.promptHistory()).stream().filter(SessionEvent::hasMessage).map(event -> event.getMessage().getMessageType())
-                .toList();
-    }
-
     private void appendTurnWithToolCall(String question, String callId, String answer) {
         sessionService.appendMessage(SESSION_ID, new UserMessage(question));
         sessionService.appendMessage(SESSION_ID,
                 AssistantMessage.builder().toolCalls(List.of(new AssistantMessage.ToolCall(callId, "function", "getCourseCompetencies", "{}"))).build());
         sessionService.appendMessage(SESSION_ID,
                 ToolResponseMessage.builder().responses(List.of(new ToolResponseMessage.ToolResponse(callId, "getCourseCompetencies", "[]"))).build());
-        sessionService.appendMessage(SESSION_ID, new AssistantMessage(answer));
+        sessionService.appendMessage(SESSION_ID, AssistantMessage.builder().content(answer).properties(Map.of("provider-output", List.of(Map.of("text", answer)))).build());
     }
 }

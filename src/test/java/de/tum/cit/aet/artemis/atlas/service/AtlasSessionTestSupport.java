@@ -9,7 +9,7 @@ import org.springframework.ai.session.InMemorySessionRepository;
 import org.springframework.ai.session.SessionService;
 
 /**
- * Session memory for the Atlas unit tests: the real Spring AI session service on the in-memory repository, so that the advisors and the readers of the chat agent run
+ * Session memory for the Atlas unit tests: the real Spring AI session service on the in-memory repository, so that the writers and readers of the chat agent run
  * against a real conversation store instead of a mock.
  */
 final class AtlasSessionTestSupport {

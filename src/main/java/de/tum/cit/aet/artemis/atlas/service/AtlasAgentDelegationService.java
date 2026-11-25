@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -8,11 +9,11 @@ import org.springframework.ai.chat.client.AdvisorParams;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.model.tool.DefaultToolCallingManager;
 import org.springframework.ai.session.SessionService;
-import org.springframework.ai.session.advisor.SessionAdvisors;
-import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
@@ -30,13 +31,12 @@ import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
  * {@link AtlasAgentToolsService}) and the autonomous {@link CompetencyOrchestrationService} need to
  * ask the LLM for a response with a specific system prompt, an optional set of tool callbacks, and
  * optionally mutable state carried in a {@link org.springframework.ai.chat.model.ToolContext}. This
- * service is the single call site so the memory semantics, system-prompt breadcrumb, and client
- * mutation rules stay in one place:
+ * service is the single call site for memory, the system-prompt breadcrumb, and tool setup:
  * <ul>
  * <li>the chat flow renders its system prompt from a template, appends a course-id breadcrumb, and
- * — when a {@link SessionService} bean is configured and {@code saveToMemory} is {@code true} — wires in
- * a {@link SessionMemoryAdvisor} so the conversation history replays on every round, using the
- * {@code chat} preset;</li>
+ * — when a {@link SessionService} bean is configured and {@code saveToMemory} is {@code true} — reads
+ * recent conversation text once before invoking the {@code chat} preset. The tool advisor keeps the
+ * provider's live tool exchange and metadata for the duration of the request;</li>
  * <li>the orchestrator and worker flows supply an already-assembled system prompt, use the {@code orchestrator}
  * and {@code worker} presets, run with memory OFF so each round is a fresh call, and record each provider
  * response before usage is combined.</li>
@@ -99,14 +99,14 @@ public class AtlasAgentDelegationService {
 
     /**
      * Delegate a message to a chat agent: render the system prompt from {@code promptResourcePath},
-     * append the course-id breadcrumb, optionally attach the chat-memory advisor, and invoke the LLM
-     * with the chat-model deployment / temperature. Returns the assistant's text response.
+     * append the course-id breadcrumb, optionally load recent conversation text, and invoke the LLM.
+     * Returns the assistant's text response.
      *
      * @param promptResourcePath   classpath path to the system-prompt template (rendered with no variables)
      * @param message              the user-role message
      * @param courseId             the course id appended as a breadcrumb to the system prompt
-     * @param sessionId            the conversation id for the memory advisor
-     * @param saveToMemory         whether to attach the {@link SessionMemoryAdvisor} (chat: {@code true})
+     * @param sessionId            the conversation id for session memory
+     * @param saveToMemory         whether to read and store conversation text (chat: {@code true})
      * @param toolCallbackProvider optional provider of {@code @Tool}-annotated callbacks
      * @return the assistant's text response (never {@code null}; empty string when the model returned no content)
      */
@@ -116,8 +116,14 @@ public class AtlasAgentDelegationService {
 
         // The model cannot supply or override this course scope when using shared content read tools.
         Map<String, Object> toolContext = Map.of(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
-        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, saveToMemory, sessionId, toolContext, null, toolCallbackProvider);
-        return extractContent(chatResponse);
+        SessionService memory = saveToMemory ? sessionService : null;
+        List<Message> history = memory != null ? AtlasChatSessions.startTurn(memory, sessionId, message) : List.of();
+        ChatResponse chatResponse = invoke(chatClient, systemPromptWithContext, message, history, toolContext, null, toolCallbackProvider);
+        String reply = extractContent(chatResponse);
+        if (memory != null && !reply.isBlank()) {
+            memory.appendMessage(sessionId, new AssistantMessage(reply));
+        }
+        return reply;
     }
 
     /**
@@ -136,7 +142,7 @@ public class AtlasAgentDelegationService {
      */
     ChatResponse delegateOrchestratorRound(String systemPrompt, String userMessage, Map<String, Object> toolContextMap, Consumer<ChatResponse> usageRecorder,
             ToolCallbackProvider... toolCallbackProviders) {
-        return invoke(orchestratorClient, systemPrompt, userMessage, false, null, toolContextMap, usageRecorder, toolCallbackProviders);
+        return invoke(orchestratorClient, systemPrompt, userMessage, List.of(), toolContextMap, usageRecorder, toolCallbackProviders);
     }
 
     /**
@@ -152,24 +158,16 @@ public class AtlasAgentDelegationService {
      */
     ChatResponse delegateWorkerRound(String systemPrompt, String userMessage, Map<String, Object> toolContextMap, Consumer<ChatResponse> usageRecorder,
             ToolCallbackProvider... toolCallbackProviders) {
-        return invoke(workerClient, systemPrompt, userMessage, false, null, toolContextMap, usageRecorder, toolCallbackProviders);
+        return invoke(workerClient, systemPrompt, userMessage, List.of(), toolContextMap, usageRecorder, toolCallbackProviders);
     }
 
     /**
-     * Single shared invocation path: builds the (optionally memory-advised) client, assembles the
-     * request spec with options / tool context / tool callbacks, and returns the {@link ChatResponse}.
+     * Assembles a request with the supplied history and tools, then returns the {@link ChatResponse}.
      */
-    private ChatResponse invoke(ChatClient baseClient, String systemPrompt, String userMessage, boolean saveToMemory, @Nullable String sessionId,
-            @Nullable Map<String, Object> toolContextMap, @Nullable Consumer<ChatResponse> usageRecorder, @Nullable ToolCallbackProvider... toolCallbackProviders) {
+    private ChatResponse invoke(ChatClient client, String systemPrompt, String userMessage, List<Message> history, @Nullable Map<String, Object> toolContextMap,
+            @Nullable Consumer<ChatResponse> usageRecorder, @Nullable ToolCallbackProvider... toolCallbackProviders) {
         boolean autonomous = usageRecorder != null;
-        ChatClient.Builder clientBuilder = baseClient.mutate();
-        boolean withMemory = sessionService != null && saveToMemory;
-        if (withMemory) {
-            clientBuilder.defaultAdvisors(SessionMemoryAdvisor.builder(sessionService).eventFilter(AtlasChatSessions.promptHistory()).build());
-        }
-        ChatClient sessionClient = clientBuilder.build();
-
-        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPrompt).user(userMessage);
+        ChatClientRequestSpec promptSpec = client.prompt().system(systemPrompt).messages(history).user(userMessage);
 
         AtlasToolCallBudget budget = null;
         if (autonomous) {
@@ -183,11 +181,6 @@ public class AtlasAgentDelegationService {
             promptSpec = promptSpec.advisors(new AtlasTokenUsageAdvisor(usageRecorder, autonomousToolCallingAdvisor.getOrder()));
         }
 
-        if (withMemory) {
-            // The advisor has no session of its own (GHSA-q62f-h9x2-gcqc): the per-(course,user) session id must be supplied on every request,
-            // and a request without one fails instead of sharing a session by accident.
-            promptSpec = promptSpec.advisors(SessionAdvisors.session(sessionId));
-        }
         if (toolContextMap != null) {
             promptSpec = promptSpec.toolContext(toolContextMap);
         }
