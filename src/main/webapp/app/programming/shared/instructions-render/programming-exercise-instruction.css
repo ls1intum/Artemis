@@ -46,6 +46,13 @@
     animation: fadeInUp 0.5s ease-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .empty-state-content {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .empty-state-icon {
     color: var(--secondary);
     opacity: 0.5;

@@ -4,7 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-24
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -150,14 +150,13 @@ shows it live: resize it, switch the theme and sort the columns. Pages assemble 
 ### Anatomy
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]  │ toolbar    40px, sticky
-│ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions     │ header     30px, sticky
-│ ☐  1037   aturing37  Alan Turing  …                                      │ rows       36px
-│ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕  │ body       scrolls, also sideways
-├──────────────────────────────────────────────────────────────────────────┤
-│ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »     │ footer     40px, sticky
-└──────────────────────────────────────────────────────────────────────────┘
+ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]    toolbar    40px, sticky
+──────────────────────────────────────────────────────────────────────────
+ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions       header     30px, sticky
+ ☐  1037   aturing37  Alan Turing  …                                        rows       36px
+ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕    body       scrolls, also sideways
+──────────────────────────────────────────────────────────────────────────
+ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »       footer     40px, sticky
 ```
 
 | Part    | Size               | Rules                                                                                                                     |
@@ -167,12 +166,14 @@ shows it live: resize it, switch the theme and sort the columns. Pages assemble 
 | Body    | rows of about 36px | The only part that scrolls, vertically and horizontally. Striping and row hover are optional.                             |
 | Footer  | at most 40px       | One line. Range and total on the left, page size and pager on the right. Omit it for lists shown completely.              |
 
-Inside the frame, the tinted header (`--tumaet-ui-table-header-background`) and the frame itself set the table apart, so
-there is no rule below the header or below the last row. A table outside a frame keeps both rules. A table with a `<tfoot>`
-draws a heavier rule above its footer cells instead of below the last row. A sortable header cell changes to
-`--tumaet-ui-table-header-hover-background` on hover, which differs from the row hover in both themes.
+The table has no border of its own: it sits flat on the panel of its page, and the controls of the toolbar start where the
+table starts, with 8px of air between the toolbar and the header. The tinted header
+(`--tumaet-ui-table-header-background`) sets it apart and has rounded outer corners, so there is no rule below the header or below the last row. A table
+outside the layout keeps both rules. A table with a `<tfoot>` draws a heavier rule above its footer cells instead of below the last
+row. A sortable header cell changes to `--tumaet-ui-table-header-hover-background` on hover, which differs from the row hover in both
+themes.
 
-The frame is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
+The table is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
 leaves no empty area, and a long one keeps toolbar and footer in view whatever sits above it.
 
 ### Responsive behaviour
