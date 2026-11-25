@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Render the 60-second trailers of the Artemis programming exercise module.
+"""Render the 60-second trailers of the Artemis modules.
 
 The trailers are built from the documentation screenshots, title cards and short motion graphics.
-There are two cuts: one for students (focus on fast, interactive feedback) and one for instructors.
+Each module has a student and/or an instructor cut. The programming exercise storyboards live in this file;
+every other module is a file `storyboards/<module>.py` that is found automatically (see README.md).
 
 Usage:
-    python3 supporting_scripts/trailer/render_trailer.py [--cut student|instructor|all] [--out DIR]
-        [--font PATH] [--mono PATH]
+    python3 supporting_scripts/trailer/render_trailer.py [--module NAME|all] [--cut student|instructor|all]
+        [--out DIR] [--font PATH] [--mono PATH]
     python3 supporting_scripts/trailer/render_trailer.py --cut student --preview 6,12.5,30
 
 See README.md in this directory for the requirements.
 """
 
 import argparse
+import importlib
 import math
+import pkgutil
 import shutil
 import subprocess
 import sys
@@ -1126,17 +1129,31 @@ def instructor():
     ]
 
 
-def render(cut, out, preview):
-    scenes = student() if cut == "student" else instructor()
+def load_modules():
+    """Return {module: {cut: (storyboard function, default video path)}}.
+
+    The programming exercise module is defined here. Every file in `storyboards/` defines `CUTS` with the same
+    shape and is registered under its file name.
+    """
+    modules = {"programming": {"student": (student, VIDEO_PATHS["student"]), "instructor": (instructor, VIDEO_PATHS["instructor"])}}
+    package = Path(__file__).parent / "storyboards"
+    for info in pkgutil.iter_modules([str(package)]):
+        modules[info.name.replace("_", "-")] = importlib.import_module(f"storyboards.{info.name}").CUTS
+    return modules
+
+
+def render(module, cut, storyboard, default_mp4, out, preview):
+    scenes = storyboard()
+    label = f"{module}/{cut}"
     if preview:
         out = out or REPO / "build" / "trailers"
         out.mkdir(parents=True, exist_ok=True)
         for ts in preview:
-            path = out / f"preview-{cut}-{ts:05.2f}.png"
+            path = out / f"preview-{module}-{cut}-{ts:05.2f}.png"
             frame_at(ts, scenes).resize((960, 540)).save(path)
             print(path)
         return
-    mp4 = out / f"artemis-programming-exercises-{cut}.mp4" if out else VIDEO_PATHS[cut]
+    mp4 = out / f"artemis-{module}-{cut}.mp4" if out else default_mp4
     mp4.parent.mkdir(parents=True, exist_ok=True)
     # CRF 30 with the animation tuning keeps the screenshot text sharp at about 5 MB per trailer.
     # The flat backgrounds and slow camera moves compress well, so a higher quality barely shows.
@@ -1151,15 +1168,17 @@ def render(cut, out, preview):
     for i in range(total):
         ff.stdin.write(frame_at(i / FPS, scenes).tobytes())
         if i % 300 == 0:
-            print(f"{cut}: frame {i}/{total}", flush=True)
+            print(f"{label}: frame {i}/{total}", flush=True)
     ff.stdin.close()
     if ff.wait() != 0:
-        sys.exit(f"ffmpeg failed for the {cut} trailer")
-    print(f"{cut}: {mp4} ({mp4.stat().st_size // 1000} kB)")
+        sys.exit(f"ffmpeg failed for the {label} trailer")
+    print(f"{label}: {mp4} ({mp4.stat().st_size // 1000} kB)")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    modules = load_modules()
+    parser.add_argument("--module", choices=[*modules, "all"], default="all")
     parser.add_argument("--cut", choices=["student", "instructor", "all"], default="all")
     parser.add_argument(
         "--out", type=Path, help="output directory; by default the videos replace the ones the documentation embeds"
@@ -1175,9 +1194,17 @@ def main():
     if not args.preview and shutil.which("ffmpeg") is None:
         sys.exit("ffmpeg is required to encode the trailers.")
     preview = [float(t) for t in args.preview.split(",")] if args.preview else None
-    for cut in ["student", "instructor"] if args.cut == "all" else [args.cut]:
-        render(cut, args.out, preview)
+    selected = modules if args.module == "all" else {args.module: modules[args.module]}
+    rendered = 0
+    for module, cuts in selected.items():
+        for cut, (storyboard, default_mp4) in cuts.items():
+            if args.cut in ("all", cut):
+                render(module, cut, storyboard, default_mp4, args.out, preview)
+                rendered += 1
+    if rendered == 0:
+        sys.exit(f"The module {args.module} has no {args.cut} cut.")
 
 
 if __name__ == "__main__":
-    main()
+    # Run the imported module so that storyboards, which import render_trailer, share its state (fonts, caches).
+    importlib.import_module("render_trailer").main()

@@ -1,7 +1,7 @@
-# Programming exercise trailers
+# Module trailers
 
-`render_trailer.py` renders two 60-second trailers (1920×1080, 30 fps, without sound) of
-the programming exercise module:
+`render_trailer.py` renders 60-second trailers (1920×1080, 30 fps, without sound) of Artemis modules. Each module
+has a student and/or an instructor cut. The programming exercise module has both:
 
 - **student**: coding in the online editor, automatic feedback on every push, AI feedback, Iris, working
   in your own IDE, practice mode and exams.
@@ -35,8 +35,11 @@ python3 -m venv .venv-trailer
 ## Render
 
 ```bash
-# Both cuts, replacing the videos the documentation embeds (takes about two minutes)
+# All modules and cuts, replacing the videos the documentation embeds (about two minutes per cut)
 .venv-trailer/bin/python supporting_scripts/trailer/render_trailer.py
+
+# One module
+.venv-trailer/bin/python supporting_scripts/trailer/render_trailer.py --module programming
 
 # One cut into another directory, for example to share it
 .venv-trailer/bin/python supporting_scripts/trailer/render_trailer.py --cut student --out ~/Downloads
@@ -68,6 +71,27 @@ The storyboards are the functions `student()` and `instructor()`. Each scene is 
 Choose crops so that every frame where the camera rests, and the last frame of a scene, shows whole rows,
 headings and controls. A crop that cuts through a line of text looks like a mistake. To find the fractions,
 draw a grid over the screenshot or measure it in an image editor.
+
+## Add a module
+
+Create `storyboards/<module>.py` (underscores in the file name become hyphens in the module name). It is found
+automatically, so no other file changes. The file imports what it needs from `render_trailer` (`WHITE`, `ACCENT`,
+`ease_io5`, `DOCS`, ...), defines one storyboard function per cut and lists them in `CUTS`:
+
+```python
+from pathlib import Path
+
+from render_trailer import ACCENT, DOCS, WHITE
+
+def student():
+    return [dict(kind="kinetic", start=0, end=4.5, ...), ...]
+
+CUTS = {"student": (student, Path(DOCS) / "student" / "..." / "assets" / "trailer-student.mp4")}
+```
+
+The scenes follow the rules of [Change a trailer](#change-a-trailer) and add up to 60 seconds. Render the module
+with `--module <module>` and embed the videos in the documentation pages of the module. Name the videos
+`trailer-student.mp4` and `trailer-instructor.mp4` in the `assets` folder next to those pages.
 
 ## Keep the trailers up to date
 
