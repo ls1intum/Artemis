@@ -247,11 +247,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
-        CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
+        CourseScoresDTO textScores = courseForDashboard.textScores();
 
-        assertThat(totalCourseScores.maxPoints()).isGreaterThan(0.0);
-        assertThat(totalCourseScores.reachablePoints()).isGreaterThan(0.0);
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isGreaterThan(0.0);
+        assertThat(textScores.maxPoints()).isEqualTo(5.0);
+        assertThat(textScores.reachablePoints()).isZero();
+        assertThat(textScores.studentScores().absoluteScore()).isEqualTo(0.6);
+        assertThat(textScores.studentScores().absoluteScoreTotal()).isEqualTo(0.6);
+        assertThat(textScores.studentScores().relativeScore()).isEqualTo(12.0);
+        assertThat(textScores.studentScores().currentRelativeScore()).isZero();
     }
 
     @Test
