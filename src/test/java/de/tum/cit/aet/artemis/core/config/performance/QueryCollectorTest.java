@@ -2,10 +2,16 @@ package de.tum.cit.aet.artemis.core.config.performance;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Method;
+import java.sql.PreparedStatement;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -228,6 +234,52 @@ class QueryCollectorTest {
 
         assertThat(QueryListener.parameterSignature(rawSql, List.of(List.of(firstIsTwo, secondIsOne)))).isNotEqualTo(bound);
         assertThat(QueryListener.parameterSignature(rawSql, List.of(List.of(secondIsTwo, firstIsOne)))).isEqualTo(bound);
+    }
+
+    /** The parameters of one statement with two {@code setLong(index, value)} calls. */
+    private static List<List<ParameterSetOperation>> twoLongs(long first, long second) {
+        return List.of(List.of(new ParameterSetOperation(null, new Object[] { 1, first }), new ParameterSetOperation(null, new Object[] { 2, second })));
+    }
+
+    @Test
+    void parameterSignatureSeparatesNeighbouringIdsThatAWeightedSumWouldMerge() {
+        String rawSql = "select * from participation where exercise_id=? and student_id=?";
+
+        // 31 * 1 + 32 == 31 * 2 + 1, and 31 * 100 + 200 == 31 * 101 + 169
+        assertThat(QueryListener.parameterSignature(rawSql, twoLongs(1, 32))).isNotEqualTo(QueryListener.parameterSignature(rawSql, twoLongs(2, 1)));
+        assertThat(QueryListener.parameterSignature(rawSql, twoLongs(100, 200))).isNotEqualTo(QueryListener.parameterSignature(rawSql, twoLongs(101, 169)));
+
+        long[] signatures = LongStream.range(0, 200).flatMap(first -> LongStream.range(0, 200).map(second -> QueryListener.parameterSignature(rawSql, twoLongs(first, second))))
+                .distinct().toArray();
+        assertThat(signatures).hasSize(200 * 200);
+    }
+
+    @Test
+    void parameterSignatureTellsTypesSettersAndBatchesApart() throws NoSuchMethodException {
+        String rawSql = "update participation set due_date=? where id=?";
+        Method setInt = PreparedStatement.class.getMethod("setInt", int.class, int.class);
+        Method setNull = PreparedStatement.class.getMethod("setNull", int.class, int.class);
+
+        assertThat(QueryListener.parameterSignature(rawSql, parameter(1))).isNotEqualTo(QueryListener.parameterSignature(rawSql, parameter(1L)));
+        assertThat(QueryListener.parameterSignature(rawSql, parameter("1"))).isNotEqualTo(QueryListener.parameterSignature(rawSql, parameter(1)));
+        assertThat(QueryListener.parameterSignature(rawSql, List.of(List.of(new ParameterSetOperation(setInt, new Object[] { 1, 4 })))))
+                .isNotEqualTo(QueryListener.parameterSignature(rawSql, List.of(List.of(new ParameterSetOperation(setNull, new Object[] { 1, 4 })))));
+        List<ParameterSetOperation> first = parameter(1L).getFirst();
+        List<ParameterSetOperation> second = parameter(2L).getFirst();
+        assertThat(QueryListener.parameterSignature(rawSql, List.of(first, second))).isNotEqualTo(QueryListener.parameterSignature(rawSql, List.of(second, first)))
+                .isNotEqualTo(QueryListener.parameterSignature(rawSql, List.of(first)));
+    }
+
+    @Test
+    void parameterSignatureUsesOnlyTheTimeZoneOfACalendar() {
+        String rawSql = "select * from exam where start_date=?";
+        Calendar earlier = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        earlier.setTimeInMillis(1_000);
+        Calendar later = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        later.setTimeInMillis(2_000);
+
+        assertThat(QueryListener.parameterSignature(rawSql, parameter(earlier))).isEqualTo(QueryListener.parameterSignature(rawSql, parameter(later)))
+                .isNotEqualTo(QueryListener.parameterSignature(rawSql, parameter(new GregorianCalendar(TimeZone.getTimeZone("Europe/Berlin")))));
     }
 
     @Test
