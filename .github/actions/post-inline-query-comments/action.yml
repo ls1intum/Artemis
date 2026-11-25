@@ -1,0 +1,39 @@
+name: 'Post inline query comments'
+description: >-
+  Posts the new query findings of the report as review comments on the lines of code that cause them, and
+  updates or removes the ones of earlier runs (see .github/scripts/post-inline-query-comments.js).
+  A convenience on top of the summary comment: a GitHub API failure must not fail the job, so call it with
+  continue-on-error.
+
+inputs:
+  pr-number:
+    description: 'Number of the pull request'
+    required: true
+  tested-sha:
+    description: 'Commit the E2E run tested. Comments are only touched while it is still the head of the pull request.'
+    required: true
+  remove-stale:
+    description: 'Remove the comments of findings that are gone. Only a run of all tests can tell, so a partial phase leaves them.'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        INPUT_PR_NUMBER: ${{ inputs.pr-number }}
+        TESTED_SHA: ${{ inputs.tested-sha }}
+        REMOVE_STALE: ${{ inputs.remove-stale }}
+      with:
+        script: |
+          const prNumber = Number(process.env.INPUT_PR_NUMBER);
+          if (!prNumber) return;
+          const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
+          const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+          const result = await postInlineQueryComments({
+            github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
+            commentsPath: 'query-inline-comments.json',
+            removeStale: process.env.REMOVE_STALE === 'true',
+          });
+          core.info(`Inline query comments: ${JSON.stringify(result)}`);

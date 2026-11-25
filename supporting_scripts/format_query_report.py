@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-format_slow_query_report.py
+format_query_report.py
 ---------------------------
-Turns the JSON produced by GET /api/admin/performance/slow-queries (plus, optionally, the
+Turns the JSON produced by GET /api/admin/performance/query-report (plus, optionally, the
 static findings of find_slow_queries.py) into
   * a GitHub-flavored Markdown summary for the PR comment (stdout), and
   * a self-contained, sortable HTML report with every finding (the CI artifact).
@@ -13,7 +13,7 @@ are marked new, and the PR comment lists only those (a single line when there ar
 --keys-out writes this run's keys, which is what a develop run uploads as the next baseline.
 
 Usage:
-    python3 format_slow_query_report.py slow-query-report.json [run_url] [html_output_path] [static_findings.json]
+    python3 format_query_report.py query-report.json [run_url] [html_output_path] [static_findings.json]
         [--baseline baseline-keys.json] [--keys-out keys.json] [--inline-out inline-comments.json] [--phase phase1|phase2|all]
 """
 
@@ -25,18 +25,13 @@ import re
 import sys
 from datetime import timezone, datetime
 
+from find_slow_queries import RULE_LABELS
+
 # GitHub caps issue/PR comment bodies at 65536 characters; the HTML artifact has everything.
 MAX_ROWS_PER_SECTION = 20
 MAX_OCCURRENCES_SHOWN = 15
 
-STATIC_RULE_LABELS = {
-    "repository_call_in_loop": "Repository call in a loop",
-    "multiple_collection_fetch": "Several collections fetched in one query",
-    "pageable_collection_fetch": "Collection fetched in a paged query",
-    "eager_to_many": "EAGER to-many association",
-    "wide_join_fetch": "More than 5 JOIN FETCHes in one @Query",
-    "wide_entitygraph": "More than 5 @EntityGraph attribute paths",
-}
+STATIC_RULE_LABELS = RULE_LABELS
 
 
 # ---------------------------------------------------------------------------
@@ -534,11 +529,11 @@ def build_report(report: dict, groups: list, static_findings: list, baseline: di
     link = f"Full report: {artifact_link(run_url)}."
     if baseline is None:
         return "\n".join(["", "---", f"**ℹ️ {title}:** no develop baseline is available yet, so findings are not classified as new. {link}", "",
-                          "<!-- Slow Query Report -->"])
+                          "<!-- Query Report -->"])
     new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")], report.get("indexes") or {}))
     new_static = [f for f in static_findings if f.get("is_new")]
     if not new_problems and not new_static:
-        return "\n".join(["", "---", f"**✅ {title}:** no new query anti-patterns compared to develop. {link}", "", "<!-- Slow Query Report -->"])
+        return "\n".join(["", "---", f"**✅ {title}:** no new query anti-patterns compared to develop. {link}", "", "<!-- Query Report -->"])
 
     status = (f"{len(new_problems)} new repeated-query problem{'' if len(new_problems) == 1 else 's'} · "
               f"{len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
@@ -557,7 +552,7 @@ def build_report(report: dict, groups: list, static_findings: list, baseline: di
               "🔍 means a static rule flags that same code. A finding is identified by its shape, endpoint, issuing code and query — not by the test or the "
               "repetition count, which depend on how much data a test creates.", "",
               "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance) for remediation patterns.", "", "</details>", "",
-              "<!-- Slow Query Report -->"]
+              "<!-- Query Report -->"]
     return "\n".join(lines)
 
 

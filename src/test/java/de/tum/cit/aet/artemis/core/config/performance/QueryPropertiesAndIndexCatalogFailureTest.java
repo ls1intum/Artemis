@@ -15,11 +15,11 @@ import org.junit.jupiter.api.Test;
 /**
  * Covers the configuration defaults and what the index catalog does when the database cannot be read.
  */
-class SlowQueryPropertiesAndIndexCatalogFailureTest {
+class QueryPropertiesAndIndexCatalogFailureTest {
 
     @Test
     void limitCanBeConfiguredAndDefaultsToTenThousandEntries() {
-        SlowQueryProperties properties = new SlowQueryProperties();
+        QueryProperties properties = new QueryProperties();
         assertThat(properties.getMaxRecordedQueries()).isEqualTo(10_000);
 
         properties.setMaxRecordedQueries(7);

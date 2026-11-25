@@ -68,7 +68,7 @@ public record QueryCallSite(String repositoryMethod, String callerMethod, String
     private static final String APP_PACKAGE = "de.tum.cit.aet.artemis.";
 
     /** The detector's own frames between the JDBC driver and the application code. */
-    private static final Set<Class<?>> DETECTOR_CLASSES = Set.of(QueryCallSite.class, SlowQueryListener.class, SlowQueryCollector.class);
+    private static final Set<Class<?>> DETECTOR_CLASSES = Set.of(QueryCallSite.class, QueryListener.class, QueryCollector.class);
 
     private static final StackWalker WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 

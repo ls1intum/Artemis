@@ -85,11 +85,11 @@ public class IndexCatalog {
                     result.put(table.toLowerCase(Locale.ROOT), tableIndexes);
                 }
             }
-            log.info("[SlowQuery] Read {} indexes of {} tables", result.values().stream().mapToInt(List::size).sum(), result.size());
+            log.info("[QueryReport] Read {} indexes of {} tables", result.values().stream().mapToInt(List::size).sum(), result.size());
             return result;
         }
         catch (SQLException e) {
-            log.warn("[SlowQuery] Could not read the database indexes; the report will not say which queries are indexed", e);
+            log.warn("[QueryReport] Could not read the database indexes; the report will not say which queries are indexed", e);
             return Map.of();
         }
     }

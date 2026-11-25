@@ -37,7 +37,7 @@ const PREWARM_ROUTES = [
 
 const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
 
-// The headers the repeated-query detector reads. Lower case on purpose: `Request.headers()` returns lower-cased
+// The headers the query detector reads. Lower case on purpose: `Request.headers()` returns lower-cased
 // names, so an override spelled differently would be added next to the existing entry and joined into `"setup, action"`.
 const PLAYWRIGHT_TEST_NAME_HEADER = 'x-playwright-test-name';
 const PLAYWRIGHT_PHASE_HEADER = 'x-playwright-phase';

@@ -12,25 +12,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.core.config.performance.IndexCatalog;
-import de.tum.cit.aet.artemis.core.config.performance.SlowQueryCollector;
-import de.tum.cit.aet.artemis.core.config.performance.SlowQueryProperties;
+import de.tum.cit.aet.artemis.core.config.performance.QueryCollector;
+import de.tum.cit.aet.artemis.core.config.performance.QueryProperties;
 import de.tum.cit.aet.artemis.core.config.performance.TableIndex;
 
 /**
  * Covers what the admin endpoint returns.
  */
-class AdminSlowQueryReportResourceTest {
+class AdminQueryReportResourceTest {
 
-    private SlowQueryCollector collector;
+    private QueryCollector collector;
 
-    private AdminSlowQueryReportResource resource;
+    private AdminQueryReportResource resource;
 
     @BeforeEach
     void setUp() {
-        collector = new SlowQueryCollector(new SlowQueryProperties());
+        collector = new QueryCollector(new QueryProperties());
         IndexCatalog indexCatalog = mock(IndexCatalog.class);
         when(indexCatalog.indexes()).thenReturn(Map.of("participation", List.of(new TableIndex("pk", List.of("id")))));
-        resource = new AdminSlowQueryReportResource(collector, indexCatalog);
+        resource = new AdminQueryReportResource(collector, indexCatalog);
     }
 
     private void recordRepeatedQuery() {

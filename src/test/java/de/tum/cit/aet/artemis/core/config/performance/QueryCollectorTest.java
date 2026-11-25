@@ -18,7 +18,7 @@ import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
  * Covers the repeated-query shapes the collector derives per request: N+1 (same template,
  * different parameters) and duplicate (same statement, same parameters).
  */
-class SlowQueryCollectorTest {
+class QueryCollectorTest {
 
     private static final String SQL = "select * from participation where exercise_id=?";
 
@@ -26,11 +26,11 @@ class SlowQueryCollectorTest {
 
     private static final QueryCallSite SITE = new QueryCallSite("ParticipationRepository.findByExerciseId", "CourseStatsService.calculate");
 
-    private SlowQueryCollector collector;
+    private QueryCollector collector;
 
     @BeforeEach
     void setUp() {
-        collector = new SlowQueryCollector(new SlowQueryProperties());
+        collector = new QueryCollector(new QueryProperties());
     }
 
     private void query(String sql, long signature, Supplier<QueryCallSite> site) {
@@ -206,16 +206,15 @@ class SlowQueryCollectorTest {
     @Test
     void parameterSignatureSeparatesValuesAndMatchesEqualOnes() {
         String rawSql = "select * from participation where exercise_id=?";
-        long first = SlowQueryListener.parameterSignature(rawSql, parameter(7L));
+        long first = QueryListener.parameterSignature(rawSql, parameter(7L));
 
-        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(7L))).isEqualTo(first);
-        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(8L))).isNotEqualTo(first);
+        assertThat(QueryListener.parameterSignature(rawSql, parameter(7L))).isEqualTo(first);
+        assertThat(QueryListener.parameterSignature(rawSql, parameter(8L))).isNotEqualTo(first);
         // array values are compared by content, not identity
-        assertThat(SlowQueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 })))
-                .isEqualTo(SlowQueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 })));
+        assertThat(QueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 }))).isEqualTo(QueryListener.parameterSignature(rawSql, parameter(new byte[] { 1, 2 })));
         // literals inlined by Hibernate are part of the raw SQL, so they distinguish statements too
-        assertThat(SlowQueryListener.parameterSignature("select * from course where id=1", List.of()))
-                .isNotEqualTo(SlowQueryListener.parameterSignature("select * from course where id=2", List.of()));
+        assertThat(QueryListener.parameterSignature("select * from course where id=1", List.of()))
+                .isNotEqualTo(QueryListener.parameterSignature("select * from course where id=2", List.of()));
     }
 
     @Test
@@ -225,22 +224,22 @@ class SlowQueryCollectorTest {
         ParameterSetOperation secondIsTwo = new ParameterSetOperation(null, new Object[] { 2, 2L });
         ParameterSetOperation firstIsTwo = new ParameterSetOperation(null, new Object[] { 1, 2L });
         ParameterSetOperation secondIsOne = new ParameterSetOperation(null, new Object[] { 2, 1L });
-        long bound = SlowQueryListener.parameterSignature(rawSql, List.of(List.of(firstIsOne, secondIsTwo)));
+        long bound = QueryListener.parameterSignature(rawSql, List.of(List.of(firstIsOne, secondIsTwo)));
 
-        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(List.of(firstIsTwo, secondIsOne)))).isNotEqualTo(bound);
-        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(List.of(secondIsTwo, firstIsOne)))).isEqualTo(bound);
+        assertThat(QueryListener.parameterSignature(rawSql, List.of(List.of(firstIsTwo, secondIsOne)))).isNotEqualTo(bound);
+        assertThat(QueryListener.parameterSignature(rawSql, List.of(List.of(secondIsTwo, firstIsOne)))).isEqualTo(bound);
     }
 
     @Test
     void normalizationCollapsesValueListsButKeepsSubqueries() {
-        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (1, 2, 3)")).isEqualTo("select id from t where id IN (?)");
-        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (?, ?)")).isEqualTo("select id from t where id IN (?)");
+        assertThat(QueryListener.normalizeSql("select id from t where id in (1, 2, 3)")).isEqualTo("select id from t where id IN (?)");
+        assertThat(QueryListener.normalizeSql("select id from t where id in (?, ?)")).isEqualTo("select id from t where id IN (?)");
 
-        String fromA = SlowQueryListener.normalizeSql("select id from t where id in (select id from a)");
-        String fromB = SlowQueryListener.normalizeSql("select id from t where id in (select id from b)");
+        String fromA = QueryListener.normalizeSql("select id from t where id in (select id from a)");
+        String fromB = QueryListener.normalizeSql("select id from t where id in (select id from b)");
         assertThat(fromA).isEqualTo("select id from t where id in (select id from a)");
         assertThat(fromA).isNotEqualTo(fromB);
-        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (select max(id) from a where x in (4, 5))"))
+        assertThat(QueryListener.normalizeSql("select id from t where id in (select max(id) from a where x in (4, 5))"))
                 .isEqualTo("select id from t where id in (select max(id) from a where x IN (?))");
     }
 
@@ -260,9 +259,9 @@ class SlowQueryCollectorTest {
 
     @Test
     void reportIsOnlyTruncatedAfterAFindingWasDropped() {
-        SlowQueryProperties properties = new SlowQueryProperties();
+        QueryProperties properties = new QueryProperties();
         properties.setMaxRecordedQueries(1);
-        collector = new SlowQueryCollector(properties);
+        collector = new QueryCollector(properties);
 
         query(SQL, 1);
         query(SQL, 2);
@@ -286,13 +285,13 @@ class SlowQueryCollectorTest {
     @Test
     void testNameHeaderIsPercentDecoded() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        assertThat(SlowQueryRequestFilter.testName(request)).isNull();
+        assertThat(QueryRequestFilter.testName(request)).isNull();
 
-        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "Dismiss%20reasoning%20%E2%9C%95%20closes%20card%20%2B%20more");
-        assertThat(SlowQueryRequestFilter.testName(request)).isEqualTo("Dismiss reasoning ✕ closes card + more");
+        request.addHeader(QueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "Dismiss%20reasoning%20%E2%9C%95%20closes%20card%20%2B%20more");
+        assertThat(QueryRequestFilter.testName(request)).isEqualTo("Dismiss reasoning ✕ closes card + more");
 
         MockHttpServletRequest malformed = new MockHttpServletRequest();
-        malformed.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "100%");
-        assertThat(SlowQueryRequestFilter.testName(malformed)).isEqualTo("100%");
+        malformed.addHeader(QueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "100%");
+        assertThat(QueryRequestFilter.testName(malformed)).isEqualTo("100%");
     }
 }
