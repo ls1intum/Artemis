@@ -2,7 +2,7 @@
 id: coding-agents
 title: Working with Coding Agents
 sidebar_label: Coding Agents
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -65,6 +65,7 @@ when it was last used. Click **Revoke** to stop a token immediately.
 | Post announcements                                | Post an announcement to the course                                                                  | instructor                        |
 | Create and edit unpublished exercises             | Create and update text and modeling exercises                                                       | editor                            |
 | Create and edit unpublished programming exercises | Create programming exercises; update their settings, dates, problem statement and test case weights | editor                            |
+| Clone and push programming repositories           | Clone the template, solution, tests and auxiliary repositories with git; push while unpublished     | editor                            |
 | Create and edit lectures and slides               | Create lectures, add units with slides, read the processing status                                  | editor                            |
 
 ## What stays in your hands
@@ -74,7 +75,8 @@ Some things are deliberately not available to an agent, however it is configured
 - **Publishing now.** Exercises and lecture units that an agent creates must have a release date in the future, so
   students cannot see them yet. An agent can also change only content that is still unpublished. A release date
   schedules publication: review the content before that date, and change the date in the Artemis web interface if you
-  need more time. Programming exercises additionally must have no student participations.
+  need more time. Programming exercises additionally must have no student participations. This holds for a push with
+  git as well: a push is refused as soon as the exercise is visible to students or has participations.
 - **Deleting.** An agent can create and change competencies, relations, exercises and units, but not delete them.
 - **Grades, exams and student data.** No scope covers them.
 
@@ -115,6 +117,10 @@ claude mcp add --transport http artemis "$ARTEMIS_URL/api/core/agent/mcp" --head
 Other agents and applications have their own way to add a remote MCP server; look for the option that takes a server
 address and a bearer token or header.
 
+Artemis speaks revision 2026-07-28 of the protocol and no earlier one. If your agent is too old, the connection fails with
+the message that Artemis supports 2026-07-28; update the agent, or use the skills and the API description instead.
+Artemis does not offer the OAuth sign-in that the protocol describes: you create the token yourself and send it as a header.
+
 The agent then sees a small set of tools, each for a task you would name yourself: list your courses, read and change the
 competency graph, post an announcement, list, read, create and change exercises, set up a programming exercise's problem
 statement, dates and test case weights, and create a lecture and check how far the processing of its slides has come.
@@ -125,6 +131,23 @@ the same limits apply to them: the roles, the scopes and the draft rule.
   the exact text, and the agent is told to ask you first.
 - **Slides are not uploaded through MCP.** A PDF does not fit into a tool call. Use the lectures skill, or upload the slides
   in the Artemis web interface.
+
+## Let an agent edit the code of a programming exercise
+
+The code of a programming exercise lives in git repositories, so an agent changes it with git, not with tools. Give the token
+the scope **Clone and push programming repositories**. The agent asks for the addresses (the MCP tool
+`get_programming_repositories`, or `GET /api/programming/programming-exercises/{id}/repositories`) and then uses git over
+HTTPS with your Artemis login as the user name and the token as the password:
+
+```bash
+git -c http.extraHeader="Authorization: Basic $(printf '%s:%s' "$ARTEMIS_LOGIN" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" clone "$REPOSITORY_URL"
+```
+
+The token opens only the template, solution, tests and auxiliary repositories of exercises in your courses, never the
+repositories of students and never those of exams. It can read them at any time. A push needs an exercise that students
+cannot see and nobody has started, and the response of the API says so (`writable`). Pushing the tests repository starts a
+build, which refreshes the test cases. A personal VCS access token that you may still hold is deprecated and is not limited
+in these ways: delete it in the user settings and give the agent the agent token instead.
 
 ## Keep it safe
 

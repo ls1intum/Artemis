@@ -71,6 +71,7 @@
                     "announcements_post": "Post announcements",
                     "exercises_draft": "Create and edit unpublished exercises",
                     "programming_draft": "Create and edit unpublished programming exercises",
+                    "programming_repositories": "Clone and, while unpublished, push the template, solution and test repositories with git",
                     "lectures_write": "Create and edit lectures and slides"
                 }
             },

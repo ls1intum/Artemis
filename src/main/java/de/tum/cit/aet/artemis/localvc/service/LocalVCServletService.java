@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -122,6 +123,8 @@ public class LocalVCServletService {
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
+    private final LocalVCAgentTokenService agentTokenService;
+
     private final long maxRepositorySizeMb;
 
     private final long maxTestsAndSolutionRepositorySizeMb;
@@ -133,7 +136,8 @@ public class LocalVCServletService {
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
             LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, LocalVCAgentTokenService agentTokenService,
+            @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
             @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -153,6 +157,7 @@ public class LocalVCServletService {
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.agentTokenService = agentTokenService;
         this.maxRepositorySizeMb = maxRepositorySizeMb;
         this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
@@ -241,6 +246,10 @@ public class LocalVCServletService {
         }
 
         try {
+            if (authenticated.agentToken() != null) {
+                // Narrower than the role of the owner: only staff repositories, and a push only while the exercise is a draft.
+                agentTokenService.authorize(authenticated.agentToken(), user, exercise, repositoryTypeOrUserName, repositoryAction);
+            }
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
             // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
             // another, so here only who this request is for is remembered.
@@ -340,6 +349,11 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("Account is not active");
         }
 
+        // A personal access token of a coding agent. It is never tried as a password or compared with the other tokens.
+        if (LocalVCAgentTokenService.isAgentToken(passwordOrToken)) {
+            return new AuthenticatedUser(user, AuthenticationMechanism.AGENT_ACCESS_TOKEN, agentTokenService.authenticate(user, passwordOrToken));
+        }
+
         // check the personal VCS access token. It is deprecated: no new one can be created, one that exists works until it expires, and its owner can revoke it.
         // findUsableToken already excludes an expired one, so the expiry is not compared here.
         var personalToken = userVcsAccessTokenService.findUsableToken(user.getId());
@@ -402,10 +416,15 @@ public class LocalVCServletService {
      * lookups the authentication just did - and getting it right at all depended on the matched participation token being
      * copied onto the in-memory user, which made a participation token show up in the log as the user's own.
      *
-     * @param user      the authenticated account
-     * @param mechanism the credential it authenticated with
+     * @param user       the authenticated account
+     * @param mechanism  the credential it authenticated with
+     * @param agentToken the personal access token it authenticated with, if that is the credential
      */
-    private record AuthenticatedUser(User user, AuthenticationMechanism mechanism) {
+    private record AuthenticatedUser(User user, AuthenticationMechanism mechanism, @Nullable PersonalAccessTokenAuthentication agentToken) {
+
+        AuthenticatedUser(User user, AuthenticationMechanism mechanism) {
+            this(user, mechanism, null);
+        }
     }
 
     /**
