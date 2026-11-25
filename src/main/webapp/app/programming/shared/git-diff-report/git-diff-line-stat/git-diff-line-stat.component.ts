@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 @Component({
     selector: 'jhi-git-diff-line-stat',
     templateUrl: './git-diff-line-stat.component.html',
-    styleUrls: ['./git-diff-line-stat.component.scss'],
+    styleUrls: ['./git-diff-line-stat.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GitDiffLineStatComponent {

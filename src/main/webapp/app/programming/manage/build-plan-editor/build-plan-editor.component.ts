@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-build-plan-editor',
     templateUrl: './build-plan-editor.component.html',
-    styleUrls: ['./build-plan-editor.scss'],
+    styleUrls: ['./build-plan-editor.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,

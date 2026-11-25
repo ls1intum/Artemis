@@ -149,7 +149,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
 
                 setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 30000);
             });
-            await quizExerciseOverview.exportQuizExercise();
+            await quizExerciseOverview.exportQuizQuestions();
             await expect(downloadPromise).resolves.toBeUndefined();
         });
     });

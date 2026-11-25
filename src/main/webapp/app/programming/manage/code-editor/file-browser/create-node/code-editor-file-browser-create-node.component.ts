@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
-    styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
+    styleUrls: ['./code-editor-file-browser-create-node.component.css'],
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {

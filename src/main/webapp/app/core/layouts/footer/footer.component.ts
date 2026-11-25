@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
-    styleUrls: ['./footer.scss'],
+    styleUrls: ['./footer.css'],
     imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class FooterComponent implements OnInit {

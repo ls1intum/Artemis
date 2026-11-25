@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-mode',
     templateUrl: './programming-exercise-mode.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         ProgrammingExerciseDifficultyComponent,

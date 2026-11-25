@@ -1,0 +1,73 @@
+/* Adapted from https://www.chilitime.design/2018/09/ActivityRings/ */
+@keyframes ring-appear {
+    0% {
+        stroke-dashoffset: 100;
+    }
+
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+svg {
+    width: 100%;
+    height: auto;
+}
+
+svg .ring {
+    transform-origin: 50%;
+}
+
+svg .progressbar {
+    stroke-linecap: round;
+}
+
+svg .progressbar-anim {
+    animation: ring-appear 1s ease-in-out forwards;
+    transition:
+        stroke-dasharray 1s ease-in-out,
+        opacity 1s linear;
+}
+
+svg .progressbar.hidden {
+    /* Use opacity: 0 instead of display: none to prevent animation when appearing */
+    opacity: 0;
+}
+
+svg circle {
+    fill: none;
+}
+
+svg .mastery-ring {
+    transform: scale(0.75) rotate(-90deg);
+}
+
+svg .mastery-ring .background {
+    stroke: var(--competency-rings-red-bg);
+}
+
+svg .mastery-ring .progressbar {
+    stroke: var(--competency-rings-red);
+}
+
+svg .mastery-ring .progressbar-anim {
+    animation-duration: 1.3s;
+    transition-duration: 1.3s;
+}
+
+svg .progress-ring {
+    transform: scale(0.5) rotate(-90deg);
+}
+
+svg .progress-ring .background {
+    stroke: var(--competency-rings-green-bg);
+}
+
+svg .progress-ring .progressbar {
+    stroke: var(--competency-rings-green);
+}
+
+svg .progress-ring .progressbar-anim {
+    animation-duration: 1s;
+    transition-duration: 1s;
+}

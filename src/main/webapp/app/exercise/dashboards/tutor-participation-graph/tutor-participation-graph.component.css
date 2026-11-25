@@ -1,0 +1,168 @@
+jhi-tutor-participation-graph ul {
+    display: flex;
+    align-items: flex-start;
+    width: max-content;
+    margin: 0;
+    padding-left: 0;
+    z-index: 1;
+    position: relative;
+    white-space: nowrap;
+}
+
+jhi-tutor-participation-graph li {
+    width: 2rem;
+    height: 2rem;
+    text-align: center;
+    line-height: 2rem;
+    border-radius: 1rem;
+    background: var(--tumaet-ui-state-success);
+    margin: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tumaet-ui-state-success-contrast);
+    position: relative;
+    flex-shrink: 0;
+}
+
+jhi-tutor-participation-graph li::before {
+    content: '';
+    position: absolute;
+    top: calc(1rem - 1px);
+    left: -4rem;
+    width: 4rem;
+    height: 2px;
+    background: var(--tumaet-ui-state-success);
+    z-index: -1;
+}
+
+jhi-tutor-participation-graph li:first-child::before {
+    display: none;
+}
+
+jhi-tutor-participation-graph .active {
+    background: var(--tumaet-ui-state-success);
+}
+
+jhi-tutor-participation-graph .active + li {
+    background: var(--tumaet-ui-state-danger);
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+jhi-tutor-participation-graph .not_participated {
+    display: none;
+}
+
+jhi-tutor-participation-graph .not_participated.active + li + li::before {
+    background: var(--tumaet-ui-state-danger);
+}
+
+jhi-tutor-participation-graph .not_participated + li::before {
+    display: none;
+}
+
+jhi-tutor-participation-graph li.opaque {
+    background: var(--tumaet-ui-state-danger);
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+jhi-tutor-participation-graph .opaque::before {
+    background: var(--tumaet-ui-state-danger);
+}
+
+jhi-tutor-participation-graph li.orange {
+    background: var(--tumaet-ui-state-warning);
+    color: var(--tumaet-ui-state-warning-contrast);
+}
+
+jhi-tutor-participation-graph .orange ~ li::before,
+jhi-tutor-participation-graph .orange ~ li::after {
+    background: var(--tumaet-ui-state-warning);
+}
+
+jhi-tutor-participation-graph li.progress-bar-li {
+    display: block;
+    width: 8rem;
+    height: 1rem;
+    background: transparent;
+    margin-top: 0.5rem;
+}
+
+jhi-tutor-participation-graph .progress-bar-li::before {
+    top: calc(0.5rem - 1px);
+}
+
+jhi-tutor-participation-graph li.stacked-li {
+    display: inline-flex;
+    flex-flow: column nowrap;
+    align-items: stretch;
+    height: auto;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item {
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item:first-child {
+    margin-top: 0;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item:first-child::before {
+    width: 4rem;
+    left: -4rem;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item:first-child::after {
+    width: 2rem;
+    right: -2rem;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item::before,
+jhi-tutor-participation-graph li.stacked-li .stacked-item::after {
+    content: '';
+    position: absolute;
+    top: calc(0.5rem - 1px);
+    width: 1rem;
+    height: 2px;
+    background: var(--tumaet-ui-state-success);
+    z-index: -1;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item::before {
+    left: -1rem;
+}
+
+jhi-tutor-participation-graph li.stacked-li .stacked-item::after {
+    right: -1rem;
+}
+
+jhi-tutor-participation-graph .stacked-li::before {
+    width: 2px;
+    left: -1rem;
+    height: calc(100% - 1rem);
+}
+
+jhi-tutor-participation-graph .stacked-li::after {
+    content: '';
+    position: absolute;
+    top: calc(0.5rem - 1px);
+    width: 2px;
+    right: -1rem;
+    height: calc(100% - 1rem);
+    background: var(--tumaet-ui-state-success);
+    z-index: -1;
+}
+
+jhi-tutor-participation-graph li.opaque::after,
+jhi-tutor-participation-graph li.opaque .stacked-item::before,
+jhi-tutor-participation-graph li.opaque .stacked-item::after {
+    background: var(--tumaet-ui-state-danger);
+}
+
+jhi-tutor-participation-graph .orange ~ li .stacked-item::before,
+jhi-tutor-participation-graph .orange ~ li .stacked-item::after,
+jhi-tutor-participation-graph li.orange::after,
+jhi-tutor-participation-graph li.orange .stacked-item::after {
+    background: var(--tumaet-ui-state-warning);
+}

@@ -23,7 +23,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styleUrls: ['./team.component.scss'],
+    styleUrls: ['./team.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         RouterLink,

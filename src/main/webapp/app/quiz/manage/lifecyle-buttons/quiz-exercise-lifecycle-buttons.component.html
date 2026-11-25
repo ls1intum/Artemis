@@ -34,15 +34,15 @@
                     <span class="font-semibold" jhiTranslate="artemisApp.exerciseManagement.batch.label" [translateValues]="{ id: batch.id }"></span>
                     @if (!batch.ended && batch.password) {
                         <tumaet-ui-tag
-                            class="min-w-0 font-mono wrap-anywhere"
+                            class="min-w-0 wrap-anywhere"
                             severity="secondary"
                             [value]="'artemisApp.exerciseManagement.batch.password' | artemisTranslate: { password: batch.password }"
                         />
                     }
                     @if (batch.ended) {
-                        <tumaet-ui-tag class="ms-auto!" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
+                        <tumaet-ui-tag class="ms-auto" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
                     } @else if (batch.started) {
-                        <tumaet-ui-tag class="ms-auto!" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
+                        <tumaet-ui-tag class="ms-auto" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
                     } @else {
                         <button
                             id="instructor-quiz-start-{{ quizExercise().id }}-{{ batch.id }}"

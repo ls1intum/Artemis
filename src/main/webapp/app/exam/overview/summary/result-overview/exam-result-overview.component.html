@@ -22,20 +22,20 @@
                         rowHover
                         size="small"
                         id="result-overview-table"
-                        class="[&_tbody_th]:border-b! [&_tbody_th]:border-(--tumaet-ui-border-color)! [&_tbody_th]:px-2 [&_tbody_th]:py-1.5 [&_tfoot_td]:px-2 [&_tfoot_td]:py-1.5 [&_tfoot_th]:px-2 [&_tfoot_th]:py-1.5 [&_thead_th]:whitespace-normal!"
+                        class="[&_tbody_th]:px-2 [&_tbody_th]:py-1.5 [&_tfoot_td]:px-2 [&_tfoot_td]:py-1.5 [&_tfoot_th]:px-2 [&_tfoot_th]:py-1.5 [&_thead_th]:whitespace-normal!"
                     >
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col" class="w-2/5" jhiTranslate="artemisApp.exam.examSummary.points.exercise"></th>
                                 @if (showIncludedInScoreColumn()) {
-                                    <th scope="col" class="text-center!" jhiTranslate="artemisApp.exercise.includedInOverallScore"></th>
+                                    <th scope="col" class="text-center" jhiTranslate="artemisApp.exercise.includedInOverallScore"></th>
                                 }
-                                <th scope="col" class="text-center!" jhiTranslate="artemisApp.exam.examSummary.points.yourPoints"></th>
-                                <th scope="col" class="text-center!" jhiTranslate="artemisApp.exam.examSummary.points.maxPoints"></th>
-                                <th scope="col" class="text-center!" jhiTranslate="artemisApp.exam.examSummary.points.achievedPercentage"></th>
+                                <th scope="col" class="text-center" jhiTranslate="artemisApp.exam.examSummary.points.yourPoints"></th>
+                                <th scope="col" class="text-center" jhiTranslate="artemisApp.exam.examSummary.points.maxPoints"></th>
+                                <th scope="col" class="text-center" jhiTranslate="artemisApp.exam.examSummary.points.achievedPercentage"></th>
                                 @if (studentExamWithGrade()?.maxBonusPoints) {
-                                    <th scope="col" class="text-center!" jhiTranslate="artemisApp.exam.examSummary.points.maxBonus"></th>
+                                    <th scope="col" class="text-center" jhiTranslate="artemisApp.exam.examSummary.points.maxBonus"></th>
                                 }
                             </tr>
                         </thead>
@@ -100,7 +100,7 @@
                             }
                         </tbody>
                         @if (hasAutomaticScore()) {
-                            <tfoot class="border-t-2 border-(--tumaet-ui-border-color)">
+                            <tfoot>
                                 <tr>
                                     <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
                                     @if (showIncludedInScoreColumn()) {
