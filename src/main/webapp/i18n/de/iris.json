@@ -1,6 +1,10 @@
 {
     "artemisApp": {
         "iris": {
+            "solutionChoice": {
+                "tryMyself": "Selbst mit Hilfe probieren",
+                "showSolution": "Vollständige Lösung zeigen"
+            },
             "onboarding": {
                 "title": "Lerne Iris kennen",
                 "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",

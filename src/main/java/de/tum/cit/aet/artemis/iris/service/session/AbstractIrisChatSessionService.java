@@ -268,6 +268,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             for (var content : parseResultContents(result)) {
                 message.addContent(content);
             }
+            if (statusUpdate.solutionOffer() != null) {
+                message.addContent(IrisJsonMessageContent.of(statusUpdate.solutionOffer()));
+            }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.
             message.setToolActivity(emptyToNull(statusUpdate.messageActivities() != null ? statusUpdate.messageActivities() : statusUpdate.activities()));

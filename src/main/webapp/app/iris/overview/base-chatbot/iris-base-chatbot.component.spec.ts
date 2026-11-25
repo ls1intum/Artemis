@@ -176,6 +176,53 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it.each([
+        ['SHOW_SOLUTION', 'iris-show-solution'],
+        ['TRY_MYSELF', 'iris-try-myself'],
+    ])('hides the %s button action while preserving its selection and the answer after history reload', (choice, testId) => {
+        const question = cloneWith(mockClientMessage, { id: 1, content: [new IrisTextMessageContent('Show me the complete solution.')] });
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('How would you like to continue?'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42 }),
+            ],
+        });
+        const action = cloneWith(mockClientMessage, {
+            id: 11,
+            content: [new IrisTextMessageContent('Show me the complete solution.'), new IrisJsonMessageContent({ type: 'solution-choice', offerMessageId: 10, choice })],
+        });
+        const answer = cloneWith(mockServerMessage, { id: 12, content: [new IrisTextMessageContent('Here is the answer. Would you like to reflect?')] });
+        chatService.messages.next([question, offer]);
+        fixture.detectChanges();
+        chatService.messages.next([question, offer, action]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-message-id="11"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-message-id="1"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`).getAttribute('aria-pressed')).toBe('true');
+
+        chatService.messages.next([question, offer, action, answer]);
+        fixture.detectChanges();
+        expect(component.messages().map((message) => message.id)).toEqual([1, 10, 12]);
+        expect(fixture.nativeElement.querySelector('[data-message-id="12"]')).not.toBeNull();
+        expect(chatService.messages.value.map((message) => message.id)).toEqual([1, 10, 11, 12]);
+        const send = vi.spyOn(chatService, 'sendMessage');
+        const resend = vi.spyOn(chatService, 'resendMessage');
+        component.resendMessage(action);
+        expect(send).not.toHaveBeenCalled();
+        expect(resend).not.toHaveBeenCalled();
+
+        fixture.destroy();
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-message-id="11"]')).toBeNull();
+        const selected = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
+        expect(selected.getAttribute('aria-pressed')).toBe('true');
+        expect(selected.disabled).toBe(true);
+        expect(component.messages().map((message) => message.id)).toEqual([1, 10, 12]);
+    });
+
     it('keeps modal focus when messages arrive while the chat is hidden, then resumes chat autofocus after dismissal', () => {
         vi.useFakeTimers();
         const modalButton = document.createElement('button');

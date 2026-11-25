@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
+
+import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -16,6 +19,10 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 
 /**
  * Implementation of {@link IrisSessionWriteRepository}.
@@ -48,6 +55,33 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
     @Override
     public IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender) {
         return appendInCurrentTransaction(sessionId, message, sender);
+    }
+
+    @Override
+    public IrisMessage appendSolutionChoice(long sessionId, IrisMessage message, IrisSolutionChoiceRequestDTO choice) {
+        var sessions = irisSessionRepository.getObject();
+        sessions.findByIdWithWriteLockElseThrow(sessionId);
+        sessions.flush();
+        var latestId = irisMessageRepository.findLatestVisibleMessageIdForUpdate(sessionId);
+        if (latestId.isEmpty() || !Objects.equals(latestId.get(), choice.offerMessageId())) {
+            throw new BadRequestException("This solution offer is no longer open");
+        }
+        var offerMessage = irisMessageRepository.findByIdElseThrow(choice.offerMessageId());
+        var context = sessions.findContextById(sessionId).orElseThrow(() -> new BadRequestException("A solution choice requires a chat session"));
+        if (context.chatMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT && context.chatMode() != IrisChatMode.TEXT_EXERCISE_CHAT) {
+            throw new BadRequestException("Solution choices are only available in exercise chats");
+        }
+        if (offerMessage.getSender() != IrisMessageSender.LLM || Boolean.TRUE.equals(offerMessage.getIntermediate())) {
+            throw new BadRequestException("Only a final Iris message can offer a solution");
+        }
+        var offer = offerMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).map(IrisJsonMessageContent.class::cast)
+                .filter(content -> "solution-offer".equals(content.readAs(IrisMessageContentTypeDTO.class).type())).map(content -> content.readAs(IrisSolutionOfferDTO.class))
+                .findFirst().orElseThrow(() -> new BadRequestException("The message contains no solution offer"));
+        if (offer.chatMode() != context.chatMode() || offer.entityId() != context.entityId()) {
+            throw new BadRequestException("The solution offer belongs to a different chat context");
+        }
+        message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO("solution-choice", choice.offerMessageId(), choice.choice())));
+        return appendInCurrentTransaction(sessionId, message, IrisMessageSender.USER);
     }
 
     @Override

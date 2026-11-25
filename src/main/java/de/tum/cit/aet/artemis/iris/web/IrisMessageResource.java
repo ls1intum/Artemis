@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqStoredResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
@@ -139,6 +142,10 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var pendingContext = requestDTO.pendingContext();
+        var solutionChoice = requestDTO.solutionChoice();
+        if (solutionChoice != null && (!(session instanceof IrisChatSession) || pendingContext != null)) {
+            throw new BadRequestException("A solution choice must answer an offer in the current chat context");
+        }
         if (pendingContext != null) {
             if (!(session instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Pending context change is only supported for chat sessions");
@@ -148,12 +155,35 @@ public class IrisMessageResource {
 
         IrisMessage message = new IrisMessage();
         List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
-        message.setContent(contentEntities);
+        for (var content : contentEntities) {
+            if (content instanceof IrisJsonMessageContent json) {
+                IrisMessageContentTypeDTO header;
+                try {
+                    header = json.readAs(IrisMessageContentTypeDTO.class);
+                }
+                catch (JacksonException ignored) {
+                    // Other valid JSON shapes cannot carry a workflow discriminator.
+                    continue;
+                }
+                var type = header == null ? null : header.type();
+                if ("solution-choice".equals(type) || "solution-offer".equals(type)) {
+                    throw new BadRequestException("Solution workflow content must be created by the server");
+                }
+            }
+        }
+        if (solutionChoice != null) {
+            boolean german = "de".equals(user.getLangKey());
+            String choiceText = solutionChoice.choice() == IrisSolutionChoice.SHOW_SOLUTION ? (german ? "Zeig mir die vollständige Lösung." : "Show me the complete solution.")
+                    : (german ? "Ich möchte es selbst mit Hilfe probieren." : "I want to try it myself with help.");
+            contentEntities = List.of(new IrisTextMessageContent(choiceText));
+        }
+        message.setContent(new ArrayList<>(contentEntities));
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
         message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
 
-        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        IrisMessage savedMessage = solutionChoice == null ? irisMessageService.saveMessage(message, session, IrisMessageSender.USER)
+                : irisSessionRepository.appendSolutionChoice(sessionId, message, solutionChoice);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles();

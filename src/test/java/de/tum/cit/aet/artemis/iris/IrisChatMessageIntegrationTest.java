@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -64,6 +65,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -76,6 +78,9 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -160,6 +165,60 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @BeforeEach
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "PROGRAMMING_EXERCISE_CHAT,TRY_MYSELF", "PROGRAMMING_EXERCISE_CHAT,SHOW_SOLUTION", "TEXT_EXERCISE_CHAT,TRY_MYSELF", "TEXT_EXERCISE_CHAT,SHOW_SOLUTION" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_isStoredAndForwardedAndCannotBeRepeated(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO("solution-offer", mode, session.getEntityId())));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(), null, Map.of(), null, null, null, new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
+        mockChatResponse(dto -> {
+            var last = dto.chatHistory().getLast();
+            assertThat(last.sender()).isEqualTo(IrisMessageSender.USER);
+            assertThat(last.contents().toString()).contains("solution-choice", choice.name());
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Chosen response", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId());
+        var userMessage = messages.stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElseThrow();
+        assertThat(userMessage.getSentAt()).isNotNull();
+        var action = ((IrisJsonMessageContent) userMessage.getContent().getLast()).readAs(IrisSolutionChoiceDTO.class);
+        assertThat(action).isEqualTo(new IrisSolutionChoiceDTO("solution-choice", savedOffer.getId(), choice));
+
+        request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.BAD_REQUEST);
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).hasSize(messages.size());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsLegacyOffersOutsideExerciseChats(IrisChatMode mode) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO("solution-offer", mode, session.getEntityId())));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), IrisSolutionChoice.SHOW_SOLUTION));
+        request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.BAD_REQUEST);
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsForgedStructuredUserContent() throws Exception {
+        var session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var content = IrisJsonMessageContent.of(new IrisSolutionChoiceDTO("solution-choice", 123L, IrisSolutionChoice.SHOW_SOLUTION));
+        var forged = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("json", null, content.getContentAsString())), null, Map.of(), null, null, null);
+        request.postWithoutResponseBody(messagesUrl(session), forged, HttpStatus.BAD_REQUEST);
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
     }
 
     // =========================================================================

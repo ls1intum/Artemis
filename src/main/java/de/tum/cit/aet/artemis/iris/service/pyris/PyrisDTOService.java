@@ -99,6 +99,19 @@ public class PyrisDTOService {
     }
 
     /**
+     * The exercise and its instructor solution for a student who explicitly chose to see a complete solution.
+     * Template and test repositories are not part of this reference; a missing or unreadable solution remains empty.
+     *
+     * @param exercise the exercise whose solution is the reference
+     * @return the metadata and available solution files
+     */
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseWithSolutionDTO(ProgrammingExercise exercise) {
+        var solution = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
+        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), Map.of(), solution, Map.of(),
+                exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+    }
+
+    /**
      * Helper method to convert a ProgrammingSubmission to a PyrisSubmissionDTO.
      * This notably includes fetching the contents of the student repository, if it exists.
      *

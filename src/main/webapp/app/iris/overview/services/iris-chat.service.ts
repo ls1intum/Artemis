@@ -18,6 +18,7 @@ import { captureException } from 'app/core/error-reporting/capture-exception';
 import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { IrisSolutionChoiceRequest } from 'app/iris/shared/entities/iris-solution-choice.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
@@ -349,7 +350,12 @@ export class IrisChatService implements OnDestroy {
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
      * @param context optional list of context objects providing information about what the user is viewing
      */
-    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
+    public sendMessage(
+        message: string,
+        uncommittedFiles: { [path: string]: string } = {},
+        context?: IrisMessageContextDTO[],
+        solutionChoice?: IrisSolutionChoiceRequest,
+    ): Observable<undefined> {
         if (!this.sessionId) {
             // Surface this instead of failing silently: onSend() clears the textarea regardless of the
             // outcome, so a swallowed error drops the user's message without telling them anything.
@@ -361,6 +367,7 @@ export class IrisChatService implements OnDestroy {
         message = message.trim();
 
         const pendingContext = this.contextService.pending();
+        if (solutionChoice && (pendingContext || this.awaitingAnswer())) return of(undefined);
         const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
         const requestSessionId = this.sessionId;
         const requestDTO: IrisMessageRequestDTO = {
@@ -372,6 +379,7 @@ export class IrisChatService implements OnDestroy {
             // Travels with the message so a command Iris issues while answering comes back addressed to this tab
             // rather than to every tab the user has the session open in.
             clientId: this.irisWebsocketService.clientId,
+            solutionChoice,
         };
 
         const generation = this.stateGeneration;

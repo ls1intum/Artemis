@@ -22,8 +22,7 @@ public record PyrisTextExerciseDTO(long id, String title, String problemStatemen
     }
 
     /**
-     * Create a new PyrisTextExerciseDTO from the given TextExercise without its example solution, for pipelines that talk to students
-     * and never read it
+     * Create a new PyrisTextExerciseDTO without its example solution, for ordinary student tutoring and hint turns.
      *
      * @param exercise the exercise
      * @return the dto

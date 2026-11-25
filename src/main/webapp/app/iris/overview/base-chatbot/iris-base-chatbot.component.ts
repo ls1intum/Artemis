@@ -37,9 +37,12 @@ import {
     getMcqSetData,
     isMcqContent,
     isMcqSetContent,
+    isTextContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
+import { IrisSolutionChoiceComponent } from 'app/iris/overview/solution-choice/iris-solution-choice.component';
+import { IrisSolutionChoice, isSolutionChoiceMessage, isSolutionOffer, solutionChoiceForOffer } from 'app/iris/shared/entities/iris-solution-choice.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
@@ -136,6 +139,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
+        IrisSolutionChoiceComponent,
         IrisActivityFeedComponent,
         TumAetUiConfirmDialogComponent,
         TumAetUiMenuComponent,
@@ -237,6 +241,34 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    protected readonly isSolutionOffer = isSolutionOffer;
+    protected selectedSolutionChoice(message: IrisMessage): IrisSolutionChoice | undefined {
+        return solutionChoiceForOffer(this.rawMessages(), message.id);
+    }
+
+    protected canChooseSolution(message: IrisMessage): boolean {
+        const latest = this.rawMessages()
+            .filter((entry) => entry.sender !== IrisSender.SUMMARY)
+            .at(-1);
+        const contents: IrisMessageContent[] = message.content;
+        const offer = contents.find(isSolutionOffer)?.attributes;
+        const context = this.chatService.displayContext();
+        return (
+            !this.isInputDisabled() &&
+            latest?.id === message.id &&
+            offer !== undefined &&
+            context !== undefined &&
+            offer.chatMode === context.mode &&
+            offer.entityId === context.entityId
+        );
+    }
+
+    protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
+        if (message.id === undefined || !this.canChooseSolution(message)) return;
+        const label = this.translateService.instant(`artemisApp.iris.solutionChoice.${choice === 'TRY_MYSELF' ? 'tryMyself' : 'showSolution'}`);
+        const provider = this.contextProvider();
+        this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).subscribe();
+    }
     // Tracks whether the chat service has finished its first session-load attempt for the
     // current context. Prevents downstream gates (notably the onboarding tour) from acting
     // on the BehaviorSubject's empty initial value before the real messages arrive.
@@ -584,29 +616,29 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Handle message scroll on new messages
         effect((onCleanup) => {
-            const rawMessages = this.rawMessages();
+            const visibleMessages = this.messages();
             // A count increase landing exactly as the streamed draft disappeared is the
             // draft's own finalization: the persisted message replacing the live bubble.
             const isDraftFinalization =
-                rawMessages.length > this.previousMessageCount &&
+                visibleMessages.length > this.previousMessageCount &&
                 !this.liveAssistantDraft() &&
                 (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined) &&
-                !this.isIntermediateAssistantMessage(rawMessages.at(-1));
-            if (rawMessages.length !== this.previousMessageCount) {
+                !this.isIntermediateAssistantMessage(visibleMessages.at(-1));
+            if (visibleMessages.length !== this.previousMessageCount) {
                 // Initial history load (e.g. after a page refresh): the batch lands at once and
                 // its content keeps growing the scroll height for several frames, so use the
                 // settling scroll to land exactly at the bottom instead of a tiny bit short.
-                const isInitialLoad = this.previousMessageCount === 0 && rawMessages.length > 0;
+                const isInitialLoad = this.previousMessageCount === 0 && visibleMessages.length > 0;
                 if (isDraftFinalization) {
                     this.exchangeAnchorActive = false;
                     this.pendingFinalizedLiveAssistantDraftRunId = undefined;
                     this.liveAssistantDraftRunId = undefined;
                     this.preserveScrollAcrossDraftSwap();
-                } else if (this.isIntermediateAssistantMessage(rawMessages.at(-1))) {
+                } else if (this.isIntermediateAssistantMessage(visibleMessages.at(-1))) {
                     this.pendingFinalizedLiveAssistantDraftRunId = undefined;
                     this.liveAssistantDraftRunId = undefined;
-                } else if (this.pendingAnchorScroll && rawMessages.length > this.previousMessageCount) {
-                    const lastMessage = rawMessages.at(-1);
+                } else if (this.pendingAnchorScroll && visibleMessages.length > this.previousMessageCount) {
+                    const lastMessage = visibleMessages.at(-1);
                     if (lastMessage?.sender === IrisSender.USER && lastMessage.id !== undefined) {
                         this.pendingAnchorScroll = false;
                         this.anchoredMessageId = lastMessage.id;
@@ -615,9 +647,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     }
                 } else if (
                     this.exchangeAnchorActive &&
-                    rawMessages.length > this.previousMessageCount &&
+                    visibleMessages.length > this.previousMessageCount &&
                     !this.liveAssistantDraft() &&
-                    rawMessages.at(-1)?.sender === IrisSender.LLM
+                    visibleMessages.at(-1)?.sender === IrisSender.LLM
                 ) {
                     // A non-streamed answer (response streaming disabled, or an older Pyris that only
                     // sends the final MESSAGE) completes without a live draft ever existing, so the
@@ -641,15 +673,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 // Use untracked to read current value without creating a dependency
                 // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
                 const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
-                rawMessages.forEach((m) => {
+                visibleMessages.forEach((m) => {
                     if (m.id && !this.previousMessageIds.has(m.id)) {
                         newAnimatingIds.add(m.id);
                     }
                 });
                 this.animatingMessageIds.set(newAnimatingIds);
             }
-            this.previousMessageIds = new Set(rawMessages.map((m) => m.id).filter((id): id is number => id !== undefined));
-            this.previousMessageCount = rawMessages.length;
+            this.previousMessageIds = new Set(visibleMessages.map((m) => m.id).filter((id): id is number => id !== undefined));
+            this.previousMessageCount = visibleMessages.length;
         });
 
         // Handle active status changes
@@ -801,10 +833,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Process messages for display (clone)
+     * Clone visible messages. Button actions remain in raw history to restore the selected choice.
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return deepClone(rawMessages);
+        return deepClone(rawMessages.filter((message) => !isSolutionChoiceMessage(message)));
     }
 
     protected isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
@@ -895,15 +927,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     resendMessage(message: IrisMessage) {
-        if (message.sender !== IrisSender.USER) {
+        if (message.sender !== IrisSender.USER || isSolutionChoiceMessage(message)) {
             return;
         }
+        const text = message.content.find(isTextContent)?.textContent;
         let observable;
         if (message.id) {
             observable = this.chatService.resendMessage(message);
             this.resendAnimationActive.set(true);
-        } else if (message.content?.[0]?.textContent) {
-            observable = this.chatService.sendMessage(message.content[0].textContent);
+        } else if (text) {
+            observable = this.chatService.sendMessage(text);
         } else {
             this.resendAnimationActive.set(false);
             return;

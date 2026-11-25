@@ -19,6 +19,19 @@ class PyrisChatStatusUpdateDTOTest {
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Test
+    void deserializesTheStructuredSolutionOffer() {
+        var dto = objectMapper.readValue("""
+                {"runState":"RUNNING","result":"Choose how to continue","final":true,
+                 "solutionOffer":{"type":"solution-offer","chatMode":"PROGRAMMING_EXERCISE_CHAT","entityId":42}}
+                """, PyrisChatStatusUpdateDTO.class);
+        assertThat(dto.solutionOffer()).isNotNull();
+        assertThat(dto.solutionOffer().type()).isEqualTo("solution-offer");
+        assertThat(dto.solutionOffer().chatMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        assertThat(dto.solutionOffer().entityId()).isEqualTo(42L);
+        assertThat(objectMapper.writeValueAsString(dto)).contains("\"solutionOffer\"");
+    }
+
+    @Test
     void deserializesPartialFields() throws JacksonException {
         String json = """
                 {
