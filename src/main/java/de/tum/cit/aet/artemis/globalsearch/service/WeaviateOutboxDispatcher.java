@@ -634,7 +634,9 @@ public class WeaviateOutboxDispatcher {
     }
 
     private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
-        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE) {
+        // A failed row of the same entity that is older than the one recorded does not replace it: the newer row is still queued, and only its own write ends the failure
+        boolean olderRowOfRecordedFailure = failureSource(entry).equals(liveFailureSource) && liveFailureRowId != null && entry.getId() < liveFailureRowId;
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE && !olderRowOfRecordedFailure) {
             liveFailure = describeFailure(e);
             liveFailureSource = failureSource(entry);
             liveFailureRowId = entry.getId();

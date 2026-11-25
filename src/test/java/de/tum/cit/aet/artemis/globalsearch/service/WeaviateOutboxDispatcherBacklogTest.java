@@ -287,6 +287,33 @@ class WeaviateOutboxDispatcherBacklogTest {
     }
 
     @Test
+    void testMonitorBacklog_aFailureOfAnOlderRowDoesNotReplaceTheFailureOfANewerRow() {
+        // Row 11 fails first, then row 10 of the same entity fails, then row 10 is written; row 11 is still queued
+        WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        newer.setId(11L);
+        WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        older.setId(10L);
+        when(outboxRepository.findDueBackgroundForDispatch(any(), anyInt())).thenReturn(List.of());
+        when(searchableEntityWeaviateService.applyOutboxEntry(newer)).thenThrow(new IllegalStateException(READ_ONLY_FAILURE));
+        when(searchableEntityWeaviateService.applyOutboxEntry(older)).thenThrow(new IllegalStateException("another failure"));
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(newer)).thenReturn(List.of());
+        dispatcher.drain();
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(older)).thenReturn(List.of());
+        dispatcher.drain();
+        doReturn(Optional.empty()).when(searchableEntityWeaviateService).applyOutboxEntry(older);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(older)).thenReturn(List.of());
+        dispatcher.drain();
+
+        Instant now = Instant.now().plus(Duration.ofHours(1));
+        queue(1, now.minus(Duration.ofMinutes(40)));
+        dispatcher.monitorBacklog(now);
+
+        assertThat(errors()).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains(READ_ONLY_FAILURE).doesNotContain("another failure"));
+        // The retry of the older row is still scheduled
+        verify(outboxRepository, times(1)).save(older);
+    }
+
+    @Test
     void testMonitorBacklog_aFailureIsForgottenOnceTheQueueIsEmpty() {
         Instant start = Instant.now().plus(Duration.ofHours(1));
         failOneWrite(READ_ONLY_FAILURE);
