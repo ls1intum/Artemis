@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -696,7 +696,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
+     * Searches for users whose login, full name, email or registration number contains the search term.
      * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -722,8 +722,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -731,8 +731,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains),
-     * excluding users who hold a staff role (teaching assistant, editor, instructor) in the given course or have
+     * Searches for users whose login, full name, email or registration number contains the search term, excluding users
+     * who hold a staff role (teaching assistant, editor, instructor) in the given course or have
      * admin/super-admin authority.
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -755,8 +755,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -1727,12 +1727,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
+    /**
+     * Checks whether the user has at least one of the roles in the course of the lecture unit.
+     * <p>
+     * This is one plain join that starts at the lecture unit, so that PostgreSQL looks up the single role row of the user by its primary key. The same check written
+     * as a user joined to the lecture without a join condition plus a correlated {@code EXISTS} was planned as a semi-join that sorted and de-duplicated the whole
+     * {@code user_course_role} table (2.2 s on 2.5 million rows, against 0.1 ms for this form).
+     *
+     * @param login         the login of the user
+     * @param lectureUnitId the id of the lecture unit
+     * @param roles         the roles that grant access, normally the given role and all roles above it
+     * @return true if the user has one of the roles in the course of the lecture unit
+     */
     @Query("""
             SELECT EXISTS (
-                FROM User user
-                    INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                    LEFT JOIN lectureUnit.lecture.course course
-                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
+                FROM LectureUnit lectureUnit
+                    INNER JOIN lectureUnit.lecture lecture
+                    INNER JOIN UserCourseRole ucr ON ucr.course.id = lecture.course.id
+                    INNER JOIN ucr.user user
+                WHERE lectureUnit.id = :lectureUnitId
+                    AND user.login = :login
+                    AND ucr.role IN :roles
             )
             """)
     boolean existsByLoginInLectureUnitWithMinRole(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
@@ -1753,12 +1768,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
+    /**
+     * Checks whether the user has at least one of the roles in the course of the lecture, with the same single join as {@link #existsByLoginInLectureUnitWithMinRole}.
+     *
+     * @param login     the login of the user
+     * @param lectureId the id of the lecture
+     * @param roles     the roles that grant access, normally the given role and all roles above it
+     * @return true if the user has one of the roles in the course of the lecture
+     */
     @Query("""
             SELECT EXISTS (
-                FROM User user
-                    INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                    LEFT JOIN lecture.course course
-                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
+                FROM Lecture lecture
+                    INNER JOIN UserCourseRole ucr ON ucr.course.id = lecture.course.id
+                    INNER JOIN ucr.user user
+                WHERE lecture.id = :lectureId
+                    AND user.login = :login
+                    AND ucr.role IN :roles
             )
             """)
     boolean existsByLoginInLectureWithMinRole(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
@@ -1857,7 +1882,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(Pageable pageable, CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+    default Page<User> searchUsersInCourseRole(Pageable pageable, PagedSearchDTO search, long courseId, CourseRole role) {
         // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
                 .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));

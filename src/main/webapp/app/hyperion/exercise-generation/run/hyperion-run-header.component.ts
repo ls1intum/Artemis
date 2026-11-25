@@ -37,7 +37,7 @@ interface RunFact {
 @Component({
     selector: 'jhi-hyperion-run-header',
     templateUrl: './hyperion-run-header.component.html',
-    styleUrl: './hyperion-run-header.component.scss',
+    styleUrl: './hyperion-run-header.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [TumAetUiConfirmationService],
     imports: [

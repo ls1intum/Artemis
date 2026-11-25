@@ -6,7 +6,7 @@
             </tumaet-ui-tab>
         }
     </tumaet-ui-tab-list>
-    <tumaet-ui-tab-panels class="p-0!">
+    <tumaet-ui-tab-panels class="p-0">
         @for (submission of plagiarismCase()?.plagiarismSubmissions; track submission; let i = $index) {
             <tumaet-ui-tab-panel [value]="i" [preserveContent]="visitedComparisons().has(i)">
                 <div class="my-2 text-center text-xl">

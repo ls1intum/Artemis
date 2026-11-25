@@ -26,7 +26,7 @@ import { onTextEditorTab } from 'app/foundation/util/text.utils';
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
-    styleUrls: ['./text-exam-submission.component.scss'],
+    styleUrls: ['./text-exam-submission.component.css'],
     imports: [
         TranslateDirective,
         ExamExerciseHeaderComponent,

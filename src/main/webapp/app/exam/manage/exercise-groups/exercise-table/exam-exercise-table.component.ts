@@ -28,11 +28,11 @@ export interface ExamTableGroupChange {
 @Component({
     selector: 'jhi-exam-exercise-table',
     templateUrl: './exam-exercise-table.component.html',
-    styleUrl: './exam-exercise-table.component.scss',
+    styleUrl: './exam-exercise-table.component.css',
     // Floor the actions column at `--actions-min-width` — the widest always-visible test-run-warning + ellipsis width
     // the rows actually report — so it collapses every main button into the ellipsis before the table scrolls, yet
     // never clips the (non-collapsing) warning. Stays unset when no row reports reserved content, so the column
-    // collapses fully (SCSS default). Mirrors the course exercise-table's `--actions-min-width` binding.
+    // collapses fully (CSS default). Mirrors the course exercise-table's `--actions-min-width` binding.
     // `--actions-width` sizes the column to the widest row's buttons, so the leftover width goes to the other columns.
     host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
@@ -99,7 +99,7 @@ export class ExamExerciseTableComponent {
      * never clipping the warning. Stays 0 when no row reports reserved content.
      */
     private readonly maxActionsMinWidth = signal(0);
-    /** CSS value for the actions-column floor, or undefined when no row needs it (so the SCSS default applies). */
+    /** CSS value for the actions-column floor, or undefined when no row needs it (so the CSS default applies). */
     protected readonly actionsMinWidthVar = computed(() => {
         const width = this.maxActionsMinWidth();
         return width > 0 ? `${width}px` : undefined;

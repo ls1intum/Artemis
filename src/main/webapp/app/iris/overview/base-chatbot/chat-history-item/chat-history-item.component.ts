@@ -15,7 +15,7 @@ import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirecti
 @Component({
     selector: 'jhi-chat-history-item',
     templateUrl: './chat-history-item.component.html',
-    styleUrl: './chat-history-item.component.scss',
+    styleUrl: './chat-history-item.component.css',
     standalone: true,
     imports: [
         TumAetUiButtonDirective,

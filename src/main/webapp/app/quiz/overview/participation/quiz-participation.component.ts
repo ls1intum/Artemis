@@ -64,7 +64,7 @@ import { QuizParticipationBase } from './quiz-participation.base';
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
-    styleUrls: ['./quiz-participation.component.scss'],
+    styleUrls: ['./quiz-participation.component.css'],
     imports: [
         NgClass,
         NgTemplateOutlet,
@@ -1207,7 +1207,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         if (this.mode() === 'live' && this.quizExercise() && !this.showingResult()) {
             if (submittedForUi) {
                 status = LiveQuizParticipationStatus.SUBMITTED;
-            } else if (this.quizExercise().quizEnded) {
+            } else if (this.quizExercise().quizEnded || (!this.waitingForQuizStart() && this.remainingTimeSeconds() < 0)) {
+                // The time is up. Without an answer this ends the participation as well, even before the server reports the end.
                 status = LiveQuizParticipationStatus.MISSED;
             } else if (!this.waitingForQuizStart()) {
                 status = LiveQuizParticipationStatus.PARTICIPATING;

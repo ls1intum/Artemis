@@ -1,0 +1,50 @@
+.top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 10px 0;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.top-bar .tab-item {
+    cursor: pointer;
+    margin: 0 0.5em;
+}
+
+.top-bar .tab-item.active {
+    box-shadow: 0 2px 0 var(--artemis-dark);
+}
+
+.grading-body-container {
+    container: grading-body / inline-size;
+}
+
+.grading-table-layout {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.grading-table-layout > div {
+    padding: 20px;
+}
+
+.grading-table-layout > div:last-child {
+    border-left: 1px solid var(--border-color);
+}
+
+/* The task table needs about 850px for its columns. Stack the charts below it as soon as the page content, not the window, is too narrow for both side by side. */
+@container grading-body (max-width: 1400px) {
+    .grading-table-layout {
+        flex-flow: column;
+    }
+
+    .grading-table-layout > div {
+        width: 100% !important;
+    }
+
+    .grading-table-layout > div:last-child {
+        border-left: hidden;
+        border-top: 1px solid var(--border-color);
+    }
+}

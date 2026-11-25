@@ -26,7 +26,7 @@ import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/ent
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
-    styleUrls: ['./exam-management.component.scss'],
+    styleUrls: ['./exam-management.component.css'],
     imports: [
         ExamManagementNavigationSidebarComponent,
         CourseSidebarToggleButtonComponent,

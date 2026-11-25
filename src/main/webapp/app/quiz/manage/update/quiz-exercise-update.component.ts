@@ -94,7 +94,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
     templateUrl: './quiz-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil, TumAetUiConfirmationService],
-    styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-exercise-update.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,

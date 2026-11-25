@@ -74,7 +74,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
-    styleUrls: ['./exam-participation.scss'],
+    styleUrls: ['./exam-participation.css'],
     imports: [
         CdkScrollable,
         TestRunRibbonComponent,

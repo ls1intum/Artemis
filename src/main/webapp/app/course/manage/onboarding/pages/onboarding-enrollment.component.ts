@@ -13,7 +13,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-onboarding-enrollment',
     templateUrl: './onboarding-enrollment.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     imports: [TranslateDirective, TumAetUiDatePickerComponent, MarkdownEditorMonacoComponent, FaIconComponent, DocumentationButtonComponent, NgClass],
 })
 export class OnboardingEnrollmentComponent {

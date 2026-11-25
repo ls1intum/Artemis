@@ -1,0 +1,38 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: min(45rem, 85vw);
+}
+
+.frame .description {
+    width: 100%;
+}
+
+.frame .success-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 25rem;
+    gap: 0.5rem;
+    color: var(--tumaet-ui-state-success);
+}
+
+.frame .success-content .success-icon {
+    font-size: 5rem;
+}
+
+.frame .controls-footer {
+    display: flex;
+    justify-content: end;
+    width: 100%;
+}
+
+.frame .controls-footer .file-upload-input {
+    display: none;
+}
+
+.frame .controls-footer .spacer {
+    flex: 1;
+}

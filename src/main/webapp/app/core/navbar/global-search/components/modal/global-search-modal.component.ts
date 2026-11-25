@@ -59,7 +59,7 @@ const CHIP_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete']);
     imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent, GlobalSearchFilterMenuComponent],
     providers: [GlobalSearchFilterService],
     templateUrl: './global-search-modal.component.html',
-    styleUrls: ['./global-search-modal.component.scss'],
+    styleUrls: ['./global-search-modal.component.css'],
 })
 export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly overlay = inject(SearchOverlayService);

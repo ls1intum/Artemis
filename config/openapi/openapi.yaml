@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: "10.8"
+  version: "10.9"
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
@@ -5626,7 +5626,7 @@ paths:
       - name: page
         in: query
         required: false
-        schema: {type: integer, format: int32, minimum: 0}
+        schema: {type: integer, format: int32, maximum: 100000, minimum: 0}
       - name: pageSize
         in: query
         required: false
@@ -5646,7 +5646,8 @@ paths:
       - name: filterProp
         in: query
         required: false
-        schema: {type: string}
+        schema:
+          type: [string, 'null']
       responses:
         '200':
           description: OK

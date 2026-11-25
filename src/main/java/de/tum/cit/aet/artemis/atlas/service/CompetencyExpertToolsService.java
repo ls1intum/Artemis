@@ -268,7 +268,8 @@ public class CompetencyExpertToolsService {
         // IMPORTANT: This enables the AI to refine previews by calling getLastPreviewedCompetency()
         String sessionId = currentSessionId.get();
         if (sessionId != null) {
-            if (viewOnly) {
+            // The model may leave out the optional flag, which makes it null: that is a preview with action buttons, as with false
+            if (Boolean.TRUE.equals(viewOnly)) {
                 sessionCacheService.clearCachedPendingCompetencyOperations(sessionId);
             }
             else {

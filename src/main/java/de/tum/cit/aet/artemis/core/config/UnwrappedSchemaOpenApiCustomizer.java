@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -105,18 +106,11 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(Record.class));
         Map<String, Class<?>> parentByChild = new TreeMap<>();
-        for (BeanDefinition definition : scanner.findCandidateComponents(ARTEMIS_PACKAGE)) {
-            String className = definition.getBeanClassName();
-            if (className == null) {
-                continue;
-            }
-            Class<?> type = ClassUtils.resolveClassName(className, UnwrappedSchemaOpenApiCustomizer.class.getClassLoader());
-            RecordComponent[] components = type.getRecordComponents();
-            if (components == null) {
-                continue;
-            }
+        List<Class<?>> records = scanner.findCandidateComponents(ARTEMIS_PACKAGE).stream().map(BeanDefinition::getBeanClassName).filter(Objects::nonNull)
+                .<Class<?>>map(className -> ClassUtils.resolveClassName(className, UnwrappedSchemaOpenApiCustomizer.class.getClassLoader())).filter(Class::isRecord).toList();
+        for (Class<?> type : records) {
             // @JsonUnwrapped targets fields and methods, not record components, so Java puts it on the accessor.
-            List<RecordComponent> unwrapped = Arrays.stream(components).filter(component -> {
+            List<RecordComponent> unwrapped = Arrays.stream(type.getRecordComponents()).filter(component -> {
                 JsonUnwrapped annotation = component.getAccessor().getAnnotation(JsonUnwrapped.class);
                 return annotation != null && annotation.enabled() && annotation.prefix().isEmpty() && annotation.suffix().isEmpty();
             }).toList();
@@ -140,18 +134,18 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
         parentByChild.forEach((childName, parentName) -> {
             Schema<?> child = schemas.get(childName);
             Schema<?> parent = schemas.get(parentName);
-            if (child != null && parent != null && repeatsFieldsOf(child, parent)) {
-                composed.put(childName, compose(child, parentName, parent));
+            Schema<?> fields = child == null ? null : fieldsOf(child);
+            if (fields != null && parent != null && repeatsFieldsOf(child, fields, parent)) {
+                composed.put(childName, compose(child, fields, parentName, parent));
             }
         });
-        composed.forEach((childName, schema) -> schemas.put(childName, schema));
+        schemas.putAll(composed);
         // Mark the parents only now: a schema can be a parent and a composed child, and the mark belongs on its final form.
         composed.keySet().forEach(childName -> schemas.get(parentByChild.get(childName)).addExtension(PARENT_EXTENSION, true));
     }
 
-    private static boolean repeatsFieldsOf(Schema<?> child, Schema<?> parent) {
-        Schema<?> fields = fieldsOf(child);
-        if (fields == null || isComposedOrUnion(parent) || parent.getProperties() == null || parent.getProperties().isEmpty()) {
+    private static boolean repeatsFieldsOf(Schema<?> child, Schema<?> fields, Schema<?> parent) {
+        if (isComposedOrUnion(parent) || parent.getProperties() == null || parent.getProperties().isEmpty()) {
             return false;
         }
         Map<String, Schema> childProperties = fields.getProperties();
@@ -188,9 +182,8 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
         return schema.getAllOf() != null || schema.getOneOf() != null || schema.getAnyOf() != null || schema.getDiscriminator() != null;
     }
 
-    private static Schema<?> compose(Schema<?> child, String parentName, Schema<?> parent) {
+    private static Schema<?> compose(Schema<?> child, Schema<?> fields, String parentName, Schema<?> parent) {
         Set<String> inherited = parent.getProperties().keySet();
-        Schema<?> fields = fieldsOf(child);
         ObjectSchema own = new ObjectSchema();
         fields.getProperties().forEach((name, property) -> {
             if (!inherited.contains(name)) {

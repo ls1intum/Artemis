@@ -1,0 +1,80 @@
+/* Tailwind 'md' breakpoint (768px) */
+.exam-management-layout {
+    display: grid;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    min-height: 0;
+    grid-template-areas: 'header header' 'sidebar content';
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
+}
+
+@media (min-width: 48rem) {
+    .exam-management-layout {
+        grid-template-areas: 'sidebar header' 'sidebar content';
+    }
+}
+
+.exam-management-sidebar {
+    grid-area: sidebar;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.exam-management-content {
+    grid-area: content;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+.exam-management-header {
+    grid-area: header;
+    min-width: 0;
+    margin-bottom: var(--spacing-divider);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: var(--title-bar-height);
+    padding-block: var(--title-bar-padding-block);
+    container: title-bar / inline-size;
+    height: auto;
+    flex-wrap: wrap;
+}
+
+.exam-management-title-wrapper {
+    flex: 0 1 auto;
+}
+
+.exam-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.title-bar-actions {
+    flex: 0 0 auto;
+}
+
+.title-bar-actions-wrapper ::ng-deep .tumaet-ui-select-button-option {
+    padding-block: 0;
+}
+
+a.exam-title-link {
+    color: inherit !important;
+    text-decoration: none !important;
+    transition:
+        background-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+}
+
+a.exam-title-link:hover,
+a.exam-title-link:focus,
+a.exam-title-link:active {
+    background-color: var(--link-item-bg);
+    box-shadow: 0 0 0 4px var(--link-item-bg);
+}
