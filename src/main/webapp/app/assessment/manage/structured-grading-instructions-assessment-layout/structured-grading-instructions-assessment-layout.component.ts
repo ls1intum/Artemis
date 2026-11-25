@@ -141,29 +141,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         });
     }
 
-    /** One more application, while a finite usage limit (if any) still has room. */
-    incrementApplication(event: Event, instruction: GradingInstruction): void {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!this.isDraggable(instruction)) {
-            return;
-        }
-        this.selectionService.addApplication(instruction);
-    }
-
-    /** One fewer application owned by the feedback list. Referenced-only applications stay put. */
-    decrementApplication(event: Event, instruction: GradingInstruction): void {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!this.selectionService.isRemovable(instruction)) {
-            return;
-        }
-        this.selectionService.removeOneApplication(instruction);
-    }
-
     /**
-     * {@link GradingInstruction.usageCount} of 1 is a single application. Zero/unset means unlimited, and any higher
-     * value is a finite multi-use limit — both need the stepper once applied.
+     * {@link GradingInstruction.usageCount} of 1 is a single application, which the checkbox covers. Zero/unset means
+     * unlimited, and any higher value is a finite multi-use limit; both show the stepper.
      */
     isMultiUse(instruction: GradingInstruction): boolean {
         return (instruction.usageCount ?? 0) !== 1;
@@ -186,16 +166,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }
-    /** Selects an instruction for application to a feedback target without dragging. */
-    armInstruction(event: Event, instruction: GradingInstruction): void {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!this.allowArming() || !this.isDraggable(instruction)) {
-            return;
-        }
-        this.selectionService.toggleArmedInstruction(instruction);
-    }
-
+    /** An assessment shows one instruction list; once it is gone, nothing would show which instruction is armed. */
     ngOnDestroy(): void {
         this.selectionService.clearArmedInstruction();
     }

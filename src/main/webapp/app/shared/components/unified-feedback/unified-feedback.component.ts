@@ -1,6 +1,6 @@
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { Component, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -24,6 +24,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { FormsModule } from '@angular/forms';
 import { POINTS_MAX_FRACTION_DIGITS, PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -39,6 +40,8 @@ interface FeedbackTypeConfig {
     styleUrls: ['./unified-feedback.component.css'],
     imports: [
         NgClass,
+        NgTemplateOutlet,
+        MarkdownDirective,
         FaIconComponent,
         TumAetUiTooltipDirective,
         TumAetUiButtonDirective,
@@ -140,6 +143,12 @@ export class UnifiedFeedbackComponent {
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
+    private static nextDetailInputId = 0;
+    /** Connects the visible Feedback label of the assessment card to its textarea. */
+    protected readonly detailInputId = `unified-feedback-detail-${UnifiedFeedbackComponent.nextDetailInputId}`;
+    /** Connects the visible Title label of the assessment card to its textarea. */
+    protected readonly titleInputId = `unified-feedback-title-${UnifiedFeedbackComponent.nextDetailInputId++}`;
+
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
         needs_revision: { icon: faExclamationTriangle, alertClass: 'unified-feedback--info' },
@@ -212,7 +221,10 @@ export class UnifiedFeedbackComponent {
         return this.feedbackTypeConfigs[this.inferredType()].alertClass;
     });
 
-    /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
+    /**
+     * Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word).
+     * Assessment cards show the exact credits the tutor gives, which may have more digits than the course rounds scores to.
+     */
     readonly pointsLabel = computed(() => {
         const points = this.effectivePoints();
         const formatted = this.localeConversionService.toLocaleString(points, this.assessmentLayout() ? POINTS_MAX_FRACTION_DIGITS : this.scoreAccuracy());

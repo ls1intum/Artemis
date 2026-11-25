@@ -136,7 +136,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
     participation = input<Participation>();
     showEditorInstructions = input(true);
     selectedFile = input<string | undefined>();
-    canSelectFile = input<() => boolean>();
+    /** Keeps the current file selected, for example while it has unsaved inline feedback. */
+    fileSelectionLocked = input(false);
     disableActions = input<boolean>(false);
     displayOnly = input<boolean>(false);
     unsavedFiles = input<string[]>([]);
@@ -160,6 +161,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
     onToggleCollapse = output<InteractableEvent>();
     onFileChange = output<[string[], FileChange, boolean?]>();
     selectedFileChange = output<string | undefined>();
+    /** Emitted when another file is clicked while {@link fileSelectionLocked} keeps the current one selected. */
+    fileSelectionBlocked = output<void>();
     commitStateChange = output<CommitState>();
     onError = output<string>();
     repositoryFilesLoaded = output<void>();
@@ -384,7 +387,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy {
      */
     handleNodeSelected(item: TreeViewItem<string>) {
         if (item && item.value !== this.selectedFile()) {
-            if (this.canSelectFile()?.() === false) {
+            if (this.fileSelectionLocked()) {
+                this.fileSelectionBlocked.emit();
                 return;
             }
             item.checked = true;

@@ -209,10 +209,6 @@
     flex-shrink: 0;
 }
 
-.unified-feedback-title-field {
-    display: contents;
-}
-
 .unified-feedback-title-input {
     flex: 1;
     min-width: 0;
@@ -329,10 +325,7 @@
     border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
-:host(.unified-feedback-inline-editor) .unified-feedback--assessment .unified-feedback-assessment-points {
-    width: 7.5rem;
-}
-
+/* Assessment cards: the header markup is separate, so only the card's own elements are styled here. */
 .unified-feedback--assessment {
     padding: 0.75rem;
     border-radius: 1rem;
@@ -348,55 +341,50 @@
     border-inline-start-color: var(--danger);
 }
 
-.unified-feedback--assessment .unified-feedback-header,
-.unified-feedback--assessment .unified-feedback-header-left {
-    flex-direction: column;
-    align-items: stretch;
-}
-
-.unified-feedback--assessment .unified-feedback-header-right {
-    order: -1;
+/* Without a title field, points and actions sit at both ends of the row and a title follows below it. */
+.assessment-header {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    width: 100%;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.unified-feedback--assessment .unified-feedback-header-left:empty,
-.unified-feedback--assessment .unified-feedback-icon-badge {
-    display: none;
+/* Read-only card: points, title and actions share one row. */
+.assessment-header--compact {
+    justify-content: flex-start;
+    margin-bottom: 0.5rem;
 }
 
-.unified-feedback--assessment .unified-feedback-header-left:not(:has(.unified-feedback-title-input, .unified-feedback-title)) {
-    display: none;
+.assessment-header--compact .unified-feedback-title {
+    flex: 1 1 auto;
 }
 
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) {
+.assessment-header--compact .unified-feedback-toolbar {
+    margin-inline-start: auto;
+}
+
+/* Editable card with a title field: title, points and actions are columns aligned at the input row. */
+.assessment-header--title-field {
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr) auto;
-    align-items: end;
+    align-items: center;
+    row-gap: 0;
 }
 
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-header-left,
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-header-right {
-    display: contents;
+/* The label takes the first row alone, so points and actions center on the input row below it. */
+.assessment-title-label {
+    grid-column: 1 / -1;
 }
 
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-title-label {
-    grid-area: 1 / 1;
-    margin: 0;
+.unified-feedback--assessment .unified-feedback-title {
+    display: block;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-title-input {
-    grid-area: 2 / 1;
-}
-
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-assessment-points {
-    grid-area: 2 / 2;
-    width: 100%;
-}
-
-.unified-feedback--assessment .unified-feedback-header:has(.unified-feedback-title-input) .unified-feedback-toolbar {
-    grid-area: 2 / 3;
-    align-self: center;
+.unified-feedback-main > .unified-feedback-title {
+    margin-bottom: 0.75rem;
 }
 
 .unified-feedback--assessment .unified-feedback-title-input {
@@ -408,15 +396,19 @@
     font-weight: 400;
 }
 
-.unified-feedback--assessment .unified-feedback-assessment-points {
+.unified-feedback--assessment .unified-feedback-points-input {
     width: 5rem;
     max-width: 100%;
     min-width: 0;
 }
 
-.unified-feedback--assessment .unified-feedback-assessment-points .unified-feedback-points-input {
+:host(.unified-feedback-inline-editor) .unified-feedback--assessment .unified-feedback-points-input {
+    width: 7.5rem;
+}
+
+.assessment-header--title-field .unified-feedback-points-input,
+:host(.unified-feedback-inline-editor) .assessment-header--title-field .unified-feedback-points-input {
     width: 100%;
-    min-width: 0;
 }
 
 .unified-feedback--assessment .unified-feedback-points {
@@ -444,25 +436,13 @@
     align-items: flex-start;
 }
 
-.unified-feedback--assessment jhi-confirm-icon,
-.unified-feedback--assessment .unified-feedback-icon-btn {
-    color: var(--danger);
-}
-
-.unified-feedback--assessment .unified-feedback-icon-btn {
-    border-radius: 0.375rem;
+.assessment-delete {
     width: 2rem;
     height: 2rem;
-    background: transparent;
-}
-
-.unified-feedback--assessment jhi-confirm-icon {
+    justify-content: center;
+    color: var(--danger);
     border: 1px solid var(--border-color);
     border-radius: 0.375rem;
-}
-
-.unified-feedback--assessment jhi-confirm-icon ::ng-deep .confirm-icon-button {
-    padding: 0.5rem;
 }
 
 .unified-feedback-section-label {
@@ -473,26 +453,16 @@
     font-weight: 700;
 }
 
-.unified-feedback-title-label {
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-}
-
 .unified-feedback-assessment-criterion {
     margin-block-end: 0.75rem;
     padding-block-end: 0.75rem;
     border-bottom: 1px solid var(--border-color);
-}
-
-.unified-feedback-assessment-criterion p {
-    margin: 0;
     min-height: 3em;
     line-height: 1.5;
-    color: var(--secondary);
+    color: var(--text-body-secondary);
 }
 
-:host ::ng-deep .assessment-apply-instruction {
+.assessment-apply-instruction {
     max-width: 100%;
     min-width: 0;
     white-space: normal;

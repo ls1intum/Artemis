@@ -153,11 +153,14 @@ describe('AssessmentHeaderComponent', () => {
         const tooltip = wrapper.injector.get(TumAetUiTooltipDirective);
         expect(tooltip.content()).toBe('artemisApp.assessment.messages.incompleteFeedback');
         expect(wrapper.nativeElement.tabIndex).toBe(0);
+        expect(wrapper.nativeElement.getAttribute('role')).toBe('button');
+        expect(wrapper.nativeElement.getAttribute('aria-disabled')).toBe('true');
         expect(wrapper.nativeElement.querySelector('#submit').disabled).toBe(true);
         fixture.componentRef.setInput('assessmentsAreValid', true);
         fixture.detectChanges();
         expect(tooltip.content()).toContain(' + Enter');
         expect(wrapper.nativeElement.getAttribute('tabindex')).toBeNull();
+        expect(wrapper.nativeElement.getAttribute('role')).toBeNull();
         expect(wrapper.nativeElement.querySelector('#submit').disabled).toBe(false);
     });
 

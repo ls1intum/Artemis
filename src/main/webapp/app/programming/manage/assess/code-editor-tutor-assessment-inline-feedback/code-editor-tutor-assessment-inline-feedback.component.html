@@ -9,27 +9,27 @@
     [title]="displayTitle()"
     [showTitle]="Feedback.isFeedbackSuggestion(feedback) || !!displayTitle()"
     [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
-    [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
+    [feedbackContent]="feedbackContent()"
     [points]="feedback.credits ?? 0"
     [scoreAccuracy]="course()?.accuracyOfScores"
     [showReference]="false"
     [highlightDifferences]="highlightDifferences()"
-    [(feedbackTitle)]="feedback.text"
-    [(feedbackDetail)]="feedback.detailText"
-    [(feedbackCredits)]="feedback.credits!"
-    (feedbackTitleChange)="onFieldChanged()"
-    (feedbackDetailChange)="onFieldChanged()"
-    (feedbackCreditsChange)="onFieldChanged()"
-    (instructionUnlinked)="onFieldChanged()"
+    [feedbackTitle]="feedback.text"
+    [feedbackDetail]="feedback.detailText"
+    [feedbackCredits]="feedback.credits"
+    (feedbackTitleChange)="setField('text', $event)"
+    (feedbackDetailChange)="setField('detailText', $event)"
+    (feedbackCreditsChange)="setField('credits', $event)"
+    (instructionUnlinked)="onInstructionUnlinked()"
     (onDelete)="removeFeedback()"
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
     (keydown)="handleKeydown($event)"
-    (input)="inputEdited.set(true)"
+    (input)="markEdited()"
 >
     <ng-container ngProjectAs="[unifiedFeedbackViewControls]">
         @if (viewOnly() && !readOnly()) {
-            <button tumAetUiButton size="small" variant="text" severity="warn" type="button" data-testid="feedback-edit" (click)="editFeedback(codeLine())">
+            <button tumAetUiButton size="small" variant="text" severity="warn" type="button" data-testid="feedback-edit" (click)="editFeedback()">
                 <fa-icon [icon]="faPencilAlt" /><span jhiTranslate="entity.action.edit"></span>
             </button>
         }

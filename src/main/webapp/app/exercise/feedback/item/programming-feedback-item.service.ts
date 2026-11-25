@@ -108,6 +108,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         // A feedback suggestion should look like a manual feedback
+        const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '');
         const codeReference = this.getAiFeedbackCodeReference(feedback);
         // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
         // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
@@ -117,7 +118,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return {
             type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: Feedback.getDisplayTitle(feedback),
+            title: titleWithoutIdentifier,
             text,
             positive: feedback.positive,
             credits: feedback.credits,

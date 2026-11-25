@@ -58,7 +58,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     async function open(feedback: Feedback) {
         fixture.componentRef.setInput('feedback', feedback);
         await settle();
-        comp.editFeedback(1);
+        comp.editFeedback();
         await settle();
     }
 
@@ -84,7 +84,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(updated).toHaveBeenCalledExactlyOnceWith(
             expect.objectContaining({ detailText: 'New comment', credits: 1.5, type: FeedbackType.MANUAL, reference: 'file:testFile_line:1', positive: true }),
         );
-        expect(comp.viewOnly()).toBe(true);
     });
 
     it('blocks empty text and blank points immediately', async () => {
@@ -118,14 +117,18 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     it('retains local comment and points when the parent rebinds unchanged feedback', async () => {
         const feedback = savedFeedback();
+        const updated = vi.fn();
+        comp.onUpdateFeedback.subscribe(updated);
         await open(feedback);
         await typeComment('Edited comment');
-        comp.currentFeedback().credits = -2;
+        const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
+        shared.onCreditsChange(-2);
         fixture.componentRef.setInput('feedback', { ...feedback });
         await settle();
         expect(comp.currentFeedback()).toMatchObject({ detailText: 'Edited comment', credits: -2 });
         comp.updateFeedback();
-        expect(comp.currentFeedback()).toMatchObject({ detailText: 'Edited comment', credits: -2 });
+        expect(updated).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detailText: 'Edited comment', credits: -2 }));
+        expect(comp.viewOnly()).toBe(true);
     });
 
     it('reserves the original instruction through unlink, apply elsewhere and Cancel', async () => {
@@ -158,7 +161,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`;
         await open(feedback);
         if (edited) {
-            comp.currentFeedback().detailText = 'Edited comment';
+            await typeComment('Edited comment');
         }
         const update = vi.spyOn(comp.onUpdateFeedback, 'emit');
 
@@ -168,20 +171,21 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(update).toHaveBeenCalledWith(expect.objectContaining({ text: `${marker}Suggestion title` }));
     });
 
-    it('rechecks the live usage limit before dropping an instruction onto a suggestion', async () => {
+    it('rechecks the live usage limit before dropping an instruction onto a card', async () => {
         const feedback = savedFeedback();
         feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`;
         await open(feedback);
         const instruction = { id: 7, credits: 2, usageCount: 1 } as GradingInstruction;
         vi.spyOn(selection, 'canApplyInstruction').mockReturnValue(false);
         const update = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
-        const event = { dataTransfer: { getData: () => JSON.stringify(instruction) } } as unknown as Event;
+        const event = { preventDefault: vi.fn(), dataTransfer: { getData: () => JSON.stringify(instruction) } } as unknown as Event;
 
         comp.updateFeedbackOnDrop(event);
 
         expect(selection.canApplyInstruction).toHaveBeenCalledWith(instruction);
-        expect(update).not.toHaveBeenCalled();
+        expect(update).toHaveReturnedWith(false);
         expect(comp.currentFeedback()).toEqual(feedback);
+        expect(comp.hasUnsavedEdits()).toBe(false);
     });
 
     it('links an accepted suggestion on a detached copy and keeps its identity until Save', async () => {
@@ -261,7 +265,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', feedback);
         await settle();
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-detail"]')).toBeNull();
-        comp.editFeedback(1);
+        comp.editFeedback();
         await settle();
 
         const textarea = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
@@ -362,7 +366,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const update = vi.fn();
         comp.onUpdateFeedback.subscribe(update);
         comp.updateFeedback();
-        comp.editFeedback(1);
+        comp.editFeedback();
         expect(update).not.toHaveBeenCalled();
         expect(comp.viewOnly()).toBe(true);
     });

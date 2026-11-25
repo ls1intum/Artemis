@@ -161,27 +161,27 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     set selectedFile(file: string | undefined) {
-        if (file !== this.selectedFileValue() && !this.canSwitchFile()) {
+        if (file !== this.selectedFileValue() && this.hasUnsavedInlineFeedback()) {
+            this.alertUnsavedInlineFeedback();
             return;
         }
         this.selectedFileValue.set(file);
     }
 
+    /** Whether a new or edited inline feedback card is not saved yet. Only tutor assessments have such cards. */
     hasUnsavedInlineFeedback(): boolean {
         return this.isTutorAssessment() && (this.monacoEditor()?.hasUnsavedInlineFeedback() ?? false);
     }
 
+    /** Closes every new or edited inline feedback card without saving it. */
     discardUnsavedInlineFeedback(): void {
         this.monacoEditor()?.discardUnsavedInlineFeedback();
     }
 
-    readonly canSwitchFile = (): boolean => {
-        if (!this.hasUnsavedInlineFeedback()) {
-            return true;
-        }
+    /** Switching files would hide an unsaved inline card, so the tutor has to save or cancel it first. */
+    protected alertUnsavedInlineFeedback(): void {
         this.alertService.error('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
-        return false;
-    };
+    }
 
     get problemStatementIdentifier(): string {
         return PROBLEM_STATEMENT_IDENTIFIER;

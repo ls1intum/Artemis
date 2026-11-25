@@ -42,8 +42,11 @@ export class GradingInstructionSelectionService {
     /** Instruction selected for application to the next feedback target. */
     private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
 
-    /** True while an instruction is armed for the next feedback target. */
-    readonly hasArmedInstruction = computed(() => this.armedInstruction() !== undefined);
+    /** True while an armed instruction can still be applied to the next feedback target within its usage limit. */
+    readonly hasArmedInstruction = computed(() => {
+        const instruction = this.armedInstruction();
+        return instruction !== undefined && this.canApplyInstruction(instruction);
+    });
 
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
@@ -160,14 +163,11 @@ export class GradingInstructionSelectionService {
         this.armedInstruction.set(this.isArmed(instruction) ? undefined : instruction);
     }
 
-    /** Takes and clears the selected instruction when its live usage limit still allows an application. */
+    /** Takes and clears the armed instruction. The caller checks the usage limit when it links the instruction. */
     consumeArmedInstruction(): GradingInstruction | undefined {
         const instruction = this.armedInstruction();
         this.armedInstruction.set(undefined);
-        if (!instruction) {
-            return undefined;
-        }
-        return this.canApplyInstruction(instruction) ? instruction : undefined;
+        return instruction;
     }
 
     /** Drops an unconsumed armed instruction (assessment teardown / new host registration). */

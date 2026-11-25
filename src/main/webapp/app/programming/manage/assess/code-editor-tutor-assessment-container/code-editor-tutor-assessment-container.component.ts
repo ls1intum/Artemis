@@ -545,7 +545,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Save the assessment
+     * Saving or submitting would leave out a new or edited inline card, so the tutor has to save or cancel it first.
+     * @returns whether no inline card is unsaved
      */
     canProceedWithInlineFeedback(): boolean {
         if (!this.codeEditorContainer()?.hasUnsavedInlineFeedback()) {
@@ -555,6 +556,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return false;
     }
 
+    /**
+     * Leaving the submission discards new or edited inline cards. Asks once and discards them on confirmation.
+     * @returns whether the tutor may leave
+     */
+    confirmDiscardInlineFeedback(): boolean {
+        const codeEditorContainer = this.codeEditorContainer();
+        if (!codeEditorContainer?.hasUnsavedInlineFeedback()) {
+            return true;
+        }
+        if (!window.confirm(this.translateService.instant('artemisApp.programmingAssessment.confirmLeave'))) {
+            return false;
+        }
+        codeEditorContainer.discardUnsavedInlineFeedback();
+        return true;
+    }
+
+    /**
+     * Save the assessment
+     */
     save(): void {
         if (!this.canProceedWithInlineFeedback()) {
             return;
@@ -615,7 +635,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Go to next submission
      */
     nextSubmission() {
-        if (!this.canProceedWithInlineFeedback()) {
+        if (!this.confirmDiscardInlineFeedback()) {
             return;
         }
         this.loadingParticipation.set(true);
@@ -810,9 +830,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.manualResult(), this.complaint(), this.exercise());
     }
 
-    inlineFeedbackReadOnly(): boolean {
-        return this.readOnly() || this.saveBusy() || this.submitBusy();
-    }
+    /** Inline cards stay closed while a save or submit is in flight, so no edit can be lost to the response. */
+    readonly inlineFeedbackReadOnly = computed(() => this.readOnly() || this.saveBusy() || this.submitBusy());
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         const result = response.body!;
@@ -916,8 +935,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 }
 
 export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
-    if (!component.canProceedWithInlineFeedback()) {
-        return false;
+    if (component.codeEditorContainer()?.hasUnsavedInlineFeedback()) {
+        // The same confirmation also covers the other pending changes.
+        return component.confirmDiscardInlineFeedback();
     }
     if (component.hasPendingChanges && component.submission() !== undefined) {
         const translate = inject(TranslateService);

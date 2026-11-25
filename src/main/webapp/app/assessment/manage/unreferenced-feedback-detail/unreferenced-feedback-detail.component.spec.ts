@@ -89,6 +89,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const serviceSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
             currentFeedback.gradingInstruction = instruction;
             currentFeedback.credits = instruction.credits;
+            return true;
         });
 
         // Spy on the component's output to verify it emits the change
@@ -135,6 +136,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
             currentFeedback.gradingInstruction = instruction;
             currentFeedback.credits = instruction.credits;
+            return true;
         });
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
 

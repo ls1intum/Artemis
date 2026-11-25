@@ -76,7 +76,9 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
             return;
         }
         const feedback = this.feedback();
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        if (!this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)) {
+            return;
+        }
         if (feedback.text) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }

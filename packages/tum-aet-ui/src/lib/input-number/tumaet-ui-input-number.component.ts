@@ -43,12 +43,13 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
      */
     readonly snapToStep = input(false, { transform: booleanAttribute });
     /** Shows increment and decrement controls. */
-    readonly horizontalButtons = input(false, { transform: booleanAttribute });
-    readonly incrementLabel = input<string>();
-    readonly decrementLabel = input<string>();
-    protected readonly faMinus = faMinus;
-    protected readonly faPlus = faPlus;
     readonly showButtons = input(false, { transform: booleanAttribute });
+    /** Places the controls on both sides of the field, minus before and plus after, instead of stacked at its end. */
+    readonly horizontalButtons = input(false, { transform: booleanAttribute });
+    /** Accessible name of the increment control; defaults to the package's translated "Increase value". */
+    readonly incrementLabel = input<string>();
+    /** Accessible name of the decrement control; defaults to the package's translated "Decrease value". */
+    readonly decrementLabel = input<string>();
     /** Text displayed before the formatted number. */
     readonly prefix = input<string>();
     /** Text displayed after the formatted number. */
@@ -90,6 +91,8 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
 
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
 
     private readonly numberFormatter = computed(() => new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: this.maxFractionDigits() }));
     private readonly localeNumberSyntax = computed(() => this.createLocaleNumberSyntax());

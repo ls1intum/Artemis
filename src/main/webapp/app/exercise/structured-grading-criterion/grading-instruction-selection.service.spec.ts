@@ -122,7 +122,7 @@ describe('GradingInstructionSelectionService', () => {
         expect(service.hasArmedInstruction()).toBe(false);
     });
 
-    it('should reject a finite armed instruction after the registered host exhausts its usage limit', () => {
+    it('should stop offering a finite armed instruction after the registered host exhausts its usage limit', () => {
         const appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
         service.register({ ...host, appliedInstructionCounts: appliedCounts });
         const limitedInstruction = { id: 1, credits: 2, usageCount: 1 } as GradingInstruction;
@@ -130,7 +130,7 @@ describe('GradingInstructionSelectionService', () => {
         service.toggleArmedInstruction(limitedInstruction);
         appliedCounts.set(new Map([[limitedInstruction.id!, 1]]));
 
-        expect(service.consumeArmedInstruction()).toBeUndefined();
         expect(service.hasArmedInstruction()).toBe(false);
+        expect(service.canApplyInstruction(service.consumeArmedInstruction())).toBe(false);
     });
 });

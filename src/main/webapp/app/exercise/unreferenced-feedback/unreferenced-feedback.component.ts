@@ -145,12 +145,13 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         return groups.length > 1 || (groups.length === 1 && !groups[0].translateTitle);
     });
 
+    /** With group headers, the add button belongs to the Other feedback group instead of standing alone. */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
+
     /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
      * positive/max-point capping as the assessment save path.
      */
-    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
-
     readonly pointsSummary = computed(() => {
         const { awarded, deducted, total } = this.assessmentScore();
         return { awarded, deducted, total };
@@ -224,9 +225,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 
     applyInstruction(instruction: GradingInstruction): void {
-        if (!this.selectionService.canApplyInstruction(instruction)) {
-            return;
-        }
         const feedback = this.createFeedback();
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
@@ -279,12 +277,11 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         return Math.max(...references.concat([0])) + 1;
     }
 
+    /** Adds a feedback for a grading instruction dropped onto the list, unless its usage limit is reached. */
     createAssessmentOnDrop(event: Event) {
-        this.addUnreferencedFeedback();
-        const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
-        if (newFeedback) {
-            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
-            this.updateFeedback(newFeedback);
+        const feedback = this.createFeedback();
+        if (this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)) {
+            this.appendFeedback(feedback);
         }
     }
 }

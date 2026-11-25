@@ -67,7 +67,7 @@ export function gradingInstructionFeedbackItem(feedback: Feedback, name: string)
     return {
         type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
         name: name,
-        title: Feedback.getDisplayTitle(feedback),
+        title: feedback.text,
         text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
         positive: feedback.positive,
         credits: feedback.credits,

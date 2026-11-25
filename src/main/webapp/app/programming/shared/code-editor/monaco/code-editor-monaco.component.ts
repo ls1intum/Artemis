@@ -112,17 +112,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
-
-    hasUnsavedInlineFeedback(): boolean {
-        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.feedback() !== undefined && component.hasUnsavedEdits());
-    }
-
-    discardUnsavedInlineFeedback(): void {
-        this.inlineFeedbackComponents()
-            .filter((component) => component.hasUnsavedEdits())
-            .forEach((component) => component.cancelFeedback());
-        this.newFeedbackLines.set([]);
-    }
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -566,14 +555,24 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
     }
 
+    /** Whether an inline feedback card is new or has edits that were not saved yet. A discarded new card counts as gone before Angular removes it. */
+    hasUnsavedInlineFeedback(): boolean {
+        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.feedback() !== undefined && component.hasUnsavedEdits());
+    }
+
+    /** Closes every new or edited inline feedback card without saving it. */
+    discardUnsavedInlineFeedback(): void {
+        this.inlineFeedbackComponents()
+            .filter((component) => component.hasUnsavedEdits())
+            .forEach((component) => component.cancelFeedback());
+        this.newFeedbackLines.set([]);
+    }
+
     /**
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
      *
-     * Manual feedback now commits on every keystroke instead of on an explicit save (see
-     * {@link CodeEditorTutorAssessmentInlineFeedbackComponent}), so this runs far more often than a single click.
-     * A widget is only re-rendered for the new-feedback transition, where it has to move out of the "new" bucket;
-     * updating content in place would otherwise tear down and recreate the widget's DOM node - including the
-     * focused textarea - on every character typed.
+     * Inline feedback reaches this only when its card is saved. A widget is only re-rendered for the new-feedback
+     * transition, where it has to move out of the "new" bucket; an existing card keeps its widget.
      * @param feedback The feedback item to save.
      * @param originalFeedback The bound item whose edit emitted this feedback, which may be a working copy.
      */
@@ -588,10 +587,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             feedbackArray[existingFeedbackIndex] = feedback;
             this.feedbackInternal.set(feedbackArray);
         } else {
-            // New feedback -> save as actual feedback and refocus its detail field once the widget is rebuilt.
+            // New feedback -> save as actual feedback, which renders as a collapsed card.
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
-            this.renderFeedbackWidgets(line);
+            this.renderFeedbackWidgets();
         }
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
@@ -645,10 +644,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
                 // New, unsaved feedback has no associated object yet.
                 for (const line of this.newFeedbackLines()) {
-                    const feedbackNode = this.inlineFeedbackComponents().find((component) => component.codeLine() === line && component.feedback() === undefined)?.elementRef
-                        .nativeElement;
+                    const feedbackNode = this.getNewInlineFeedbackNode(line);
                     if (!feedbackNode) {
-                        throw new Error('No draft feedback node found at line ' + line);
+                        throw new Error('No new feedback node found at line ' + line);
                     }
                     this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
                 }
@@ -658,10 +656,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 if (focusLine !== undefined) {
                     // The inline feedback editor renders its description field through jhi-unified-feedback, which
                     // identifies the textarea by class rather than by a (non-reusable) id.
-                    const detailTextarea = this.inlineFeedbackComponents()
-                        .find((component) => component.codeLine() === focusLine && component.feedback() === undefined)
-                        ?.elementRef.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement | null;
-                    detailTextarea?.focus();
+                    this.getNewInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
                 }
             },
             { injector: this.injector },
@@ -947,6 +942,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     getInlineFeedbackNode(line: number, feedback?: Feedback): HTMLElement | undefined {
         return this.inlineFeedbackComponents().find((comp) => comp.codeLine() === line && (feedback === undefined || comp.feedback() === feedback))?.elementRef?.nativeElement;
+    }
+
+    /** The node of the unsaved card at the line. A stored feedback on the same line has its own card. */
+    private getNewInlineFeedbackNode(line: number): HTMLElement | undefined {
+        return this.inlineFeedbackComponents().find((component) => component.codeLine() === line && component.feedback() === undefined)?.elementRef.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {

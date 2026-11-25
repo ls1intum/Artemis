@@ -1,7 +1,7 @@
 @if (headerKey() !== null) {
     <div class="expandable-header-row">
         @if (isSubHeader()) {
-            <!-- Sub-header (used only by the structured criteria panel): chevron leads the title, per the design. -->
+            <!-- Sub-header (used only by the structured criteria panel): the chevron leads, so nested criteria read as a tree. -->
             <h6
                 class="expandable-header expandable-header--sub"
                 (click)="toggleCollapsed()"

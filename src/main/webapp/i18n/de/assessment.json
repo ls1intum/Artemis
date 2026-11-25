@@ -61,12 +61,11 @@
                 "finalScore": "Gesamt",
                 "pointsShort": "{{points}} Pkt.",
                 "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
-                "feedbackHeader": "Titel",
-                "criteria": "Kriterium",
+                "title": "Titel",
                 "instruction": "Anweisung",
                 "feedbackUsage": {
-                    "limited": "Du hast dieses Feedback {{used}} von {{limit}} erlaubten Malen verwendet.",
-                    "unlimited": "Du hast dieses Feedback {{used}} Mal verwendet. Dieses Feedback hat keine Nutzungsbegrenzung."
+                    "limited": "Verwendungen dieses Feedbacks: {{used}} von {{limit}} erlaubten.",
+                    "unlimited": "Verwendungen dieses Feedbacks: {{used}}. Dieses Feedback hat keine Nutzungsbegrenzung."
                 },
                 "decreasePoints": "Punkte verringern",
                 "increasePoints": "Punkte erhöhen"

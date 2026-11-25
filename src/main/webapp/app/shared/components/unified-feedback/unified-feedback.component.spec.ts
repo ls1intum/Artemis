@@ -86,7 +86,7 @@ describe('UnifiedFeedbackComponent', () => {
         expect(deleted).not.toHaveBeenCalled();
     });
 
-    it('keeps missing-comment validation without coloring the assessment textarea', () => {
+    it('marks a missing comment in the assessment textarea and labels it', () => {
         fixture.componentRef.setInput('assessmentLayout', true);
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL_UNREFERENCED } as Feedback);
@@ -95,7 +95,8 @@ describe('UnifiedFeedbackComponent', () => {
         const detail = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
         expect(component.isDetailMissing()).toBe(true);
         expect(detail.getAttribute('aria-invalid')).toBe('true');
-        expect(detail.classList).not.toContain('unified-feedback-detail-input-missing');
+        expect(detail.classList).toContain('unified-feedback-detail-input-missing');
+        expect(detail.labels?.[0]?.textContent).toContain('artemisApp.assessment.detail.feedback');
         expect(fixture.nativeElement.querySelector('.unified-feedback').classList).toContain('unified-feedback--success');
         component.feedbackCredits.set(-1);
         fixture.detectChanges();
@@ -136,7 +137,7 @@ describe('UnifiedFeedbackComponent', () => {
 
         const title = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
         const detail = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
-        expect(title.labels?.[0]?.textContent).toContain('artemisApp.assessment.detail.feedbackHeader');
+        expect(title.labels?.[0]?.textContent).toContain('artemisApp.assessment.detail.title');
         title.value = 'Edited title';
         title.dispatchEvent(new Event('input'));
         detail.value = 'Edited comment';
@@ -165,7 +166,11 @@ describe('UnifiedFeedbackComponent', () => {
         await fixture.whenStable();
 
         expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeNull();
-        expect(fixture.nativeElement.textContent).toContain('When documentation is complete');
+        // The instruction description is markdown, which renders asynchronously.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('When documentation is complete');
+        });
         expect(fixture.nativeElement.textContent).toContain('Document the code');
         expect(fixture.nativeElement.querySelector('.unified-feedback-points').textContent.trim()).toBe('+2');
         fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance.removeLink();

@@ -1,7 +1,3 @@
-.sgi-item__markdown ::ng-deep p {
-    margin: 0;
-}
-
 .sgi-item--armed {
     border-color: var(--primary);
 }

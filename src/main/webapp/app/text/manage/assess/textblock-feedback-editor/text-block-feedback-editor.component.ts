@@ -87,15 +87,16 @@ export class TextBlockFeedbackEditorComponent {
         this.unifiedFeedback().focusTextarea();
     }
 
-    /**
-     * Hook to indicate a score change; resets the correction status because it is now stale
-     */
+    /** Links the armed grading instruction; {@link didChange} marks an accepted suggestion as adapted. */
     applyArmedInstruction(): void {
         if (!this.readOnly() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.feedback())) {
             this.onScoreChange();
         }
     }
 
+    /**
+     * Hook to indicate a score change; resets the correction status because it is now stale
+     */
     onScoreChange(): void {
         this.feedback().correctionStatus = undefined;
         this.didChange();
@@ -157,7 +158,9 @@ export class TextBlockFeedbackEditorComponent {
 
     connectFeedbackWithInstruction(event: Event) {
         const feedbackValue = this.feedback();
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedbackValue, event);
+        if (!this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedbackValue, event)) {
+            return;
+        }
 
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         feedbackValue.correctionStatus = undefined;

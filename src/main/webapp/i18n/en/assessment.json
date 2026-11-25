@@ -61,12 +61,11 @@
                 "finalScore": "Final",
                 "pointsShort": "{{points}} pts",
                 "pointsOfShort": "{{points}} / {{maxPoints}} pts",
-                "feedbackHeader": "Title",
-                "criteria": "Criteria",
+                "title": "Title",
                 "instruction": "Instruction",
                 "feedbackUsage": {
-                    "limited": "You have used this feedback {{used}} out of {{limit}} allowed times.",
-                    "unlimited": "You have used this feedback {{used}} times. This feedback has no usage limit."
+                    "limited": "Uses of this feedback: {{used}} of {{limit}} allowed.",
+                    "unlimited": "Uses of this feedback: {{used}}. This feedback has no usage limit."
                 },
                 "decreasePoints": "Decrease points",
                 "increasePoints": "Increase points"

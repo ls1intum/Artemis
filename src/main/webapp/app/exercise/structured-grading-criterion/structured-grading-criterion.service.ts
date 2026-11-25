@@ -22,47 +22,47 @@ export class StructuredGradingCriterionService {
     private readonly selectionService = inject(GradingInstructionSelectionService);
 
     /**
-     * Connects the structured grading instructions with the feedback of a submission element
-     * @param {Event} event - The drop event
-     * @param {Feedback} feedback - The feedback of the assessment to be updated
-     * the SGI element sent on drag in processed in this method
-     * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
+     * Links the grading instruction dragged from StructuredGradingInstructionsAssessmentLayoutComponent to the feedback.
+     * @param feedback the feedback the instruction was dropped onto
+     * @param event the drop event
+     * @returns whether the instruction was linked; false for foreign drag data or an exhausted usage limit
      */
-    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event) {
+    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event): boolean {
         event.preventDefault();
-        try {
-            const data = (event as DragEvent).dataTransfer?.getData('text/plain');
-            if (!data) {
-                return;
-            }
-            this.applyInstructionToFeedback(feedback, parseJson<GradingInstruction>(data));
-        } catch (err) {
-            // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
-            if (!(err instanceof SyntaxError)) {
-                throw err;
-            }
+        const data = (event as DragEvent).dataTransfer?.getData('text/plain');
+        if (!data) {
+            return false;
         }
+        let instruction: GradingInstruction;
+        try {
+            instruction = parseJson<GradingInstruction>(data);
+        } catch (err) {
+            // Something unrelated was dropped, so the data is no instruction JSON.
+            if (err instanceof SyntaxError) {
+                return false;
+            }
+            throw err;
+        }
+        return this.applyInstructionToFeedback(feedback, instruction);
     }
 
     /**
-     * Applies and clears a previously selected instruction onto {@code feedback}.
-     * @returns whether an instruction was applied
+     * Links the armed instruction to the feedback and disarms it.
+     * @returns whether an instruction was linked
      */
     applyArmedInstructionToFeedback(feedback: Feedback): boolean {
         const instruction = this.selectionService.consumeArmedInstruction();
-        if (!instruction) {
-            return false;
-        }
-        this.applyInstructionToFeedback(feedback, instruction);
-        return true;
+        return !!instruction && this.applyInstructionToFeedback(feedback, instruction);
     }
 
-    private applyInstructionToFeedback(feedback: Feedback, instruction: GradingInstruction | undefined): void {
-        if (!instruction) {
-            return;
+    /** Every way of linking an instruction ends here, so the usage limit applies to all of them. Relinking the same instruction adds no application. */
+    private applyInstructionToFeedback(feedback: Feedback, instruction: GradingInstruction): boolean {
+        if (feedback.gradingInstruction?.id !== instruction.id && !this.selectionService.canApplyInstruction(instruction)) {
+            return false;
         }
         feedback.gradingInstruction = instruction;
         feedback.credits = instruction.credits;
+        return true;
     }
 
     computeTotalScore(assessments: Feedback[]) {

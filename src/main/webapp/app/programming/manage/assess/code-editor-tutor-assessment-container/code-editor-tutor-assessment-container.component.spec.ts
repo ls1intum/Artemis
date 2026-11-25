@@ -263,7 +263,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
-        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
+        const discard = vi.fn();
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => true,
+            discardUnsavedInlineFeedback: discard,
+        } as unknown as CodeEditorContainerComponent);
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
         const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         comp.participation.set(participation);
@@ -283,6 +288,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.saveBusy()).toBe(false);
         expect(comp.submitBusy()).toBe(false);
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        expect(confirmSpy).toHaveBeenCalledTimes(2);
+        expect(discard).not.toHaveBeenCalled();
+    });
+
+    it('should discard unsaved inline cards when the tutor confirms leaving', () => {
+        const discard = vi.fn();
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => true,
+            discardUnsavedInlineFeedback: discard,
+        } as unknown as CodeEditorContainerComponent);
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+        comp.hasPendingChanges = true;
+        comp.submission.set(submission);
+
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(true);
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(discard).toHaveBeenCalledOnce();
     });
 
     it.each([false, true])('preserves live result references when a save or submit fails (%s)', async (submit) => {

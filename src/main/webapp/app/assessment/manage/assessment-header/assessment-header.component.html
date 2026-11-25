@@ -144,6 +144,9 @@
                         class="assessment-submit-control"
                         data-testid="assessment-submit-control"
                         [attr.tabindex]="submitDisabled ? 0 : null"
+                        [attr.role]="submitDisabled ? 'button' : null"
+                        [attr.aria-disabled]="submitDisabled || null"
+                        [attr.aria-label]="submitDisabled ? ('entity.action.submit' | artemisTranslate) : null"
                         [tumAetUiTooltip]="
                             !assessmentsAreValid()
                                 ? ('artemisApp.assessment.messages.incompleteFeedback' | artemisTranslate)
@@ -158,6 +161,7 @@
                             severity="success"
                             (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
                             [disabled]="submitDisabled"
+                            [attr.aria-hidden]="submitDisabled || null"
                         >
                             @if (submitBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />

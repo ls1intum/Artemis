@@ -232,7 +232,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         fixture.componentRef.setInput('feedbacks', [first, second]);
         await settle();
         const secondCard = comp.inlineFeedbackComponents()[1];
-        secondCard.editFeedback(1);
+        secondCard.editFeedback();
         await settle();
         const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.value = 'Edited second suggestion';
@@ -247,7 +247,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         expect(second.detailText).toBe('Second suggestion detail');
         expect(secondCard.viewOnly()).toBe(true);
 
-        secondCard.deleteFeedback();
+        secondCard.removeFeedback();
         await settle();
         expect(comp.feedbackInternal()).toEqual([first]);
         expect(overlays.size).toBe(1);
@@ -262,7 +262,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         fixture.componentRef.setInput('feedbacks', [first, second]);
         await settle();
         const secondCard = comp.inlineFeedbackComponents()[1];
-        secondCard.editFeedback(1);
+        secondCard.editFeedback();
         await settle();
         const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.focus();
@@ -280,7 +280,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         expect(textarea.value).toBe('First suggestion detail');
         expect(textarea.selectionStart).toBe(7);
         expect(textarea.selectionEnd).toBe(7);
-        secondCard.deleteFeedback();
+        secondCard.removeFeedback();
         await settle();
 
         expect(comp.feedbackInternal()).toHaveLength(1);
@@ -292,7 +292,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         fixture.componentRef.setInput('feedbacks', [first, second]);
         await settle();
         const [cardA, cardB] = comp.inlineFeedbackComponents();
-        cardA.editFeedback(1);
+        cardA.editFeedback();
         await settle();
         const comment = cardA.elementRef.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
         comment.value = 'Unsaved comment A';
@@ -301,7 +301,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         points.value = '2.5';
         points.dispatchEvent(new Event('input'));
         await settle();
-        cardB.editFeedback(1);
+        cardB.editFeedback();
         await settle();
         cardB.updateFeedback();
         await settle();
@@ -321,7 +321,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         fixture.componentRef.setInput('feedbacks', [feedback]);
         await settle();
         const card = comp.inlineFeedbackComponents()[0];
-        card.editFeedback(1);
+        card.editFeedback();
         await settle();
         const selection = TestBed.inject(GradingInstructionSelectionService);
         selection.toggleArmedInstruction({ id: 77, credits: 2, feedback: 'Instruction text' } as GradingInstruction);

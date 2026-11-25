@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
@@ -9,9 +9,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
-import { parseJson } from 'app/foundation/util/json.util';
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+type EditableField = 'text' | 'detailText' | 'credits';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -35,6 +35,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
     protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly Feedback = Feedback;
+
+    /** The stored feedback, or undefined for a new card that has not been saved yet. */
     readonly feedback = input<Feedback>();
     readonly selectedFile = input.required<string>();
     readonly codeLine = input.required<number>();
@@ -42,63 +44,76 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
     readonly highlightDifferences = input(false);
     readonly course = input<Course>();
     readonly gradingCriteria = input<GradingCriterion[]>([]);
-    private readonly unifiedFeedback = viewChild(UnifiedFeedbackComponent);
-    private readonly editing = signal(false);
-    protected readonly inputEdited = signal(false);
-    private readonly revision = signal(0);
 
-    // Parent updates to other cards must not replace this card's working copy.
-    readonly currentFeedback = linkedSignal<Feedback | undefined, Feedback>({
-        source: () => this.feedback(),
-        computation: (feedback, previous) => (this.editing() && previous ? previous.value : deepClone(feedback ?? new Feedback())),
-    });
-    readonly viewOnly = linkedSignal<Feedback | undefined, boolean>({
-        source: () => this.feedback(),
-        computation: (feedback, previous) => (this.editing() && previous ? previous.value : !!feedback),
-    });
     readonly onUpdateFeedback = output<Feedback>();
     readonly onCancelFeedback = output<number>();
     readonly onDeleteFeedback = output<Feedback>();
     readonly onEditFeedback = output<number>();
 
+    private readonly unifiedFeedback = viewChild(UnifiedFeedbackComponent);
+
+    /**
+     * Working copy of an open card. It is replaced, never mutated, so the computeds below track every edit, and it
+     * is detached from {@link feedback} so the parent can rebind the stored feedback without discarding the edit.
+     */
+    private readonly draft = signal<Feedback | undefined>(undefined);
+    /** Set by any edit, including raw input that has not reached the draft yet, such as a lone minus sign in the points field. */
+    private readonly edited = signal(false);
+
+    readonly viewOnly = computed(() => !!this.feedback() && !this.draft());
+    readonly currentFeedback = computed(() => this.draft() ?? this.feedback() ?? new Feedback());
+
     protected readonly saveEnabled = computed(() => {
-        this.revision();
         const feedback = this.currentFeedback();
         return !this.readOnly() && Number.isFinite(feedback.credits) && Feedback.hasContent(feedback);
     });
 
-    protected displayTitle(): string | undefined {
+    protected readonly displayTitle = computed(() => {
         const feedback = this.currentFeedback();
         const instructionId = feedback.gradingInstruction?.id;
-        const criterion =
-            instructionId === undefined
-                ? undefined
-                : this.gradingCriteria().find((item) => item.structuredGradingInstructions?.some((instruction) => instruction.id === instructionId));
-        return criterion?.title || (Feedback.isFeedbackSuggestion(feedback) ? Feedback.getDisplayTitle(feedback) : undefined);
-    }
-
-    /** The original stays in the assessment until Save, including its instruction usage. */
-    hasUnsavedEdits(): boolean {
-        if (!this.feedback()) {
-            return true;
+        if (instructionId !== undefined) {
+            const criterion = this.gradingCriteria().find((item) => item.structuredGradingInstructions?.some((instruction) => instruction.id === instructionId));
+            if (criterion?.title) {
+                return criterion.title;
+            }
         }
-        const current = this.currentFeedback();
-        const original = this.feedback()!;
-        return (
-            !this.viewOnly() &&
-            (this.inputEdited() ||
-                current.text !== original.text ||
-                current.detailText !== original.detailText ||
-                current.credits !== original.credits ||
-                current.gradingInstruction?.id !== original.gradingInstruction?.id)
-        );
+        return Feedback.isFeedbackSuggestion(feedback) ? Feedback.stripSuggestionPrefix(feedback.text ?? '') || undefined : undefined;
+    });
+
+    protected readonly feedbackContent = computed(() => buildFeedbackTextForReview(this.currentFeedback(), false));
+
+    /** A new card counts as unsaved; a stored one only while it is open and edited. The original stays in the assessment until Save. */
+    hasUnsavedEdits(): boolean {
+        return !this.feedback() || (!this.viewOnly() && this.edited());
     }
 
-    protected onFieldChanged(): void {
-        this.revision.update((value) => value + 1);
-        const instruction = this.currentFeedback().gradingInstruction;
-        // The original link is already counted by the parent; reserve only an additional draft link.
+    protected setField<K extends EditableField>(field: K, value: Feedback[K]): void {
+        const next = deepClone(this.currentFeedback());
+        next[field] = value;
+        this.commitDraft(next);
+    }
+
+    /** The shared card unlinks the instruction on the object it was given, so the draft is replaced to make the change visible. */
+    protected onInstructionUnlinked(): void {
+        this.commitDraft(deepClone(this.currentFeedback()));
+    }
+
+    protected markEdited(): void {
+        this.edited.set(true);
+    }
+
+    private commitDraft(next: Feedback): void {
+        this.draft.set(next);
+        this.edited.set(true);
+        // The stored link is already counted by the parent; reserve only an additional draft link.
+        const instruction = next.gradingInstruction;
         this.selectionService.reserveInstruction(this, instruction?.id !== this.feedback()?.gradingInstruction?.id ? instruction : undefined);
+    }
+
+    private closeDraft(): void {
+        this.draft.set(undefined);
+        this.edited.set(false);
+        this.selectionService.reserveInstruction(this);
     }
 
     updateFeedback(): void {
@@ -111,15 +126,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         if (!feedback.text) {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
-        } else if (this.hasUnsavedEdits()) {
+        } else if (this.edited()) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }
         feedback.positive = (feedback.credits ?? 0) > 0;
-        this.editing.set(false);
-        this.inputEdited.set(false);
-        this.currentFeedback.set(feedback);
-        this.viewOnly.set(true);
-        this.selectionService.reserveInstruction(this);
+        this.closeDraft();
         this.onUpdateFeedback.emit(feedback);
     }
 
@@ -127,40 +138,32 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         if (this.readOnly()) {
             return;
         }
-        this.editing.set(false);
-        this.inputEdited.set(false);
-        this.selectionService.reserveInstruction(this);
-        this.currentFeedback.set(deepClone(this.feedback() ?? new Feedback()));
-        this.viewOnly.set(!!this.feedback());
+        this.closeDraft();
         if (!this.feedback()) {
             this.onCancelFeedback.emit(this.codeLine());
         }
     }
 
-    deleteFeedback(): void {
-        if (!this.readOnly()) {
-            this.selectionService.reserveInstruction(this);
-            this.onDeleteFeedback.emit(this.feedback() ?? this.currentFeedback());
-        }
-    }
-
     removeFeedback(): void {
-        if (this.feedback()) {
-            this.deleteFeedback();
-        } else {
-            this.cancelFeedback();
-        }
-    }
-
-    editFeedback(line: number): void {
         if (this.readOnly()) {
             return;
         }
-        this.currentFeedback.set(deepClone(this.feedback() ?? new Feedback()));
-        this.editing.set(true);
-        this.inputEdited.set(false);
-        this.viewOnly.set(false);
-        this.onEditFeedback.emit(line);
+        const feedback = this.feedback();
+        if (!feedback) {
+            this.cancelFeedback();
+            return;
+        }
+        this.closeDraft();
+        this.onDeleteFeedback.emit(feedback);
+    }
+
+    editFeedback(): void {
+        if (this.readOnly()) {
+            return;
+        }
+        this.draft.set(deepClone(this.currentFeedback()));
+        this.edited.set(false);
+        this.onEditFeedback.emit(this.codeLine());
         setTimeout(() => this.unifiedFeedback()?.focusTextarea());
     }
 
@@ -168,48 +171,42 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         if (this.readOnly()) {
             return;
         }
-        if (Feedback.isFeedbackSuggestion(this.currentFeedback())) {
-            try {
-                const data = (event as DragEvent).dataTransfer?.getData('text/plain');
-                if (data && !this.selectionService.canApplyInstruction(parseJson<GradingInstruction>(data))) {
-                    return;
-                }
-            } catch (error) {
-                if (!(error instanceof SyntaxError)) {
-                    throw error;
-                }
-                return;
-            }
+        const next = deepClone(this.currentFeedback());
+        if (!this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(next, event)) {
+            return;
         }
         if (this.viewOnly()) {
-            this.editFeedback(this.codeLine());
+            this.editFeedback();
         }
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.currentFeedback(), event);
-        this.onInstructionLinked();
+        this.linkInstruction(next);
     }
 
     applyArmedInstruction(): void {
-        if (!this.readOnly() && !this.viewOnly() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.currentFeedback())) {
-            this.onInstructionLinked();
+        if (this.readOnly() || this.viewOnly()) {
+            return;
+        }
+        const next = deepClone(this.currentFeedback());
+        if (this.structuredGradingCriterionService.applyArmedInstructionToFeedback(next)) {
+            this.linkInstruction(next);
         }
     }
 
-    private onInstructionLinked(): void {
-        const feedback = this.currentFeedback();
-        if (feedback.text) {
-            feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
+    private linkInstruction(next: Feedback): void {
+        if (next.text) {
+            next.text = Feedback.markAdaptedIfAcceptedSuggestion(next.text);
         }
-        this.onFieldChanged();
+        this.commitDraft(next);
     }
 
     ngOnDestroy(): void {
         this.selectionService.reserveInstruction(this);
     }
 
-    public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback, false);
-    }
-
+    /**
+     * Monaco forwards keys typed in a content widget to the editor, which would run its own commands, for example
+     * Backspace deleting code in the read-only editor. Only the assessment shortcuts handled by the assessment
+     * header (Ctrl+S, Ctrl+Enter, Ctrl+Shift+ArrowRight) may leave the card.
+     */
     protected handleKeydown(event: KeyboardEvent): void {
         if (event.ctrlKey && (event.key.toLowerCase() === 's' || event.key === 'Enter' || (event.shiftKey && event.key === 'ArrowRight'))) {
             return;

@@ -120,6 +120,7 @@ describe('UnreferencedFeedbackComponent', () => {
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
+            return true;
         });
 
         // Call spy function with empty event
@@ -129,8 +130,15 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
 
+    it('should not add feedback when the dropped instruction cannot be linked', () => {
+        comp.unreferencedFeedback = [];
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockReturnValue(false);
+        comp.createAssessmentOnDrop(new Event(''));
+        expect(comp.unreferencedFeedback).toHaveLength(0);
+    });
+
     it('should only replace feedback on drop, not add another one', () => {
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockReturnValue(true);
         comp.createAssessmentOnDrop(new Event(''));
         fixture.changeDetectorRef.detectChanges();
 
@@ -399,7 +407,10 @@ describe('Applying instructions with real feedback cards', () => {
         (target.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
         await fixture.whenStable();
         expect(fixture.nativeElement.querySelectorAll('.unified-feedback-assessment-criterion')).toHaveLength(linked ? 2 : 1);
-        expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        });
         expect(fixture.componentInstance.unreferencedFeedback).toHaveLength(feedbacks.length);
     });
 });
@@ -440,7 +451,10 @@ describe('Instruction application through the full assessment controls', () => {
         await fixture.whenStable();
         (fixture.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
         await fixture.whenStable();
-        expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        });
         expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Rubric feedback');
     });
 });

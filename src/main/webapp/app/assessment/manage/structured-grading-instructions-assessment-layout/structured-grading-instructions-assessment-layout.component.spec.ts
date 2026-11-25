@@ -202,8 +202,6 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(comp.isDraggable(instruction)).toBe(true);
             fixture.nativeElement.querySelector('[data-testid="increase-instruction-usage"]').click();
             expect(host.applyInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
-            comp.armInstruction(new Event('click'), instruction);
-            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
         });
 
         it('keeps the arming button available without a registered feedback list', () => {

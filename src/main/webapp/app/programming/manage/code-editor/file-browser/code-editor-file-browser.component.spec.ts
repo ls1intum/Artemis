@@ -115,15 +115,17 @@ describe('CodeEditorFileBrowserComponent', () => {
         const next = new TreeViewItem({ checked: false, text: 'Next', value: 'Next', children: [] });
         comp.filesTreeViewItem.set([current, next]);
         fixture.componentRef.setInput('selectedFile', 'Current');
-        fixture.componentRef.setInput('canSelectFile', () => false);
+        fixture.componentRef.setInput('fileSelectionLocked', true);
         fixture.detectChanges();
         const emitSpy = vi.spyOn(comp.selectedFileChange, 'emit');
+        const blockedSpy = vi.spyOn(comp.fileSelectionBlocked, 'emit');
 
         comp.handleNodeSelected(next);
 
         expect(current.checked).toBe(true);
         expect(next.checked).toBe(false);
         expect(emitSpy).not.toHaveBeenCalled();
+        expect(blockedSpy).toHaveBeenCalledOnce();
     });
 
     it('uncompresses the tree when toggling from true → false', () => {
