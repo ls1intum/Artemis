@@ -422,7 +422,14 @@ describe('ModelingAssessmentComponent', () => {
         comp.generateFeedbackFromAssessment([{ ...assessment, score: 1 }]);
         const saved = comp.elementFeedback.get(RELATIONSHIP_ID)!;
         expect(saved.detailText).toBe('Consider extracting a common superclass.');
-        const reloaded: Feedback = { text: saved.text, detailText: saved.detailText, referenceId: RELATIONSHIP_ID, reference: 'reference', credits: saved.credits };
+        const reloaded: Feedback = {
+            text: saved.text,
+            detailText: saved.detailText,
+            gradingInstruction: legacy.gradingInstruction,
+            referenceId: RELATIONSHIP_ID,
+            reference: 'reference',
+            credits: saved.credits,
+        };
         fixture.componentRef.setInput('resultFeedbacks', [reloaded]);
         fixture.detectChanges();
         expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID].feedback).toBe('Consider extracting a common superclass.');
