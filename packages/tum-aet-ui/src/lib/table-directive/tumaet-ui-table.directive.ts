@@ -23,7 +23,7 @@ const HEADER_CLASSES =
  * Every row has a rule below it, row header cells included. In a table with a footer the last row gives the rule to the
  * footer, and only the last `<tbody>` does so, because the others keep the separator towards the next body.
  * `border-separate` draws a border on cells only, never on a `<tfoot>`, so the footer cells carry a heavier rule above them.
- * Inside `tumaet-ui-table-layout` the frame leaves out the rules around the header and below the last row (see `tailwind.css`).
+ * Inside `tumaet-ui-table-layout` the layout leaves out the rules around the header and below the last row (see `tailwind.css`).
  */
 const BODY_CLASSES =
     'tumaet:[&_tbody_td]:text-text tumaet:[&_tbody_td]:border-b tumaet:[&_tbody_td]:border-border tumaet:[&_tbody_th]:border-b tumaet:[&_tbody_th]:border-border ' +

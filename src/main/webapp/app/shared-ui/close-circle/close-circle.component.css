@@ -19,7 +19,7 @@
     /* rotate is a workaround for subpixel rendering issues on Firefox */
     transform: translate(35%, -35%) rotate(0.0001deg);
     cursor: pointer;
-    transition: all 0.25s;
+    transition: opacity 0.25s;
     opacity: var(--close-circle-opacity);
 }
 

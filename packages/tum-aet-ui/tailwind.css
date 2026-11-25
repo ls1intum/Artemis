@@ -146,8 +146,8 @@
     }
 
     /*
-     * Inside the frame of `tumaet-ui-table-layout` the tinted header and the frame set a table apart, so the rule below the
-     * header and the one below the last row would only add lines. Outside the frame, and for a table in a cell, the table
+     * Inside `tumaet-ui-table-layout` the tinted header and the footer line set a table apart, so the rule below the
+     * header and the one below the last row would only add lines. Outside the layout, and for a table in a cell, the table
      * keeps both. A table with a footer keeps the rule above the footer, which its cells draw themselves.
      */
     .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *) > thead > tr > th {
@@ -156,6 +156,15 @@
 
     .tumaet-ui-table-layout-body .tumaet-ui-table:not(td *, th *, :has(> tfoot)) > tbody:last-child > tr:last-child > :is(td, th) {
         border-bottom-width: 0;
+    }
+
+    /* Without a frame, the tinted header is the top edge of the table, and its ends are rounded like the other surfaces. */
+    .tumaet-ui-table-layout-body table:not(td *, th *) > thead > tr:first-child > th:first-child {
+        border-start-start-radius: var(--tumaet-ui-radius-md);
+    }
+
+    .tumaet-ui-table-layout-body table:not(td *, th *) > thead > tr:first-child > th:last-child {
+        border-start-end-radius: var(--tumaet-ui-radius-md);
     }
 
     .tumaet-ui-button-group {
