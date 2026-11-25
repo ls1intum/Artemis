@@ -3,7 +3,7 @@
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
     <tumaet-ui-select-button
-        class="block mb-4"
+        class="mb-4"
         [options]="filterOptions"
         [(ngModel)]="selectedThreadState"
         optionValue="value"
@@ -19,7 +19,7 @@
         </span>
     </ng-template>
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
-    <input [attr.aria-label]="'accessibility.threadFilter' | artemisTranslate" type="text" [(ngModel)]="threadFilter" tumAetUiInput class="w-full mb-4!" />
+    <input [attr.aria-label]="'accessibility.threadFilter' | artemisTranslate" type="text" [(ngModel)]="threadFilter" tumAetUiInput class="w-full mb-4" />
     @for (thread of filteredThreads(); track thread) {
         <div class="py-2 border-b border-surface-200 dark:border-surface-700">
             <h6 class="flex items-center gap-2 flex-wrap">

@@ -7,7 +7,7 @@ import * as monaco from 'monaco-editor';
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
-    styleUrls: ['monaco-diff-editor.component.scss'],
+    styleUrls: ['monaco-diff-editor.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })

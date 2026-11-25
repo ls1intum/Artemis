@@ -1,0 +1,38 @@
+/*
+ * Page chrome measurements — same approach as plagiarism-inspector.component.css.
+ * navbar + footer = 88px = --sidebar-header-footer-combined-height (see themes/light.css).
+ * Breadcrumb height is content-sized with no global variable; 41px matches the measured default.
+ */
+:host {
+    display: block;
+    height: calc(100vh - 2 * 16px - 57px - 31px - 41px);
+    min-height: 0;
+}
+
+.version-history-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
+}
+
+.version-history-page jhi-exercise-version-history-layout {
+    flex: 1;
+    min-height: 0;
+}
+
+.timeline-pane,
+.snapshot-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.75rem;
+}
+
+.snapshot-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}

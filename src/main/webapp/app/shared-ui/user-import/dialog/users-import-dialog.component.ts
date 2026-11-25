@@ -24,7 +24,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-users-import-dialog',
     templateUrl: './users-import-dialog.component.html',
-    styleUrls: ['./users-import-dialog.component.scss'],
+    styleUrls: ['./users-import-dialog.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FormsModule,

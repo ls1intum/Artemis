@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -50,7 +52,6 @@ import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
@@ -2316,17 +2317,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param exerciseId       exercise to search
      * @param teamMode         whether team and practice participations should be included
-     * @param search           search, score bounds, and ordering
+     * @param search           search and ordering
      * @param filters          validated selections
+     * @param scoreRangeLower  inclusive lower score bound, or null
+     * @param scoreRangeUpper  upper score bound, or null
      * @param stuckBuildCutoff cutoff for builds without results
      * @param pageable         pagination information
      * @return a page of matching participation IDs
      */
-    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, ParticipationSearchDTO search, Set<ParticipationFilter> filters,
-            ZonedDateTime stuckBuildCutoff, Pageable pageable) {
+    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, PagedSearchDTO search, Set<ParticipationFilter> filters,
+            @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper, ZonedDateTime stuckBuildCutoff, Pageable pageable) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
                 .and(StudentParticipationSpecs.searchForManagement(search.searchTerm(), teamMode))
-                .and(StudentParticipationSpecs.managementFilters(filters, stuckBuildCutoff, search.scoreRangeLower(), search.scoreRangeUpper())).and(StudentParticipationSpecs
+                .and(StudentParticipationSpecs.managementFilters(filters, stuckBuildCutoff, scoreRangeLower, scoreRangeUpper)).and(StudentParticipationSpecs
                         .orderedForManagement(search.sortedColumn(), search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING, teamMode));
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         return findAll(spec, unsortedPageable).map(StudentParticipation::getId);

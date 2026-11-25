@@ -7,7 +7,7 @@
                         type="button"
                         tumAetUiButton
                         severity="secondary"
-                        class="m-1!"
+                        class="m-1"
                         (click)="printPlagiarismCase()"
                         [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.print' | artemisTranslate"
                     >
@@ -81,7 +81,7 @@
                                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></span>
                             </tumaet-ui-tab>
                         </tumaet-ui-tab-list>
-                        <tumaet-ui-tab-panels class="p-0!">
+                        <tumaet-ui-tab-panels class="p-0">
                             <tumaet-ui-tab-panel [value]="1" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription"></p>
                                 <div class="flex flex-wrap items-center">
@@ -107,7 +107,7 @@
                             <tumaet-ui-tab-panel [value]="2" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription"></p>
                                 <div class="flex flex-wrap items-center">
-                                    <tumaet-ui-input-group class="w-auto!">
+                                    <tumaet-ui-input-group class="w-auto">
                                         <input
                                             tumAetUiInput
                                             [attr.aria-label]="'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate"

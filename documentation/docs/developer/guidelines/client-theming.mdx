@@ -2,7 +2,7 @@
 id: client-theming
 title: Client Theming
 sidebar_label: Client Theming
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-23
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -25,8 +25,10 @@ documents how Artemis implements those decisions.
 
 The theming boundary has three layers:
 
-1. The light and dark SCSS variable files define Artemis semantic roles and compile them to CSS
-   custom properties.
+1. `content/css/themes/light.css` defines the Artemis semantic roles as CSS custom properties on the root
+   element; `themes/dark.css` overrides the roles whose value differs in the dark theme. Both are part of
+   the one global stylesheet. The theme service sets `data-theme` on the root element, and the selector
+   `:root[data-theme='dark']` of `dark.css` applies the dark values.
 2. `src/main/webapp/tailwind.css` exposes selected roles as semantic Tailwind utilities.
 3. The same file maps Artemis foundations and color roles to the public `--tumaet-ui-*` contract.
    TUM AET UI components consume only that package-owned contract.
@@ -44,7 +46,7 @@ Use the first suitable option:
 2. **Semantic Tailwind utility.** Use one when Artemis owns the mapping, such as
    `text-state-danger`, `text-muted-color` or `border-surface`. The neutral `surface` scale
    (`bg-surface-100`) is a primitive: prefer a role such as `bg-surface-raised`.
-3. **Artemis semantic CSS property.** Use an existing role in component SCSS or an irreducible
+3. **Artemis semantic CSS property.** Use an existing role in a component stylesheet or an irreducible
    dynamic style when a utility cannot express the requirement.
 4. **New semantic role.** Add one only when the concept recurs and no existing role has the correct
    meaning. Define both light and dark values and expose it to TUM AET UI only when it is a supported
@@ -299,9 +301,10 @@ Before adding a property, search the existing semantic roles and the
 [TUM AET UI theme contract](/developer/guidelines/tum-aet-ui-kit#theme-contract). If a new role is necessary:
 
 1. Name it after purpose rather than hue or a single screen.
-2. Add values to
-   `src/main/webapp/content/scss/themes/_default-variables.scss` and
-   `_dark-variables.scss`.
+2. Add the value to `src/main/webapp/content/css/themes/light.css`. Add a value to `themes/dark.css` only
+   if it differs in the dark theme. A role that follows another one refers to it
+   (`--link-item-color: var(--primary)`), so it follows that role in both themes and needs no value of its own in
+   `dark.css`.
 3. Check text and non-text contrast on every surface where the role is used.
 4. Add a semantic Tailwind mapping only when application markup needs a utility.
 5. Add a `--tumaet-ui-*` mapping only when package components need that supported customization
@@ -309,8 +312,9 @@ Before adding a property, search the existing semantic roles and the
 6. Verify the real component in both themes, compact layouts, forced-colors mode, and its relevant
    interaction states.
 
-Avoid theme-specific component selectors in `theme-default.scss` or `theme-dark.scss`. They are a
-last resort for legacy global integrations. A new application or TUM AET UI component should consume
+Avoid selectors that depend on the theme. `themes/dark-rules.css` holds the few global rules that only apply in
+the dark theme; it is a last resort for what a token cannot express. A component that needs one uses
+`:host-context([data-theme='dark'])`. A new application or TUM AET UI component should consume
 semantic properties instead.
 
 ## Reading and changing the active theme
@@ -324,10 +328,6 @@ private readonly themeService = inject(ThemeService);
 protected readonly isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
 ```
 
-Code that reads resolved CSS values after a stylesheet swap, such as a canvas chart, must also
-depend on `ThemeService.appliedThemeRevision`. This signal changes only after the selected theme
-stylesheet is active.
-
 Call `applyThemePreference()` only in response to an explicit user choice. Pass `undefined` to
 restore system-preference mode:
 
@@ -340,6 +340,6 @@ Do not subscribe manually to theme changes or mirror the current theme into a mu
 
 ## Cascade and source scanning
 
-Element defaults live in `content/scss/_base.scss` and are not in a cascade layer, so they and component SCSS win
-over Tailwind utilities. Tailwind scans only the folders listed in `tailwind.css`. Both constraints are documented in
+Element defaults live in `content/css/base.css`, in the cascade layer `base`, so a Tailwind utility overrides
+them. The stylesheets of application components are not in a layer and win over Tailwind utilities. Tailwind scans only the folders listed in `tailwind.css`. Both constraints are documented in
 [Client Development: Styling](/developer/guidelines/client-development#styling).

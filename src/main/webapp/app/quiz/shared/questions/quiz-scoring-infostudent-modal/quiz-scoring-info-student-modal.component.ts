@@ -18,7 +18,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
-    styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
+    styleUrls: ['./quiz-scoring-info-student-modal.component.css'],
     imports: [NgTemplateOutlet, TranslateDirective, FaIconComponent, NgClass, TumAetUiDialogComponent, TumAetUiButtonDirective],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {

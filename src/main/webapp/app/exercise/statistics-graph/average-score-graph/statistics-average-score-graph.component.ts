@@ -39,7 +39,7 @@ export enum PerformanceInterval {
 @Component({
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
-    styleUrls: ['./statistics-average-score-graph.component.scss'],
+    styleUrls: ['./statistics-average-score-graph.component.css'],
     imports: [
         TumAetUiPopoverComponent,
         TumAetUiPopoverTriggerDirective,

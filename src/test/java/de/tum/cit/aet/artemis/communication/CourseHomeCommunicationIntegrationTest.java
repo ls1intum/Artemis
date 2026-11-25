@@ -272,7 +272,9 @@ class CourseHomeCommunicationIntegrationTest extends AbstractSpringIntegrationIn
         old = faqs.findById(old.getId()).orElseThrow();
         old.setFaqState(FaqState.ACCEPTED);
         faqs.saveAndFlush(old);
-        assertThat(load().faqs()).extracting(i -> i.target().id()).containsExactly(old.getId());
+        var acceptedAt = faqs.findById(old.getId()).orElseThrow().getLastModifiedDate();
+        var result = home.load(course.getId(), student, acceptedAt, baseline.minusDays(7).toInstant());
+        assertThat(result.faqs()).extracting(i -> i.target().id()).containsExactly(old.getId());
     }
 
     private de.tum.cit.aet.artemis.communication.dto.CourseHomeCommunicationDTO load() {

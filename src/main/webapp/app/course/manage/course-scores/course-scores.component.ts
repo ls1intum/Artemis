@@ -78,7 +78,7 @@ const POINTS_PER_TYPE_PREFIX = 'sumPointsPerExerciseType.';
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
-    styleUrls: ['./course-scores.component.scss'],
+    styleUrls: ['./course-scores.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiButtonDirective,

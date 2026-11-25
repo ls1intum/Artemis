@@ -16,7 +16,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-sidebar-card-item',
     templateUrl: './sidebar-card-item.component.html',
-    styleUrls: ['./sidebar-card-item.component.scss', '../sidebar.component.scss'],
+    styleUrls: ['./sidebar-card-item.component.css', '../sidebar.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,

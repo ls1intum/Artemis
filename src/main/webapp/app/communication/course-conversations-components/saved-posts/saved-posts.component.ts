@@ -13,7 +13,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-saved-posts',
     templateUrl: './saved-posts.component.html',
-    styleUrls: ['./saved-posts.component.scss'],
+    styleUrls: ['./saved-posts.component.css'],
     host: { class: 'flex min-h-0 flex-1 flex-col' },
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent, TumAetUiButtonDirective],
 })

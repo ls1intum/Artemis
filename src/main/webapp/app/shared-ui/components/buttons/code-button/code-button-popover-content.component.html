@@ -29,7 +29,7 @@
                 <span class="flex w-full items-center gap-2 text-sm">
                     <span jhiTranslate="artemisApp.exerciseActions.passwordAuthenticationWarning"></span>
                     <fa-icon
-                        class="ms-auto! text-muted-color"
+                        class="ms-auto text-muted-color"
                         [icon]="faQuestionCircle"
                         [tumAetUiTooltip]="'artemisApp.exerciseActions.passwordAuthenticationWarningTooltip' | artemisTranslate"
                         tumAetUiTooltipPlacement="left"
@@ -42,7 +42,7 @@
             <div class="flex min-w-0 flex-1">
                 <button
                     type="button"
-                    class="flex items-center gap-2! rounded-s-sm! rounded-e-none! border! border-(--border-color)! border-(--primary)! bg-(--primary)! px-2.5 text-(--tumaet-ui-primary-contrast-color)"
+                    class="flex items-center gap-2 rounded-s-sm rounded-e-none border border-(--border-color)! border-(--primary)! bg-(--primary) px-2.5 text-(--tumaet-ui-primary-contrast-color)"
                     [tumAetUiMenuTrigger]="authenticationMenu"
                     data-testid="authentication-method-menu-trigger"
                 >
@@ -56,7 +56,7 @@
             </div>
 
             <a
-                class="flex items-center justify-center rounded-sm text-color!"
+                class="flex items-center justify-center rounded-sm text-color"
                 [routerLink]="repositoryViewLink()"
                 data-testid="open-repository-button"
                 target="_blank"
@@ -98,7 +98,7 @@
                     <fa-icon [icon]="faLaptopCode" aria-hidden="true" />
                     <span jhiTranslate="artemisApp.exerciseActions.ideButton.openIn" [translateValues]="{ ideName: currentIdeLinkData.name }"></span>
                     <fa-icon
-                        class="ms-auto! text-muted-color"
+                        class="ms-auto text-muted-color"
                         [icon]="faQuestionCircle"
                         [tumAetUiTooltip]="'artemisApp.exerciseActions.ideButton.helpIcon' | artemisTranslate"
                         tumAetUiTooltipPlacement="left"
@@ -129,7 +129,7 @@
                     <fa-icon [icon]="faCodeBranch" aria-hidden="true" />
                     <span jhiTranslate="artemisApp.exerciseActions.openInSourceTree.button"></span>
                     <fa-icon
-                        class="ms-auto! text-muted-color"
+                        class="ms-auto text-muted-color"
                         [icon]="faQuestionCircle"
                         [tumAetUiTooltip]="'artemisApp.exerciseActions.openInSourceTree.helpIcon' | artemisTranslate"
                         tumAetUiTooltipPlacement="left"

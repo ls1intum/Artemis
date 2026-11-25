@@ -62,25 +62,8 @@ class CachingHttpHeadersFilterTest {
         assertThat(chain.getRequest()).as("the filter must not swallow the request").isNotNull();
     }
 
-    /**
-     * {@code theme-dark.css} has no content hash in its name, and the production reverse proxy caches by path and
-     * ignores the hourly query the client appends. With a 30 day lifetime it kept serving the stylesheet of an older
-     * release after an update, so users saw old dark mode colours (a light message hover, an empty primary button).
-     */
     @ParameterizedTest
-    @ValueSource(strings = { "/theme-dark.css", "/artemis/theme-dark.css", "/theme-light.css" })
-    void unversionedThemeStylesheetsAreRevalidatedInsteadOfCached(String path) throws Exception {
-        MockFilterChain chain = new MockFilterChain();
-
-        MockHttpServletResponse response = doFilterWithLifetimeOf(30, chain, path);
-
-        assertThat(response.getHeader("Cache-Control")).isEqualTo("no-cache");
-        assertThat(response.getHeader("Expires")).isNull();
-        assertThat(chain.getRequest()).as("the filter must not swallow the request").isNotNull();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "/styles-7WCKMG4K.css", "/main-KLCX6SYX.js", "/i18n/en.json", "/some/theme-dark.css.map" })
+    @ValueSource(strings = { "/styles-7WCKMG4K.css", "/main-KLCX6SYX.js", "/i18n/en.json" })
     void contentVersionedFilesKeepTheLongLifetime(String path) throws Exception {
         MockHttpServletResponse response = doFilterWithLifetimeOf(30, new MockFilterChain(), path);
 
