@@ -2,8 +2,13 @@ package de.tum.cit.aet.artemis.core.config.performance;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_E2E_PERFORMANCE;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -66,30 +71,63 @@ public class QueryListener implements QueryExecutionListener {
     }
 
     /**
-     * A hash of the raw SQL text and every bound parameter value: two executions get the same
-     * signature exactly when they ran the same statement with the same values. The raw SQL is
-     * included (not just the parameters) because Hibernate inlines some values as literals, which
-     * normalisation strips from the template but which still make two statements different. For
-     * a JDBC batch, all of its parameter sets are hashed together, so one batch counts as one
-     * execution -- batching is the fix for one-statement-per-item, not an instance of it.
-     * A 64-bit hash keeps per-request memory flat; a collision is negligible at that size.
+     * A 64-bit digest of the raw SQL text and every bound parameter value: two executions get the same
+     * signature when they ran the same statement with the same values. The raw SQL is included (not just
+     * the parameters) because Hibernate inlines some values as literals, which normalisation strips from
+     * the template but which still make two statements different. For a JDBC batch, all of its parameter
+     * sets are digested together, so one batch counts as one execution -- batching is the fix for
+     * one-statement-per-item, not an instance of it.
+     * <p>
+     * A cryptographic digest, because values such as ids lie close together, where a sum of hash codes
+     * gives different parameters the same result. Cut to 64 bits to keep per-request memory flat.
      */
     static long parameterSignature(String rawSql, List<List<ParameterSetOperation>> parametersList) {
-        long hash = rawSql != null ? rawSql.hashCode() : 0;
+        MessageDigest digest = sha256();
+        add(digest, rawSql);
         if (parametersList != null) {
             for (List<ParameterSetOperation> parameterSet : parametersList) {
-                // hashed in parameter-index order, so the result depends on which value is bound to
-                // which parameter but not on the order of the calls; deepHashCode also covers byte[]
+                // in parameter-index order, so the result depends on which value is bound to which
+                // parameter but not on the order of the calls
                 List<ParameterSetOperation> ordered = new ArrayList<>(parameterSet);
                 ordered.sort(Comparator.comparing(QueryListener::parameterIndex));
-                long setHash = 0;
+                add(digest, "set of " + ordered.size());
                 for (ParameterSetOperation operation : ordered) {
-                    setHash = setHash * 31 + Arrays.deepHashCode(operation.getArgs());
+                    // the setter tells setNull(index, sqlType) apart from setInt(index, value)
+                    add(digest, operation.getMethod() == null ? null : operation.getMethod().getName());
+                    Object[] arguments = operation.getArgs() == null ? new Object[0] : operation.getArgs();
+                    for (Object argument : arguments) {
+                        add(digest, argument == null ? null : argument.getClass().getName());
+                        add(digest, describe(argument));
+                    }
                 }
-                hash = hash * 1_000_003L + setHash;
             }
         }
-        return hash;
+        return ByteBuffer.wrap(digest.digest()).getLong();
+    }
+
+    /** Adds one piece, preceded by its length, so that different sequences of pieces never give the same bytes. */
+    private static void add(MessageDigest digest, String piece) {
+        byte[] bytes = String.valueOf(piece).getBytes(StandardCharsets.UTF_8);
+        digest.update(ByteBuffer.allocate(Integer.BYTES).putInt(bytes.length).array());
+        digest.update(bytes);
+    }
+
+    private static String describe(Object argument) {
+        // a statement takes only the time zone from a calendar, whose text also holds the moment it was created
+        if (argument instanceof Calendar calendar) {
+            return calendar.getTimeZone().getID();
+        }
+        // renders an array, such as a byte[] value, by its content
+        return Arrays.deepToString(new Object[] { argument });
+    }
+
+    private static MessageDigest sha256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Every Java platform provides SHA-256", e);
+        }
     }
 
     /** The JDBC parameter index (or name) a setXxx call binds, its first argument. */
