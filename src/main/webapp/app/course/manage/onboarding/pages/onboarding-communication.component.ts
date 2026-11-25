@@ -11,7 +11,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-onboarding-communication',
     templateUrl: './onboarding-communication.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     imports: [FormsModule, TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, DocumentationButtonComponent, NgClass],
 })
 export class OnboardingCommunicationComponent {

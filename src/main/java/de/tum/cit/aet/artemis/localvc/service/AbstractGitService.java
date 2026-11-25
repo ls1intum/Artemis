@@ -24,6 +24,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -55,6 +56,12 @@ public abstract class AbstractGitService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.git.name}")
+    protected String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    protected String artemisGitEmail;
 
     protected final WorkingCopyLocks workingCopyLocks = WorkingCopyLocks.shared();
 
@@ -590,4 +597,13 @@ public abstract class AbstractGitService {
     }
 
     protected abstract LsRemoteCommand lsRemoteCommand();
+
+    /**
+     * The identity that the server configures for commits it makes itself, {@code artemis.git.name} and {@code artemis.git.email}.
+     *
+     * @return the placeholder identity
+     */
+    public PersonIdent getPlaceholderIdentity() {
+        return new PersonIdent(artemisGitName, artemisGitEmail);
+    }
 }

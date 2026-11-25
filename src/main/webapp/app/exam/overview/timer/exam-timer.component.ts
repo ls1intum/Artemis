@@ -12,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exam-timer',
     templateUrl: './exam-timer.component.html',
-    styleUrls: ['./exam-timer.scss'],
+    styleUrls: ['./exam-timer.css'],
     imports: [AsyncPipe, ArtemisTranslatePipe],
 })
 export class ExamTimerComponent implements OnInit, OnDestroy {

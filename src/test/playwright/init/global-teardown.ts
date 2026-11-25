@@ -2,17 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { request } from '@playwright/test';
 import { admin } from '../support/users';
+import { SlowQueryReport, mergeSlowQueryReports } from './mergeSlowQueryReports';
 
 const REPORT_JSON_PATH = path.join(__dirname, '..', 'test-reports', 'slow-query-report.json');
-
-/** The parts of the server's query report that are combined across nodes. */
-interface SlowQueryReport {
-    slowQueryCount: number;
-    repeatedQueryCount: number;
-    slowQueries: unknown[];
-    repeatedQueries: unknown[];
-    endpointTimings: unknown[];
-}
 
 /**
  * Collects the runtime query report while the Artemis server is still reachable. CI tears the
@@ -49,14 +41,7 @@ async function collectSlowQueryReport(): Promise<void> {
         reports.push(report);
     }
 
-    const merged = reports.reduce((all, report) => ({
-        ...all,
-        slowQueryCount: all.slowQueryCount + report.slowQueryCount,
-        repeatedQueryCount: all.repeatedQueryCount + report.repeatedQueryCount,
-        slowQueries: [...all.slowQueries, ...report.slowQueries],
-        repeatedQueries: [...all.repeatedQueries, ...report.repeatedQueries],
-        endpointTimings: [...all.endpointTimings, ...report.endpointTimings],
-    }));
+    const merged = mergeSlowQueryReports(reports);
     fs.mkdirSync(path.dirname(REPORT_JSON_PATH), { recursive: true });
     fs.writeFileSync(REPORT_JSON_PATH, JSON.stringify(merged));
     console.log(`[slow-query] Report of ${reports.length} node(s) saved to ${REPORT_JSON_PATH}`);

@@ -9,6 +9,7 @@ import org.springframework.boot.health.contributor.Status;
 
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.config.AthenaHealthIndicator;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 class AthenaHealthIndicatorTest extends AbstractAthenaTest {
 
@@ -40,10 +41,10 @@ class AthenaHealthIndicatorTest extends AbstractAthenaTest {
     }
 
     @Test
-    void healthDown() {
+    void healthDegraded() {
         athenaRequestMockProvider.mockHealthStatusFailure();
         final Health health = athenaHealthIndicator.health();
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         athenaRequestMockProvider.verify();
     }
 }

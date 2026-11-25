@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration properties for the runtime slow-query detector.
- * Bound from the {@code artemis.performance} namespace in {@code application-e2e-performance.yml}.
+ * Configuration properties for the runtime repeated-query detector.
+ * Bound from the {@code artemis.performance} namespace; the defaults below apply unless a property overrides them.
  * Only active when the {@code e2e-performance} Spring profile is enabled.
  */
 @Component
@@ -19,26 +19,12 @@ import org.springframework.stereotype.Component;
 public class SlowQueryProperties {
 
     /**
-     * Queries whose execution time exceeds this value (in milliseconds) are captured.
-     * Default: 100 ms.
-     */
-    private long slowQueryThresholdMs = 100;
-
-    /**
      * Circuit-breaker: stop recording after this many entries to prevent OOM on runaway queries.
      * Default: 10 000.
      */
     private int maxRecordedQueries = 10_000;
 
     // --- getters & setters ---
-
-    public long getSlowQueryThresholdMs() {
-        return slowQueryThresholdMs;
-    }
-
-    public void setSlowQueryThresholdMs(long slowQueryThresholdMs) {
-        this.slowQueryThresholdMs = slowQueryThresholdMs;
-    }
 
     public int getMaxRecordedQueries() {
         return maxRecordedQueries;

@@ -24,7 +24,7 @@ import { finalize } from 'rxjs/operators';
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
-    styleUrls: ['./sharing.scss'],
+    styleUrls: ['./sharing.css'],
     imports: [TumAetUiButtonDirective, RouterLink, FormsModule, TranslateDirective, FaIconComponent, TumAetUiTableDirective, TumAetUiTableSortableColumnComponent],
 })
 export class SharingComponent implements OnInit {

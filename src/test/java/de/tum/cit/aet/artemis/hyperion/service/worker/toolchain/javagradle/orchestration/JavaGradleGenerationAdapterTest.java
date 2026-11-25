@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -108,6 +109,26 @@ class JavaGradleGenerationAdapterTest {
     }
 
     @Test
+    void cooperativeStopLetsVerificationDrainButCancellationStillStopsIt() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        var signal = new de.tum.cit.aet.artemis.aiworker.api.WorkloadApi.StopSignal(cancelled::get, () -> true);
+        var stopVerification = JavaGradleGenerationAdapterService.stopVerification(signal, Instant.now().minusSeconds(1));
+
+        assertThat(signal.getAsBoolean()).isTrue();
+        assertThat(stopVerification.getAsBoolean()).isFalse();
+        cancelled.set(true);
+        assertThat(stopVerification.getAsBoolean()).isTrue();
+    }
+
+    @Test
+    void verificationDrainCannotOutliveTheCoordinatorWindowOrIgnorePlainCancellation() {
+        var softStop = new de.tum.cit.aet.artemis.aiworker.api.WorkloadApi.StopSignal(() -> false, () -> true);
+        assertThat(JavaGradleGenerationAdapterService.stopVerification(softStop, Instant.now().minus(GenerationAssignment.AUTHORING_DRAIN_WINDOW).minusSeconds(1)).getAsBoolean())
+                .isTrue();
+        assertThat(JavaGradleGenerationAdapterService.stopVerification(() -> true, Instant.now().plusSeconds(300)).getAsBoolean()).isTrue();
+    }
+
+    @Test
     void unknownPresetOrPresetWithRetriesFailsTheRunBeforeSandboxWork() {
         var engine = engine(1);
         assertThatIllegalStateException().isThrownBy(() -> engine.generate(assignment(Instant.now().plusSeconds(300)), () -> false, observer, ignored -> {
@@ -129,6 +150,49 @@ class JavaGradleGenerationAdapterTest {
             assertThat(options.getModel()).isEqualTo("test-model");
             assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(10));
         });
+    }
+
+    @Test
+    void repairPresetIsResolvedWithItsOwnModelAndTimeoutOrDisabledWhenItIsThePrimaryPreset() {
+        var engine = engine(0);
+        var primary = assignment(Instant.now()).parameters();
+        assertThat(engine.repairModel(primary)).isNull();
+        assertThat(engine.repairModel(withRepairPreset(primary, "testpreset"))).isNull();
+
+        ChatModel repair = mock(ChatModel.class);
+        when(repair.getOptions()).thenReturn(OpenAiChatOptions.builder().model("repair-model").build());
+        when(llmClientService.preset("repairpreset")).thenReturn(LlmTestCatalog.preset("repair", "repair-model", LlmProperties.Api.RESPONSES));
+        when(llmClientService.effectiveMaxRetries("repairpreset")).thenReturn(0);
+        when(llmClientService.effectiveTimeout("repairpreset")).thenReturn(Duration.ofMinutes(3));
+        when(llmClientService.chatModel("repairpreset")).thenReturn(repair);
+
+        var resolved = engine.repairModel(withRepairPreset(primary, "repairpreset"));
+        assertThat(resolved).isNotNull();
+        assertThat(resolved.preset()).isEqualTo("repairpreset");
+        assertThat(resolved.chatModel()).isSameAs(repair);
+        assertThat(resolved.options()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getModel()).isEqualTo("repair-model");
+            assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(3));
+        });
+        assertThat(engine.settings(withRepairPreset(primary, "repairpreset"), model).repairLlmPreset()).isEqualTo("repairpreset");
+    }
+
+    @Test
+    void aRepairPresetTheWorkerDoesNotConfigureFailsTheRunBeforeSandboxWork() {
+        var engine = engine(0);
+        when(llmClientService.preset("missing")).thenThrow(new IllegalArgumentException("unknown"));
+        var assignment = assignment(Instant.now().plusSeconds(300));
+        var withMissingRepair = new GenerationAssignment(assignment.identity(), assignment.brief(), withRepairPreset(assignment.parameters(), "missing"), assignment.seed(),
+                assignment.authoringDeadline(), assignment.imageDigest(), assignment.gradingContext());
+
+        assertThatIllegalStateException().isThrownBy(() -> engine.generate(withMissingRepair, () -> false, observer, ignored -> {
+        })).withMessageContaining("no LLM preset 'missing'");
+        verifyNoInteractions(executionSandbox, observer);
+    }
+
+    private static GenerationParameters withRepairPreset(GenerationParameters parameters, String repairPreset) {
+        return new GenerationParameters(parameters.effortProfile(), parameters.maxTurns(), parameters.maxTokens(), parameters.maxDuration(), parameters.contextWindowTokens(),
+                parameters.llmPreset(), parameters.stagedGeneration(), parameters.stagedContext(), parameters.cachedInputTokenWeight(), repairPreset);
     }
 
     @Test

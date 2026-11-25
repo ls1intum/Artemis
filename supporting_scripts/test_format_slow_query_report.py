@@ -29,7 +29,6 @@ class GroupingTest(unittest.TestCase):
     def test_same_shape_in_different_tests_and_counts_is_one_group(self):
         groups = report.group_repeated_queries([repeated("A.spec", 3), repeated("B.spec", 40)])
         self.assertEqual(len(groups), 1)
-        self.assertEqual(groups[0]["max_executions"], 40)
         self.assertEqual(groups[0]["tests"], {"A.spec", "B.spec"})
 
     def test_shape_endpoint_and_issuing_code_each_separate_groups(self):
@@ -145,6 +144,39 @@ class InlineCommentTest(unittest.TestCase):
                     report.main()
                 self.assertEqual(os.path.exists(inline), expected)
 
+    def test_an_incomplete_run_writes_neither_inline_comments_nor_baseline_keys(self):
+        import json
+        import os
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            source, baseline = os.path.join(tmp, "report.json"), os.path.join(tmp, "baseline.json")
+            static, inline, keys = os.path.join(tmp, "static.json"), os.path.join(tmp, "inline.json"), os.path.join(tmp, "keys.json")
+            data = {"repeatedQueries": [repeated(**self.LOCATION)]}
+            with open(baseline, "w", encoding="utf-8") as f:
+                json.dump({}, f)
+            with open(static, "w", encoding="utf-8") as f:
+                json.dump([], f)
+
+            def run(report_data, *extra, static_path=static):
+                with open(source, "w", encoding="utf-8") as f:
+                    json.dump(report_data, f)
+                for path in (inline, keys):
+                    if os.path.exists(path):
+                        os.remove(path)
+                with mock.patch.object(sys, "argv", ["x", source, "", "", static_path, "--baseline", baseline, "--inline-out", inline, "--keys-out", keys, *extra]), mock.patch("builtins.print"):
+                    report.main()
+                return os.path.exists(inline), os.path.exists(keys)
+
+            self.assertEqual(run(data), (True, True))
+            self.assertEqual(run(data, "--tests-outcome", "success"), (True, True))
+            self.assertEqual(run(data, "--tests-outcome", "failure"), (False, False))
+            self.assertEqual(run(dict(data, truncated=True)), (False, False))
+            self.assertEqual(run(data, static_path=os.path.join(tmp, "missing.json")), (False, False))
+            with open(static, "w", encoding="utf-8") as f:
+                f.write("{broken")
+            self.assertEqual(run(data), (False, False))
+
     def test_the_line_does_not_change_the_key(self):
         first = self.comments([repeated(**self.LOCATION)])[0]["key"]
         moved = self.comments([repeated(sourceFile=self.LOCATION["sourceFile"], line=130)])[0]["key"]
@@ -254,11 +286,11 @@ class ProblemTest(unittest.TestCase):
 
 
 INDEXES = {
-    "saved_post": [{"name": "pk_saved_post", "columns": ["id"], "unique": True},
-                   {"name": "idx_saved_post_user_id_post_id_post_type", "columns": ["user_id", "post_id", "post_type"], "unique": True}],
-    "user_course_notification_status": [{"name": "pk_user_course_notification_status", "columns": ["course_notification_id", "user_id"], "unique": True}],
-    "course_notification": [{"name": "pk_course_notification", "columns": ["id"], "unique": True}],
-    "exercise": [{"name": "pk_exercise", "columns": ["id"], "unique": True}],
+    "saved_post": [{"name": "pk_saved_post", "columns": ["id"]},
+                   {"name": "idx_saved_post_user_id_post_id_post_type", "columns": ["user_id", "post_id", "post_type"]}],
+    "user_course_notification_status": [{"name": "pk_user_course_notification_status", "columns": ["course_notification_id", "user_id"]}],
+    "course_notification": [{"name": "pk_course_notification", "columns": ["id"]}],
+    "exercise": [{"name": "pk_exercise", "columns": ["id"]}],
     "participation": [{"name": "fk_participation_exercise_id", "columns": ["exercise_id"], "unique": False}],
 }
 
@@ -309,8 +341,8 @@ class HtmlTest(unittest.TestCase):
     def test_html_report_renders_every_section(self):
         groups = report.group_repeated_queries([repeated(), repeated(normalizedSql="insert into result (id) values (?)")])
         report.link_static_confirmations(groups, [LOOP_FINDING])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [LOOP_FINDING], None)
-        for fragment in ('class="problem problem-card cat-n_plus_one"', "Row-by-row inserts", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [LOOP_FINDING], None)
+        for fragment in ('<tr class="problem">', "Row-by-row insert", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
             self.assertIn(fragment, page)
 
     def test_with_a_baseline_the_report_opens_on_the_new_findings(self):
@@ -320,7 +352,7 @@ class HtmlTest(unittest.TestCase):
         static_findings = [dict(OTHER_FINDING), dict(LOOP_FINDING)]
         report.link_static_confirmations(groups, static_findings)
         report.mark_new(groups, static_findings, baseline)
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, static_findings, baseline, phase="phase1")
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, static_findings, baseline, phase="phase1")
         self.assertIn("<title>Query Report (Phase 1)</title>", page)
         self.assertIn('aria-selected="true" aria-controls="panel-new">🆕 New in this PR <span class="tab-count">2</span>', page)
         new_panel = page[page.index('id="panel-new"'):page.index('id="panel-repeated-queries"')]
@@ -332,17 +364,23 @@ class HtmlTest(unittest.TestCase):
     def test_without_a_baseline_there_is_no_new_tab(self):
         groups = report.group_repeated_queries([repeated()])
         report.link_static_confirmations(groups, [])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None)
         self.assertNotIn("panel-new", page)
         self.assertIn('aria-selected="true" aria-controls="panel-repeated-queries"', page)
 
-    def test_only_problems_beyond_the_top_ones_are_rows(self):
-        findings = [repeated(callerMethod=f"Service{i}.run", executions=50 - i) for i in range(report.TOP_PROBLEMS + 3)]
-        groups = report.group_repeated_queries(findings)
+    def test_every_problem_is_a_row_of_one_table_and_cards_are_only_on_the_new_tab(self):
+        old = repeated()
+        new = repeated(callerMethod="NewService.loop")
+        insert = repeated(normalizedSql="insert into result (id) values (?)")
+        baseline = report.collect_keys(report.group_repeated_queries([old]), [])
+        groups = report.group_repeated_queries([old, new, insert])
         report.link_static_confirmations(groups, [])
-        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
-        self.assertEqual(page.count('<article class="problem '), report.TOP_PROBLEMS)
-        self.assertEqual(page.count('<tr class="problem"'), 3)
+        report.mark_new(groups, [], baseline)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], baseline)
+        repeated_panel = page[page.index('id="panel-repeated-queries"'):page.index('id="panel-static-findings"')]
+        self.assertEqual(repeated_panel.count('<tr class="problem">'), 3)
+        self.assertNotIn("<article", repeated_panel)
+        self.assertEqual(page.count("<article"), 2)
 
     def test_a_duplicate_from_many_places_folds_them_one_per_line(self):
         sites = [{"repositoryMethod": f"Repository{i}.load", "callerMethod": f"Service{i}.delete"} for i in range(5)]

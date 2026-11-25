@@ -7,7 +7,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
     standalone: true,
     imports: [NgClass],
     templateUrl: './calendar-day-badge.component.html',
-    styleUrls: ['./calendar-day-badge.component.scss'],
+    styleUrls: ['./calendar-day-badge.component.css'],
 })
 export class CalendarDayBadgeComponent {
     date = input.required<Dayjs>();

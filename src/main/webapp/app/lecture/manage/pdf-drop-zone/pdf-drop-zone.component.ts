@@ -14,7 +14,7 @@ let nextDropZoneId = 0;
     selector: 'jhi-pdf-drop-zone',
     imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './pdf-drop-zone.component.html',
-    styleUrl: './pdf-drop-zone.component.scss',
+    styleUrl: './pdf-drop-zone.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfDropZoneComponent {

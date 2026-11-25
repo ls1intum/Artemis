@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.config.performance;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_E2E_PERFORMANCE;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -19,14 +21,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerMapping;
 
 /**
- * Servlet filter that times each HTTP request end-to-end and clears the per-request N+1
- * frequency counters in {@link SlowQueryCollector} after each HTTP request completes.
+ * Servlet filter that turns the queries of each HTTP request into repeated-query findings and then
+ * clears the per-request counters of the {@link SlowQueryCollector}, so that a query run once per
+ * request is never counted as repeated across requests.
  * <p>
- * Without the reset, frequency counts would accumulate across requests and produce
- * false N+1 positives (e.g. a query executed once per request over 10 requests would
- * appear as if it was executed 10 times within one request).
- * <p>
- * Runs with the highest precedence, so it wraps every other filter: the timing covers the whole
+ * Runs with the highest precedence, so it wraps every other filter: the findings cover the whole
  * request, and the reset also runs when an earlier filter (e.g. security) rejects the request.
  * Only active when the {@code e2e-performance} Spring profile is enabled.
  */
@@ -36,6 +35,12 @@ import org.springframework.web.servlet.HandlerMapping;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SlowQueryRequestFilter implements Filter {
 
+    /** Request header set by the Playwright {@code baseFixtures.ts} fixture: the test title, percent-encoded because header values must be ASCII. */
+    static final String PLAYWRIGHT_TEST_HEADER = "X-Playwright-Test-Name";
+
+    /** Request header set by the Playwright fixture: {@code "action"} for what the browser page issued, {@code "setup"} for the test's own API calls. */
+    static final String PLAYWRIGHT_PHASE_HEADER = "X-Playwright-Phase";
+
     private final SlowQueryCollector collector;
 
     public SlowQueryRequestFilter(SlowQueryCollector collector) {
@@ -44,25 +49,33 @@ public class SlowQueryRequestFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        long startNanos = System.nanoTime();
         try {
             chain.doFilter(request, response);
         }
         finally {
             if (request instanceof HttpServletRequest httpRequest) {
-                long totalDurationMs = (System.nanoTime() - startNanos) / 1_000_000;
-                // Resolved route template ("/api/admin/courses/{courseId}"), not the raw URI --
-                // same reasoning as SlowQueryListener's endpoint capture: otherwise every distinct
-                // path-variable value fragments one endpoint into many patterns downstream. This
-                // filter is the outermost one, so by the time doFilter() returns here in the
-                // finally block, the whole request -- including handler mapping, which sets this
-                // attribute -- has already completed.
+                // The resolved route template ("/api/admin/courses/{courseId}"), not the raw URI, or
+                // every path-variable value would be an endpoint of its own. It is set by the handler
+                // mapping, so it is only available once the request has completed; a request that
+                // never resolved to a handler (e.g. a 404) falls back to the raw URI.
                 Object routeTemplate = httpRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
                 String httpEndpoint = routeTemplate != null ? routeTemplate.toString() : httpRequest.getRequestURI();
-                collector.recordEndpointTiming(httpRequest.getMethod(), httpEndpoint, SlowQueryListener.testName(httpRequest),
-                        httpRequest.getHeader(SlowQueryListener.PLAYWRIGHT_PHASE_HEADER), totalDurationMs);
+                collector.finishRequest(httpRequest.getMethod(), httpEndpoint, testName(httpRequest), httpRequest.getHeader(PLAYWRIGHT_PHASE_HEADER));
             }
             collector.resetRequestState();
+        }
+    }
+
+    static String testName(HttpServletRequest request) {
+        String header = request.getHeader(PLAYWRIGHT_TEST_HEADER);
+        if (header == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(header, StandardCharsets.UTF_8);
+        }
+        catch (IllegalArgumentException _) {
+            return header;
         }
     }
 }

@@ -5,7 +5,7 @@ import { TUM_AET_UI_TRANSLATOR } from '../i18n/tumaet-ui-translations';
 @Component({
     selector: 'tumaet-ui-avatar',
     templateUrl: './tumaet-ui-avatar.component.html',
-    styleUrl: './tumaet-ui-avatar.component.scss',
+    styleUrl: './tumaet-ui-avatar.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[attr.role]': 'decorative() ? null : "img"',

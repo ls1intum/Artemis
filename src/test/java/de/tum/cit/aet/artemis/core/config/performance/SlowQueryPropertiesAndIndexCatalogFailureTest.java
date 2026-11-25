@@ -18,15 +18,12 @@ import org.junit.jupiter.api.Test;
 class SlowQueryPropertiesAndIndexCatalogFailureTest {
 
     @Test
-    void thresholdAndLimitCanBeConfiguredAndDefaultToHundredMillisecondsAndTenThousandEntries() {
+    void limitCanBeConfiguredAndDefaultsToTenThousandEntries() {
         SlowQueryProperties properties = new SlowQueryProperties();
-        assertThat(properties.getSlowQueryThresholdMs()).isEqualTo(100);
         assertThat(properties.getMaxRecordedQueries()).isEqualTo(10_000);
 
-        properties.setSlowQueryThresholdMs(5);
         properties.setMaxRecordedQueries(7);
 
-        assertThat(properties.getSlowQueryThresholdMs()).isEqualTo(5);
         assertThat(properties.getMaxRecordedQueries()).isEqualTo(7);
     }
 
