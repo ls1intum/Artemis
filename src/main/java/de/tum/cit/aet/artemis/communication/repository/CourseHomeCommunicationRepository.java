@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.base.InteractiveQueryTimeout;
 
 @Repository
 @Lazy
@@ -57,6 +58,7 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
         ZonedDateTime getActivityAt();
     }
 
+    @InteractiveQueryTimeout
     @Query("""
             SELECT p.id AS id,c.id AS conversationId,p.title AS title,SUBSTRING(p.content,1,500) AS excerpt,
             COUNT(a.id) AS replies,p.resolved AS resolved,SUM(CASE WHEN a.author.id<>:userId THEN 1 ELSE 0 END) AS externalReplies,
@@ -93,6 +95,7 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
         ZonedDateTime getActivityAt();
     }
 
+    @InteractiveQueryTimeout
     @Query("""
                        SELECT p.id AS id,c.id AS conversationId,p.title AS title,SUBSTRING(p.content,1,500) AS excerpt,COALESCE(p.updatedDate,p.creationDate) AS activityAt
                        FROM Post p JOIN TREAT(p.conversation AS Channel) c LEFT JOIN c.exercise linkedExercise LEFT JOIN c.exam linkedExam
@@ -115,6 +118,7 @@ public interface CourseHomeCommunicationRepository extends ArtemisJpaRepository<
         Instant getActivityAt();
     }
 
+    @InteractiveQueryTimeout
     @Query("""
             SELECT f.id AS id,f.questionTitle AS title,f.lastModifiedDate AS activityAt FROM Faq f
             WHERE f.course.id=:courseId AND f.faqState=de.tum.cit.aet.artemis.communication.domain.FaqState.ACCEPTED
