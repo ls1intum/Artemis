@@ -211,6 +211,11 @@ jhi-modeling-assessment {
     white-space: nowrap;
 }
 
+.feedback-row__title {
+    grid-column: 1 / -1;
+    font-weight: 600;
+}
+
 .feedback-row__text {
     grid-column: 1 / -1;
     margin: 0;
