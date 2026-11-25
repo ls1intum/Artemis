@@ -11,7 +11,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-exercise-update-warning',
     templateUrl: './exercise-update-warning.component.html',
-    styleUrls: ['./exercise-update-warning.component.scss'],
+    styleUrls: ['./exercise-update-warning.component.css'],
     imports: [TumAetUiCheckboxComponent, TumAetUiButtonDirective, TranslateDirective, FormsModule, FaIconComponent],
 })
 export class ExerciseUpdateWarningComponent {

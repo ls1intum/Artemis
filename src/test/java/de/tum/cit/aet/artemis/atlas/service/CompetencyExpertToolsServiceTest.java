@@ -558,8 +558,8 @@ class CompetencyExpertToolsServiceTest {
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), true);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
-            // The cache should not be updated for view-only previews
-            // This is verified indirectly as the implementation skips caching when viewOnly is true
+            verify(sessionCacheService).clearCachedPendingCompetencyOperations(sessionId);
+            verify(sessionCacheService, never()).cachePendingCompetencyOperations(any(), any());
 
             CompetencyExpertToolsService.clearCurrentSessionId();
         }
@@ -574,6 +574,25 @@ class CompetencyExpertToolsServiceTest {
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), false);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
+            verify(sessionCacheService).cachePendingCompetencyOperations(sessionId, List.of(op));
+            verify(sessionCacheService, never()).clearCachedPendingCompetencyOperations(any());
+
+            CompetencyExpertToolsService.clearCurrentSessionId();
+        }
+
+        @Test
+        void shouldCacheCompetenciesWhenViewOnlyIsLeftOut() {
+            String sessionId = "default_session";
+            CompetencyExpertToolsService.setCurrentSessionId(sessionId);
+
+            CompetencyOperation op = new CompetencyOperation(null, "Default", "Description", CompetencyTaxonomy.APPLY);
+
+            // The model leaves out the optional flag, which reaches the tool as null
+            String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
+
+            assertThat(result).contains("Preview generated successfully for 1 competency");
+            verify(sessionCacheService).cachePendingCompetencyOperations(sessionId, List.of(op));
+            verify(sessionCacheService, never()).clearCachedPendingCompetencyOperations(any());
 
             CompetencyExpertToolsService.clearCurrentSessionId();
         }

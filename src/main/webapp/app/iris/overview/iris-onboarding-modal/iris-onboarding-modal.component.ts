@@ -67,7 +67,7 @@ type TooltipConfig = {
     selector: 'jhi-iris-onboarding-modal',
     standalone: true,
     templateUrl: './iris-onboarding-modal.component.html',
-    styleUrls: ['./iris-onboarding-modal.component.scss'],
+    styleUrls: ['./iris-onboarding-modal.component.css'],
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

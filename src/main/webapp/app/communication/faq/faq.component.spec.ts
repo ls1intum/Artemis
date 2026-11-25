@@ -339,6 +339,46 @@ describe('FaqComponent', () => {
         expect(actions.querySelector('.flex-col')).toBeNull();
     });
 
+    it('has no empty actions column when a tutor can act on none of the FAQs', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(false);
+        const accepted = createFaq(4, 'category4', '#0ab84f');
+        accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponentFixture.detectChanges();
+
+        const element = faqComponentFixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('thead th')).toHaveLength(5);
+        expect(element.querySelectorAll('#faq-4 td')).toHaveLength(5);
+        expect(element.querySelector('[data-testid="faq-row-actions"]')).toBeNull();
+
+        faqComponent['allFaqs'].set([accepted, faq1]);
+        faqComponent.filteredFaqs.set([accepted, faq1]);
+        faqComponentFixture.detectChanges();
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+
+        faqComponent['allFaqs'].set([accepted]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+    });
+
+    it('keeps the actions column while a search shows only FAQs without an action', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(false);
+        const accepted = createFaq(4, 'category4', '#0ab84f');
+        accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted, faq1]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponentFixture.detectChanges();
+
+        const element = faqComponentFixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+        expect(element.querySelector('thead th:last-child .sr-only')).not.toBeNull();
+    });
+
     it('lists the categories in a popover that is only available when categories exist', () => {
         faqComponentFixture.detectChanges();
         faqComponent.existingCategories.set([new FaqCategory('category1', '#94a11c'), new FaqCategory('category2', '#0ab84f')]);

@@ -84,7 +84,7 @@ class OpenAiResponsesChatModelTest {
                 .defaultAdvisors(org.springframework.ai.chat.client.advisor.ToolCallingAdvisor.builder().build()).build();
 
         ChatResponse result = chatClient.prompt().user("find it").options(OpenAiChatOptions.builder().deploymentName("gpt-test")).toolContext(Map.of("marker", "ctx"))
-                .toolCallbacks(callback).call().chatResponse();
+                .tools(callback).call().chatResponse();
 
         assertThat(result.getResult().getOutput().getText()).isEqualTo("done");
         assertThat(contextMarker).hasValue("ctx");

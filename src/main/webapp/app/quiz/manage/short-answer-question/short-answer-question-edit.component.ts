@@ -63,7 +63,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
-    styleUrls: ['./short-answer-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./short-answer-question-edit.component.css', '../exercise/quiz-exercise.css', '../../../quiz/shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,

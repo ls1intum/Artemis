@@ -11,7 +11,7 @@ type Day = { date: Dayjs; weekdayNameKey: string; id: string };
     selector: 'jhi-calendar-desktop-week-presentation',
     imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-desktop-week-presentation.component.html',
-    styleUrl: './calendar-desktop-week-presentation.component.scss',
+    styleUrl: './calendar-desktop-week-presentation.component.css',
 })
 export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;

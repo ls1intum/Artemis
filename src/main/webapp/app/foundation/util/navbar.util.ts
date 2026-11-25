@@ -13,7 +13,7 @@ function snapToDevicePixelGrid(cssPixels: number): number {
 }
 
 /**
- * Update the header height SCSS variable based on the navbar height.
+ * Update the header height CSS variable based on the navbar height.
  *
  * The navbar height can change based on the screen size and the content of the navbar
  * (e.g. long breadcrumbs due to longs exercise names)

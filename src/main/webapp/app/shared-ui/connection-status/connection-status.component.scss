@@ -1,9 +1,0 @@
-.connection-status {
-    font-size: 0.75rem;
-    color: var(--connection-status);
-
-    &.disconnected {
-        font-size: 1.25rem;
-        color: var(--connection-status-disconnected);
-    }
-}

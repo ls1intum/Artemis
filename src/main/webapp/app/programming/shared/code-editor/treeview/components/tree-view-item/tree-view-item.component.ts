@@ -6,7 +6,7 @@ import { NgTemplateOutlet } from '@angular/common';
 @Component({
     selector: 'treeview-item',
     templateUrl: './tree-view-item.component.html',
-    styleUrls: ['./tree-view-item.component.scss'],
+    styleUrls: ['./tree-view-item.component.css'],
     imports: [NgTemplateOutlet],
 })
 export class TreeViewItemComponent<T> {

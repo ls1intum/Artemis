@@ -192,7 +192,7 @@ public class AtlasAgentDelegationService {
         if (toolCallbackProviders != null) {
             for (ToolCallbackProvider provider : toolCallbackProviders) {
                 if (provider != null) {
-                    promptSpec = promptSpec.toolCallbacks(autonomous ? AtlasToolCallBudget.decorate(provider, budget) : provider);
+                    promptSpec = promptSpec.tools(autonomous ? AtlasToolCallBudget.decorate(provider, budget) : provider);
                 }
             }
         }

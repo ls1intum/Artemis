@@ -18,7 +18,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 @Component({
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
-    styleUrls: ['./forwarded-message.component.scss'],
+    styleUrls: ['./forwarded-message.component.css'],
     imports: [ProfilePictureComponent, TranslateDirective, FaIconComponent, TumAetUiTooltipDirective, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class ForwardedMessageComponent {

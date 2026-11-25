@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,9 +13,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +27,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -51,6 +57,9 @@ class ProgrammingExerciseImportRepositoryServiceTest {
     @Mock
     private GitService gitService;
 
+    @Mock
+    private CourseConfigurationRepository courseConfigurationRepository;
+
     private ProgrammingExerciseImportRepositoryService importService;
 
     private ProgrammingExercise exercise;
@@ -61,7 +70,7 @@ class ProgrammingExerciseImportRepositoryServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        importService = new ProgrammingExerciseImportRepositoryService(repositoryService, gitService);
+        importService = new ProgrammingExerciseImportRepositoryService(repositoryService, gitService, courseConfigurationRepository);
         exercise = new ProgrammingExercise();
         exercise.setId(7L);
         // The template and solution URIs live on the participations, so the exercise needs them before the setters do anything.
@@ -73,6 +82,9 @@ class ProgrammingExerciseImportRepositoryServiceTest {
         extractedZip = Files.createDirectories(baseDir.resolve("extracted"));
         user = new User();
         user.setLogin("ge12abc");
+        user.setFirstName("Ida");
+        user.setLastName("Importer");
+        user.setEmail("ida@example.org");
     }
 
     /**
@@ -173,9 +185,42 @@ class ProgrammingExerciseImportRepositoryServiceTest {
         verify(gitService).stageAllChanges(repositories[0]);
         verify(gitService).stageAllChanges(repositories[1]);
         verify(gitService).stageAllChanges(repositories[2]);
-        verify(gitService).commitAndPush(eq(repositories[0]), any(), anyBoolean(), eq(user));
-        verify(gitService).commitAndPush(eq(repositories[1]), any(), anyBoolean(), eq(user));
-        verify(gitService).commitAndPush(eq(repositories[2]), any(), anyBoolean(), eq(user));
+        for (Repository repository : repositories) {
+            verify(gitService).commitAndPushAs(eq(repository), any(), anyBoolean(),
+                    argThat(identity -> identity.getName().equals(user.getName()) && identity.getEmailAddress().equals("ida@example.org")));
+        }
+    }
+
+    @Test
+    void theCourseDecidesWhoAuthorsTheImportOfTheTemplateSolutionAndTests() throws Exception {
+        var repositories = withCheckouts();
+        withZipContent();
+        when(gitService.getPlaceholderIdentity()).thenReturn(new PersonIdent("Artemis", "artemis@example.com"));
+        when(courseConfigurationRepository.findInitialCommitAuthorByExerciseId(7L))
+                .thenReturn(Optional.of(new InitialCommitAuthorDTO(InitialCommitAuthorMode.PLACEHOLDER, null, null)));
+
+        importService.importRepositoriesFromFile(exercise, extractedZip, user);
+
+        for (Repository repository : repositories) {
+            verify(gitService).commitAndPushAs(eq(repository), any(), anyBoolean(),
+                    argThat(identity -> identity.getName().equals("Artemis") && identity.getEmailAddress().equals("artemis@example.com")));
+        }
+    }
+
+    @Test
+    void aCustomIdentityOfTheCourseAuthorsTheImportOfTheTemplateSolutionAndTests() throws Exception {
+        var repositories = withCheckouts();
+        withZipContent();
+        when(gitService.getPlaceholderIdentity()).thenReturn(new PersonIdent("Artemis", "artemis@example.com"));
+        when(courseConfigurationRepository.findInitialCommitAuthorByExerciseId(7L))
+                .thenReturn(Optional.of(new InitialCommitAuthorDTO(InitialCommitAuthorMode.CUSTOM, "Course Team", "team@university.example")));
+
+        importService.importRepositoriesFromFile(exercise, extractedZip, user);
+
+        for (Repository repository : repositories) {
+            verify(gitService).commitAndPushAs(eq(repository), any(), anyBoolean(),
+                    argThat(identity -> identity.getName().equals("Course Team") && identity.getEmailAddress().equals("team@university.example")));
+        }
     }
 
     @Test
