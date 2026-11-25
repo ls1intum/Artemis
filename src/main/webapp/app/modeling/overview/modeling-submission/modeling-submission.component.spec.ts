@@ -1235,6 +1235,13 @@ describe('ModelingSubmissionComponent', () => {
             expect(title({ text: 'Looks right' })).toBeUndefined();
             expect(title({ detailText: 'A long comment without a title' })).toBeUndefined();
             expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: { feedback: 'Use interfaces' } as any })).toBeUndefined();
+            expect(
+                title({
+                    text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction',
+                    detailText: 'Extract an interface.',
+                    gradingInstruction: { feedback: 'Use interfaces' } as any,
+                }),
+            ).toBe('Missing abstraction');
         });
     });
 
