@@ -197,7 +197,8 @@ public class QueryCollector {
             else if (repeatedQueries.size() < properties.getMaxRecordedQueries()) {
                 repeatedQueries.put(key, finding);
             }
-            else {
+            else if (!truncated) {
+                // logged once: every further new finding of the run would repeat it
                 truncated = true;
                 log.warn("[QueryReport] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
             }

@@ -145,7 +145,7 @@ class InlineCommentTest(unittest.TestCase):
                     report.main()
                 self.assertEqual(os.path.exists(inline), expected)
 
-    def test_an_incomplete_run_writes_neither_inline_comments_nor_baseline_keys(self):
+    def test_an_incomplete_run_writes_neither_inline_comments_nor_baseline_keys_and_its_report_says_so(self):
         import json
         import os
         import tempfile
@@ -153,6 +153,7 @@ class InlineCommentTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             source, baseline = os.path.join(tmp, "report.json"), os.path.join(tmp, "baseline.json")
             static, inline, keys = os.path.join(tmp, "static.json"), os.path.join(tmp, "inline.json"), os.path.join(tmp, "keys.json")
+            page = os.path.join(tmp, "report.html")
             data = {"repeatedQueries": [repeated(**self.LOCATION)]}
             with open(baseline, "w", encoding="utf-8") as f:
                 json.dump({}, f)
@@ -165,14 +166,21 @@ class InlineCommentTest(unittest.TestCase):
                 for path in (inline, keys):
                     if os.path.exists(path):
                         os.remove(path)
-                with mock.patch.object(sys, "argv", ["x", source, "", "", static_path, "--baseline", baseline, "--inline-out", inline, "--keys-out", keys, *extra]), mock.patch("builtins.print"):
+                with mock.patch.object(sys, "argv", ["x", source, "", page, static_path, "--baseline", baseline, "--inline-out", inline, "--keys-out", keys, *extra]), mock.patch("builtins.print"):
                     report.main()
                 return os.path.exists(inline), os.path.exists(keys)
 
+            def html_report():
+                with open(page, encoding="utf-8") as f:
+                    return f.read()
+
             self.assertEqual(run(data), (True, True))
+            self.assertNotIn("Incomplete comparison", html_report())
             self.assertEqual(run(data, "--tests-outcome", "success"), (True, True))
             self.assertEqual(run(data, "--tests-outcome", "failure"), (False, False))
+            self.assertIn("the E2E tests did not succeed (failure)", html_report())
             self.assertEqual(run(dict(data, truncated=True)), (False, False))
+            self.assertIn("<strong>Incomplete comparison:</strong> the collector reached its size limit and dropped findings.", html_report())
             self.assertEqual(run(data, static_path=os.path.join(tmp, "missing.json")), (False, False))
             with open(static, "w", encoding="utf-8") as f:
                 f.write("{broken")

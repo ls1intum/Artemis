@@ -15,8 +15,12 @@ import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.performance.RepeatedQueryFinding.Type;
 import net.ttddyy.dsproxy.proxy.ParameterSetOperation;
 
@@ -332,6 +336,30 @@ class QueryCollectorTest {
         query(other, 6);
         assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isTrue();
+    }
+
+    @Test
+    void reachingTheLimitIsLoggedOnce() {
+        QueryProperties properties = new QueryProperties();
+        properties.setMaxRecordedQueries(1);
+        collector = new QueryCollector(properties);
+        Logger logger = (Logger) LoggerFactory.getLogger(QueryCollector.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            for (String table : List.of("lecture", "exam", "exercise")) {
+                String sql = "select * from " + table + " where course_id=?";
+                query(sql, 1);
+                query(sql, 2);
+                finishRequest();
+            }
+        }
+        finally {
+            logger.detachAppender(appender);
+        }
+
+        assertThat(appender.list).singleElement().satisfies(event -> assertThat(event.getFormattedMessage()).contains("max 1 entries reached"));
     }
 
     @Test
