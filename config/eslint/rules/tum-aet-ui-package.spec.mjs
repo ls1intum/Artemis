@@ -405,6 +405,14 @@ describe('@tumaet/ui-angular integration contract', () => {
             expect(exportedNames(publicApi, 'public-api.ts', (specifier) => !componentDirectories.some((directory) => specifier === `./lib/${directory}`))).toEqual([]);
         });
 
+        it.each(subpathEntries)('maps %s to the directory of its component in development serve mode', (subpath, target) => {
+            // The mapping is explicit where the name of the entry point differs from its directory (`set-inputs`), and `src/lib/*` otherwise.
+            const paths = serveTsconfig.compilerOptions.paths;
+            const mapped = (paths[`@tumaet/ui-angular/${subpath.slice(2)}`] ?? [paths['@tumaet/ui-angular/*'][0].replace('*', subpath.slice(2))])[0];
+
+            expect(resolve(repoRoot, 'config/client', mapped)).toBe(resolve(repoRoot, 'packages/tum-aet-ui', dirname(target)));
+        });
+
         it('writes the stub manifests that the path mappings of the monorepo need whenever it builds the package', () => {
             expect(packageJson.scripts['build:package']).toContain('node write-entry-stubs.mjs');
             expect(packageJson.scripts['build:package:dev']).toContain('node write-entry-stubs.mjs');
