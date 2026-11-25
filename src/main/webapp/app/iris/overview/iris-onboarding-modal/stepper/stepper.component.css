@@ -1,0 +1,23 @@
+.iris-tour-stepper__indicator {
+    height: 8px;
+    border-radius: 16px;
+    background: var(--iris-tertiary-background);
+    transition:
+        width 0.3s ease,
+        background-color 0.3s ease;
+}
+
+.iris-tour-stepper__indicator--active {
+    width: 20px;
+    background: var(--primary);
+}
+
+.iris-tour-stepper__indicator--inactive {
+    width: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-tour-stepper__indicator {
+        transition: none;
+    }
+}

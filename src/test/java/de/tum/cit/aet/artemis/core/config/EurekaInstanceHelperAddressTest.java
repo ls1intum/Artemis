@@ -48,7 +48,7 @@ class EurekaInstanceHelperAddressTest {
         Map<String, String> metadata = new HashMap<>(Map.of("profile", "prod,core", "zone", "zone-a", "version", "test"));
         InstanceInfo info = InstanceInfo.Builder.newBuilder().setAppName("artemis").setHostName("core").setMetadata(new HashMap<>(metadata)).build();
         ApplicationInfoManager manager = new ApplicationInfoManager(Mockito.mock(EurekaInstanceConfig.class), info);
-        info.setIsDirty(false);
+        info.unsetIsDirty(Long.MAX_VALUE);
         when(registration.getMetadata()).thenReturn(metadata);
         when(registration.getApplicationInfoManager()).thenReturn(manager);
         EurekaInstanceHelper helper = new EurekaInstanceHelper(Mockito.mock(DiscoveryClient.class), Optional.of(registration), Mockito.mock(Environment.class));

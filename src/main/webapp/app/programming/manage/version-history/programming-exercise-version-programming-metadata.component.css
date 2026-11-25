@@ -1,0 +1,133 @@
+:host {
+    display: block;
+}
+
+.metadata-section {
+    padding: 0.25rem 0;
+}
+
+.metadata-section h4 {
+    margin: 0 0 0.6rem;
+    font-size: 1.03rem;
+    font-weight: 700;
+}
+
+.metadata-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.metadata-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: baseline;
+    column-gap: 1.25rem;
+}
+
+.metadata-row__label {
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.9rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.metadata-row__value {
+    text-align: left;
+    font-weight: 500;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.version-meta-panel {
+    display: block;
+}
+
+.metadata-empty-note {
+    margin-bottom: 0.75rem;
+    color: var(--text-color-secondary);
+}
+
+.metadata-row__value--mono {
+    font-family: var(--artemis-font-family-monospace, monospace);
+    font-size: 0.85rem;
+}
+
+.metadata-row__value--commit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.metadata-row__value--actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.metadata-commit__hash {
+    letter-spacing: 0.02em;
+}
+
+.metadata-commit__button {
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0.15rem;
+}
+
+.metadata-commit__button fa-icon {
+    font-size: 0.9rem;
+}
+
+.metadata-row__value--empty {
+    color: var(--text-color-secondary);
+    font-style: italic;
+    font-weight: 400;
+}
+
+.metadata-subsection {
+    margin-top: 0.75rem;
+}
+
+.metadata-subsection--collapsible {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.55rem 0.65rem;
+    background: var(--surface-ground);
+}
+
+.metadata-subsection__label {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    color: var(--text-color-secondary);
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.metadata-subsection--collapsible .metadata-subsection__label {
+    display: list-item;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.markdown-block,
+.json-block {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.65rem;
+    background: var(--surface-ground);
+}
+
+.json-block {
+    margin: 0.55rem 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--artemis-font-family-monospace, monospace);
+    font-size: 0.83rem;
+}
+
+.json-block--empty,
+.markdown-block--empty {
+    color: var(--text-color-secondary);
+    font-style: italic;
+}

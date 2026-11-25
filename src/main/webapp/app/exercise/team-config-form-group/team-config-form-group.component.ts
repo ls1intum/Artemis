@@ -15,7 +15,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team-config-form-group',
     templateUrl: './team-config-form-group.component.html',
-    styleUrls: ['./team-config-form-group.component.scss'],
+    styleUrls: ['./team-config-form-group.component.css'],
     imports: [TumAetUiInputDirective, TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {

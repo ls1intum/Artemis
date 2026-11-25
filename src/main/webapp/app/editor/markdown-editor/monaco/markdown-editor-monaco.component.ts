@@ -119,7 +119,7 @@ const TAB_VISUAL_ID = 'editor_visual';
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
-    styleUrls: ['./markdown-editor-monaco.component.scss'],
+    styleUrls: ['./markdown-editor-monaco.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTabsComponent,

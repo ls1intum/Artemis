@@ -29,7 +29,7 @@ import { CourseRoleMember } from 'app/course/shared/course-group/course-role-mem
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
-    styleUrls: ['./course-group.component.scss'],
+    styleUrls: ['./course-group.component.css'],
     imports: [
         UsersImportDialogComponent,
         TranslateDirective,
@@ -209,7 +209,7 @@ export class CourseGroupComponent {
             this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
-                    this.tableViewRef()?.reloadAfterRemoval();
+                    this.tableViewRef()?.reload({ rowsRemoved: 1 });
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });

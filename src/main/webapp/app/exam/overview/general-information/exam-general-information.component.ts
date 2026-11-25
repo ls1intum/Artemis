@@ -14,7 +14,7 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-general-information',
-    styleUrls: ['./exam-general-information.component.scss'],
+    styleUrls: ['./exam-general-information.component.css'],
     templateUrl: './exam-general-information.component.html',
     imports: [
         TranslateDirective,

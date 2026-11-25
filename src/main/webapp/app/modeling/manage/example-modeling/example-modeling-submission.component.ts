@@ -56,7 +56,7 @@ interface AssessmentSave {
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
-    styleUrls: ['./example-modeling-submission.component.scss'],
+    styleUrls: ['./example-modeling-submission.component.css'],
     imports: [
         TranslateDirective,
         FormsModule,
@@ -383,6 +383,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         }
         if (!this.hasValidFeedbackScores(assessment.feedbacks)) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            return EMPTY;
+        }
+        if (!this.modelingAssessmentService.isFeedbackTextValid(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return EMPTY;
         }
         const current = this.exampleSubmission();

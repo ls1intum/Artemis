@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-course-notification-popup-overlay',
     imports: [CourseNotificationComponent, CommonModule, FaIconComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-notification-popup-overlay.component.html',
-    styleUrls: ['./course-notification-popup-overlay.component.scss'],
+    styleUrls: ['./course-notification-popup-overlay.component.css'],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);

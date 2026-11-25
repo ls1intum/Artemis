@@ -18,7 +18,7 @@ interface ParticipationModeOption {
 @Component({
     selector: 'jhi-participation-mode-toggle',
     templateUrl: './participation-mode-toggle.component.html',
-    styleUrls: ['./participation-mode-toggle.component.scss'],
+    styleUrls: ['./participation-mode-toggle.component.css'],
     imports: [TumAetUiButtonDirective, TumAetUiTagComponent, FaIconComponent, TranslateDirective],
 })
 export class ParticipationModeToggleComponent {

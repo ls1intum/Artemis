@@ -72,7 +72,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./drag-and-drop-question-edit.component.css', '../exercise/quiz-exercise.css', '../../../quiz/shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,

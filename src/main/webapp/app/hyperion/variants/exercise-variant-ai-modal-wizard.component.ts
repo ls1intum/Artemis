@@ -96,7 +96,7 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
 @Component({
     selector: 'jhi-exercise-variant-ai-modal-wizard',
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
-    styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
+    styleUrl: './exercise-variant-ai-modal-wizard.component.css',
     providers: [TumAetUiConfirmationService],
     imports: [
         HyperionRunInspectorComponent,

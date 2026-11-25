@@ -15,7 +15,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 
 @Component({
     selector: 'jhi-plagiarism-header',
-    styleUrls: ['./plagiarism-header.component.scss'],
+    styleUrls: ['./plagiarism-header.component.css'],
     templateUrl: './plagiarism-header.component.html',
     imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiConfirmDialogComponent],
     providers: [TumAetUiConfirmationService],

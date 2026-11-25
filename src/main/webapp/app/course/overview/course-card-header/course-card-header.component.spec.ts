@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, RouterLink, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { Logger, compile } from 'sass';
+import { readFileSync } from 'node:fs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
@@ -61,13 +61,13 @@ describe('CourseCardHeaderComponent', () => {
     // Regression test for issue #12526: a long course title used to be cut off in the middle of its fourth line (the
     // title box had a fixed max-height without a line clamp) and a long unbreakable word overflowed the card, because
     // the flex item holding the title could not shrink below its content width.
-    // Vitest does not apply component styles, so the component's SCSS is compiled and attached to the document here.
+    // Vitest does not apply component styles, so the stylesheet of the component is read and attached to the document here.
     describe('long course titles', () => {
         const longTitle = 'Funktionale Programmierung und Verifikation (Sommersemester 2023)';
         let styleElement: HTMLStyleElement;
 
         beforeEach(() => {
-            const { css } = compile('src/main/webapp/app/course/overview/course-card-header/course-card-header.component.scss', { logger: Logger.silent });
+            const css = readFileSync('src/main/webapp/app/course/overview/course-card-header/course-card-header.component.css', 'utf8');
             styleElement = document.createElement('style');
             // ::ng-deep is Angular-specific and not valid CSS for the DOM implementation of the test environment
             styleElement.textContent = css.replaceAll('::ng-deep', '');
