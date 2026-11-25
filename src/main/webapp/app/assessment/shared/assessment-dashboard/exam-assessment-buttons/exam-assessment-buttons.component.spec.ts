@@ -43,8 +43,6 @@ describe('ExamAssessmentButtons', () => {
         }),
         MockProvider(StudentExamApi, {
             assessUnsubmittedStudentExamsAndEmptySubmissions: () => of(undefined),
-        }),
-        MockProvider(StudentExamApi, {
             getLongestWorkingTimeForExam: () => {
                 return of(studentExamOne?.workingTime ?? 0);
             },
@@ -131,10 +129,13 @@ describe('ExamAssessmentButtons', () => {
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(course).toBeTruthy();
         const assessSpy = vi.spyOn(studentExamApi, 'assessUnsubmittedStudentExamsAndEmptySubmissions');
+        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).not.toBeNull();
         assessButton.nativeElement.click();
         expect(assessSpy).toHaveBeenCalledTimes(1);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess');
+        expect(examAssessmentButtonsComponent.isAssessingUnsubmittedExams()).toBe(false);
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
