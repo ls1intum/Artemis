@@ -67,6 +67,19 @@ class ArtemisSpringLiquibaseDataSourceTest {
     }
 
     @Test
+    void aSeparateConnectionWithoutAnyUserOrPasswordIsValid() {
+        liquibaseProperties.setUrl(SEPARATE_URL);
+        dataSourceProperties.setUsername(null);
+        dataSourceProperties.setPassword(null);
+
+        DriverManagerDataSource separate = separateDataSource();
+
+        assertThat(separate.getUrl()).isEqualTo(SEPARATE_URL);
+        assertThat(separate.getUsername()).as("a database that needs no user is a valid configuration").isNull();
+        assertThat(separate.getPassword()).isNull();
+    }
+
+    @Test
     void theSeparateConnectionDoesNotPool() {
         liquibaseProperties.setUrl(SEPARATE_URL);
 

@@ -216,6 +216,12 @@ public class ArtemisSpringLiquibase extends SpringLiquibase {
         String user = liquibaseProperties.getUser() != null ? liquibaseProperties.getUser() : dataSourceProperties.getUsername();
         String password = liquibaseProperties.getPassword() != null ? liquibaseProperties.getPassword() : dataSourceProperties.getPassword();
 
-        return new DriverManagerDataSource(url, user, password);
+        // The setters, not the constructor with all three: a database that needs no user or password is a valid
+        // configuration, and only the setters accept null for them.
+        DriverManagerDataSource liquibaseDataSource = new DriverManagerDataSource();
+        liquibaseDataSource.setUrl(url);
+        liquibaseDataSource.setUsername(user);
+        liquibaseDataSource.setPassword(password);
+        return liquibaseDataSource;
     }
 }
