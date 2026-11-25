@@ -33,15 +33,19 @@ export class StructuredGradingCriterionService {
         if (!data) {
             return false;
         }
-        let instruction: GradingInstruction;
+        let instruction: GradingInstruction | null;
         try {
-            instruction = parseJson<GradingInstruction>(data);
+            instruction = parseJson<GradingInstruction | null>(data);
         } catch (err) {
             // Something unrelated was dropped, so the data is no instruction JSON.
             if (err instanceof SyntaxError) {
                 return false;
             }
             throw err;
+        }
+        // Valid JSON from another drag source, such as selected text, is no serialized instruction.
+        if (typeof instruction !== 'object' || instruction === null || instruction.id === undefined) {
+            return false;
         }
         return this.applyInstructionToFeedback(feedback, instruction);
     }

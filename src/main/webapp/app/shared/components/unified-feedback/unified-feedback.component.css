@@ -396,12 +396,6 @@
     font-weight: 400;
 }
 
-.unified-feedback--assessment .unified-feedback-points-input {
-    width: 5rem;
-    max-width: 100%;
-    min-width: 0;
-}
-
 :host(.unified-feedback-inline-editor) .unified-feedback--assessment .unified-feedback-points-input {
     width: 7.5rem;
 }

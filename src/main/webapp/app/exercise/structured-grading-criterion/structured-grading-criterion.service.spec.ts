@@ -127,6 +127,15 @@ describe('Structured Grading Criteria Service', () => {
             expect(selectionService.hasArmedInstruction()).toBe(true);
         });
 
+        it.each(['42', '{}', 'null', '"text"'])('should ignore a dropped JSON payload that is no instruction (%s)', (payload) => {
+            const feedback = { credits: 1 } as Feedback;
+            const event = { preventDefault() {}, dataTransfer: { getData: () => payload } } as unknown as DragEvent;
+
+            expect(service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)).toBe(false);
+            expect(feedback.gradingInstruction).toBeUndefined();
+            expect(feedback.credits).toBe(1);
+        });
+
         it('should refuse a dropped instruction whose usage limit is reached, unless the feedback already links it', () => {
             const instruction = { id: 3, credits: 1, usageCount: 1 } as GradingInstruction;
             vi.spyOn(TestBed.inject(GradingInstructionSelectionService), 'canApplyInstruction').mockReturnValue(false);
