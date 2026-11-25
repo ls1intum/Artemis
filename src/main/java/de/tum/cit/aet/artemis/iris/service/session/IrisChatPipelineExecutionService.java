@@ -9,13 +9,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -29,20 +28,17 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionStep;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -180,10 +176,11 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        boolean includeSolutionReference = event.isEmpty() && hasSelectedCompleteSolution(chatSession);
+        // An event-triggered run answers no student message, so it never continues the solution workflow
+        var solutionStep = event.isEmpty() ? solutionStep(chatSession) : null;
         pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
-                        latestSubmission, uncommittedFiles, context, includeSolutionReference));
+                        latestSubmission, uncommittedFiles, context, solutionStep));
     }
 
     /**
@@ -194,8 +191,9 @@ public class IrisChatPipelineExecutionService {
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
-            List<IrisMessageContextDTO> context, boolean includeSolutionReference) {
+            List<IrisMessageContextDTO> context, @Nullable IrisSolutionStep solutionStep) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
+        boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION;
 
         // Base data shared across all chat modes (course chat is the baseline)
         long courseLoadStart = System.nanoTime();
@@ -274,43 +272,25 @@ public class IrisChatPipelineExecutionService {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
-                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext);
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext, solutionStep);
     }
 
-    private boolean hasSelectedCompleteSolution(IrisChatSession session) {
-        if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT && session.getMode() != IrisChatMode.TEXT_EXERCISE_CHAT) {
-            return false;
+    /**
+     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only appendSolutionChoice writes one, after validating its offer.
+     * The message after a delivered solution answers the request to explain that solution.
+     */
+    private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session) {
+        var studentMessages = session.getMessages().stream().filter(message -> message.getSender() == IrisMessageSender.USER).toList();
+        if (studentMessages.isEmpty()) {
+            return null;
         }
-        var messages = session.getMessages().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
-        if (messages.size() < 2) {
-            return false;
+        var latestChoice = IrisSolutionChoiceDTO.in(studentMessages.getLast());
+        if (latestChoice.isPresent()) {
+            return latestChoice.get() == IrisSolutionChoice.SHOW_SOLUTION ? IrisSolutionStep.SHOW_SOLUTION : IrisSolutionStep.TRY_MYSELF;
         }
-        var latest = messages.getLast();
-        var previous = messages.get(messages.size() - 2);
-        if (latest.getSender() != IrisMessageSender.USER || previous.getSender() != IrisMessageSender.LLM || Boolean.TRUE.equals(previous.getIntermediate())) {
-            return false;
-        }
-        var choice = structuredContent(latest, "solution-choice", IrisSolutionChoiceDTO.class).orElse(null);
-        var offer = structuredContent(previous, "solution-offer", IrisSolutionOfferDTO.class).orElse(null);
-        return choice != null && choice.choice() == IrisSolutionChoice.SHOW_SOLUTION && previous.getId() != null && choice.offerMessageId() == previous.getId() && offer != null
-                && offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId();
-    }
-
-    private <T extends Record> Optional<T> structuredContent(IrisMessage message, String kind, Class<T> type) {
-        for (var content : message.getContent()) {
-            if (content instanceof IrisJsonMessageContent json) {
-                try {
-                    var header = json.readAs(IrisMessageContentTypeDTO.class);
-                    if (header != null && kind.equals(header.type())) {
-                        return Optional.ofNullable(json.readAs(type));
-                    }
-                }
-                catch (JacksonException ignored) {
-                    // Other JSON shapes and malformed legacy actions cannot authorize access to an instructor solution.
-                }
-            }
-        }
-        return Optional.empty();
+        boolean followsSolution = studentMessages.size() > 1
+                && IrisSolutionChoiceDTO.in(studentMessages.get(studentMessages.size() - 2)).orElse(null) == IrisSolutionChoice.SHOW_SOLUTION;
+        return followsSolution ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

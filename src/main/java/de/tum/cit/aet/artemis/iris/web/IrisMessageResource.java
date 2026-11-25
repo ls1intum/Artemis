@@ -44,8 +44,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -58,6 +56,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -155,27 +155,9 @@ public class IrisMessageResource {
 
         IrisMessage message = new IrisMessage();
         List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
-        for (var content : contentEntities) {
-            if (content instanceof IrisJsonMessageContent json) {
-                IrisMessageContentTypeDTO header;
-                try {
-                    header = json.readAs(IrisMessageContentTypeDTO.class);
-                }
-                catch (JacksonException ignored) {
-                    // Other valid JSON shapes cannot carry a workflow discriminator.
-                    continue;
-                }
-                var type = header == null ? null : header.type();
-                if ("solution-choice".equals(type) || "solution-offer".equals(type)) {
-                    throw new BadRequestException("Solution workflow content must be created by the server");
-                }
-            }
-        }
-        if (solutionChoice != null) {
-            boolean german = "de".equals(user.getLangKey());
-            String choiceText = solutionChoice.choice() == IrisSolutionChoice.SHOW_SOLUTION ? (german ? "Zeig mir die vollständige Lösung." : "Show me the complete solution.")
-                    : (german ? "Ich möchte es selbst mit Hilfe probieren." : "I want to try it myself with help.");
-            contentEntities = List.of(new IrisTextMessageContent(choiceText));
+        // Choices are written only by appendSolutionChoice after it validated the offer, so a client must never send one itself.
+        if (contentEntities.stream().map(IrisMessageContentTypeDTO::typeOf).anyMatch(type -> IrisSolutionChoiceDTO.TYPE.equals(type) || IrisSolutionOfferDTO.TYPE.equals(type))) {
+            throw new BadRequestException("Solution workflow content must be created by the server");
         }
         message.setContent(new ArrayList<>(contentEntities));
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());

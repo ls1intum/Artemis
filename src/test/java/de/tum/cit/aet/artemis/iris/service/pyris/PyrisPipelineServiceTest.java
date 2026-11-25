@@ -82,7 +82,7 @@ class PyrisPipelineServiceTest {
         session.setUserId(7L);
 
         service.executeChatPipeline("default", "moderate", session, Optional.empty(), null, (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null,
-                List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null));
+                List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null, null));
 
         verify(irisChatWebsocketService).sendStatusUpdate(eq(session), eq("run-1"), eq(PyrisRunState.RUNNING), isNull());
         var order = inOrder(pyrisJobService, materialVersionService, pyrisConnectorService);
@@ -120,7 +120,7 @@ class PyrisPipelineServiceTest {
 
         service.executeChatPipeline("default", "moderate", session, Optional.of("build_failed"), null,
                 (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null,
-                        null, null, null, null, null, null, null));
+                        null, null, null, null, null, null, null, null));
 
         verify(pyrisJobService).addChatJob(1L, 2L, 3L, null, null);
     }
@@ -264,7 +264,7 @@ class PyrisPipelineServiceTest {
         var capturedSettings = new AtomicReference<PyrisPipelineExecutionSettingsDTO>();
         service.executeChatPipeline("default", "moderate", session, Optional.empty(), null, (executionDto, ignoredUser, ignoredPyrisUser) -> {
             capturedSettings.set(executionDto.settings());
-            return new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null);
+            return new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null, null, null, null, null, null, null, null, null);
         });
 
         return capturedSettings.get();
