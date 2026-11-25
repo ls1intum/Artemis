@@ -208,6 +208,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Incremented whenever a suggestion request starts or an assessment navigation begins, so a response for an
     // earlier request can recognise that it is stale and must not touch the current assessment.
     private feedbackSuggestionsRequestGeneration = 0;
+    // Incremented whenever an assessment navigation begins, so a load that a later navigation replaced does not rewrite the URL.
+    // Kept apart from the suggestion generation, which every suggestion request also increments.
+    private assessmentLoadGeneration = 0;
 
     // listener, will get notified upon loading of feedback
     readonly onFeedbackLoaded = output();
@@ -271,6 +274,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // The previous submission stays loaded until the next one arrives, so a suggestion response arriving in
             // between would otherwise still pass as current. Invalidate it as soon as the navigation starts.
             this.feedbackSuggestionsRequestGeneration++;
+            this.assessmentLoadGeneration++;
             this.loadingFeedbackSuggestions.set(false);
             this.resultNotFound.set(false);
 
@@ -344,6 +348,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
         // A request still pending after the assessor left must not show its error on the next page.
         this.feedbackSuggestionsRequestGeneration++;
+        this.assessmentLoadGeneration++;
     }
 
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
@@ -365,8 +370,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // validate feedback here already so that overrides are possible for assessment note changes
         // without touching the feedbacks
+        const loadGeneration = this.assessmentLoadGeneration;
         await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
-        if (submissionId === 'new') {
+        if (submissionId === 'new' && loadGeneration === this.assessmentLoadGeneration) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty and
             // using it here rewrites the address to the application root once the submission has loaded.

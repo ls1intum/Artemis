@@ -130,6 +130,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participationUpdateListener?: Subscription;
     private examSummaryReload?: Subscription;
     private failedExamSummaryReloadResultId?: number;
+    private examSummaryReloadResultId?: number;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
@@ -218,7 +219,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 // The tracker has already counted these results as notified, so a reload that failed is retried from its own record.
-                const resultIdToReload = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id ?? this.failedExamSummaryReloadResultId;
+                const newestResultId = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id;
+                // A reload only returns the requested result, so an older one completing later must not replace the newer feedback.
+                const isNewerThanReloaded = newestResultId !== undefined && newestResultId > (this.examSummaryReloadResultId ?? -1);
+                const resultIdToReload = isNewerThanReloaded ? newestResultId : this.failedExamSummaryReloadResultId;
                 this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
                 if (resultIdToReload !== undefined && this.isExamSummary() && this.participation()?.id !== undefined) {
                     this.reloadForExamSummary(resultIdToReload);
@@ -236,6 +240,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private reloadForExamSummary(resultId: number): void {
         this.examSummaryReload?.unsubscribe();
         this.failedExamSummaryReloadResultId = undefined;
+        this.examSummaryReloadResultId = resultId;
         this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
             next: (data) => {
                 this.updateParticipation(data, this.submissionId, resultId);

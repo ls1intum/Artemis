@@ -69,6 +69,8 @@ type ContainerInternalsOverrides = {
     athenaService: AthenaService;
     loadFeedbackSuggestions: () => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
+    handleReceivedSubmission: (submission: ProgrammingSubmission) => Promise<void>;
+    assessmentLoadGeneration: number;
 };
 type ContainerInternals = Omit<CodeEditorTutorAssessmentContainerComponent, keyof ContainerInternalsOverrides> & ContainerInternalsOverrides;
 const internals = (c: CodeEditorTutorAssessmentContainerComponent): ContainerInternals => c as unknown as ContainerInternals;
@@ -891,6 +893,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             { queryParams: { 'correction-round': '0', testRun: 'false' } },
         );
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+    });
+
+    it('should not replace new with the loaded submission id when a later navigation replaced the load', async () => {
+        let finishLoad!: () => void;
+        const loadCanFinish = new Promise<void>((resolve) => (finishLoad = resolve));
+        const handleReceivedSubmission = internals(comp).handleReceivedSubmission.bind(comp);
+        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
+            await loadCanFinish;
+            await handleReceivedSubmission(received);
+        });
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+        const load = internals(comp).onSubmissionReceived('new', submission);
+        // what the route subscription does when the assessor navigates to another submission
+        internals(comp).assessmentLoadGeneration++;
+        finishLoad();
+        await load;
+
+        expect(goSpy).not.toHaveBeenCalled();
     });
 
     it('should not invalidate assessment after saving', async () => {

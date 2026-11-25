@@ -1073,6 +1073,20 @@ describe('TextEditorComponent', () => {
             expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
         });
 
+        it('should keep reloading the exam summary with the newest Athena result when an older one completes later', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const newerReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(newerReload.asObservable());
+            const olderCompleted = withResults([{ ...athenaResult(true), id: 6 }]);
+            olderCompleted.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            participationSubject.next(olderCompleted);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+            expect(newerReload.observed).toBe(true);
+        });
+
         it('should drop the answer of an exam summary reload that a newer one replaced', () => {
             const participationSubject = openWithParticipation(withResults([]), true);
             const firstReload = new Subject<StudentParticipation>();
