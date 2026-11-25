@@ -18,9 +18,9 @@ import org.junit.jupiter.api.Test;
 class QueryPropertiesAndIndexCatalogFailureTest {
 
     @Test
-    void limitCanBeConfiguredAndDefaultsToTenThousandEntries() {
+    void limitCanBeConfiguredAndDefaultsToThirtyThousandEntries() {
         QueryProperties properties = new QueryProperties();
-        assertThat(properties.getMaxRecordedQueries()).isEqualTo(10_000);
+        assertThat(properties.getMaxRecordedQueries()).isEqualTo(30_000);
 
         properties.setMaxRecordedQueries(7);
 

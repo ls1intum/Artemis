@@ -20,9 +20,9 @@ public class QueryProperties {
 
     /**
      * Circuit-breaker: stop recording after this many entries to prevent OOM on runaway queries.
-     * Default: 10 000.
+     * Default: 30 000.
      */
-    private int maxRecordedQueries = 10_000;
+    private int maxRecordedQueries = 30_000;
 
     // --- getters & setters ---
 
