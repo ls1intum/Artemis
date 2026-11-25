@@ -76,7 +76,8 @@ Some things are deliberately not available to an agent, however it is configured
   students cannot see them yet. An agent can also change only content that is still unpublished. A release date
   schedules publication: review the content before that date, and change the date in the Artemis web interface if you
   need more time. Programming exercises additionally must have no student participations. This holds for a push with
-  git as well: a push is refused as soon as the exercise is visible to students or has participations.
+  git as well: a push is refused when it starts if the exercise is visible to students or has participations. A push that
+  started earlier is not stopped by a later release or participation.
 - **Deleting.** An agent can create and change competencies, relations, exercises and units, but not delete them.
 - **Grades, exams and student data.** No scope covers them.
 
@@ -140,8 +141,12 @@ the scope **Clone and push programming repositories**. The agent asks for the ad
 HTTPS with your Artemis login as the user name and the token as the password:
 
 ```bash
-git -c http.extraHeader="Authorization: Basic $(printf '%s:%s' "$ARTEMIS_LOGIN" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" clone "$REPOSITORY_URL"
+ARTEMIS_GIT_AUTH="Authorization: Basic $(printf '%s:%s' "$ARTEMIS_LOGIN" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" \
+  git --config-env=http.extraHeader=ARTEMIS_GIT_AUTH clone "$REPOSITORY_URL"
 ```
+
+The header goes to git through an environment variable on purpose. With `git -c http.extraHeader=...` it would be part of the
+command line, which other users of the same machine can read while git runs.
 
 The token opens only the template, solution, tests and auxiliary repositories of exercises in your courses, never the
 repositories of students and never those of exams. It can read them at any time. A push needs an exercise that students

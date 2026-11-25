@@ -61,8 +61,12 @@ The template, solution and test repositories are ordinary git repositories. The 
 with that user name and the agent token as the password, without writing the token into the address or a file:
 
 ```bash
-git -c http.extraHeader="Authorization: Basic $(printf '%s:%s' "$USER_NAME" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" clone "$URL"
+ARTEMIS_GIT_AUTH="Authorization: Basic $(printf '%s:%s' "$USER_NAME" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" \
+  git --config-env=http.extraHeader=ARTEMIS_GIT_AUTH clone "$URL"
 ```
+
+Hand the header to git through an environment variable, as shown, and not with `git -c http.extraHeader=...`: the arguments
+of a running process can be read by other users of the same machine, its environment cannot.
 
 Push the same way, to the branch from the response, and only while `writable` is true. A push is refused once students
 can see the exercise or have started it; ask the instructor to change that in Artemis, do not look for a way around it.
