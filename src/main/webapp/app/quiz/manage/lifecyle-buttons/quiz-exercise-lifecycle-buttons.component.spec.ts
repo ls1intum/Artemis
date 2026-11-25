@@ -84,12 +84,12 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should end quiz', () => {
-        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+        vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.endQuiz();
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'end-now');
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledWith(456);
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should add quiz batch', () => {
@@ -146,11 +146,18 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     }
 
     describe('button visibility', () => {
-        it('shows the start button only for a not-yet-started synchronized quiz with editor rights', () => {
-            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
+        it('shows the start button only for a synchronized quiz whose batch has not started and with editor rights', () => {
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.INVISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: false }));
             expect(flags().showStartButton()).toBe(true);
 
+            // The server flag quizStarted means "visible to students": a visible quiz in the waiting room can still be started.
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(true);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.ACTIVE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: true, quizStarted: true }));
+            expect(flags().showStartButton()).toBe(false);
+
+            fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.SYNCHRONIZED, isAtLeastEditor: false, quizStarted: true }));
             expect(flags().showStartButton()).toBe(false);
 
             fixture.componentRef.setInput('quizExercise', buildQuiz({ status: QuizStatus.VISIBLE, quizMode: QuizMode.BATCHED, isAtLeastEditor: true, quizStarted: false }));
@@ -238,7 +245,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks the quiz as ended and clears the dialog error on end', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -252,7 +259,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('routes an end failure into the dialog error stream', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const errors: string[] = [];
             comp.dialogError$.subscribe((e) => errors.push(e));

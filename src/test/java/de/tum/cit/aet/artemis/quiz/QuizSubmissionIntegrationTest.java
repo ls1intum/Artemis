@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -67,7 +68,6 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -453,6 +453,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * A quiz of an exam is conducted through the exam, so the participation of a course quiz cannot be started for it, whoever asks and at any time.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizStartParticipation_examQuiz_badRequest() throws Exception {
+        QuizExercise examQuiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(30), ZonedDateTime.now().plusHours(1));
+
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + examQuiz.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(participationRepository.findByExerciseId(examQuiz.getId())).isEmpty();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource
@@ -617,7 +630,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationRepository.save(practiceParticipation);
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var search = new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
         var scores = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 

@@ -1,31 +1,54 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+interface SpanOption {
+    label: string;
+    value: SpanType;
+}
+
 @Component({
     selector: 'div[jhi-statistics-span-selector]',
-    imports: [ArtemisTranslatePipe],
+    imports: [ArtemisTranslatePipe, FormsModule, TumAetUiSelectButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    template: `
-        @for (span of spans; track span; let i = $index) {
-            <label
-                class="flex flex-1 cursor-pointer items-center justify-center gap-1 border-1 border-solid border-(--tumaet-ui-border-color)! px-3! py-1.5! first:rounded-s-md last:rounded-e-md focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--tumaet-ui-focus-color)"
-                [class.active]="currentSpan() === span"
-                [class]="
-                    currentSpan() === span
-                        ? 'bg-(--tumaet-ui-primary-color) text-(--tumaet-ui-primary-contrast-color)'
-                        : 'bg-(--tumaet-ui-control-background) text-(--tumaet-ui-text-color)'
-                "
-            >
-                <input type="radio" name="options" [id]="'option' + (i + 1)" [checked]="currentSpan() === span" (click)="spanChange.emit(span)" />{{
-                    'statistics.span.' + span.toLowerCase() | artemisTranslate
-                }}
-            </label>
+    styles: `
+        .span-selector-scroll {
+            max-width: 100%;
+            overflow-x: auto;
+            /* Keep the focus outline of the first and last period inside the scroll container. */
+            padding: 3px;
+            margin: -3px;
         }
+    `,
+    template: `
+        <div class="span-selector-scroll">
+            <tumaet-ui-select-button
+                [attr.aria-label]="'statistics.spanLabel' | artemisTranslate"
+                [options]="spanOptions"
+                [ngModel]="currentSpan()"
+                (ngModelChange)="spanChange.emit($event)"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
+                [allowEmpty]="false"
+                [itemTemplate]="spanItem"
+            />
+        </div>
+        <ng-template #spanItem let-option>
+            {{ option.label | artemisTranslate }}
+        </ng-template>
     `,
 })
 export class StatisticsSpanSelectorComponent {
     readonly currentSpan = input.required<SpanType>();
     readonly spanChange = output<SpanType>();
-    protected readonly spans = [SpanType.DAY, SpanType.WEEK, SpanType.MONTH, SpanType.QUARTER, SpanType.YEAR];
+    protected readonly spanOptions: SpanOption[] = [
+        { label: 'statistics.span.day', value: SpanType.DAY },
+        { label: 'statistics.span.week', value: SpanType.WEEK },
+        { label: 'statistics.span.month', value: SpanType.MONTH },
+        { label: 'statistics.span.quarter', value: SpanType.QUARTER },
+        { label: 'statistics.span.year', value: SpanType.YEAR },
+    ];
 }

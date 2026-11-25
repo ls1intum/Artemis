@@ -185,7 +185,7 @@ describe('ComplaintRequestComponent', () => {
 
             expect(card).toBeTruthy();
             // The same card language as the feedback cards on the page. The important padding is needed because Bootstrap pads and sizes by its own scale.
-            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4']) {
                 expect(card.classList.contains(utility), utility).toBe(true);
             }
         });

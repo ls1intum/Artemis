@@ -15,6 +15,7 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -93,7 +94,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
 @Component({
     selector: 'jhi-grading',
     templateUrl: './grading.component.html',
-    styleUrls: ['./grading.component.scss'],
+    styleUrls: ['./grading.component.css'],
     imports: [
         TranslateDirective,
         GradingInfoModalComponent,
@@ -123,6 +124,7 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
 })
 export class GradingComponent implements OnInit {
     private readonly gradingService = inject(GradingService);
+    private readonly gradingScaleApi = inject(GradingScaleApi);
     private readonly route = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly courseService = inject(CourseManagementService);
@@ -480,13 +482,13 @@ export class GradingComponent implements OnInit {
         }
         this.isLoading.set(true);
         if (this.isExam()) {
-            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForExam(this.courseId!, this.examId!));
+            this.handleDeleteObservable(this.gradingScaleApi.deleteGradingScaleForExam(this.courseId!, this.examId!));
         } else {
-            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForCourse(this.courseId!));
+            this.handleDeleteObservable(this.gradingScaleApi.deleteGradingScaleForCourse(this.courseId!));
         }
     }
 
-    handleDeleteObservable(deleteObservable: Observable<HttpResponse<void>>) {
+    handleDeleteObservable(deleteObservable: Observable<void>) {
         deleteObservable.subscribe({
             next: () => {
                 // Reset state only on successful delete

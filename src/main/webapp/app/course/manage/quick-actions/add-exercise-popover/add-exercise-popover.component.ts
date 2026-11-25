@@ -3,7 +3,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { Popover } from 'primeng/popover';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
@@ -20,9 +21,17 @@ interface ExerciseModalRow {
 
 @Component({
     selector: 'jhi-add-exercise-popover',
-    imports: [TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, Popover, FaIconComponent],
+    imports: [
+        TranslateDirective,
+        ExerciseCreateButtonComponent,
+        ExerciseImportButtonComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiButtonDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './add-exercise-popover.component.html',
-    styleUrls: ['./add-exercise-popover.component.scss'],
+    styleUrls: ['./add-exercise-popover.component.css'],
     exportAs: 'addExercisePopover',
 })
 export class AddExercisePopoverComponent {
@@ -75,20 +84,23 @@ export class AddExercisePopoverComponent {
 
     course = input.required<Course>();
 
-    addExercisePopover = viewChild<Popover>('addExercisePopover');
+    addExercisePopover = viewChild<TumAetUiPopoverComponent>('addExercisePopover');
 
     /**
-     * Show the overlay panel
+     * Show the overlay panel, anchored to the element that was clicked
      * @param event The click event
      */
     public showPopover(event: Event): void {
-        this.addExercisePopover()?.show(event);
+        const origin = event.currentTarget ?? event.target;
+        if (origin instanceof HTMLElement) {
+            this.addExercisePopover()?.open(origin);
+        }
     }
 
     /**
      * Hide the overlay panel
      */
     hidePopover(): void {
-        this.addExercisePopover()?.hide();
+        this.addExercisePopover()?.close();
     }
 }

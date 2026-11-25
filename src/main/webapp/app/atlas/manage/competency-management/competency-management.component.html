@@ -1,13 +1,13 @@
 <div>
-    <div class="d-flex flex-wrap">
-        <div *titleBarTitle class="d-flex justify-content-center align-items-center">
+    <div class="flex flex-wrap">
+        <div *titleBarTitle class="flex items-center justify-center">
             <jhi-course-title-bar-title title="artemisApp.competency.manage.title" />
-            <button tumAetUiButton size="small" severity="success" type="button" class="ms-3" (click)="openCourseCompetencyExplanation()">
+            <button tumAetUiButton size="small" severity="success" type="button" class="ms-4" (click)="openCourseCompetencyExplanation()">
                 <fa-icon [icon]="faCircleQuestion" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.helpButton"></span>
             </button>
         </div>
-        <div *titleBarActions class="ms-auto justify-content-end">
+        <div *titleBarActions class="ms-auto justify-end">
             @if (irisEnabled()) {
                 <a tumAetUiButton size="small" severity="primary" id="generateButton" [routerLink]="['/course-management', courseId(), 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
@@ -25,10 +25,8 @@
         </div>
     </div>
     @if (isLoading()) {
-        <div class="d-flex justify-content-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+        <div class="flex justify-center">
+            <tumaet-ui-progress-spinner [style.width.rem]="2" [style.height.rem]="2" [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     }
     <jhi-competency-management-table
@@ -54,8 +52,9 @@
             tumAetUiButton
             size="small"
             severity="primary"
+            rounded
             type="button"
-            class="rounded-circle agent-chat-button"
+            class="agent-chat-button"
             (click)="openAgentChatModal()"
             [attr.aria-label]="'AI Assistant'"
             title="Chat with AI Assistant"

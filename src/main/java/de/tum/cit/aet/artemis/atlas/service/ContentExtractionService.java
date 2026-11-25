@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -29,14 +26,13 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration;
-import de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLlmPresets;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -103,17 +99,12 @@ public class ContentExtractionService {
 
     private static final String FLAVOR_STRIP_PIPELINE_ID = "ATLAS_FLAVOR_STRIP";
 
+    @Nullable
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
 
     private final QuizExerciseRepository quizExerciseRepository;
-
-    private final String flavorStripModel;
-
-    private final String flavorStripReasoningEffort;
-
-    private final double flavorStripTemperature;
 
     @Nullable
     private final LLMTokenUsageService llmTokenUsageService;
@@ -122,38 +113,27 @@ public class ContentExtractionService {
     private final UserRepository userRepository;
 
     @Autowired
-    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            @Value("${artemis.atlas.flavor-strip-model:gpt-5.6-luna}") String flavorStripModel,
-            @Value("${artemis.atlas.flavor-strip-reasoning-effort:high}") String flavorStripReasoningEffort,
-            @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
-            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
-        this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
-                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, llmTokenUsageService, userRepository);
+    public ContentExtractionService(LlmClientService llmClientService, AtlasLlmPresets presets, AtlasPromptTemplateService templateService,
+            QuizExerciseRepository quizExerciseRepository, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+        this(llmClientService.chatClient(presets.flavorStripPreset()), templateService, quizExerciseRepository, llmTokenUsageService, userRepository);
     }
 
-    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, AtlasOrchestratorProperties orchestratorProperties,
-            @Qualifier(AtlasResponsesApiConfiguration.ATLAS_RESPONSES_CHAT_CLIENT) @Nullable AtlasResponsesChatClient responsesClient) {
-        this(orchestratorProperties.responsesApiEnabled() ? (responsesClient == null ? null : responsesClient.chatClient()) : chatClient, templateService, quizExerciseRepository,
-                flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null, (UserRepository) null);
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository) {
+        this(chatClient, templateService, quizExerciseRepository, null, null);
     }
 
+    /**
+     * @param chatClient             client of the {@code flavor-strip} preset, or {@code null} to return text unchanged
+     * @param templateService        renders the flavor-strip prompt
+     * @param quizExerciseRepository loads quiz questions
+     * @param llmTokenUsageService   records usage, or {@code null}
+     * @param userRepository         resolves the current user for usage, or {@code null}
+     */
     public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature) {
-        this(chatClient, templateService, quizExerciseRepository, flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature, (LLMTokenUsageService) null,
-                (UserRepository) null);
-    }
-
-    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
-            String flavorStripModel, String flavorStripReasoningEffort, double flavorStripTemperature, @Nullable LLMTokenUsageService llmTokenUsageService,
-            @Nullable UserRepository userRepository) {
+            @Nullable LLMTokenUsageService llmTokenUsageService, @Nullable UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.flavorStripModel = flavorStripModel;
-        this.flavorStripReasoningEffort = flavorStripReasoningEffort;
-        this.flavorStripTemperature = flavorStripTemperature;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
     }
@@ -272,15 +252,14 @@ public class ContentExtractionService {
         if (rawText == null || rawText.isBlank()) {
             return "";
         }
-        if (flavorStripModel == null || flavorStripModel.isBlank() || chatClient == null) {
+        if (chatClient == null) {
             return rawText;
         }
         try {
             // Spring AI's .entity(Class) automatically appends JSON schema / format instructions to
             // the user message; no need to inject them via the prompt template.
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
-            OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
-            var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().responseEntity(FlavorStripEditsDTO.class);
+            var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).call().responseEntity(FlavorStripEditsDTO.class);
             trackFlavorStripUsage(responseEntity.response(), courseId, exerciseId);
             FlavorStripEditsDTO parsedEdits = responseEntity.entity();
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
@@ -308,22 +287,6 @@ public class ContentExtractionService {
         Long userId = userRepository == null ? null : SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, FLAVOR_STRIP_PIPELINE_ID,
                 builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
-    }
-
-    /**
-     * Build the OpenAI chat options for the flavor-strip call. GPT-5 reasoning deployments reject an
-     * explicit temperature alongside {@code reasoningEffort}, so exactly one is set: {@code reasoningEffort}
-     * when configured, otherwise {@code temperature}. Mirrors {@code CompetencyOrchestrationService.buildChatOptions}.
-     */
-    static OpenAiChatOptions.Builder buildChatOptions(String model, String reasoningEffort, double temperature) {
-        OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder().deploymentName(model);
-        if (reasoningEffort != null && !reasoningEffort.isBlank()) {
-            builder.reasoningEffort(reasoningEffort);
-        }
-        else {
-            builder.temperature(temperature);
-        }
-        return builder;
     }
 
     /**

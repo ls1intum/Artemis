@@ -8,6 +8,7 @@ import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isActingAsTestExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import {
@@ -188,7 +189,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
     readonly isAdmin = signal(false);
-    readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isTestExam = computed(() => isActingAsTestExam(this.exam()));
     readonly isLoading = signal(true);
 
     readonly searchUsersForExamFn = (term: string, page: number, size: number): Observable<UserSearchResult> => {
@@ -285,7 +286,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'visibleRegistrationNumber',
                 headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber',
                 sort: true,
-                wrapHeader: true,
                 width: '6rem',
                 templateRef: this.plainTemplate(),
             },
@@ -308,7 +308,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'workingTime',
                 headerKey: this.isTestExam() ? 'artemisApp.studentExams.usedWorkingTime' : 'artemisApp.studentExams.workingTime',
                 sort: true,
-                wrapHeader: true,
                 width: '4rem',
                 templateRef: this.workingTimeTemplate(),
             },

@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.core.util.IpRangeSet;
  * would mean refusing every build agent - and which treats an address of another family as a plain non-match rather
  * than an error.
  * <p>
- * This deliberately does not use {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest} to
- * obtain the address it is asked about. That helper returns the first {@code X-Forwarded-For} value whenever the
- * header is present, and any client can set that header, so it cannot be the basis of an allowlist. Callers resolve
- * the peer with {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getPeerIpString} instead.
+ * Callers resolve the peer with {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getPeerIpString}, which walks
+ * the forwarding header only through the proxies listed in {@link BuildAgentNetworkConfiguration}, and not with
+ * {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest}, which reports what the servlet
+ * container resolved.
  *
  * @see BuildAgentNetworkConfiguration
  */
@@ -84,7 +84,7 @@ public class BuildAgentNetworkPolicy {
     /**
      * Says so when the allowlist is configured but the header that can defeat it is still trusted from anywhere private.
      * <p>
-     * Artemis runs with {@code server.forward-headers-strategy: native}, so Tomcat rewrites {@code getRemoteAddr()}
+     * Artemis runs with {@code server.request.header.forwarded.strategy: web-server}, so Tomcat rewrites {@code getRemoteAddr()}
      * from {@code X-Forwarded-For} for any peer matching {@code server.tomcat.remoteip.internal-proxies}, whose default
      * is the private ranges plus loopback. A caller connecting from any of them can therefore name an arbitrary private
      * address, and both this allowlist and the build agent origin binding read that address.

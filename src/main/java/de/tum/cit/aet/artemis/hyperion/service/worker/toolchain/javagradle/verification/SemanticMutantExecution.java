@@ -4,17 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 
-/** Pure decision logic around sandbox mutant builds; {@link DifferentialVerifier} remains the sole owner of executing and restoring the workspace. */
+/** Classifies sandbox mutant builds; {@link DifferentialVerifier} remains the sole owner of executing and restoring the workspace. */
 final class SemanticMutantExecution {
-
-    private static final int MAX_MUTANTS = 4;
 
     @FunctionalInterface
     interface ProbeRunner {
@@ -40,7 +42,8 @@ final class SemanticMutantExecution {
             return inconclusive(candidates);
         }
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
-        for (SemanticMutant mutant : candidates.stream().limit(MAX_MUTANTS).toList()) {
+        // The caller bounds the admitted proposals; every one it passes receives an outcome, so none is silently dropped.
+        for (SemanticMutant mutant : candidates) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath())) || declaresMethod(testFiles, mutant.counterexample().testName())) {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
@@ -65,7 +68,7 @@ final class SemanticMutantExecution {
                 continue;
             }
             if (ContractWitnessProbe.validated(pristine.testNames(), pristine.testFailedNames(), List.of(mutant.counterexample())).isEmpty()) {
-                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
+                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE, pristine.buildDiagnostic()));
                 continue;
             }
             BuildSummary mutated = runner.run(mutant, overlay);
@@ -80,20 +83,52 @@ final class SemanticMutantExecution {
     }
 
     static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
+        return recheck(solutionFiles, mutants, testName -> true, runner);
+    }
+
+    /**
+     * Rechecks mutants whose kill only counts when a test that earns credit fails.
+     *
+     * @param countedTests whether a failure of the executed test with this name kills the mutant; a failure of any other test, such as a zero-weight check of supplied
+     *                         behavior, earns a student nothing and neither kills the mutant nor makes the build inconclusive
+     */
+    static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, Predicate<String> countedTests, ProbeRunner runner) {
+        return recheck(solutionFiles, mutants, countedTests, runner, _ -> {
+        });
+    }
+
+    static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, Predicate<String> countedTests, ProbeRunner runner,
+            Consumer<SemanticMutantOutcome> completed) {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        if (mutants.isEmpty()) {
+            return List.of();
+        }
+        BuildSummary baseline = null;
         for (SemanticMutant mutant : mutants) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))) {
                 // This exact replacement was proven only against another reference revision. It is neither a survivor nor a kill against the current candidate; the orchestration
                 // review authors a fresh mutant against the new source instead of making an unexecuted stale probe block acceptance.
-                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
+                var outcome = new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE);
+                outcomes.add(outcome);
+                completed.accept(outcome);
+                continue;
+            }
+            if (baseline == null) {
+                baseline = runner.run(null, null);
+            }
+            Set<String> expectedTests = baseline.testNames().stream().filter(countedTests).collect(Collectors.toUnmodifiableSet());
+            if (!passed(baseline) || expectedTests.isEmpty()) {
+                var outcome = new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE);
+                outcomes.add(outcome);
+                completed.accept(outcome);
                 continue;
             }
             BuildSummary result = runner.run(mutant, null);
             // The repair may rename, strengthen, or replace the suggested counterexample. Because the candidate already passed mechanical verification immediately before this
             // probe, any test that executes and fails only after installing the mutant is outcome-level evidence that the suite now kills it. Compile failures execute no tests.
-            Disposition disposition = executedTestFailed(result) ? Disposition.KILLED_BY_GRADED_SUITE
-                    : passed(result) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.INCONCLUSIVE;
-            outcomes.add(new SemanticMutantOutcome(mutant, disposition));
+            var outcome = new SemanticMutantOutcome(mutant, result.testNames().containsAll(expectedTests) ? disposition(result, countedTests) : Disposition.INCONCLUSIVE);
+            outcomes.add(outcome);
+            completed.accept(outcome);
         }
         return List.copyOf(outcomes);
     }
@@ -108,10 +143,27 @@ final class SemanticMutantExecution {
     }
 
     private static boolean executedTestFailed(BuildSummary summary) {
-        return !summary.timedOut() && !summary.testFailedNames().isEmpty() && summary.testNames().stream().anyMatch(summary.testFailedNames()::contains);
+        return executedTestFailed(summary, testName -> true);
+    }
+
+    private static Disposition disposition(BuildSummary result, Predicate<String> countedTests) {
+        if (executedTestFailed(result, countedTests)) {
+            return Disposition.KILLED_BY_GRADED_SUITE;
+        }
+        return passedCountedTests(result, countedTests) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.INCONCLUSIVE;
+    }
+
+    private static boolean executedTestFailed(BuildSummary summary, Predicate<String> countedTests) {
+        return !summary.timedOut() && summary.testFailedNames().stream().filter(countedTests).anyMatch(summary.testNames()::contains);
+    }
+
+    /** A build that ran tests and in which every failure, if any, was an executed test that does not count. */
+    private static boolean passedCountedTests(BuildSummary summary, Predicate<String> countedTests) {
+        return passed(summary) || (!summary.timedOut() && summary.tests() > 0 && summary.failures() > 0 && summary.testFailedNames().stream().noneMatch(countedTests)
+                && summary.testNames().containsAll(summary.testFailedNames()));
     }
 
     private static List<SemanticMutantOutcome> inconclusive(List<SemanticMutant> candidates) {
-        return candidates.stream().limit(MAX_MUTANTS).map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
+        return candidates.stream().map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
     }
 }

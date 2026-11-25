@@ -46,7 +46,7 @@ const PRESET_MENU_SELECTOR = '[data-notification-preset-menu]';
         CourseNotificationPresetPickerComponent,
     ],
     templateUrl: './course-notification-overview.component.html',
-    styleUrls: ['./course-notification-overview.component.scss'],
+    styleUrls: ['./course-notification-overview.component.css'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
     private elementRef = inject(ElementRef);

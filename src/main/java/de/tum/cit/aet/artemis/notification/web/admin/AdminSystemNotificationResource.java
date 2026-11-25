@@ -7,6 +7,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
@@ -123,7 +125,7 @@ public class AdminSystemNotificationResource {
             @Header(name = "X-artemisApp-params", description = "URL-encoded entity id (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")) })
     @ApiResponse(responseCode = "400", description = "ID must be absent; both dates must be present and the start must precede expiry", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PostMapping("system-notifications")
-    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@RequestBody SystemNotificationUpdateDTO dto,
+    public ResponseEntity<SystemNotificationDTO> createSystemNotification(@Valid @RequestBody SystemNotificationUpdateDTO dto,
             @RequestParam(defaultValue = "false") boolean sendMaintenanceEmail) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", dto);
         if (dto.id() != null) {
@@ -173,7 +175,7 @@ public class AdminSystemNotificationResource {
             @Header(name = "X-artemisApp-params", description = "URL-encoded entity id (prefix configured by jhipster.clientApp.name)", schema = @Schema(type = "string")) })
     @ApiResponse(responseCode = "400", description = "ID must identify an existing notification; both dates must be present and the start must precede expiry", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PutMapping("system-notifications")
-    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@RequestBody SystemNotificationUpdateDTO updateDTO) {
+    public ResponseEntity<SystemNotificationDTO> updateSystemNotification(@Valid @RequestBody SystemNotificationUpdateDTO updateDTO) {
         log.debug("REST request to update SystemNotification : {}", updateDTO);
         if (updateDTO.id() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idNull");

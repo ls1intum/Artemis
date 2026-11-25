@@ -536,7 +536,7 @@ describe('System Notification Component', () => {
             vi.advanceTimersByTime(500);
 
             // The CSS variable must be set on document.documentElement (the :root element)
-            // because the dynamic-content-height mixin and admin-container use var(--system-notification-height, 0px)
+            // because the stylesheets that size a page by the viewport use var(--system-notification-height, 0px)
             const value = document.documentElement.style.getPropertyValue('--system-notification-height');
             expect(value).toBe('0px');
 

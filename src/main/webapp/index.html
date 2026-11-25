@@ -76,25 +76,51 @@
                 "sameAs": ["https://github.com/ls1intum/Artemis", "https://docs.artemis.tum.de"]
             }
         </script>
+        <script>
+            // Sets the theme before the first paint, so a page in the dark theme does not start in the light one. The theme
+            // service (theme.service.ts) reads the same two sources once the application runs: the stored choice of the user
+            // (key `artemisapp.theme.preference`, value "LIGHT" or "DARK") and otherwise the colour scheme of the system.
+            (function () {
+                var theme;
+                try {
+                    var stored = JSON.parse(localStorage.getItem('artemisapp.theme.preference'));
+                    if (stored === 'DARK') theme = 'dark';
+                    if (stored === 'LIGHT') theme = 'light';
+                } catch (e) {
+                    // no usable preference: follow the system
+                }
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
         <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
              application chunk is parsed; replaced by the real shell once Angular hydrates. -->
         <style>
             :root {
                 color-scheme: light dark;
             }
-            html,
-            body {
-                margin: 0;
-                padding: 0;
-                background: #e9ecef;
-                color: #212529;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                min-height: 100vh;
-            }
-            @media (prefers-color-scheme: dark) {
+            /* Apollon ships its control styles in a layer named `components`. Declared first, it stays below the element defaults, as when those were not in a layer. The full order is explained in content/css/application.css. */
+            @layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
+            /* In the layer of the element defaults (content/css/base.css), so the theme replaces these values once it has loaded. */
+            @layer base {
                 html,
                 body {
-                    background: #303030;
+                    margin: 0;
+                    padding: 0;
+                    background: #e9ecef;
+                    color: #212529;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    min-height: 100vh;
+                }
+                /*
+                 * The body colours of the dark theme (themes/dark.css), for the time before the stylesheet has loaded.
+                 * `:where()` keeps the specificity of a single element selector, so the `body` rule of base.css replaces them like the light ones.
+                 */
+                html:where([data-theme='dark']),
+                :where(html[data-theme='dark']) body {
+                    background: #22272e;
                     color: #f8f9fa;
                 }
             }

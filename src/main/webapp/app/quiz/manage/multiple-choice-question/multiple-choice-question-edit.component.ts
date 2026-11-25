@@ -1,8 +1,7 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -23,17 +22,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgClass } from '@angular/common';
-import { SelectModule } from 'primeng/select';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss', './multiple-choice-question-edit.component.scss'],
+    styleUrls: ['../exercise/quiz-exercise.css', '../../../quiz/shared/quiz.css', './multiple-choice-question-edit.component.css'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
@@ -42,17 +37,15 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         FormsModule,
         TranslateDirective,
-        NgbCollapse,
         QuizScoringInfoModalComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         MarkdownEditorMonacoComponent,
         MultipleChoiceQuestionComponent,
         MultipleChoiceVisualQuestionComponent,
         ArtemisTranslatePipe,
-        NgClass,
-        SelectModule,
-        CheckboxModule,
-        InputTextModule,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
         PointsInputComponent,
     ],
 })

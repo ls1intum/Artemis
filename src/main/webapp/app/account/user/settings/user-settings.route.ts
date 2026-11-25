@@ -1,8 +1,31 @@
-import { Routes } from '@angular/router';
+import { Route, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
 import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
 import { learnerProfileGuard } from 'app/account/user/settings/learning/learner-profile.guard';
+
+type SettingsPage = 'profile' | 'credentials' | 'credentials/ssh/add' | 'credentials/ssh/fingerprints' | 'credentials/ssh/view/:keyId' | 'ai-experience' | 'exercises';
+
+const legacySettingsAliases: readonly (readonly [alias: string, target: SettingsPage])[] = [
+    ['account', 'profile'],
+    ['notifications', 'profile'],
+    ['science', 'profile'],
+    ['passkeys', 'credentials'],
+    ['ssh', 'credentials'],
+    ['ssh/add', 'credentials/ssh/add'],
+    ['ssh/fingerprints', 'credentials/ssh/fingerprints'],
+    ['ssh/view/:keyId', 'credentials/ssh/view/:keyId'],
+    ['vcs-token', 'credentials'],
+    ['access-tokens', 'credentials'],
+    ['agent-access', 'credentials'],
+    ['llm-usage', 'ai-experience'],
+    ['ide-preferences', 'exercises'],
+    ['quiz-training', 'exercises'],
+];
+
+function settingsRedirect([path, redirectTo]: readonly [string, SettingsPage]): Route {
+    return { path, pathMatch: 'full', redirectTo };
+}
 
 export const routes: Routes = [
     {
@@ -83,76 +106,7 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.navigation.exercises',
                 },
             },
-            {
-                path: 'account',
-                pathMatch: 'full',
-                redirectTo: 'profile',
-            },
-            {
-                path: 'notifications',
-                pathMatch: 'full',
-                redirectTo: 'profile',
-            },
-            {
-                path: 'science',
-                pathMatch: 'full',
-                redirectTo: 'profile',
-            },
-            {
-                path: 'passkeys',
-                pathMatch: 'full',
-                redirectTo: 'credentials',
-            },
-            {
-                path: 'ssh',
-                pathMatch: 'full',
-                redirectTo: 'credentials',
-            },
-            {
-                path: 'ssh/add',
-                pathMatch: 'full',
-                redirectTo: 'credentials/ssh/add',
-            },
-            {
-                path: 'ssh/fingerprints',
-                pathMatch: 'full',
-                redirectTo: 'credentials/ssh/fingerprints',
-            },
-            {
-                path: 'ssh/view/:keyId',
-                pathMatch: 'full',
-                redirectTo: 'credentials/ssh/view/:keyId',
-            },
-            {
-                path: 'vcs-token',
-                pathMatch: 'full',
-                redirectTo: 'credentials',
-            },
-            {
-                path: 'access-tokens',
-                pathMatch: 'full',
-                redirectTo: 'credentials',
-            },
-            {
-                path: 'agent-access',
-                pathMatch: 'full',
-                redirectTo: 'credentials',
-            },
-            {
-                path: 'llm-usage',
-                pathMatch: 'full',
-                redirectTo: 'ai-experience',
-            },
-            {
-                path: 'ide-preferences',
-                pathMatch: 'full',
-                redirectTo: 'exercises',
-            },
-            {
-                path: 'quiz-training',
-                pathMatch: 'full',
-                redirectTo: 'exercises',
-            },
+            ...legacySettingsAliases.map(settingsRedirect),
         ],
     },
 ];

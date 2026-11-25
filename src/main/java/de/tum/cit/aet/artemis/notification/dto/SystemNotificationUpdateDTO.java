@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.notification.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.Size;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -26,7 +28,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SystemNotificationUpdateDTO(@Schema(nullable = true, description = "Omit on creation; required on update") @Nullable Long id,
-        @Schema(nullable = true) @Nullable String title, @Schema(nullable = true) @Nullable String text,
+        @Schema(nullable = true) @Size(max = 255) @Nullable String title, @Schema(nullable = true) @Size(max = 2000) @Nullable String text,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Start instant; must precede expireDate") @Nullable ZonedDateTime notificationDate,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Expiry instant; both dates are required for a successful write") @Nullable ZonedDateTime expireDate,
         @Schema(nullable = true) @Nullable SystemNotificationType type) {

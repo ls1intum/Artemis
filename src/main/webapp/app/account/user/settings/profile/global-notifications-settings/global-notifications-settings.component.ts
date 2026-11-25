@@ -38,7 +38,7 @@ interface NotificationTypeLink {
     selector: 'jhi-email-notifications-settings',
     imports: [TranslateDirective, FaIconComponent, FormsModule, RouterLink, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent, ArtemisTranslatePipe],
     templateUrl: './global-notifications-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     private globalNotificationSettingApi = inject(GlobalNotificationSettingApi);

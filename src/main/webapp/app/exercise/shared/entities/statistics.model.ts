@@ -38,7 +38,7 @@ export enum StatisticsView {
 
 /**
  * Graph colors using CSS variables.
- * See theme variables scss files for exact colors.
+ * See the theme files (content/css/themes) for exact colors.
  * Color names refer to the default theme; might not return what you expect in other themes
  * to account for background colors etc.
  */

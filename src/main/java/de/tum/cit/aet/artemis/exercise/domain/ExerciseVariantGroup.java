@@ -110,7 +110,7 @@ public class ExerciseVariantGroup extends ExerciseTimeline {
     }
 
     /**
-     * Whether this group's timeline fields are internally consistent, mirroring {@link Exercise#validateBaseDates()}. All
+     * Whether this group's timeline fields are internally consistent, mirroring {@link ExerciseDateValidator#validate(Exercise)}. All
      * configured dates must follow the strict ordering used for course exercises, and an assessment due date requires a due
      * date.
      *

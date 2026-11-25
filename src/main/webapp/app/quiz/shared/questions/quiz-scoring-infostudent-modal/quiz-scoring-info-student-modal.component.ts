@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, inject, input, model, signal } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -18,8 +18,8 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
-    styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
-    imports: [NgTemplateOutlet, TranslateDirective, FaIconComponent, NgClass, DialogModule],
+    styleUrls: ['./quiz-scoring-info-student-modal.component.css'],
+    imports: [NgTemplateOutlet, TranslateDirective, FaIconComponent, NgClass, TumAetUiDialogComponent, TumAetUiButtonDirective],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     private translateService = inject(TranslateService);

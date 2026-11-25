@@ -1,11 +1,11 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { MockDirective } from 'ng-mocks';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
-import { PaginatorState } from 'primeng/paginator';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,7 +16,7 @@ describe('ImportCompetenciesTableComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective)],
+            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -45,8 +45,11 @@ describe('ImportCompetenciesTableComponent', () => {
         expect(component.search().page).toBe(5);
     });
 
-    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
-        component.onPaginatorPageChange({ page: 4 } as PaginatorState);
+    it('converts the zero-based paginator page to the one-based search page', () => {
+        componentFixture.detectChanges();
+
+        componentFixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).triggerEventHandler('pageChange', 4);
+
         expect(component.search().page).toBe(5);
     });
 
@@ -54,10 +57,9 @@ describe('ImportCompetenciesTableComponent', () => {
         expect(component.search().sortingOrder).toBe(SortingOrder.DESCENDING);
         expect(component.search().sortedColumn).toBe('ID');
 
-        component.onSortChange({ predicate: 'TITLE', ascending: true });
+        component.onSortChange({ field: 'TITLE', order: 1 });
 
         expect(component.search().sortingOrder).toBe(SortingOrder.ASCENDING);
         expect(component.search().sortedColumn).toBe('TITLE');
-        expect(component.ascending).toBeTruthy();
     });
 });

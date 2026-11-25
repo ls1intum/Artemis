@@ -1,8 +1,17 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
-import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiToggleSwitchComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +19,6 @@ import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-t
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { SortIconComponent } from 'app/foundation/sort/icon/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -34,14 +42,31 @@ export interface FeedbackAnalysisState {
 @Component({
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
-    styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [SortIconComponent, NgbTooltipModule, PaginatorModule, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
+    styleUrls: ['./feedback-analysis.component.css'],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        FontAwesomeModule,
+        CommonModule,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FeedbackModalComponent,
+        FeedbackFilterModalComponent,
+        AffectedStudentsModalComponent,
+        FeedbackDetailChannelModalComponent,
+    ],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
     private localStorageService = inject(LocalStorageService);
     private router = inject(Router);
 
@@ -83,7 +108,12 @@ export class FeedbackAnalysisComponent {
     readonly maxCount = signal<number>(0);
     readonly errorCategories = signal<string[]>(['Student Error', 'Ares Error', 'AST Error']);
 
-    private isFeedbackDetailChannelModalOpen = false;
+    /** The feedback detail each dialog is open for; `undefined` while the dialog is closed. */
+    readonly feedbackModalDetail = signal<FeedbackDetail | undefined>(undefined);
+    readonly affectedStudentsModalDetail = signal<FeedbackDetail | undefined>(undefined);
+    readonly channelModalDetail = signal<FeedbackDetail | undefined>(undefined);
+    /** The filters the filter dialog starts from; `undefined` while the dialog is closed. */
+    readonly filterModalFilters = signal<FilterData | undefined>(undefined);
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
     readonly groupFeedback = signal<boolean>(false);
@@ -179,9 +209,14 @@ export class FeedbackAnalysisComponent {
         void this.loadData();
     }
 
-    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
-    onPageChange(event: PaginatorState): void {
-        this.setPage((event.page ?? 0) + 1);
+    /** Paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPageChange(page: number): void {
+        this.setPage(page + 1);
+    }
+
+    onPageSizeChange(pageSize: number): void {
+        this.pageSize.set(pageSize);
+        this.setPage(1);
     }
 
     async search(searchTerm: string): Promise<void> {
@@ -191,32 +226,23 @@ export class FeedbackAnalysisComponent {
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
-        const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true, size: 'lg' });
-        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+        this.feedbackModalDetail.set(feedbackDetail);
     }
 
-    setSortedColumn(column: string): void {
-        if (this.sortedColumn() === column) {
-            this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
-        } else {
-            this.sortedColumn.set(column);
-            this.sortingOrder.set(SortingOrder.ASCENDING);
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
         }
+        this.sortedColumn.set(event.field);
+        this.sortingOrder.set(event.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING);
         void this.loadData();
     }
 
-    getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
-        if (this.sortedColumn() === column) {
-            return this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
-        }
-        return 'none';
-    }
-
     async openFilterModal(): Promise<void> {
-        const savedTasks = this.localStorageService.retrieve(this.FILTER_TASKS_KEY);
-        const savedTestCases = this.localStorageService.retrieve(this.FILTER_TEST_CASES_KEY);
-        const savedOccurrence = this.localStorageService.retrieve(this.FILTER_OCCURRENCE_KEY);
-        const savedErrorCategories = this.localStorageService.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
+        const savedTasks = this.localStorageService.retrieve<string[]>(this.FILTER_TASKS_KEY) ?? [];
+        const savedTestCases = this.localStorageService.retrieve<string[]>(this.FILTER_TEST_CASES_KEY) ?? [];
+        const savedOccurrence = this.localStorageService.retrieve<number[]>(this.FILTER_OCCURRENCE_KEY);
+        const savedErrorCategories = this.localStorageService.retrieve<string[]>(this.FILTER_ERROR_CATEGORIES_KEY) ?? [];
         this.minCount.set(0);
         if (this.groupFeedback()) {
             this.maxCount.set(this.maxCount());
@@ -224,21 +250,11 @@ export class FeedbackAnalysisComponent {
             this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
         }
 
-        const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
-
-        modalRef.componentInstance.exerciseId = this.exerciseId;
-        modalRef.componentInstance.taskArray = this.taskNames;
-        modalRef.componentInstance.testCaseNames = this.testCaseNames;
-        modalRef.componentInstance.maxCount = this.maxCount;
-        modalRef.componentInstance.errorCategories = this.errorCategories;
-        modalRef.componentInstance.filters = {
+        this.filterModalFilters.set({
             tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
             testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
-            occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
+            occurrence: (this.selectedFiltersCount() !== 0 ? savedOccurrence : undefined) ?? [this.minCount(), this.maxCount()],
             errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
-        };
-        modalRef.componentInstance.filterApplied.subscribe((filters: FilterData) => {
-            this.applyFilters(filters);
         });
     }
 
@@ -264,47 +280,38 @@ export class FeedbackAnalysisComponent {
         return count;
     }
 
-    async openAffectedStudentsModal(feedbackDetail: FeedbackDetail): Promise<void> {
-        const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.exerciseId = this.exerciseId;
-        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+    openAffectedStudentsModal(feedbackDetail: FeedbackDetail): void {
+        this.affectedStudentsModalDetail.set(feedbackDetail);
     }
 
-    async openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): Promise<void> {
-        if (this.isFeedbackDetailChannelModalOpen) {
+    openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): void {
+        if (this.channelModalDetail()) {
             return;
         }
-        this.isFeedbackDetailChannelModalOpen = true;
-        const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
-        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
-        modalRef.componentInstance.exerciseDueDate = signal(this.exerciseDueDate());
-        modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
-            try {
-                const feedbackChannelRequest: FeedbackChannelRequestDTO = {
-                    channel: channelDto,
-                    feedbackDetailTexts: feedbackDetail.detailTexts,
-                    testCaseName: feedbackDetail.testCaseName,
-                };
-                const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
-                const channelName = createdChannel.name;
-                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { channelName });
-                if (navigate) {
-                    const urlTree = this.router.createUrlTree(['courses', this.courseId(), 'communication'], {
-                        queryParams: { conversationId: createdChannel.id },
-                    });
-                    await this.router.navigateByUrl(urlTree);
-                }
-            } catch (error) {
-                this.alertService.error(getErrorMessage(error));
-            }
-        });
+        this.channelModalDetail.set(feedbackDetail);
+    }
+
+    /**
+     * Creates the channel the dialog asked for and, if requested, navigates to it.
+     */
+    async createFeedbackChannel(feedbackDetail: FeedbackDetail, { channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }): Promise<void> {
         try {
-            await modalRef.result;
-        } catch {
-            // modal dismissed
-        } finally {
-            this.isFeedbackDetailChannelModalOpen = false;
+            const feedbackChannelRequest: FeedbackChannelRequestDTO = {
+                channel: channelDto,
+                feedbackDetailTexts: feedbackDetail.detailTexts,
+                testCaseName: feedbackDetail.testCaseName,
+            };
+            const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
+            const channelName = createdChannel.name;
+            this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { channelName });
+            if (navigate) {
+                const urlTree = this.router.createUrlTree(['courses', this.courseId(), 'communication'], {
+                    queryParams: { conversationId: createdChannel.id },
+                });
+                await this.router.navigateByUrl(urlTree);
+            }
+        } catch (error) {
+            this.alertService.error(getErrorMessage(error));
         }
     }
 

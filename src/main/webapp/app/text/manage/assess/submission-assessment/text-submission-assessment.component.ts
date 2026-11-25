@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,6 +11,7 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +29,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/fou
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -47,11 +49,12 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
-    styleUrls: ['./text-submission-assessment.component.scss'],
+    styleUrls: ['./text-submission-assessment.component.css'],
     imports: [
         AssessmentLayoutComponent,
         ResizeableContainerComponent,
@@ -64,6 +67,8 @@ import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-sub
         AssessmentNotPossibleYetComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -73,7 +78,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private route = inject(ActivatedRoute);
     private complaintService = inject(ComplaintService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
 
@@ -375,6 +380,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // Update the text on all text block refs
         for (const blockRef of newTextBlockRefs) {
             blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex);
+            // Updating the text recomputes the block ID after any range changes.
+            if (blockRef.feedback) {
+                blockRef.feedback.reference = blockRef.block!.id;
+            }
         }
 
         this.textBlockRefs = newTextBlockRefs;
@@ -489,6 +498,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             assessmentAfterComplaint.onError();
             return;
         }
+        if (!Feedback.haveCreditsInBounds(this.assessments)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            assessmentAfterComplaint.onError();
+            return;
+        }
 
         const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
@@ -509,13 +523,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.alertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
-                    }
+                    alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.textAssessment.updateAfterComplaintFailed');
                 },
             });
     }
@@ -545,7 +553,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result()?.feedbacks || [];
-        this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
+        const blocks = this.submission?.blocks || [];
+        const blockIds = new Set(blocks.map(({ id }) => id));
+        this.unreferencedFeedback.set(
+            feedbacks.flatMap((feedback) => {
+                // Keep feedback with missing blocks visible without rewriting the original result used for complaints.
+                if (feedback.reference != undefined && !blockIds.has(feedback.reference)) {
+                    return [cloneWith(feedback, { reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED })];
+                }
+                return feedback.reference == undefined && feedback.type === FeedbackType.MANUAL_UNREFERENCED ? [feedback] : [];
+            }),
+        );
 
         // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
         // AUTOMATIC type check alone misses them here: loadFeedbackSuggestions() only sees a fresh Athena response
@@ -556,7 +574,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             ),
         );
 
-        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(blocks, feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 
@@ -620,11 +638,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
+     * Invokes the example submission import when useAsExampleSubmission is emitted in assessment-layout
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe({
+            this.exampleSubmissionApi.importExampleSubmission(this.exercise.id!, this.submission.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

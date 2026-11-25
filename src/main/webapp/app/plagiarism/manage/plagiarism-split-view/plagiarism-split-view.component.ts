@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, afterNextRender, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { PlagiarismComparison, PlagiarismComparisonSummary } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Subject } from 'rxjs';
@@ -12,20 +12,21 @@ import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/Plagiarism
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SplitterModule } from 'primeng/splitter';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiSplitterComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 
+/** Smallest size (in percent) a pane keeps while both panes are shown. */
+const MIN_PANE_SIZE = 10;
+
 @Component({
     selector: 'jhi-plagiarism-split-view',
-    styleUrls: ['./plagiarism-split-view.component.scss'],
+    styleUrls: ['./plagiarism-split-view.component.css'],
     templateUrl: './plagiarism-split-view.component.html',
-    imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent, TooltipModule, ArtemisTranslatePipe],
+    imports: [TumAetUiSplitterComponent, TextSubmissionViewerComponent, FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
-    private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
     readonly comparison = input<PlagiarismComparison | PlagiarismComparisonSummary | undefined>(undefined);
     readonly exercise = input<Exercise | PlagiarismCaseExercise>();
@@ -39,28 +40,38 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
     dropdownHoverSubject = new Subject<PlagiarismFileElement>();
 
     /**
-     * Sizes (in percent) of the two splitter panels. Bound to p-splitter via [panelSizes];
-     * updating this signal re-applies the panel sizes at runtime through the panelSizes setter.
+     * Initial sizes (in percent) of the two splitter panels. Bound to the splitter via [panelSizes]; the splitter applies a
+     * new value whenever this signal is set, also when it holds the same numbers as before, which discards the size the
+     * user dragged to.
      */
     readonly panelSizes = signal<number[]>([50, 50]);
 
     /**
      * Which pane the "show only left/right" controls have fully collapsed, or undefined when both are shown.
-     * Collapsing is applied via a CSS class (see the component SCSS), NOT via `panelSizes`: p-splitter coerces a
-     * falsy size to an even split (`panelInitialSize || 100 / panels.length`), so setting a pane to `0` would
-     * render it at 50% and never actually hide it.
+     * A collapsed pane has size 0 and the splitter minimum of both panes is lifted to 0, since the splitter does not let a
+     * pane shrink below its minimum.
      */
     readonly collapsedSide = signal<'left' | 'right' | undefined>(undefined);
 
     /**
-     * Live x-position (px, from the splitter's left edge) of the gutter centre. The lock-files button is positioned
-     * here so it stays on the divider while dragging, instead of staying fixed at the centre (a reviewer finding).
-     * Updated by a ResizeObserver on the first panel because p-splitter emits no event during a drag.
+     * Minimum size (in percent) of each pane, which is 0 while a pane is collapsed.
      */
-    readonly gutterCenterPx = signal<number | undefined>(undefined);
+    readonly minSizes = computed(() => (this.collapsedSide() ? [0, 0] : [MIN_PANE_SIZE, MIN_PANE_SIZE]));
+
+    /**
+     * Size (in percent) of the first pane as the user last set it. The lock-files button is positioned from it, so that it
+     * stays on the divider while dragging.
+     */
+    readonly splitPercent = signal(50);
+
     /** Splitter gutter width (px); single source of truth, bound to the template's [gutterSize] and used to centre the lock button. */
     protected readonly gutterSize = 6;
-    private panelResizeObserver?: ResizeObserver;
+
+    /**
+     * Horizontal position of the gutter centre: the first pane takes its share of the width without the gutter, and the
+     * gutter then adds half its own width.
+     */
+    readonly lockButtonLeft = computed(() => `calc((100% - ${this.gutterSize}px) * ${this.splitPercent() / 100} + ${this.gutterSize / 2}px)`);
 
     // Replaces the ngOnChanges 'exercise' branch: pure derived state, recomputed whenever the exercise input changes.
     readonly isProgrammingOrTextExercise = computed(() => {
@@ -111,31 +122,6 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
                 });
             });
         });
-
-        afterNextRender(() => this.observeGutterPosition());
-    }
-
-    /**
-     * Observes the first splitter panel so the lock-files button can follow the gutter live while dragging.
-     * The gutter centre sits at the first panel's width plus half the gutter size, measured from the splitter's left.
-     */
-    private observeGutterPosition(): void {
-        const firstPanel = this.hostElement.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
-        if (!firstPanel || typeof ResizeObserver === 'undefined') {
-            return;
-        }
-        const update = () => {
-            // Skip a meaningless measurement (panel not laid out yet, e.g. inside an inactive ngbNav tab): writing
-            // gutterSize/2 here would jam the lock button near the far-left edge. Leaving gutterCenterPx undefined
-            // keeps the SCSS fallback (left: 50%; translateX(-50%)) centring it until a real width arrives.
-            const width = firstPanel.offsetWidth;
-            if (width > 0) {
-                this.gutterCenterPx.set(width + this.gutterSize / 2);
-            }
-        };
-        this.panelResizeObserver = new ResizeObserver(update);
-        this.panelResizeObserver.observe(firstPanel);
-        update();
     }
 
     ngOnInit(): void {
@@ -146,7 +132,6 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
         this.fileSelectedSubject.complete();
         this.showFilesSubject.complete();
         this.dropdownHoverSubject.complete();
-        this.panelResizeObserver?.disconnect();
     }
 
     /**
@@ -224,18 +209,43 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
             case 'left': {
                 // show only the left pane: fully collapse the right one
                 this.collapsedSide.set('right');
+                this.panelSizes.set([100, 0]);
                 return;
             }
             case 'right': {
                 // show only the right pane: fully collapse the left one
                 this.collapsedSide.set('left');
+                this.panelSizes.set([0, 100]);
                 return;
             }
             case 'even': {
                 this.collapsedSide.set(undefined);
                 this.panelSizes.set([50, 50]);
+                this.splitPercent.set(50);
             }
         }
+    }
+
+    /**
+     * Follows the divider while the user drags it or moves it with the keyboard.
+     * @param sizes the sizes (in percent) of the two panes
+     */
+    onSizesChange(sizes: number[]) {
+        this.splitPercent.set(sizes[0]);
+    }
+
+    /**
+     * Leaves the collapsed state when the user moves the divider that remains at the edge of the collapsed pane.
+     * @param sizes the sizes (in percent) of the two panes
+     */
+    onResizeEnd(sizes: number[]) {
+        if (!this.collapsedSide()) {
+            return;
+        }
+        const first = Math.min(100 - MIN_PANE_SIZE, Math.max(MIN_PANE_SIZE, sizes[0]));
+        this.collapsedSide.set(undefined);
+        this.panelSizes.set([first, 100 - first]);
+        this.splitPercent.set(first);
     }
 
     /**

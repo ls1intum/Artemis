@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, inject, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -7,6 +8,7 @@ import {
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
@@ -20,11 +22,12 @@ import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-exam-import',
@@ -32,6 +35,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     imports: [
         FormsModule,
         TranslateDirective,
+        ArtemisTranslatePipe,
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiInputDirective,
@@ -41,11 +45,14 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         ExamExerciseImportComponent,
         ExamImportProgressDialogComponent,
         ExamModeBadgeComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
+
+    protected readonly ExamMode = ExamMode;
 
     examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
 

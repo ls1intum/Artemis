@@ -182,10 +182,14 @@ public class ReactionService {
     }
 
     private void mayInteractWithConversationElseThrow(User user, Post post, Course course) {
+        PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
         if (post.getConversation() != null) {
-            PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
-            conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
+            // the course role is validated first
             api.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+            conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
+        }
+        else {
+            api.checkUserMayInteractWithPostElseThrow(user, post, course);
         }
     }
 

@@ -20,6 +20,16 @@ final class HyperionQuizQuestionChecks {
 
     private static final int TRUE_FALSE_OPTION_COUNT = 2;
 
+    /**
+     * Returns how many answer options a question of the given type carries: two for true-false, four otherwise.
+     *
+     * @param type the question type
+     * @return the option count the generator is asked for and the checks require
+     */
+    static int optionCountFor(QuizQuestionGenerationType type) {
+        return type == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+    }
+
     /** Length limits matching the size constraints of {@code GeneratedQuizQuestionDTO} and {@code GeneratedQuizAnswerOptionDTO}. */
     private static final int MAX_QUESTION_TITLE_LENGTH = 500;
 
@@ -27,6 +37,7 @@ final class HyperionQuizQuestionChecks {
 
     private static final int MAX_OPTION_TEXT_LENGTH = 2_000;
 
+    /** Options a multiple-choice question may mark correct at most when the caller names no bound. */
     private static final int MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE = 3;
 
     /** Minimum absolute length excess before the correct option counts as conspicuously long. */
@@ -53,6 +64,29 @@ final class HyperionQuizQuestionChecks {
                             + "(tableau|table|figure|diagram|network|matrix|linear program|program|lp|code|tabelle|abbildung|graph\\w*|netzwerk|programm)\\b",
                     Pattern.CASE_INSENSITIVE);
 
+    /** A line of the question text that opens like an enumerated answer option, "A) …", "(b) …", "- C. …", "**D:** …"; group 1 holds the rest of the line. */
+    private static final Pattern ENUMERATED_OPTION_LINE = Pattern.compile("^\\s*(?:[-*+]\\s+)?(?:\\*\\*)?\\(?[A-Da-d][).:](?:\\*\\*)?\\s+(\\S.*)$", Pattern.MULTILINE);
+
+    /** Enumerated lines that carry an answer option from which on the question text counts as listing its options. */
+    private static final int MIN_ENUMERATED_OPTION_LINES = 2;
+
+    /** Option length from which on an option found in the question text counts as repeated there. */
+    private static final int MIN_REPEATED_OPTION_LENGTH = 3;
+
+    /** Fenced code blocks, code spans, and math in {@code $$…$$} or {@code $…$}, in which LaTeX commands are allowed. */
+    private static final Pattern CODE_OR_MATH = Pattern.compile("```.*?```|`[^`]*`|\\$\\$.+?\\$\\$|\\$[^$]+\\$", Pattern.DOTALL);
+
+    /** An option that refers to a statement of the question text by number or name: "Statement 1 is correct", "Aussage II", "Only (2) and (3)". */
+    private static final Pattern STATEMENT_REFERENCE = Pattern.compile(
+            "\\b(?:statements?|claims?|cases?|aussagen?|behauptungen?|fälle|fall)\\s*\\(?(?:\\d+|(?-i:[IVX]+|[A-D]))\\b|\\(\\d\\)\\s*(?:and|und|,)\\s*\\(\\d\\)|^\\s*(?:only|nur)\\s+(?:\\d+|(?-i:[IVX]+))\\b",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
+    /** Options referring to statements of the question text from which on the question counts as listing its options there. */
+    private static final int MIN_STATEMENT_REFERENCES = 2;
+
+    /** A LaTeX command such as {@code \leq} or {@code \frac}. */
+    private static final Pattern LATEX_COMMAND = Pattern.compile("\\\\[A-Za-z]{2,}");
+
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final Pattern TRAILING_PUNCTUATION = Pattern.compile("[.,;:]+$");
@@ -74,6 +108,10 @@ final class HyperionQuizQuestionChecks {
         TEXT_TOO_LONG,
         /** The question names a tableau, figure or program whose data it does not contain. */
         DANGLING_REFERENCE,
+        /** The question text lists the answer options, which the question carries separately. */
+        OPTIONS_IN_QUESTION_TEXT,
+        /** A LaTeX command stands outside math delimiters and code, so it renders as raw text. */
+        UNDELIMITED_MATH,
         /** The question carries the wrong number of answer options. */
         OPTION_COUNT,
         /** An answer option has no text. */
@@ -91,13 +129,26 @@ final class HyperionQuizQuestionChecks {
     }
 
     /**
-     * Validates a question against the rules every question of a filtered generation must satisfy.
+     * Validates a question against the rules every question of a filtered generation must satisfy; a multiple-choice question may mark
+     * one to three options correct.
      *
      * @param question     the mapped question
      * @param allowedTypes question types the request asked for
      * @return the first defect found, empty when the question is usable
      */
     static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes) {
+        return defectOf(question, allowedTypes, MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE);
+    }
+
+    /**
+     * Validates a question against the rules every question of a filtered generation must satisfy.
+     *
+     * @param question          the mapped question
+     * @param allowedTypes      question types the request asked for
+     * @param maxCorrectOptions the most options a multiple-choice question may mark correct
+     * @return the first defect found, empty when the question is usable
+     */
+    static Optional<Defect> defectOf(GeneratedQuizQuestionDTO question, Set<QuizQuestionGenerationType> allowedTypes, int maxCorrectOptions) {
         if (!allowedTypes.contains(question.type())) {
             return Optional.of(Defect.TYPE_NOT_REQUESTED);
         }
@@ -110,8 +161,54 @@ final class HyperionQuizQuestionChecks {
         if (DANGLING_REFERENCE.matcher(question.questionText()).find() && !question.questionText().contains("\n")) {
             return Optional.of(Defect.DANGLING_REFERENCE);
         }
+        Optional<Defect> optionDefect = optionDefectOf(question, maxCorrectOptions);
+        if (optionDefect.isPresent()) {
+            return optionDefect;
+        }
+        if (listsOptionsInQuestionText(question)) {
+            return Optional.of(Defect.OPTIONS_IN_QUESTION_TEXT);
+        }
+        if (hasUndelimitedMath(question.questionText()) || question.options().stream().anyMatch(option -> hasUndelimitedMath(option.text()))
+                || (question.explanation() != null && hasUndelimitedMath(question.explanation()))) {
+            return Optional.of(Defect.UNDELIMITED_MATH);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Detects a question text that lists the answer options: two or more lines that open like enumerated options and carry an option, two or more options that
+     * refer to statements of the text by number or name, or all but at most one of the options repeated in it as whole phrases. True-false questions are only checked for
+     * enumerated lines, since their options
+     * "True" and "False" commonly occur in the text.
+     */
+    private static boolean listsOptionsInQuestionText(GeneratedQuizQuestionDTO question) {
+        List<String> options = question.options().stream().map(option -> comparable(option.text())).filter(option -> !option.isEmpty()).toList();
+        long enumeratedOptions = ENUMERATED_OPTION_LINE.matcher(question.questionText()).results().map(line -> comparable(line.group(1)))
+                .filter(line -> options.stream().anyMatch(option -> line.equals(option) || containsAsWholePhrase(line, option))).count();
+        if (enumeratedOptions >= MIN_ENUMERATED_OPTION_LINES) {
+            return true;
+        }
+        if (question.options().stream().filter(option -> STATEMENT_REFERENCE.matcher(option.text()).find()).count() >= MIN_STATEMENT_REFERENCES) {
+            return true;
+        }
+        if (question.type() == QuizQuestionGenerationType.TRUE_FALSE) {
+            return false;
+        }
+        String text = comparable(question.questionText());
+        long repeated = question.options().stream().map(option -> comparable(option.text()))
+                .filter(option -> option.length() >= MIN_REPEATED_OPTION_LENGTH && containsAsWholePhrase(text, option)).count();
+        return repeated >= question.options().size() - 1;
+    }
+
+    /** Whether the text holds a LaTeX command outside code and math delimiters. */
+    private static boolean hasUndelimitedMath(String text) {
+        return LATEX_COMMAND.matcher(CODE_OR_MATH.matcher(text).replaceAll(" ")).find();
+    }
+
+    /** The first defect of the question's answer options, empty when they are usable. */
+    private static Optional<Defect> optionDefectOf(GeneratedQuizQuestionDTO question, int maxCorrectOptions) {
         List<GeneratedQuizAnswerOptionDTO> options = question.options();
-        int requiredOptions = question.type() == QuizQuestionGenerationType.TRUE_FALSE ? TRUE_FALSE_OPTION_COUNT : OPTION_COUNT;
+        int requiredOptions = optionCountFor(question.type());
         if (options == null || options.size() != requiredOptions) {
             return Optional.of(Defect.OPTION_COUNT);
         }
@@ -134,7 +231,7 @@ final class HyperionQuizQuestionChecks {
         long correct = options.stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
         boolean correctCountValid = switch (question.type()) {
             case SINGLE_CHOICE, TRUE_FALSE -> correct == 1;
-            case MULTIPLE_CHOICE -> correct >= 1 && correct <= MAX_CORRECT_OPTIONS_MULTIPLE_CHOICE;
+            case MULTIPLE_CHOICE -> correct >= 1 && correct <= maxCorrectOptions;
         };
         if (!correctCountValid) {
             return Optional.of(Defect.CORRECT_COUNT);

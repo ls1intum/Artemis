@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-20
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -197,6 +197,78 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Configuration Keys That Spring Cannot Bind Any More
+
+Artemis now refuses to start when the configuration sets a key that Spring Boot or one of its libraries marks as removed or deprecated without a replacement key of the same type (`spring.properties.migrator.fail: on-error`, using `spring-boot-properties-migrator`). Before, such a key was ignored without a message, so a setting could stop working unnoticed.
+
+**Some of these keys still work.** For example, Spring AI deprecated its chat memory, so `spring.ai.chat.memory.repository.jdbc.initialize-schema` is rejected although Spring AI still reads it. The check looks at every source of the environment, which includes environment variables, command-line arguments and a config server, not only the configuration files. A key that has a replacement of the same type is only renamed on the fly and logged as a warning, which does not stop the start.
+
+The error log names each key and its source at the end of the start-up. Remove the key or replace it as described there, then start again. To start anyway while you fix the configuration, set `spring.properties.migrator.fail` (or the environment variable `SPRING_PROPERTIES_MIGRATOR_FAIL`) to `never`. The report stays in the log.
+
+This release moves to Spring Boot 4.2, which renamed `server.forward-headers-strategy` to `server.request.header.forwarded.strategy` and its value `native` to `web-server` (`framework` and `none` keep their names). Artemis sets `web-server`. **If your configuration sets the old key, replace it with the new key before you upgrade, and map its value.** Do not only delete it: without a key, Artemis uses `web-server`, and then Tomcat believes `X-Forwarded-For` from the proxies in `server.tomcat.remoteip.internal-proxies`, see [Client Address of Requests](#108-client-address-of-requests). Spring Boot refuses to start when both keys are set, and the old key alone is rejected by the check above.
+
+### 10.8: Relative Redirects
+
+Tomcat now answers a redirect that the application gives as a relative address with a relative `Location` header instead of making it absolute: `server.tomcat.servlet.use-relative-redirects` (formerly `server.tomcat.use-relative-redirects`) defaults to `true` in Spring Boot 4.2. Browsers handle this, but a client or proxy that cannot follow a relative `Location` header needs `server.tomcat.servlet.use-relative-redirects: false`.
+
+### 10.8: Error Tag of Server Error Metrics
+
+An exception that Spring handles and answers with a 5xx status is now recorded on the `http.server.requests` metric with its class name in the `error` tag, where it was `none` before. Requests with a 4xx status are not affected. **If an alert or a dashboard counts `error!="none"` as an unexpected failure, it reports more server errors than before**, although these requests already had `outcome="SERVER_ERROR"`.
+
+### 10.8: Embedding Artemis from LTI Platforms
+
+On an installation with LTI platforms, Artemis now sends `frame-ancestors 'self'` followed by the origins of these platforms, which it derives from the issuer and the authorization address of each platform. Without LTI platforms and without `artemis.security.frame-ancestors` nothing changes. **Check where your learning management system serves the pages that embed Artemis.** If that origin differs from the issuer and the authorization address of its platform, as it does for Canvas and for Blackboard Learn (issuer `https://blackboard.com`, authorization address at `developer.blackboard.com`), list the origin that embeds Artemis in `artemis.security.frame-ancestors`, otherwise the browser refuses to show Artemis in the frame. Artemis logs a warning for every platform from which it cannot derive any origin. See [Embedding in Other Pages](/admin/production-setup/security#embedding-in-other-pages-and-api-documentation).
+
+### 10.8: Host Key Check of Build Agents
+
+A build agent that clones over SSH (`build-agent-use-ssh: true`) now compares the SSH host key it is shown with the fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints`, and refuses a clone from a host with another key. **Check that `artemis.version-control.url` on each agent reaches a core node, and that all core nodes behind one address share one host key (`ssh-host-key-path`).** An agent that cannot read the fingerprints keeps cloning and logs a warning, unless you set `artemis.version-control.ssh-host-key-verification: required` on it. See [Host key of the SSH server](/admin/production-setup/security#host-key-of-the-ssh-server).
+
+### 10.8: Submission Policy in Exercise Updates
+
+Updating a programming exercise with `PUT /api/programming/programming-exercises` no longer adds, changes or removes its submission policy. Before, a request that omitted the policy removed it without applying the effect of the removal to the participations. The policy is now managed only through the `submission-policy` endpoints of the exercise, which the grading page of the client uses. The client needs no change, because its edit page already shows the policy read-only. Scripts that changed a policy through the exercise update have to call the dedicated endpoints.
+
+### 10.8: Rate Limit of Re-evaluations
+
+Re-evaluating all results of a programming exercise (`PUT /api/programming/programming-exercises/{exerciseId}/grading/re-evaluate`) and saving an exercise update with a re-evaluation (`PUT /api/programming/programming-exercises/{exerciseId}/re-evaluate`) together are limited to 6 requests per minute and user. Set `artemis.rate-limiting.re-evaluation-requests-per-minute` to change the limit. Instructors who exceed it receive a 429 response with a `Retry-After` header. Nothing else changes. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
+### 10.8: Token in the Response of the Login
+
+`POST /api/core/public/authenticate` returns the session token in the JSON body (`access_token`) only when the request asks for it. The web application uses the cookie that the same response sets and does not read the body, so browsers are not affected. Clients that cannot use a cookie opt in with the query parameter `returnToken=true`. A request that carries a `tool` parameter, which is how tools such as Scorpio sign in, receives the token as before. **If a script or a tool of yours reads `access_token` from the response without either parameter, add `?returnToken=true` to its request before you upgrade.**
+
+### 10.8: External Logins and Internal Accounts
+
+A SAML2 or OpenID Connect login is refused when its login name belongs to an internal account, that is an account with a password of its own. Before, such a login signed in to the internal account and updated its data. Artemis logs a warning with the login name for every refused login, and the user is told to sign in with the Artemis password.
+
+Accounts that an OpenID Connect login created are stored as external accounts and are not affected. Two groups of accounts are stored as internal accounts although a person may use them with an external login:
+
+- **SAML2 accounts that Artemis created before version 9.9 and that nobody converted.** They are still marked as internal. Clear the flag as described in [Accounts Provisioned Through SAML2](#99-accounts-provisioned-through-saml2) before you upgrade, otherwise their owners can no longer sign in through the identity provider.
+- **Accounts that an LTI launch created.** Artemis creates them as internal accounts, and their login is the `preferred_username` of the launch. If the identity provider of a SAML2 or OpenID Connect login produces the same login name, that login is refused.
+
+**Before you upgrade, check that no person signs in to the same account both with a password and through the identity provider.** Such an account has to use one way only. For SAML2, this query lists the internal accounts that signed in through the identity provider (the audit events are subject to your retention period, so a missing row is no proof):
+
+```sql
+SELECT u.login, u.email
+FROM jhi_user u
+WHERE u.is_internal = TRUE
+  AND u.login IN (SELECT e.principal
+                  FROM security_audit_event e
+                  WHERE e.event_type = 'SAML2_AUTHENTICATION_SUCCESS');
+```
+
+On a version before 10.0, read `jhi_persistent_audit_event` instead of `security_audit_event`. Artemis stores no audit event for a successful OpenID Connect login, so no comparable query exists for it. Compare the logins that your identity provider releases with the internal accounts instead. See [OpenID Connect](/admin/oidc-login-registration#accounts-with-a-password-of-their-own) and [SAML2](/admin/saml2-login-registration#accounts-with-a-password-of-their-own).
+
+### 10.8: Client Address of Requests
+
+Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits except the one for Git over HTTP, which counts the address as described in the section linked below, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.
+Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
+share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+
+### 10.8: Build Results in the Distributed Data
+
+With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued builds are kept. A build that was still running when you stopped its node is marked as missing and rebuilt automatically after about five to ten minutes.
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+[Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
+
 ### 10.7: Rate Limit of Git Operations
 
 The authentication of git operations over HTTP and SSH has its own rate limit setting, `artemis.rate-limiting.git-authentication-requests-per-minute` (`ARTEMIS_RATELIMITING_GITAUTHENTICATIONREQUESTSPERMINUTE`), which is **30 per minute and client address** unless you set it.
@@ -209,6 +281,34 @@ That is more room for guessing a password, because git over HTTP can verify a pa
 - If you never set it, decide whether 30 git authentications per client address and minute is what you want next to 30 logins, and lower the git setting if not.
 
 See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
+### 10.5: Email Changes Need Confirmation
+
+No data has to be migrated. The upgrade adds nullable columns to `user_recovery_key`, so the previous version keeps working after a rollback. Two behaviors change for users:
+
+- A user with an internal account changes the email address only after the owners of the current and of the new address have both followed a link in a mail. Without a configured mail server (`jhipster.mail.from` left at its default), nothing could be confirmed, so the field in the settings is disabled and only an administrator can change the address. Configure the mail server before you upgrade if users should keep changing their address themselves. The links point to `/account/confirm-email-change` on `server.url`, so that path has to reach the client.
+- A session that started before the credentials last changed, for example before a password reset, can no longer add a passkey, an SSH key or an access token. The client signs the user out and asks them to sign in again.
+
+See [Changing the email address](/admin/user-registration#changing-the-email-address) and [Sessions and new credentials](/admin/user-registration#sessions-and-new-credentials).
+
+### 10.4: Course-Level Science Data Collection
+
+Science data collection is enabled per course and needs each student's consent in that course. See
+[Science Data Collection](/admin/science-data-collection). The migration changes the `science_event` table on the
+first start:
+
+- It adds a `course_id` column and fills it for existing events from the lecture, lecture unit, exercise, competency,
+  learning path or course each event refers to. Events whose resource no longer exists keep an empty `course_id`.
+- It adds a foreign key from `course_id` to `course`, so deleting a course deletes its science events, and two indexes,
+  on `course_id, timestamp, id` and on `identity, course_id`.
+- It drops the `science_setting` table, which held the global science preference of each user. These preferences are
+  not carried over: no course collects data until an administrator enables it, and the students of an enabled course
+  are asked again.
+
+The backfill, the foreign key and each index process the whole `science_event` table. On an instance that has
+collected events for a long time, that table can be large, so expect the first start to take correspondingly longer,
+and take the database backup described in the upgrade procedure right before you upgrade. Rolling the migration back
+recreates `science_setting` empty; the dropped preferences can only be restored from that backup.
 
 ### 10.1: Installation Metadata in Production
 

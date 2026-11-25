@@ -1,41 +1,38 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/course/shared/entities/course.model';
 
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
-    let dialogRef: DynamicDialogRef;
-    let dialogConfig: DynamicDialogConfig;
+    let dialogRef: TumAetUiDialogRef;
+    let dialogConfig: { data: Record<string, unknown> };
 
     beforeEach(async () => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-        dialogConfig = { data: {} } as DynamicDialogConfig;
+        } as unknown as TumAetUiDialogRef;
+        dialogConfig = { data: {} };
 
         await TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent)],
             declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -55,12 +52,22 @@ describe('ImportAllCompetenciesComponent', () => {
     });
 
     it('keeps disabledIds provided via dialog data (base effect must not clobber it)', () => {
-        // Regression guard: when opened via DialogService, disabledIds arrives through DynamicDialogConfig.data and
+        // Regression guard: when opened via the dialog service, disabledIds arrives through the dialog config data and
         // is applied in ngOnInit. The base ImportComponent effect must NOT reset it to the input default [] —
         // otherwise the same-course import-exclusion guard silently breaks.
         dialogConfig.data = { disabledIds: [42] };
         fixture.detectChanges();
         expect(component.disabledIds).toContain(42);
+    });
+
+    it('closes the dialog with the selected course and the relation import choice', () => {
+        fixture.detectChanges();
+        const course = { id: 5, title: 'Selected' };
+        component['importRelations'] = false;
+
+        component.selectImport(course as any);
+
+        expect(dialogRef.close).toHaveBeenCalledWith({ courseForImportDTO: course, importRelations: false });
     });
 
     it('should extract competency properties', () => {
@@ -81,23 +88,5 @@ describe('ImportAllCompetenciesComponent', () => {
 
         const semesterProperty = component.columns[2];
         expect(semesterProperty.getProperty(course)).toBe(course.semester);
-    });
-
-    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
-        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
-
-        component.onPaginatorPageChange({ page: 2 } as PaginatorState);
-
-        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
-        expect(component.state.page).toBe(3);
-    });
-
-    it('onPaginatorPageChange treats an undefined page as the first page (page 1)', () => {
-        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
-
-        component.onPaginatorPageChange({} as PaginatorState);
-
-        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
-        expect(component.state.page).toBe(1);
     });
 });

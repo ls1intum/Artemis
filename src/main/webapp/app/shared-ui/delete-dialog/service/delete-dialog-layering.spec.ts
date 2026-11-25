@@ -1,8 +1,7 @@
 import { vi } from 'vitest';
 import { ApplicationRef, Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Logger, compile } from 'sass';
-import { PrimeNG } from 'primeng/config';
+import { readFileSync } from 'node:fs';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -12,8 +11,10 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-const THEME_STYLES = 'src/main/webapp/content/scss/themes/theme-default.scss';
-const BOOTSTRAP_MODAL_Z_INDEX = 1055;
+const OVERLAY_STYLES = 'src/main/webapp/content/css/third-party.css';
+// Default modal layers of the dialogs that modules not yet on TUM AET UI still open.
+const LEGACY_MODAL_Z_INDEX = 1100;
+const LEGACY_MODAL_BACKDROP_Z_INDEX = 1055;
 const ALERT_OVERLAY_Z_INDEX = 100000;
 const deleteData: DeleteDialogData = {
     entityTitle: 'presentation',
@@ -34,17 +35,13 @@ class PresentationDialogComponent {
     }
 }
 
-/** The compiled application CSS owns the shared overlay container's relationship to legacy dialogs and alerts. */
-function compileOverlayContainerZIndex(): number {
-    const { css } = compile(THEME_STYLES, {
-        loadPaths: [process.cwd()],
-        logger: Logger.silent,
-        silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
-    });
+/** The global stylesheet owns the relationship of the shared overlay container to legacy dialogs and alerts. */
+function readOverlayContainerZIndex(): number {
+    const css = readFileSync(OVERLAY_STYLES, 'utf8');
     const rule = /(?:^|\n)\.cdk-overlay-container\s*\{([^}]*)\}/.exec(css);
     const zIndex = rule ? /z-index:\s*(\d+)/.exec(rule[1]) : null;
     if (!zIndex) {
-        throw new Error('the compiled theme declares no z-index for .cdk-overlay-container');
+        throw new Error(`${OVERLAY_STYLES} declares no z-index for .cdk-overlay-container`);
     }
     return Number(zIndex[1]);
 }
@@ -90,12 +87,12 @@ describe('DeleteDialogService layering', () => {
     });
 
     it('keeps the shared dialog and calendar container above legacy dialogs', () => {
-        const containerZIndex = compileOverlayContainerZIndex();
-        expect(containerZIndex).toBeGreaterThan(TestBed.inject(PrimeNG).zIndex.modal + 2);
-        expect(containerZIndex).toBeGreaterThan(BOOTSTRAP_MODAL_Z_INDEX);
+        const containerZIndex = readOverlayContainerZIndex();
+        expect(containerZIndex).toBeGreaterThan(LEGACY_MODAL_Z_INDEX + 2);
+        expect(containerZIndex).toBeGreaterThan(LEGACY_MODAL_BACKDROP_Z_INDEX);
     });
 
     it('keeps confirmations below the alert overlay so a failed operation remains readable', () => {
-        expect(compileOverlayContainerZIndex()).toBeLessThan(ALERT_OVERLAY_Z_INDEX);
+        expect(readOverlayContainerZIndex()).toBeLessThan(ALERT_OVERLAY_Z_INDEX);
     });
 });

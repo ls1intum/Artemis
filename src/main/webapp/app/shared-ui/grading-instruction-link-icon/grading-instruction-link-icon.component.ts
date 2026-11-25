@@ -9,7 +9,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    styleUrl: './grading-instruction-link-icon.component.scss',
+    styleUrl: './grading-instruction-link-icon.component.css',
     imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent implements OnInit {

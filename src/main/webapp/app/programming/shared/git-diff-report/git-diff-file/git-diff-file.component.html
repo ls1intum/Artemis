@@ -1,10 +1,10 @@
 <div class="ph-1">
     @if (diffInformation().lineChange?.fileTooLarge) {
-        <div class="w-100 d-flex justify-content-center">
+        <div class="flex w-full justify-center">
             <span class="p-2" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.fileTooLarge"></span>
         </div>
     } @else if (fileUnchanged()) {
-        <div class="w-100 d-flex justify-content-center">
+        <div class="flex w-full justify-center">
             <span class="p-2" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.fileUnchanged"></span>
         </div>
     }

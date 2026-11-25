@@ -8,12 +8,11 @@ import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-sv
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiLineChartComponent, TumAetUiLineChartConfig, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -27,8 +26,18 @@ export enum SwitchTimeSpanDirection {
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
-    styleUrls: ['./course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, TumAetUiLineChartComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    styleUrls: ['./course-detail-line-chart.component.css'],
+    imports: [
+        RouterLink,
+        TranslateDirective,
+        HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        TumAetUiLineChartComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     private courseManagementService = inject(CourseManagementService);

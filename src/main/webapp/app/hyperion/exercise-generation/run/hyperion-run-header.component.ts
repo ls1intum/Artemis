@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { elapsedSecondsSince, serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { formatElapsed } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
-import { HyperionSpendView, formatEuro, formatTokenCount, spendHero } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
+import { HyperionSpendView, formatTokenCount, formatUsd, spendHero } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
 
 const CANCEL_CONFIRMATION_KEY = 'hyperionRunCancelConfirmation';
 
@@ -37,7 +37,7 @@ interface RunFact {
 @Component({
     selector: 'jhi-hyperion-run-header',
     templateUrl: './hyperion-run-header.component.html',
-    styleUrl: './hyperion-run-header.component.scss',
+    styleUrl: './hyperion-run-header.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [TumAetUiConfirmationService],
     imports: [
@@ -172,7 +172,7 @@ export class HyperionRunHeaderComponent {
             return {
                 key: 'spend',
                 labelKey: 'artemisApp.hyperion.generation.run.spendLabel',
-                value: formatEuro(hero.eur, locale),
+                value: formatUsd(hero.usd, locale),
                 qualifierKey: lowerBound ?? (spend.accounting === 'PENDING' ? 'artemisApp.hyperion.generation.usage.costSoFar' : undefined),
             };
         }

@@ -1,9 +1,9 @@
-<div class="checklist-panel">
-    <div class="checklist-panel-header">
-        <h5 jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
+<div class="mb-3 overflow-hidden rounded-md border border-(--border-color)">
+    <div class="flex items-center justify-between border-b border-border bg-surface-sunken px-3 py-2">
+        <h5 class="m-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
         <button
             type="button"
-            pButton
+            tumAetUiButton
             severity="primary"
             size="small"
             data-testid="analyze-button"
@@ -19,61 +19,67 @@
 
     @if (analysisResult(); as result) {
         <!-- Quality Section -->
-        <p-panel
+        <tumaet-ui-panel
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
+            data-testid="checklist-section-quality"
+            [attr.data-stale]="isSectionStale('quality')"
             [toggleable]="true"
             [collapsed]="!sectionExpanded['quality']()"
             (collapsedChange)="toggleSection('quality')"
-            [header]="'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate"
-            [class]="'checklist-section' + (isSectionStale('quality') ? ' stale' : '')"
+            [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate"
         >
-            <ng-template #icons>
-                @if (result.qualityIssues?.length) {
-                    <p-badge [value]="'' + result.qualityIssues?.length" severity="warn" />
-                } @else {
-                    <p-tag severity="success">
-                        <fa-icon [icon]="faCheckCircle" size="xs" />
-                    </p-tag>
-                }
-                @if (isSectionStale('quality')) {
-                    <span class="stale-badge">
-                        <fa-icon [icon]="faExclamationTriangle" />
-                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
-                    </span>
-                }
-                <button
-                    type="button"
-                    pButton
-                    severity="warn"
-                    [text]="true"
-                    size="small"
-                    (click)="$event.stopPropagation(); reanalyzeSection('quality')"
-                    [disabled]="isLoading() || isSectionLoading('quality')"
-                >
-                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" />
-                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
-                </button>
-            </ng-template>
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
+                <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.quality.title' | artemisTranslate }}</span>
+                <div class="flex items-center gap-2">
+                    @if (result.qualityIssues?.length) {
+                        <tumaet-ui-tag [value]="'' + result.qualityIssues?.length" severity="warn" size="sm" [rounded]="true" />
+                    } @else {
+                        <tumaet-ui-tag severity="success">
+                            <fa-icon [icon]="faCheckCircle" size="xs" />
+                        </tumaet-ui-tag>
+                    }
+                    @if (isSectionStale('quality')) {
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-state-warning">
+                            <fa-icon [icon]="faExclamationTriangle" />
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                        </span>
+                    }
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="warn"
+                        variant="text"
+                        size="small"
+                        (click)="$event.stopPropagation(); reanalyzeSection('quality')"
+                        [disabled]="isLoading() || isSectionLoading('quality')"
+                    >
+                        <fa-icon [icon]="faSync" [animation]="isSectionLoading('quality') ? 'spin' : undefined" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                    </button>
+                </div>
+            </div>
 
             <!-- Quality Radar Chart -->
-            <div class="quality-radar-section">
-                <div class="quality-radar-chart">
+            <div class="mb-3 flex items-start gap-6">
+                <div>
                     <svg
                         viewBox="-120 -120 240 240"
                         width="220"
                         height="220"
                         style="overflow: visible"
                         role="img"
+                        class="block"
                         [attr.aria-label]="'artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel' | artemisTranslate"
                     >
                         <title jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.radarChartLabel">Quality scores radar chart</title>
                         <!-- Background grid -->
-                        <g class="radar-grid">
+                        <g>
                             @for (points of qualityGridStrings; track $index) {
-                                <polygon [attr.points]="points" fill="none" stroke="var(--surface-500)" stroke-width="0.5" opacity="0.3" />
+                                <polygon [attr.points]="points" fill="none" stroke="var(--border-color)" stroke-width="0.5" opacity="0.3" />
                             }
                         </g>
                         <!-- Axes -->
-                        <g class="radar-axes">
+                        <g>
                             @for (point of qualityRadarPoints(); track point.label) {
                                 <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" [style.stroke]="point.color" stroke-width="1" opacity="0.5" />
                             }
@@ -82,13 +88,12 @@
                         <polygon [attr.points]="qualityPolygonPoints()" fill="var(--primary)" fill-opacity="0.15" stroke="var(--primary)" stroke-width="2" />
                         <!-- Data points and labels -->
                         @for (point of qualityRadarPoints(); track point.label) {
-                            <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="4" [style.fill]="point.color" stroke="var(--surface-ground)" stroke-width="1.5" />
+                            <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="4" [style.fill]="point.color" stroke="var(--module-bg)" stroke-width="1.5" />
                             <text
                                 [attr.x]="point.labelX"
                                 [attr.y]="point.labelY"
                                 text-anchor="middle"
                                 dominant-baseline="middle"
-                                class="radar-label"
                                 [style.fill]="point.color"
                                 font-size="11"
                                 font-weight="600"
@@ -110,29 +115,28 @@
                     </svg>
                 </div>
                 <!-- Quality Legend -->
-                <div class="quality-legend">
+                <div class="flex flex-col gap-1.5 text-sm">
                     @for (point of qualityRadarPoints(); track point.label) {
-                        <div class="quality-legend-item">
-                            <span class="quality-dot" [style.background-color]="point.color"></span>
-                            <span class="quality-legend-name">{{ point.label }}</span>
-                            <span class="quality-legend-value">{{ point.value * 100 | number: '1.0-0' }}%</span>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block size-2 shrink-0 rounded-full" [style.background-color]="point.color"></span>
+                            <span class="font-semibold">{{ point.label }}</span>
+                            <span class="text-muted-color">{{ point.value * 100 | number: '1.0-0' }}%</span>
                         </div>
                     }
                 </div>
             </div>
 
             @if (result.qualityIssues && result.qualityIssues.length > 0) {
-                <div class="issue-toolbar">
-                    <div class="issue-toolbar-start">
-                        <p-checkbox
-                            [binary]="true"
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
                             [ngModel]="allIssuesSelected()"
                             (ngModelChange)="$event ? selectAllIssues() : deselectAllIssues()"
                             [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                             inputId="select-all-issues"
                             data-testid="select-all-issues"
                         />
-                        <label for="select-all-issues" class="issue-toolbar-label">
+                        <label for="select-all-issues" class="m-0 text-sm text-muted-color">
                             {{
                                 (allIssuesSelected()
                                     ? 'artemisApp.programmingExercise.instructorChecklist.quality.deselectAll'
@@ -141,14 +145,14 @@
                             }}
                         </label>
                     </div>
-                    <div class="issue-toolbar-end">
+                    <div class="flex items-center gap-2">
                         @if (selectedIssueIndices().size > 0) {
                             <button
                                 type="button"
-                                pButton
+                                tumAetUiButton
                                 severity="warn"
                                 size="small"
-                                [outlined]="true"
+                                variant="outlined"
                                 [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                 (click)="fixSelectedIssues()"
                                 data-testid="fix-selected-button"
@@ -163,10 +167,10 @@
                             </button>
                             <button
                                 type="button"
-                                pButton
+                                tumAetUiButton
                                 severity="danger"
                                 size="small"
-                                [outlined]="true"
+                                variant="outlined"
                                 [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                 (click)="discardSelectedIssues()"
                                 data-testid="discard-selected-button"
@@ -178,10 +182,10 @@
                         }
                         <button
                             type="button"
-                            pButton
+                            tumAetUiButton
                             severity="primary"
                             size="small"
-                            [outlined]="true"
+                            variant="outlined"
                             [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                             (click)="fixAllQualityIssues()"
                         >
@@ -190,32 +194,33 @@
                         </button>
                     </div>
                 </div>
-                <div class="quality-issues-list">
+                <div class="border-t border-border">
                     @for (issue of result.qualityIssues; track $index; let i = $index) {
-                        <div class="quality-issue-item" [class.issue-selected]="isIssueSelected(i)">
-                            <div class="issue-item-header">
-                                <div class="issue-badges">
-                                    <p-checkbox
-                                        [binary]="true"
+                        <div class="border-b border-border p-3 last:border-b-0" [class]="isIssueSelected(i) ? 'bg-primary/10' : ''">
+                            <div class="mb-2 flex items-start justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <tumaet-ui-checkbox
                                         [ngModel]="isIssueSelected(i)"
                                         (ngModelChange)="toggleIssueSelection(i)"
                                         [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                         [inputId]="'issue-select-' + i"
                                         [attr.data-testid]="'issue-checkbox-' + i"
                                     />
-                                    <p-tag [value]="issue.category" styleClass="category-badge" [ngClass]="getCategoryColorClass(issue.category)" />
-                                    <p-tag [value]="issue.severity" [severity]="getSeverityTagSeverity(issue.severity)" />
+                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-sm font-bold" [class]="getCategoryColorClass(issue.category)">{{
+                                        issue.category
+                                    }}</span>
+                                    <tumaet-ui-tag [value]="issue.severity" [severity]="getSeverityTagSeverity(issue.severity)" />
                                 </div>
-                                <div class="issue-actions">
+                                <div class="flex shrink-0 flex-wrap items-center gap-2">
                                     @if (issue.location?.startLine) {
-                                        <small class="issue-line-ref">Line {{ issue.location?.startLine }}</small>
+                                        <small class="text-muted-color">Line {{ issue.location?.startLine }}</small>
                                     }
                                     <button
                                         type="button"
-                                        pButton
+                                        tumAetUiButton
                                         severity="warn"
                                         size="small"
-                                        [outlined]="true"
+                                        variant="outlined"
                                         [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                         (click)="fixQualityIssue(issue, i)"
                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
@@ -229,10 +234,10 @@
                                     </button>
                                     <button
                                         type="button"
-                                        pButton
+                                        tumAetUiButton
                                         severity="danger"
                                         size="small"
-                                        [text]="true"
+                                        variant="text"
                                         [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0"
                                         (click)="discardQualityIssue(i)"
                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.discardIssue' | artemisTranslate"
@@ -242,15 +247,15 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="issue-description">{{ issue.description }}</p>
+                            <p class="mt-1 mb-0 text-sm">{{ issue.description }}</p>
                             @if (issue.suggestedFix) {
-                                <p class="issue-suggestion">
+                                <p class="mt-1 mb-0 text-sm text-muted-color">
                                     <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.suggestedFix">Suggested fix:</strong>
                                     {{ issue.suggestedFix }}
                                 </p>
                             }
                             @if (issue.impactOnLearners) {
-                                <p class="issue-impact">
+                                <p class="mt-1 mb-0 flex items-center gap-1 text-sm text-muted-color italic">
                                     <fa-icon [icon]="faInfoCircle" />
                                     {{ issue.impactOnLearners }}
                                 </p>
@@ -259,59 +264,63 @@
                     }
                 </div>
             } @else {
-                <p class="no-issues-message">
+                <p class="m-0 flex items-center gap-2 text-state-success">
                     <fa-icon [icon]="faCheckCircle" />
                     <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
                 </p>
             }
-        </p-panel>
+        </tumaet-ui-panel>
 
         <!-- Estimated Learning Goals Section -->
-        <p-panel
+        <tumaet-ui-panel
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
+            data-testid="checklist-section-competencies"
+            [attr.data-stale]="isSectionStale('competencies')"
             [toggleable]="true"
             [collapsed]="!sectionExpanded['competencies']()"
             (collapsedChange)="toggleSection('competencies')"
-            [header]="'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate"
-            [class]="'checklist-section' + (isSectionStale('competencies') ? ' stale' : '')"
+            [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate"
         >
-            <ng-template #icons>
-                @if (result.inferredCompetencies?.length) {
-                    <p-badge [value]="'' + result.inferredCompetencies?.length" severity="info" />
-                }
-                @if (isSectionStale('competencies')) {
-                    <span class="stale-badge">
-                        <fa-icon [icon]="faExclamationTriangle" />
-                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
-                    </span>
-                }
-                <button
-                    type="button"
-                    pButton
-                    severity="warn"
-                    [text]="true"
-                    size="small"
-                    (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
-                    [disabled]="isLoading() || isSectionLoading('competencies')"
-                >
-                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" />
-                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
-                </button>
-            </ng-template>
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
+                <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.competencies.title' | artemisTranslate }}</span>
+                <div class="flex items-center gap-2">
+                    @if (result.inferredCompetencies?.length) {
+                        <tumaet-ui-tag [value]="'' + result.inferredCompetencies?.length" severity="info" size="sm" [rounded]="true" />
+                    }
+                    @if (isSectionStale('competencies')) {
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-state-warning">
+                            <fa-icon [icon]="faExclamationTriangle" />
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                        </span>
+                    }
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="warn"
+                        variant="text"
+                        size="small"
+                        (click)="$event.stopPropagation(); reanalyzeSection('competencies')"
+                        [disabled]="isLoading() || isSectionLoading('competencies')"
+                    >
+                        <fa-icon [icon]="faSync" [animation]="isSectionLoading('competencies') ? 'spin' : undefined" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                    </button>
+                </div>
+            </div>
 
             @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
-                <p class="competency-empty-state" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</p>
+                <p class="m-0 p-3 text-muted-color" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</p>
             } @else {
-                <div class="competency-toolbar">
-                    <div class="competency-toolbar-start">
-                        <p-checkbox
-                            [binary]="true"
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
                             [ngModel]="allCompetenciesSelected()"
                             (ngModelChange)="$event ? selectAllCompetencies() : deselectAllCompetencies()"
                             [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                             inputId="select-all-competencies"
                             data-testid="select-all-competencies"
                         />
-                        <label for="select-all-competencies" class="competency-toolbar-label">
+                        <label for="select-all-competencies" class="m-0 text-sm text-muted-color">
                             {{
                                 (allCompetenciesSelected()
                                     ? 'artemisApp.programmingExercise.instructorChecklist.competencies.deselectAll'
@@ -320,14 +329,14 @@
                             }}
                         </label>
                     </div>
-                    <div class="competency-toolbar-end">
+                    <div class="flex items-center gap-2">
                         @if (selectedCompetencyIndices().size > 0) {
                             <button
                                 type="button"
-                                pButton
+                                tumAetUiButton
                                 severity="primary"
                                 size="small"
-                                [outlined]="true"
+                                variant="outlined"
                                 [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                                 (click)="applySelectedCompetencies()"
                                 data-testid="apply-selected-competencies-button"
@@ -338,10 +347,10 @@
                             </button>
                             <button
                                 type="button"
-                                pButton
+                                tumAetUiButton
                                 severity="danger"
                                 size="small"
-                                [outlined]="true"
+                                variant="outlined"
                                 [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                                 (click)="discardSelectedCompetencies()"
                                 data-testid="discard-selected-competencies-button"
@@ -353,10 +362,10 @@
                         }
                         <button
                             type="button"
-                            pButton
+                            tumAetUiButton
                             severity="primary"
                             size="small"
-                            [outlined]="true"
+                            variant="outlined"
                             [disabled]="isLoading() || isSyncingCompetencies() || isApplyingAction() || sectionLoading().size > 0"
                             (click)="applyCompetencies()"
                             data-testid="apply-all-competencies-button"
@@ -366,14 +375,13 @@
                         </button>
                     </div>
                 </div>
-                <div class="competency-list">
+                <div class="border-t border-border">
                     @for (comp of result.inferredCompetencies; track $index; let i = $index) {
-                        <div class="competency-item" [class.competency-selected]="isCompetencySelected(i)">
-                            <div class="competency-header">
-                                <div class="competency-info">
-                                    <div class="competency-tags">
-                                        <p-checkbox
-                                            [binary]="true"
+                        <div class="border-b border-border p-3 last:border-b-0" [class]="isCompetencySelected(i) ? 'bg-primary/10' : ''">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1">
+                                    <div class="mb-1 flex flex-wrap items-center gap-2">
+                                        <tumaet-ui-checkbox
                                             [ngModel]="isCompetencySelected(i)"
                                             (ngModelChange)="toggleCompetencySelection(i)"
                                             [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
@@ -384,32 +392,31 @@
                                             [attr.data-testid]="'competency-checkbox-' + i"
                                         />
                                         @if (comp.knowledgeAreaShortTitle) {
-                                            <p-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
+                                            <tumaet-ui-tag [value]="comp.knowledgeAreaShortTitle" severity="secondary" />
                                         }
-                                        <strong class="competency-title">{{ comp.competencyTitle }}</strong>
+                                        <strong class="text-sm">{{ comp.competencyTitle }}</strong>
                                         @if (comp.isLikelyPrimary) {
-                                            <p-tag severity="info" [value]="'artemisApp.programmingExercise.instructorChecklist.competencies.primary' | artemisTranslate" />
+                                            <tumaet-ui-tag severity="info" [value]="'artemisApp.programmingExercise.instructorChecklist.competencies.primary' | artemisTranslate" />
                                         }
-                                        <p-tag [value]="comp.taxonomyLevel" severity="info" />
+                                        <tumaet-ui-tag [value]="comp.taxonomyLevel" severity="info" />
                                         @if (isCompetencyLinked(comp)) {
-                                            <p-tag severity="success">
+                                            <tumaet-ui-tag severity="success">
                                                 <fa-icon [icon]="faLink" size="xs" />
                                                 <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.linked">Linked</span>
-                                            </p-tag>
+                                            </tumaet-ui-tag>
                                         }
                                     </div>
                                     @if (comp.whyThisMatches) {
-                                        <p class="competency-rationale">{{ comp.whyThisMatches }}</p>
+                                        <p class="mt-1 mb-0 text-sm text-muted-color">{{ comp.whyThisMatches }}</p>
                                     }
                                 </div>
-                                <div class="competency-actions">
+                                <div class="flex shrink-0 items-center gap-1">
                                     <button
                                         type="button"
-                                        pButton
-                                        [text]="true"
+                                        tumAetUiButton
+                                        variant="text"
                                         severity="secondary"
                                         size="small"
-                                        class="expand-details-btn"
                                         (click)="toggleCompetencyExpand($index); $event.stopPropagation()"
                                     >
                                         <fa-icon [icon]="isCompetencyExpanded($index) ? faChevronDown : faChevronRight" size="xs" />
@@ -421,10 +428,10 @@
                                     </button>
                                     <button
                                         type="button"
-                                        pButton
+                                        tumAetUiButton
                                         severity="danger"
                                         size="small"
-                                        [text]="true"
+                                        variant="text"
                                         [disabled]="isLoading() || isApplyingAction() || isSyncingCompetencies() || sectionLoading().size > 0"
                                         (click)="discardCompetency(i)"
                                         [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.discardCompetency' | artemisTranslate"
@@ -438,14 +445,14 @@
                                 </div>
                             </div>
                             @if (isCompetencyExpanded($index)) {
-                                <div class="evidence-section">
+                                <div class="rounded-md border-s-4 border-s-primary px-3 py-2">
                                     @if (comp.relatedTaskNames?.length) {
                                         <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks">Related tasks:</strong>
-                                        <span class="evidence-text">{{ comp.relatedTaskNames?.join(', ') }}</span>
+                                        <span class="text-sm text-muted-color">{{ comp.relatedTaskNames?.join(', ') }}</span>
                                     }
                                     @if (comp.evidence?.length) {
                                         <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence">Evidence:</strong>
-                                        <ul>
+                                        <ul class="mb-0 ps-4">
                                             @for (item of comp.evidence; track $index) {
                                                 <li>{{ item }}</li>
                                             }
@@ -456,82 +463,85 @@
                         </div>
                     }
                 </div>
-                <div class="competency-actions-section">
-                    <small class="competency-apply-hint" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
+                <div class="flex flex-col gap-2 border-t border-border p-3">
+                    <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.applyHint">
                         Links matching course competencies and creates new ones for unmatched learning goals.
                     </small>
                 </div>
             }
-        </p-panel>
+        </tumaet-ui-panel>
 
         <!-- Difficulty Section -->
-        <p-panel
+        <tumaet-ui-panel
+            class="rounded-none border-x-0 border-b-0 data-[stale=true]:border-t-state-warning!"
+            data-testid="checklist-section-difficulty"
+            [attr.data-stale]="isSectionStale('difficulty')"
             [toggleable]="true"
             [collapsed]="!sectionExpanded['difficulty']()"
             (collapsedChange)="toggleSection('difficulty')"
-            [header]="'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate"
-            [class]="'checklist-section' + (isSectionStale('difficulty') ? ' stale' : '')"
+            [toggleAriaLabel]="'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate"
         >
-            <ng-template #icons>
-                @if (isSectionStale('difficulty')) {
-                    <span class="stale-badge">
-                        <fa-icon [icon]="faExclamationTriangle" />
-                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
-                    </span>
-                }
-                <button
-                    type="button"
-                    pButton
-                    severity="warn"
-                    [text]="true"
-                    size="small"
-                    (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
-                    [disabled]="isLoading() || isSectionLoading('difficulty')"
-                >
-                    <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" />
-                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
-                </button>
-            </ng-template>
+            <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-2">
+                <span class="font-semibold">{{ 'artemisApp.programmingExercise.instructorChecklist.difficulty.title' | artemisTranslate }}</span>
+                <div class="flex items-center gap-2">
+                    @if (isSectionStale('difficulty')) {
+                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-state-warning">
+                            <fa-icon [icon]="faExclamationTriangle" />
+                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.outdated">Outdated</span>
+                        </span>
+                    }
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        severity="warn"
+                        variant="text"
+                        size="small"
+                        (click)="$event.stopPropagation(); reanalyzeSection('difficulty')"
+                        [disabled]="isLoading() || isSectionLoading('difficulty')"
+                    >
+                        <fa-icon [icon]="faSync" [animation]="isSectionLoading('difficulty') ? 'spin' : undefined" />
+                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.reanalyze">Re-analyze</span>
+                    </button>
+                </div>
+            </div>
 
             @if (result.difficultyAssessment) {
-                <div class="difficulty-overview">
+                <div class="mb-2 flex flex-wrap items-center gap-4">
                     <div>
-                        <span class="difficulty-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
-                        <p-tag [value]="result.difficultyAssessment.suggested" [severity]="getDifficultySeverity(result.difficultyAssessment.suggested)" />
+                        <span class="me-1 font-semibold" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
+                        <tumaet-ui-tag [value]="result.difficultyAssessment.suggested" [severity]="getDifficultySeverity(result.difficultyAssessment.suggested)" />
                     </div>
                     <div>
-                        <span class="difficulty-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
+                        <span class="me-1 font-semibold" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.vsDeclared">vs. Declared:</span>
                         @if (localDeclaredDifficulty()) {
-                            <p-tag [value]="localDeclaredDifficulty()!" [severity]="getDifficultySeverity(localDeclaredDifficulty())" />
+                            <tumaet-ui-tag [value]="localDeclaredDifficulty()!" [severity]="getDifficultySeverity(localDeclaredDifficulty())" />
                         }
-                        <fa-icon [icon]="getDeltaIcon(effectiveDelta())" [ngClass]="getDeltaClass(effectiveDelta())" />
-                        <span [ngClass]="getDeltaClass(effectiveDelta())">{{ getDeltaLabel(effectiveDelta()) }}</span>
+                        <fa-icon [icon]="getDeltaIcon(effectiveDelta())" [class]="getDeltaClass(effectiveDelta())" />
+                        <span [class]="getDeltaClass(effectiveDelta())">{{ getDeltaLabel(effectiveDelta()) }}</span>
                     </div>
                 </div>
-                <div class="difficulty-counts">
-                    <p-tag severity="secondary">
+                <div class="mb-2 flex items-center gap-3">
+                    <tumaet-ui-tag severity="secondary">
                         <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
                         {{ localTaskTestCounts().tasks }}
-                    </p-tag>
-                    <p-tag severity="secondary">
+                    </tumaet-ui-tag>
+                    <tumaet-ui-tag severity="secondary">
                         <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
                         {{ localTaskTestCounts().tests }}
-                    </p-tag>
+                    </tumaet-ui-tag>
                 </div>
-                <p class="difficulty-reasoning">{{ result.difficultyAssessment.reasoning }}</p>
-                <div class="difficulty-adapt">
-                    <small class="difficulty-adapt-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo">Adapt to:</small>
+                <p class="mb-2 text-sm text-muted-color">{{ result.difficultyAssessment.reasoning }}</p>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <small class="leading-[calc(1/0.75)] font-semibold text-muted-color" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo"
+                        >Adapt to:</small
+                    >
                     @for (level of difficultyLevels; track level) {
                         <button
                             type="button"
-                            pButton
+                            tumAetUiButton
                             [severity]="getDifficultySeverity(level)"
                             size="small"
-                            class="difficulty-chip"
-                            [ngClass]="{
-                                'difficulty-chip--current': localDeclaredDifficulty() === level,
-                                'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && localDeclaredDifficulty() !== level,
-                            }"
+                            [class]="difficultyChipClass(level)"
                             [disabled]="isLoading() || isApplyingAction() || sectionLoading().size > 0 || localDeclaredDifficulty() === level"
                             (click)="adaptDifficulty(level)"
                         >
@@ -547,9 +557,9 @@
                     }
                 </div>
             }
-        </p-panel>
+        </tumaet-ui-panel>
     } @else {
-        <p class="checklist-empty-state" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
+        <p class="m-0 p-3 text-center text-muted-color" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
             Click "Analyze Problem Statement" to check for competencies, difficulty, and quality issues.
         </p>
     }

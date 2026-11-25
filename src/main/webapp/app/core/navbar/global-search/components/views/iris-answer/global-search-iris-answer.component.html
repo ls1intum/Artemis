@@ -13,12 +13,12 @@
     >
         <!-- Header. While Iris works it also carries the status, set in the answer's own type so the
              card speaks in one voice rather than introducing a label style of its own. -->
-        <div class="iris-card-header d-flex align-items-center gap-2">
+        <div class="iris-card-header flex items-center gap-2">
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="isWorking()" [style.filter]="'none'" aria-hidden="true" />
-            <span class="iris-card-label fw-bold">Iris</span>
-            <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
+            <span class="iris-card-label font-bold">Iris</span>
+            <span class="iris-ai-badge inline-flex items-center rounded-full font-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
             @if (phase() === 'thinking') {
-                <span class="iris-strip-status text-truncate" role="status" data-testid="iris-strip-status">{{ stageStatusKey() | artemisTranslate: stageStatusParams() }}</span>
+                <span class="iris-strip-status truncate" role="status" data-testid="iris-strip-status">{{ stageStatusKey() | artemisTranslate: stageStatusParams() }}</span>
             }
         </div>
 
@@ -28,8 +28,8 @@
             <div class="iris-card-body">
                 @switch (phase()) {
                     @case ('noAnswer') {
-                        <div class="iris-quiet-note d-flex align-items-start gap-2" data-testid="iris-no-answer">
-                            <fa-icon [icon]="faCircleInfo" class="iris-quiet-icon flex-shrink-0" aria-hidden="true" />
+                        <div class="iris-quiet-note flex items-start gap-2" data-testid="iris-no-answer">
+                            <fa-icon [icon]="faCircleInfo" class="iris-quiet-icon shrink-0" aria-hidden="true" />
                             <div>
                                 <div>{{ 'global.search.irisAnswerNoneRelevant' | artemisTranslate }}</div>
                                 <div class="iris-quiet-sub">{{ 'global.search.irisAnswerNoneRelevantHint' | artemisTranslate }}</div>
@@ -37,11 +37,11 @@
                         </div>
                     }
                     @case ('failed') {
-                        <div class="iris-quiet-note d-flex align-items-start gap-2" data-testid="iris-answer-failed">
-                            <fa-icon [icon]="faCircleInfo" class="iris-quiet-icon flex-shrink-0" aria-hidden="true" />
+                        <div class="iris-quiet-note flex items-start gap-2" data-testid="iris-answer-failed">
+                            <fa-icon [icon]="faCircleInfo" class="iris-quiet-icon shrink-0" aria-hidden="true" />
                             <div>
                                 <div>{{ 'global.search.irisAnswerFailed' | artemisTranslate }}</div>
-                                <button class="iris-retry-btn bg-transparent border-0 fw-medium p-0" type="button" (click)="retry()" data-testid="iris-answer-retry">
+                                <button class="iris-retry-btn font-medium" type="button" (click)="retry()" data-testid="iris-answer-retry">
                                     {{ 'global.search.irisAnswerRetry' | artemisTranslate }}
                                 </button>
                             </div>
@@ -81,22 +81,20 @@
                         <!-- Show more / less — sits below the text, never overlapping. Only ever shown once the
                              answer is settled, since a toggle cannot mean anything while text is still arriving. -->
                         @if (shouldClamp()) {
-                            <button class="iris-toggle-btn bg-transparent border-0 fw-medium" type="button" (click)="isExpanded.set(true)">
+                            <button class="iris-toggle-btn font-medium" type="button" (click)="isExpanded.set(true)">
                                 {{ 'global.search.irisAnswerShowMore' | artemisTranslate }} ↓
                             </button>
                         }
                         @if (isSettled() && isOverflowing() && isExpanded()) {
-                            <button class="iris-toggle-btn bg-transparent border-0 fw-medium" type="button" (click)="collapse()">
-                                {{ 'global.search.irisAnswerShowLess' | artemisTranslate }} ↑
-                            </button>
+                            <button class="iris-toggle-btn font-medium" type="button" (click)="collapse()">{{ 'global.search.irisAnswerShowLess' | artemisTranslate }} ↑</button>
                         }
 
                         <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
                         @if (sources().length > 0 || entitySources().length > 0) {
-                            <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
+                            <div class="iris-chips flex items-center" [class.iris-chips--expanded]="moreOpen()">
                                 @for (view of visibleSourceViews(); track $index) {
                                     <a
-                                        class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                                        class="iris-chip inline-flex items-center no-underline! whitespace-nowrap rounded-full"
                                         [class.iris-chip-lit]="activeCitations().has(view.markerNumber)"
                                         (mouseenter)="setChipHighlight(view.markerNumber)"
                                         [routerLink]="view.source.lectureUnit.link"
@@ -104,19 +102,19 @@
                                         [state]="lectureDeepLinkNavigationState"
                                     >
                                         @if (hasCitations()) {
-                                            <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ view.markerNumber }}</span>
+                                            <span class="iris-chip-n shrink-0" data-testid="iris-chip-number">{{ view.markerNumber }}</span>
                                         }
-                                        <fa-icon [icon]="SOURCE_ICONS[view.source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
-                                        <span class="iris-chip-name text-truncate">{{ view.source.lectureUnit.name }}</span>
+                                        <fa-icon [icon]="SOURCE_ICONS[view.source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon shrink-0" aria-hidden="true" />
+                                        <span class="iris-chip-name truncate">{{ view.source.lectureUnit.name }}</span>
                                         @if (view.source.lectureUnit.displayMeta) {
-                                            <span class="iris-chip-meta text-body-secondary">· {{ view.source.lectureUnit.displayMeta }}</span>
+                                            <span class="iris-chip-meta">· {{ view.source.lectureUnit.displayMeta }}</span>
                                         }
                                     </a>
                                 }
                                 <!-- Entity sources (course information): few by construction, marker numbers may interleave with the lecture sources' -->
                                 @for (chip of entityChipViews(); track $index) {
                                     <button
-                                        class="iris-chip d-inline-flex align-items-center text-nowrap rounded-pill"
+                                        class="iris-chip inline-flex items-center whitespace-nowrap"
                                         type="button"
                                         data-testid="iris-entity-chip"
                                         [class.iris-chip-lit]="activeCitations().has(chip.markerNumber)"
@@ -124,23 +122,23 @@
                                         (click)="openEntitySource(chip.source)"
                                     >
                                         @if (hasCitations()) {
-                                            <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ chip.markerNumber }}</span>
+                                            <span class="iris-chip-n shrink-0" data-testid="iris-chip-number">{{ chip.markerNumber }}</span>
                                         }
-                                        <fa-icon [icon]="chip.icon" class="iris-chip-icon flex-shrink-0" [attr.aria-label]="chip.typeLabelKey | artemisTranslate" />
-                                        <span class="iris-chip-name text-truncate">{{ chip.source.title }}</span>
+                                        <fa-icon [icon]="chip.icon" class="iris-chip-icon shrink-0" [attr.aria-label]="chip.typeLabelKey | artemisTranslate" />
+                                        <span class="iris-chip-name truncate">{{ chip.source.title }}</span>
                                         @if (chip.source.course?.name) {
-                                            <span class="iris-chip-meta text-body-secondary">· {{ chip.source.course?.name }}</span>
+                                            <span class="iris-chip-meta">· {{ chip.source.course?.name }}</span>
                                         }
                                     </button>
                                 }
                                 @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
-                                    <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
+                                    <button class="iris-chip iris-more-btn" type="button" (click)="moreOpen.set(true)">
                                         +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
                                     </button>
                                 }
                                 @if (moreOpen()) {
                                     <button
-                                        class="iris-collapse-btn d-inline-flex align-items-center justify-content-center rounded-pill flex-shrink-0"
+                                        class="iris-collapse-btn inline-flex items-center justify-center shrink-0"
                                         type="button"
                                         (click)="moreOpen.set(false)"
                                         [attr.aria-label]="'global.search.irisCollapseSources' | artemisTranslate"
@@ -162,14 +160,10 @@
 
         @if (citationPopover(); as popover) {
             <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
-                <fa-icon
-                    [icon]="popover.icon"
-                    class="iris-chip-icon flex-shrink-0"
-                    [attr.aria-label]="popover.entityTypeKey ? (popover.entityTypeKey | artemisTranslate) : undefined"
-                />
-                <span class="iris-cite-popover-name text-truncate">{{ popover.name }}</span>
+                <fa-icon [icon]="popover.icon" class="iris-chip-icon shrink-0" [attr.aria-label]="popover.entityTypeKey ? (popover.entityTypeKey | artemisTranslate) : undefined" />
+                <span class="iris-cite-popover-name truncate">{{ popover.name }}</span>
                 @if (popover.meta) {
-                    <span class="iris-chip-meta text-body-secondary">· {{ popover.meta }}</span>
+                    <span class="iris-chip-meta">· {{ popover.meta }}</span>
                 }
             </div>
         }

@@ -12,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
-    styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
+    styleUrl: './code-editor-tutor-assessment-inline-feedback.component.css',
     imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent, UnifiedFeedbackComponent],
     // Monaco anchors the widget on this host. Several cards may share a line, so the line is a data attribute,
     // not an HTML id that would be duplicated when two suggestions refer to the same location.

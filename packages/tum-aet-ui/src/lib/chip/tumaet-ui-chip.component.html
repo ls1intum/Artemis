@@ -1,8 +1,8 @@
 <span [class]="chipClasses()">
     @if (label(); as chipLabel) {
-        <span class="tumaet-ui-chip-label tumaet:truncate">{{ chipLabel }}</span>
+        <span class="tumaet-ui-chip-label tumaet:min-w-0 tumaet:truncate">{{ chipLabel }}</span>
     } @else {
-        <span class="tumaet-ui-chip-label tumaet:truncate"><ng-content /></span>
+        <span class="tumaet-ui-chip-label tumaet:min-w-0 tumaet:truncate"><ng-content /></span>
     }
     @if (removable()) {
         <button

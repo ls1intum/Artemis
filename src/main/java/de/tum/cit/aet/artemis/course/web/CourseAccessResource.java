@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
@@ -349,7 +349,7 @@ public class CourseAccessResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
 
-        return ResponseEntity.ok(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser).stream().map(CourseMemberDTO::of).toList());
+        return ResponseEntity.ok(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser).stream().map(CourseMemberDTO::ofNameAndLogin).toList());
     }
 
     /**
@@ -547,8 +547,7 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/{courseRoleSlug}/paged")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug,
-            @Valid CourseRoleMembersSearchDTO search) {
+    public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @Valid PagedSearchDTO search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
         courseRepository.findByIdElseThrow(courseId);
         CourseRole role = resolveCourseRole(courseRoleSlug);

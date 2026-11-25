@@ -1,10 +1,13 @@
-<div class="update-footer gap-4">
-    <div class="text-start">
+<div class="update-footer gap-6">
+    <div class="text-left">
         @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
-            <div class="d-flex align-items-center">
+            <div class="flex items-center">
                 <div
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
-                    [disableTooltip]="areAuxiliaryRepositoriesValid()"
+                    [tumAetUiTooltip]="
+                        areAuxiliaryRepositoriesValid()
+                            ? undefined
+                            : ('artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate)
+                    "
                 >
                     <jhi-switch-edit-mode-button
                         class="me-1"
@@ -19,7 +22,7 @@
         }
     </div>
     @if (!isCreation() && !isImport()) {
-        <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
+        <jhi-exercise-update-notification class="w-full grow" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
     }
     <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
     @if (invalidReasons().length) {
@@ -29,11 +32,19 @@
             }
         </ul>
     }
-    <div class="d-flex gap-2 text-end">
+    <div class="flex gap-2 text-right">
         @if (isSaving()) {
-            <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
+            <tumaet-ui-tag severity="secondary" size="sm" class="self-center" data-testid="form-footer-saving"><span jhiTranslate="entity.action.saving"></span></tumaet-ui-tag>
         }
-        <button tumAetUiButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
+        <button
+            [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            tumAetUiButton
+            type="button"
+            id="cancel-save"
+            severity="secondary"
+            size="small"
+            (click)="onCancel.emit()"
+        >
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -42,10 +53,11 @@
             type="button"
             id="save-entity"
             [severity]="isImport() ? 'secondary' : 'primary'"
-            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            class="aria-disabled:opacity-60"
             size="small"
             [tumAetUiTooltip]="invalidReasonTexts()"
             [tumAetUiTooltipDescribesHost]="false"
+            [attr.aria-label]="saveTitle() | artemisTranslate"
             [attr.aria-disabled]="isSubmitDisabled()"
             [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
             (click)="onSave()"

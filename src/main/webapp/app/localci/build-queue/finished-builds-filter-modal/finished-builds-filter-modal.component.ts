@@ -131,7 +131,7 @@ export enum FinishedBuildJobFilterKey {
         TumAetUiAutoCompleteComponent,
     ],
     templateUrl: './finished-builds-filter-modal.component.html',
-    styleUrl: './finished-builds-filter-modal.component.scss',
+    styleUrl: './finished-builds-filter-modal.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FinishedBuildsFilterModalComponent {

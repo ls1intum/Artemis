@@ -41,6 +41,8 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -52,8 +54,6 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -73,7 +73,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import * as downloadUtil from 'app/foundation/util/download.util';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
@@ -165,7 +165,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             providers: [
                 { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,
                 SessionStorageService,
@@ -173,7 +173,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
@@ -182,7 +181,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             ],
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in
-            // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
+            // their own dependencies (e.g. TumAetUiDialogService) or crash on missing inputs (doughnut chart).
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
                     imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],
@@ -551,6 +550,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
+    });
+
+    describe('build time window details', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const windowDetails = (buildTimeWindow?: { start?: dayjs.Dayjs; end?: dayjs.Dayjs }) => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 123;
+            programmingExercise.buildConfig!.advancedSettings = buildTimeWindow ? { buildTimeWindow } : undefined;
+            comp.programmingExercise.set(programmingExercise);
+            return comp
+                .getExerciseDetailsLanguageSection(programmingExercise)
+                .details.filter((detail) => !!detail && detail.type === DetailType.Date && detail.title?.includes('buildTimeWindow'));
+        };
+
+        it('should show no row for an exercise without a window', () => {
+            expect(windowDetails()).toEqual([]);
+        });
+
+        it('should show the start and the end of the window', () => {
+            expect(windowDetails({ start: windowStart, end: windowEnd })).toEqual([
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.start', data: { date: windowStart } },
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.end', data: { date: windowEnd } },
+            ]);
+        });
+
+        it('should show only the bound that is set', () => {
+            expect(windowDetails({ start: windowStart }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.start']);
+            expect(windowDetails({ end: windowEnd }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.end']);
+        });
     });
 
     it.each([

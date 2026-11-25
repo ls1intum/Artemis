@@ -2,7 +2,7 @@
 id: extensions-setup
 title: Setup of Extension Services
 sidebar_label: Extensions Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-23
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -12,6 +12,25 @@ import sharingHealth2 from './assets/sharing/sharing_health2.png';
 import Callout from '../../src/components/Callout/Callout';
 
 This section describes the required setup for various extension services that can be used to activate additional functionality in your Artemis instance.
+
+## Health of the extension services
+
+Extension services are optional. When one of them is not available, the core of Artemis (courses, exercises, exams, repositories, builds) keeps working, and only the feature that uses the service stops.
+Artemis therefore distinguishes two kinds of components on `/management/health` and in **Administration → Monitoring → Health**:
+
+| Component                                                                                                                                                                       | Status when it fails | HTTP status of `/management/health` |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------------- |
+| Critical components: database, distributed data provider (Hazelcast, Redis), websocket broker, service registry, continuous integration server (LocalCI or Jenkins), disk space | `DOWN`               | 503                                 |
+| Optional external systems: Athena, Iris (Pyris), Hermes, Apollon, Weaviate, the sharing platform, Hyperion workers                                                              | `DEGRADED`           | 200                                 |
+
+The status of the whole instance is the most severe status of its components: `DOWN` before `OUT_OF_SERVICE` before `DEGRADED` before `UP`.
+An instance with a failing optional system reports `DEGRADED` and keeps answering with HTTP 200, so a container health check, a load balancer or a deployment check that only looks at the HTTP status does not restart or remove an instance because a service it does not need is in maintenance.
+The failing component and its error stay visible in the health page and in the `artemis.health` metric, which reports `0` for both `DOWN` and `DEGRADED`.
+
+Use the following endpoints for automation:
+
+- `/management/health/readiness` and `/management/health/liveness` answer whether this Artemis instance runs and can take traffic. Base restart and routing decisions on them.
+- `/management/health` is the complete picture for monitoring. A check that compares the status with `UP`, whether by the HTTP status or by matching `"status":"UP"` in the body, must also accept `DEGRADED`, if an unavailable optional system should not fail it.
 
 ## EduTelligence Suite
 
@@ -36,6 +55,9 @@ artemis:
         url: https://pyris.your-domain.com # Or http://localhost:8000 for local development
         secret-token: your-shared-secret # Must match the token configured in Pyris
 ```
+
+Pyris is called by the core nodes, and Pyris and the Weaviate instance behind it work together. Run them on the private network, use a separate Pyris for every installation that holds real data, and give every installation its own
+secret. See the [Network Model](/admin/production-setup/network-model#extension-services).
 
 Optionally, configure per-user rate limiting:
 
@@ -86,7 +108,11 @@ artemis:
         secret: <shared-secret>
 ```
 
-Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
+Use a deployment-managed shared secret that is unique to your installation, for example `openssl rand -hex 32`, and configure the same value in Athena.
+Without a secret, Artemis neither sends requests to Athena nor answers its repository requests.
+Under the `prod` profile, Artemis refuses to start with the Athena module enabled when the secret is empty, is one of the example values shipped with Artemis, or starts with `CHANGE_ME`.
+The example environment files under `deployment/docker/artemis/config` carry such a placeholder on purpose.
+For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
 
 ## Other Extension Services
 
@@ -170,6 +196,9 @@ artemis:
     # ...
     push-notification-relay: <url>
 ```
+
+The value must be an absolute URL. Do not set it to an empty value: the property has a default, and an empty value makes the push notification services and the health check fail.
+An instance that does not run its own Hermes keeps using the default relay. If that relay is not reachable from your network, the Hermes component of the health page is permanently `DEGRADED`. This does not make the instance unhealthy, see [Health of the extension services](#health-of-the-extension-services), but it hides a real outage of another optional system in the aggregate status, so watch the components and not only the aggregate.
 
 ### Hyperion Service
 

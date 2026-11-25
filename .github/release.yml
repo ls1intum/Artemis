@@ -1,0 +1,10 @@
+# Categories of the automatically generated release notes.
+# A pull request that hardens an interface carries the label "security-hardening", so operators can see which release matters to them.
+changelog:
+  categories:
+    - title: Security hardening
+      labels:
+        - security-hardening
+    - title: Other changes
+      labels:
+        - "*"

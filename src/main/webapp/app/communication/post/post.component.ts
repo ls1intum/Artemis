@@ -19,8 +19,7 @@ import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posti
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { CommunicationService } from 'app/communication/service/communication.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../communication.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -50,14 +49,14 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['./post.component.scss', './../communication.component.scss'],
+    styleUrls: ['./post.component.css', './../communication.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         SavedPostingBannerComponent,
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         PostingHeaderComponent,
         RouterLinkActive,
         RouterLink,
@@ -81,9 +80,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
-    // if the post is previewed in the create/edit modal,
-    // we need to pass the ref in order to close it when navigating to the previewed post via post title
-    modalRef = input<DynamicDialogRef | undefined>(undefined);
     searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
@@ -311,11 +307,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
     /**
      * ensures that only when clicking on context without having control key pressed,
-     * the modal is dismissed (closed and cleared)
+     * the active conversation is switched
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
-            this.modalRef()?.close();
             this.courseConversationsService.setActiveConversation(this.contextInformation().queryParams!['conversationId']);
         }
     }

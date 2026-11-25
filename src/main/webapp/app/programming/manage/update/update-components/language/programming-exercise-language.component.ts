@@ -1,4 +1,7 @@
-import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, input, model, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, EventEmitter, OnDestroy, computed, inject, input, model, viewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -18,7 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         FormsModule,
@@ -29,9 +32,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         KeyValuePipe,
         RemoveKeysPipe,
         ArtemisTranslatePipe,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
+    private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
@@ -43,6 +53,15 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
      * changes the exercise in place, which would not make this section render the online IDE settings.
      */
     readonly allowOnlineIde = input(false);
+
+    /** The entries of the language select, labelled in the current language. */
+    readonly languageOptions = computed(() => {
+        this.currentLocale();
+        return (this.programmingExerciseCreationConfig().supportedLanguages ?? []).map((language) => ({
+            value: language,
+            label: this.translateService.instant('artemisApp.ProgrammingLanguage.' + language) as string,
+        }));
+    });
 
     readonly selectLanguageField = viewChild<NgModel>('select');
     readonly packageNameField = viewChild<NgModel>('packageName');

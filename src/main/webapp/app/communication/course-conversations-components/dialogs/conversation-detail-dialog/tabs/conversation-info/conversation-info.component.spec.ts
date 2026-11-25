@@ -189,6 +189,22 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('should show the validation error below the name input only while the name is invalid', () => {
+            if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
+                const errorRegion = (): HTMLElement => fixture.nativeElement.querySelector('#name-section .tumaet-ui-form-field-error');
+                expect(errorRegion().hidden).toBe(true);
+
+                component.onNameInput('INVALID NAME');
+                fixture.changeDetectorRef.detectChanges();
+                expect(errorRegion().hidden).toBe(false);
+                expect(errorRegion().querySelector('[jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"]')).toBeTruthy();
+
+                component.onNameInput('valid-name');
+                fixture.changeDetectorRef.detectChanges();
+                expect(errorRegion().hidden).toBe(true);
+            }
+        });
+
         it('should show notification section for all conversation types', () => {
             checkThatSectionExistsInTemplate('notification');
         });
@@ -250,8 +266,9 @@ examples.forEach((activeConversation) => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled()).toBeTruthy();
-            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            const desc = fixture.nativeElement.querySelector('[data-testid="notification-description"]');
             expect(desc).toBeTruthy();
+            expect(desc.querySelector('[jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription"]')).toBeTruthy();
 
             const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
             expect(muteSelectButton).toBeTruthy();
@@ -276,8 +293,9 @@ examples.forEach((activeConversation) => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled()).toBeFalsy();
-            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            const desc = fixture.nativeElement.querySelector('[data-testid="notification-description"]');
             expect(desc).toBeTruthy();
+            expect(desc.querySelector('[jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled"]')).toBeTruthy();
         });
 
         it('should show muted notification message when conversation is muted', () => {
@@ -293,13 +311,15 @@ examples.forEach((activeConversation) => {
             );
 
             activeConversation.isMuted = true;
+            component.isMuted.set(true);
             component['loadNotificationSettings']();
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled()).toBeTruthy();
-            const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
+            const desc = fixture.nativeElement.querySelector('[data-testid="notification-description"]');
             expect(desc).toBeTruthy();
+            expect(desc.querySelector('[jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription"]')).toBeTruthy();
 
             const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
             expect(muteSelectButton).toBeTruthy();

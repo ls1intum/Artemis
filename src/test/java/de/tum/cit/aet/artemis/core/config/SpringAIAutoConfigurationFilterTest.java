@@ -8,8 +8,16 @@ import org.springframework.mock.env.MockEnvironment;
 /** The filter must agree with {@link ArtemisConfigHelper#isHyperionEnabled}: a Hyperion flag inherited by a standalone build agent must not load Spring AI. */
 class SpringAIAutoConfigurationFilterTest {
 
-    private static final String[] CANDIDATES = { "org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration",
+    private static final String[] CANDIDATES = { "org.springframework.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration",
             "org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration" };
+
+    @Test
+    void openAiModelAutoConfigurationIsAlwaysExcluded() {
+        // Artemis builds its OpenAI clients from artemis.llm, so Spring AI must not create a model of its own, whatever the flags say
+        var filter = new SpringAIAutoConfigurationFilter();
+        filter.setEnvironment(environment(true, true));
+        assertThat(filter.match(new String[] { "org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration" }, null)).containsExactly(false);
+    }
 
     @Test
     void hyperionFlagWithoutCoreProfileExcludesSpringAi() {

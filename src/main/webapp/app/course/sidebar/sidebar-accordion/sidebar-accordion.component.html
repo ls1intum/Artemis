@@ -1,9 +1,9 @@
 @for (groupKey of Object.keys(groupedData()); track groupKey; let i = $index) {
     @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length || sidebarItemAlwaysShow()[groupKey]) {
-        <div id="test-accordion-item-container-{{ i }}" class="pointer">
+        <div id="test-accordion-item-container-{{ i }}" class="cursor-pointer">
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
-                class="control-label d-flex align-items-center justify-content-between bg-module px-1"
+                class="control-label flex items-center justify-between bg-module px-1"
                 (click)="toggleGroupCategoryCollapse(groupKey)"
                 [attr.aria-expanded]="!collapseStateInternal()[groupKey]"
                 #keyboardAction4
@@ -30,51 +30,58 @@
                     @if (totalUnreadMessagesPerGroup()[groupKey] > 0 && collapseStateInternal()[groupKey]) {
                         <span class="unread-count me-2">{{ totalUnreadMessagesPerGroup()[groupKey] }}</span>
                     }
-                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseStateInternal()[groupKey]" />
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon inline-block align-middle" [class.rotated]="!collapseStateInternal()[groupKey]" />
                 </div>
             </div>
             @if ((groupedData()[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length) {
-                <div id="test-accordion-item-content" [ngbCollapse]="collapseStateInternal()[groupKey]" class="bg-module">
-                    <div class="p-1">
-                        @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
-                            @if (weekGroup.showDateHeader) {
-                                <div class="text-muted small py-2" [ngClass]="{ 'pt-0': first }">
-                                    {{
-                                        weekGroup.isNoDate
-                                            ? ('artemisApp.courseOverview.sidebar.noDate' | artemisTranslate)
-                                            : ('artemisApp.courseOverview.sidebar.weekRange'
-                                              | artemisTranslate
-                                                  : {
-                                                        start: (weekGroup.start | artemisDate: 'long-date'),
-                                                        end: (weekGroup.end | artemisDate: 'long-date'),
-                                                    })
-                                    }}
-                                </div>
-                            }
-                            <div>
-                                @for (
-                                    sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
-                                    let last = $last;
-                                    track sidebarItem.trackId ?? sidebarItem.id
-                                ) {
-                                    <div [ngClass]="{ 'mb-2': !last }">
-                                        <jhi-sidebar-card
-                                            [size]="sidebarItem.size"
-                                            [itemSelected]="itemSelected()"
-                                            [sidebarType]="sidebarType()"
-                                            [sidebarItem]="sidebarItem"
-                                            [groupKey]="groupKey"
-                                            [activeItemId]="selectedItemId()"
-                                            (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                        />
+                <div
+                    id="test-accordion-item-content"
+                    class="group-content bg-module"
+                    [class.group-collapsed]="collapseStateInternal()[groupKey]"
+                    [attr.inert]="collapseStateInternal()[groupKey] ? '' : null"
+                >
+                    <div class="group-content-inner">
+                        <div class="p-1">
+                            @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf(); let first = $first) {
+                                @if (weekGroup.showDateHeader) {
+                                    <div class="text-(--text-body-secondary) text-[0.875em] py-2" [ngClass]="{ 'pt-0': first }">
+                                        {{
+                                            weekGroup.isNoDate
+                                                ? ('artemisApp.courseOverview.sidebar.noDate' | artemisTranslate)
+                                                : ('artemisApp.courseOverview.sidebar.weekRange'
+                                                  | artemisTranslate
+                                                      : {
+                                                            start: (weekGroup.start | artemisDate: 'long-date'),
+                                                            end: (weekGroup.end | artemisDate: 'long-date'),
+                                                        })
+                                        }}
                                     </div>
                                 }
-                            </div>
-                        }
+                                <div>
+                                    @for (
+                                        sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
+                                        let last = $last;
+                                        track sidebarItem.trackId ?? sidebarItem.id
+                                    ) {
+                                        <div [ngClass]="{ 'mb-2': !last }">
+                                            <jhi-sidebar-card
+                                                [size]="sidebarItem.size"
+                                                [itemSelected]="itemSelected()"
+                                                [sidebarType]="sidebarType()"
+                                                [sidebarItem]="sidebarItem"
+                                                [groupKey]="groupKey"
+                                                [activeItemId]="selectedItemId()"
+                                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                            />
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             }
-            <hr class="my-1" />
+            <hr class="my-1!" />
         </div>
     }
 }

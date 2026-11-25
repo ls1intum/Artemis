@@ -80,6 +80,8 @@
     --color-button-contrast-foreground: var(--tumaet-ui-button-contrast-foreground);
     --color-button-secondary-border: var(--tumaet-ui-button-secondary-border);
     --color-table-striped-background: var(--tumaet-ui-table-striped-background);
+    --color-table-header: var(--tumaet-ui-table-header-background);
+    --color-table-header-hover: var(--tumaet-ui-table-header-hover-background);
     --color-tooltip-background: var(--tumaet-ui-tooltip-background);
     --color-tooltip: var(--tumaet-ui-tooltip-color);
 }

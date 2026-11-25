@@ -1,12 +1,18 @@
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiCheckboxComponent, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogRef,
+    TumAetUiDialogService,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
-import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
@@ -14,7 +20,7 @@ import {
     getExerciseDifficultyFilterOptions,
     getExerciseTypeFilterOptions,
 } from 'app/course/sidebar/sidebar.helper';
-import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterModalComponent, ExerciseFilterModalData } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -31,7 +37,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
-    styleUrls: ['./sidebar.component.scss'],
+    styleUrls: ['./sidebar.component.css'],
     host: {
         '[class.fit-container-height]': 'fitContainerHeight()',
     },
@@ -40,11 +46,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         SidebarAccordionComponent,
         SidebarCardComponent,
         SearchFilterPipe,
@@ -69,7 +74,6 @@ export class SidebarComponent implements OnDestroy {
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
     readonly searchFieldEnabled = input<boolean>(true);
-    readonly searchFieldSize = input<TumAetUiInputSize | undefined>(undefined);
     /** Size the scrollable list from the available container height instead of the viewport. */
     readonly fitContainerHeight = input(false);
     readonly sidebarData = input.required<SidebarData>();
@@ -221,15 +225,16 @@ export class SidebarComponent implements OnDestroy {
             this.sidebarDataBeforeFiltering.set(deepClone(this.sidebarDataInternal()));
         }
 
-        this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
+        this.modalRef = this.modalService.open<ExerciseFilterModalComponent, unknown, ExerciseFilterModalData>(ExerciseFilterModalComponent, {
             size: 'large',
             showHeader: false,
             ariaLabel: this.translateService.instant('artemisApp.courseOverview.exerciseFilter.modalTitle'),
             dismissableMask: false,
+            data: {
+                sidebarData: deepClone(this.sidebarDataBeforeFiltering()),
+                exerciseFilters: deepClone(this.exerciseFilters()),
+            },
         });
-
-        this.modalRef.componentInstance.sidebarData = deepClone(this.sidebarDataBeforeFiltering());
-        this.modalRef.componentInstance.exerciseFilters = deepClone(this.exerciseFilters());
 
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarDataInternal.set(exerciseFilterResults.filteredSidebarData!);

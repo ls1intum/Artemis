@@ -4,7 +4,17 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ConnectedPosition } from '@angular/cdk/overlay';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import {
+    TumAetUiMenuComponent,
+    TumAetUiMenuGroupComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuSeparatorComponent,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { User } from 'app/account/user/user.model';
 import {
     MODULE_FEATURE_ATLAS,
@@ -27,7 +37,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -49,30 +59,32 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['navbar.scss'],
+    styleUrls: ['navbar.css'],
     imports: [
         NgOptimizedImage,
         NgClass,
         ThemeSwitchComponent,
-        NgbDropdown,
+        TumAetUiMenuTriggerDirective,
         RouterLinkActive,
-        NgbDropdownToggle,
+        TumAetUiMenuComponent,
+        TumAetUiMenuGroupComponent,
+        TumAetUiMenuSeparatorComponent,
         FaIconComponent,
         TranslateDirective,
-        NgbDropdownMenu,
+        TumAetUiMenuItemDirective,
         RouterLink,
         ActiveMenuDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         JhiConnectionWarningComponent,
         LoadingNotificationComponent,
         NgTemplateOutlet,
-        NgbCollapse,
         SystemNotificationComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
@@ -101,11 +113,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly courseStorageService = inject(CourseStorageService);
+    private readonly breakpointObserver = inject(BreakpointObserver);
+
+    /** Below this width the course overview hides its own enrollment button, so the account menu offers it. */
+    readonly isNarrowScreen = toSignal(this.breakpointObserver.observe('(max-width: 767.98px)').pipe(map((state) => state.matches)), { initialValue: false });
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;
     protected readonly faCog = faCog;
-    protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
     protected readonly faFlag = faFlag;
     protected readonly faSignOutAlt = faSignOutAlt;
@@ -113,6 +128,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faUserShield = faUserShield;
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    /** The account menu hangs from the right edge of its trigger, which sits at the right edge of the window. */
+    protected readonly accountMenuPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' },
+    ];
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);
@@ -125,7 +145,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     languages = LANGUAGES;
     readonly version = signal<string>(undefined!);
     readonly currAccount = signal<User | undefined>(undefined);
-    isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
     breadcrumbSubscriptions: Subscription[] = [];
@@ -311,6 +330,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
+        smart_quizzes: 'artemisApp.hyperion.quizQuestionPool.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -961,7 +981,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            !this.studentExam.exam.testExam &&
+            this.studentExam.exam.examMode === ExamMode.REAL &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&

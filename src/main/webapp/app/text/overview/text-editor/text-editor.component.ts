@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -50,7 +51,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./text-editor.component.scss'],
+    styleUrls: ['./text-editor.component.css'],
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -65,6 +66,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         UpperCasePipe,
         ArtemisTranslatePipe,
         MarkdownDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {

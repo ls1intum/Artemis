@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,7 +20,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -54,8 +53,6 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -69,6 +66,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -143,6 +145,11 @@ describe('CourseOverviewComponent', () => {
     let tutorialGroupApiService: TutorialGroupApi;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let courseAccessStorageService: CourseAccessStorageService;
+    let scienceFeatureActive: BehaviorSubject<boolean>;
+    let scienceSettingsServiceMock: {
+        getConsentForCourse: ReturnType<typeof vi.fn<(courseId: number) => Observable<ScienceCourseConsent | undefined>>>;
+        saveConsentForCourse: ReturnType<typeof vi.fn>;
+    };
     let router: MockRouter;
     let findCourseForOverviewStub: ReturnType<typeof vi.spyOn>;
     let route: ActivatedRoute;
@@ -182,18 +189,20 @@ describe('CourseOverviewComponent', () => {
             snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
+        scienceFeatureActive = new BehaviorSubject<boolean>(true);
+        scienceSettingsServiceMock = {
+            getConsentForCourse: vi.fn<(courseId: number) => Observable<ScienceCourseConsent | undefined>>().mockReturnValue(of(undefined)),
+            saveConsentForCourse: vi.fn().mockReturnValue(of({ courseId: course1.id!, scienceEnabled: true, active: true })),
+        };
 
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
                 MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
@@ -220,10 +229,14 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
-                { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: ScienceSettingsService, useValue: scienceSettingsServiceMock },
+                {
+                    provide: FeatureToggleService,
+                    useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable(), getFeatureToggles: () => of(Object.values(FeatureToggle)) },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -381,8 +394,8 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
     });
 
     it('should create sidebar items for student if questions are available for practice', () => {
@@ -390,23 +403,23 @@ describe('CourseOverviewComponent', () => {
         component.availableTabs.set(availableTabs({ lectures: true, training: true }));
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Training');
-        expect(sidebarItems[2].title).toContain('Lectures');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Training');
+        expect(sidebarItems[3].title).toContain('Lectures');
     });
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.availableTabs.set(availableTabs({ competencies: true, learningPaths: true }));
         component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('Competencies');
-        expect(sidebarItems[4].title).toContain('Learning Path');
+        expect(sidebarItems[4].title).toContain('Competencies');
+        expect(sidebarItems[5].title).toContain('Learning Path');
     });
 
     it('should create faq item when accepted faqs exist', () => {
         component.availableTabs.set(availableTabs({ faq: true }));
         const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems[3].title).toContain('FAQs');
+        expect(sidebarItems[4].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -638,7 +651,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should show the exams item when the exams tab is available', () => {
         component.availableTabs.set(availableTabs({ exams: true }));
-        expect(component.getSidebarItems()[0].title).toContain('Exams');
+        expect(component.getSidebarItems()[1].title).toContain('Exams');
     });
 
     it('should not show the exams item when the exams tab is unavailable', () => {
@@ -654,6 +667,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(items).toContainEqual(courseSidebarItemService.getCommunicationsItem());
         expect(items).toContainEqual(courseSidebarItemService.getTutorialGroupsItem());
+        expect(items[0].routerLink).toBe('home');
         expect(items).toContainEqual(courseSidebarItemService.getIrisItem());
     });
 
@@ -852,6 +866,214 @@ describe('CourseOverviewComponent', () => {
 
             expect(internals().isolatedView()).toBe(true);
             expect(fixture.nativeElement.querySelector('.sidebar').hidden).toBe(true);
+        });
+    });
+
+    describe('science consent', () => {
+        const undecidedConsent: ScienceCourseConsent = { courseId: course1.id!, scienceEnabled: true };
+        const otherCourse = { ...course1, id: 77 } as Course;
+
+        /** The page-scoped instance the course overview provides, not a module-level one. */
+        const scienceService = () => fixture.debugElement.injector.get(ScienceService);
+
+        /** Enters a course whose consent endpoint answers with the given state. */
+        const enterCourse = (consent: ScienceCourseConsent | undefined, course: Course = course1) => {
+            scienceSettingsServiceMock.getConsentForCourse.mockReturnValue(of(consent));
+            component.course.set(course);
+            scienceService().loadConsent(course.id!);
+        };
+
+        it('should prompt for a decision the student has not taken yet', () => {
+            enterCourse(undecidedConsent);
+
+            expect(component.scienceConsentCourse()).toEqual(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it('waits until the AI selection dialog closes before showing consent', () => {
+            const modal = TestBed.inject(LLMSelectionModalService);
+            void modal.open();
+            enterCourse(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBe(false);
+
+            modal.emitChoice(LLM_MODAL_DISMISSED);
+            expect(component.showScienceConsentModal()).toBe(true);
+        });
+
+        it.each([
+            ['the student already opted in', { ...undecidedConsent, active: true }],
+            ['the student already opted out', { ...undecidedConsent, active: false }],
+            ['the course no longer collects science data', { ...undecidedConsent, scienceEnabled: false }],
+        ])('should not prompt when %s', (_case, consent) => {
+            enterCourse(consent);
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should neither load nor prompt while the science feature is disabled', () => {
+            scienceFeatureActive.next(false);
+            enterCourse(undecidedConsent);
+
+            expect(scienceSettingsServiceMock.getConsentForCourse).not.toHaveBeenCalled();
+            expect(component.scienceConsentCourse()).toBeUndefined();
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should not carry a decision over to another course', () => {
+            // The dialog is matched against the course on screen, so switching course cannot leave the previous course's
+            // prompt open - which would have written the previous course's consent when the student answered it.
+            enterCourse(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+
+            component.course.set({ ...course1, id: 99 } as Course);
+
+            expect(component.scienceConsentCourse()).toBeUndefined();
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it.each([
+            ['accept', true],
+            ['decline', false],
+        ])('should store the decision and close the dialog when the student chooses to %s', (_choice, expected) => {
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValue(of({ ...undecidedConsent, active: expected }));
+            enterCourse(undecidedConsent);
+
+            if (expected) {
+                component.acceptScienceConsent();
+            } else {
+                component.declineScienceConsent();
+            }
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledWith(course1.id, expected);
+            expect(scienceService().courseConsent()).toEqual({ ...undecidedConsent, active: expected });
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should lock both decisions while one is being stored', () => {
+            // Two overlapping saves can reach the server in either order, so "Contribute data" followed by "Do not
+            // contribute" could leave the student contributing although their last choice was to decline.
+            const pendingSave = new Subject<ScienceCourseConsent>();
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValue(pendingSave);
+            enterCourse(undecidedConsent);
+
+            component.acceptScienceConsent();
+            fixture.detectChanges();
+            expect(component.scienceConsentSaving()).toBeTruthy();
+            expect(document.querySelector<HTMLButtonElement>('[data-testid="science-consent-accept"]')?.disabled).toBeTruthy();
+            expect(document.querySelector<HTMLButtonElement>('[data-testid="science-consent-decline"]')?.disabled).toBeTruthy();
+
+            component.declineScienceConsent();
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledExactlyOnceWith(course1.id, true);
+
+            pendingSave.next({ ...undecidedConsent, active: true });
+            pendingSave.complete();
+            expect(component.scienceConsentSaving()).toBeFalsy();
+            expect(scienceService().courseConsent()).toEqual({ ...undecidedConsent, active: true });
+        });
+
+        it('should unlock the decisions after a failed save so the student can try again', () => {
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValueOnce(throwError(() => new Error('boom')));
+            enterCourse(undecidedConsent);
+
+            component.acceptScienceConsent();
+            expect(component.scienceConsentSaving()).toBeFalsy();
+            component.acceptScienceConsent();
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledTimes(2);
+        });
+
+        it('should stop prompting for this course once the dialog is dismissed', () => {
+            // Consent has to be freely given, so there is always a way out. Without it a failed save left a modal with
+            // no close control over an unusable course.
+            enterCourse(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+
+            component.dismissScienceConsent();
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should prompt again for a different course after a dismissal', () => {
+            enterCourse(undecidedConsent);
+            component.dismissScienceConsent();
+
+            enterCourse({ ...undecidedConsent, courseId: 77 }, otherCourse);
+
+            expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it('should keep every dismissed course dismissed when switching back and forth', () => {
+            enterCourse(undecidedConsent);
+            component.dismissScienceConsent();
+            enterCourse({ ...undecidedConsent, courseId: 77 }, otherCourse);
+            component.dismissScienceConsent();
+
+            enterCourse(undecidedConsent);
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should never prompt on an exam page', () => {
+            // A reload during an exam rebuilds this page; nothing may cover a running exam.
+            router.setUrl(`/courses/${course1.id}/exams/5`);
+            enterCourse(undecidedConsent);
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+
+            router.setUrl(`/courses/${course1.id}/exercises`);
+
+            expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it('should load only the consent of the entered course on course entry', async () => {
+            scienceSettingsServiceMock.getConsentForCourse.mockReturnValue(of(undecidedConsent));
+
+            await component['initializeCourseOverviewComponent']();
+
+            expect(scienceSettingsServiceMock.getConsentForCourse).toHaveBeenCalledExactlyOnceWith(course1.id);
+            expect(scienceService().courseConsent()).toEqual(undecidedConsent);
+        });
+
+        it('should load the consent of the new course when switching course in place', async () => {
+            const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+            (route as any).params = paramsSubject.asObservable();
+            scienceSettingsServiceMock.getConsentForCourse.mockImplementation((courseId: number) => of(courseId === course1.id ? undecidedConsent : undefined));
+            await component['initializeCourseOverviewComponent']();
+            expect(scienceService().courseConsent()).toEqual(undecidedConsent);
+
+            paramsSubject.next({ courseId: 999 });
+
+            expect(scienceSettingsServiceMock.getConsentForCourse).toHaveBeenLastCalledWith(999);
+            expect(scienceService().courseConsent()).toBeUndefined();
+        });
+
+        it('should not load the consent on course entry while the science feature is disabled', async () => {
+            // The consent endpoint is behind the feature toggle: loading it anyway answers every course entry with a 403.
+            scienceFeatureActive.next(false);
+
+            await component['initializeCourseOverviewComponent']();
+
+            expect(scienceSettingsServiceMock.getConsentForCourse).not.toHaveBeenCalled();
+        });
+
+        it('should store nothing when there is no consent to answer', () => {
+            enterCourse(undefined);
+
+            component.acceptScienceConsent();
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).not.toHaveBeenCalled();
+        });
+
+        it('should report a failed decision with the error text and keep the dialog open', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertSpy = vi.spyOn(alertService, 'error');
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValue(throwError(() => new Error('boom')));
+            enterCourse(undecidedConsent);
+
+            component.acceptScienceConsent();
+
+            expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'boom' });
+            expect(component.showScienceConsentModal()).toBeTruthy();
         });
     });
 });

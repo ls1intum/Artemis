@@ -24,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
@@ -234,6 +235,16 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textAtMaxLength_ok() throws Exception {
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void shouldAllowAdminPagingWithRepeatedSortAndDetail() throws Exception {
         request.performMvcRequest(
                 get("/api/notification/admin/system-notifications").queryParam("page", "0").queryParam("size", "1").queryParam("sort", "notificationDate,desc", "id,asc"))
@@ -298,6 +309,16 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_textTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void shouldKeepDomainValidationErrorsForMissingDatesAndUnknownId() throws Exception {
         request.performMvcRequest(post("/api/notification/admin/system-notifications").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest())
                 .andExpect(header().string("X-artemisApp-error", "error.systemNotificationNeedsBothDates"));
@@ -310,6 +331,51 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         var unknown = new SystemNotificationUpdateDTO(Long.MAX_VALUE, null, null, null, null, null);
         request.performMvcRequest(put("/api/notification/admin/system-notifications").contentType(MediaType.APPLICATION_JSON).content(jsonMapper.writeValueAsString(unknown)))
                 .andExpect(status().isBadRequest()).andExpect(header().string("X-artemisApp-error", "error.idNull"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textAtMaxLength_ok() throws Exception {
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2000), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        SystemNotificationDTO response = request.putWithResponseBody("/api/notification/admin/system-notifications", dto, SystemNotificationDTO.class, HttpStatus.OK);
+        assertThat(response.text()).hasSize(2000);
+        assertThat(systemNotificationRepo.findById(response.id())).get().extracting(SystemNotification::getText).satisfies(t -> assertThat(t).hasSize(2000));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_textTooLong_badRequest() throws Exception {
+        String originalText = "original text";
+        systemNotification.setText(originalText);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "Title", "a".repeat(2001), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getText).isEqualTo(originalText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_titleTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "a".repeat(256), "text", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_titleTooLong_badRequest() throws Exception {
+        String originalTitle = "original title";
+        systemNotification.setTitle(originalTitle);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "a".repeat(256), "text", ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getTitle).isEqualTo(originalTitle);
     }
 
     /**

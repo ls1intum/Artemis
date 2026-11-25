@@ -17,8 +17,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -45,6 +43,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { signal } from '@angular/core';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -85,9 +85,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(SortByDirective),
                 TranslatePipeMock,
-                MockDirective(SortDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,
@@ -290,6 +288,151 @@ describe('CourseExercisesComponent', () => {
         TestBed.tick();
 
         expect(exerciseDetails.setSidebarToggle).toHaveBeenCalledWith(false, expect.any(Function));
+    });
+
+    describe('focused exercise page', () => {
+        const storedPreference = (collapsed: boolean) => vi.spyOn(TestBed.inject(CourseOverviewService), 'getSidebarCollapseStateFromStorage').mockReturnValue(collapsed);
+
+        it('should collapse the list while the page asks for focus, without storing the collapsed state', () => {
+            const store = vi.spyOn(TestBed.inject(CourseOverviewService), 'setSidebarCollapseState');
+            (component as any)._isCollapsed.set(false);
+            const focusMode = signal(false);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode });
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(false);
+
+            focusMode.set(true);
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+            expect(store).not.toHaveBeenCalled();
+        });
+
+        it('should still let the student open the list by hand, and keep it open while the page stays focused', () => {
+            const focusMode = signal(true);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode });
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+
+            component.toggleSidebar();
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(false);
+        });
+
+        it('should restore a stored preference of an expanded list when the focused page is left', () => {
+            storedPreference(false);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+
+            component.onSubRouteDeactivate();
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(false);
+        });
+
+        it('should restore a stored preference of a collapsed list when the focused page is left', () => {
+            storedPreference(true);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            // The student opens the list during the quiz; only a restore can collapse it again, a no-op would leave it open.
+            component.toggleSidebar();
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(false);
+            storedPreference(true);
+
+            component.onSubRouteDeactivate();
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+        });
+
+        it('should keep the list collapsed while a new page replaces the focused one before it knows its focus state', () => {
+            const restore = storedPreference(false);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+            restore.mockClear();
+
+            // Opening a running quiz swaps the details page for a new instance in one tick, before the exercise has loaded.
+            component.onSubRouteDeactivate();
+            const loadingPage = signal<boolean | undefined>(undefined);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: loadingPage });
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+            expect(restore).not.toHaveBeenCalled();
+
+            loadingPage.set(true);
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(true);
+            expect(restore).not.toHaveBeenCalled();
+
+            loadingPage.set(false);
+            TestBed.tick();
+            expect(component.isCollapsed()).toBe(false);
+            expect(restore).toHaveBeenCalledOnce();
+        });
+
+        it('should make the collapsed list inert and open it to the keyboard again when it is expanded', () => {
+            (component as any)._course.set(course);
+            (component as any)._isCollapsed.set(true);
+            TestBed.tick();
+            fixture.detectChanges();
+            const wrapper = () => fixture.nativeElement.querySelector('.sidebar-collapsed') as HTMLElement | null;
+            expect(wrapper()!.hasAttribute('inert')).toBe(true);
+
+            (component as any)._isCollapsed.set(false);
+            TestBed.tick();
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('jhi-sidebar')!.parentElement.hasAttribute('inert')).toBe(false);
+        });
+
+        it('should move the focus from the list to the toggle of the page when the list collapses for focus', () => {
+            (component as any)._course.set(course);
+            (component as any)._isCollapsed.set(false);
+            TestBed.tick();
+            fixture.detectChanges();
+            const inList = document.createElement('button');
+            fixture.nativeElement.querySelector('jhi-sidebar').parentElement.append(inList);
+            const toggle = document.createElement('button');
+            toggle.setAttribute('data-testid', 'course-sidebar-toggle');
+            fixture.nativeElement.querySelector('.content-width').append(toggle);
+            document.body.append(fixture.nativeElement);
+            inList.focus();
+            expect(document.activeElement).toBe(inList);
+
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode: signal(true) });
+            TestBed.tick();
+            fixture.detectChanges();
+
+            expect(component.isCollapsed()).toBe(true);
+            expect(document.activeElement).toBe(toggle);
+            fixture.nativeElement.remove();
+        });
+
+        it('should restore the stored preference when the focus ends on the same page', () => {
+            storedPreference(false);
+            const focusMode = signal(true);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn(), focusMode });
+            TestBed.tick();
+
+            focusMode.set(false);
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(false);
+        });
+
+        it('should leave the list alone for a page without focus mode', () => {
+            (component as any)._isCollapsed.set(true);
+            component.onSubRouteActivate({ setSidebarToggle: vi.fn() });
+            TestBed.tick();
+            component.onSubRouteDeactivate();
+            TestBed.tick();
+
+            expect(component.isCollapsed()).toBe(true);
+        });
     });
 
     it('should display "Please Select an Exercise" when no exercise is selected', () => {

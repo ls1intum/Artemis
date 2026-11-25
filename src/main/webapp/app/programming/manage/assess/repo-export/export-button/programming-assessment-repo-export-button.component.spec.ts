@@ -5,7 +5,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { provideHttpClient } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
     let comp: ProgrammingAssessmentRepoExportButtonComponent;
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportButtonComponent>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
 
     const exerciseId = 42;
     const participationIdList = [1];
@@ -27,13 +27,13 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
 
     beforeEach(() => {
         const mockDialogService = {
-            open: vi.fn().mockReturnValue({ onClose: { subscribe: vi.fn() }, close: vi.fn() } as unknown as DynamicDialogRef),
+            open: vi.fn().mockReturnValue({ onClose: { subscribe: vi.fn() }, close: vi.fn() } as unknown as TumAetUiDialogRef),
         };
 
         return TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: mockDialogService },
+                { provide: TumAetUiDialogService, useValue: mockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -42,7 +42,7 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportButtonComponent);
                 comp = fixture.componentInstance;
-                dialogService = TestBed.inject(DialogService);
+                dialogService = TestBed.inject(TumAetUiDialogService);
 
                 fixture.componentRef.setInput('programmingExercises', [programmingExercise]);
                 fixture.componentRef.setInput('participationIdList', participationIdList);
@@ -53,6 +53,16 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('translates the accessible name in single-participant mode: %s', (singleMode) => {
+        const titleKey = singleMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title';
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `Translated ${key}`);
+        fixture.componentRef.setInput('singleParticipantMode', singleMode);
+        fixture.detectChanges();
+
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+        expect(button.getAttribute('aria-label')).toBe(`Translated ${titleKey}`);
     });
 
     it('should open repo export dialog with the correct data and a dismissable config', () => {
@@ -67,7 +77,7 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             ProgrammingAssessmentRepoExportDialogComponent,
             expect.objectContaining({
-                modal: true,
+                size: 'medium',
                 closable: true,
                 closeOnEscape: true,
                 header: 'entity.exportRepos.title',

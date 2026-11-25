@@ -21,7 +21,6 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-notification-settings',
     imports: [TranslateDirective, FaIconComponent, CourseNotificationPresetPickerComponent, CourseNotificationSettingSpecificationCardComponent],
     templateUrl: './notification-settings.component.html',
-    styleUrl: './notification-settings.component.scss',
 })
 export class NotificationSettingsComponent extends CourseSettingCategoryDirective implements OnDestroy {
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);

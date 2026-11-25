@@ -20,6 +20,7 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let submissionPolicyService: SubmissionPolicyService;
+    let routeData: Record<string, unknown>;
 
     const studentParticipation: ProgrammingExerciseStudentParticipation = {
         id: 21,
@@ -27,13 +28,21 @@ describe('CodeEditorStudentContainerComponent', () => {
     };
 
     beforeEach(() => {
+        routeData = {};
         TestBed.configureTestingModule({
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 {
                     provide: ActivatedRoute,
-                    useValue: { params: of({ participationId: studentParticipation.id }) },
+                    useValue: {
+                        params: of({ participationId: studentParticipation.id }),
+                        snapshot: {
+                            get data() {
+                                return routeData;
+                            },
+                        },
+                    },
                 },
                 MockProvider(DomainService),
                 MockProvider(SubmissionPolicyService),
@@ -48,6 +57,29 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    describe('layout', () => {
+        beforeEach(() => {
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
+            vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        });
+
+        it('should leave out the instructions and the navbar when the exercise page shows them next to the editor', () => {
+            comp.ngOnInit();
+
+            expect(comp.fullPage()).toBe(false);
+            expect(comp.lightweight()).toBe(true);
+        });
+
+        it('should show the instructions and the navbar when the editor is the whole page', () => {
+            routeData = { fullPageEditor: true };
+
+            comp.ngOnInit();
+
+            expect(comp.fullPage()).toBe(true);
+            expect(comp.lightweight()).toBe(false);
+        });
     });
 
     it('should correctly initialize the number of submissions for submission policy', () => {

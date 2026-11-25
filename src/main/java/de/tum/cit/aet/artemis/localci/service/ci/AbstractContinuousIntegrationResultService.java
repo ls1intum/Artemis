@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.ci;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -76,6 +77,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
                     activeTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
         }
 
+        List<TestCaseBase> unmatchedFailures = new ArrayList<>();
+        List<TestCaseBase> reportedTests = new ArrayList<>();
         jobs.forEach(job -> {
             if (log.isDebugEnabled()) {
                 var failedTestNames = job.failedTests().stream().map(TestCaseBase::name).sorted().toList();
@@ -86,8 +89,12 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
                         failedTest.testMessages()));
             }
 
-            job.failedTests().forEach(failedTest -> feedbackCreationService
-                    .createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases).ifPresent(result::addTestCaseFeedback));
+            reportedTests.addAll(job.failedTests());
+            reportedTests.addAll(job.successfulTests());
+            job.failedTests()
+                    .forEach(failedTest -> feedbackCreationService
+                            .createFeedbackFromTestCase(failedTest.name(), failedTest.testMessages(), false, programmingExercise, activeTestCases)
+                            .ifPresentOrElse(result::addTestCaseFeedback, () -> unmatchedFailures.add(failedTest)));
             result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
             for (final var successfulTest : job.successfulTests()) {
@@ -98,6 +105,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
         });
+
+        // A failed test that matches no test case may be an error of a whole test class (e.g. in @BeforeAll): show it on the tests of that class that did not run.
+        feedbackCreationService.addFeedbackForTestsOfFailedClasses(unmatchedFailures, reportedTests, activeTestCases, result, programmingExercise);
 
         if (result.getTestCaseCount() > 0 && result.getTestCaseFeedbacks().isEmpty()) {
             // Not a failed build: the tests ran, but Artemis cannot attribute any of them. This is what a failed or

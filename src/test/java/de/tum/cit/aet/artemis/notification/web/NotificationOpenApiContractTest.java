@@ -134,6 +134,8 @@ class NotificationOpenApiContractTest {
         assertValue(input + ".required", containsInAnyOrder("notificationDate", "expireDate"));
         assertValue(input + ".properties.id.type", containsInAnyOrder("integer", "null"));
         assertValue(input + ".properties.title.type", containsInAnyOrder("string", "null"));
+        assertValue(input + ".properties.title.maxLength", 255);
+        assertValue(input + ".properties.text.maxLength", 2000);
         assertValue(input + ".properties.notificationDate.type", "string");
         assertValue(input + ".properties.type.enum", hasItem(nullValue()));
     }
