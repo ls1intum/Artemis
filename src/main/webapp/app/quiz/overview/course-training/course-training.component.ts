@@ -8,7 +8,7 @@ import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
 import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';

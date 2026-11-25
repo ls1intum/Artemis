@@ -1,17 +1,13 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiPaginatorComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiToggleSwitchComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';

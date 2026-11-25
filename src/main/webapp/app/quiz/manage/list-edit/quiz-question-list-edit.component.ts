@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';

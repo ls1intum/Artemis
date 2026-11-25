@@ -4,7 +4,7 @@ import { InitializationState, Participation } from 'app/exercise/shared/entities
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Observable, from, of } from 'rxjs';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';

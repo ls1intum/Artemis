@@ -21,7 +21,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faDownload, faFileImport, faUserMinus, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';

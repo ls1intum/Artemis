@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 

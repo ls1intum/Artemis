@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';

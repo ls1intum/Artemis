@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/credentials/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
 describe('VcsAccessTokensSettingsComponent', () => {

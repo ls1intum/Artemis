@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

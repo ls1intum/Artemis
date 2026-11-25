@@ -11,7 +11,7 @@ import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/
 import { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 /**
  * Builds a signal-backed detail input matching {@link ProgrammingDiffReportDetail}. The fields are signals so the

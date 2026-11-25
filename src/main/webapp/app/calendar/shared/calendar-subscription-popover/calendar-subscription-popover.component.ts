@@ -1,5 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';

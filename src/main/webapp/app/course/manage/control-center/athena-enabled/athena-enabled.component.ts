@@ -6,7 +6,8 @@ import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-tog
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 /**

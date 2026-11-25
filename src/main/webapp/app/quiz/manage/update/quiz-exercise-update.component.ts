@@ -1,16 +1,13 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDatePickerComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';

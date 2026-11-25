@@ -4,7 +4,8 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';

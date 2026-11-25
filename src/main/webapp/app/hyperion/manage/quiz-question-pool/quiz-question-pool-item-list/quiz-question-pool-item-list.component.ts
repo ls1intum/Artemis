@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { TumAetUiEmptyStateComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizQuestionPoolItemComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-item/quiz-question-pool-item.component';

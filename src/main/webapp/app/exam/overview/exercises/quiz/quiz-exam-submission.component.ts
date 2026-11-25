@@ -16,7 +16,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';

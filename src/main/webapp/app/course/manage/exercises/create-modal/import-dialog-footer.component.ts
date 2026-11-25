@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

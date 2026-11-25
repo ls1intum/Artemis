@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, e
 import { HttpErrorResponse } from '@angular/common/http';
 import { TumLiveFilePickerComponent } from './tum-live-file-picker.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumLiveTransferError, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';

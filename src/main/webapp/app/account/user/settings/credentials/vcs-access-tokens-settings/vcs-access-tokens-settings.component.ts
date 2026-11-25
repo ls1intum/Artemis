@@ -4,14 +4,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiDatePickerComponent,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-    TumAetUiTableDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
