@@ -1,0 +1,76 @@
+:host {
+    display: block;
+}
+
+.metadata-section {
+    padding: 0.25rem 0;
+}
+
+.metadata-section h4 {
+    margin: 0 0 0.6rem;
+    font-size: 1.03rem;
+    font-weight: 700;
+}
+
+.metadata-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.metadata-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: baseline;
+    column-gap: 1.25rem;
+}
+
+.metadata-row__label {
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.9rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.metadata-row__value {
+    text-align: left;
+    font-weight: 500;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.version-meta-panel {
+    display: block;
+}
+
+.category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.markdown-block {
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 8px;
+    padding: 0.65rem;
+    background: var(--tumaet-ui-control-background);
+}
+
+/* ::ng-deep is required to override Angular-injected markdown-preview border styles */
+:host ::ng-deep .markdown-preview.markdown-block {
+    border: 1px solid var(--tumaet-ui-border-color) !important;
+}
+
+.markdown-block--problem {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+}
+
+.metadata-section--problem {
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: var(--tumaet-ui-control-background);
+}

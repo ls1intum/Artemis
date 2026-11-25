@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-loading-indicator-container',
     templateUrl: './loading-indicator-container.component.html',
-    styleUrls: ['./loading-indicator-container.component.scss'],
+    styleUrls: ['./loading-indicator-container.component.css'],
     imports: [TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
 })
 export class LoadingIndicatorContainerComponent {

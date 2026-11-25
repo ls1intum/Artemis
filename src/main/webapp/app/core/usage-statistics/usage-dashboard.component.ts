@@ -18,7 +18,7 @@ const EXERCISE_TYPES = ['programming', 'quiz', 'text', 'modeling', 'file-upload'
 @Component({
     selector: 'jhi-usage-dashboard',
     templateUrl: './usage-dashboard.component.html',
-    styleUrl: './usage-dashboard.component.scss',
+    styleUrl: './usage-dashboard.component.css',
     imports: [DecimalPipe, NgTemplateOutlet, FaIconComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class UsageDashboardComponent implements OnInit {

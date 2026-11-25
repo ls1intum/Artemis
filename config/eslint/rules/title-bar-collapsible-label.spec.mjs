@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 
@@ -8,8 +8,8 @@ const webapp = resolve(repoRoot, 'src/main/webapp');
 
 /**
  * A title bar collapses the labels of the controls projected into it once it runs out of room, leaving icon-only
- * controls. Two halves have to line up for that: the bar declares itself a size container (`title-bar-size-container`,
- * which names the container `title-bar`), and a label opts in with `.title-bar-collapsible-label`, whose rule is a
+ * controls. Two halves have to line up for that: the bar declares itself a size container named `title-bar`
+ * (`container: title-bar / inline-size`), and a label opts in with `.title-bar-collapsible-label`, whose rule is a
  * `@container title-bar` query.
  *
  * Both halves fail silently. A container query whose named container does not exist never matches, so the labels simply
@@ -31,47 +31,46 @@ const relative = (file) => file.slice(repoRoot.length + 1);
 
 const LABEL_CLASS = 'title-bar-collapsible-label';
 const OPTIONAL_CLASS = 'title-bar-optional-control';
-const CONTAINER_MIXIN = 'title-bar-size-container';
-const CONTROLS_MIXIN = 'title-bar-compact-controls';
+const CONTROLS_CLASS = 'title-bar-controls';
+const DECLARES_CONTAINER = /container(-name)?:\s*title-bar\b/;
 
-const mixinsFile = resolve(webapp, 'content/scss/_artemis-mixins.scss');
-const globalFile = resolve(webapp, 'content/scss/global.scss');
+const globalFile = resolve(webapp, 'content/css/layout.css');
+
+/** The body of the `@container title-bar` query that holds the rule of the given selector, if there is one. */
+const containerQueryOf = (css, selector) => css.match(new RegExp(`@container\\s+title-bar\\s*\\([^)]*\\)\\s*\\{[^}]*?${selector}\\s*\\{([^}]*)\\}`))?.[1];
 
 describe('collapsible title bar labels', () => {
-    it('names its container in the mixin the bars include', () => {
-        const mixins = readFileSync(mixinsFile, 'utf8');
-        const body = mixins.match(new RegExp(`@mixin ${CONTAINER_MIXIN}\\s*\\{([\\s\\S]*?)\\n\\}`));
-        expect(body, `${CONTAINER_MIXIN} is not defined in _artemis-mixins.scss`).toBeTruthy();
+    it('names the container of a page top bar', () => {
+        const global = readFileSync(globalFile, 'utf8');
+        const rules = [...global.matchAll(/^\.page-top-bar\s*\{([^}]*)\}/gm)].map((match) => match[1]);
         // Either the shorthand (`container: title-bar / inline-size`) or the two longhands, but the name must be there.
-        expect(body[1]).toMatch(/container(-name)?:\s*title-bar/);
-        expect(body[1]).toMatch(/inline-size/);
+        expect(rules.some((body) => DECLARES_CONTAINER.test(body) && /inline-size/.test(body)), '.page-top-bar is not a size container named title-bar').toBe(true);
     });
 
     it('queries that same container name from the opt-in class', () => {
-        const global = readFileSync(globalFile, 'utf8');
-        const rule = global.match(new RegExp(`\\.${LABEL_CLASS}\\s*\\{([\\s\\S]*?)\\n\\}\\n`));
-        expect(rule, `.${LABEL_CLASS} is not defined in global.scss`).toBeTruthy();
-        expect(rule[1], `.${LABEL_CLASS} must collapse inside an @container title-bar query`).toMatch(/@container\s+title-bar\s*\(/);
+        const body = containerQueryOf(readFileSync(globalFile, 'utf8'), `\\.${LABEL_CLASS}`);
+        expect(body, `.${LABEL_CLASS} must collapse inside an @container title-bar query in layout.css`).toBeTruthy();
         // `display: none` would drop the label out of the accessibility tree and leave the icon-only control unnamed.
-        expect(rule[1]).not.toMatch(/display:\s*none/);
+        expect(body).not.toMatch(/display:\s*none/);
     });
 
     it('establishes the container in every bar that styles projected controls', () => {
-        const offenders = walk(webapp, '.scss')
+        // A component marks its bar with the class in its template or on its host; its stylesheet has to make the bar a
+        // size container, because the rules of layout.css for that class include a container query.
+        const offenders = [...walk(webapp, '.html'), ...walk(webapp, '.ts')]
+            .filter((file) => !file.endsWith('.spec.ts') && new RegExp(`\\b${CONTROLS_CLASS}\\b`).test(readFileSync(file, 'utf8')))
             .filter((file) => {
-                const content = readFileSync(file, 'utf8');
-                return new RegExp(`@include ${CONTROLS_MIXIN}`).test(content) && !new RegExp(`@include ${CONTAINER_MIXIN}`).test(content);
+                const stylesheet = file.replace(/\.(html|ts)$/, '.css');
+                return !existsSync(stylesheet) || !DECLARES_CONTAINER.test(readFileSync(stylesheet, 'utf8'));
             })
             .map(relative);
         expect(offenders, `these style projected title bar controls but never become a size container, so ${LABEL_CLASS} cannot work in them`).toEqual([]);
     });
 
     it('queries that container from the drop-on-narrow class too', () => {
-        const global = readFileSync(globalFile, 'utf8');
-        const rule = global.match(new RegExp(`\\.${OPTIONAL_CLASS}\\s*\\{([\\s\\S]*?)\\n\\}\\n`));
-        expect(rule, `.${OPTIONAL_CLASS} is not defined in global.scss`).toBeTruthy();
-        expect(rule[1], `.${OPTIONAL_CLASS} must drop its control inside an @container title-bar query`).toMatch(/@container\s+title-bar\s*\(/);
-        expect(rule[1]).toMatch(/display:\s*none/);
+        const body = containerQueryOf(readFileSync(globalFile, 'utf8'), `\\.${OPTIONAL_CLASS}\\.${OPTIONAL_CLASS}`);
+        expect(body, `.${OPTIONAL_CLASS} must drop its control inside an @container title-bar query in layout.css`).toBeTruthy();
+        expect(body).toMatch(/display:\s*none/);
     });
 
     it('only marks elements that sit inside a title bar', () => {

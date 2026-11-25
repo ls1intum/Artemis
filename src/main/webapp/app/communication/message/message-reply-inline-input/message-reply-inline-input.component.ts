@@ -15,7 +15,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-message-reply-inline-input',
     templateUrl: './message-reply-inline-input.component.html',
-    styleUrls: ['./message-reply-inline-input.component.scss'],
+    styleUrls: ['./message-reply-inline-input.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })

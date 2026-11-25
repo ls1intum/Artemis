@@ -67,7 +67,8 @@ jobs:
         run: pnpm run clean-www && pnpm run prebuild
       # Only the compile has to run under the tracer. `bootWar` would add resource processing, the
       # git properties, the SBOM tasks and the WAR packaging, none of which CodeQL reads.
+      # The tracer only sees classes javac really compiles, so a build cache hit would leave the Java database empty.
       - name: Build Java
-        run: ./gradlew -Pprod -Pwar compileJava -x webapp
+        run: ./gradlew -Pprod -Pwar compileJava -x webapp --no-build-cache
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3

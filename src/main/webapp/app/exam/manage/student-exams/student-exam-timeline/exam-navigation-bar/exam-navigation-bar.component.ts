@@ -24,7 +24,7 @@ import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.m
 @Component({
     selector: 'jhi-exam-navigation-bar',
     templateUrl: './exam-navigation-bar.component.html',
-    styleUrls: ['./exam-navigation-bar.component.scss'],
+    styleUrls: ['./exam-navigation-bar.component.css'],
     imports: [TranslateDirective, NgClass, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {

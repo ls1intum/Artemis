@@ -29,7 +29,7 @@ import { FileService } from 'app/foundation/service/file.service';
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
-    styleUrls: ['../../communication.component.scss'],
+    styleUrls: ['../../communication.component.css'],
     imports: [RouterLink, FaIconComponent, TranslateDirective, TumAetUiCardComponent],
 })
 export class PostingContentPartComponent {

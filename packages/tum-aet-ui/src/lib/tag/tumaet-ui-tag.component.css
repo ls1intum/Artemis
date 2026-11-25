@@ -1,0 +1,21 @@
+@layer tumaet-ui {
+    :host span[data-severity='success'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-success) 20%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-success-foreground);
+    }
+
+    :host span[data-severity='info'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-info) 20%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-info-foreground);
+    }
+
+    :host span[data-severity='warn'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-warning) 20%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-warning-foreground);
+    }
+
+    :host span[data-severity='danger'] {
+        background: color-mix(in srgb, var(--tumaet-ui-state-danger) 20%, var(--tumaet-ui-content-background));
+        color: var(--tumaet-ui-state-danger-foreground);
+    }
+}

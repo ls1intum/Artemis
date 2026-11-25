@@ -39,7 +39,7 @@ interface MetadataDateField {
 @Component({
     selector: 'jhi-exercise-version-shared-snapshot-metadata',
     templateUrl: './exercise-version-shared-snapshot-metadata.component.html',
-    styleUrls: ['./exercise-version-shared-snapshot-metadata.component.scss'],
+    styleUrls: ['./exercise-version-shared-snapshot-metadata.component.css'],
     imports: [TumAetUiPanelComponent, TumAetUiTagComponent, TranslateDirective, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -10,7 +10,7 @@ const FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 
 @Component({
     selector: 'jhi-hyperion-markdown',
     template: `<div class="hyperion-markdown-body" data-slot="prose" [attr.data-density]="density()" [innerHTML]="rendered() | safeHtml"></div>`,
-    styleUrl: './hyperion-markdown.component.scss',
+    styleUrl: './hyperion-markdown.component.css',
     encapsulation: ViewEncapsulation.None,
     styles: `
         /* Keep styled descendants inside the document; scrolling preserves access to wide tables and formulas. */

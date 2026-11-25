@@ -1,0 +1,77 @@
+:host {
+    cursor: pointer;
+}
+
+:host > div {
+    padding: 5px 0;
+    background-color: var(--overview-light-background-color);
+    border-radius: 0.25rem;
+}
+
+:host > div .exercise-row-line {
+    min-height: 35px;
+    align-items: center;
+}
+
+:host > div:hover {
+    background-color: var(--hover-slightly-darker-body-bg);
+}
+
+:host .course-exercise-row {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+}
+
+/* the link that makes the whole row clickable */
+:host .cover-link::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: '';
+}
+
+:host .exercise-row-icon {
+    color: var(--body-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+:host .exercise-row-icon > fa-icon {
+    z-index: 1;
+}
+
+:host .result {
+    width: unset;
+    z-index: 2;
+}
+
+:host .due-date {
+    z-index: 1;
+}
+
+.raised-actions {
+    position: relative;
+    z-index: 1;
+}
+
+@media (min-width: 768px) {
+    .max-width {
+        max-width: 90%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .max-width {
+        max-width: 100%;
+    }
+}
+
+.exercise-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}

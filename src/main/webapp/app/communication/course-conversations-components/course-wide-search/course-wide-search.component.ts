@@ -25,7 +25,7 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
 @Component({
     selector: 'jhi-course-wide-search',
     templateUrl: './course-wide-search.component.html',
-    styleUrls: ['./course-wide-search.component.scss'],
+    styleUrls: ['./course-wide-search.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,

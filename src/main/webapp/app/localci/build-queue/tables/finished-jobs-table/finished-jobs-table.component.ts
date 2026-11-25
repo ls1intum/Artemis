@@ -20,7 +20,7 @@ import {
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',
-    styleUrl: './finished-jobs-table.component.scss',
+    styleUrls: ['../build-jobs-table.css', './finished-jobs-table.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

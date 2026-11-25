@@ -42,6 +42,37 @@ class HyperionEffortProfileServiceTest {
     }
 
     @Test
+    void repairPresetIsInheritedOverriddenAndPreservedWhenBoundsNarrow() {
+        var standard = profile("Standard");
+        var thorough = profile("Thorough");
+        thorough.setRepairLlmPreset("specialist");
+        var properties = propertiesWith(Map.of("standard", standard, "thorough", thorough));
+        properties.setRepairLlmPreset("deployment-repair");
+        var service = new HyperionEffortProfileService(properties);
+        assertThat(service.resolve(null).repairLlmPreset()).isEqualTo("deployment-repair");
+        assertThat(service.resolve("standard").repairLlmPreset()).isEqualTo("deployment-repair");
+        assertThat(service.resolve("thorough").tightenedBy(100_000L, Duration.ofMinutes(5)).repairLlmPreset()).isEqualTo("specialist");
+
+        // Like the profile's own preset, a blank repair preset inherits the agent's; without one the handoff is disabled.
+        thorough.setRepairLlmPreset(" ");
+        assertThat(new HyperionEffortProfileService(properties).resolve("thorough").repairLlmPreset()).isEqualTo("deployment-repair");
+        properties.setRepairLlmPreset(null);
+        assertThat(new HyperionEffortProfileService(properties).resolve("thorough").repairLlmPreset()).isNull();
+    }
+
+    @Test
+    void repairPresetsAreValidatedAtStartupWithoutRetries() {
+        var thorough = profile("Thorough");
+        thorough.setRepairLlmPreset("specialist");
+        var properties = propertiesWith(Map.of("thorough", thorough));
+        properties.setRepairLlmPreset("deployment-repair");
+
+        assertThat(properties.llmPresetAssignments()).filteredOn(assignment -> assignment.propertyKey().endsWith("repair-llm-preset"))
+                .extracting(assignment -> assignment.propertyKey() + "=" + assignment.preset() + ":" + assignment.requiresNoRetry()).containsExactlyInAnyOrder(
+                        "artemis.hyperion.agent.repair-llm-preset=deployment-repair:true", "artemis.hyperion.agent.profiles.thorough.repair-llm-preset=specialist:true");
+    }
+
+    @Test
     void withoutConfiguredProfiles_everyRunUsesTheDeploymentDefaultAndNoneIsSelectable() {
         HyperionAgentProperties properties = agentProperties();
         properties.setMaxTurns(60);

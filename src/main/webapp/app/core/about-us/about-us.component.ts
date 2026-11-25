@@ -26,7 +26,7 @@ const CONTACT_MAIL_BODY =
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
-    styleUrl: './about-us.component.scss',
+    styleUrl: './about-us.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CdkCopyToClipboard, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent],
 })

@@ -9,7 +9,7 @@ import { Link, LinkifyService } from 'app/communication/link-preview/services/li
 @Component({
     selector: 'jhi-link-preview-container',
     templateUrl: './link-preview-container.component.html',
-    styleUrls: ['./link-preview-container.component.scss'],
+    styleUrls: ['./link-preview-container.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LinkPreviewComponent],
 })

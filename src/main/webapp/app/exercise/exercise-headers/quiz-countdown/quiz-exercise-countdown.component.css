@@ -1,0 +1,26 @@
+/*
+ * A bordered box rather than loose text, so the remaining time reads as its own thing in a bar that is otherwise
+ * a title and buttons, and holds a running quiz's attention. The frame is the shared one of a box in a title bar — the same one the
+ * status and due date pills use — so the boxes in the bar line up with each other and with the buttons beside them.
+ * The urgency stays on the number, in the red the result percentage uses.
+ */
+.quiz-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: var(--title-bar-content-height);
+    padding-inline: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+}
+
+.quiz-countdown__label {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.quiz-countdown__value {
+    /* Tabular figures so the box does not jitter as the digits change. */
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}

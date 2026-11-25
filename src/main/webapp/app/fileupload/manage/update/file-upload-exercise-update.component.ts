@@ -56,7 +56,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrl: '../../../exercise/shared/exercise-update-grading-layout.scss',
+    styleUrl: '../../../exercise/shared/exercise-update-grading-layout.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,

@@ -7,7 +7,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-confirm-icon',
     templateUrl: './confirm-icon.component.html',
-    styleUrl: './confirm-icon.component.scss',
+    styleUrl: './confirm-icon.component.css',
     imports: [FaIconComponent, TumAetUiTooltipDirective],
     host: { '[class.confirm-icon-fill-parent]': 'fillParent()' },
 })

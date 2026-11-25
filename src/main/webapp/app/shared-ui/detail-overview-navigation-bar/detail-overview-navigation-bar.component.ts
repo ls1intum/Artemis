@@ -6,7 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 @Component({
     selector: 'jhi-detail-overview-navigation-bar',
     templateUrl: './detail-overview-navigation-bar.component.html',
-    styleUrls: ['./detail-overview-navigation-bar.scss'],
+    styleUrls: ['./detail-overview-navigation-bar.css'],
     imports: [ArtemisTranslatePipe, RouterLink],
     host: {
         '(window:resize)': 'onResizeAddDistanceFromStatusBarToNavbar()',
