@@ -14,7 +14,7 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
-            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte",
+            "points": "{{ totalAbsoluteScore }} / {{ totalMaxPoints }} Punkte",
             "cardScore": "Punktzahl",
             "cardManageCourse": "Kurs Verwalten",
             "archive": {

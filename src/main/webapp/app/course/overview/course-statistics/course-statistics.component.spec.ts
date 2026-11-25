@@ -587,6 +587,53 @@ describe('CourseStatisticsComponent', () => {
         expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
     });
 
+    it('uses max points and the relative score in the score ring when a future manual exercise is not reachable yet', () => {
+        const completedExercise = {
+            id: 901,
+            type: ExerciseType.PROGRAMMING,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+        } as Exercise;
+        const futureManualExercise = {
+            id: 902,
+            type: ExerciseType.TEXT,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+            dueDate: dayjs().add(2, 'days'),
+            studentParticipations: [],
+        } as Exercise;
+        const courseWithFutureManualExercise = { ...course, presentationScore: undefined, exercises: [completedExercise, futureManualExercise] } as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseWithFutureManualExercise);
+        const exerciseScores = new CourseScores(10, 10, 0, {
+            absoluteScore: 10,
+            absoluteScoreTotal: 10,
+            relativeScore: 100,
+            currentRelativeScore: 100,
+            presentationScore: 0,
+        });
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(
+            new Map([
+                [ExerciseType.PROGRAMMING, exerciseScores],
+                [ExerciseType.TEXT, new CourseScores(10, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 })],
+            ]),
+        );
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(20, 10, 0, {
+                absoluteScore: 10,
+                absoluteScoreTotal: 10,
+                relativeScore: 50,
+                currentRelativeScore: 100,
+                presentationScore: 0,
+            }),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.doughnutChartEntries().map((entry) => entry.value)).toEqual([10, 10]);
+        expect(fixture.nativeElement.querySelector('[data-testid="total-score-label"]').textContent).toContain('50%');
+        expect(fixture.nativeElement.querySelector('[data-testid="total-score-label"]').textContent).toContain('10 / 20 pt');
+    });
+
     it('should show total and credited points separately when the course has exercise variants', () => {
         const variantExercise = {
             type: 'modeling',

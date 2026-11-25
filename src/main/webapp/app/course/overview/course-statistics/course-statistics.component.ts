@@ -506,7 +506,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE));
         this.overallPointsTotal.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE_TOTAL));
         const totalPresentationPoints = course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
-        let totalMissedPoints = this.reachablePoints() - this.overallPoints();
+        let totalMissedPoints = this.overallMaxPoints() - this.overallPoints();
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
