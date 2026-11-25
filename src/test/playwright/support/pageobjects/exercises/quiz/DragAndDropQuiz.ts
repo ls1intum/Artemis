@@ -64,6 +64,28 @@ export class DragAndDropQuiz {
         );
     }
 
+    /** The Apollon editor in the diagram dialog; its popovers render inside it while the dialog is open. */
+    get apollonEditor(): Locator {
+        return this.page.getByTestId('apollon-diagram-editor');
+    }
+
+    /**
+     * Adds a class through the palette, the way an instructor does: a tap places it in the centre of
+     * the canvas and selects it, so its edit and delete actions show.
+     */
+    async addClassFromPalette() {
+        await this.apollonEditor.getByRole('button', { name: 'Add element: Class' }).click();
+    }
+
+    /**
+     * Opens the edit popover of the selected class through its pen action and returns the class's name field.
+     * The popover lists the class name first, followed by a name field for each attribute and method.
+     */
+    async openEditPopoverOfSelectedElement(): Promise<Locator> {
+        await this.apollonEditor.getByRole('button', { name: 'Edit element' }).click();
+        return this.apollonEditor.getByRole('textbox', { name: 'Name', exact: true }).first();
+    }
+
     async getXAxis(elements: Locator) {
         let minX = Number.MAX_SAFE_INTEGER;
         let maxX = Number.MIN_SAFE_INTEGER;
