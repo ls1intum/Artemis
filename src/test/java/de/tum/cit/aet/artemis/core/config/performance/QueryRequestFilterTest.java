@@ -11,6 +11,8 @@ import jakarta.servlet.ServletException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.servlet.HandlerMapping;
@@ -68,6 +70,22 @@ class QueryRequestFilterTest {
         filter.doFilter(new MockHttpServletRequest("GET", "/api/missing"), new MockHttpServletResponse(), chain);
 
         assertThat(collector.getReport(Map.of()).repeatedQueries()).singleElement().satisfies(finding -> assertThat(finding.httpEndpoint()).isEqualTo("/api/missing"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "/git/E2EABC123/e2eabc123-student1.git/info/refs, /git/{projectKey}/{repository}.git/info/refs",
+            "/git/E2EXYZ789/e2exyz789-team47a3b56e5.git/git-receive-pack, /git/{projectKey}/{repository}.git/git-receive-pack",
+            "/git/E2EXYZ789/e2exyz789-exercise.git/git-upload-pack, /git/{projectKey}/{repository}.git/git-upload-pack",
+            "/git/E2EXYZ789/e2exyz789-solution.git, /git/{projectKey}/{repository}.git", "/git/health, /git/health", "/api/git/a/b.git, /api/git/a/b.git" })
+    void aGitRequestIsReportedWithoutTheNamesOfItsRepository(String uri, String endpoint) throws ServletException, IOException {
+        FilterChain chain = (req, res) -> {
+            queryOnce(1);
+            queryOnce(2);
+        };
+
+        filter.doFilter(new MockHttpServletRequest("GET", uri), new MockHttpServletResponse(), chain);
+
+        assertThat(collector.getReport(Map.of()).repeatedQueries()).singleElement().satisfies(finding -> assertThat(finding.httpEndpoint()).isEqualTo(endpoint));
     }
 
     @Test
