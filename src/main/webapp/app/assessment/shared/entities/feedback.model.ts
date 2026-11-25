@@ -403,7 +403,8 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (includeText) {
+        // A title is not repeated here, as without a grading instruction; only a legacy comment in `text` is.
+        if (includeText && !Feedback.isTextTitle(feedback)) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {

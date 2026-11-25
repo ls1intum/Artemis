@@ -114,6 +114,12 @@ describe('Feedback', () => {
             expect(buildFeedbackTextForReview(feedback)).toBe('Poor<br>feedback1');
         });
 
+        it.each(['', 'Uses private fields'])('should not repeat a title alongside its grading instruction (description "%s")', (detailText) => {
+            const feedback = { text: 'Encapsulation', detailText, gradingInstruction } as Feedback;
+
+            expect(buildFeedbackTextForReview(feedback)).toBe(detailText ? `Poor<br>${detailText}` : 'Poor');
+        });
+
         it('should drop even a non-suggestion text when addFeedbackText is false', () => {
             const feedback = { text: 'File Main.java at line 3', gradingInstruction } as Feedback;
 
