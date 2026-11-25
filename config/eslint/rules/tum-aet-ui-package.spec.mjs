@@ -408,7 +408,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         it.each(subpathEntries)('maps %s to the directory of its component in development serve mode', (subpath, target) => {
             // The mapping is explicit where the name of the entry point differs from its directory (`set-inputs`), and `src/lib/*` otherwise.
             const paths = serveTsconfig.compilerOptions.paths;
-            const mapped = (paths[`@tumaet/ui-angular/${subpath.slice(2)}`] ?? [paths['@tumaet/ui-angular/*'][0].replace('*', subpath.slice(2))])[0];
+            const mapped = (paths[`@tumaet/ui-angular/${subpath.slice(2)}`] ?? [paths['@tumaet/ui-angular/*'][0].split('*').join(subpath.slice(2))])[0];
 
             expect(resolve(repoRoot, 'config/client', mapped)).toBe(resolve(repoRoot, 'packages/tum-aet-ui', dirname(target)));
         });
