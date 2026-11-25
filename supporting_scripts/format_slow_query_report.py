@@ -114,16 +114,14 @@ def group_repeated_queries(findings: list) -> list:
         key = repeated_query_key(f)
         g = groups.setdefault(key, {
             "key": key, "type": f.get("type"), "method": f.get("httpMethod"), "endpoint": f.get("httpEndpoint"), "sql": f.get("normalizedSql") or "",
-            "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "max_executions": 0, "requests": 0, "tests": set(),
+            "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "tests": set(),
             "occurrences": [], "call_sites": set(), "sourceFile": None, "line": None,
         })
-        g["requests"] += 1
         # the line is not part of the key: it only says where the code was seen, and moves with every edit
         if not g["sourceFile"] and f.get("sourceFile") and f.get("line"):
             g["sourceFile"], g["line"] = f["sourceFile"], f["line"]
         # a duplicate across several pieces of code lists them; which ones can differ per request
         g["call_sites"].update(source_label(site) for site in f.get("callSites") or [])
-        g["max_executions"] = max(g["max_executions"], f.get("executions", 0))
         if f.get("testName"):
             g["tests"].add(f["testName"])
         g["occurrences"].append({"test": f.get("testName"), "phase": f.get("phase"), "executions": f.get("executions", 0), "distinct": f.get("distinctParameterSets", 0)})

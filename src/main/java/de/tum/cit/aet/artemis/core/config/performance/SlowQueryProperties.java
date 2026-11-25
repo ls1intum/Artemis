@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Configuration properties for the runtime repeated-query detector.
- * Bound from the {@code artemis.performance} namespace in {@code application-e2e-performance.yml}.
+ * Bound from the {@code artemis.performance} namespace; the defaults below apply unless a property overrides them.
  * Only active when the {@code e2e-performance} Spring profile is enabled.
  */
 @Component

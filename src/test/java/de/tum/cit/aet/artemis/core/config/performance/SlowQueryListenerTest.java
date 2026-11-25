@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.core.config.performance;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,16 +99,6 @@ class SlowQueryListenerTest {
 
     @Test
     void aQueryOutsideARequestIsNotCounted() {
-        assertThat(runTwiceAndFinishRequest()).isEmpty();
-    }
-
-    @Test
-    void aRecycledRequestIsTreatedAsNoRequest() {
-        // a servlet container throws IllegalStateException for a request that was already recycled
-        HttpServletRequest recycled = mock(HttpServletRequest.class);
-        when(recycled.getMethod()).thenThrow(new IllegalStateException("request recycled"));
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(recycled));
-
         assertThat(runTwiceAndFinishRequest()).isEmpty();
     }
 }

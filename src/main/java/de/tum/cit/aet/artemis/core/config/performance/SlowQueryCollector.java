@@ -40,16 +40,11 @@ public class SlowQueryCollector {
     private final SlowQueryProperties properties;
 
     /**
-     * Per-request statistics, keyed by normalized SQL template and the code that issued it; every
-     * query of the request, not just outliers. The issuing code is part of the key because one
-     * template (e.g. loading a user by id) is run by many places in the same request, and each of
-     * them is its own finding with its own count.
-     * <p>
-     * Scoped via {@link ThreadLocal} rather than a single shared map: Tomcat/Spring MVC handles
-     * one HTTP request per thread (this collector is never used with async/reactive request
-     * handling), so a thread-confined map gives each request its own counters without any
-     * cross-request synchronization. A shared map cleared at the end of *any* request would, under
-     * parallel E2E test workers, wipe another still-in-flight request's counts mid-count.
+     * Per-request statistics, keyed by normalized SQL template and the code that issued it: one
+     * template (e.g. loading a user by id) is run by many places in a request, and each of them is
+     * its own finding. A {@link ThreadLocal} because one request is handled by one thread, so every
+     * request gets its own counters without synchronization, and a request finishing cannot wipe the
+     * counts of another one still running.
      */
     private final ThreadLocal<Map<TemplateKey, TemplateStats>> requestTemplates = ThreadLocal.withInitial(HashMap::new);
 
@@ -60,7 +55,7 @@ public class SlowQueryCollector {
      */
     private final Map<FindingKey, RepeatedQueryFinding> repeatedQueries = new LinkedHashMap<>();
 
-    /** Set once a repeated-query finding was dropped, which makes the set of findings of the run incomplete. Cleared by {@link #reset()}. */
+    /** Set once a repeated-query finding was dropped, which makes the set of findings of the run incomplete. */
     private volatile boolean truncated;
 
     public SlowQueryCollector(SlowQueryProperties properties) {
@@ -68,56 +63,32 @@ public class SlowQueryCollector {
     }
 
     /**
-     * Records a completed query execution. Called by {@link SlowQueryListener} after every
-     * JDBC statement.
+     * Records a completed query execution of the current request, called by {@link SlowQueryListener}.
      *
-     * @param normalizedSql      SQL with literals stripped (produced by {@link SlowQueryListener}).
-     * @param parameterSignature hash of the raw SQL and its bound parameter values: equal for two
-     *                               executions of the exact same statement with the exact same
-     *                               values, different otherwise -- see {@link SlowQueryListener#parameterSignature}.
-     * @param callSiteResolver   resolves where the query was issued from; invoked for every
-     *                               query of a request, since each execution is counted under
-     *                               the code that issued it, and not for background queries.
-     *                               Must be invoked on the query's own thread, which this method
-     *                               guarantees by calling it inline.
-     * @param httpMethod         HTTP verb of the triggering request; may be {@code null}.
-     * @param httpEndpoint       route template of the triggering request; {@code null} for
-     *                               background/async queries without a request.
-     * @param testName           Playwright test name from the {@code X-Playwright-Test-Name} header;
-     *                               may be {@code null}.
-     * @param phase              Playwright phase from the {@code X-Playwright-Phase} header — {@code "action"}
-     *                               for requests the browser page itself issued, {@code "setup"} for
-     *                               {@code page.request}/{@code context.request} traffic; may be {@code null}.
+     * @param normalizedSql      SQL with literals stripped.
+     * @param parameterSignature hash of the SQL and its bound values, see {@link SlowQueryListener#parameterSignature}.
+     * @param callSiteResolver   resolves where the query was issued from; invoked inline, as it needs the query's own thread.
      */
-    public void record(String normalizedSql, long parameterSignature, Supplier<QueryCallSite> callSiteResolver, String httpMethod, String httpEndpoint, String testName,
-            String phase) {
-        if (httpEndpoint != null) {
-            TemplateKey key = new TemplateKey(normalizedSql, resolveCallSite(callSiteResolver));
-            TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats());
-            stats.executions++;
-            stats.parameterSignatures.merge(parameterSignature, 1, Integer::sum);
-        }
+    public void record(String normalizedSql, long parameterSignature, Supplier<QueryCallSite> callSiteResolver) {
+        TemplateKey key = new TemplateKey(normalizedSql, resolveCallSite(callSiteResolver));
+        TemplateStats stats = requestTemplates.get().computeIfAbsent(key, k -> new TemplateStats());
+        stats.executions++;
+        stats.parameterSignatures.merge(parameterSignature, 1, Integer::sum);
     }
 
-    /**
-     * Discards the calling thread's per-request statistics. Called at the end of each HTTP
-     * request (via a {@link jakarta.servlet.Filter}, on the same request-handling thread), after
-     * {@link #finishRequest}, so that nothing bleeds into whichever request this thread
-     * handles next -- also when {@link #finishRequest} was never reached.
-     */
+    /** Discards the calling thread's per-request statistics, also when {@link #finishRequest} was never reached, so nothing bleeds into the thread's next request. */
     public void resetRequestState() {
         requestTemplates.remove();
     }
 
     /**
-     * Turns the calling thread's accumulated per-request statistics into the request's
-     * {@link RepeatedQueryFinding}s, then clears them. Called once per HTTP request,
-     * on the same request-handling thread, after {@link #record} has been called for every query the request triggered.
+     * Turns the calling thread's per-request statistics into the request's {@link RepeatedQueryFinding}s and clears them.
+     * Called once per HTTP request, on its thread, after {@link #record} ran for every query of the request.
      *
      * @param httpMethod   HTTP verb of the request.
      * @param httpEndpoint route template of the request.
-     * @param testName     Playwright test name from the {@code X-Playwright-Test-Name} header; may be {@code null}.
-     * @param phase        Playwright phase from the {@code X-Playwright-Phase} header; may be {@code null}.
+     * @param testName     Playwright test name; may be {@code null}.
+     * @param phase        Playwright phase ({@code "action"} or {@code "setup"}); may be {@code null}.
      */
     public void finishRequest(String httpMethod, String httpEndpoint, String testName, String phase) {
         Map<TemplateKey, TemplateStats> templates = requestTemplates.get();
@@ -129,38 +100,18 @@ public class SlowQueryCollector {
     }
 
     /**
-     * Assembles and returns the current report.
+     * Returns a snapshot of all findings.
      *
      * @param indexes the indexes of every table, passed through to the report (see {@link IndexCatalog}).
-     * @return an immutable snapshot of all collected findings.
+     * @return the report.
      */
     public SlowQueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
         List<RepeatedQueryFinding> repeatedSnapshot;
         synchronized (repeatedQueries) {
             repeatedSnapshot = new ArrayList<>(repeatedQueries.values());
         }
-        return new SlowQueryReportDTO(Instant.now(), repeatedSnapshot.size(), repeatedSnapshot, indexes, truncated);
+        return new SlowQueryReportDTO(Instant.now(), repeatedSnapshot, indexes, truncated);
     }
-
-    /**
-     * Resets all collected data. Called via the {@code POST .../reset} endpoint to allow
-     * re-running the report collection mid-test-run if needed.
-     * <p>
-     * Does not touch {@link #requestTemplates}: it is thread-confined, self-clears at the end of
-     * every request regardless of this call, and (being a {@link ThreadLocal}) can't be cleared
-     * for other threads from here anyway.
-     */
-    public void reset() {
-        synchronized (repeatedQueries) {
-            repeatedQueries.clear();
-        }
-        truncated = false;
-        log.info("[SlowQuery] Collector reset");
-    }
-
-    // --------------------------------------------------
-    // Private helpers
-    // --------------------------------------------------
 
     /**
      * Derives the request's repeated-query findings. Each piece of code that ran a template more

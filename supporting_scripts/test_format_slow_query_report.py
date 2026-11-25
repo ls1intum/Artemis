@@ -29,7 +29,6 @@ class GroupingTest(unittest.TestCase):
     def test_same_shape_in_different_tests_and_counts_is_one_group(self):
         groups = report.group_repeated_queries([repeated("A.spec", 3), repeated("B.spec", 40)])
         self.assertEqual(len(groups), 1)
-        self.assertEqual(groups[0]["max_executions"], 40)
         self.assertEqual(groups[0]["tests"], {"A.spec", "B.spec"})
 
     def test_shape_endpoint_and_issuing_code_each_separate_groups(self):
@@ -287,11 +286,11 @@ class ProblemTest(unittest.TestCase):
 
 
 INDEXES = {
-    "saved_post": [{"name": "pk_saved_post", "columns": ["id"], "unique": True},
-                   {"name": "idx_saved_post_user_id_post_id_post_type", "columns": ["user_id", "post_id", "post_type"], "unique": True}],
-    "user_course_notification_status": [{"name": "pk_user_course_notification_status", "columns": ["course_notification_id", "user_id"], "unique": True}],
-    "course_notification": [{"name": "pk_course_notification", "columns": ["id"], "unique": True}],
-    "exercise": [{"name": "pk_exercise", "columns": ["id"], "unique": True}],
+    "saved_post": [{"name": "pk_saved_post", "columns": ["id"]},
+                   {"name": "idx_saved_post_user_id_post_id_post_type", "columns": ["user_id", "post_id", "post_type"]}],
+    "user_course_notification_status": [{"name": "pk_user_course_notification_status", "columns": ["course_notification_id", "user_id"]}],
+    "course_notification": [{"name": "pk_course_notification", "columns": ["id"]}],
+    "exercise": [{"name": "pk_exercise", "columns": ["id"]}],
     "participation": [{"name": "fk_participation_exercise_id", "columns": ["exercise_id"], "unique": False}],
 }
 

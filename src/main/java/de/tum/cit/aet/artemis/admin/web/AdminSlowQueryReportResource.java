@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,21 +20,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
- * Admin REST endpoint for the runtime slow-query detector.
- * <p>
- * Exposes two operations:
- * <ul>
- * <li>{@code GET  /api/admin/performance/slow-queries} – returns the current JSON report
- * of all repeated-query findings captured since the last reset.</li>
- * <li>{@code POST /api/admin/performance/slow-queries/reset} – clears all accumulated
- * data, allowing a fresh collection window to start.</li>
- * </ul>
- * <p>
- * Both operations require {@code ROLE_ADMIN}. In CI this is satisfied by the Artemis admin
- * account configured via {@code ARTEMIS_USERMANAGEMENT_INTERNALADMIN_*} environment variables.
- * <p>
- * Only active when <em>both</em> the {@code core} module profile and the {@code e2e-performance}
- * profile are enabled. The endpoint therefore has zero impact on production deployments.
+ * Admin REST endpoint for the runtime repeated-query detector: {@code GET /api/admin/performance/slow-queries} returns
+ * the findings captured so far. Only active with both the {@code core} and the {@code e2e-performance} profile, so it has no impact on production.
  */
 @Profile(PROFILE_CORE + " & " + SPRING_PROFILE_E2E_PERFORMANCE)
 @EnforceAdmin
@@ -57,28 +43,14 @@ public class AdminSlowQueryReportResource {
     }
 
     /**
-     * Returns a snapshot of all slow-query findings collected since the server started
-     * (or since the last {@code /reset} call).
+     * Returns the findings collected since the server started.
      *
-     * @return HTTP 200 with the {@link SlowQueryReportDTO} as JSON body.
+     * @return HTTP 200 with the report.
      */
     @GetMapping("slow-queries")
     public ResponseEntity<SlowQueryReportDTO> getReport() {
         SlowQueryReportDTO report = collector.getReport(indexCatalog.indexes());
-        log.debug("[SlowQuery] Report requested: {} repeated-query findings", report.repeatedQueryCount());
+        log.debug("[SlowQuery] Report requested: {} repeated-query findings", report.repeatedQueries().size());
         return ResponseEntity.ok(report);
-    }
-
-    /**
-     * Clears all accumulated slow-query data.
-     * Useful for separating collection windows within a single server lifetime.
-     *
-     * @return HTTP 200 with an empty body.
-     */
-    @PostMapping("slow-queries/reset")
-    public ResponseEntity<Void> reset() {
-        collector.reset();
-        log.info("[SlowQuery] Collector reset via admin endpoint");
-        return ResponseEntity.ok().build();
     }
 }

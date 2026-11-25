@@ -33,15 +33,15 @@ class SlowQueryRequestFilterTest {
     }
 
     private void queryOnce(long signature) {
-        collector.record(SQL, signature, () -> QueryCallSite.UNKNOWN, "GET", "/api/x", null, null);
+        collector.record(SQL, signature, () -> QueryCallSite.UNKNOWN);
     }
 
     @Test
     void aRequestThatRepeatedAQueryIsReportedUnderItsRouteTemplate() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/courses/7");
         request.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, "/api/courses/{courseId}");
-        request.addHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER, "A%20test");
-        request.addHeader(SlowQueryListener.PLAYWRIGHT_PHASE_HEADER, "setup");
+        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "A%20test");
+        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_PHASE_HEADER, "setup");
         FilterChain chain = (req, res) -> {
             queryOnce(1);
             queryOnce(2);

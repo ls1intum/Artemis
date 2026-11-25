@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.config.performance.SlowQueryProperties;
 import de.tum.cit.aet.artemis.core.config.performance.TableIndex;
 
 /**
- * Covers what the admin endpoint returns and clears.
+ * Covers what the admin endpoint returns.
  */
 class AdminSlowQueryReportResourceTest {
 
@@ -29,13 +29,13 @@ class AdminSlowQueryReportResourceTest {
     void setUp() {
         collector = new SlowQueryCollector(new SlowQueryProperties());
         IndexCatalog indexCatalog = mock(IndexCatalog.class);
-        when(indexCatalog.indexes()).thenReturn(Map.of("participation", List.of(new TableIndex("pk", List.of("id"), true))));
+        when(indexCatalog.indexes()).thenReturn(Map.of("participation", List.of(new TableIndex("pk", List.of("id")))));
         resource = new AdminSlowQueryReportResource(collector, indexCatalog);
     }
 
     private void recordRepeatedQuery() {
-        collector.record("select 1", 1, () -> null, "GET", "/api/x", null, null);
-        collector.record("select 1", 2, () -> null, "GET", "/api/x", null, null);
+        collector.record("select 1", 1, () -> null);
+        collector.record("select 1", 2, () -> null);
         collector.finishRequest("GET", "/api/x", null, null);
     }
 
@@ -46,18 +46,8 @@ class AdminSlowQueryReportResourceTest {
         var response = resource.getReport();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().repeatedQueryCount()).isEqualTo(1);
+        assertThat(response.getBody().repeatedQueries()).hasSize(1);
         assertThat(response.getBody().indexes()).containsKey("participation");
-        collector.resetRequestState();
-    }
-
-    @Test
-    void resetStartsANewCollectionWindow() {
-        recordRepeatedQuery();
-
-        assertThat(resource.reset().getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        assertThat(resource.getReport().getBody().repeatedQueryCount()).isZero();
         collector.resetRequestState();
     }
 }

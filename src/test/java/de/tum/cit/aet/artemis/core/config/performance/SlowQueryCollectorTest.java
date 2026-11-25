@@ -34,7 +34,7 @@ class SlowQueryCollectorTest {
     }
 
     private void query(String sql, long signature, Supplier<QueryCallSite> site) {
-        collector.record(sql, signature, site, "GET", ENDPOINT, "CourseStats.spec", "action");
+        collector.record(sql, signature, site);
     }
 
     private void query(String sql, long signature) {
@@ -169,7 +169,7 @@ class SlowQueryCollectorTest {
     }
 
     @Test
-    void callSiteIsResolvedForEveryRequestQueryButNotForBackgroundQueries() {
+    void callSiteIsResolvedForEveryQuery() {
         AtomicInteger resolutions = new AtomicInteger();
         Supplier<QueryCallSite> countingSite = () -> {
             resolutions.incrementAndGet();
@@ -178,7 +178,6 @@ class SlowQueryCollectorTest {
         for (long id = 1; id <= 3; id++) {
             query(SQL, id, countingSite);
         }
-        collector.record(SQL, 4, countingSite, null, null, null, null);
 
         finishRequest();
         assertThat(resolutions).hasValue(3);
@@ -197,15 +196,6 @@ class SlowQueryCollectorTest {
             assertThat(finding.repositoryMethod()).isNull();
             assertThat(finding.callerMethod()).isNull();
         });
-    }
-
-    @Test
-    void backgroundQueriesWithoutRequestAreNotCountedAsRepeated() {
-        for (long id = 1; id <= 3; id++) {
-            collector.record(SQL, id, () -> SITE, null, null, null, null);
-        }
-
-        assertThat(collector.getReport(Map.of()).repeatedQueries()).isEmpty();
     }
 
     /** One bound parameter, as the proxy records a {@code PreparedStatement.setXxx(index, value)} call. */
@@ -291,21 +281,18 @@ class SlowQueryCollectorTest {
         query(other, 6);
         assertThat(finishRequest()).hasSize(1);
         assertThat(collector.getReport(Map.of()).truncated()).isTrue();
-
-        collector.reset();
-        assertThat(collector.getReport(Map.of()).truncated()).isFalse();
     }
 
     @Test
     void testNameHeaderIsPercentDecoded() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        assertThat(SlowQueryListener.testName(request)).isNull();
+        assertThat(SlowQueryRequestFilter.testName(request)).isNull();
 
-        request.addHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER, "Dismiss%20reasoning%20%E2%9C%95%20closes%20card%20%2B%20more");
-        assertThat(SlowQueryListener.testName(request)).isEqualTo("Dismiss reasoning ✕ closes card + more");
+        request.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "Dismiss%20reasoning%20%E2%9C%95%20closes%20card%20%2B%20more");
+        assertThat(SlowQueryRequestFilter.testName(request)).isEqualTo("Dismiss reasoning ✕ closes card + more");
 
         MockHttpServletRequest malformed = new MockHttpServletRequest();
-        malformed.addHeader(SlowQueryListener.PLAYWRIGHT_TEST_HEADER, "100%");
-        assertThat(SlowQueryListener.testName(malformed)).isEqualTo("100%");
+        malformed.addHeader(SlowQueryRequestFilter.PLAYWRIGHT_TEST_HEADER, "100%");
+        assertThat(SlowQueryRequestFilter.testName(malformed)).isEqualTo("100%");
     }
 }

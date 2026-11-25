@@ -19,28 +19,9 @@ import net.ttddyy.dsproxy.support.ProxyDataSource;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 
 /**
- * Spring configuration that wraps the auto-configured {@link DataSource} (HikariCP) with a
- * datasource-proxy {@link ProxyDataSource} when the {@code e2e-performance} profile is active.
- * <p>
- * The wrapping is done through a {@link BeanPostProcessor} so that:
- * <ul>
- * <li>Spring Boot's {@code DataSourceAutoConfiguration} still creates the HikariCP pool with
- * all of its normal configuration ({@code spring.datasource.*} properties, health
- * indicators, Actuator metrics, etc.).</li>
- * <li>The proxy transparently replaces the HikariCP bean in the application context without
- * requiring any changes to other beans or configuration files.</li>
- * </ul>
- * <p>
- * The inner {@link DataSourceProxyBeanPostProcessor} implements {@link ApplicationContextAware}
- * so it can resolve the {@link SlowQueryListener} lazily — only when the {@code "dataSource"} bean
- * is being post-processed. This avoids the early-initialisation problem that would occur if the
- * BPP tried to {@code @Autowire} a regular {@code @Component} at BPP instantiation time.
- * <p>
- * The {@code @Bean} factory method is {@code static} so Spring instantiates the processor
- * early (before {@code @Configuration} class post-processing), which is required for
- * {@link BeanPostProcessor} implementations.
- * <p>
- * Only active when the {@code e2e-performance} Spring profile is enabled.
+ * Wraps the auto-configured {@link DataSource} with a datasource-proxy {@link ProxyDataSource} that reports every
+ * statement to the {@link SlowQueryListener}, when the {@code e2e-performance} profile is active. Done in a
+ * {@link BeanPostProcessor}, so Spring Boot still creates the connection pool with all its normal configuration.
  */
 @Configuration
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
@@ -48,11 +29,9 @@ import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 public class SlowQueryDataSourceConfiguration {
 
     /**
-     * Registers the {@link DataSourceProxyBeanPostProcessor}.
-     * Must be {@code static} so Spring can instantiate it before any {@code @Configuration}
-     * class post-processing takes place.
+     * Static, so Spring can instantiate the post-processor before any {@code @Configuration} class is processed.
      *
-     * @return the bean post-processor that wraps the {@code DataSource} with a datasource-proxy.
+     * @return the post-processor that wraps the {@code DataSource}.
      */
     @Bean
     public static DataSourceProxyBeanPostProcessor dataSourceProxyBeanPostProcessor() {
@@ -60,13 +39,8 @@ public class SlowQueryDataSourceConfiguration {
     }
 
     /**
-     * A {@link BeanPostProcessor} that wraps the primary Spring Boot auto-configured
-     * {@code DataSource} (bean name {@code "dataSource"}) with a datasource-proxy
-     * {@link ProxyDataSource}.
-     * <p>
-     * The {@link SlowQueryListener} is obtained lazily from the {@link ApplicationContext}
-     * at wrap time rather than at BPP instantiation time, ensuring all regular
-     * {@code @Component} beans are fully initialised before they are first used.
+     * Wraps the primary {@code DataSource} (bean name {@code "dataSource"}). The {@link SlowQueryListener} is looked
+     * up at wrap time, not injected, because a post-processor is created before regular components exist.
      */
     static class DataSourceProxyBeanPostProcessor implements BeanPostProcessor, ApplicationContextAware {
 
@@ -81,10 +55,7 @@ public class SlowQueryDataSourceConfiguration {
 
         @Override
         public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-            // Only wrap the primary DataSource; skip already-proxied instances
-            // (e.g. Liquibase creates its own DataSource proxy internally).
             if (bean instanceof DataSource dataSource && !(bean instanceof ProxyDataSource) && "dataSource".equals(beanName)) {
-
                 SlowQueryListener listener = applicationContext.getBean(SlowQueryListener.class);
                 ProxyDataSource proxy = ProxyDataSourceBuilder.create(dataSource).name("artemis-slow-query-proxy").listener(listener).build();
 
