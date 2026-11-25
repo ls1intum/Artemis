@@ -12,7 +12,7 @@ import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollo
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -1224,6 +1224,17 @@ describe('ModelingSubmissionComponent', () => {
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
             comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+        });
+
+        it('shows the title of an assessment box above its comment, and only where the comment text leaves it out', () => {
+            createModelingSubmissionComponent();
+            const title = (feedback: Partial<Feedback>) => comp['feedbackTitle'](feedback as Feedback);
+
+            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
+            expect(title({ text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
+            expect(title({ text: 'Looks right' })).toBeUndefined();
+            expect(title({ detailText: 'A long comment without a title' })).toBeUndefined();
+            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: { feedback: 'Use interfaces' } as any })).toBeUndefined();
         });
     });
 

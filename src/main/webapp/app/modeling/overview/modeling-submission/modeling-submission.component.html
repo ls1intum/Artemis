@@ -112,6 +112,9 @@
                                                                                 {{ feedbackPoints(feedback) }}
                                                                             </span>
                                                                             <span class="feedback-row__name">{{ feedbackElementName(feedback) }}</span>
+                                                                            @if (feedbackTitle(feedback); as title) {
+                                                                                <span class="feedback-row__title" data-testid="feedback-row-title">{{ title }}</span>
+                                                                            }
                                                                             <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
                                                                         </li>
                                                                     }

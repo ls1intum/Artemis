@@ -117,6 +117,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return credits > 0 ? `+${label}` : label;
     }
 
+    /**
+     * The title of a feedback's assessment box, shown above its comment. A feedback with a comment in `detailText` holds the
+     * title in `text`, which {@link buildFeedbackTextForReview} leaves out unless a grading instruction adds it to the text.
+     */
+    protected feedbackTitle(feedback: Feedback): string | undefined {
+        if (!Feedback.hasDetailText(feedback) || feedback.gradingInstruction?.feedback) {
+            return undefined;
+        }
+        return Feedback.stripSuggestionPrefix(feedback.text ?? '') || undefined;
+    }
+
     protected feedbackElementName(feedback: Feedback): string | undefined {
         const names = this.assessmentsNames();
         const referenceId = feedback.referenceId;
