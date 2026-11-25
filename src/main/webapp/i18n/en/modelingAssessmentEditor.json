@@ -25,7 +25,7 @@
                 "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted, and the submission will be available for assessment to other tutors again.",
                 "noConflicts": "Conflicts could not be loaded",
                 "conflictsResolved": "All conflicts have been processed.",
-                "feedbackTextTooLong": "Failed to save assessment. Feedback text must be no longer than 500 characters.",
+                "feedbackTextTooLong": "Failed to save assessment. A feedback title can have at most 500 characters, a comment on a diagram element at most 1,000 and a general comment at most 5,000.",
                 "loadFeedbackSuggestionsFailed": "Retrieving automatically generated feedback suggestions failed."
             }
         }
