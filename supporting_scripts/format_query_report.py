@@ -602,6 +602,7 @@ h1 { margin-bottom: 4px; }
 .muted { color: var(--muted); }
 .ok { color: #16a34a; font-weight: 600; }
 .lead { max-width: 820px; line-height: 1.5; margin: 8px 0 6px; }
+.incomplete { max-width: 820px; line-height: 1.5; padding: 10px 12px; border-left: 4px solid var(--sev-medium); background: var(--tile-bg); }
 details.how-to-read { margin: 0 0 24px; font-size: 13px; color: var(--muted); }
 details.how-to-read summary { cursor: pointer; }
 details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
@@ -1037,8 +1038,10 @@ def build_new_findings_html(problems: list, static_findings: list) -> str:
     return "\n".join(parts)
 
 
-def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
+def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "", incomplete: tuple = ()) -> str:
     has_baseline = baseline is not None
+    incomplete_notice = (f'<p class="incomplete">⚠️ <strong>Incomplete comparison:</strong> {html.escape("; ".join(incomplete))}. '
+                         "Findings may be missing from this report.</p>") if incomplete else ""
     title = report_title(phase)
     problems = build_problems(groups, report.get("indexes"))
     run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
@@ -1069,6 +1072,7 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
 <h1>{html.escape(title)}</h1>
 <p class="muted">Generated at {html.escape(iso_to_human(report.get("generatedAt", "")))}</p>
 {run_link}
+{incomplete_notice}
 <p class="lead">{comparison}</p>
 <details class="how-to-read"><summary>How to read this</summary><p>Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
 more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), or rows inserted one
@@ -1150,7 +1154,7 @@ def main():
         print(f"\n**⚠️ Incomplete comparison:** {'; '.join(incomplete)}. Existing inline comments are kept and this run is not used as a develop baseline.")
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
-            f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
+            f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase, incomplete))
     # Without a baseline or with an incomplete run there is no comparison: write no file, so that a reader
     # cannot take "nothing new" for "everything fixed" and delete the comments of an earlier run.
     if args.inline_out and baseline is not None and not incomplete:
