@@ -7,6 +7,17 @@ import re
 MAX_FETCH_THRESHOLD = 5  # You can adjust this threshold
 SEARCH_DIRECTORIES = ["./src/main/java", "./src/main/kotlin"]  # Paths to scan
 
+# The rules, in words: the one list of the findings this scanner can emit. The query report shows these names,
+# and a test checks that every rule below has one and that no label outlives its rule.
+RULE_LABELS = {
+    "repository_call_in_loop": "Repository call in a loop",
+    "multiple_collection_fetch": "Several collections fetched in one query",
+    "pageable_collection_fetch": "Collection fetched in a paged query",
+    "eager_to_many": "EAGER to-many association",
+    "wide_join_fetch": "More than 5 JOIN FETCHes in one @Query",
+    "wide_entitygraph": "More than 5 @EntityGraph attribute paths",
+}
+
 # Regex Patterns
 entitygraph_pattern = re.compile(r'@EntityGraph\s*\(.*?attributePaths\s*=\s*\{([^\}]*)\}', re.DOTALL)
 query_pattern = re.compile(r'@Query\s*\(\s*"""(.*?)"""', re.DOTALL | re.MULTILINE)

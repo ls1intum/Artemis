@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Thread-safe in-memory store for the repeated-query detector.
+ * Thread-safe in-memory store for the query detector.
  * <p>
  * Collects the query templates that ran more than once within a single HTTP request, either with
  * different parameters (N+1) or with identical ones (duplicate); see {@link RepeatedQueryFinding}.
@@ -30,14 +30,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
 @Lazy
-public class SlowQueryCollector {
+public class QueryCollector {
 
-    private static final Logger log = LoggerFactory.getLogger(SlowQueryCollector.class);
+    private static final Logger log = LoggerFactory.getLogger(QueryCollector.class);
 
     private static final Comparator<QueryCallSite> CALL_SITE_ORDER = Comparator.comparing(QueryCallSite::callerMethod, Comparator.nullsLast(Comparator.naturalOrder()))
             .thenComparing(QueryCallSite::repositoryMethod, Comparator.nullsLast(Comparator.naturalOrder()));
 
-    private final SlowQueryProperties properties;
+    private final QueryProperties properties;
 
     /**
      * Per-request statistics, keyed by normalized SQL template and the code that issued it: one
@@ -58,15 +58,15 @@ public class SlowQueryCollector {
     /** Set once a repeated-query finding was dropped, which makes the set of findings of the run incomplete. */
     private volatile boolean truncated;
 
-    public SlowQueryCollector(SlowQueryProperties properties) {
+    public QueryCollector(QueryProperties properties) {
         this.properties = properties;
     }
 
     /**
-     * Records a completed query execution of the current request, called by {@link SlowQueryListener}.
+     * Records a completed query execution of the current request, called by {@link QueryListener}.
      *
      * @param normalizedSql      SQL with literals stripped.
-     * @param parameterSignature hash of the SQL and its bound values, see {@link SlowQueryListener#parameterSignature}.
+     * @param parameterSignature hash of the SQL and its bound values, see {@link QueryListener#parameterSignature}.
      * @param callSiteResolver   resolves where the query was issued from; invoked inline, as it needs the query's own thread.
      */
     public void record(String normalizedSql, long parameterSignature, Supplier<QueryCallSite> callSiteResolver) {
@@ -105,12 +105,12 @@ public class SlowQueryCollector {
      * @param indexes the indexes of every table, passed through to the report (see {@link IndexCatalog}).
      * @return the report.
      */
-    public SlowQueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
+    public QueryReportDTO getReport(Map<String, List<TableIndex>> indexes) {
         List<RepeatedQueryFinding> repeatedSnapshot;
         synchronized (repeatedQueries) {
             repeatedSnapshot = new ArrayList<>(repeatedQueries.values());
         }
-        return new SlowQueryReportDTO(Instant.now(), repeatedSnapshot, indexes, truncated);
+        return new QueryReportDTO(Instant.now(), repeatedSnapshot, indexes, truncated);
     }
 
     /**
@@ -179,7 +179,7 @@ public class SlowQueryCollector {
             return site != null ? site : QueryCallSite.UNKNOWN;
         }
         catch (RuntimeException e) {
-            log.debug("[RepeatedQuery] Could not resolve the call site of a query", e);
+            log.debug("[QueryReport] Could not resolve the call site of a query", e);
             return QueryCallSite.UNKNOWN;
         }
     }
@@ -199,7 +199,7 @@ public class SlowQueryCollector {
             }
             else {
                 truncated = true;
-                log.warn("[RepeatedQuery] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
+                log.warn("[QueryReport] Circuit-breaker: max {} entries reached, ignoring further repeated-query findings", properties.getMaxRecordedQueries());
             }
         }
     }

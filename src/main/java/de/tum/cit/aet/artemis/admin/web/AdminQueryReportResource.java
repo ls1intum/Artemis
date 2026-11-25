@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.performance.IndexCatalog;
-import de.tum.cit.aet.artemis.core.config.performance.SlowQueryCollector;
-import de.tum.cit.aet.artemis.core.config.performance.SlowQueryReportDTO;
+import de.tum.cit.aet.artemis.core.config.performance.QueryCollector;
+import de.tum.cit.aet.artemis.core.config.performance.QueryReportDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
- * Admin REST endpoint for the runtime repeated-query detector: {@code GET /api/admin/performance/slow-queries} returns
+ * Admin REST endpoint for the runtime query detector: {@code GET /api/admin/performance/query-report} returns
  * the findings captured so far. Only active with both the {@code core} and the {@code e2e-performance} profile, so it has no impact on production.
  */
 @Profile(PROFILE_CORE + " & " + SPRING_PROFILE_E2E_PERFORMANCE)
@@ -29,15 +29,15 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 @Lazy
 @RestController
 @RequestMapping("api/admin/performance/")
-public class AdminSlowQueryReportResource {
+public class AdminQueryReportResource {
 
-    private static final Logger log = LoggerFactory.getLogger(AdminSlowQueryReportResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminQueryReportResource.class);
 
-    private final SlowQueryCollector collector;
+    private final QueryCollector collector;
 
     private final IndexCatalog indexCatalog;
 
-    public AdminSlowQueryReportResource(SlowQueryCollector collector, IndexCatalog indexCatalog) {
+    public AdminQueryReportResource(QueryCollector collector, IndexCatalog indexCatalog) {
         this.collector = collector;
         this.indexCatalog = indexCatalog;
     }
@@ -47,10 +47,10 @@ public class AdminSlowQueryReportResource {
      *
      * @return HTTP 200 with the report.
      */
-    @GetMapping("slow-queries")
-    public ResponseEntity<SlowQueryReportDTO> getReport() {
-        SlowQueryReportDTO report = collector.getReport(indexCatalog.indexes());
-        log.debug("[SlowQuery] Report requested: {} repeated-query findings", report.repeatedQueries().size());
+    @GetMapping("query-report")
+    public ResponseEntity<QueryReportDTO> getReport() {
+        QueryReportDTO report = collector.getReport(indexCatalog.indexes());
+        log.debug("[QueryReport] Report requested: {} repeated-query findings", report.repeatedQueries().size());
         return ResponseEntity.ok(report);
     }
 }

@@ -20,13 +20,13 @@ import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 
 /**
  * Wraps the auto-configured {@link DataSource} with a datasource-proxy {@link ProxyDataSource} that reports every
- * statement to the {@link SlowQueryListener}, when the {@code e2e-performance} profile is active. Done in a
+ * statement to the {@link QueryListener}, when the {@code e2e-performance} profile is active. Done in a
  * {@link BeanPostProcessor}, so Spring Boot still creates the connection pool with all its normal configuration.
  */
 @Configuration
 @Profile(SPRING_PROFILE_E2E_PERFORMANCE)
 @Lazy
-public class SlowQueryDataSourceConfiguration {
+public class QueryDataSourceConfiguration {
 
     /**
      * Static, so Spring can instantiate the post-processor before any {@code @Configuration} class is processed.
@@ -39,7 +39,7 @@ public class SlowQueryDataSourceConfiguration {
     }
 
     /**
-     * Wraps the primary {@code DataSource} (bean name {@code "dataSource"}). The {@link SlowQueryListener} is looked
+     * Wraps the primary {@code DataSource} (bean name {@code "dataSource"}). The {@link QueryListener} is looked
      * up at wrap time, not injected, because a post-processor is created before regular components exist.
      */
     static class DataSourceProxyBeanPostProcessor implements BeanPostProcessor, ApplicationContextAware {
@@ -56,10 +56,10 @@ public class SlowQueryDataSourceConfiguration {
         @Override
         public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
             if (bean instanceof DataSource dataSource && !(bean instanceof ProxyDataSource) && "dataSource".equals(beanName)) {
-                SlowQueryListener listener = applicationContext.getBean(SlowQueryListener.class);
-                ProxyDataSource proxy = ProxyDataSourceBuilder.create(dataSource).name("artemis-slow-query-proxy").listener(listener).build();
+                QueryListener listener = applicationContext.getBean(QueryListener.class);
+                ProxyDataSource proxy = ProxyDataSourceBuilder.create(dataSource).name("artemis-query-proxy").listener(listener).build();
 
-                log.info("[SlowQuery] DataSource wrapped with datasource-proxy (slow-query detection active)");
+                log.info("[QueryReport] DataSource wrapped with datasource-proxy (query detection active)");
                 return proxy;
             }
             return bean;

@@ -180,42 +180,12 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
-      - name: Download develop slow-query baseline (Phase 1)
+      - name: Query report (Phase 1)
         if: ${{ !cancelled() }}
-        continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        uses: ./.github/actions/query-report
         with:
-          script: |
-            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
-            const fs = require('fs');
-            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
-            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
-            const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-            if (!latest) {
-              core.info('No develop baseline available yet; the report will not classify findings as new.');
-              return;
-            }
-            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
-            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
-            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
-
-      - name: Collect slow-query report (Phase 1)
-        if: ${{ !cancelled() }}
-        shell: bash
-        env:
-          E2E_TESTS_OUTCOME: ${{ steps.run-tests-phase1.outcome }}
-        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
-
-      - name: Upload slow-query report artifact (Phase 1)
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
-        with:
-          name: Slow Query Report Phase 1
-          path: slow-query-report.html
-          if-no-files-found: warn
+          tests-outcome: ${{ steps.run-tests-phase1.outcome }}
+          artifact-name: Query Report Phase 1
 
       - name: E2E Teardown
         id: teardown
@@ -314,8 +284,8 @@ jobs:
             // process with the whole job environment, and a large report here has previously
             // pushed that environment past the OS's exec() size limit ("Argument list too long"),
             // silently swallowed by this step's continue-on-error.
-            let slowQueryMd = '';
-            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -336,7 +306,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
-            if (slowQueryMd) { body += '\n' + slowQueryMd; }
+            if (queryReportMd) { body += '\n' + queryReportMd; }
             body += runFullSuite
               ? `\n\n**Requested scope:** Full suite (two-phase execution)\n`
               : `\n\n**Requested scope:** Selected relevant + smoke specs. The full suite was not requested; Phase 2 is intentionally omitted.\n`;
@@ -363,24 +333,13 @@ jobs:
 
       - name: Post inline query comments (Phase 1)
         if: (success() || failure()) && inputs.is_pr
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
         continue-on-error: true
-        env:
-          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
-          TESTED_SHA: ${{ inputs.commit_sha }}
+        uses: ./.github/actions/post-inline-query-comments
         with:
-          script: |
-            const prNumber = Number(process.env.INPUT_PR_NUMBER);
-            if (!prNumber) return;
-            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
-            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
-            const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
-              commentsPath: 'slow-query-inline-comments.json',
-              removeStale: false,
-            });
-            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'false'
 
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
@@ -463,42 +422,12 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
-      - name: Download develop slow-query baseline (Phase 2)
+      - name: Query report (Phase 2)
         if: ${{ !cancelled() }}
-        continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        uses: ./.github/actions/query-report
         with:
-          script: |
-            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
-            const fs = require('fs');
-            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
-            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
-            const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-            if (!latest) {
-              core.info('No develop baseline available yet; the report will not classify findings as new.');
-              return;
-            }
-            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
-            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
-            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
-
-      - name: Collect slow-query report (Phase 2)
-        if: ${{ !cancelled() }}
-        shell: bash
-        env:
-          E2E_TESTS_OUTCOME: ${{ steps.run-tests-phase2.outcome }}
-        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
-
-      - name: Upload slow-query report artifact (Phase 2)
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
-        with:
-          name: Slow Query Report Phase 2
-          path: slow-query-report.html
-          if-no-files-found: warn
+          tests-outcome: ${{ steps.run-tests-phase2.outcome }}
+          artifact-name: Query Report Phase 2
 
       - name: E2E Teardown
         id: teardown
@@ -591,8 +520,8 @@ jobs:
             // process with the whole job environment, and a large report here has previously
             // pushed that environment past the OS's exec() size limit ("Argument list too long"),
             // silently swallowed by this step's continue-on-error.
-            let slowQueryMd = '';
-            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -600,7 +529,7 @@ jobs:
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
 
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (slowQueryMd ? '\n' + slowQueryMd : ''));
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (queryReportMd ? '\n' + queryReportMd : ''));
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -644,24 +573,13 @@ jobs:
 
       - name: Post inline query comments (Phase 2)
         if: (success() || failure()) && inputs.is_pr
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
         continue-on-error: true
-        env:
-          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
-          TESTED_SHA: ${{ inputs.commit_sha }}
+        uses: ./.github/actions/post-inline-query-comments
         with:
-          script: |
-            const prNumber = Number(process.env.INPUT_PR_NUMBER);
-            if (!prNumber) return;
-            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
-            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
-            const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
-              commentsPath: 'slow-query-inline-comments.json',
-              removeStale: false,
-            });
-            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'false'
 
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
@@ -736,42 +654,12 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
-      - name: Download develop slow-query baseline (All PR)
+      - name: Query report (All PR)
         if: ${{ !cancelled() }}
-        continue-on-error: true
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        uses: ./.github/actions/query-report
         with:
-          script: |
-            // The keys of the latest develop run's findings: lets the report mark what this PR adds.
-            const fs = require('fs');
-            fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
-            const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
-            const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-            if (!latest) {
-              core.info('No develop baseline available yet; the report will not classify findings as new.');
-              return;
-            }
-            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
-            fs.writeFileSync('slow-query-baseline.zip', Buffer.from(zip.data));
-            core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
-
-      - name: Collect slow-query report (All PR)
-        if: ${{ !cancelled() }}
-        shell: bash
-        env:
-          E2E_TESTS_OUTCOME: ${{ steps.run-tests-all-pr.outcome }}
-        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
-
-      - name: Upload slow-query report artifact (All PR)
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
-        with:
-          name: Slow Query Report All PR
-          path: slow-query-report.html
-          if-no-files-found: warn
+          tests-outcome: ${{ steps.run-tests-all-pr.outcome }}
+          artifact-name: Query Report All PR
 
       - name: E2E Teardown
         id: teardown
@@ -872,8 +760,8 @@ jobs:
             // process with the whole job environment, and a large report here has previously
             // pushed that environment past the OS's exec() size limit ("Argument list too long"),
             // silently swallowed by this step's continue-on-error.
-            let slowQueryMd = '';
-            try { slowQueryMd = fs.readFileSync('slow-query-summary.md', 'utf8'); } catch {}
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('all-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -887,7 +775,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
-            if (slowQueryMd) { body += '\n' + slowQueryMd; }
+            if (queryReportMd) { body += '\n' + queryReportMd; }
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
@@ -912,24 +800,13 @@ jobs:
   # immutable build SHA before requesting a self-hosted runner for the full suite.
       - name: Post inline query comments (All Tests)
         if: (success() || failure()) && inputs.is_pr
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
         continue-on-error: true
-        env:
-          INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
-          TESTED_SHA: ${{ inputs.commit_sha }}
+        uses: ./.github/actions/post-inline-query-comments
         with:
-          script: |
-            const prNumber = Number(process.env.INPUT_PR_NUMBER);
-            if (!prNumber) return;
-            const { postInlineQueryComments } = require('./.github/scripts/post-inline-query-comments.js');
-            const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
-            const result = await postInlineQueryComments({
-              github, context, prNumber, headSha: pr.head.sha, testedSha: process.env.TESTED_SHA,
-              commentsPath: 'slow-query-inline-comments.json',
-              removeStale: true,
-            });
-            core.info(`Inline query comments: ${JSON.stringify(result)}`);
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'true'
 
   develop-e2e-tip:
     name: Check develop tip for E2E
@@ -1015,31 +892,14 @@ jobs:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
 
-      - name: Collect slow-query report (Non-PR)
+      - name: Query report (Non-PR)
         if: ${{ !cancelled() }}
-        shell: bash
-        env:
-          E2E_TESTS_OUTCOME: ${{ steps.run-tests-all-non-pr.outcome }}
-        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
-
-      - name: Upload slow-query report artifact (Non-PR)
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
+        uses: ./.github/actions/query-report
         with:
-          name: Slow Query Report Non-PR
-          path: slow-query-report.html
-          if-no-files-found: warn
-
-      - name: Upload slow-query baseline (develop)
-        if: ${{ !cancelled() && inputs.branch_name == 'develop' }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        continue-on-error: true
-        with:
-          name: Slow Query Baseline
-          path: slow-query-keys.json
-          retention-days: 90
-          if-no-files-found: warn
+          tests-outcome: ${{ steps.run-tests-all-non-pr.outcome }}
+          artifact-name: Query Report Non-PR
+          compare-with-develop: 'false'
+          publish-baseline: ${{ inputs.branch_name == 'develop' }}
 
       - name: E2E Teardown
         id: teardown

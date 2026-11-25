@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-11-24T12:00:00Z",
+  "repeatedQueries": [
+    {
+      "type": "N_PLUS_ONE",
+      "normalizedSql": "select r1_0.id from result r1_0 where r1_0.participation_id=?",
+      "executions": 2,
+      "distinctParameterSets": 2,
+      "repositoryMethod": "ResultRepository.findByParticipationId",
+      "callerMethod": "ResultService.loadAll",
+      "sourceFile": "src/main/java/de/tum/cit/aet/artemis/assessment/service/ResultService.java",
+      "line": 142,
+      "httpMethod": "GET",
+      "httpEndpoint": "/api/assessment/exercises/{exerciseId}/results",
+      "testName": "Results.spec: opens the list",
+      "phase": "action"
+    },
+    {
+      "type": "DUPLICATE",
+      "normalizedSql": "select c1_0.id from course c1_0 where c1_0.id=?",
+      "executions": 2,
+      "distinctParameterSets": 1,
+      "httpMethod": "GET",
+      "httpEndpoint": "/api/assessment/exercises/{exerciseId}/results",
+      "testName": "Results.spec: opens the list",
+      "phase": "action",
+      "callSites": [
+        {
+          "repositoryMethod": "CourseRepository.findById",
+          "callerMethod": "ExamService.update",
+          "sourceFile": null,
+          "line": null
+        },
+        {
+          "repositoryMethod": "CourseRepository.findById",
+          "callerMethod": "ExerciseService.update",
+          "sourceFile": null,
+          "line": null
+        }
+      ]
+    }
+  ],
+  "indexes": {
+    "result": [
+      {
+        "name": "idx_result_participation",
+        "columns": ["participation_id"]
+      }
+    ]
+  },
+  "truncated": false
+}

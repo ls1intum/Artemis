@@ -9,21 +9,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.StaticApplicationContext;
 
-import de.tum.cit.aet.artemis.core.config.performance.SlowQueryDataSourceConfiguration.DataSourceProxyBeanPostProcessor;
+import de.tum.cit.aet.artemis.core.config.performance.QueryDataSourceConfiguration.DataSourceProxyBeanPostProcessor;
 import net.ttddyy.dsproxy.support.ProxyDataSource;
 
 /**
  * Covers which beans the processor wraps with the query-timing proxy.
  */
-class SlowQueryDataSourceConfigurationTest {
+class QueryDataSourceConfigurationTest {
 
     private DataSourceProxyBeanPostProcessor processor;
 
     @BeforeEach
     void setUp() {
         StaticApplicationContext context = new StaticApplicationContext();
-        context.getBeanFactory().registerSingleton("listener", new SlowQueryListener(new SlowQueryCollector(new SlowQueryProperties())));
-        processor = SlowQueryDataSourceConfiguration.dataSourceProxyBeanPostProcessor();
+        context.getBeanFactory().registerSingleton("listener", new QueryListener(new QueryCollector(new QueryProperties())));
+        processor = QueryDataSourceConfiguration.dataSourceProxyBeanPostProcessor();
         processor.setApplicationContext(context);
     }
 
@@ -34,7 +34,7 @@ class SlowQueryDataSourceConfigurationTest {
         Object result = processor.postProcessAfterInitialization(dataSource, "dataSource");
 
         assertThat(result).isInstanceOf(ProxyDataSource.class);
-        assertThat(((ProxyDataSource) result).getDataSourceName()).isEqualTo("artemis-slow-query-proxy");
+        assertThat(((ProxyDataSource) result).getDataSourceName()).isEqualTo("artemis-query-proxy");
     }
 
     @Test

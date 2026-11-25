@@ -19,18 +19,18 @@ import net.ttddyy.dsproxy.QueryInfo;
 /**
  * Covers how the listener turns an executed statement and the current request into a finding.
  */
-class SlowQueryListenerTest {
+class QueryListenerTest {
 
     private static final String SQL = "select * from participation where exercise_id = 42";
 
-    private SlowQueryCollector collector;
+    private QueryCollector collector;
 
-    private SlowQueryListener listener;
+    private QueryListener listener;
 
     @BeforeEach
     void setUp() {
-        collector = new SlowQueryCollector(new SlowQueryProperties());
-        listener = new SlowQueryListener(collector);
+        collector = new QueryCollector(new QueryProperties());
+        listener = new QueryListener(collector);
     }
 
     @AfterEach
@@ -61,10 +61,10 @@ class SlowQueryListenerTest {
 
     @Test
     void literalsAndValueListsAreNormalizedAwayButJoinsAndSubqueriesAreNot() {
-        assertThat(SlowQueryListener.normalizeSql("select * from t where a = 'x' and b = 12.5 and c in (1, 2, 3)")).isEqualTo("select * from t where a = ? and b = ? and c IN (?)");
-        assertThat(SlowQueryListener.normalizeSql("select * from t  join u on t.id = u.t_id where t.id in (select id from v)"))
+        assertThat(QueryListener.normalizeSql("select * from t where a = 'x' and b = 12.5 and c in (1, 2, 3)")).isEqualTo("select * from t where a = ? and b = ? and c IN (?)");
+        assertThat(QueryListener.normalizeSql("select * from t  join u on t.id = u.t_id where t.id in (select id from v)"))
                 .isEqualTo("select * from t join u on t.id = u.t_id where t.id in (select id from v)");
-        assertThat(SlowQueryListener.normalizeSql(null)).isNull();
+        assertThat(QueryListener.normalizeSql(null)).isNull();
     }
 
     @Test

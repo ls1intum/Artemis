@@ -3,6 +3,7 @@
 Run: python3 supporting_scripts/test_find_slow_queries.py
 """
 
+import ast
 import contextlib
 import io
 from pathlib import Path
@@ -237,6 +238,21 @@ class RepositoryCallInLoopTest(unittest.TestCase):
         self.assertEqual(blanked.count("\n"), source.count("\n"))
         self.assertNotIn("{", blanked)
         self.assertTrue(blanked.startswith('a = "') and blanked.endswith('""" b'))
+
+
+class RuleLabelsTest(unittest.TestCase):
+
+    def emitted_rule_types(self):
+        tree = ast.parse(Path(checker.__file__).read_text(encoding="utf-8"))
+        return {value.value for node in ast.walk(tree) if isinstance(node, ast.Dict)
+                for key, value in zip(node.keys, node.values)
+                if isinstance(key, ast.Constant) and key.value == "type" and isinstance(value, ast.Constant)}
+
+    def test_every_rule_the_scanner_emits_has_a_label(self):
+        self.assertEqual(self.emitted_rule_types() - set(checker.RULE_LABELS), set())
+
+    def test_no_label_outlives_its_rule(self):
+        self.assertEqual(set(checker.RULE_LABELS) - self.emitted_rule_types(), set())
 
 
 if __name__ == "__main__":
