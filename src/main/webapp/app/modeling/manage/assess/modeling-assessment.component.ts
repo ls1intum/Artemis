@@ -619,20 +619,21 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     /**
      * Stores an Apollon assessment box in a manual feedback the way Artemis keeps titled feedback for every exercise type:
-     * `text` holds the title and `detailText` the description. A box with only one of the two keeps it in `text`, unless
-     * it is a description longer than `text` can hold.
+     * `text` holds the title and `detailText` the description. A box with only a title keeps an empty `detailText`, so the
+     * boxes show it as a title again while the assessment is open; the server omits an empty `detailText`, so after a reload
+     * the title shows as the comment. An untitled description is kept in `text`, unless it is longer than `text` can hold.
      */
     private applyTitleAndDescription(feedback: Feedback, assessment: Assessment): void {
         const title = this.ownTitleOf(assessment);
         const description = assessment.feedback?.length ? assessment.feedback : undefined;
-        if (title !== undefined && description !== undefined) {
+        if (title !== undefined) {
             feedback.text = title;
-            feedback.detailText = description;
-        } else if (title === undefined && description !== undefined && description.length > MAX_FEEDBACK_TEXT_LENGTH) {
+            feedback.detailText = description ?? '';
+        } else if (description !== undefined && description.length > MAX_FEEDBACK_TEXT_LENGTH) {
             feedback.text = undefined;
             feedback.detailText = description;
         } else {
-            feedback.text = title ?? assessment.feedback;
+            feedback.text = assessment.feedback;
             feedback.detailText = undefined;
         }
     }
@@ -652,8 +653,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const title = this.stripSuggestionPrefix(feedback.text ?? '');
             return { title: title || undefined, description: feedback.detailText ?? '' };
         }
-        if (Feedback.hasDetailText(feedback)) {
-            return { title: feedback.text || undefined, description: feedback.detailText! };
+        // A defined detail text, even an empty one, means that `text` holds the title.
+        if (feedback.detailText != undefined) {
+            return { title: feedback.text || undefined, description: feedback.detailText };
         }
         return { description: feedback.text ?? '' };
     }

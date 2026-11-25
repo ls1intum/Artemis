@@ -499,11 +499,11 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.detailText).toBeUndefined();
         });
 
-        it('keeps a title without a description as the comment', () => {
+        it('keeps a title without a description as a title with an empty detail text', () => {
             const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: '' })]);
 
             expect(created.text).toBe('Missing abstraction');
-            expect(created.detailText).toBeUndefined();
+            expect(created.detailText).toBe('');
         });
 
         it('moves the description back into text when the tutor clears the title', () => {
@@ -625,6 +625,30 @@ describe('ModelingAssessmentComponent', () => {
             const assessment = await showFeedback(feedbackFor(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction', 'Edited detail'));
 
             expect(assessment.feedbackSuggestion).toBe('adapted');
+        });
+
+        it('keeps a title entered before the comment when the feedback comes back while editing', async () => {
+            await showFeedback(feedbackFor('Looks right'));
+            const box = { modelElementId: RELATIONSHIP_ID, elementType: 'ClassUnidirectional', score: 1 };
+
+            const titled = comp.generateFeedbackFromAssessment([{ ...box, title: 'Missing abstraction', feedback: '' } as any]);
+            fixture.componentRef.setInput('resultFeedbacks', titled);
+            fixture.detectChanges();
+
+            const shown = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
+            expect(shown.title).toBe('Missing abstraction');
+            expect(shown.feedback).toBe('');
+
+            const [stored] = comp.generateFeedbackFromAssessment([{ ...box, title: 'Missing abstraction', feedback: 'Extract an interface.' } as any]);
+            expect(stored.text).toBe('Missing abstraction');
+            expect(stored.detailText).toBe('Extract an interface.');
+        });
+
+        it('shows a saved title without a description as the comment after a reload, which omits the empty detail text', async () => {
+            const assessment = await showFeedback(feedbackFor('Missing abstraction'));
+
+            expect(assessment.title).toBeUndefined();
+            expect(assessment.feedback).toBe('Missing abstraction');
         });
 
         it('stores a shown title and description unchanged when the box reports them back', async () => {
