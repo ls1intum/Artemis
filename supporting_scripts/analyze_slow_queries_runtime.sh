@@ -19,6 +19,10 @@
 #   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
 #   slow-query-keys.json     – this run's finding keys (uploaded by develop runs as the baseline)
 #
+# Env, set by the CI steps: E2E_TESTS_OUTCOME, the outcome of the test step. Anything but "success" keeps
+# the report but withholds the baseline keys and the inline comments. Under GitHub Actions a missing
+# value counts as not successful.
+#
 # Input, optional: slow-query-baseline.zip, the latest develop run's "Slow Query Baseline"
 # artifact, downloaded by the preceding CI step.
 #
@@ -72,7 +76,11 @@ fi
 # Static source scan -- informational only, never fails this step even if it errors (that's
 # ci-quality.yml's job; this one just wants the findings for cross-referencing, if available).
 rm -f "${STATIC_FINDINGS}"
-python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /dev/null 2>&1 || echo "⚠️  Static scan failed; report will render without static-finding correlation."
+if ! python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /dev/null 2>&1; then
+    # a scan that failed midway may have left a partial list, which must not count as the static findings
+    rm -f "${STATIC_FINDINGS}"
+    echo "⚠️  Static scan failed; report will render without static-finding correlation."
+fi
 
 # Develop baseline: the finding keys of the latest develop run, downloaded by the preceding CI step
 # when one exists. With it, the report marks what this run adds; without it, nothing is marked new.
@@ -94,7 +102,7 @@ fi
 # ------------------------------------------------------------------
 if ! python3 supporting_scripts/format_slow_query_report.py \
     "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" --inline-out "${INLINE_COMMENTS}" \
-    --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
+    --tests-outcome "${E2E_TESTS_OUTCOME:-${GITHUB_ACTIONS:+unknown}}" --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
     # never upload partial keys as a baseline or post a partial summary
     echo "⚠️  Formatting the slow-query report failed."
     rm -f "${KEYS_FILE}" "${INLINE_COMMENTS}"

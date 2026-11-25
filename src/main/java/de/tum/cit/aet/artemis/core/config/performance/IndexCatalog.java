@@ -119,15 +119,14 @@ public class IndexCatalog {
                     unusable.add(name);
                 }
                 else {
-                    boolean unique = !resultSet.getBoolean("NON_UNIQUE");
-                    byName.computeIfAbsent(name, k -> new IndexColumns(unique)).add(resultSet.getShort("ORDINAL_POSITION"), column.toLowerCase(Locale.ROOT));
+                    byName.computeIfAbsent(name, k -> new IndexColumns()).add(resultSet.getShort("ORDINAL_POSITION"), column.toLowerCase(Locale.ROOT));
                 }
             }
         }
         List<TableIndex> result = new ArrayList<>();
         byName.forEach((name, columns) -> {
             if (!unusable.contains(name)) {
-                result.add(new TableIndex(name.toLowerCase(Locale.ROOT), columns.inOrder(), columns.unique));
+                result.add(new TableIndex(name.toLowerCase(Locale.ROOT), columns.inOrder()));
             }
         });
         return result;
@@ -144,13 +143,7 @@ public class IndexCatalog {
     /** The columns of one index as the metadata lists them, one row per column. */
     private static final class IndexColumns {
 
-        private final boolean unique;
-
         private final Map<Short, String> byPosition = new TreeMap<>();
-
-        private IndexColumns(boolean unique) {
-            this.unique = unique;
-        }
 
         private void add(short position, String column) {
             byPosition.put(position, column);

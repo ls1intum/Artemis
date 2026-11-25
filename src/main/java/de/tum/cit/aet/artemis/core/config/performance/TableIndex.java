@@ -10,5 +10,5 @@ import java.util.List;
  *                    through a prefix of them.
  * @param unique  whether the index enforces uniqueness (a primary key or unique constraint does).
  */
-public record TableIndex(String name, List<String> columns, boolean unique) {
+public record TableIndex(String name, List<String> columns) {
 }

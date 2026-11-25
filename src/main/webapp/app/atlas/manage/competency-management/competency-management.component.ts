@@ -37,7 +37,7 @@ import { getErrorMessage } from 'app/foundation/util/global.utils';
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    styleUrl: './competency-management.component.scss',
+    styleUrl: './competency-management.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiButtonDirective,

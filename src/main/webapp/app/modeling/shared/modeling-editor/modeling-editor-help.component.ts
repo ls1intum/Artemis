@@ -55,7 +55,7 @@ const WALKTHROUGHS: readonly HelpWalkthrough[] = [
 @Component({
     selector: 'jhi-modeling-editor-help',
     templateUrl: './modeling-editor-help.component.html',
-    styleUrls: ['./modeling-editor-help.component.scss'],
+    styleUrls: ['./modeling-editor-help.component.css'],
     imports: [
         NgOptimizedImage,
         TumAetUiDialogComponent,

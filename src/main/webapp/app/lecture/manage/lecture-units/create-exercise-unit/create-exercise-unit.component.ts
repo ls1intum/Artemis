@@ -27,7 +27,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
-    styleUrl: './create-exercise-unit.component.scss',
+    styleUrl: './create-exercise-unit.component.css',
     imports: [
         TranslateDirective,
         FaIconComponent,

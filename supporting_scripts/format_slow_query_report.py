@@ -114,16 +114,14 @@ def group_repeated_queries(findings: list) -> list:
         key = repeated_query_key(f)
         g = groups.setdefault(key, {
             "key": key, "type": f.get("type"), "method": f.get("httpMethod"), "endpoint": f.get("httpEndpoint"), "sql": f.get("normalizedSql") or "",
-            "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "max_executions": 0, "requests": 0, "tests": set(),
+            "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "tests": set(),
             "occurrences": [], "call_sites": set(), "sourceFile": None, "line": None,
         })
-        g["requests"] += 1
         # the line is not part of the key: it only says where the code was seen, and moves with every edit
         if not g["sourceFile"] and f.get("sourceFile") and f.get("line"):
             g["sourceFile"], g["line"] = f["sourceFile"], f["line"]
         # a duplicate across several pieces of code lists them; which ones can differ per request
         g["call_sites"].update(source_label(site) for site in f.get("callSites") or [])
-        g["max_executions"] = max(g["max_executions"], f.get("executions", 0))
         if f.get("testName"):
             g["tests"].add(f["testName"])
         g["occurrences"].append({"test": f.get("testName"), "phase": f.get("phase"), "executions": f.get("executions", 0), "distinct": f.get("distinctParameterSets", 0)})
@@ -341,7 +339,6 @@ def summarize_problem(problem: dict, indexes: dict = None) -> dict:
         # the biggest single repeat, not the sum: a delete cascade issues many small repeats that one fix would not remove
         avoidable=queries[0]["avoidable"],
         endpoints=sorted(endpoint_avoidable, key=lambda e: (-endpoint_avoidable[e], e)),
-        methods=sorted({g["method"] or "?" for g in groups}),
         tests=sorted(set().union(*(g["tests"] for g in groups))),
         phases=sorted({r["phase"] for q in queries for r in q["requests"] if r.get("phase") in ("action", "setup")}),
         static_matches=sorted({i for g in groups for i in g.get("static_matches", [])}),
@@ -373,27 +370,6 @@ def query_counts_label(q: dict) -> str:
     if q["executions"] > q["distinct"]:
         label += f" (each ~{round(q['executions'] / q['distinct'])}×)"
     return label
-
-
-# ---------------------------------------------------------------------------
-# Slow queries (context only: timing in CI is too noisy to judge a PR by)
-# ---------------------------------------------------------------------------
-
-def compute_slow_query_groups(slow_queries: list) -> list:
-    """Groups raw slow-query captures by (endpoint, SQL template) -- the same query crossing the
-    threshold many times across a few tests is one row, not hundreds. The thread only tells
-    background queries apart; for a request it is whichever server thread happened to serve it."""
-    groups = {}
-    for q in slow_queries:
-        thread_name = None if q.get("httpEndpoint") else q.get("threadName")
-        key = (q.get("httpMethod"), q.get("httpEndpoint"), q.get("sql", ""), thread_name)
-        g = groups.setdefault(key, {"count": 0, "worst_ms": 0, "join_count": q.get("joinCount", 0), "occurrences": []})
-        g["count"] += 1
-        g["worst_ms"] = max(g["worst_ms"], q.get("executionTimeMs", 0))
-        g["occurrences"].append({"test": q.get("testName"), "phase": q.get("phase"), "ms": q.get("executionTimeMs", 0), "has_endpoint": bool(q.get("httpEndpoint"))})
-    items = list(groups.items())
-    items.sort(key=lambda kv: kv[1]["worst_ms"], reverse=True)
-    return items
 
 
 # ---------------------------------------------------------------------------
@@ -634,11 +610,6 @@ h1 { margin-bottom: 4px; }
 details.how-to-read { margin: 0 0 24px; font-size: 13px; color: var(--muted); }
 details.how-to-read summary { cursor: pointer; }
 details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
-.stats { display: flex; gap: 16px; margin: 0 0 32px; flex-wrap: wrap; }
-.stat-tile { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 160px; }
-.stat-value { display: block; font-size: 28px; font-weight: 700; }
-.stat-label { display: block; font-size: 13px; color: var(--muted); }
-.stat-sub { display: block; font-size: 12px; color: var(--muted); }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
 .tab-btn { appearance: none; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 6px; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .tab-btn:hover { color: var(--fg); }
@@ -649,9 +620,10 @@ details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 13px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { cursor: pointer; user-select: none; white-space: nowrap; color: var(--muted); font-weight: 600; }
-th:hover { color: var(--fg); }
-th::after { content: "\\21C5"; opacity: .35; margin-left: 4px; font-size: 11px; }
+th { white-space: nowrap; color: var(--muted); font-weight: 600; }
+table.sortable th { cursor: pointer; user-select: none; }
+table.sortable th:hover { color: var(--fg); }
+table.sortable th::after { content: "\\21C5"; opacity: .35; margin-left: 4px; font-size: 11px; }
 tr:hover td { background: var(--row-hover); }
 tr.sev-high td:first-child { border-left: 4px solid var(--sev-high); }
 tr.sev-medium td:first-child { border-left: 4px solid var(--sev-medium); }
@@ -666,9 +638,9 @@ td.sql-cell summary { cursor: pointer; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .badge-new { background: color-mix(in srgb, var(--new) 18%, transparent); color: var(--new); }
 .badge-existing { background: rgba(107, 114, 128, .12); color: var(--muted); }
-.phase-action { background: rgba(22, 163, 74, .15); color: #16a34a; }
-.phase-setup { background: rgba(107, 114, 128, .15); color: var(--muted); }
-.phase-background { background: rgba(107, 114, 128, .08); color: var(--muted); font-style: italic; }
+.phase-action { background: var(--muted); color: var(--bg); }
+.phase-setup { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--muted); }
+td .badge { margin: 0 4px 2px 0; }
 table.nested-table { width: auto; min-width: 320px; margin: 6px 0 0; font-size: 12px; }
 table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .static-badge { display: inline-block; margin-top: 4px; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: var(--sql-keyword); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
@@ -681,15 +653,8 @@ table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .sql-string { color: var(--sql-string); }
 .sql-number { color: var(--sql-number); }
 .sql-placeholder { color: var(--sql-placeholder); font-weight: 600; }
-.group-row { cursor: pointer; }
-.expand-cell { width: 20px; text-align: center; color: var(--muted); }
-.detail-row td { background: var(--tile-bg); padding: 10px 10px 14px 30px; }
 .problem-controls { position: sticky; top: 0; z-index: 2; background: var(--bg); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
 .problem-controls .filter-box { margin: 0; flex: 1 1 240px; }
-.filter-chip { appearance: none; border: 1px solid var(--border); background: var(--tile-bg); color: var(--fg); border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
-.filter-chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
-.filter-chip.only-chip[aria-pressed="false"] { opacity: 1; text-decoration: none; }
-.filter-chip.only-chip[aria-pressed="true"] { border-color: var(--new); color: var(--new); }
 .section-note { max-width: 820px; line-height: 1.5; }
 .problem-cards { display: grid; gap: 14px; margin-bottom: 32px; }
 .problem-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
@@ -758,20 +723,15 @@ document.querySelectorAll('table.sortable').forEach(function (table) {
     });
 });
 
-// A filter hides non-matching rows; in a grouped table the group row decides for its detail row,
-// and matches on the detail row's text too (test names and phases are only listed there).
+// A filter hides the rows that do not match.
 document.querySelectorAll('.filter-box').forEach(function (input) {
     input.addEventListener('input', function () {
         var table = document.getElementById(input.dataset.target);
         if (!table) return;
         var query = input.value.toLowerCase();
         Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
-            if (row.classList.contains('detail-row')) return;
-            var detail = row.dataset.detailTarget ? document.getElementById(row.dataset.detailTarget) : null;
-            var text = row.textContent + (detail ? ' ' + detail.textContent : '');
-            var visible = text.toLowerCase().indexOf(query) !== -1;
+            var visible = row.textContent.toLowerCase().indexOf(query) !== -1;
             row.style.display = visible ? '' : 'none';
-            if (detail && !visible) detail.hidden = true;
         });
     });
 });
@@ -813,86 +773,21 @@ document.addEventListener('click', function (e) {
     if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
-// Grouped tables: a group row expands its detail row; sorting moves each detail row along with its
-// group row (the generic sort above would split them, since a detail row has one colspan cell).
-function setupGroupedTable(tableId, colIndex) {
-    var table = document.getElementById(tableId);
-    if (!table) return;
-    var tbody = table.tBodies[0];
-    table.querySelectorAll('.group-row').forEach(function (row) {
-        row.addEventListener('click', function (e) {
-            if (e.target.closest('details') || e.target.closest('table.sortable') || e.target.closest('.static-badge')) return;
-            var detail = document.getElementById(row.dataset.detailTarget);
-            var arrow = row.querySelector('.expand-arrow');
-            detail.hidden = !detail.hidden;
-            arrow.innerHTML = detail.hidden ? '&#9654;' : '&#9660;';
-        });
-    });
-    table.querySelectorAll('th[data-col]').forEach(function (th) {
-        th.addEventListener('click', function () {
-            var col = th.dataset.col;
-            var idx = colIndex[col];
-            var type = th.dataset.type;
-            var groupRows = Array.prototype.slice.call(tbody.querySelectorAll('.group-row'));
-            var asc = !(table.dataset.sortCol === col && table.dataset.sortDir === 'asc');
-            groupRows.sort(function (a, b) {
-                var x = a.cells[idx].dataset.sort !== undefined ? a.cells[idx].dataset.sort : a.cells[idx].textContent.trim();
-                var y = b.cells[idx].dataset.sort !== undefined ? b.cells[idx].dataset.sort : b.cells[idx].textContent.trim();
-                if (type === 'number') { x = parseFloat(x) || 0; y = parseFloat(y) || 0; }
-                else { x = x.toLowerCase(); y = y.toLowerCase(); }
-                if (x < y) return asc ? -1 : 1;
-                if (x > y) return asc ? 1 : -1;
-                return 0;
-            });
-            groupRows.forEach(function (row) {
-                tbody.appendChild(row);
-                tbody.appendChild(document.getElementById(row.dataset.detailTarget));
-            });
-            table.dataset.sortCol = col;
-            table.dataset.sortDir = asc ? 'asc' : 'desc';
-        });
-    });
-}
-
-setupGroupedTable('slow-queries-table', { endpoint: 1, occurrences: 3, joins: 4, duration: 5 });
-
-// Repeated queries: the search box and the chips filter cards and rows together. A chip that is
-// pressed includes its problems; "only new" narrows to new ones instead.
+// Repeated queries: the search box filters the rows.
 (function () {
     var panel = document.getElementById('panel-repeated-queries');
     var search = panel && panel.querySelector('.problem-search');
     if (!search) return;
     var problems = Array.prototype.slice.call(panel.querySelectorAll('.problem'));
-    var excluded = { category: {}, phase: {}, method: {} };
-    var onlyNew = false;
-    var onlyScan = false;
-    function apply() {
+    search.addEventListener('input', function () {
         var query = search.value.toLowerCase();
         var shown = 0;
         problems.forEach(function (el) {
-            var phases = el.dataset.phases ? el.dataset.phases.split(' ') : [];
-            var methods = el.dataset.methods.split(' ');
-            var visible = !excluded.category[el.dataset.category]
-                && (phases.length === 0 || phases.some(function (p) { return !excluded.phase[p]; }))
-                && !(excluded.method.DELETE && methods.every(function (m) { return m === 'DELETE'; }))
-                && (!onlyNew || el.dataset.new === 'true')
-                && (!onlyScan || el.dataset.index === 'scan')
-                && (!query || el.textContent.toLowerCase().indexOf(query) !== -1);
+            var visible = !query || el.textContent.toLowerCase().indexOf(query) !== -1;
             el.classList.toggle('filtered-out', !visible);
             if (visible) shown++;
         });
         document.getElementById('problems-empty').hidden = shown > 0;
-    }
-    search.addEventListener('input', apply);
-    panel.querySelectorAll('.filter-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            var pressed = chip.getAttribute('aria-pressed') !== 'true';
-            chip.setAttribute('aria-pressed', pressed ? 'true' : 'false');
-            if (chip.dataset.filter === 'new') onlyNew = pressed;
-            else if (chip.dataset.filter === 'scan') onlyScan = pressed;
-            else excluded[chip.dataset.filter][chip.dataset.value] = !pressed;
-            apply();
-        });
     });
 })();
 """
@@ -934,22 +829,13 @@ def html_sql_cell(sql: str) -> str:
     return f"<details><summary><code>{highlight_sql(trunc_plain(sql, 100))}</code></summary><pre>{highlight_sql(sql)}</pre></details>"
 
 
-def html_phase(phase: str, has_endpoint: bool = True) -> str:
+def html_phase(phase: str) -> str:
     """setup = test fixture traffic (page.request/context.request), action = what the browser page did."""
-    if not has_endpoint:
-        return '<span class="badge phase-background">background</span>'
     if phase == "action":
-        return '<span class="badge phase-action">action</span>'
+        return '<span class="badge phase-action" title="Issued by the browser page during the test, like a real user">action</span>'
     if phase == "setup":
-        return '<span class="badge phase-setup">setup</span>'
+        return '<span class="badge phase-setup" title="Issued by the test itself to prepare data">setup</span>'
     return '<span class="muted">?</span>'
-
-
-def html_endpoint(method: str, endpoint: str, thread_name: str = None) -> str:
-    if not method and not endpoint:
-        label = f"(background: {thread_name})" if thread_name else "(background)"
-        return f'<span class="muted">{html.escape(label)}</span>'
-    return html.escape(f"{method or '?'} {endpoint or '?'}")
 
 
 def html_status(item: dict, has_baseline: bool) -> str:
@@ -964,7 +850,6 @@ def capped_note(hidden: int, what: str) -> str:
     return f'<p class="muted" style="margin:6px 0 0;font-size:12px;">+ {hidden} more {what} not shown</p>' if hidden > 0 else ""
 
 
-TOP_PROBLEMS = 20
 FOOT_ITEMS_SHOWN = 3
 
 
@@ -1051,15 +936,10 @@ def problem_tags_html(p: dict, static_findings: list, has_baseline: bool) -> str
     return "".join(tags)
 
 
-def problem_attributes(p: dict) -> str:
-    return (f'data-category="{p["category"]}" data-phases="{" ".join(p["phases"])}" data-methods="{html.escape(" ".join(p["methods"]))}" '
-            f'data-new="{"true" if p["is_new"] else "false"}" data-index="{p["index_state"]}"')
-
-
 def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
     anchor_kind = {"function": "Method", "endpoint": "Endpoint", "insert": "Table"}[p["kind"]]
     endpoints = f'Seen at {len(p["endpoints"])} endpoint{"" if len(p["endpoints"]) == 1 else "s"}'
-    return (f'<article class="problem problem-card cat-{p["category"]}" {problem_attributes(p)}>'
+    return (f'<article class="problem-card cat-{p["category"]}">'
             f'<div class="problem-head"><span class="problem-rank">#{rank}</span>'
             f'<div class="problem-anchor"><span class="anchor-kind">{anchor_kind}</span><code>{html.escape(p["anchor"])}</code></div>'
             f'<div class="problem-impact"><span class="impact-value">{p["avoidable"]}</span><span class="impact-label">avoidable queries<br>per request</span></div></div>'
@@ -1076,7 +956,7 @@ def problem_row_html(p: dict, rank: int, static_findings: list, has_baseline: bo
         what = f'{count} caller{"" if count == 1 else "s"}'
     else:
         what = f'{count} quer{"y" if count == 1 else "ies"}'
-    return (f'<tr class="problem" {problem_attributes(p)}>'
+    return (f'<tr class="problem">'
             f'<td class="num muted">#{rank}</td>'
             f'<td class="num"><strong>{p["avoidable"]}</strong></td>'
             f'<td>{problem_tags_html(p, static_findings, has_baseline)}</td>'
@@ -1093,76 +973,12 @@ def problem_table_html(problems: list, first_rank: int, static_findings: list, h
             f'<th>Shape</th><th>Where to fix</th><th>Tests</th></tr></thead><tbody>{rows}</tbody></table></div>')
 
 
-def build_problems_html(problems: list, static_findings: list, has_baseline: bool, has_indexes: bool) -> str:
+def build_problems_html(problems: list, static_findings: list, has_baseline: bool) -> str:
     if not problems:
         return '<p class="ok">✅ No query ran more than once within a request.</p>'
-    ordered = loops_before_inserts(problems)
-    loops = [p for p in ordered if p["category"] != "insert"]
-    inserts = ordered[len(loops):]
-    top, rest = loops[:TOP_PROBLEMS], loops[TOP_PROBLEMS:]
-    chips = "".join(f'<button type="button" class="filter-chip" data-filter="category" data-value="{c}" aria-pressed="true">{label}</button>'
-                    for c, label in CATEGORY_LABELS.items())
-    chips += ('<button type="button" class="filter-chip" data-filter="phase" data-value="action" aria-pressed="true">action</button>'
-              '<button type="button" class="filter-chip" data-filter="phase" data-value="setup" aria-pressed="true">setup</button>'
-              '<button type="button" class="filter-chip" data-filter="method" data-value="DELETE" aria-pressed="true" title="problems seen only at DELETE endpoints">DELETE</button>')
-    if has_baseline:
-        chips += '<button type="button" class="filter-chip only-chip" data-filter="new" aria-pressed="false">only new</button>'
-    if has_indexes:
-        chips += '<button type="button" class="filter-chip only-chip" data-filter="scan" aria-pressed="false">only ⚠ not indexed</button>'
-    parts = [f'<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…">{chips}</div>']
-    if top:
-        parts.append(f'<h2>Top {len(top)} problems</h2><p class="muted section-note">Ranked by the biggest repeat: the executions one fix would save in a single request.</p>'
-                     f'<div class="problem-cards">{"".join(problem_card_html(p, i + 1, static_findings, has_baseline) for i, p in enumerate(top))}</div>')
-    if rest:
-        parts.append(f'<h2>All other problems <span class="muted">({len(rest)})</span></h2>{problem_table_html(rest, len(top) + 1, static_findings, has_baseline)}')
-    if inserts:
-        parts.append(f'<h2>Row-by-row inserts <span class="muted">({len(inserts)})</span></h2>'
-                     '<p class="muted section-note">Rows inserted one statement at a time: either <code>save()</code> in a loop, or one <code>save()</code>/<code>saveAll()</code> '
-                     'that Hibernate cannot batch because the database generates the ids. The SQL does not tell the two apart, so these are listed apart from the loops.</p>'
-                     f'{problem_table_html(inserts, 1, static_findings, has_baseline)}')
-    parts.append('<p id="problems-empty" class="muted" hidden>No problem matches the filters.</p>')
-    return "\n".join(parts)
-
-
-def slow_query_occurrences_html(occurrences: list) -> str:
-    ranked = sorted(occurrences, key=lambda o: o["ms"], reverse=True)
-    shown = ranked[:MAX_OCCURRENCES_SHOWN]
-    rows = "".join(
-        "<tr>"
-        f'<td class="num" data-sort="{o["ms"]}">{o["ms"]} ms</td>'
-        f'<td data-sort="{1 if o.get("phase") == "action" else 0}">{html_phase(o.get("phase"), o.get("has_endpoint", True))}</td>'
-        f'<td>{html.escape(o["test"]) if o.get("test") else "<span class=muted>—</span>"}</td>'
-        "</tr>" for o in shown)
-    return ('<table class="nested-table sortable"><thead><tr><th data-type="number">Duration</th><th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table>{capped_note(len(ranked) - len(shown), "occurrences")}')
-
-
-def build_slow_queries_table_html(slow_queries: list, threshold_ms) -> str:
-    if not slow_queries:
-        return f'<p class="ok">✅ No query slower than {threshold_ms} ms.</p>'
-    rows = []
-    for idx, ((method, endpoint, sql, thread_name), g) in enumerate(compute_slow_query_groups(slow_queries)):
-        detail_id = f"slow-query-detail-{idx}"
-        rows.append(
-            '<tr class="group-row" data-detail-target="' + detail_id + '">'
-            '<td class="expand-cell"><span class="expand-arrow">&#9654;</span></td>'
-            f"<td>{html_endpoint(method, endpoint, thread_name)}</td>"
-            f'<td class="sql-cell">{html_sql_cell(sql)}</td>'
-            f'<td class="num" data-sort="{g["count"]}">{g["count"]}×</td>'
-            f'<td class="num" data-sort="{g["join_count"]}">{g["join_count"]}</td>'
-            f'<td class="num" data-sort="{g["worst_ms"]}">{g["worst_ms"]} ms</td>'
-            "</tr>"
-            f'<tr class="detail-row" id="{detail_id}" hidden><td></td><td colspan="5">{slow_query_occurrences_html(g["occurrences"])}</td></tr>'
-        )
-    return (
-        '<input class="filter-box" type="search" placeholder="Filter by endpoint, test, phase, or SQL…" data-target="slow-queries-table">\n'
-        '<div class="table-scroll"><table class="grouped-table" id="slow-queries-table">\n<thead><tr><th></th>'
-        '<th data-type="string" data-col="endpoint">Endpoint</th><th>Query</th>'
-        '<th data-type="number" data-col="occurrences">Occurrences</th>'
-        '<th data-type="number" data-col="joins" title="Tables joined in this one query">Joins</th>'
-        '<th data-type="number" data-col="duration">Worst duration</th>'
-        f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
-    )
+    return ('<div class="problem-controls"><input class="filter-box problem-search" type="search" placeholder="Filter by method, endpoint, test, table, SQL…"></div>'
+            f'{problem_table_html(loops_before_inserts(problems), 1, static_findings, has_baseline)}'
+            '<p id="problems-empty" class="muted" hidden>No problem matches the filters.</p>')
 
 
 def static_location(f: dict) -> str:
@@ -1229,16 +1045,7 @@ def build_new_findings_html(problems: list, static_findings: list) -> str:
 def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
     has_baseline = baseline is not None
     title = report_title(phase)
-    threshold_ms = report.get("thresholdMs", "?")
-    slow_queries = report.get("slowQueries", [])
-    slow_count = len(compute_slow_query_groups(slow_queries))
-    has_indexes = bool(report.get("indexes"))
     problems = build_problems(groups, report.get("indexes"))
-    n_plus_one = sum(1 for p in problems if p["category"] == "n_plus_one")
-    duplicates = sum(1 for p in problems if p["category"] in ("duplicate_one_place", "duplicate_several_places"))
-    inserts = sum(1 for p in problems if p["category"] == "insert")
-    confirmed = sum(1 for p in problems if p["static_matches"])
-    not_indexed = sum(1 for p in problems if p["index_state"] == "scan")
     run_link = f'<p><a href="{html.escape(run_url)}">View CI run</a></p>' if run_url else ""
     if has_baseline:
         new_count = sum(1 for p in problems if p["is_new"]) + sum(1 for f in static_findings if f.get("is_new"))
@@ -1273,31 +1080,18 @@ more than once in one request, either with different parameters (<strong>N+1</st
 statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
 load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
 for the very same code. A query marked ⚠ <strong>not indexed</strong> has no index that starts with the columns it filters on, so once the
-table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by.</p></details>
-<div class="stats">
-<div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
-<div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
-<div class="stat-tile"><span class="stat-value">{inserts}</span><span class="stat-label">Row-by-row insert</span><span class="stat-sub">one statement per row</span></div>
-{f'<div class="stat-tile"><span class="stat-value">{not_indexed}</span><span class="stat-label">Not indexed</span><span class="stat-sub">a repeated query has no index for its filter</span></div>' if has_indexes else ""}
-<div class="stat-tile"><span class="stat-value">{confirmed}</span><span class="stat-label">Confirmed statically</span><span class="stat-sub">a static rule flags the same code</span></div>
-<div class="stat-tile"><span class="stat-value">{len(static_findings)}</span><span class="stat-label">Static findings</span><span class="stat-sub">from the source scan</span></div>
-</div>
-
+table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>action</strong> and <strong>setup</strong> say where a
+request came from: the browser page acting like a user, or the test's own API calls that prepare data. Findings in <strong>action</strong> requests are the ones a user would see.</p></details>
 <div class="tabs" role="tablist">
 {new_tab}<button class="tab-btn{"" if has_baseline else " active"}" type="button" role="tab" aria-selected="{"false" if has_baseline else "true"}" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
-<button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 </div>
 
 {new_panel}<section class="tab-panel" id="panel-repeated-queries" role="tabpanel"{" hidden" if has_baseline else ""}>
-{build_problems_html(problems, static_findings, has_baseline, has_indexes)}
+{build_problems_html(problems, static_findings, has_baseline)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
 {build_static_findings_table_html(static_findings, has_baseline)}
-</section>
-<section class="tab-panel" id="panel-slow-queries" role="tabpanel" hidden>
-<p class="muted">Queries slower than {html.escape(str(threshold_ms))} ms. Context only, not compared against develop.</p>
-{build_slow_queries_table_html(slow_queries, threshold_ms)}
 </section>
 </div>
 <script>{HTML_REPORT_JS}</script>
@@ -1319,6 +1113,7 @@ def main():
     parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
     parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
     parser.add_argument("--inline-out", help="write the new findings that have a line of code, as inline PR comments, here (only with a baseline)")
+    parser.add_argument("--tests-outcome", default="", help="outcome of the E2E test step; anything but success makes the comparison incomplete (omit to skip the check)")
     parser.add_argument("--phase", default="", help="the E2E job's phase (phase1, phase2 or all), named in the report's title")
     args = parser.parse_args()
 
@@ -1329,11 +1124,20 @@ def main():
         sys.exit(1)
 
     static_findings = []
+    incomplete = []  # why this run cannot be compared completely: nothing is then published as baseline or reconciled
     if args.static_findings:
         try:
             static_findings = load_json(args.static_findings)
-        except (json.JSONDecodeError, FileNotFoundError) as exc:
+            if not isinstance(static_findings, list):
+                raise ValueError("expected a list of findings")
+        except (json.JSONDecodeError, FileNotFoundError, ValueError) as exc:
+            static_findings = []
+            incomplete.append("the static scan is unavailable")
             print(f"Warning: could not load static findings from {args.static_findings}: {exc}", file=sys.stderr)
+    if report.get("truncated"):
+        incomplete.append("the collector reached its size limit and dropped findings")
+    if args.tests_outcome and args.tests_outcome != "success":
+        incomplete.append(f"the E2E tests did not succeed ({args.tests_outcome})")
 
     baseline = None
     if args.baseline:
@@ -1347,15 +1151,17 @@ def main():
     mark_new(groups, static_findings, baseline)
 
     print(build_report(report, groups, static_findings, baseline, args.run_url, args.phase))
+    if incomplete:
+        print(f"\n**⚠️ Incomplete comparison:** {'; '.join(incomplete)}. Existing inline comments are kept and this run is not used as a develop baseline.")
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
             f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
-    # Without a baseline there is no comparison: write no file, so that a reader cannot take "nothing
-    # new" for "everything fixed" and delete the comments of an earlier run.
-    if args.inline_out and baseline is not None:
+    # Without a baseline or with an incomplete run there is no comparison: write no file, so that a reader
+    # cannot take "nothing new" for "everything fixed" and delete the comments of an earlier run.
+    if args.inline_out and baseline is not None and not incomplete:
         with open(args.inline_out, "w", encoding="utf-8") as f:
             json.dump(build_inline_comments(report, groups, static_findings, baseline, args.run_url), f, indent=1)
-    if args.keys_out:
+    if args.keys_out and not incomplete:
         keys = collect_keys(groups, static_findings)
         keys["generatedAt"] = report.get("generatedAt")
         with open(args.keys_out, "w", encoding="utf-8") as f:

@@ -274,12 +274,23 @@ Add a new module to `migratedModules`, to the Stylelint override and to the `@so
 `tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
 Tailwind utilities are in the cascade layer `utilities`. The element defaults in
-`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
-overrides them without a modifier. Component SCSS and the classes of TUM AET UI are not in a layer and win over
-every utility: write the important modifier where a utility has to override them (`mb-6!`). Bootstrap used the
+`src/main/webapp/content/css/base.css` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
+overrides them without a modifier. The styles of TUM AET UI are in the layer `tumaet-ui`, between the two, so a
+utility on a TUM AET UI component overrides the component, too. The stylesheets of the application components are not in a
+layer and win over every utility, as does a style that a component sets inline: write the important modifier where a
+utility has to override one of them (`mb-6!`). Bootstrap used the
 spacing names with another scale for the steps 3 to 5 (16, 24 and 48px against Tailwind's 12, 16 and 20px); markup
 from an old branch needs `mb-3` to `mb-4`, `mb-4` to `mb-6` and `mb-5` to `mb-12`. See _Spacing utilities_ in
 `documentation/docs/developer/guidelines/client-development.mdx`.
+
+Stylesheets are plain CSS; the client has no Sass. Write the full selector of every rule and do not nest
+rules: the view encapsulation of Angular scopes a nested selector differently (`:host { &.open { … } }`
+matches nothing), and Stylelint rejects it. Use the tokens of `content/css/themes/light.css` through
+`var(--token)`; a token gets a value in `themes/dark.css` only if it differs in the dark theme. Share rules
+between components with `styleUrls`, not with `@import`, and do not write vendor prefixes. After a change
+to a global stylesheet, the tokens or many component stylesheets, compare the client before and after with
+`supporting_scripts/client/style-comparison`
+(`documentation/docs/developer/client-style-comparison.mdx`).
 
 If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK

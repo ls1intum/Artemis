@@ -45,7 +45,7 @@ class ExerciseForTeam extends Exercise {
 @Component({
     selector: 'jhi-team-participation-table',
     templateUrl: './team-participation-table.component.html',
-    styleUrls: ['./team-participation-table.component.scss'],
+    styleUrls: ['./team-participation-table.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,

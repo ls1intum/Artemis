@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-not-released-tag',
     templateUrl: './not-released-tag.component.html',
-    styleUrls: ['./not-released-tag.component.scss'],
+    styleUrls: ['./not-released-tag.component.css'],
     imports: [TranslateDirective, TumAetUiTagComponent, TumAetUiTooltipDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class NotReleasedTagComponent {
