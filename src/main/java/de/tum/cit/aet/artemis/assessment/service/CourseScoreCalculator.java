@@ -61,11 +61,9 @@ public final class CourseScoreCalculator {
      * Calculates max and reachable max points for the given exercises, plus the reachable presentation points when the
      * course awards them.
      * <p>
-     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation}) exercises whose
-     * due date has passed or is unset, or which are automatically assessed with their build-and-test date in the past.
+     * Max points include every exercise configured to count towards the overall score, independent of its due date.
      * Reachable max points only count exercises whose assessment is done (see {@link #isAssessmentDone}). An exercise
-     * that is not automatically assessed with a due date in the past but an assessment due date in the future therefore
-     * counts towards max points but not towards reachable max points.
+     * whose assessment is still pending therefore counts towards max points but not towards reachable max points.
      *
      * @param settings           the course settings the calculation rounds by
      * @param presentationConfig the graded presentation configuration, or {@code null} to calculate no presentation points
@@ -295,23 +293,15 @@ public final class CourseScoreCalculator {
      * Determines whether a given exercise will be included into course score calculation.
      * <p>
      * The requirement that has to be fulfilled for every exercise: it has to be included in the score.
-     * The base case: an exercise that is not an automatically assessed programming exercise
-     * -> include in maxPointsInCourse after the due date.
-     * Edge case 1: an automatically assessed programming exercise without test runs after the due date
-     * -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
-     * Edge case 2: an automatically assessed programming exercise with test runs after the due date
-     * -> include in maxPointsInCourse after the final test run is over, not immediately after release, because
-     * the test run after the due date is important for the final course score (hidden tests).
+     * Inclusion depends only on the course score setting. Whether the points are reachable yet is evaluated separately
+     * by {@link #isAssessmentDone(ExerciseCourseScoreDTO, ZonedDateTime)}.
      *
      * @param exercise        the exercise whose involvement should be determined
      * @param calculationTime the instant at which the score is calculated
      * @return true if the exercise counts towards the course score
      */
     public static boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
-        boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
-        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(calculationTime));
-
-        return isExerciseIncluded && (isExerciseFinished || isAutomaticAssessmentDone(exercise, calculationTime));
+        return exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
     }
 
     /**
