@@ -29,7 +29,7 @@ const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
-    styleUrls: ['home.scss'],
+    styleUrls: ['home.css'],
     imports: [
         TranslateDirective,
         FormsModule,

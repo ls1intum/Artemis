@@ -53,7 +53,7 @@ export enum DetailType {
 @Component({
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
-    styleUrls: ['./detail-overview-list.component.scss'],
+    styleUrls: ['./detail-overview-list.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,

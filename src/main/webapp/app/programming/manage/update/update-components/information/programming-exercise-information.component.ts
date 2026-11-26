@@ -41,7 +41,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 @Component({
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css', 'programming-exercise-information.component.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,

@@ -32,7 +32,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
     selector: 'jhi-build-job-statistics',
     imports: [TranslateDirective, TumAetUiDoughnutChartComponent, HelpIconComponent, TumAetUiSelectButtonComponent, FormsModule, ArtemisTranslatePipe],
     templateUrl: './build-job-statistics.component.html',
-    styleUrl: './build-job-statistics.component.scss',
+    styleUrl: './build-job-statistics.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildJobStatisticsComponent implements OnInit {

@@ -29,7 +29,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-ssh-user-settings',
     templateUrl: './ssh-user-settings.component.html',
-    styleUrls: ['../../user-settings.scss', './ssh-user-settings.component.scss'],
+    styleUrls: ['../../user-settings.css', './ssh-user-settings.component.css'],
     imports: [
         TranslateDirective,
         DocumentationLinkComponent,

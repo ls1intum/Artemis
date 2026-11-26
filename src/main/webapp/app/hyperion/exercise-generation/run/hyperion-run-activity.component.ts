@@ -32,7 +32,7 @@ interface LivenessLine {
 @Component({
     selector: 'jhi-hyperion-run-activity',
     templateUrl: './hyperion-run-activity.component.html',
-    styleUrl: './hyperion-run-activity.component.scss',
+    styleUrl: './hyperion-run-activity.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiButtonComponent, HyperionStatusComponent],
 })

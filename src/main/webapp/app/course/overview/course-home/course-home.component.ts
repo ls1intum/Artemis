@@ -26,7 +26,7 @@ import { CourseHomeTeachingTeamComponent } from './course-home-teaching-team.com
 @Component({
     selector: 'jhi-course-home',
     templateUrl: './course-home.component.html',
-    styleUrl: './course-home.component.scss',
+    styleUrl: './course-home.component.css',
     imports: [
         RouterLink,
         ArtemisDatePipe,

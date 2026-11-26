@@ -98,7 +98,7 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
         FormsModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
-    styleUrl: './attachment-video-unit.component.scss',
+    styleUrl: './attachment-video-unit.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
