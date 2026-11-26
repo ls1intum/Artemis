@@ -504,8 +504,20 @@ public class DeimosAnalysisService {
         try (Repository repository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
             TextSnapshot template = readTemplate(participationId, participation.getProgrammingExercise().getId(), participationStart);
             var history = new HistoryAccumulator(participationId, repository, template, new MarkerScan(participationId, template, sentinel, evidence), evidence);
-            for (ProgrammingSubmission submission : submissions) {
-                history.add(submission);
+            for (int index = 0; index < submissions.size(); index++) {
+                try {
+                    history.add(submissions.get(index));
+                }
+                catch (Exception ex) {
+                    // The history stays failed, but a marker in a later submission that can still be read is reported.
+                    try {
+                        history.scanForMarkers(submissions.subList(index + 1, submissions.size()));
+                    }
+                    catch (RuntimeException scanFailure) {
+                        ex.addSuppressed(scanFailure);
+                    }
+                    throw ex;
+                }
             }
             return history.finish();
         }
@@ -672,6 +684,30 @@ public class DeimosAnalysisService {
             previousOtherFiles = current.otherFiles();
             if (!diffResult.text().isEmpty()) {
                 appendSection(header + diffResult.text() + System.lineSeparator().repeat(SECTION_TRAILER_LINE_SEPARATORS), recorded(diffResult.omissions(), snapshot), snapshot);
+            }
+        }
+
+        /**
+         * Scans submissions for imitated fence markers after the history could not be read up to them.
+         * <p>
+         * Without the snapshot before them, each one is compared with the template. That finds what the chained scan
+         * would have found, since whether a file carries a forged marker depends only on its content and the template.
+         * A snapshot that cannot be read either is skipped, as the history has already failed.
+         *
+         * @param submissions the submissions after the one whose snapshot could not be processed
+         */
+        private void scanForMarkers(List<ProgrammingSubmission> submissions) {
+            for (ProgrammingSubmission submission : submissions) {
+                if (submission.getCommitHash() == null || submission.getCommitHash().isBlank()) {
+                    continue;
+                }
+                try {
+                    TextSnapshot current = readSnapshot(repository, submission.getCommitHash());
+                    markerScan.scan(template.textFiles(), template.otherFiles().keySet(), current, snapshotLabel(submission));
+                }
+                catch (DeimosSnapshotHistoryException ex) {
+                    log.debug("Snapshot of submission {} of participation {} could not be scanned for markers either", submission.getId(), participationId, ex);
+                }
             }
         }
 

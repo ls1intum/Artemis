@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 
 import com.openai.core.http.Headers;
 import com.openai.errors.OpenAIServiceException;
@@ -157,6 +162,13 @@ class DefaultDeimosLlmClientTest {
         // once as text is no unambiguous answer.
         assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": false, \"rationale\": 42, \"rationale\": \"ordinary solution\"}")).isEmpty();
         assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": \"no\", \"malicious\": false, \"rationale\": \"ordinary solution\"}")).isEmpty();
+    }
+
+    @Test
+    void shouldRejectAFieldThatIsRepeatedInTheSameShape() {
+        // Binding would keep only one of the two rationales, so the instructor would read a reasoning the model did not settle on.
+        assertThat(DefaultDeimosLlmClient.parseVerdict("{\"rationale\": \"first\", \"rationale\": \"second\", \"malicious\": false}")).isEmpty();
+        assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": true, \"malicious\": true, \"rationale\": \"probes the grader\"}")).isEmpty();
     }
 
     @ParameterizedTest
@@ -348,6 +360,30 @@ class DefaultDeimosLlmClientTest {
         assertThat(((DeimosLlmException) thrown).getFailureType()).isEqualTo(DeimosFailureType.LLM_UNPARSEABLE);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "length", "LENGTH", "max_tokens" })
+    void shouldReportAnAnswerCutOffAtTheOutputLimitAsUnparseable(String finishReason) {
+        // The verdict object is complete, but the text after it was never generated and could have revised it.
+        var client = clientOver(chatClientAnswering("{\"malicious\": false, \"rationale\": \"ordinary\"} Wait, looking again at the build", finishReason));
+
+        Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
+
+        assertThat(thrown).isInstanceOf(DeimosLlmException.class).hasMessage("LLM response for participation 7 was cut off at the output limit");
+        assertThat(((DeimosLlmException) thrown).getFailureType()).isEqualTo(DeimosFailureType.LLM_UNPARSEABLE);
+    }
+
+    @Test
+    void shouldReportAMissingResponseAsEmpty() {
+        ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
+        when(chatClient.prompt().system(anyString()).user(anyString()).call().chatResponse()).thenReturn(null);
+        var client = clientOver(chatClient);
+
+        Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
+
+        assertThat(thrown).isInstanceOf(DeimosLlmException.class).hasMessage("LLM returned an empty response for participation 7");
+        assertThat(((DeimosLlmException) thrown).getFailureType()).isEqualTo(DeimosFailureType.LLM_UNPARSEABLE);
+    }
+
     @Test
     void shouldReportAnAnswerWithoutVerdictAsUnparseable() {
         var client = clientOver(chatClientAnswering("I cannot decide."));
@@ -493,14 +529,19 @@ class DefaultDeimosLlmClientTest {
     }
 
     private static ChatClient chatClientAnswering(String content) {
+        return chatClientAnswering(content, "STOP");
+    }
+
+    private static ChatClient chatClientAnswering(String content, String finishReason) {
+        var generation = new Generation(new AssistantMessage(content), ChatGenerationMetadata.builder().finishReason(finishReason).build());
         ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
-        when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenReturn(content);
+        when(chatClient.prompt().system(anyString()).user(anyString()).call().chatResponse()).thenReturn(new ChatResponse(List.of(generation)));
         return chatClient;
     }
 
     private static DeimosLlmException callFailingWith(RuntimeException failure) {
         ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
-        when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenThrow(failure);
+        when(chatClient.prompt().system(anyString()).user(anyString()).call().chatResponse()).thenThrow(failure);
         var client = clientOver(chatClient);
 
         Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));

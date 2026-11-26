@@ -21,6 +21,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.FinishReasonCategory;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -30,6 +33,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.openai.errors.OpenAIServiceException;
 
+import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.cfg.CoercionAction;
@@ -94,7 +98,10 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     // silently resolved to the first object; such a response falls through to the fenced and balanced candidates.
     // Nothing is coerced: "true", 1 or an empty string in place of the classification, or a number or boolean in place
     // of the rationale, is not a verdict the model actually gave.
-    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+    // A repeated key is rejected as well, even with the same shape: an object stating its rationale twice is no
+    // unambiguous answer, and binding would silently keep only one of them.
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .withCoercionConfig(LogicalType.Boolean,
                     config -> config.setCoercion(CoercionInputShape.String, CoercionAction.Fail).setCoercion(CoercionInputShape.EmptyString, CoercionAction.Fail)
                             .setCoercion(CoercionInputShape.Integer, CoercionAction.Fail).setCoercion(CoercionInputShape.Float, CoercionAction.Fail))
@@ -110,9 +117,9 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     @Override
     public DeimosLlmResponse analyze(DeimosLlmRequest request) {
-        String content;
+        ChatResponse chatResponse;
         try {
-            content = chatClient.prompt().system(request.systemPrompt()).user(request.userPrompt()).call().content();
+            chatResponse = chatClient.prompt().system(request.systemPrompt()).user(request.userPrompt()).call().chatResponse();
         }
         catch (Exception ex) {
             OptionalInt rejectedStatus = credentialRejectionStatus(ex);
@@ -124,6 +131,13 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             throw new DeimosLlmException(classifyCallFailure(ex), "LLM call failed for participation " + request.participationId() + ": " + ex.getMessage(), ex);
         }
 
+        Generation generation = chatResponse != null ? chatResponse.getResult() : null;
+        // A verdict object can be complete although the provider stopped generating at the output limit, and the text cut
+        // off after it could have revised the classification. Such a response is not a finished answer.
+        if (generation != null && generation.getMetadata().getFinishReasonCategory() == FinishReasonCategory.TRUNCATED) {
+            throw new DeimosLlmException(DeimosFailureType.LLM_UNPARSEABLE, "LLM response for participation " + request.participationId() + " was cut off at the output limit");
+        }
+        String content = generation != null && generation.getOutput() != null ? generation.getOutput().getText() : null;
         if (content == null || content.isBlank()) {
             throw new DeimosLlmException(DeimosFailureType.LLM_UNPARSEABLE, "LLM returned an empty response for participation " + request.participationId());
         }
@@ -283,8 +297,8 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
      * missing {@code malicious} would silently deserialise to {@code false}, i.e. a security tool would report "benign"
      * for an answer it never actually understood. {@link VerdictCandidate} keeps a missing field recognisable. A missing
      * or blank {@code rationale} is rejected for the same reason: the rationale is the only thing an instructor can
-     * review, and a verdict without one is not usable evidence. Every occurrence of a repeated field has to be correctly
-     * typed, not only the last one: an object that states a field twice in different shapes is not an unambiguous answer.
+     * review, and a verdict without one is not usable evidence. A field stated twice is rejected, whatever its shapes:
+     * binding would keep only one occurrence, so such an object is not an unambiguous answer.
      *
      * @param candidate the candidate text
      * @return the verdict, or empty if the candidate is not a valid verdict object

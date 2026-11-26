@@ -66,6 +66,18 @@ class DeimosDiffBuilderTest {
     }
 
     @Test
+    void omitsAFileWhoseHeadersDoNotFitButNotAnEmptyFileWithoutDiff() throws Exception {
+        var base = Map.of("a.txt", "x\n", "gone.txt", "");
+        var target = Map.of("a.txt", "y\n", "new.txt", "");
+
+        // Ten bytes are left for file sections: too few for any headers, yet an empty added or deleted file has no diff.
+        DiffResult result = BUILDER.buildDiff(base, target, RESERVED + 10L);
+
+        assertThat(result.text()).isEqualTo("[... 1 further changed file(s) omitted to stay within the size limit ...]");
+        assertThat(result.omissions()).containsExactly(new DiffOmission(DeimosOmissionReason.PAYLOAD_LIMIT, "a.txt"));
+    }
+
+    @Test
     void reportsAnExhaustedBudgetBeforeTheInputLimit() throws Exception {
         var builder = new DeimosDiffBuilder(16, 1000);
         var base = Map.of("a.txt", "x\n", "b.txt", "x\n");

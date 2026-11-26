@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.entry;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -61,10 +60,26 @@ class DeimosSnapshotReaderTest {
     void readReportsSymbolicLinksAndSubmodulesWithTheObjectTheyPointTo() throws Exception {
         try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call()) {
             FileUtils.writeStringToFile(workingTree.resolve("Main.java").toFile(), "class Main {}\n", StandardCharsets.UTF_8);
-            Files.createSymbolicLink(workingTree.resolve("link"), Path.of("Main.java"));
+            git.add().addFilepattern("Main.java").call();
+            // Written straight into the index like the submodule, so the test does not depend on the file system and
+            // the permissions of the test JVM supporting symbolic links. Adding the working tree afterwards would drop
+            // the link again, as no file backs it, so the index is committed as it is.
+            ObjectId linkTarget;
+            try (ObjectInserter inserter = git.getRepository().newObjectInserter()) {
+                linkTarget = inserter.insert(Constants.OBJ_BLOB, "Main.java".getBytes(StandardCharsets.UTF_8));
+                inserter.flush();
+            }
             ObjectId submoduleCommit = ObjectId.fromString("0123456789abcdef0123456789abcdef01234567");
             DirCache dirCache = git.getRepository().lockDirCache();
             DirCacheEditor editor = dirCache.editor();
+            editor.add(new DirCacheEditor.PathEdit("link") {
+
+                @Override
+                public void apply(DirCacheEntry entry) {
+                    entry.setFileMode(FileMode.SYMLINK);
+                    entry.setObjectId(linkTarget);
+                }
+            });
             editor.add(new DirCacheEditor.PathEdit("lib/module") {
 
                 @Override
@@ -74,7 +89,7 @@ class DeimosSnapshotReaderTest {
                 }
             });
             editor.commit();
-            String commitHash = commitAll(git);
+            String commitHash = commit(git);
 
             DeimosSnapshotReader.TextSnapshot snapshot = deimosSnapshotReader.read(git.getRepository(), commitHash);
 
@@ -184,6 +199,10 @@ class DeimosSnapshotReaderTest {
 
     private static String commitAll(Git git) throws Exception {
         git.add().addFilepattern(".").call();
+        return commit(git);
+    }
+
+    private static String commit(Git git) throws Exception {
         var author = new PersonIdent("Artemis", "artemis@example.com");
         return GitService.commit(git).setMessage("Files").setAuthor(author).setCommitter(author).call().getName();
     }

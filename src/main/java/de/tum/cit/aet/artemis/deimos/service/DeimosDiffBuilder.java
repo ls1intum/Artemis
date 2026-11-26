@@ -155,6 +155,14 @@ final class DeimosDiffBuilder {
         if (utf8Length(oldContent) > maxFileInputBytes || utf8Length(newContent) > maxFileInputBytes) {
             return renderOversizedFile(path, headers, remainingBytes);
         }
+        // An empty file added or deleted has no diff and is rendered as unchanged, so it must not reach the check below.
+        if (oldContent.equals(newContent)) {
+            return FileSection.UNCHANGED;
+        }
+        // renderDiff omits a file whose headers alone do not fit, so the diff is not computed for it in the first place.
+        if (utf8Length(headers) + utf8Length(System.lineSeparator()) > remainingBytes) {
+            return FileSection.omitted(new DiffOmission(DeimosOmissionReason.PAYLOAD_LIMIT, path));
+        }
 
         String unifiedDiff = unifiedDiff(oldContent, newContent);
         if (unifiedDiff.isEmpty()) {
