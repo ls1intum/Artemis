@@ -432,6 +432,18 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    void testFeedbackSuggestionsTextRejectsNoAiSelectionForGradedRequestOfAssessor() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, noAiUser));
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextRejectsMissingSelectionForGradedRequestOfAssessor() {
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, undecidedUser));
+    }
+
+    @Test
     void testFeedbackSuggestionsIdConflict() {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         var otherExercise = new TextExercise();
