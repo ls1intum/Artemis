@@ -26,7 +26,7 @@
                 "noConflicts": "Conflicts could not be loaded",
                 "conflictsResolved": "All conflicts have been processed.",
                 "feedbackTextTooLong": "Failed to save assessment. A feedback title can have at most 500 characters, a comment on a diagram element at most 1,000 and a general comment at most 5,000.",
-                "loadFeedbackSuggestionsFailed": "Retrieving automatically generated feedback suggestions failed."
+                "loadFeedbackSuggestionsFailed": "Retrieving AI generated feedback suggestions failed."
             }
         }
     }
