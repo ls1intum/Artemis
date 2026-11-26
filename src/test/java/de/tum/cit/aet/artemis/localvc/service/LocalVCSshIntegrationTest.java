@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
@@ -325,9 +326,10 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             // Verify the session survived without crashing
             assertThat(serverSession.isOpen()).isTrue();
 
-            // When participation is absent, cacheAttributesInSshSession should NOT cache anything
+            // The tests repository has no participation, so the subject of the access log is the exercise and the repository
             var cachedSubject = ((ServerSession) serverSession).getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
-            assertThat(cachedSubject).as("No subject of the VCS access log should be cached when participation is absent").isNull();
+            assertThat(cachedSubject).as("The subject of the VCS access log refers to the tests repository of the exercise").isNotNull();
+            assertThat(cachedSubject.target()).isEqualTo(new AccessLogTarget.OfStaffRepository(programmingExercise.getId(), RepositoryType.TESTS, null, null));
             var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
             assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }

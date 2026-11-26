@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
+import de.tum.cit.aet.artemis.localvc.service.AccessLogTarget;
 import de.tum.cit.aet.artemis.localvc.service.GitOperationAudit;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
@@ -107,7 +108,7 @@ class SshGitCommandTest {
         });
         when(session.getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY)).thenAnswer(_ -> {
             entryCaptured.set(true);
-            return new AccessLogSubject(new User(), 1L, AuthenticationMechanism.SSH, "127.0.0.1");
+            return new AccessLogSubject(new User(), new AccessLogTarget.OfParticipation(1L), AuthenticationMechanism.SSH, "127.0.0.1");
         });
         when(pushProcessingService.claimProgrammingExerciseMutation(any(Repository.class), same(exercise))).thenAnswer(_ -> {
             // A later command may replace session state while this call waits for the exercise's mutation lease.

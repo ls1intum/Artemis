@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
@@ -85,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.repository.VcsStaffRepositoryAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
@@ -134,6 +136,8 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
+    private final Optional<VcsStaffRepositoryAccessLogRepository> vcsStaffRepositoryAccessLogRepository;
+
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
@@ -146,9 +150,10 @@ public class ProgrammingExerciseParticipationResource {
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            RepositoryAccessService repositoryAccessService, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            Optional<VcsAccessLogRepository> vcsAccessLogRepository, Optional<VcsStaffRepositoryAccessLogRepository> vcsStaffRepositoryAccessLogRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<SharedQueueManagementService> sharedQueueManagementService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, RepositoryAccessService repositoryAccessService, UserRepository userRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
@@ -162,6 +167,7 @@ public class ProgrammingExerciseParticipationResource {
         this.repositoryService = repositoryService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.vcsStaffRepositoryAccessLogRepository = vcsStaffRepositoryAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.repositoryAccessService = repositoryAccessService;
@@ -713,31 +719,49 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Retrieves the VCS access logs for the specified programming exercise's template or solution participation
+     * Retrieves the VCS access log of a repository of a programming exercise: the template or solution, which belong to a participation, or the tests or an auxiliary
+     * repository, which belong to the exercise.
      *
      * @param exerciseId     the ID of the programming exercise
-     * @param repositoryType the type of repository (either TEMPLATE or SOLUTION) for which to retrieve the logs.
-     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
-     * @throws BadRequestAlertException if the repository type is invalid
+     * @param repositoryType the type of repository: TEMPLATE, SOLUTION, TESTS or AUXILIARY
+     * @param repositoryId   the id of the auxiliary repository, which has to be given for AUXILIARY and is not looked at for the other types
+     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the repository, or 400 (Bad request) if localVC is not enabled.
+     * @throws BadRequestAlertException if the repository type is invalid, or an auxiliary repository is not given or does not belong to the exercise
      */
     @GetMapping("programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
-        if (vcsAccessLogRepository.isEmpty()) {
+    public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
+            @RequestParam(required = false) Long repositoryId) {
+        if (vcsAccessLogRepository.isEmpty() || vcsStaffRepositoryAccessLogRepository.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION) {
-            throw new BadRequestAlertException("Can only get vcs access log from template and assignment repositories", ENTITY_NAME, "incorrect repositoryType");
-        }
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
         log.info("Fetching VCS access logs for exercise ID: {} and repository type: {}", exerciseId, repositoryType);
+        List<? extends VcsAccessLogEntry> entries = switch (repositoryType) {
+            case TEMPLATE, SOLUTION -> {
+                ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+                var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+                yield vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
+            }
+            case TESTS -> vcsStaffRepositoryAccessLogRepository.get().findAllByExerciseIdAndRepositoryType(exerciseId, RepositoryType.TESTS);
+            case AUXILIARY -> {
+                if (repositoryId == null) {
+                    throw new BadRequestAlertException("Select an auxiliary repository", ENTITY_NAME, "missingRepositoryId");
+                }
+                var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
+                if (!auxiliaryRepository.getExercise().getId().equals(exerciseId)) {
+                    throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
+                }
+                yield vcsStaffRepositoryAccessLogRepository.get().findAllByAuxiliaryRepositoryId(repositoryId);
+            }
+            default -> throw new BadRequestAlertException("Can only get vcs access log from the template, solution, tests and auxiliary repositories", ENTITY_NAME,
+                    "incorrect repositoryType");
+        };
+        return ResponseEntity.ok(toDTOs(entries));
+    }
 
-        var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-
-        List<VcsAccessLog> vcsAccessLogs = vcsAccessLogRepository.get().findAllByParticipationId(participation.getId());
-        var vcsAccessLogDTOs = VcsAccessLogOperations.oneEntryPerOperation(vcsAccessLogs).stream().map(VcsAccessLogDTO::of).toList();
-        return ResponseEntity.ok(vcsAccessLogDTOs);
+    private static <T extends VcsAccessLogEntry> List<VcsAccessLogDTO> toDTOs(List<T> entries) {
+        return VcsAccessLogOperations.oneEntryPerOperation(entries).stream().map(VcsAccessLogDTO::of).toList();
     }
 
     /**

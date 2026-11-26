@@ -262,6 +262,18 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBe(true);
     });
 
+    it('should offer the vcs access log for the tests repository in course management', () => {
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: { id: 1 } as ProgrammingExercise });
+        (TestBed.inject(Router) as unknown as MockRouter).setUrl('/course-management/1/programming-exercises/1/repository/TESTS/1');
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TESTS' });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+
+        component.ngOnInit();
+
+        expect(component.enableVcsAccessLog()).toBe(true);
+        component.ngOnDestroy();
+    });
+
     it('should clear stale participation when switching from TEMPLATE to TESTS repository type', () => {
         const mockExercise: ProgrammingExercise = {
             id: 1,

@@ -223,7 +223,7 @@ public class LocalVCServletService {
         catch (LocalVCAuthException | AuthenticationException e) {
             // A request without a password is the first request of an operation, because git waits to be asked, and is no attempt. Every other rejection of the credentials is.
             if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
-                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, repositoryAction);
+                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, exercise.exerciseId(), repositoryAction);
             }
             throw e;
         }
@@ -244,7 +244,8 @@ public class LocalVCServletService {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
             // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
             // another, so here only who this request is for is remembered.
-            accessLogRecorder.rememberSubjectHTTPS(request, user, optionalParticipation, authenticated.mechanism());
+            accessLogRecorder.rememberSubjectHTTPS(request, user, accessLogRecorder.targetOf(optionalParticipation, exercise.exerciseId(), repositoryTypeOrUserName),
+                    authenticated.mechanism());
         }
         catch (LocalVCForbiddenException e) {
             log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
@@ -274,8 +275,12 @@ public class LocalVCServletService {
     public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, long exerciseId, LocalVCRepositoryUri localVCRepositoryUri, User user,
             RepositoryActionType repositoryAction) {
         try {
-            var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
-                    participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId));
+            // The tests and auxiliary repositories have no participation, so the attempt is written for the exercise and the repository. It used to be written for the solution
+            // participation, which put it in the log of the solution repository.
+            Optional<AccessLogTarget.OfStaffRepository> staffRepository = accessLogRecorder.staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName);
+            Optional<Long> participationId = staffRepository.isPresent() ? Optional.empty()
+                    : Optional.of(tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
+                            participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId)).getId());
             // A request that advertises the references is refused before the repository is reached, so the entry carries no commit. That is what lets the log tell it from a
             // transfer that was refused after an advertisement was stored, see VcsAccessLogOperations.
             boolean refusedBeforeAdvertisement = context instanceof AuthenticationContext.Request(var request) && "GET".equals(request.getMethod());
@@ -283,7 +288,14 @@ public class LocalVCServletService {
             var authenticationMechanism = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.getId(), action, authenticationMechanism, commitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> {
+                if (participationId.isPresent()) {
+                    service.saveAccessLog(user, participationId.get(), action, authenticationMechanism, commitHash, ipAddress);
+                }
+                else {
+                    service.saveStaffRepositoryAccessLog(user, staffRepository.orElseThrow(), action, authenticationMechanism, commitHash, ipAddress);
+                }
+            });
         }
         catch (Exception e) {
             log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());

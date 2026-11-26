@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Entity
 @Table(name = "vcs_access_log")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class VcsAccessLog extends DomainObject {
+public class VcsAccessLog extends DomainObject implements VcsAccessLogEntry {
 
     /**
      * How the name of an access by a build agent starts. The agent authenticates as a build job, not as a person, so the entry has no user and the name identifies the accessor.
@@ -95,34 +95,42 @@ public class VcsAccessLog extends DomainObject {
         this.repositoryActionType = repositoryActionType;
     }
 
+    @Override
     public User getUser() {
         return user;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public String getEmail() {
         return email;
     }
 
+    @Override
     public String getCommitHash() {
         return commitHash;
     }
 
+    @Override
     public ZonedDateTime getTimestamp() {
         return timestamp;
     }
 
+    @Override
     public AuthenticationMechanism getAuthenticationMechanism() {
         return authenticationMechanism;
     }
 
+    @Override
     public RepositoryActionType getRepositoryActionType() {
         return repositoryActionType;
     }
 
+    @Override
     public String getIpAddress() {
         return ipAddress;
     }

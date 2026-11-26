@@ -301,6 +301,7 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `UserSshPublicKey` | User `user_id` | Required | No |  |
 | `UserVCSAccessToken` | User `user_id` | Required | No | Cascades on user deletion. |
 | `VcsAccessLog` | Participation `participation_id` | Required | No | Cascades. The account that acted is a reference and is cleared when it is deleted. |
+| `VcsStaffRepositoryAccessLog` | ProgrammingExercise `exercise_id` | Required | No | Cascades. The access log of the tests and auxiliary repositories, which have no participation. The account that acted and the auxiliary repository are references and are cleared when they are deleted; the name of the repository stays. |
 
 ### Quiz
 
@@ -477,7 +478,7 @@ name.
 
 ## Where orphans are still possible
 
-Of the 149 tables behind the 188 entities, 96 have a required parent, 24 are roots by design, 18 are
+Of the 150 tables behind the 189 entities, 97 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
 parents. That leaves **6 tables where the schema permits an orphan**, in two shapes.
 

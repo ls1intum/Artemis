@@ -96,7 +96,14 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     it.each(['TEMPLATE', 'SOLUTION', 'TESTS'])('loads %s repository logs', (repositoryType) => {
         params.next({ exerciseId: '10', repositoryType });
         createComponent();
-        expect(repositoryLog).toHaveBeenCalledExactlyOnceWith(10, repositoryType);
+        expect(repositoryLog).toHaveBeenCalledExactlyOnceWith(10, repositoryType, undefined);
+        expect(participationLog).not.toHaveBeenCalled();
+    });
+
+    it('loads the log of an auxiliary repository by its id', () => {
+        params.next({ exerciseId: '10', repositoryType: 'AUXILIARY', repositoryId: '7' });
+        createComponent();
+        expect(repositoryLog).toHaveBeenCalledExactlyOnceWith(10, 'AUXILIARY', 7);
         expect(participationLog).not.toHaveBeenCalled();
     });
 

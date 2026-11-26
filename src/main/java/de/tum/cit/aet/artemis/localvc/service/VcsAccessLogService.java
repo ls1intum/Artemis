@@ -18,10 +18,15 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsStaffRepositoryAccessLog;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.repository.VcsStaffRepositoryAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
@@ -38,9 +43,20 @@ public class VcsAccessLogService {
 
     private final ParticipationRepository participationRepository;
 
-    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, ParticipationRepository participationRepository) {
+    private final VcsStaffRepositoryAccessLogRepository vcsStaffRepositoryAccessLogRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, ParticipationRepository participationRepository,
+            VcsStaffRepositoryAccessLogRepository vcsStaffRepositoryAccessLogRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.participationRepository = participationRepository;
+        this.vcsStaffRepositoryAccessLogRepository = vcsStaffRepositoryAccessLogRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -136,6 +152,49 @@ public class VcsAccessLogService {
         Participation participation = participationRepository.getReferenceById(participationId);
         return vcsAccessLogRepository
                 .save(new VcsAccessLog(user, participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress, timestamp));
+    }
+
+    /**
+     * Stores an entry for an access to the tests or an auxiliary repository of an exercise before returning, which have no participation for
+     * {@link #createAccessLog(User, long, RepositoryActionType, AuthenticationMechanism, String, String, ZonedDateTime)} to refer to.
+     * <p>
+     * An entry is written once, when the operation is over, and is never changed afterwards. A failure to write it must not fail the Git operation, so the callers catch it.
+     *
+     * @param user                    The user accessing the repository
+     * @param target                  The exercise and the repository
+     * @param actionType              The action: a read or a write that moved no data, or a clone, pull or push, or a failed one
+     * @param authenticationMechanism The used authentication mechanism
+     * @param commitHash              The commit hash that belongs to the action
+     * @param ipAddress               The ip address of the user accessing the repository
+     * @param timestamp               When the access happened
+     * @return the stored entry
+     */
+    public VcsStaffRepositoryAccessLog createStaffRepositoryAccessLog(User user, AccessLogTarget.OfStaffRepository target, RepositoryActionType actionType,
+            AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress, ZonedDateTime timestamp) {
+        log.debug("Storing access operation for user {} to the {} repository of exercise {}", user.getLogin(), target.repositoryType(), target.exerciseId());
+
+        // The entry only references the exercise and the auxiliary repository, so the references are enough and nothing is loaded.
+        ProgrammingExercise exercise = programmingExerciseRepository.getReferenceById(target.exerciseId());
+        var auxiliaryRepository = target.auxiliaryRepositoryId() == null ? null : auxiliaryRepositoryRepository.getReferenceById(target.auxiliaryRepositoryId());
+        return vcsStaffRepositoryAccessLogRepository.save(new VcsStaffRepositoryAccessLog(exercise, target.repositoryType(), auxiliaryRepository, target.repositoryName(), user,
+                user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash, ipAddress, timestamp));
+    }
+
+    /**
+     * Creates an entry for a rejected attempt on the tests or an auxiliary repository in the background, which nothing waits for. The exercise is passed by id, as an entity or
+     * a proxy that is handed to another thread cannot be read there.
+     *
+     * @param user                    The user accessing the repository
+     * @param target                  The exercise and the repository
+     * @param actionType              The action type, for example a failed clone or push
+     * @param authenticationMechanism The used authentication mechanism
+     * @param commitHash              The latest commit hash
+     * @param ipAddress               The ip address of the user accessing the repository
+     */
+    @Async("vcsAccessLogExecutor")
+    public void saveStaffRepositoryAccessLog(User user, AccessLogTarget.OfStaffRepository target, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
+            String commitHash, String ipAddress) {
+        createStaffRepositoryAccessLog(user, target, actionType, authenticationMechanism, commitHash, ipAddress, ZonedDateTime.now());
     }
 
     /**

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261126225017-01-create-vcs-staff-repository-access-log" author="krusche">
+        <comment>Record who accessed the tests and auxiliary repositories of a programming exercise, which have no participation for the access log to refer to.</comment>
+        <!--
+        The access log of a participation (vcs_access_log) cannot hold these entries: a tests or auxiliary repository belongs to the exercise, not to a participation, and
+        the entries that were written for them so far were attached to the solution participation, so they showed up in the log of the solution repository.
+        The enums are stored by name here, so that the order of their constants is not part of the schema.
+        -->
+        <createTable tableName="vcs_staff_repository_access_log">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="auxiliary_repository_id" type="bigint"/>
+            <column name="repository_name" type="varchar(100)"/>
+            <column name="user_id" type="bigint"/>
+            <column name="name" type="varchar(255)"/>
+            <column name="email" type="varchar(255)"/>
+            <column name="repository_action_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authentication_mechanism" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_hash" type="varchar(40)"/>
+            <column name="ip_address" type="varchar(45)"/>
+            <column name="timestamp" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- The log belongs to the exercise and goes with it. -->
+        <addForeignKeyConstraint baseTableName="vcs_staff_repository_access_log" baseColumnNames="exercise_id" constraintName="FK_VCS_STAFF_REPOSITORY_ACCESS_LOG_EXERCISE"
+                                 referencedTableName="exercise" referencedColumnNames="id" onDelete="CASCADE"/>
+        <!-- An auxiliary repository can be removed from an exercise. Its entries stay, with its name, and no longer refer to it. -->
+        <addForeignKeyConstraint baseTableName="vcs_staff_repository_access_log" baseColumnNames="auxiliary_repository_id"
+                                 constraintName="FK_VCS_STAFF_REPOSITORY_ACCESS_LOG_AUXILIARY_REPOSITORY" referencedTableName="programming_exercise_auxiliary_repositories"
+                                 referencedColumnNames="id" onDelete="SET NULL"/>
+        <!-- The account is a reference, not a parent: the log outlives the person who acted, so the key is nulled. -->
+        <addForeignKeyConstraint baseTableName="vcs_staff_repository_access_log" baseColumnNames="user_id" constraintName="FK_VCS_STAFF_REPOSITORY_ACCESS_LOG_USER"
+                                 referencedTableName="jhi_user" referencedColumnNames="id" onDelete="SET NULL"/>
+        <createIndex indexName="idx_vcs_staff_repository_access_log_exercise" tableName="vcs_staff_repository_access_log">
+            <column name="exercise_id"/>
+            <column name="repository_type"/>
+        </createIndex>
+        <createIndex indexName="idx_vcs_staff_repository_access_log_auxiliary" tableName="vcs_staff_repository_access_log">
+            <column name="auxiliary_repository_id"/>
+        </createIndex>
+        <createIndex indexName="idx_vcs_staff_repository_access_log_timestamp" tableName="vcs_staff_repository_access_log">
+            <column name="timestamp"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="vcs_staff_repository_access_log"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

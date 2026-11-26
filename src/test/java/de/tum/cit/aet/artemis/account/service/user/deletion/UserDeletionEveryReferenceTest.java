@@ -277,6 +277,8 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.LLM_USAGE_ACTOR, userId, values());
         seed(UserDeletionReferencePolicy.VCS_ACCESS_LOG, userId, values("participation_id", participationId, "name", "Deleted Account", "email", "deleted@localhost",
                 "repository_action_type", 0, "authentication_mechanism", 0, "timestamp", now));
+        seed(UserDeletionReferencePolicy.VCS_STAFF_REPOSITORY_ACCESS_LOG, userId, values("exercise_id", exerciseId, "repository_type", "TESTS", "name", "Deleted Account", "email",
+                "deleted@localhost", "repository_action_type", "CLONE", "authentication_mechanism", "PASSWORD", "timestamp", now));
     }
 
     /**

@@ -78,7 +78,8 @@ public enum UserDeletionReferencePolicy {
     SSH_PUBLIC_KEY("user_public_ssh_key", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     RECOVERY_KEY("user_recovery_key", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     PERSONAL_VCS_TOKEN("user_vcs_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
-    VCS_ACCESS_LOG("vcs_access_log", "user_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DETACH_ACTOR, true);
+    VCS_ACCESS_LOG("vcs_access_log", "user_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DETACH_ACTOR, true),
+    VCS_STAFF_REPOSITORY_ACCESS_LOG("vcs_staff_repository_access_log", "user_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DETACH_ACTOR, true);
 
     private final String tableName;
 

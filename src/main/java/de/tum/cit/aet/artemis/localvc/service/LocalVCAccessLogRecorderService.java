@@ -31,7 +31,9 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.UsernameAndPass
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
@@ -75,6 +77,8 @@ public class LocalVCAccessLogRecorderService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final AuxiliaryRepositoryService auxiliaryRepositoryService;
+
     /**
      * Creates the recorder.
      *
@@ -83,14 +87,50 @@ public class LocalVCAccessLogRecorderService {
      * @param userVcsAccessTokenService               tells whether a credential is the personal access token of a user
      * @param repositoryVCSAccessTokenRepository      tells whether a credential is the token of a user for one repository
      * @param programmingExerciseParticipationService finds the participation a rejected attempt is written for
+     * @param auxiliaryRepositoryService              finds the auxiliary repository an entry is written for
      */
     public LocalVCAccessLogRecorderService(Optional<VcsAccessLogService> vcsAccessLogService, UserRepository userRepository, UserVcsAccessTokenService userVcsAccessTokenService,
-            RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService) {
         this.vcsAccessLogService = vcsAccessLogService;
         this.userRepository = userRepository;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.repositoryVCSAccessTokenRepository = repositoryVCSAccessTokenRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.auxiliaryRepositoryService = auxiliaryRepositoryService;
+    }
+
+    /**
+     * The repository an entry is written for: the participation that owns it, or for the tests and auxiliary repositories, which have none, the exercise and the repository.
+     *
+     * @param optionalParticipation    the participation that owns the repository, if any
+     * @param exerciseId               the exercise the repository belongs to
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @return the target, empty for a repository that has neither a participation nor is the tests or an auxiliary repository
+     */
+    public Optional<AccessLogTarget> targetOf(Optional<ProgrammingExerciseParticipation> optionalParticipation, long exerciseId, String repositoryTypeOrUserName) {
+        if (optionalParticipation.isPresent()) {
+            return Optional.of(new AccessLogTarget.OfParticipation(optionalParticipation.get().getId()));
+        }
+        return staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName).map(AccessLogTarget.class::cast);
+    }
+
+    /**
+     * The target of the tests or an auxiliary repository, which belong to the exercise and have no participation.
+     *
+     * @param exerciseId               the exercise the repository belongs to
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @return the target, empty if the name is that of the template, the solution, or of no auxiliary repository of the exercise
+     */
+    public Optional<AccessLogTarget.OfStaffRepository> staffRepositoryTargetOf(long exerciseId, String repositoryTypeOrUserName) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return Optional.of(new AccessLogTarget.OfStaffRepository(exerciseId, RepositoryType.TESTS, null, null));
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+            return Optional.empty();
+        }
+        return auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exerciseId)
+                .map(auxiliaryRepositoryId -> new AccessLogTarget.OfStaffRepository(exerciseId, RepositoryType.AUXILIARY, auxiliaryRepositoryId, repositoryTypeOrUserName));
     }
 
     /**
@@ -98,14 +138,12 @@ public class LocalVCAccessLogRecorderService {
      *
      * @param request                 the authorized request
      * @param user                    the authenticated user
-     * @param optionalParticipation   the participation that owns the repository, if any
+     * @param optionalTarget          the repository the request is for, empty if it is not logged
      * @param authenticationMechanism the credential used by this request
      */
-    public void rememberSubjectHTTPS(HttpServletRequest request, User user, Optional<ProgrammingExerciseParticipation> optionalParticipation,
-            AuthenticationMechanism authenticationMechanism) {
+    public void rememberSubjectHTTPS(HttpServletRequest request, User user, Optional<AccessLogTarget> optionalTarget, AuthenticationMechanism authenticationMechanism) {
         request.removeAttribute(SUBJECT_ATTRIBUTE);
-        optionalParticipation.ifPresent(
-                participation -> request.setAttribute(SUBJECT_ATTRIBUTE, new AccessLogSubject(user, participation.getId(), authenticationMechanism, request.getRemoteAddr())));
+        optionalTarget.ifPresent(target -> request.setAttribute(SUBJECT_ATTRIBUTE, new AccessLogSubject(user, target, authenticationMechanism, request.getRemoteAddr())));
     }
 
     /**
@@ -270,7 +308,7 @@ public class LocalVCAccessLogRecorderService {
                         continue;
                     }
                     // The operation has happened and its response must not change for it, so a failure to describe it is only reported.
-                    log.warn("Could not write the VCS access log entry ({}) of user {} to participation {}", action, subject.user().getLogin(), subject.participationId(), e);
+                    log.warn("Could not write the VCS access log entry ({}) of user {} for {}", action, subject.user().getLogin(), subject.target(), e);
                     return;
                 }
             }
@@ -283,13 +321,18 @@ public class LocalVCAccessLogRecorderService {
     }
 
     private void store(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash, @Nullable ZonedDateTime accessedAt) {
-        if (accessedAt == null) {
-            vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
-                    subject.ipAddress());
-        }
-        else {
-            vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
-                    subject.ipAddress(), accessedAt);
+        String commit = Objects.requireNonNullElse(commitHash, "");
+        switch (subject.target()) {
+            case AccessLogTarget.OfParticipation(long participationId) -> {
+                if (accessedAt == null) {
+                    vcsAccessLogService.get().createAccessLog(subject.user(), participationId, action, subject.mechanism(), commit, subject.ipAddress());
+                }
+                else {
+                    vcsAccessLogService.get().createAccessLog(subject.user(), participationId, action, subject.mechanism(), commit, subject.ipAddress(), accessedAt);
+                }
+            }
+            case AccessLogTarget.OfStaffRepository staffRepository -> vcsAccessLogService.get().createStaffRepositoryAccessLog(subject.user(), staffRepository, action,
+                    subject.mechanism(), commit, subject.ipAddress(), Objects.requireNonNullElseGet(accessedAt, ZonedDateTime::now));
         }
     }
 
@@ -375,20 +418,17 @@ public class LocalVCAccessLogRecorderService {
      *
      * @param user                    the user accessing the repository
      * @param optionalParticipation   the participation associated with the repository
+     * @param optionalTarget          the repository the entry is written for, empty if it is not logged
      * @param authenticationMechanism the mechanism used for authentication
      * @param ipAddress               the IP address of the user accessing the repository
      * @param serverSession           the SSH serverSession, where the data gets stored
      */
-    public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, AuthenticationMechanism authenticationMechanism,
-            String ipAddress, ServerSession serverSession) {
+    public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, Optional<AccessLogTarget> optionalTarget,
+            AuthenticationMechanism authenticationMechanism, String ipAddress, ServerSession serverSession) {
         serverSession.removeAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
         serverSession.removeAttribute(SshConstants.PARTICIPATION_KEY);
-        if (optionalParticipation.isEmpty()) {
-            return;
-        }
-        ProgrammingExerciseParticipation participation = optionalParticipation.get();
-        serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation);
-        serverSession.setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY, new AccessLogSubject(user, participation.getId(), authenticationMechanism, ipAddress));
+        optionalParticipation.ifPresent(participation -> serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation));
+        optionalTarget.ifPresent(target -> serverSession.setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY, new AccessLogSubject(user, target, authenticationMechanism, ipAddress)));
     }
 
     /**
@@ -402,14 +442,22 @@ public class LocalVCAccessLogRecorderService {
      *
      * @param request              the request, which carries the credentials
      * @param localVCRepositoryUri the repository the request was for
+     * @param exerciseId           the exercise the repository belongs to
      * @param repositoryAction     WRITE for a push, READ for a fetch
      */
-    public void recordFailedAuthenticationHTTPS(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryAction) {
+    public void recordFailedAuthenticationHTTPS(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, long exerciseId, RepositoryActionType repositoryAction) {
         try {
             String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = resolveHTTPSAuthenticationMechanism(authorizationHeader, user, localVCRepositoryUri);
+            var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+            // The tests and auxiliary repositories have no participation: their entries refer to the exercise and the repository
+            var staffRepository = staffRepositoryTargetOf(exerciseId, localVCRepositoryUri.getRepositoryTypeOrUserName());
+            if (staffRepository.isPresent()) {
+                vcsAccessLogService.ifPresent(service -> service.saveStaffRepositoryAccessLog(user, staffRepository.get(), action, mechanism, "", request.getRemoteAddr()));
+                return;
+            }
             // One id, no entity: the entry only references the participation.
             var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
@@ -417,7 +465,6 @@ public class LocalVCAccessLogRecorderService {
                 return;
             }
             long participationId = participation.get().getId();
-            var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participationId, action, mechanism, "", request.getRemoteAddr()));
         }
         catch (LocalVCAuthException | EntityNotFoundException _) {

@@ -11,7 +11,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsStaffRepositoryAccessLog;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class VcsAccessLogOperationsTest {
@@ -43,6 +46,20 @@ class VcsAccessLogOperationsTest {
 
     private VcsAccessLog add(User user, RepositoryActionType action, long secondsAfterStart) {
         return add(user, action, AuthenticationMechanism.PASSWORD, "10.0.0.1", secondsAfterStart);
+    }
+
+    private static VcsStaffRepositoryAccessLog staffEntry(User user, RepositoryActionType action, long secondsAfterStart) {
+        return new VcsStaffRepositoryAccessLog(new ProgrammingExercise(), RepositoryType.TESTS, null, null, user, "name", "mail", action, AuthenticationMechanism.PASSWORD, "hash",
+                "10.0.0.1", START.plusSeconds(secondsAfterStart));
+    }
+
+    @Test
+    void theEntriesOfTheTestsAndAuxiliaryRepositoriesAreJoinedToOperationsLikeThoseOfAParticipation() {
+        var advertisement = staffEntry(alice, RepositoryActionType.READ, 0);
+        var clone = staffEntry(alice, RepositoryActionType.CLONE, 1);
+        var otherUsersAccess = staffEntry(bob, RepositoryActionType.READ, 2);
+
+        assertThat(VcsAccessLogOperations.oneEntryPerOperation(List.of(advertisement, clone, otherUsersAccess))).containsExactly(clone, otherUsersAccess);
     }
 
     @Test

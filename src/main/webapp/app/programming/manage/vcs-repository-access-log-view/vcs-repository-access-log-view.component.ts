@@ -49,10 +49,18 @@ export class VcsRepositoryAccessLogViewComponent {
         const id = this.params().repositoryId;
         return id ? Number(id) : undefined;
     });
+    private readonly auxiliaryRepositoryId = computed(() => {
+        if (this.repositoryType() !== RepositoryType.AUXILIARY) {
+            return undefined;
+        }
+        const id = this.params().repositoryId;
+        return id ? Number(id) : undefined;
+    });
     private readonly fetchParams = computed(() => ({
         participationId: this.participationId(),
         exerciseId: this.exerciseId(),
         repositoryType: this.repositoryType(),
+        auxiliaryRepositoryId: this.auxiliaryRepositoryId(),
     }));
 
     private readonly logState = toSignal(
@@ -60,7 +68,7 @@ export class VcsRepositoryAccessLogViewComponent {
             switchMap((params) =>
                 (params.participationId
                     ? this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(params.participationId)
-                    : this.programmingExerciseParticipationService.getVcsAccessLogForRepository(params.exerciseId, params.repositoryType)
+                    : this.programmingExerciseParticipationService.getVcsAccessLogForRepository(params.exerciseId, params.repositoryType, params.auxiliaryRepositoryId)
                 ).pipe(
                     map((entries) => ({ entries: entries ?? [], loading: false })),
                     catchError(() => {

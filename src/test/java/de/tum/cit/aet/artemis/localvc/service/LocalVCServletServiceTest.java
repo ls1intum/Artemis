@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -230,6 +231,24 @@ class LocalVCServletServiceTest {
                 RepositoryActionType.WRITE);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(5L), eq(RepositoryActionType.PUSH_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""), any());
+    }
+
+    @Test
+    void saveFailedAccessVcsAccessLog_forTheTestsRepository_isWrittenForTheExerciseAndNotForTheSolutionParticipation() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("GET");
+        var target = new AccessLogTarget.OfStaffRepository(testExercise.getId(), RepositoryType.TESTS, null, null);
+        when(accessLogRecorder.staffRepositoryTargetOf(testExercise.getId(), "tests")).thenReturn(Optional.of(target));
+        when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.PASSWORD);
+
+        localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), "tests", testExercise.getId(), testRepositoryUri, testUser,
+                RepositoryActionType.READ);
+
+        verify(vcsAccessLogService).saveStaffRepositoryAccessLog(eq(testUser), eq(target), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""),
+                any());
+        verify(vcsAccessLogService, never()).saveAccessLog(any(), anyLong(), any(), any(), anyString(), any());
+        // no participation is looked up for it: that was the solution participation, whose log the entry used to end up in
+        verifyNoInteractions(programmingExerciseParticipationService);
     }
 
     @Test
