@@ -1,0 +1,90 @@
+---
+id: eager-loading-report
+title: Eager-Loading Report for Pull Requests
+sidebar_label: Eager-Loading Report
+last_reviewed: 2026-11-27
+---
+
+CI reports how much client code each lazily loaded route downloads as soon as it opens, and what a pull request changes
+about that. The report is advisory and never fails a build. It appears as the pull request comment **Client Eager-Chunk
+Loading Report**.
+
+## What It Detects
+
+A component that is loaded lazily with `loadComponent` is only downloaded when its route opens. That stops working when
+another component also imports it with a normal `import`:
+
+```ts
+// the list component: this import ships the detail component, and everything it imports, with the list
+import { ExerciseDetailComponent } from './exercise-detail.component';
+
+// the route file: the detail component is meant to be downloaded only for this route
+{ path: ':exerciseId', loadComponent: () => import('./exercise-detail.component').then((m) => m.ExerciseDetailComponent) }
+```
+
+Nothing breaks and no test fails, but users download code that they may never need. The files that a route downloads
+before the user does anything are its **eager chunks**.
+
+## How It Works
+
+1. The build job of CI builds the client twice. An unoptimized build is only used for this report, which keeps the
+   description of its chunks. The client that ships is a separate, optimized build.
+2. `analyze_eager_chunks.mjs` finds every `loadComponent` target in the route files and follows only the normal imports
+   from its chunk. The result is uploaded as the artifact `chunk-eager-report`.
+3. For a pull request, `diff_eager_chunks.mjs` compares this report with the report of the `develop` commit that the
+   branch was cut from, so that later changes on `develop` do not count for the pull request.
+4. CI posts the result as a comment, or updates the earlier one.
+
+All scripts are in `supporting_scripts/chunk-eager-loading`. No list of routes is maintained by hand and no baseline file
+is committed.
+
+## Read the Report
+
+A route is a **regression** or an **improvement** when its eager chunks grow or shrink by more than 3 files, or its eager
+size by more than 10 percent. The table lists only these routes. The line under a route names the imports that caused the
+change. Open it to see their size and the largest things they bring along, and start with the largest import.
+
+The sizes come from the unoptimized build. Compare them with each other; they are not what a user downloads. Which import
+caused a change is derived from the chunks, so a chunk that mixes unrelated files can be named after the wrong one. The
+full report, linked at the end of the comment as a downloadable page, lists every chunk.
+
+| Comment says | Meaning |
+| --- | --- |
+| No meaningful change on any route | The pull request stays within both limits. |
+| Comparison skipped | The `develop` commit has no report, for example because its build failed or the report expired after 90 days. |
+| Comparison failed | The report of this commit could not be generated. |
+
+The last two replace an earlier comment, so that an outdated result does not stay. Without an earlier comment, nothing is
+posted.
+
+## Fix a Regression
+
+* Remove the normal import, so that the component is only downloaded with the route that needs it.
+* If you only need a type or a constant from that file, move it to a small file of its own and import that.
+* If the import is intended, keep it and explain the added size in the pull request description.
+
+## Limitations
+
+* Only `loadComponent` targets are measured, not routes loaded with `loadChildren`.
+* The report cannot compare when the `develop` commit has no report.
+* A pull request from a fork may get no comment, because its token cannot write to the pull request.
+
+## Run It Locally
+
+Build the client as CI does for the report, create the report and compare it with another one, for example the
+`chunk-eager-report` artifact of a `develop` run:
+
+```bash
+pnpm run prebuild
+pnpm exec ng build --configuration production --optimization=false --stats-json
+node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/resources/main/static/browser-stats.json --out report.json
+node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs report.json --baseline other-report.json
+```
+
+The last command prints the summary and the changed routes, and exits with code 1 if there is a regression. The
+[README of the scripts](https://github.com/ls1intum/Artemis/blob/develop/supporting_scripts/chunk-eager-loading/README.md)
+describes the report format and further options. Run the tests of the comparison with:
+
+```bash
+node --test supporting_scripts/chunk-eager-loading/diff_eager_chunks.test.mjs
+```
