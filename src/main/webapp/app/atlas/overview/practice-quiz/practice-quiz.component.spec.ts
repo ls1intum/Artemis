@@ -15,6 +15,8 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PracticeQuizComponent', () => {
     let fixture: ComponentFixture<PracticeQuizComponent>;
@@ -87,6 +89,7 @@ describe('PracticeQuizComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(PracticeQuizService),
                 {
                     provide: ActivatedRoute,
@@ -268,6 +271,18 @@ describe('PracticeQuizComponent', () => {
         expect(component.state()).toBe('QUIZ');
         expect(component.currentSession()).toEqual(mockSession);
         expect(component.selectedAnswerOptions()).toEqual({});
+    });
+
+    it('should label each question navigation button with its number and block cancelling while submitting', () => {
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(mockSession));
+        fixture.detectChanges();
+        component.isSubmitting.set(true);
+        fixture.detectChanges();
+
+        const navButtons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.quiz-nav-step'));
+        expect(navButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['Question 1']);
+        const cancelButton = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('#quiz-header button')).find((button) => button.textContent?.trim() === 'Cancel');
+        expect(cancelButton?.disabled).toBe(true);
     });
 
     it('should cancel pending requests of the previous course when the route switches to another course', () => {

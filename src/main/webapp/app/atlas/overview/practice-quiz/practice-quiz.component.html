@@ -130,7 +130,9 @@
                             </span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="backToOverview()">Cancel</button>
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [disabled]="isSubmitting()" (click)="backToOverview()">
+                                Cancel
+                            </button>
                             <button tumAetUiButton type="button" size="small" [disabled]="isSubmitting()" (click)="submitQuiz()">
                                 <fa-icon [icon]="faCheck" class="me-1" />
                                 <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
@@ -150,6 +152,7 @@
                                             class="quiz-nav-step multiplechoicecolor-question"
                                             (click)="navigateToQuestion(i)"
                                             [class.changed-question]="isAnswered(question.id!)"
+                                            [attr.aria-label]="'Question ' + (i + 1)"
                                             [tumAetUiTooltip]="
                                                 (isAnswered(question.id!) ? 'artemisApp.quizExercise.explanationAnswered' : 'artemisApp.quizExercise.explanationNotAnswered')
                                                     | artemisTranslate
@@ -239,6 +242,7 @@
                                             class="quiz-nav-step multiplechoicecolor-question"
                                             [class.changed-question]="isAnswered(question.id!)"
                                             (click)="navigateToQuestion(i)"
+                                            [attr.aria-label]="'Question ' + (i + 1)"
                                             [tumAetUiTooltip]="questionTooltip(question.id!, question.points ?? 1)"
                                             tumAetUiTooltipPlacement="right"
                                         >
