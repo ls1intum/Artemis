@@ -339,6 +339,27 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBe(true);
     });
 
+    it.each([true, false])('should offer the vcs access log of an auxiliary repository only to instructors (instructor: %s)', (isInstructor) => {
+        const mockAuxiliaryRepository: AuxiliaryRepository = { id: 5, repositoryUri: 'repositoryUri', checkoutDirectory: 'dir', name: 'AuxRepo', description: 'description' };
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            course: { id: 3, isAtLeastInstructor: isInstructor },
+            auxiliaryRepositories: [mockAuxiliaryRepository],
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        (TestBed.inject(Router) as unknown as MockRouter).setUrl('/course-management/3/programming-exercises/1/repository/AUXILIARY/5');
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'AUXILIARY', repositoryId: 5 });
+        vi.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(new HttpResponse({ body: mockExercise })));
+
+        component.ngOnInit();
+
+        expect(component.enableVcsAccessLog()).toBe(true);
+        expect(component.allowVcsAccessLog()).toBe(isInstructor);
+        component.ngOnDestroy();
+    });
+
     it('should handle unknown repository type', () => {
         // Mock exercise and participation data
         const mockExercise: ProgrammingExercise = {

@@ -623,6 +623,13 @@ class LocalVCAccessLogRecorderServiceTest {
     }
 
     @Test
+    void aFailureToFindTheAuxiliaryRepositoryDoesNotRejectTheAuthorizedOperation() {
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("extras", 1L)).thenThrow(new IllegalStateException("the database is away"));
+
+        assertThat(accessLogRecorder.targetOf(Optional.empty(), 1L, "extras")).isEmpty();
+    }
+
+    @Test
     void aStudentIsNotAStaffRepositoryUnlessTheNameIsThatOfAnAuxiliaryRepository() {
         when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("student1", 1L)).thenReturn(Optional.empty());
 

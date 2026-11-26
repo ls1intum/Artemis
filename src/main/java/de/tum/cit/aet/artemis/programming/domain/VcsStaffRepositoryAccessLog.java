@@ -79,7 +79,7 @@ public class VcsStaffRepositoryAccessLog extends DomainObject implements VcsAcce
     @Column(name = "timestamp", nullable = false)
     private ZonedDateTime timestamp;
 
-    protected VcsStaffRepositoryAccessLog() {
+    public VcsStaffRepositoryAccessLog() {
         // for Hibernate
     }
 

@@ -106,13 +106,20 @@ public class LocalVCAccessLogRecorderService {
      * @param optionalParticipation    the participation that owns the repository, if any
      * @param exerciseId               the exercise the repository belongs to
      * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
-     * @return the target, empty for a repository that has neither a participation nor is the tests or an auxiliary repository
+     * @return the target, empty for a repository that has neither a participation nor is the tests or an auxiliary repository, and if the auxiliary repository cannot be looked
+     *         up: the operation is authorized already, and a failure to describe it for the log must not reject it
      */
     public Optional<AccessLogTarget> targetOf(Optional<ProgrammingExerciseParticipation> optionalParticipation, long exerciseId, String repositoryTypeOrUserName) {
         if (optionalParticipation.isPresent()) {
             return Optional.of(new AccessLogTarget.OfParticipation(optionalParticipation.get().getId()));
         }
-        return staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName).map(AccessLogTarget.class::cast);
+        try {
+            return staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName).map(AccessLogTarget.class::cast);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not find the repository {} of exercise {} for the VCS access log, so the operation is not logged", repositoryTypeOrUserName, exerciseId, e);
+            return Optional.empty();
+        }
     }
 
     /**

@@ -252,6 +252,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                         this.domainService.setDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
                         this.repositoryUri.set(auxiliaryRepo.repositoryUri!);
                     }
+                    this.allowVcsAccessLog.set(this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(exercise)));
                 }),
             )
             .subscribe({
