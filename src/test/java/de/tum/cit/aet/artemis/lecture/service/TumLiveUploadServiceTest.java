@@ -176,6 +176,40 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void aFailedAcknowledgementDiscardsTheUploadBeforeTheSchedulerCanAttachIt() {
+        var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
+        var file = InputStream.nullInputStream();
+        var failure = new IllegalStateException("could not save the acknowledgement");
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now(), 55L)));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenReturn(target);
+        when(uploadRepository.recordPendingStream(UNIT_ID, REF, 55)).thenReturn(true);
+        doAnswer(_ -> {
+            service.processPendingUploads();
+            throw failure;
+        }).when(uploadRepository).markTransferAccepted(UNIT_ID, REF);
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, file)).isSameAs(failure);
+
+        verify(api).transferUpload(target, file);
+        verify(api, never()).getRecording(anyLong(), anyLong());
+        verify(uploadRepository, never()).attachPending(anyLong(), anyString(), anyString(), any());
+        verify(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), eq("The video transfer to TUM.Live failed."), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = HttpStatus.class, names = { "NOT_FOUND", "SERVICE_UNAVAILABLE" })
+    void aFailureCreatingTheUploadTargetDiscardsTheReservation(HttpStatus status) {
+        when(uploadRepository.findByLectureUnitId(UNIT_ID)).thenReturn(Optional.of(pending(ZonedDateTime.now(), null)));
+        when(api.createUpload(eq(23L), eq(REF), anyString())).thenThrow(new GocastIntegrationException("could not create upload", status));
+
+        assertThatThrownBy(() -> service.transfer(unit(), REF, InputStream.nullInputStream())).isInstanceOf(RuntimeException.class);
+
+        verify(api, never()).transferUpload(any(), any());
+        verify(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), eq("The video transfer to TUM.Live failed."), any());
+    }
+
+    @Test
     void aCleanupFailurePreservesTheOriginalTransferFailure() {
         var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
         var video = InputStream.nullInputStream();
