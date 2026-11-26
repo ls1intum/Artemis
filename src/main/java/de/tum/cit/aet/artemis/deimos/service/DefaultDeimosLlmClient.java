@@ -137,7 +137,7 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
         if (generation != null && generation.getMetadata().getFinishReasonCategory() == FinishReasonCategory.TRUNCATED) {
             throw new DeimosLlmException(DeimosFailureType.LLM_UNPARSEABLE, "LLM response for participation " + request.participationId() + " was cut off at the output limit");
         }
-        String content = generation != null && generation.getOutput() != null ? generation.getOutput().getText() : null;
+        String content = generation != null ? generation.getOutput().getText() : null;
         if (content == null || content.isBlank()) {
             throw new DeimosLlmException(DeimosFailureType.LLM_UNPARSEABLE, "LLM returned an empty response for participation " + request.participationId());
         }

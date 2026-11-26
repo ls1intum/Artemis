@@ -504,21 +504,7 @@ public class DeimosAnalysisService {
         try (Repository repository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
             TextSnapshot template = readTemplate(participationId, participation.getProgrammingExercise().getId(), participationStart);
             var history = new HistoryAccumulator(participationId, repository, template, new MarkerScan(participationId, template, sentinel, evidence), evidence);
-            for (int index = 0; index < submissions.size(); index++) {
-                try {
-                    history.add(submissions.get(index));
-                }
-                catch (Exception ex) {
-                    // The history stays failed, but a marker in a later submission that can still be read is reported.
-                    try {
-                        history.scanForMarkers(submissions.subList(index + 1, submissions.size()));
-                    }
-                    catch (RuntimeException scanFailure) {
-                        ex.addSuppressed(scanFailure);
-                    }
-                    throw ex;
-                }
-            }
+            history.addAll(submissions);
             return history.finish();
         }
         catch (DeimosSnapshotHistoryException ex) {
@@ -688,6 +674,27 @@ public class DeimosAnalysisService {
         }
 
         /**
+         * Adds the submissions in chronological order.
+         * <p>
+         * When one of them cannot be processed, the history stays failed, but a marker in a later submission that can
+         * still be read is reported: those submissions are scanned before the failure is rethrown.
+         *
+         * @param submissions the submissions of the participation, oldest first
+         * @throws IOException if a snapshot could not be diffed
+         */
+        private void addAll(List<ProgrammingSubmission> submissions) throws IOException {
+            for (int index = 0; index < submissions.size(); index++) {
+                try {
+                    add(submissions.get(index));
+                }
+                catch (IOException | RuntimeException ex) {
+                    scanForMarkers(submissions.subList(index + 1, submissions.size()), ex);
+                    throw ex;
+                }
+            }
+        }
+
+        /**
          * Scans submissions for imitated fence markers after the history could not be read up to them.
          * <p>
          * Without the snapshot before them, each one is compared with the template. That finds what the chained scan
@@ -695,8 +702,9 @@ public class DeimosAnalysisService {
          * A snapshot that cannot be read either is skipped, as the history has already failed.
          *
          * @param submissions the submissions after the one whose snapshot could not be processed
+         * @param failure     the failure that stopped the history, which keeps any unexpected scan failure as suppressed
          */
-        private void scanForMarkers(List<ProgrammingSubmission> submissions) {
+        private void scanForMarkers(List<ProgrammingSubmission> submissions, Exception failure) {
             for (ProgrammingSubmission submission : submissions) {
                 if (submission.getCommitHash() == null || submission.getCommitHash().isBlank()) {
                     continue;
@@ -707,6 +715,9 @@ public class DeimosAnalysisService {
                 }
                 catch (DeimosSnapshotHistoryException ex) {
                     log.debug("Snapshot of submission {} of participation {} could not be scanned for markers either", submission.getId(), participationId, ex);
+                }
+                catch (RuntimeException ex) {
+                    failure.addSuppressed(ex);
                 }
             }
         }
