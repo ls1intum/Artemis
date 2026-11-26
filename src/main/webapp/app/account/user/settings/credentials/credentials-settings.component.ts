@@ -1,4 +1,4 @@
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, computed, inject, viewChild } from '@angular/core';
 import { CredentialRevocationChoice } from 'app/account/password/password.service';
 import { MODULE_FEATURE_AGENT_ACCESS, MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { AgentAccessSettingsComponent } from 'app/account/user/settings/credentials/agent-access-settings/agent-access-settings.component';
@@ -31,7 +31,8 @@ export class CredentialsSettingsComponent {
     private readonly vcsAccessTokenOverview = viewChild(VcsAccessTokenOverviewComponent);
 
     readonly isPasskeyAvailable = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-    readonly isVcsTokenAvailable = this.accountService.isAtLeastTutor;
+    /** The personal VCS access token is deprecated and cannot be created any more, so the section exists for whoever still holds one and may need to revoke it. */
+    readonly isVcsTokenAvailable = computed(() => !!this.accountService.userIdentity()?.vcsAccessTokenExpiryDate);
     readonly isAgentAccessAvailable = () => this.profileService.isModuleFeatureActive(MODULE_FEATURE_AGENT_ACCESS) && this.accountService.mayCreateAgentTokens();
 
     onCredentialsRevoked(choice: CredentialRevocationChoice): void {

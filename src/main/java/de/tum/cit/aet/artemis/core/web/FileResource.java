@@ -512,7 +512,7 @@ public class FileResource {
      * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
-    @GetMapping({ "files/attachments/lectures/{lectureId}/merge-pdf", CoreLegacyFileRestPaths.LECTURE_ATTACHMENTS_MERGED })
+    @GetMapping("files/attachments/lectures/{lectureId}/merge-pdf")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);

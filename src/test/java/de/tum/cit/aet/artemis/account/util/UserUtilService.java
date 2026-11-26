@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import de.tum.cit.aet.artemis.programming.domain.UserVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.repository.UserVCSAccessTokenRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
@@ -75,6 +77,9 @@ public class UserUtilService {
 
     @Autowired
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private UserVCSAccessTokenRepository userVcsAccessTokenRepository;
 
     @Autowired
     private UserAiPreferenceService userAiPreferenceService;
@@ -205,8 +210,12 @@ public class UserUtilService {
      * @return The updated User
      */
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
-        // The personal token lives in user_vcs_access_token, so it is seeded through its service rather than on the user row.
-        userVcsAccessTokenService.store(user.getId(), vcsAccessToken, expiryDate);
+        // The personal token lives in user_vcs_access_token, so it is seeded there rather than on the user row. The product cannot create one any more, so a test
+        // seeds the row itself: an account that still holds a token from before is what the code under test has to deal with.
+        UserVCSAccessToken row = userVcsAccessTokenRepository.findByUserId(user.getId()).orElseGet(() -> new UserVCSAccessToken(user.getId(), null, null));
+        row.setToken(vcsAccessToken);
+        row.setExpiryDate(expiryDate);
+        userVcsAccessTokenRepository.save(row);
         return user;
     }
 
