@@ -225,8 +225,15 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
         mockChatResponse(_ -> pipelineDone.set(true));
 
-        request.postWithoutResponseBody(messagesUrl(session), new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "No thanks", null)), null, Map.of(), null, null,
-                null, new IrisSolutionChoiceRequestDTO(savedOffer.getId(), IrisSolutionChoice.SKIP_SUMMARY)), HttpStatus.CREATED);
+        // The solution answer used up the last response of the rate limit; declining the summary asks Iris nothing, so it is still accepted.
+        configureCourseRateLimit(course, 1, 10);
+        try {
+            request.postWithoutResponseBody(messagesUrl(session), new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "No thanks", null)), null, Map.of(), null,
+                    null, null, new IrisSolutionChoiceRequestDTO(savedOffer.getId(), IrisSolutionChoice.SKIP_SUMMARY)), HttpStatus.CREATED);
+        }
+        finally {
+            configureCourseRateLimit(course, null, null);
+        }
 
         await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(2)).until(() -> !pipelineDone.get());
         var userMessage = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast();

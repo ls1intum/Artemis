@@ -141,7 +141,6 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        irisSessionService.checkRateLimit(session, user);
 
         var pendingContext = requestDTO.pendingContext();
         var solutionChoice = requestDTO.solutionChoice();
@@ -149,6 +148,11 @@ public class IrisMessageResource {
             throw new BadRequestException("A solution choice must answer an offer in the current chat context");
         }
         var validatedChoice = solutionChoice == null ? null : validateSolutionChoice((IrisChatSession) session, solutionChoice);
+        // Declining the summary only records the choice: Iris has nothing to say to it, so it costs no response of the rate limit.
+        boolean asksIris = validatedChoice == null || validatedChoice.choice() != IrisSolutionChoice.SKIP_SUMMARY;
+        if (asksIris) {
+            irisSessionService.checkRateLimit(session, user);
+        }
         List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
         // Choices are written only here after validating the offer, so a client must never send one itself.
         // Checked before the context change, so a rejected request does not move the session.
@@ -177,8 +181,7 @@ public class IrisMessageResource {
         var uncommittedFiles = requestDTO.uncommittedFiles();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
-        // Declining the summary only records the choice: Iris has nothing to say to it.
-        if (solutionChoice == null || solutionChoice.choice() != IrisSolutionChoice.SKIP_SUMMARY) {
+        if (asksIris) {
             irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId(), savedMessage.getId());
         }
 
