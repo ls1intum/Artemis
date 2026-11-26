@@ -300,7 +300,7 @@ If TUM AET UI lacks a reusable capability, add or evolve a package component aro
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
 primitives, and keep Artemis-specific composition in the application. A new component directory needs an
 `index.ts` with explicit `export { ... }` statements, an `exports` entry `./<directory>` in
-`packages/tum-aet-ui/package.json` and a line in `src/public-api.ts`; the package contract test checks all three.
+`packages/tum-aet-ui/package.json` and a line in `packages/tum-aet-ui/src/public-api.ts`; the package contract test checks all three.
 See `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
 ## Data tables
