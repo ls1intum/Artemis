@@ -68,7 +68,7 @@
         <title>Class with Attributes</title>
         <g id="Graphic_24">
           <title>Attributes</title>
-          <rect x="354.5566" y="251.81426" width="129.875" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <rect x="354.5566" y="251.81426" width="129.875" height="92.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(360.5566 257.81426)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
@@ -76,9 +76,6 @@
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">endDate</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">semester</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">onlineCourse</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">studentGroupName</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">taGroupName</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">instructorGroupName</tspan>
           </text>
         </g>
         <g id="Graphic_23">
@@ -189,7 +186,7 @@
         </g>
       </g>
       <g id="Line_59">
-        <path d="M 419.4941 386.38546 L 419.4941 393.38546 L 419.44094 428.7822 L 419.44094 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 419.4941 344.38546 L 419.4941 351.38546 L 419.44094 428.7822 L 419.44094 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_58">
         <text transform="translate(405.37435 422.67926)" fill="black">
@@ -197,7 +194,7 @@
         </text>
       </g>
       <g id="Graphic_57">
-        <text transform="translate(426.12835 391.20465)" fill="black">
+        <text transform="translate(426.12835 349.20465)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
@@ -445,7 +442,7 @@
         </text>
       </g>
       <g id="Graphic_149">
-        <text transform="translate(378.28913 390.88546)" fill="black">
+        <text transform="translate(378.28913 348.88546)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.179779" y="10">course</tspan>
         </text>
       </g>
