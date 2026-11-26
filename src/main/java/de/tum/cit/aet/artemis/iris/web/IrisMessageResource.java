@@ -179,7 +179,7 @@ public class IrisMessageResource {
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
         // Declining the summary only records the choice: Iris has nothing to say to it.
         if (solutionChoice == null || solutionChoice.choice() != IrisSolutionChoice.SKIP_SUMMARY) {
-            irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId(), savedMessage.getId());
         }
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
@@ -262,7 +262,7 @@ public class IrisMessageResource {
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
         message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
         irisMessageRepository.save(message);
-        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId);
+        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId, message.getId());
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));
     }

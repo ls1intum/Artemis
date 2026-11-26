@@ -141,9 +141,9 @@ class IrisChatPipelineContextTest {
         List<IrisMessageContextDTO> context = List.of(slides, videoContext, onlySlides, onlyVideo, both, new IrisVideoContextDTO(99L, 0.0), new IrisSlidesContextDTO(99L, 1),
                 new IrisCombinedViewContextDTO(null, null), new IrisCombinedViewContextDTO(slides, videoContext),
                 new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(99L, 1), null), new IrisCombinedViewContextDTO(null, new IrisVideoContextDTO(99L, 0.0)));
-        service.execute(session, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), context, "tab");
+        service.execute(session, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), context, "tab", null);
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         var dto = builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
         assertThat(dto.context()).containsExactly(slides, videoContext, onlySlides, onlyVideo, both);
         assertThat(dto.lectureUnitId()).isEqualTo(5L);
@@ -207,23 +207,25 @@ class IrisChatPipelineContextTest {
         when(dtoService.toPyrisProgrammingExerciseMetadataDTO(exercise))
                 .thenReturn(new PyrisProgrammingExerciseDTO(20L, "title", null, Map.of(), Map.of(), Map.of(), "", null, null));
 
-        service.execute(programmingSession, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab");
+        service.execute(programmingSession, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab", null);
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
 
         verify(dtoService).toPyrisProgrammingExerciseMetadataDTO(exercise);
         verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
     }
 
+    /** The run of the latest student message, as the client starts it right after storing the message. */
     private PyrisChatPipelineExecutionDTO runChatPipeline() {
-        return runChatPipeline(Optional.empty());
+        return runChatPipeline(Optional.empty(),
+                session.getMessages().reversed().stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElseThrow());
     }
 
-    private PyrisChatPipelineExecutionDTO runChatPipeline(Optional<String> event) {
-        service.execute(session, event, Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab");
+    private PyrisChatPipelineExecutionDTO runChatPipeline(Optional<String> event, IrisMessage userMessage) {
+        service.execute(session, event, Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab", userMessage.getId());
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines, atLeastOnce()).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines, atLeastOnce()).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         return builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
     }
 
@@ -369,10 +371,25 @@ class IrisChatPipelineContextTest {
     }
 
     @Test
+    void eachOfTwoClicksStoredBeforeTheirRunsIsAnsweredFromItsOwnMessage() {
+        prepareProgrammingReferenceContext();
+        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
+        var firstClick = session.getMessages().getLast();
+        // A second tab clicked the other button before the first run read the session.
+        var secondClick = message(IrisMessageSender.USER, "Try it myself");
+        secondClick.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.TRY_MYSELF)));
+        session.getMessages().add(secondClick);
+        var firstRun = runChatPipeline(Optional.empty(), firstClick);
+        assertThat(firstRun.solutionStep()).isEqualTo(IrisSolutionStep.SHOW_SOLUTION);
+        assertThat(firstRun.programmingExercise().solutionRepository().get("Main.java")).isEqualTo("INSTRUCTOR SOLUTION");
+        assertThat(runChatPipeline(Optional.empty(), secondClick).solutionStep()).isNull();
+    }
+
+    @Test
     void eventTriggeredRunNeverContinuesTheStudentsChoice() {
         prepareProgrammingReferenceContext();
         appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
-        var result = runChatPipeline(Optional.of("build_failed"));
+        var result = runChatPipeline(Optional.of("build_failed"), session.getMessages().getLast());
         assertThat(result.solutionStep()).isNull();
         assertThat(result.programmingExercise().solutionRepository()).isEmpty();
         verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
@@ -414,8 +431,11 @@ class IrisChatPipelineContextTest {
         session.getMessages().add(offer);
     }
 
+    private static long nextMessageId = 100;
+
     private static IrisMessage message(IrisMessageSender sender, String text) {
         var message = new IrisMessage();
+        message.setId(nextMessageId++);
         message.setSender(sender);
         message.addContent(new IrisTextMessageContent(text));
         return message;

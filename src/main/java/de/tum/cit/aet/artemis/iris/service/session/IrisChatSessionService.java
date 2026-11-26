@@ -274,9 +274,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param uncommittedFiles The uncommitted files from the client
      * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      * @param clientId         Identifies the browser tab the message was sent from, so a command Iris issues mid-pipeline is addressed back to it; null if the client sent none
+     * @param userMessageId    The student message the run answers
      */
-    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context, clientId);
+    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId,
+            @Nullable Long userMessageId) {
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context, clientId, userMessageId);
     }
 
     // -------------------------------------------------------------------------
