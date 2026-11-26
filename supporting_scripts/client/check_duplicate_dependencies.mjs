@@ -117,7 +117,11 @@ export function findBundledDuplicates(metafile) {
         if (!outputPath.endsWith('.js')) {
             continue;
         }
-        for (const inputPath of Object.keys(output.inputs ?? {})) {
+        for (const [inputPath, input] of Object.entries(output.inputs ?? {})) {
+            // esbuild lists inputs that end up with no code in the output; they are not bundled.
+            if (!input.bytesInOutput) {
+                continue;
+            }
             let match;
             let last;
             bundledPackagePattern.lastIndex = 0;
@@ -148,10 +152,14 @@ function toDuplicateMap(versionsByName) {
 
 /**
  * Compares duplicates with the allowlist and returns human readable problems; an empty list means
- * the check passed. `checkStale` is false for the bundle check, which sees fewer packages than the
- * lockfile and must not demand that every allowlisted entry shows up in it.
+ * the check passed.
+ *
+ * For the lockfile the allowlist must match exactly: an entry that is no longer duplicated, or whose
+ * versions changed, is a problem, so the list shrinks. With `bundle` set, the duplicates come from a
+ * build, which can contain fewer versions than the lockfile: every bundled version must be one the
+ * allowlist names, but not every allowlisted entry has to show up.
  */
-export function evaluate(duplicates, allowlist, { checkStale = true } = {}) {
+export function evaluate(duplicates, allowlist, { bundle = false } = {}) {
     const problems = [];
     for (const [name, versions] of duplicates) {
         const allowed = allowlist[name];
@@ -160,11 +168,18 @@ export function evaluate(duplicates, allowlist, { checkStale = true } = {}) {
                 `${name} resolves to ${versions.join(' and ')}. Align the versions (an override in pnpm-workspace.yaml, or a bump of the package that asks for the old one; \`pnpm why ${name}\` shows who). ` +
                     `If that is not possible yet, add it to duplicate-dependencies-allowlist.json with a reason.`,
             );
-        } else if (checkStale && JSON.stringify([...allowed.versions].sort()) !== JSON.stringify(versions)) {
+        } else if (bundle) {
+            const unexpected = versions.filter((version) => !allowed.versions.includes(version));
+            if (unexpected.length > 0) {
+                problems.push(
+                    `${name} is allowlisted for ${allowed.versions.join(' and ')} but ${unexpected.join(' and ')} is bundled as well. Review it and update the allowlist.`,
+                );
+            }
+        } else if (JSON.stringify([...allowed.versions].sort()) !== JSON.stringify(versions)) {
             problems.push(`${name} is allowlisted for ${allowed.versions.join(' and ')} but now resolves to ${versions.join(' and ')}. Review it and update the allowlist.`);
         }
     }
-    if (checkStale) {
+    if (!bundle) {
         for (const name of Object.keys(allowlist)) {
             if (!duplicates.has(name)) {
                 problems.push(`${name} is allowlisted but is no longer duplicated. Remove it from duplicate-dependencies-allowlist.json.`);
@@ -194,7 +209,7 @@ function main() {
     const problems = evaluate(findDuplicates(parseLockfile(readFileSync(lockfileFile, 'utf8'))), allowlist);
     if (statsFile) {
         const bundled = findBundledDuplicates(JSON.parse(readFileSync(statsFile, 'utf8')));
-        problems.push(...evaluate(bundled, allowlist, { checkStale: false }).map((problem) => `bundle: ${problem}`));
+        problems.push(...evaluate(bundled, allowlist, { bundle: true }).map((problem) => `bundle: ${problem}`));
     }
 
     if (problems.length > 0) {

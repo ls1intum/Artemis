@@ -110,6 +110,18 @@ describe('findBundledDuplicates', () => {
         });
         assert.deepEqual([...duplicates], [['zustand', ['4.5.7', '5.1.0']]]);
     });
+
+    it('ignores an input that contributes no bytes, but reports two versions that both do', () => {
+        const withZeroBytes = findBundledDuplicates({
+            outputs: { 'chunk.js': { inputs: { [path('shared', '1.0.0')]: { bytesInOutput: 10 }, [path('shared', '2.0.0')]: { bytesInOutput: 0 } } } },
+        });
+        assert.equal(withZeroBytes.size, 0);
+
+        const withBytes = findBundledDuplicates({
+            outputs: { 'chunk.js': { inputs: { [path('shared', '1.0.0')]: { bytesInOutput: 10 }, [path('shared', '2.0.0')]: { bytesInOutput: 1 } } } },
+        });
+        assert.deepEqual([...withBytes], [['shared', ['1.0.0', '2.0.0']]]);
+    });
 });
 
 describe('evaluate', () => {
@@ -130,8 +142,30 @@ describe('evaluate', () => {
         assert.match(problems[0], /now resolves to 8\.1\.0 and 9\.0\.0/);
     });
 
-    it('fails an allowlist entry that is no longer duplicated, unless stale entries are not checked', () => {
+    it('fails an allowlist entry that is no longer duplicated', () => {
         assert.match(evaluate(new Map(), { entities: { versions: ['8.1.0', '9.0.0'], reason: 'x' } })[0], /no longer duplicated/);
-        assert.deepEqual(evaluate(new Map(), { entities: { versions: ['8.1.0', '9.0.0'], reason: 'x' } }, { checkStale: false }), []);
+    });
+
+    describe('for a bundle', () => {
+        const allowlist = { entities: { versions: ['8.1.0', '9.0.0'], reason: 'x' } };
+
+        it('passes when the bundled versions are the allowed ones', () => {
+            assert.deepEqual(evaluate(duplicates, allowlist, { bundle: true }), []);
+        });
+
+        it('passes when the bundle contains only a subset of the allowed versions or none of the allowlisted packages', () => {
+            assert.deepEqual(evaluate(new Map([['entities', ['9.0.0']]]), allowlist, { bundle: true }), []);
+            assert.deepEqual(evaluate(new Map(), allowlist, { bundle: true }), []);
+        });
+
+        it('fails an allowlisted package with a bundled version outside the allowed ones', () => {
+            const problems = evaluate(new Map([['entities', ['7.0.0', '9.0.0']]]), allowlist, { bundle: true });
+            assert.equal(problems.length, 1);
+            assert.match(problems[0], /7\.0\.0 is bundled as well/);
+        });
+
+        it('fails a package that is not allowlisted', () => {
+            assert.match(evaluate(new Map([['zustand', ['4.5.7', '5.1.0']]]), allowlist, { bundle: true })[0], /zustand resolves to 4\.5\.7 and 5\.1\.0/);
+        });
     });
 });
