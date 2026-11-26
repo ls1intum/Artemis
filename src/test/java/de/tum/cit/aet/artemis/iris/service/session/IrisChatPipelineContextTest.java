@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,7 +20,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -225,30 +225,39 @@ class IrisChatPipelineContextTest {
         return builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = IrisSolutionChoice.class, names = { "TRY_MYSELF", "SHOW_SOLUTION" })
-    void programmingReferenceIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice) {
+    @Test
+    void solutionChoiceSendsOnlyTheProgrammingSolution() {
         var exercise = prepareProgrammingReferenceContext();
-        appendChoice(choice);
+        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
         var dto = runChatPipeline();
-        assertThat(dto.solutionStep()).isEqualTo(IrisSolutionStep.valueOf(choice.name()));
+        assertThat(dto.solutionStep()).isEqualTo(IrisSolutionStep.SHOW_SOLUTION);
         var result = dto.programmingExercise();
-        if (choice == IrisSolutionChoice.SHOW_SOLUTION) {
-            assertThat(result.solutionRepository()).containsEntry("Main.java", "INSTRUCTOR SOLUTION");
-            verify(dtoService).toPyrisProgrammingExerciseWithSolutionDTO(exercise);
-        }
-        else {
-            assertThat(result.solutionRepository()).isEmpty();
-            verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
-        }
+        assertThat(result.solutionRepository()).containsEntry("Main.java", "INSTRUCTOR SOLUTION");
         assertThat(result.templateRepository()).isEmpty();
         assertThat(result.testRepository()).isEmpty();
+        verify(dtoService).toPyrisProgrammingExerciseWithSolutionDTO(exercise);
+        verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
+    }
+
+    /** Every choice but the explicit one for the solution is its own step and keeps the reference back; a declined summary is no step. */
+    @ParameterizedTest
+    @CsvSource({ "TRY_MYSELF, TRY_MYSELF", "SUMMARIZE, SUMMARIZE", "SKIP_SUMMARY, " })
+    void otherChoicesWithholdTheProgrammingSolution(IrisSolutionChoice choice, IrisSolutionStep step) {
+        prepareProgrammingReferenceContext();
+        appendChoice(choice);
+        var dto = runChatPipeline();
+        assertThat(dto.solutionStep()).isEqualTo(step);
+        var result = dto.programmingExercise();
+        assertThat(result.solutionRepository()).isEmpty();
+        assertThat(result.templateRepository()).isEmpty();
+        assertThat(result.testRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
         verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
     }
 
     @ParameterizedTest
-    @EnumSource(value = IrisSolutionChoice.class, names = { "TRY_MYSELF", "SHOW_SOLUTION" })
-    void textReferenceIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice) {
+    @CsvSource({ "SHOW_SOLUTION, INSTRUCTOR TEXT SOLUTION", "TRY_MYSELF, " })
+    void textExampleSolutionIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice, String expectedSolution) {
         var exercise = new TextExercise();
         exercise.setId(30L);
         exercise.setCourse(course);
@@ -261,23 +270,7 @@ class IrisChatPipelineContextTest {
         when(exercises.findByIdElseThrow(30L)).thenReturn(exercise);
         when(texts.findByIdElseThrow(30L)).thenReturn(exercise);
         appendChoice(choice);
-        var result = runChatPipeline().textExercise();
-        if (choice == IrisSolutionChoice.SHOW_SOLUTION) {
-            assertThat(result.exampleSolution()).contains("INSTRUCTOR TEXT SOLUTION");
-        }
-        else {
-            assertThat(result.exampleSolution()).isEmpty();
-        }
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = IrisSolutionChoice.class, names = { "SUMMARIZE", "SKIP_SUMMARY" })
-    void summaryChoicesAreTheirStepsWithoutTheReference(IrisSolutionChoice choice) {
-        prepareProgrammingReferenceContext();
-        appendChoice(choice);
-        var result = runChatPipeline();
-        assertThat(result.solutionStep()).isEqualTo(choice == IrisSolutionChoice.SUMMARIZE ? IrisSolutionStep.SUMMARIZE : null);
-        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+        assertThat(runChatPipeline().textExercise().exampleSolution()).isEqualTo(Optional.ofNullable(expectedSolution));
     }
 
     @Test
@@ -292,19 +285,19 @@ class IrisChatPipelineContextTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = IrisSolutionStep.class, names = { "OFFER_REPLY", "SUMMARY_REPLY" })
-    void typedReplyToAnOfferIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step) {
+    @CsvSource({ "OFFER_REPLY, INSTRUCTOR SOLUTION", "SUMMARY_REPLY, " })
+    void typedReplyToAnOfferIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step, String sentSolution) {
         prepareProgrammingReferenceContext();
         appendOffer(step == IrisSolutionStep.OFFER_REPLY ? SOLUTION_CHOICES : SUMMARY_CHOICES);
         session.getMessages().add(message(IrisMessageSender.USER, "yes"));
         var result = runChatPipeline();
         assertThat(result.solutionStep()).isEqualTo(step);
-        assertThat(result.programmingExercise().solutionRepository().isEmpty()).isEqualTo(step == IrisSolutionStep.SUMMARY_REPLY);
+        assertThat(result.programmingExercise().solutionRepository().get("Main.java")).isEqualTo(sentSolution);
     }
 
     @ParameterizedTest
-    @EnumSource(value = IrisSolutionChoice.class, names = { "SUMMARIZE", "SKIP_SUMMARY" })
-    void messageAfterATypedSummaryChoiceIsAnExplanationOnlyIfItAccepted(IrisSolutionChoice choice) {
+    @CsvSource({ "SUMMARIZE, EXPLAIN_SOLUTION", "SKIP_SUMMARY, " })
+    void messageAfterATypedSummaryChoiceIsAnExplanationOnlyIfItAccepted(IrisSolutionChoice choice, IrisSolutionStep step) {
         prepareProgrammingReferenceContext();
         appendOffer(SUMMARY_CHOICES);
         session.getMessages().add(message(IrisMessageSender.USER, "ok"));
@@ -312,7 +305,7 @@ class IrisChatPipelineContextTest {
         answer.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, choice)));
         session.getMessages().addAll(List.of(answer, message(IrisMessageSender.USER, "The loop skips the first element.")));
         var result = runChatPipeline();
-        assertThat(result.solutionStep()).isEqualTo(choice == IrisSolutionChoice.SUMMARIZE ? IrisSolutionStep.EXPLAIN_SOLUTION : null);
+        assertThat(result.solutionStep()).isEqualTo(step);
     }
 
     @Test
@@ -357,7 +350,7 @@ class IrisChatPipelineContextTest {
     private void appendOffer(List<IrisSolutionChoice> choices) {
         var offer = message(IrisMessageSender.LLM, "Trying it yourself is worth it here.");
         offer.setId(10L);
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, session.getMode(), session.getEntityId(), choices)));
+        offer.addContent(solutionOffer(session.getMode(), session.getEntityId(), choices));
         session.getMessages().add(offer);
     }
 

@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 
@@ -28,7 +27,6 @@ public record IrisSolutionChoiceDTO(String type, long offerMessageId, IrisSoluti
      * @return the recorded choice, or empty if the message records none
      */
     public static Optional<IrisSolutionChoice> in(IrisMessage message) {
-        return message.getContent().stream().filter(content -> TYPE.equals(IrisMessageContentTypeDTO.typeOf(content)))
-                .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionChoiceDTO.class).choice()).findFirst();
+        return IrisMessageContentTypeDTO.readFirst(message, TYPE, IrisSolutionChoiceDTO.class).map(IrisSolutionChoiceDTO::choice);
     }
 }

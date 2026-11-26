@@ -49,7 +49,7 @@ import {
     isSolutionOffer,
     offeredChoices,
     offersSummary,
-    solutionChoiceForOffer,
+    solutionChoicesByOffer,
 } from 'app/iris/shared/entities/iris-solution-choice.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
@@ -249,33 +249,31 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    /** The chat service never lists summaries, so this is the latest message the student sees. */
+    private readonly latestMessage = computed(() => this.rawMessages().at(-1));
+    private readonly solutionChoices = computed(() => solutionChoicesByOffer(this.rawMessages()));
     protected readonly isSolutionOffer = isSolutionOffer;
     protected readonly offeredChoices = offeredChoices;
 
     /** The fixed invitation to summarize ends the last text of an answer that offers the summary, so it reads as part of the answer. */
     protected endsWithSummaryInvitation(message: IrisMessage, content: IrisMessageContent): boolean {
-        return (
-            message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) &&
-            message.content.filter((entry) => entry.type === IrisMessageContentType.TEXT).at(-1) === content
-        );
+        return message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) && message.content.filter(isTextContent).at(-1) === content;
     }
     protected selectedSolutionChoice(message: IrisMessage): IrisSolutionChoice | undefined {
-        return solutionChoiceForOffer(this.rawMessages(), message.id);
+        return message.id === undefined ? undefined : this.solutionChoices().get(message.id);
     }
 
-    /** Only the latest message can be an open offer; the server rejects any other choice. */
+    /** Only the latest message can be an open offer; the server rejects any other choice, and a choice never travels with a staged context change. */
     protected canChooseSolution(message: IrisMessage): boolean {
-        const latest = this.rawMessages()
-            .filter((entry) => entry.sender !== IrisSender.SUMMARY)
-            .at(-1);
-        return !this.isInputDisabled() && latest?.id === message.id;
+        return !this.isInputDisabled() && !this.chatService.pendingContext() && this.latestMessage()?.id === message.id;
     }
 
+    /** The disabled buttons of {@link canChooseSolution} emit no choice. */
     protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
-        if (message.id === undefined || !this.canChooseSolution(message)) return;
+        if (message.id === undefined) return;
         const label = this.translateService.instant(SOLUTION_CHOICE_LABEL_KEYS[choice]);
         const provider = this.contextProvider();
-        this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).subscribe();
+        this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
     // Tracks whether the chat service has finished its first session-load attempt for the
     // current context. Prevents downstream gates (notably the onboarding tour) from acting
@@ -354,8 +352,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.isAIEnabled() &&
             this.active() &&
             (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
-            !this.awaitingAnswer(),
+            !this.awaitingAnswer() &&
+            !this.offerIsOpen(),
     );
+    /** While an offer waits for the student's choice, its buttons are the next step; the suggestions of a solution appear once the summary is declined. */
+    private readonly offerIsOpen = computed(() => this.latestMessage()?.content.some(isSolutionOffer) ?? false);
     readonly isScrolledToBottom = signal(true);
     readonly exchangeSpacerPx = signal(0);
     private pendingAnchorScroll = false;

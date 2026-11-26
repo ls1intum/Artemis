@@ -37,15 +37,6 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             """, nativeQuery = true)
     Optional<Long> findLatestVisibleMessageId(@Param("sessionId") long sessionId);
 
-    /** The visible message right before the given one, which a typed reply to a solution offer answers. */
-    @Query(value = """
-            SELECT previous.id FROM iris_message previous
-            JOIN iris_message message ON message.session_id = previous.session_id
-            WHERE message.id = :messageId AND previous.sender <> 'SUMMARY' AND previous.iris_message_order < message.iris_message_order
-            ORDER BY previous.iris_message_order DESC LIMIT 1
-            """, nativeQuery = true)
-    Optional<Long> findPreviousVisibleMessageId(@Param("messageId") long messageId);
-
     List<IrisMessage> findAllBySessionIdOrderBySentAtAscIdAsc(long sessionId);
 
     /**

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,6 +17,8 @@ import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
@@ -30,7 +33,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionWriteRepositoryImpl;
@@ -58,8 +60,7 @@ class IrisSolutionChoiceRepositoryTest {
         lenient().when(sessions.findContextById(1L)).thenReturn(Optional.of(new IrisSessionContextDAO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L, 7L)));
         offer = new IrisMessage();
         offer.setId(10L);
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L,
-                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION))));
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L, List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
         lenient().when(messages.findByIdElseThrow(10L)).thenReturn(offer);
         repository = new IrisSessionWriteRepositoryImpl(provider, messages);
     }
@@ -82,28 +83,13 @@ class IrisSolutionChoiceRepositoryTest {
         assertThat(action).isEqualTo(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION));
     }
 
-    @Test
-    void rejectsRepeatedOrStaleChoice() {
-        when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(11L));
-        assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)))
-                .isInstanceOf(BadRequestException.class);
-        verify(messages, never()).saveAndFlush(any());
-    }
-
-    @Test
-    void rejectsOfferFromAnotherExercise() {
-        when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(10L));
-        when(sessions.findContextById(1L)).thenReturn(Optional.of(new IrisSessionContextDAO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 99L, 7L)));
-        assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, IrisSolutionChoice.TRY_MYSELF)))
-                .isInstanceOf(BadRequestException.class);
-        verify(messages, never()).saveAndFlush(any());
-    }
-
-    @Test
-    void rejectsAChoiceTheOfferDoesNotOffer() {
-        when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(10L));
-        assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, IrisSolutionChoice.SUMMARIZE)))
-                .isInstanceOf(BadRequestException.class);
+    /** A repeated or stale choice (a newer message exists), an offer from another exercise, and a choice the offer does not make. */
+    @ParameterizedTest
+    @CsvSource({ "11, 42, SHOW_SOLUTION", "10, 99, TRY_MYSELF", "10, 42, SUMMARIZE" })
+    void rejectsAChoiceThatDoesNotAnswerTheOpenOffer(long latestMessageId, long contextEntityId, IrisSolutionChoice choice) {
+        when(messages.findLatestVisibleMessageId(1L)).thenReturn(Optional.of(latestMessageId));
+        lenient().when(sessions.findContextById(1L)).thenReturn(Optional.of(new IrisSessionContextDAO(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, contextEntityId, 7L)));
+        assertThatThrownBy(() -> repository.appendSolutionChoice(1L, new IrisMessage(), new IrisSolutionChoiceRequestDTO(10L, choice))).isInstanceOf(BadRequestException.class);
         verify(messages, never()).saveAndFlush(any());
     }
 }

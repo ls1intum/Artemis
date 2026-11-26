@@ -1427,6 +1427,21 @@ describe('IrisBaseChatbotComponent', () => {
             });
         });
 
+        it('holds back suggestions while an offer waits for the choice', () => {
+            const offer = cloneWith(mockServerMessage, {
+                content: [
+                    new IrisTextMessageContent('Here is the solution.'),
+                    new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+                ],
+            });
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, offer]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelectorAll('.iris-chat__suggestion')).toHaveLength(0);
+        });
+
         it('should disable suggestion buttons if isLoading is true', () => {
             component.isLoading.set(true);
             fixture.changeDetectorRef.detectChanges();

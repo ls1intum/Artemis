@@ -21,6 +21,11 @@ export function isSolutionOffer(content: IrisMessageContent): content is IrisJso
     return isJsonContent(content) && content.attributes?.['type'] === 'solution-offer';
 }
 
+/** The structured part of a student message that records a choice; only the server writes it. */
+function isSolutionChoice(content: IrisMessageContent): content is IrisJsonMessageContent {
+    return isJsonContent(content) && content.attributes?.['type'] === 'solution-choice';
+}
+
 /** Whether the offer invites the student to summarize a delivered solution; the client shows its fixed invitation above the buttons. */
 export function offersSummary(offer: IrisJsonMessageContent): boolean {
     return offeredChoices(offer).includes('SUMMARIZE');
@@ -31,21 +36,17 @@ export function offeredChoices(offer: IrisJsonMessageContent): IrisSolutionChoic
     return (offer.attributes?.['choices'] as IrisSolutionChoice[] | undefined) ?? [];
 }
 
-/** The choice the student made for an offer, by click or typed reply, also after a history reload; only the server writes choices. */
-export function solutionChoiceForOffer(messages: IrisMessage[], offerMessageId: number | undefined): IrisSolutionChoice | undefined {
-    if (offerMessageId === undefined) return undefined;
-    for (const message of messages) {
-        for (const content of message.content) {
-            const data = isJsonContent(content) ? content.attributes : undefined;
-            if (data?.['type'] === 'solution-choice' && data['offerMessageId'] === offerMessageId) {
-                return data['choice'] as IrisSolutionChoice;
-            }
-        }
+/** The choice the student made for each offer, by click or typed reply, keyed by the offer's message id; only the server writes choices. */
+export function solutionChoicesByOffer(messages: IrisMessage[]): Map<number, IrisSolutionChoice> {
+    const choices = new Map<number, IrisSolutionChoice>();
+    for (const content of messages.flatMap((message) => message.content).filter(isSolutionChoice)) {
+        const offerMessageId = content.attributes?.['offerMessageId'] as number;
+        if (!choices.has(offerMessageId)) choices.set(offerMessageId, content.attributes?.['choice'] as IrisSolutionChoice);
     }
-    return undefined;
+    return choices;
 }
 
 /** The student message a click sends: it records the choice for the server and Iris, while the chat shows the choice only as the pressed button. */
 export function isClickedChoiceMessage(message: IrisMessage): boolean {
-    return message.sender === IrisSender.USER && message.content.some((content) => isJsonContent(content) && content.attributes?.['type'] === 'solution-choice');
+    return message.sender === IrisSender.USER && message.content.some(isSolutionChoice);
 }

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -372,7 +374,14 @@ class IrisChatSessionServiceStatusUpdateTest {
         when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, 11L, null);
         stubJobLock(job);
-        when(irisMessageRepository.findPreviousVisibleMessageId(11L)).thenReturn(Optional.of(10L));
+        var offer = new IrisMessage();
+        offer.setId(10L);
+        offer.setSender(IrisMessageSender.LLM);
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 3L, List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        var reply = new IrisMessage();
+        reply.setId(11L);
+        reply.setSender(IrisMessageSender.USER);
+        session.setMessages(new ArrayList<>(List.of(offer, reply)));
         when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
             var message = invocation.getArgument(0, IrisMessage.class);
             message.setId(12L);
@@ -385,7 +394,6 @@ class IrisChatSessionServiceStatusUpdateTest {
 
         var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
         verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
-        assertThat(IrisSolutionChoiceDTO.in(messageCaptor.getValue())).contains(IrisSolutionChoice.SHOW_SOLUTION);
         assertThat(messageCaptor.getValue().getContent().stream().filter(content -> content instanceof IrisJsonMessageContent)
                 .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionChoiceDTO.class)))
                 .containsExactly(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION));

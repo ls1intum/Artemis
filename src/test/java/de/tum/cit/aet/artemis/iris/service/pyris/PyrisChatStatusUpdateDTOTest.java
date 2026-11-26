@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import tools.jackson.core.JacksonException;
@@ -9,6 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -24,10 +27,8 @@ class PyrisChatStatusUpdateDTOTest {
                 {"runState":"RUNNING","result":"Choose how to continue","final":true,
                  "solutionOffer":{"type":"solution-offer","chatMode":"PROGRAMMING_EXERCISE_CHAT","entityId":42}}
                 """, PyrisChatStatusUpdateDTO.class);
-        assertThat(dto.solutionOffer()).isNotNull();
-        assertThat(dto.solutionOffer().type()).isEqualTo("solution-offer");
-        assertThat(dto.solutionOffer().chatMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
-        assertThat(dto.solutionOffer().entityId()).isEqualTo(42L);
+        // An offer without choices has no buttons instead of failing every later read.
+        assertThat(dto.solutionOffer()).isEqualTo(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L, List.of()));
         assertThat(objectMapper.writeValueAsString(dto)).contains("\"solutionOffer\"");
     }
 

@@ -70,7 +70,7 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
         if (offer.chatMode() != context.chatMode() || offer.entityId() != context.entityId()) {
             throw new BadRequestException("The solution offer belongs to a different chat context");
         }
-        if (!offer.choices().contains(choice.choice())) {
+        if (!offer.offers(choice.choice())) {
             throw new BadRequestException("The solution offer does not offer this choice");
         }
         message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(choice.offerMessageId(), choice.choice())));

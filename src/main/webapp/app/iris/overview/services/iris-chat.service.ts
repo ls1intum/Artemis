@@ -77,6 +77,7 @@ export class IrisChatService implements OnDestroy {
 
     readonly committedContext = this.contextService.committed;
     readonly displayContext = this.contextService.display;
+    readonly pendingContext = this.contextService.pending;
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -367,7 +368,6 @@ export class IrisChatService implements OnDestroy {
         message = message.trim();
 
         const pendingContext = this.contextService.pending();
-        if (solutionChoice && (pendingContext || this.awaitingAnswer())) return of(undefined);
         const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
         const requestSessionId = this.sessionId;
         const requestDTO: IrisMessageRequestDTO = {
@@ -382,6 +382,9 @@ export class IrisChatService implements OnDestroy {
             solutionChoice,
         };
 
+        // The chat stays busy from the send until Iris answers. A declined summary is only stored, so no answer follows
+        // and the chat is free again once the server has stored it; until then it still blocks a second click.
+        const answerFollows = solutionChoice?.choice !== 'SKIP_SUMMARY';
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
         return this.irisChatHttpService.createMessage(requestSessionId, requestDTO).pipe(
@@ -400,10 +403,13 @@ export class IrisChatService implements OnDestroy {
                         );
                     this.chatSessions.next(updatedSessions);
                 }
-                this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
-                // The server records a declined summary without asking Iris, so no answer follows.
-                if (solutionChoice?.choice === 'SKIP_SUMMARY') this.closePendingRunGeneration();
+                if (answerFollows) {
+                    this.suggestions.next([]);
+                } else {
+                    // The suggestions that came with the solution stay the next step.
+                    this.closePendingRunGeneration();
+                }
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {

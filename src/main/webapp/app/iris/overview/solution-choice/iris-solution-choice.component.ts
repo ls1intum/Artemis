@@ -41,6 +41,6 @@ export class IrisSolutionChoiceComponent {
     });
 
     protected choose(choice: IrisSolutionChoice): void {
-        if (!this.disabled() && this.selected() === undefined) this.choice.emit(choice);
+        this.choice.emit(choice);
     }
 }

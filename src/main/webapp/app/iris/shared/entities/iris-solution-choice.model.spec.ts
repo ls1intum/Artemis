@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { IrisJsonMessageContent, IrisTextMessageContent } from './iris-content-type.model';
-import { isClickedChoiceMessage, isSolutionOffer, offeredChoices, offersSummary, solutionChoiceForOffer } from './iris-solution-choice.model';
+import { isClickedChoiceMessage, isSolutionOffer, offeredChoices, offersSummary, solutionChoicesByOffer } from './iris-solution-choice.model';
 import { ChatServiceMode } from './iris-session-context.model';
 import { IrisMessage, IrisSender } from './iris-message.model';
 
@@ -20,11 +20,9 @@ describe('Iris solution choice content', () => {
                     new IrisJsonMessageContent({ type: 'solution-choice', offerMessageId, choice: 'SHOW_SOLUTION' }),
                 ],
             }) as IrisMessage;
-        expect(solutionChoiceForOffer([choice(IrisSender.USER, 10)], 10)).toBe('SHOW_SOLUTION');
-        expect(solutionChoiceForOffer([choice(IrisSender.USER, 10)], 9)).toBeUndefined();
-        expect(solutionChoiceForOffer([choice(IrisSender.USER, 10)], undefined)).toBeUndefined();
-        expect(solutionChoiceForOffer([choice(IrisSender.LLM, 10)], 10)).toBe('SHOW_SOLUTION');
-        expect(solutionChoiceForOffer([{ sender: IrisSender.USER, content: [new IrisTextMessageContent('SHOW_SOLUTION')] }], 10)).toBeUndefined();
+        expect(solutionChoicesByOffer([choice(IrisSender.USER, 10)])).toEqual(new Map([[10, 'SHOW_SOLUTION']]));
+        expect(solutionChoicesByOffer([choice(IrisSender.LLM, 10)])).toEqual(new Map([[10, 'SHOW_SOLUTION']]));
+        expect(solutionChoicesByOffer([{ sender: IrisSender.USER, content: [new IrisTextMessageContent('SHOW_SOLUTION')] }])).toEqual(new Map());
     });
 
     it('reads the buttons of an offer in order', () => {

@@ -147,6 +147,12 @@ public class IrisMessageResource {
         if (solutionChoice != null && (!(session instanceof IrisChatSession) || pendingContext != null)) {
             throw new BadRequestException("A solution choice must answer an offer in the current chat context");
         }
+        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
+        // Choices are written only by appendSolutionChoice after it validated the offer, so a client must never send one itself.
+        // Checked before the context change, so a rejected request does not move the session.
+        if (contentEntities.stream().map(IrisMessageContentTypeDTO::typeOf).anyMatch(type -> IrisSolutionChoiceDTO.TYPE.equals(type) || IrisSolutionOfferDTO.TYPE.equals(type))) {
+            throw new BadRequestException("Solution workflow content must be created by the server");
+        }
         if (pendingContext != null) {
             if (!(session instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Pending context change is only supported for chat sessions");
@@ -155,11 +161,6 @@ public class IrisMessageResource {
         }
 
         IrisMessage message = new IrisMessage();
-        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
-        // Choices are written only by appendSolutionChoice after it validated the offer, so a client must never send one itself.
-        if (contentEntities.stream().map(IrisMessageContentTypeDTO::typeOf).anyMatch(type -> IrisSolutionChoiceDTO.TYPE.equals(type) || IrisSolutionOfferDTO.TYPE.equals(type))) {
-            throw new BadRequestException("Solution workflow content must be created by the server");
-        }
         message.setContent(new ArrayList<>(contentEntities));
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);

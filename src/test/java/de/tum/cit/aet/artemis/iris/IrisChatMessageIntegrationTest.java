@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.suggestionsDTO;
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -82,7 +83,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -176,8 +176,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var session = createSessionForUser(mode, "student1");
         var offer = new IrisMessage();
         offer.addContent(new IrisTextMessageContent("Choose how to continue"));
-        offer.addContent(IrisJsonMessageContent
-                .of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, mode, session.getEntityId(), List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION))));
+        offer.addContent(solutionOffer(mode, session.getEntityId(), List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
         var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
         var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
                 new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
@@ -206,8 +205,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
         var offer = new IrisMessage();
         offer.addContent(new IrisTextMessageContent("Here is the solution. Want to summarize it in your own words?"));
-        offer.addContent(IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, session.getEntityId(),
-                List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY))));
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, session.getEntityId(), List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY)));
         var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
         mockChatResponse(_ -> pipelineDone.set(true));
 

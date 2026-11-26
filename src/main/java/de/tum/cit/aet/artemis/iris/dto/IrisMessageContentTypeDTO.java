@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
+import java.util.Optional;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -7,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 
 /** Read only the discriminator before deserializing a structured message's type-specific fields. */
@@ -30,5 +33,18 @@ public record IrisMessageContentTypeDTO(@Nullable String type) {
         catch (JacksonException ignored) {
             return null;
         }
+    }
+
+    /**
+     * Reads the first structured content of the given type in a message.
+     *
+     * @param message any message
+     * @param type    the discriminator of the content
+     * @param as      the record the content is read as
+     * @param <T>     the type of that record
+     * @return the content, or empty if the message holds none of this type
+     */
+    public static <T extends Record> Optional<T> readFirst(IrisMessage message, String type, Class<T> as) {
+        return message.getContent().stream().filter(content -> type.equals(typeOf(content))).findFirst().map(content -> ((IrisJsonMessageContent) content).readAs(as));
     }
 }

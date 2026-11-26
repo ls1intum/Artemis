@@ -1175,14 +1175,17 @@ describe('IrisChatService', () => {
         it.each([
             ['SKIP_SUMMARY', false],
             ['SUMMARIZE', true],
-        ] as const)('guard: after the %s choice awaitingAnswer is %s, because only a declined summary gets no answer', async (choice, awaiting) => {
+        ] as const)('guard: after the %s choice awaitingAnswer is %s, because only a declined summary gets no answer and keeps the suggestions', async (choice, awaiting) => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);
+            service.suggestions.next(['What does Context do?']);
             vi.spyOn(httpService, 'createMessage').mockReturnValue(of({ body: mockUserMessageWithContent('No thanks') } as HttpResponse<IrisMessageResponseDTO>));
 
             await firstValueFrom(service.sendMessage('No thanks', {}, undefined, { offerMessageId: 10, choice }));
 
             expect(service.awaitingAnswer()).toBe(awaiting);
+            // The suggestions of the solution stay for the declined summary, the next step after it.
+            expect(service.suggestions.getValue()).toEqual(awaiting ? [] : ['What does Context do?']);
         });
 
         it('guard: awaitingAnswer clears on assistant MESSAGE and the persisted trail stays on the message', async () => {

@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -20,6 +19,11 @@ public record IrisSolutionOfferDTO(String type, IrisChatMode chatMode, long enti
 
     public static final String TYPE = "solution-offer";
 
+    /** A Pyris payload may leave out the choices; such an offer has no buttons instead of failing every later read. */
+    public IrisSolutionOfferDTO {
+        choices = choices == null ? List.of() : List.copyOf(choices);
+    }
+
     /**
      * Reads the offer a message makes.
      *
@@ -27,12 +31,21 @@ public record IrisSolutionOfferDTO(String type, IrisChatMode chatMode, long enti
      * @return the offer, or empty if the message makes none
      */
     public static Optional<IrisSolutionOfferDTO> in(IrisMessage message) {
-        return message.getContent().stream().filter(content -> TYPE.equals(IrisMessageContentTypeDTO.typeOf(content)))
-                .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionOfferDTO.class)).findFirst();
+        return IrisMessageContentTypeDTO.readFirst(message, TYPE, IrisSolutionOfferDTO.class);
+    }
+
+    /**
+     * Whether a choice answers this offer; only such a choice may be stored, because the next step trusts every stored choice.
+     *
+     * @param choice the choice of the student
+     * @return true if the offer has a button for it
+     */
+    public boolean offers(IrisSolutionChoice choice) {
+        return choices.contains(choice);
     }
 
     /** Whether this offer is the one for the complete solution, rather than the check after it. */
     public boolean offersSolution() {
-        return choices.contains(IrisSolutionChoice.SHOW_SOLUTION);
+        return offers(IrisSolutionChoice.SHOW_SOLUTION);
     }
 }

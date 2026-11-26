@@ -302,13 +302,13 @@ public class IrisChatPipelineExecutionService {
                 case SKIP_SUMMARY -> null;
             };
         }
-        var answeredOffer = latest > 0 ? IrisSolutionOfferDTO.in(messages.get(latest - 1)) : Optional.<IrisSolutionOfferDTO>empty();
-        if (answeredOffer.isPresent()) {
-            return answeredOffer.get().offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
+        var answeredOffer = latest > 0 ? IrisSolutionOfferDTO.in(messages.get(latest - 1)).orElse(null) : null;
+        if (answeredOffer != null) {
+            return answeredOffer.offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
         }
         int previous = lastStudentMessageBefore(messages, latest);
         boolean followsSummary = previous >= 0
-                && messages.subList(previous, latest).stream().map(IrisSolutionChoiceDTO::in).anyMatch(choice -> choice.orElse(null) == IrisSolutionChoice.SUMMARIZE);
+                && messages.subList(previous, latest).stream().flatMap(message -> IrisSolutionChoiceDTO.in(message).stream()).anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
         return followsSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
     }
 
