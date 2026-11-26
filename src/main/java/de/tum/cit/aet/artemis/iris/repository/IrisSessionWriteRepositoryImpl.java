@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import java.time.ZonedDateTime;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +16,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 
 /**
  * Implementation of {@link IrisSessionWriteRepository}.
@@ -53,28 +48,6 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
     @Override
     public IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender) {
         return appendInCurrentTransaction(sessionId, message, sender);
-    }
-
-    @Override
-    public IrisMessage appendSolutionChoice(long sessionId, IrisMessage message, IrisSolutionChoiceRequestDTO choice) {
-        var sessions = irisSessionRepository.getObject();
-        sessions.findByIdWithWriteLockElseThrow(sessionId);
-        sessions.flush();
-        // Under the session lock: only the latest visible message is an open offer, and a choice appended now closes it for every later request.
-        if (!choice.offerMessageId().equals(irisMessageRepository.findLatestVisibleMessageId(sessionId).orElse(null))) {
-            throw new BadRequestException("This solution offer is no longer open");
-        }
-        var context = sessions.findContextById(sessionId).orElseThrow(() -> new BadRequestException("A solution choice requires a chat session"));
-        var offer = IrisSolutionOfferDTO.in(irisMessageRepository.findByIdElseThrow(choice.offerMessageId()))
-                .orElseThrow(() -> new BadRequestException("The message contains no solution offer"));
-        if (offer.chatMode() != context.chatMode() || offer.entityId() != context.entityId()) {
-            throw new BadRequestException("The solution offer belongs to a different chat context");
-        }
-        if (!offer.offers(choice.choice())) {
-            throw new BadRequestException("The solution offer does not offer this choice");
-        }
-        message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(choice.offerMessageId(), choice.choice())));
-        return appendInCurrentTransaction(sessionId, message, IrisMessageSender.USER);
     }
 
     @Override

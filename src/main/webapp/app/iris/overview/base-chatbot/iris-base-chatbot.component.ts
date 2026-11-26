@@ -263,7 +263,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return message.id === undefined ? undefined : this.solutionChoices().get(message.id);
     }
 
-    /** Only the latest message can be an open offer; the server rejects any other choice, and a choice never travels with a staged context change. */
+    /** Only the latest message is an open offer: any chat after it closes the offer. A choice never travels with a staged context change. */
     protected canChooseSolution(message: IrisMessage): boolean {
         return !this.isInputDisabled() && !this.chatService.pendingContext() && this.latestMessage()?.id === message.id;
     }

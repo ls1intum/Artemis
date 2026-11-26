@@ -279,7 +279,7 @@ public class IrisChatPipelineExecutionService {
     }
 
     /**
-     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only appendSolutionChoice writes one after validating
+     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only IrisMessageResource writes one after validating
      * its offer, and only the result of a typed reply to an offer, with the choice Pyris read from it.
      * <ul>
      * <li>A clicked choice on the latest message is that step.</li>

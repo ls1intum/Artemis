@@ -29,14 +29,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 @Conditional(IrisEnabled.class)
 public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
 
-    /** The latest message the student sees; a summary does not close an offer. Read it under the session write lock. */
-    @Query(value = """
-            SELECT id FROM iris_message
-            WHERE session_id = :sessionId AND sender <> 'SUMMARY'
-            ORDER BY iris_message_order DESC LIMIT 1
-            """, nativeQuery = true)
-    Optional<Long> findLatestVisibleMessageId(@Param("sessionId") long sessionId);
-
     List<IrisMessage> findAllBySessionIdOrderBySentAtAscIdAsc(long sessionId);
 
     /**

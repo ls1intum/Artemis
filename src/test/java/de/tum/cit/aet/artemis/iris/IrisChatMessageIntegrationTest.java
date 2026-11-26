@@ -172,7 +172,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @ParameterizedTest
     @CsvSource({ "PROGRAMMING_EXERCISE_CHAT,TRY_MYSELF", "PROGRAMMING_EXERCISE_CHAT,SHOW_SOLUTION", "TEXT_EXERCISE_CHAT,TRY_MYSELF", "TEXT_EXERCISE_CHAT,SHOW_SOLUTION" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void solutionChoice_isStoredAndForwardedAndCannotBeRepeated(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
+    void solutionChoice_isStoredAndForwarded(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
         var session = createSessionForUser(mode, "student1");
         var offer = new IrisMessage();
         offer.addContent(new IrisTextMessageContent("Choose how to continue"));
@@ -194,9 +194,25 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(((IrisTextMessageContent) userMessage.getContent().getFirst()).getTextContent()).isEqualTo("Button label");
         var action = ((IrisJsonMessageContent) userMessage.getContent().getLast()).readAs(IrisSolutionChoiceDTO.class);
         assertThat(action).isEqualTo(new IrisSolutionChoiceDTO(savedOffer.getId(), choice));
+    }
+
+    /** An offer of another session, an offer bound to another exercise, and a choice the offer does not make. */
+    @ParameterizedTest
+    @CsvSource({ "true, false, SHOW_SOLUTION", "false, true, TRY_MYSELF", "false, false, SUMMARIZE" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsAChoiceThatDoesNotAnswerTheOffer(boolean otherSession, boolean otherExercise, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        var offerSession = otherSession ? createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1") : session;
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, otherExercise ? session.getEntityId() + 1 : session.getEntityId(),
+                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        var savedOffer = irisMessageService.saveMessage(offer, offerSession, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
 
         request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.BAD_REQUEST);
-        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).hasSize(messages.size());
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).noneMatch(message -> message.getSender() == IrisMessageSender.USER);
     }
 
     @Test

@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 
 /**
- * Server-created content of the user message answering a solution offer. Artemis writes it only after validating the offer under the session lock and never
+ * Server-created content of the user message answering a solution offer. Artemis writes it only after validating the offer and never
  * accepts it from a client, so a stored choice can be trusted as is.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

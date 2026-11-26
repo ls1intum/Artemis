@@ -10,7 +10,6 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
-import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
 
 /**
  * The multi-statement writes against a chat session's ordered message list. A custom fragment of
@@ -38,10 +37,6 @@ public interface IrisSessionWriteRepository {
      */
     @Transactional // ok: the lock, the index allocation and the insert are only correct as one unit
     IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender);
-
-    /** Validate the latest offer and append its choice under one session lock, preventing duplicate choices. */
-    @Transactional // ok: validating an open offer and consuming it must be atomic
-    IrisMessage appendSolutionChoice(long sessionId, IrisMessage message, IrisSolutionChoiceRequestDTO choice);
 
     /**
      * Append a question and the answer to it under one write lock, so a session never holds the question without its answer.

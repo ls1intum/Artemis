@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -147,8 +148,9 @@ public class IrisMessageResource {
         if (solutionChoice != null && (!(session instanceof IrisChatSession) || pendingContext != null)) {
             throw new BadRequestException("A solution choice must answer an offer in the current chat context");
         }
+        var validatedChoice = solutionChoice == null ? null : validateSolutionChoice((IrisChatSession) session, solutionChoice);
         List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
-        // Choices are written only by appendSolutionChoice after it validated the offer, so a client must never send one itself.
+        // Choices are written only here after validating the offer, so a client must never send one itself.
         // Checked before the context change, so a rejected request does not move the session.
         if (contentEntities.stream().map(IrisMessageContentTypeDTO::typeOf).anyMatch(type -> IrisSolutionChoiceDTO.TYPE.equals(type) || IrisSolutionOfferDTO.TYPE.equals(type))) {
             throw new BadRequestException("Solution workflow content must be created by the server");
@@ -166,8 +168,10 @@ public class IrisMessageResource {
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
         message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
 
-        IrisMessage savedMessage = solutionChoice == null ? irisMessageService.saveMessage(message, session, IrisMessageSender.USER)
-                : irisSessionRepository.appendSolutionChoice(sessionId, message, solutionChoice);
+        if (validatedChoice != null) {
+            message.addContent(IrisJsonMessageContent.of(validatedChoice));
+        }
+        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles();
@@ -180,6 +184,22 @@ public class IrisMessageResource {
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
+    }
+
+    /**
+     * A choice must answer an offer of this session in its current context, with a button the offer has. Whether the offer is still the latest message is the
+     * client's concern: it only enables the buttons of the latest message.
+     */
+    private IrisSolutionChoiceDTO validateSolutionChoice(IrisChatSession session, IrisSolutionChoiceRequestDTO request) {
+        var offerMessage = irisMessageRepository.findByIdElseThrow(request.offerMessageId());
+        if (!session.getId().equals(offerMessage.getSession().getId())) {
+            throw new BadRequestException("The solution offer belongs to a different session");
+        }
+        var offer = IrisSolutionOfferDTO.in(offerMessage).orElseThrow(() -> new BadRequestException("The message contains no solution offer"));
+        if (offer.chatMode() != session.getMode() || offer.entityId() != session.getEntityId() || !offer.offers(request.choice())) {
+            throw new BadRequestException("The solution offer does not offer this choice in the current chat context");
+        }
+        return new IrisSolutionChoiceDTO(request.offerMessageId(), request.choice());
     }
 
     /**
