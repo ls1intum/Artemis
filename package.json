@@ -95,7 +95,6 @@
         "husky": "9.1.7",
         "jsdom": "catalog:",
         "knip": "6.44.1",
-        "lighthouse": "13.6.0",
         "lint-staged": "17.6.0",
         "ng-mocks": "14.18.6",
         "postcss": "catalog:",

@@ -145,9 +145,6 @@ overrides:
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
-  # lighthouse (a dev tool) asks for @sentry/node ^11.8.0. Its 11.10.0 release pulls @sentry/bundler-plugins with glob ^13.0.6, which is affected by
-  # GHSA-3g3m-2fjr-6pw4 (fixed in glob 14.0.2). 11.11.0 is the first release whose bundler plugin uses glob ^14.0.3.
-  '@sentry/node': '11.12.0'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
   brace-expansion: '5.0.13'
