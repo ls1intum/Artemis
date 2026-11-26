@@ -96,21 +96,6 @@ public class HyperionQuizQuestionPoolResource {
     }
 
     /**
-     * POST /courses/{courseId}/quiz-question-pool/seed : Seed sample quiz question pool items for testing.
-     *
-     * @param courseId the id of the course
-     * @return 200 with the number of seeded items
-     */
-    @EnforceAtLeastInstructorInCourse
-    @PostMapping("courses/{courseId}/quiz-question-pool/seed")
-    public ResponseEntity<Integer> seedQuizQuestionPool(@PathVariable long courseId) {
-        log.debug("REST request to seed the Hyperion quiz question pool of course [{}]", courseId);
-        courseRepository.findByIdElseThrow(courseId);
-        int count = poolService.seedSampleQuestions(courseId);
-        return ResponseEntity.ok(count);
-    }
-
-    /**
      * POST /courses/{courseId}/quiz-question-pool/build/cancel : Stop the running build of the course's pool after its current step. The build
      * drops the questions it has not generated yet.
      *

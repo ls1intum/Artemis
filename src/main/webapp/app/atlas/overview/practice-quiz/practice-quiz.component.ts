@@ -89,6 +89,12 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             const idParam = params.get('courseId');
             if (idParam) {
                 const id = parseInt(idParam, 10);
+                if (id !== this.routeCourseId()) {
+                    // The router reuses this component across courses, so drop the previous course's quiz state
+                    this.resetView();
+                    this.pastSessions.set([]);
+                    this.errorMessage.set(null);
+                }
                 this.routeCourseId.set(id);
                 this.loadOverview();
             }
@@ -135,7 +141,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.isLoading.set(false);
-                this.errorMessage.set(err?.error?.message ?? 'Failed to load past sessions.');
+                this.errorMessage.set(this.readableError(err, 'Failed to load past sessions.'));
             },
         });
     }
@@ -159,7 +165,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.isLoading.set(false);
-                const msg = err?.error?.message ?? 'No quiz questions available for practice in this course yet.';
+                const msg = this.readableError(err, 'No quiz questions available for practice in this course yet.');
                 this.alertService.error(msg);
                 this.errorMessage.set(msg);
             },
@@ -247,7 +253,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.isSubmitting.set(false);
-                const msg = err?.error?.message ?? 'Failed to submit quiz.';
+                const msg = this.readableError(err, 'Failed to submit quiz.');
                 this.alertService.error(msg);
                 this.errorMessage.set(msg);
             },
@@ -273,7 +279,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.isLoading.set(false);
-                const msg = err?.error?.message ?? 'Failed to load session review.';
+                const msg = this.readableError(err, 'Failed to load session review.');
                 this.alertService.error(msg);
             },
         });
@@ -337,16 +343,28 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
      * Returns back to the overview dashboard.
      */
     backToOverview(): void {
-        this.state.set('OVERVIEW');
-        this.reviewSession.set(null);
-        this.currentSession.set(null);
-        this.activeQuestions.set([]);
-        this.reviewQuestions.set([]);
-        this.reviewSubmittedResult.set(undefined);
+        this.resetView();
         const cId = this.activeCourseId();
         if (cId) {
             this.isLoading.set(true);
             this.loadPastSessions(cId);
         }
+    }
+
+    private resetView(): void {
+        this.state.set('OVERVIEW');
+        this.reviewSession.set(null);
+        this.currentSession.set(null);
+        this.activeQuestions.set([]);
+        this.selectedAnswerOptions.set({});
+        this.reviewQuestions.set([]);
+        this.reviewSubmittedResult.set(undefined);
+    }
+
+    /**
+     * Returns the server's human-readable error title. Its `message` field holds a translation key such as `error.poolNotAvailable`.
+     */
+    private readableError(err: { error?: { title?: string } } | undefined, fallback: string): string {
+        return err?.error?.title || fallback;
     }
 }

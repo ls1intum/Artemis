@@ -125,24 +125,6 @@ theia:
             C: "c-latest"
 
 artemis:
-    llm:
-        endpoints:
-            local:
-                base-url: http://localhost:11434/v1
-                timeout: 30s
-                max-retries: 0
-        presets:
-            local:
-                endpoint: local
-                model: dev-local
-                api: responses
-                max-retries: 0
-    hyperion:
-        llm-presets:
-            default: local
-        quiz-pool:
-            generator-llm-preset: local
-            judge-llm-preset: local
     audit-events:
         # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
         # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).

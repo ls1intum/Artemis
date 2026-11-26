@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -19,6 +19,7 @@ describe('PracticeQuizComponent', () => {
     let fixture: ComponentFixture<PracticeQuizComponent>;
     let component: PracticeQuizComponent;
     let practiceQuizService: PracticeQuizService;
+    let paramMap: BehaviorSubject<ParamMap>;
 
     const mockSession: PracticeSessionDTO = {
         id: 42,
@@ -78,6 +79,7 @@ describe('PracticeQuizComponent', () => {
     };
 
     beforeEach(async () => {
+        paramMap = new BehaviorSubject(convertToParamMap({ courseId: '1' }));
         await TestBed.configureTestingModule({
             imports: [PracticeQuizComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe), MockComponent(MultipleChoiceQuestionComponent)],
             providers: [
@@ -89,7 +91,7 @@ describe('PracticeQuizComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            paramMap: of(convertToParamMap({ courseId: '1' })),
+                            paramMap,
                         },
                     },
                 },
@@ -232,5 +234,58 @@ describe('PracticeQuizComponent', () => {
         expect(component.state()).toBe('OVERVIEW');
         expect(component.reviewSession()).toBeNull();
         expect(component.reviewQuestions()).toEqual([]);
+    });
+
+    it('should reset the previous course quiz when the route switches to another course', () => {
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockImplementation((courseId: number) => of(courseId === 1 ? mockSession : null));
+        const pastSpy = vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([]));
+
+        component.ngOnInit();
+        component.onSelectedAnswerOptionsChange(101, [{ id: 201 } as AnswerOption]);
+        expect(component.state()).toBe('QUIZ');
+
+        paramMap.next(convertToParamMap({ courseId: '2' }));
+
+        expect(component.activeCourseId()).toBe(2);
+        expect(component.state()).toBe('OVERVIEW');
+        expect(component.currentSession()).toBeNull();
+        expect(component.activeQuestions()).toEqual([]);
+        expect(component.selectedAnswerOptions()).toEqual({});
+        expect(pastSpy).toHaveBeenCalledWith(2);
+    });
+
+    it('should show the readable server error instead of its translation key when generation fails', () => {
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));
+        vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([]));
+        vi.spyOn(practiceQuizService, 'startSession').mockReturnValue(
+            throwError(() => ({ error: { title: 'Quiz question pool service is not available', message: 'error.poolNotAvailable' } })),
+        );
+
+        component.ngOnInit();
+        component.startNewQuiz();
+
+        expect(component.state()).toBe('OVERVIEW');
+        expect(component.isLoading()).toBe(false);
+        expect(component.errorMessage()).toBe('Quiz question pool service is not available');
+    });
+
+    it('should fall back to a default message when an error has no title', () => {
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(throwError(() => ({})));
+        vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(throwError(() => ({ error: { message: 'error.http.500' } })));
+
+        component.ngOnInit();
+        expect(component.errorMessage()).toBe('Failed to load past sessions.');
+
+        component.setupQuizSession(mockSession);
+        vi.spyOn(practiceQuizService, 'submitSession').mockReturnValue(throwError(() => ({})));
+        component.submitQuiz();
+        expect(component.isSubmitting()).toBe(false);
+        expect(component.state()).toBe('QUIZ');
+        expect(component.errorMessage()).toBe('Failed to submit quiz.');
+
+        vi.spyOn(practiceQuizService, 'getSessionReview').mockReturnValue(throwError(() => ({})));
+        component.openReview(42);
+        expect(component.isLoading()).toBe(false);
+        expect(component.state()).toBe('QUIZ');
     });
 });
