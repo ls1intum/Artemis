@@ -34,7 +34,7 @@
         "@ngx-translate/core": "18.1.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.5.0",
-        "@tumaet/apollon": "5.4.0",
+        "@tumaet/apollon": "5.5.1",
         "@tumaet/ui-angular": "workspace:*",
         "@vscode/codicons": "0.0.46-24",
         "@vscode/markdown-it-katex": "1.1.2",
