@@ -5,7 +5,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { TranslateService } from '@ngx-translate/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -15,7 +15,6 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
