@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -284,11 +285,10 @@ public class IrisChatPipelineExecutionService {
      * The step of the solution workflow the latest student message is. A stored choice is a button its offer has, so it is not checked against the offer again:
      * only IrisMessageResource writes one after validating its offer, and only the result of a typed reply to an offer, with the choice Pyris read from it.
      * <ul>
-     * <li>A clicked choice on the latest message is that step if the message right before it is its offer: an offer is open only while it is the latest message, so a
-     * choice that arrives after another message, such as a context switch or a click in another tab, is no step.</li>
+     * <li>A clicked choice on the latest message is that step if the message right before it is its offer, made in the session's current context.</li>
      * <li>A message right after an offer of the current context, without a click, is a typed reply to it.</li>
-     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution, unless the context switched since
-     * the previous student message.</li>
+     * <li>A message after a turn that accepted the summary, by a valid click or a typed reply, is the student's explanation of the solution, unless the context
+     * switched since the previous student message.</li>
      * </ul>
      */
     private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session) {
@@ -297,31 +297,43 @@ public class IrisChatPipelineExecutionService {
         if (latest < 0) {
             return null;
         }
-        var latestChoice = IrisMessageContentTypeDTO.readFirst(messages.get(latest), IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class);
-        if (latestChoice.isPresent()) {
-            if (latest == 0 || !Objects.equals(messages.get(latest - 1).getId(), latestChoice.get().offerMessageId())) {
-                return null;
-            }
-            return switch (latestChoice.get().choice()) {
+        if (IrisSolutionChoiceDTO.in(messages.get(latest)).isPresent()) {
+            return validChoice(messages, latest, session).map(choice -> switch (choice) {
                 case TRY_MYSELF -> IrisSolutionStep.TRY_MYSELF;
                 case SHOW_SOLUTION -> IrisSolutionStep.SHOW_SOLUTION;
                 case SUMMARIZE -> IrisSolutionStep.SUMMARIZE;
                 case SKIP_SUMMARY -> null;
-            };
+            }).orElse(null);
         }
-        // An answer of a run that was still running during a context switch can land after the marker: its offer belongs to the previous context.
-        var answeredOffer = latest > 0
-                ? IrisSolutionOfferDTO.in(messages.get(latest - 1)).filter(offer -> offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId()).orElse(null)
-                : null;
+        var answeredOffer = latest > 0 ? offerOfTheContext(messages.get(latest - 1), session).orElse(null) : null;
         if (answeredOffer != null) {
             return answeredOffer.offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
         }
         int previous = lastStudentMessageBefore(messages, latest);
         // A context switch since the previous student message starts the workflow over in the new context.
         boolean switchedContext = previous >= 0 && messages.subList(previous, latest).stream().anyMatch(message -> message.getSender() == IrisMessageSender.CTXSWAP);
-        boolean followsSummary = previous >= 0 && !switchedContext
-                && messages.subList(previous, latest).stream().flatMap(message -> IrisSolutionChoiceDTO.in(message).stream()).anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
+        boolean followsSummary = previous >= 0 && !switchedContext && IntStream.range(previous, latest).mapToObj(index -> validChoice(messages, index, session))
+                .flatMap(Optional::stream).anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
         return followsSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
+    }
+
+    /**
+     * The choice a message records, if it answered an open offer of the session's current context. A choice whose offer belongs to another context would continue that
+     * context's workflow, for example the answer of a run that landed after a context switch. A click also counts only right after its offer, since an offer is open
+     * only while it is the latest message: a click after another message, such as a click in another tab, is stale. The choice of a typed reply sits on the answer.
+     */
+    private static Optional<IrisSolutionChoice> validChoice(List<IrisMessage> messages, int index, IrisChatSession session) {
+        var message = messages.get(index);
+        return IrisMessageContentTypeDTO.readFirst(message, IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class)
+                .filter(choice -> message.getSender() != IrisMessageSender.USER || (index > 0 && Objects.equals(messages.get(index - 1).getId(), choice.offerMessageId())))
+                .filter(choice -> messages.stream().filter(offerMessage -> Objects.equals(offerMessage.getId(), choice.offerMessageId())).findFirst()
+                        .flatMap(offerMessage -> offerOfTheContext(offerMessage, session)).isPresent())
+                .map(IrisSolutionChoiceDTO::choice);
+    }
+
+    /** The offer a message makes, if it belongs to the session's current context; an answer that lands after a context switch carries an offer of the previous one. */
+    private static Optional<IrisSolutionOfferDTO> offerOfTheContext(IrisMessage message, IrisChatSession session) {
+        return IrisSolutionOfferDTO.in(message).filter(offer -> offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId());
     }
 
     private static int lastStudentMessageBefore(List<IrisMessage> messages, int end) {

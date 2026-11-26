@@ -319,24 +319,53 @@ class IrisChatPipelineContextTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
-    void choiceThatArrivesAfterAnotherMessageIsNoStepAndNeverSendsTheReference(boolean afterContextSwitch) {
+    @ValueSource(strings = { "SWITCH_BEFORE_CHOICE", "OTHER_TAB", "SWITCH_AFTER_CHOICE" })
+    void choiceThatIsStaleOrOfAnotherContextIsNoStepAndNeverSendsTheReference(String race) {
         prepareProgrammingReferenceContext();
-        if (afterContextSwitch) {
-            appendOffer(SOLUTION_CHOICES);
-            session.getMessages().addAll(List.of(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"), message(IrisMessageSender.USER, "New exercise")));
-        }
-        else {
+        switch (race) {
+            case "SWITCH_BEFORE_CHOICE" -> {
+                appendOffer(SOLUTION_CHOICES);
+                session.getMessages().addAll(List.of(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"), message(IrisMessageSender.USER, "New exercise")));
+            }
             // The first click from another tab already answered the offer.
-            appendChoice(IrisSolutionChoice.TRY_MYSELF);
+            case "OTHER_TAB" -> appendChoice(IrisSolutionChoice.TRY_MYSELF);
+            // The choice answered the offer of another exercise, and the session switched before its run read it.
+            default -> {
+                appendOffer(SOLUTION_CHOICES);
+                session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SOLUTION_CHOICES))));
+            }
         }
-        var lateChoice = message(IrisMessageSender.USER, "Show me the complete solution");
-        lateChoice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
-        session.getMessages().add(lateChoice);
+        var choice = message(IrisMessageSender.USER, "Show me the complete solution");
+        choice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
+        session.getMessages().add(choice);
+        if ("SWITCH_AFTER_CHOICE".equals(race)) {
+            session.getMessages().add(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"));
+        }
         var result = runChatPipeline();
         assertThat(result.solutionStep()).isNull();
         assertThat(result.programmingExercise().solutionRepository()).isEmpty();
         verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void staleOrOtherContextSummaryChoiceNeverMakesTheNextQuestionAnExplanation(boolean otherTab) {
+        prepareProgrammingReferenceContext();
+        var lateChoice = message(otherTab ? IrisMessageSender.USER : IrisMessageSender.LLM, "Summarize it");
+        lateChoice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SUMMARIZE)));
+        if (otherTab) {
+            // One tab declined the summary, another accepted it a moment later.
+            appendChoice(IrisSolutionChoice.SKIP_SUMMARY);
+        }
+        else {
+            // The typed acceptance of another exercise's summary offer was answered after the switch to this exercise.
+            appendOffer(SUMMARY_CHOICES);
+            session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SUMMARY_CHOICES))));
+            session.getMessages().addAll(List.of(message(IrisMessageSender.USER, "yes"), message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"),
+                    message(IrisMessageSender.USER, "New exercise")));
+        }
+        session.getMessages().addAll(List.of(lateChoice, message(IrisMessageSender.LLM, "How can I help?"), message(IrisMessageSender.USER, "What is a loop invariant?")));
+        assertThat(runChatPipeline().solutionStep()).isNull();
     }
 
     @Test
