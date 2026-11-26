@@ -9,6 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PracticeQuizComponent } from 'app/atlas/overview/practice-quiz/practice-quiz.component';
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { PracticeSessionDTO, PracticeSessionReviewDTO, PracticeSessionSummaryDTO } from 'app/atlas/overview/practice-quiz/practice-quiz.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -287,5 +288,20 @@ describe('PracticeQuizComponent', () => {
         component.openReview(42);
         expect(component.isLoading()).toBe(false);
         expect(component.state()).toBe('QUIZ');
+    });
+
+    it('should shuffle answer options through the quiz service when a quiz starts', () => {
+        const randomizeSpy = vi.spyOn(TestBed.inject(ArtemisQuizService), 'randomizeOrder');
+
+        component.setupQuizSession(mockSession);
+
+        expect(randomizeSpy).toHaveBeenCalledWith(component.activeQuestions(), false);
+        expect(component.activeQuestions()[0].randomizeOrder).toBe(true);
+        expect(
+            component
+                .activeQuestions()[0]
+                .answerOptions?.map((option) => option.id)
+                .sort(),
+        ).toEqual([201, 202]);
     });
 });

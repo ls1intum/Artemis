@@ -12,6 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { parseJson } from 'app/foundation/util/json.util';
 import { PracticeQuizService } from 'app/atlas/overview/practice-quiz/practice-quiz.service';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import {
     PracticeSessionDTO,
     PracticeSessionReviewDTO,
@@ -50,6 +51,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly practiceQuizService = inject(PracticeQuizService);
     private readonly alertService = inject(AlertService);
+    private readonly quizService = inject(ArtemisQuizService);
 
     // 2. Component inputs & signals
     courseId = input<number>();
@@ -178,6 +180,8 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         for (const q of questions) {
             q.scoringType = ScoringType.ALL_OR_NOTHING;
         }
+        // Shuffle the answer options like a regular quiz; option ids stay stable for grading and review
+        this.quizService.randomizeOrder(questions, false);
         this.activeQuestions.set(questions);
         this.selectedAnswerOptions.set({});
         this.state.set('QUIZ');
