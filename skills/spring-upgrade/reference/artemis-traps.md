@@ -52,8 +52,10 @@ interface named there still exists and is still called.
 
 - **Keep the properties migrator.** Generic upgrade guides remove `spring-boot-properties-migrator`
   after migrating. Artemis ships it on purpose with `spring.properties.migrator.fail: on-error`, so
-  that an unknown setting stops the start instead of being ignored. It also rejects some deprecated
-  keys that still work. A renamed or removed key needs an entry in the upgrade guide.
+  that a key which Spring or a library marks as removed, or as deprecated without a replacement of
+  the same type, stops the start instead of being ignored. Some of these keys still work. A renamed
+  key with such a replacement only causes a warning, and a misspelled or unknown key without this
+  metadata is not reported. A renamed or removed key needs an entry in the upgrade guide.
 - **New Spring AI model types** are created unless switched off, and need credentials. The server ends
   when one of these beans fails.
 - `SpringAIAutoConfigurationFilter` always excludes the OpenAI model auto-configurations, and all
@@ -94,6 +96,6 @@ Run these first; each exists because something broke or could break silently. Ru
 
 ## Deprecations recorded as follow-ups
 
-Noted with Boot 4.2, check whether they are done: `RestTemplate` is deprecated for removal in
+Noted with Boot 4.2, check whether they are done: RestTemplate is deprecated for removal in
 Framework 8.0 (move to `RestClient`), and the Spring AI chat memory types are deprecated for removal in
 Spring AI 3.0.
