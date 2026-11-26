@@ -41,6 +41,11 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             // The dashboard starts the reference material collapsed; the assessment editor keeps it open.
             const dashboardInstructions = page.getByTestId('exercise-assessment-progress');
+            // The Instructions panel stays collapsed after confirming; open it before reaching the sections inside.
+            const instructionsToggle = dashboardInstructions.getByRole('button', { name: 'Instructions', exact: true });
+            await expect(instructionsToggle).toHaveAttribute('aria-expanded', 'false');
+            await instructionsToggle.click();
+            await expect(instructionsToggle).toHaveAttribute('aria-expanded', 'true');
             for (const section of ['problem-statement-section', 'example-solution-section']) {
                 const toggle = dashboardInstructions.getByTestId(section).getByTestId('expandable-section-toggle');
                 await expect(toggle).toHaveAttribute('aria-expanded', 'false');
