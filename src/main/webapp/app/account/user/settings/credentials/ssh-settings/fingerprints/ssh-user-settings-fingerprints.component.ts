@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-fingerprints.component.html',
-    styleUrls: ['../ssh-user-settings.component.scss'],
+    styleUrls: ['../ssh-user-settings.component.css'],
     imports: [TranslateDirective, DocumentationLinkComponent, RouterLink, TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective, ArtemisTranslatePipe],
 })
 export class SshUserSettingsFingerprintsComponent implements OnInit {

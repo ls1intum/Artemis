@@ -18,7 +18,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
-    styleUrls: ['./course-detail-doughnut-chart.component.scss'],
+    styleUrls: ['./course-detail-doughnut-chart.component.css'],
     imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class CourseDetailDoughnutChartComponent {

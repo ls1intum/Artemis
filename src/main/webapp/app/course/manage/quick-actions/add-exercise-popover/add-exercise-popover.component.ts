@@ -31,7 +31,7 @@ interface ExerciseModalRow {
         ArtemisTranslatePipe,
     ],
     templateUrl: './add-exercise-popover.component.html',
-    styleUrls: ['./add-exercise-popover.component.scss'],
+    styleUrls: ['./add-exercise-popover.component.css'],
     exportAs: 'addExercisePopover',
 })
 export class AddExercisePopoverComponent {

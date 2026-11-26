@@ -162,7 +162,7 @@
                                             <tumaet-ui-input-number
                                                 inputId="quiz-duration-hours"
                                                 fluid
-                                                class="w-22!"
+                                                class="w-22"
                                                 [(ngModel)]="duration.hours"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
@@ -173,7 +173,7 @@
                                             <tumaet-ui-input-number
                                                 inputId="quiz-duration-minutes"
                                                 fluid
-                                                class="w-22!"
+                                                class="w-22"
                                                 [(ngModel)]="duration.minutes"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
@@ -185,7 +185,7 @@
                                             <tumaet-ui-input-number
                                                 inputId="quiz-duration-seconds"
                                                 fluid
-                                                class="w-22!"
+                                                class="w-22"
                                                 [(ngModel)]="duration.seconds"
                                                 (ngModelChange)="onDurationChange()"
                                                 [min]="0"
@@ -231,7 +231,7 @@
                                         <jhi-help-icon tumAetUiFormFieldLabel text="artemisApp.quizExercise.quizMode.explanation" />
                                         <tumaet-ui-select
                                             inputId="quizMode"
-                                            class="flex! w-full"
+                                            class="flex w-full"
                                             [options]="quizModeOptions()"
                                             optionLabel="label"
                                             optionValue="value"
@@ -439,7 +439,7 @@
                                 tumAetUiButton
                                 severity="primary"
                                 size="small"
-                                class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                                class="aria-disabled:opacity-60"
                                 (click)="onSaveClick()"
                                 [tumAetUiTooltip]="saveBlockedReasons()"
                                 [tumAetUiTooltipDescribesHost]="false"

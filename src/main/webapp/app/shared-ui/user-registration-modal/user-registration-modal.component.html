@@ -1,4 +1,4 @@
-<tumaet-ui-dialog [(visible)]="isOpen" [dismissableMask]="true">
+<tumaet-ui-dialog [visible]="isOpen()" (visibleChange)="onVisibleChange($event)" [dismissableMask]="true">
     <ng-template #header>
         <span class="flex items-center gap-2">
             <fa-icon class="text-2xl" [icon]="faUsers" />

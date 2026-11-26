@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
-    styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
+    styleUrls: ['./pdf-preview-thumbnail-grid.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,

@@ -7,7 +7,7 @@ import { TumAetUiButtonSeverity, TumAetUiButtonSize, TumAetUiButtonVariant, tumA
 @Component({
     selector: 'tumaet-ui-button',
     templateUrl: './tumaet-ui-button.component.html',
-    styleUrl: './tumaet-ui-button.component.scss',
+    styleUrl: './tumaet-ui-button.component.css',
     imports: [FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

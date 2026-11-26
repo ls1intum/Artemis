@@ -32,7 +32,7 @@ import { HyperionActivityRow, authoringActivity, variantActivity } from './hyper
 @Component({
     selector: 'jhi-hyperion-activity-tray',
     templateUrl: './hyperion-activity-tray.component.html',
-    styleUrl: './hyperion-activity-tray.component.scss',
+    styleUrl: './hyperion-activity-tray.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [TumAetUiConfirmationService],
     imports: [

@@ -144,6 +144,29 @@ describe('Message editor editing transactions', () => {
         expect(changed).not.toHaveBeenCalled();
     });
 
+    it.each([
+        ['1.', 'ol'],
+        ['-', 'ul'],
+    ])('does not treat the empty list from the typed marker %s as a blank document', (marker, list) => {
+        editor.load('');
+        expect(editor.isBlank('')).toBe(true);
+        editor.insertText(marker);
+        expect(editor.convertTypedListMarker(' ')).toBe(true);
+
+        expect(root.querySelector(`${list} > li`)).not.toBeNull();
+        // The message of a list without text serializes to nothing, but the editor already shows the list marker.
+        expect(changed).toHaveBeenLastCalledWith('');
+        expect(editor.isBlank('')).toBe(false);
+        expect(editor.isBlank(changed.mock.lastCall![0])).toBe(false);
+    });
+
+    it('treats a document of plain empty paragraphs as blank', () => {
+        editor.load('');
+        root.replaceChildren(document.createElement('p'));
+        expect(editor.isBlank('')).toBe(true);
+        expect(editor.isBlank('text')).toBe(false);
+    });
+
     it('does not turn a protected reference labelled as a marker into a list', () => {
         editor.load('[user]-(anna)[/user]');
         const reference = root.querySelector('[data-message-reference]')!;

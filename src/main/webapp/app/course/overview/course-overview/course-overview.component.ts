@@ -34,7 +34,7 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
+    styleUrls: ['./course-overview.css', '../../shared/course-base-container/course-base-container.component.css', './course-overview.component.css'],
     imports: [
         CdkScrollable,
         NgClass,

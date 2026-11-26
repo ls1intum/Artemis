@@ -40,7 +40,7 @@ interface PanState {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgTemplateOutlet],
     templateUrl: './dag-graph.component.html',
-    styleUrl: './dag-graph.component.scss',
+    styleUrl: './dag-graph.component.css',
 })
 export class DagGraphComponent implements OnDestroy {
     private static readonly DEFAULT_NODE_WIDTH = 100;

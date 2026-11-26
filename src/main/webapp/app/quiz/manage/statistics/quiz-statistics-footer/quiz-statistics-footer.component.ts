@@ -26,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
+    styleUrls: ['./quiz-statistics-footer.component.css', '../../../shared/quiz.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiMenuComponent,

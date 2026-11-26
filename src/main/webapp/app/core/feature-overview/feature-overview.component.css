@@ -1,0 +1,86 @@
+/*
+ * Layout and spacing are Tailwind utilities in the template. What stays here are heading, paragraph and list margins,
+ * heading sizes, button chrome and the shared card look of the About page.
+ */
+.feature-overview {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+}
+
+.feature-overview h1,
+.feature-overview h2,
+.feature-overview h3,
+.feature-overview p {
+    margin: 0;
+}
+
+.feature-overview h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.feature-overview h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.feature-overview h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.feature-overview__eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.feature-overview__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.feature-overview__card,
+.feature-overview__detail {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    background: var(--module-bg);
+    color: var(--body-color);
+}
+
+.feature-overview__card {
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.feature-overview__card:hover {
+    border-color: var(--primary);
+}
+
+.feature-overview__card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.feature-overview__detail {
+    scroll-margin-top: 1rem;
+}
+
+.feature-overview__description {
+    white-space: pre-line;
+}
+
+.feature-overview__screenshot {
+    display: block;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.feature-overview__screenshot img {
+    display: block;
+    width: 100%;
+    height: auto;
+}

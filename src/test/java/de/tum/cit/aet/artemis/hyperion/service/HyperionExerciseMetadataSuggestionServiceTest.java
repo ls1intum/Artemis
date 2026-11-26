@@ -71,7 +71,6 @@ class HyperionExerciseMetadataSuggestionServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         // The ChatClient merges request options into the model's options, which must be non-null
-        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         course = new Course();
         course.setId(COURSE_ID);
@@ -104,7 +103,6 @@ class HyperionExerciseMetadataSuggestionServiceTest {
             Integer sentMaxCompletionTokens) {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"title\": \"Bounded Stack\"}")))));
         // a preset's model carries OpenAI options, into which the ChatClient merges the request options
-        when(chatModel.getDefaultOptions()).thenReturn(OpenAiChatOptions.builder().build());
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
         HyperionChatClientService chatClients = mock(HyperionChatClientService.class);
         when(chatClients.forTask(any())).thenReturn(ChatClient.create(chatModel));

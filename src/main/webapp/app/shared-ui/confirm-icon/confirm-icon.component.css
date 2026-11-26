@@ -1,0 +1,34 @@
+:host {
+    display: inline-flex;
+    align-items: center;
+}
+
+.confirm-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.confirm-icon-button fa-icon {
+    display: inline-flex;
+}
+
+:host(.confirm-icon-fill-parent) {
+    align-self: stretch;
+}
+
+:host(.confirm-icon-fill-parent) .confirm-icon-button {
+    height: 100%;
+    padding: 0 0.5rem;
+}
+
+.confirm-icon-danger {
+    color: var(--danger);
+}

@@ -36,7 +36,7 @@ export interface StarRatingChangeEvent {
 @Component({
     selector: 'star-rating',
     template: `<div #starMain></div>`,
-    styleUrls: ['./star-rating.component.scss'],
+    styleUrls: ['./star-rating.component.css'],
     encapsulation: ViewEncapsulation.ShadowDom,
 })
 export class StarRatingComponent implements OnDestroy {

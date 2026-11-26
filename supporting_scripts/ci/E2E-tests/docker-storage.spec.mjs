@@ -86,16 +86,19 @@ describe('E2E Docker storage preparation', () => {
     it('recovers low headroom by trimming unused build cache and checking the filesystem again', () => {
         const result = checkStorage(19 * 1024 * 1024, undefined, undefined, { afterCacheKiB: 21 * 1024 * 1024 });
         expect(result.status).toBe(0);
-        expect(result.calls).toContain('buildx prune --builder default --force --min-free-space 21474836480 --reserved-space 512MB');
+        expect(result.calls).toContain('buildx prune --builder default --force --reserved-space 512MB');
+        // --min-free-space reclaimed 8 kB of 19 GB of unused cache on the runners, so the prune must not depend on it.
+        expect(result.calls).not.toContain('--min-free-space');
         expect(result.calls).not.toContain('system df');
         expect(result.calls.match(/image prune/g)).toHaveLength(1);
         expect(result.stdout).toContain(`${21 * 1024 * 1024} KiB available`);
     });
 
-    it('targets the filesystem reserve rather than a fixed cache budget on larger disks', () => {
+    it('measures the reserve as a tenth of the filesystem plus 10 GiB, so larger disks need more headroom', () => {
         const result = checkStorage(109 * 1024 * 1024, 1000 * 1024 * 1024, undefined, { afterCacheKiB: 111 * 1024 * 1024 });
         expect(result.status).toBe(0);
-        expect(result.calls).toContain('buildx prune --builder default --force --min-free-space 118111600640 --reserved-space 512MB');
+        expect(result.calls).toContain('buildx prune --builder default --force --reserved-space 512MB');
+        expect(result.stdout).toContain(`${111 * 1024 * 1024} KiB available, ${100 * 1024 * 1024 + 10 * 1024 * 1024} KiB required`);
     });
 
     it('recovers the develop runner shortfall by dropping only unused Artemis image retention after cache cleanup', () => {
