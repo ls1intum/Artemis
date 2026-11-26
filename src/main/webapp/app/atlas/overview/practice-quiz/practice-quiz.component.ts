@@ -33,7 +33,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 @Component({
     selector: 'jhi-practice-quiz',
     templateUrl: './practice-quiz.component.html',
-    styleUrls: ['../../../quiz/overview/participation/quiz-participation.component.scss'],
+    styleUrls: ['../../../quiz/overview/participation/quiz-participation.component.css'],
     imports: [
         CommonModule,
         FaIconComponent,
