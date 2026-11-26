@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -55,6 +55,8 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(messages[0].nativeElement.textContent).toContain('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable');
+        const info = fixture.debugElement.query(By.css('[data-testid="feedback-suggestions-info"]'));
+        expect(info.injector.get(TumAetUiTooltipDirective).content()).toBe('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo');
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 

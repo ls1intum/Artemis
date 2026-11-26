@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleNotch, faInfoCircle, faPenSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faInfoCircle, faPenSquare, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -10,7 +10,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    imports: [TumAetUiMessageComponent, TumAetUiButtonComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiMessageComponent, TumAetUiButtonComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsBannerComponent {
     private readonly profileService = inject(ProfileService);
@@ -38,5 +38,6 @@ export class FeedbackSuggestionsBannerComponent {
 
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faInfoCircle = faInfoCircle;
+    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPenSquare = faPenSquare;
 }

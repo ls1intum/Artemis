@@ -2,7 +2,18 @@
     <tumaet-ui-message severity="info" [text]="'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate" />
 }
 @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
-    <tumaet-ui-message severity="info" [text]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate" />
+    <tumaet-ui-message severity="info">
+        <div class="flex items-center gap-2">
+            <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                size="lg"
+                class="cursor-pointer"
+                data-testid="feedback-suggestions-info"
+                [tumAetUiTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
+            />
+        </div>
+    </tumaet-ui-message>
 }
 @if (isLoading() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
     <tumaet-ui-message severity="secondary">
