@@ -17,7 +17,7 @@ export type ThemeSwitchPopoverPlacement = 'bottom' | 'bottom-right';
 @Component({
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
-    styleUrls: ['theme-switch.component.scss'],
+    styleUrls: ['theme-switch.component.css'],
     imports: [FormsModule, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiToggleSwitchComponent, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

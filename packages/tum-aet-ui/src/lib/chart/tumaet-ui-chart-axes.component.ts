@@ -11,20 +11,22 @@ import { ChartAxisTitle, ChartGridLine, ChartTick } from './tumaet-ui-chart.fram
     selector: 'g[tumAetUiChartAxes]',
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: `
-        .tumaet-ui-chart-grid {
-            stroke: var(--tumaet-ui-border-color);
-            stroke-width: 1;
-            shape-rendering: crispedges;
-        }
-        .tumaet-ui-chart-tick {
-            fill: var(--tumaet-ui-muted-color);
-            font-size: var(--tumaet-ui-font-size-xs);
-            font-family: inherit;
-        }
-        .tumaet-ui-chart-axis-title {
-            fill: var(--tumaet-ui-text-color);
-            font-size: var(--tumaet-ui-font-size-sm);
-            font-family: inherit;
+        @layer tumaet-ui {
+            .tumaet-ui-chart-grid {
+                stroke: var(--tumaet-ui-border-color);
+                stroke-width: 1;
+                shape-rendering: crispedges;
+            }
+            .tumaet-ui-chart-tick {
+                fill: var(--tumaet-ui-muted-color);
+                font-size: var(--tumaet-ui-font-size-xs);
+                font-family: inherit;
+            }
+            .tumaet-ui-chart-axis-title {
+                fill: var(--tumaet-ui-text-color);
+                font-size: var(--tumaet-ui-font-size-sm);
+                font-family: inherit;
+            }
         }
     `,
     template: `

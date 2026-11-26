@@ -19,7 +19,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
     selector: 'jhi-tutorial-registrations-register-search-bar',
     imports: [FormsModule, FaIconComponent, TumAetUiIconFieldComponent, TumAetUiInputDirective, OverlayModule, ScrollingModule, TranslateDirective],
     templateUrl: './tutorial-registrations-register-search-bar.component.html',
-    styleUrl: './tutorial-registrations-register-search-bar.component.scss',
+    styleUrl: './tutorial-registrations-register-search-bar.component.css',
 })
 export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestroy {
     private translateService = inject(TranslateService);

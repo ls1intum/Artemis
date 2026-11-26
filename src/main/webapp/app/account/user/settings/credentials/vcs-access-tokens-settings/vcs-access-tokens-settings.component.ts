@@ -23,7 +23,7 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
 @Component({
     selector: 'jhi-vcs-access-tokens-settings',
     templateUrl: './vcs-access-tokens-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

@@ -16,7 +16,7 @@
 
 <div class="apollon-diagram-list__body flex min-h-0 grow flex-col gap-4 px-6">
     <tumaet-ui-table-layout fill [loading]="isLoading()" [empty]="apollonDiagrams().length === 0 && !isLoading()" emptyTitle="artemisApp.apollonDiagram.home.empty">
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             <button
                 [attr.aria-label]="'artemisApp.apollonDiagram.home.createLabel' | artemisTranslate"
                 type="button"

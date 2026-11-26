@@ -26,7 +26,7 @@ const DEFAULT_LIFETIME_IN_DAYS = 30;
 @Component({
     selector: 'jhi-agent-access-settings',
     templateUrl: './agent-access-settings.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

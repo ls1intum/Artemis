@@ -70,12 +70,29 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
                  WHEN e.createdDate IS NULL OR e.releaseDate > e.createdDate THEN e.releaseDate ELSE e.createdDate END
             """;
 
-    String SUBMITTED = """
+    String OWNED_AS_STUDENT = "p.student.id = :userId AND e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL";
+
+    String OWNED_AS_TEAM_MEMBER = "p.team.id IN (SELECT t.id FROM Team t JOIN t.students m WHERE m.id = :userId)";
+
+    String SUBMISSION_OF_EXERCISE = """
             EXISTS (SELECT s.id FROM Submission s JOIN TREAT(s.participation AS StudentParticipation) p
-                WHERE s.submitted = TRUE AND p.testRun = FALSE
-                  AND (p.exercise = e OR (g.id IS NOT NULL AND p.exercise.exerciseVariantGroup.id = g.id))
-                  AND
-            """ + OWNED + ")";
+                WHERE s.submitted = TRUE AND p.testRun = FALSE AND p.exercise = e AND
+            """;
+
+    String SUBMISSION_IN_VARIANT_GROUP = """
+            EXISTS (SELECT s.id FROM Submission s JOIN TREAT(s.participation AS StudentParticipation) p
+                WHERE s.submitted = TRUE AND p.testRun = FALSE AND p.exercise.exerciseVariantGroup.id = g.id AND
+            """;
+
+    /**
+     * Whether the user, or a team of the user, submitted this exercise or any variant of its group.
+     * Every branch is anchored on the user's own participations (student or team key) and has no OR
+     * between differently indexed columns. The previous single EXISTS with an OR over the exercise, the
+     * variant group and student/team ownership gave the planner no index to start from, so on production
+     * it scanned all ~10 million submitted submissions once per exercise.
+     */
+    String SUBMITTED = "(" + SUBMISSION_OF_EXERCISE + OWNED_AS_STUDENT + ") OR " + SUBMISSION_OF_EXERCISE + OWNED_AS_TEAM_MEMBER + ") OR (g.id IS NOT NULL AND ("
+            + SUBMISSION_IN_VARIANT_GROUP + OWNED_AS_STUDENT + ") OR " + SUBMISSION_IN_VARIANT_GROUP + OWNED_AS_TEAM_MEMBER + "))))";
 
     String ACTIVITY = """
             (SELECT MAX(COALESCE(s.submissionDate, p.initializationDate)) FROM StudentParticipation p LEFT JOIN p.submissions s

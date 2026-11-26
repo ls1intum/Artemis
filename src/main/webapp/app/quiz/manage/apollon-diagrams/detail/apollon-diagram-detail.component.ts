@@ -27,7 +27,7 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
-    styleUrls: ['./apollon-diagram-detail.component.scss'],
+    styleUrls: ['./apollon-diagram-detail.component.css'],
     providers: [ApollonDiagramService],
     imports: [
         TranslateDirective,

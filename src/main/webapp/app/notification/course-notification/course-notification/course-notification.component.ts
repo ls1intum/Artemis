@@ -32,7 +32,7 @@ const MARKDOWN_PREVIEW_PARAMETERS: Partial<Record<string, string>> = {
     selector: 'jhi-course-notification',
     imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, ArtemisTranslatePipe, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
-    styleUrls: ['./course-notification.component.scss'],
+    styleUrls: ['./course-notification.component.css'],
     // Mirror the `fluid` input onto the host so the (inline by default) host and its inline-block
     // child can be made block-level in fluid mode, giving `width: 100%` a definite containing block.
     host: { '[class.fluid]': 'fluid()' },

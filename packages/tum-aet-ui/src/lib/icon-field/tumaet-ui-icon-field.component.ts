@@ -7,7 +7,7 @@ export type TumAetUiIconFieldPosition = 'left' | 'right';
 @Component({
     selector: 'tumaet-ui-icon-field',
     templateUrl: './tumaet-ui-icon-field.component.html',
-    styleUrl: './tumaet-ui-icon-field.component.scss',
+    styleUrl: './tumaet-ui-icon-field.component.css',
     imports: [FaIconComponent],
     host: {
         class: 'tumaet-ui-icon-field',

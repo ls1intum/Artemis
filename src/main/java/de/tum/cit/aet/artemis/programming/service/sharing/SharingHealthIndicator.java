@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+
 /**
  * Health indicator that shows the status of the Sharing Platform connector.
  */
@@ -47,7 +49,7 @@ public class SharingHealthIndicator implements HealthIndicator {
 
             SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.get().getLastHealthStati();
             if (lastHealthStati.getLastConnect() == null) {
-                health = Health.down();
+                health = Health.status(ConnectorHealth.DEGRADED);
             }
             else if (lastHealthStati.getLastConnect().isBefore(Instant.now().minus(11, ChronoUnit.MINUTES))) {
                 health = Health.unknown();
@@ -66,7 +68,8 @@ public class SharingHealthIndicator implements HealthIndicator {
 
         }
         else {
-            health = Health.down().withDetail("Status", "Sharing seems not configured: prop \"artemis.sharing.enabled\" is " + sharingEnabled + ". Should be \"true\"");
+            health = Health.status(ConnectorHealth.DEGRADED).withDetail("Status",
+                    "Sharing seems not configured: prop \"artemis.sharing.enabled\" is " + sharingEnabled + ". Should be \"true\"");
         }
         return health.build();
     }

@@ -150,7 +150,7 @@ class AtlasResponsesToolLoopTest {
         var callback = FunctionToolCallback.<Map<String, Object>, String>builder("lookup", input -> {
             throw new AssertionError("Unsupported provider output must never execute a tool");
         }).inputType(Map.class).build();
-        var result = client.prompt().user("work").toolCallbacks(callback).call().chatResponse();
+        var result = client.prompt().user("work").tools(callback).call().chatResponse();
         assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("unsupported_output");
         assertThat(result.getResult().getOutput().hasToolCalls()).isFalse();
         assertThat(calls).hasSize(1);

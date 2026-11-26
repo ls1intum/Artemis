@@ -95,7 +95,7 @@ const INITIAL_EAGER_PAGES = 3;
         TranslateDirective,
     ],
     templateUrl: './pdf-viewer.component.html',
-    styleUrls: ['./pdf-viewer.component.scss'],
+    styleUrls: ['./pdf-viewer.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfViewerComponent {
