@@ -108,6 +108,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Dependency Version Consistency
         run: pnpm run sync-versions:check
+      - name: Duplicate Client Dependencies
+        run: node --test supporting_scripts/client/check_duplicate_dependencies.test.mjs && pnpm run check:duplicate-dependencies
+        if: ${{ !cancelled() }}
       - name: TypeScript Formatting
         run: pnpm run prettier:check
       - name: TypeScript Code Style

@@ -1,0 +1,6 @@
+{
+    "entities": {
+        "versions": ["8.1.0", "9.0.0"],
+        "reason": "markdown-it 15 asks for entities 8, parse5 8 (markdown-file-destinations.ts) for entities 9. Goes away when one of the two stops using it or both move to the same major."
+    }
+}

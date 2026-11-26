@@ -120,6 +120,7 @@
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",
+        "check:duplicate-dependencies": "node supporting_scripts/client/check_duplicate_dependencies.mjs",
         "check:vite-override": "node supporting_scripts/check-vite-override.mjs",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "compile": "pnpm run prebuild && tsc --project config/client/tsconfig.app.json",

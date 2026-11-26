@@ -305,6 +305,14 @@ most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAe
 in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
 [Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
 
+## Duplicate dependencies
+
+The production client resolves each package to one version. `pnpm run check:duplicate-dependencies` (Client Code Style
+job) fails on a second version. Align with `pnpm why <package>`, a bump or a scoped override in `pnpm-workspace.yaml`;
+use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with a reason, and remove the entry as soon
+as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
+[Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
