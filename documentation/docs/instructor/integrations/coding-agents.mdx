@@ -76,8 +76,9 @@ Some things are deliberately not available to an agent, however it is configured
   students cannot see them yet. An agent can also change only content that is still unpublished. A release date
   schedules publication: review the content before that date, and change the date in the Artemis web interface if you
   need more time. Programming exercises additionally must have no student participations. This holds for a push with
-  git as well: a push is refused when it starts if the exercise is visible to students or has participations. A push that
-  started earlier is not stopped by a later release or participation.
+  git as well: a push is refused when it starts if the exercise is visible to students or has participations, and again
+  when its data has arrived, so a release or a participation during a long upload stops it too. Only the moment between
+  that last check and the update of the branch is not covered.
 - **Deleting.** An agent can create and change competencies, relations, exercises and units, but not delete them.
 - **Grades, exams and student data.** No scope covers them.
 
