@@ -44,8 +44,8 @@ def forbiddenRuntimeModules = [
 ]
 
 /**
- * Sets of jars that legitimately share classes. Keyed by the sorted `group:artifact` coordinates joined with ' + ', valued by
- * the reason. Every entry is a decision: it hides a second copy of those classes from this check.
+ * Sets of jars that legitimately share classes. Keyed by the sorted jar labels joined with ' + ' (see {@link #jarLabel}: `group:artifact`,
+ * with `:classifier` appended for a classified jar), valued by the reason. Every entry is a decision: it hides a second copy of those classes from this check.
  */
 def allowedDuplicateClassJars = [
     'commons-logging:commons-logging + org.slf4j:jcl-over-slf4j': 'jcl-over-slf4j is the deliberate bridge that routes Jakarta Commons Logging calls of libraries (PDFBox, Apache HttpClient 4) to SLF4J, while Spring Core declares ' +
@@ -53,10 +53,22 @@ def allowedDuplicateClassJars = [
 ]
 
 /**
+ * The label that identifies one jar: `group:artifact`, plus `:classifier` when the jar is a classified variant such as
+ * `client-1.0-all.jar`. Two jars of the same module with different classifiers are different jars with their own classes, so
+ * they must not share a label, or their class lists would be merged and an overlap between them would go unreported.
+ */
+static String jarLabel(String group, String module, String version, String fileName) {
+    String stem = fileName.replaceAll(/\.jar$/, '')
+    String prefix = "${module}-${version}-".toString()
+    String classifier = stem.startsWith(prefix) ? stem.substring(prefix.length()) : ''
+    return classifier.isEmpty() ? "${group}:${module}".toString() : "${group}:${module}:${classifier}".toString()
+}
+
+/**
  * Finds classes that exist in more than one jar.
  *
- * @param jarClasses coordinate (`group:artifact`) -> the class entry names of that jar
- * @return the sorted coordinate list joined with ' + ' -> the classes the jars share, for every group of jars that shares at least one class
+ * @param jarClasses jar label (see {@link #jarLabel}) -> the class entry names of that jar
+ * @return the sorted label list joined with ' + ' -> the classes the jars share, for every group of jars that shares at least one class
  */
 static Map<String, List<String>> findSharedClasses(Map<String, Collection<String>> jarClasses) {
     def owners = [:].withDefault { new TreeSet<String>() }
@@ -96,6 +108,23 @@ static void verifyDuplicateClassScanner() {
     if (!findSharedClasses(['a:one': ['p/A.class'], 'b:two': ['p/B.class']]).isEmpty()) {
         throw new GradleException('Duplicate class scanner is broken: disjoint jars must not report anything.')
     }
+    // Classified variants of one module are separate jars: they overlap when they share a class and pass when they do not.
+    def overlappingVariants = findSharedClasses([
+        (jarLabel('example', 'client', '1.0', 'client-1.0.jar'))    : ['p/Client.class'],
+        (jarLabel('example', 'client', '1.0', 'client-1.0-all.jar')): ['p/Client.class', 'p/Shaded.class'],
+    ])
+    if (overlappingVariants.keySet() != ['example:client + example:client:all'] as Set || overlappingVariants.values().flatten() != ['p/Client.class']) {
+        throw new GradleException("Duplicate class scanner is broken: overlapping classifier variants must be reported, got ${overlappingVariants}.")
+    }
+    if (!findSharedClasses([
+        (jarLabel('example', 'client', '1.0', 'client-1.0.jar'))              : ['p/Client.class'],
+        (jarLabel('example', 'client', '1.0', 'client-1.0-linux-x86_64.jar')): ['p/Native.class'],
+    ]).isEmpty()) {
+        throw new GradleException('Duplicate class scanner is broken: disjoint classifier variants must not report anything.')
+    }
+    if (jarLabel('example', 'client', '1.0', 'client-1.0.jar') != 'example:client' || jarLabel('example', 'client', '1.0.Final', 'client-1.0.Final-all.jar') != 'example:client:all') {
+        throw new GradleException('Jar label derivation is broken.')
+    }
 }
 
 tasks.register('verifyRuntimeClasspathHygiene') {
@@ -115,7 +144,10 @@ tasks.register('verifyRuntimeClasspathHygiene') {
             if (!(id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) || !artifact.file.name.endsWith('.jar')) {
                 return
             }
+            // The plain module coordinate is what the forbidden list names; the jar label also carries the classifier and is what
+            // class ownership and the allowlist are keyed by.
             def coordinate = "${id.group}:${id.module}".toString()
+            def label = jarLabel(id.group, id.module, id.version, artifact.file.name)
             def reason = forbidden[coordinate]
             if (reason != null) {
                 problems << "'${coordinate}:${id.version}' must not be on the runtime classpath. ${reason}"
@@ -128,7 +160,7 @@ tasks.register('verifyRuntimeClasspathHygiene') {
                     }
                 }
             }
-            jarClasses.merge(coordinate, names, { a, b -> a + b })
+            jarClasses.merge(label, names, { a, b -> a + b })
         }
 
         // The runtime classpath of the root project always carries hundreds of jars; an (almost) empty scan means this task
