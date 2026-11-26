@@ -16,7 +16,8 @@
             "deductionsTooltip": "Punkte: {{ percentage }}% aller abgezogenen Punkte.",
             "codeIssueNotApplied": "Dieses Issue zieht nicht die maximale Punktzahl ab, da bereits andere ähnliche Issues genug Punkte abziehen. Wenn dies das einzige Issue wäre, würde es {{points}} Punkte abziehen.",
             "invalidAssessments": "Deine Bewertung ist nicht gültig!",
-            "saveInlineFeedbackFirst": "Verwende Speichern oder Abbrechen auf der Inline-Feedback-Karte, bevor du fortfährst."
+            "saveInlineFeedbackFirst": "Verwende Speichern oder Abbrechen auf der Inline-Feedback-Karte, bevor du fortfährst.",
+            "loadFeedbackSuggestionsFailed": "Laden der KI-Feedback-Vorschläge ist fehlgeschlagen."
         }
     }
 }
