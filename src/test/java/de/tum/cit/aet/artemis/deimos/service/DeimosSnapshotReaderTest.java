@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -124,7 +125,7 @@ class DeimosSnapshotReaderTest {
     void readFailsForACommitWithMoreEntriesThanTheEntryLimit() throws Exception {
         try (Git git = Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call()) {
             for (int file = 0; file < 3; file++) {
-                FileUtils.writeStringToFile(workingTree.resolve("dir/File%d.java".formatted(file)).toFile(), "", StandardCharsets.UTF_8);
+                FileUtils.writeStringToFile(workingTree.resolve(String.format(Locale.ROOT, "dir/File%d.java", file)).toFile(), "", StandardCharsets.UTF_8);
             }
             String commitHash = commitAll(git);
 
@@ -142,7 +143,7 @@ class DeimosSnapshotReaderTest {
             ObjectId emptyTree = inserter.insert(new TreeFormatter());
             var rootTree = new TreeFormatter();
             for (int directory = 0; directory < 20; directory++) {
-                rootTree.append("dir%02d".formatted(directory), FileMode.TREE, emptyTree);
+                rootTree.append(String.format(Locale.ROOT, "dir%02d", directory), FileMode.TREE, emptyTree);
             }
             var commit = new CommitBuilder();
             commit.setTreeId(inserter.insert(rootTree));

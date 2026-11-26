@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -201,7 +202,7 @@ public class DeimosAnalysisService {
                 int notReached = participationIds.size() - index - 1;
                 if (notReached > 0) {
                     failedAnalyses.add(new FailedAnalysis(BATCH_LEVEL_FAILURE_PARTICIPATION_ID, DeimosFailureType.LLM_AUTHENTICATION_FAILED,
-                            "Run aborted after the LLM endpoint rejected the credentials; %d participation(s) were not analysed".formatted(notReached)));
+                            String.format(Locale.ROOT, "Run aborted after the LLM endpoint rejected the credentials; %d participation(s) were not analysed", notReached)));
                     failed += notReached;
                 }
                 log.warn("Deimos run {} aborted after the LLM endpoint rejected the credentials; {} participation(s) were not analysed", runId, notReached);
@@ -662,7 +663,7 @@ public class DeimosAnalysisService {
             // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
             // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
             // which the check below then discards in full rather than keeping a truncated version of it.
-            String header = "=== Snapshot %d (%s) ===%n".formatted(emittedSnapshots + 1, snapshot.label());
+            String header = String.format(Locale.ROOT, "=== Snapshot %d (%s) ===%n", emittedSnapshots + 1, snapshot.label());
             long sectionOverheadBytes = utf8Length(header) + (long) SECTION_TRAILER_LINE_SEPARATORS * utf8Length(System.lineSeparator());
             long diffBudget = Math.max(0, incrementalBudget - usedBytes - sectionOverheadBytes);
 
@@ -704,7 +705,7 @@ public class DeimosAnalysisService {
             // Without paths: the names of binary files and links are the student's, and this notice must not carry them into
             // the prompt. It is charged before the final state is built, so the final state cannot exceed the payload bound.
             String nonTextNotice = nonTextChanges > 0
-                    ? "[... %d change(s) to binary files or links were not examined; their content is not included ...]%n%n".formatted(nonTextChanges)
+                    ? String.format(Locale.ROOT, "[... %d change(s) to binary files or links were not examined; their content is not included ...]%n%n", nonTextChanges)
                     : "";
             long cumulativeBudget = Math.max(0, maxPayloadBytes - usedBytes - utf8Length(nonTextNotice) - utf8Length(cumulativeHeader));
             // A single complete snapshot already is the change against the template. Building its copy first would let the
@@ -726,7 +727,7 @@ public class DeimosAnalysisService {
 
         private void appendNotice(int count, String format) {
             if (count > 0) {
-                String notice = format.formatted(count);
+                String notice = String.format(Locale.ROOT, format, count);
                 sb.append(notice);
                 usedBytes += utf8Length(notice);
             }

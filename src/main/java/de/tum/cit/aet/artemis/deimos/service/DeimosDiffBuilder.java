@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -104,7 +105,7 @@ final class DeimosDiffBuilder {
         }
 
         if (omittedFiles > 0) {
-            sb.append("[... %d further changed file(s) omitted to stay within the size limit ...]%n".formatted(omittedFiles));
+            sb.append(String.format(Locale.ROOT, "[... %d further changed file(s) omitted to stay within the size limit ...]%n", omittedFiles));
         }
 
         return new DiffResult(sb.toString().stripTrailing(), omissions);

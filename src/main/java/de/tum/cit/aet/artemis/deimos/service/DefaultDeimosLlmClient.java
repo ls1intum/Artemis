@@ -119,7 +119,7 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             if (rejectedStatus.isPresent()) {
                 // Fixed text and no cause: the SDK exception can carry the rejected request, and a cause attached here
                 // would be printed in full wherever this exception is logged.
-                throw new DeimosLlmException(DeimosFailureType.LLM_AUTHENTICATION_FAILED, CREDENTIALS_REJECTED_MESSAGE.formatted(rejectedStatus.getAsInt()));
+                throw new DeimosLlmException(DeimosFailureType.LLM_AUTHENTICATION_FAILED, String.format(Locale.ROOT, CREDENTIALS_REJECTED_MESSAGE, rejectedStatus.getAsInt()));
             }
             throw new DeimosLlmException(classifyCallFailure(ex), "LLM call failed for participation " + request.participationId() + ": " + ex.getMessage(), ex);
         }
