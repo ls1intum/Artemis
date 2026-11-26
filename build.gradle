@@ -440,12 +440,6 @@ dependencies {
     implementation "org.apache.httpcomponents.client5:httpclient5-cache:5.6.5"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.4.4"
     implementation "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
-    // Artemis itself still uses the Apache HttpClient 4 types URIBuilder and URLEncodedUtils (ExerciseSharingService and the LTI
-    // tests), and the Eureka client requests HttpClient 4.5.3, which has no URIBuilder.setPathSegments. Until the gitlab4j-api
-    // exclusion above, 4.5.13 only arrived by accident through its Jersey Apache connector. The 4.x line is a different artifact
-    // from client5 and not part of the HttpComponents families guard. TODO: move those six files to org.apache.hc.core5.net and
-    // leave 4.x to Eureka.
-    implementation "org.apache.httpcomponents:httpclient:4.5.13"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
     implementation "org.glassfish.jersey.core:jersey-common:4.0.3"
@@ -747,6 +741,10 @@ dependencies {
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
+        }
+        implementation("org.apache.httpcomponents:httpclient") {
+            version { strictly("4.5.14") }
+            because("Only the Eureka client still needs the HttpClient 4 line (it asks for 4.5.3); keep it on the last 4.x release instead of a version with known CVEs")
         }
     }
 
