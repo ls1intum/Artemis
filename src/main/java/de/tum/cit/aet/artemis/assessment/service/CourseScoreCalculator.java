@@ -85,8 +85,9 @@ public final class CourseScoreCalculator {
         maxPoints += variantGroupPoints.maxPoints();
         reachableMaxPoints += variantGroupPoints.reachablePoints();
 
+        double maxPresentationPoints = calculateReachablePresentationPoints(presentationConfig, maxPoints, settings.accuracyOfScores());
         double reachablePresentationPoints = calculateReachablePresentationPoints(presentationConfig, reachableMaxPoints, settings.accuracyOfScores());
-        maxPoints += reachablePresentationPoints;
+        maxPoints += maxPresentationPoints;
         reachableMaxPoints += reachablePresentationPoints;
 
         return new MaxAndReachablePointsDTO(maxPoints, reachableMaxPoints, reachablePresentationPoints);
@@ -315,16 +316,18 @@ public final class CourseScoreCalculator {
      * <p>
      * Base case: points are reachable if the exercise is released and the assessment is over -> it was possible for the student to get points.
      * Addition regarding edge case 1: the exercise score is reachable immediately after release since the student score only depends on the
-     * immediate automatic feedback.
+     * immediate automatic feedback. Quiz points are an exception; they become reachable after their due date, even if no assessment due date is set.
      * Addition regarding edge case 2: the exercise score is officially reachable after the final test run
      * (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
      *
      * @param exercise the exercise whose assessment state should be determined
      */
     private static boolean isAssessmentDone(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
+        boolean quizHasEnded = exercise.type() != ExerciseType.QUIZ || exercise.dueDate() == null || calculationTime.isAfter(exercise.dueDate());
         boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise)
                 && (exercise.assessmentDueDate() == null || calculationTime.isAfter(exercise.assessmentDueDate()));
-        return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise, calculationTime);
+        boolean assessmentIsDone = isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise, calculationTime);
+        return quizHasEnded && assessmentIsDone;
     }
 
     private static boolean isAssessedAutomatically(ExerciseCourseScoreDTO exercise) {
