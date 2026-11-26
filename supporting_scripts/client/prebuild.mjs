@@ -7,7 +7,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { hashElement } from 'folder-hash';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
@@ -20,11 +20,28 @@ runViteOverrideCheck();
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '../..');
 process.chdir(repoRoot);
-const languagesHash = await hashElement(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'), {
-    algo: 'md5',
-    encoding: 'hex',
-    files: { include: ['*.json'] },
-});
+
+/*
+ * Cache-busting hash of the translation sources (the per-language folders under i18n). It changes whenever a translation
+ * file is added, removed, renamed or edited. The merged files this script writes next to those folders (en.json, de.json and
+ * the landing slices) are left out, so the hash does not depend on whether an earlier build already generated them.
+ */
+function hashTranslationSources(i18nDirectory) {
+    const files = fs
+        .readdirSync(i18nDirectory, { recursive: true })
+        .map((file) => file.split(path.sep).join('/'))
+        .filter((file) => file.includes('/') && file.endsWith('.json'))
+        .sort();
+    const hash = createHash('sha256');
+    for (const file of files) {
+        hash.update(`${file}\0`);
+        hash.update(fs.readFileSync(path.resolve(i18nDirectory, file)));
+        hash.update('\0');
+    }
+    return hash.digest('hex');
+}
+
+const languagesHash = hashTranslationSources(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'));
 
 // =====================
 // Environment variables
@@ -60,7 +77,7 @@ export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
 // The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
 // If you use an API server, in \`prod\` mode, you will need to enable CORS
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
-export const I18N_HASH = '${languagesHash.hash}';
+export const I18N_HASH = '${languagesHash}';
 `;
 fs.writeFileSync(path.resolve(repoRoot, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 

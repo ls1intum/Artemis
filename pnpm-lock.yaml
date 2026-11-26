@@ -373,7 +373,6 @@ packageExtensionsChecksum: sha256-FxzDauMFgXGpVPl6LQS0nn7COtdoFcvao6oTXCtGOGc=
 
 patchedDependencies:
   eslint@10.14.0: 19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424
-  folder-hash@4.1.4: 307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b
   y-monaco@0.1.6: 1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e
 
 importers:
@@ -618,9 +617,6 @@ importers:
       eslint-plugin-storybook:
         specifier: 'catalog:'
         version: 10.6.7(eslint@10.14.0(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
-      folder-hash:
-        specifier: 4.1.4
-        version: 4.1.4(patch_hash=307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b)(supports-color@10.2.2)
       husky:
         specifier: 9.1.7
         version: 9.1.7
@@ -4405,11 +4401,6 @@ packages:
 
   flatted@3.4.4:
     resolution: {integrity: sha512-5+ybhBZANEJxaH3X5evAFatUxLfEHSr7n6kYJ+1Qd0mUqr4eu9gIf6GDbWHf8RJijHrjjO8G+la14SlL2SeS1Q==}
-
-  folder-hash@4.1.4:
-    resolution: {integrity: sha512-BhHpJCYoTej4YH0C3HY4X49C2uOcWntjSD24T1GBYlfWcW/7mkHZov9HbvzCHQO+ZLbJ3VRE+cL1uEiaQvacLw==}
-    engines: {node: '>=10.10.0'}
-    hasBin: true
 
   font-family-papandreou@0.2.0-patch2:
     resolution: {integrity: sha512-l/YiRdBSH/eWv6OF3sLGkwErL+n0MqCICi9mppTZBOCL5vixWGDqCYvRcuxB2h7RGCTzaTKOHT2caHvCXQPRlw==}
@@ -9344,13 +9335,6 @@ snapshots:
       hookified: 1.15.1
 
   flatted@3.4.4: {}
-
-  folder-hash@4.1.4(patch_hash=307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b)(supports-color@10.2.2):
-    dependencies:
-      debug: 4.4.3(supports-color@10.2.2)
-      minimatch: 11.0.8
-    transitivePeerDependencies:
-      - supports-color
 
   font-family-papandreou@0.2.0-patch2:
     optional: true

@@ -91,7 +91,6 @@
         "eslint": "catalog:",
         "eslint-plugin-prettier": "5.5.7",
         "eslint-plugin-storybook": "catalog:",
-        "folder-hash": "4.1.4",
         "husky": "9.1.7",
         "jsdom": "catalog:",
         "knip": "6.44.1",
