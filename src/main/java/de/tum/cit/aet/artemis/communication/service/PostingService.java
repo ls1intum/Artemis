@@ -342,8 +342,7 @@ public abstract class PostingService {
      *
      * <p>
      * This helper method determines the appropriate author role (INSTRUCTOR, TUTOR, or USER) for the author of a posting
-     * based on their authorities and their course roles in the specified course. The author must be fetched with their
-     * authorities and course roles set prior to calling this method.
+     * based on their authorities and their course roles in the specified course.
      * </p>
      *
      * <p>

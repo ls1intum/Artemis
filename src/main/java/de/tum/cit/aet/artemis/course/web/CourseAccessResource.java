@@ -234,7 +234,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/users/search : Search all users with one of the specified roles in the course by login or name
+     * GET /courses/:courseId/users/search : Search all users with one of the specified roles in the course by login or name. A search for tutors also returns editors.
      *
      * @param courseId    the id of the course
      * @param loginOrName the login or name by which to search users
