@@ -98,7 +98,7 @@ const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, 
 @Component({
     selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styleUrls: ['./exercise-assessment-dashboard.component.css'],
+    styleUrls: ['./exercise-assessment-dashboard.component.css', '../assessment-information-table.css'],
     providers: [CourseManagementService],
     imports: [
         AssessmentProgressComponent,
@@ -181,10 +181,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
-    protected readonly instructionsReviewed = computed(() => {
-        const status = this.tutorParticipationStatus();
-        return status === TutorParticipationStatus.REVIEWED_INSTRUCTIONS || status === TutorParticipationStatus.TRAINED || status === TutorParticipationStatus.COMPLETED;
-    });
     readonly assessmentInstructionsCollapsed = signal(true);
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
@@ -259,7 +255,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly tutorSubmissionPercentage = computed(() =>
         this.numberOfSubmissions().total > 0 ? Math.floor((100 * this.numberOfTutorAssessedSubmissions()) / this.numberOfSubmissions().total) : 100,
     );
-    readonly showsComplaintProgress = computed(() => this.exercise()?.type === ExerciseType.PROGRAMMING && !!this.exercise().allowComplaintsForAutomaticAssessments);
+    // An automatically assessed programming exercise has nothing to assess manually, so its progress counts complaints instead.
+    readonly showsComplaintProgress = computed(() => {
+        const exercise = this.exercise();
+        return exercise?.type === ExerciseType.PROGRAMMING && exercise.assessmentType === AssessmentType.AUTOMATIC && !!exercise.allowComplaintsForAutomaticAssessments;
+    });
     readonly totalAssessmentSlots = computed(() => {
         if (this.showsComplaintProgress()) {
             return this.statsForDashboard().numberOfComplaints;
@@ -283,12 +283,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         return Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks);
     });
     readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));
-    readonly assessedPercentage = computed(() =>
-        this.totalAssessmentSlots() > 0 ? Math.min(100, Math.floor((100 * this.completedAssessments()) / this.totalAssessmentSlots())) : 0,
-    );
-    readonly inProgressPercentage = computed(() =>
-        this.totalAssessmentSlots() > 0 ? Math.min(100 - this.assessedPercentage(), (100 * this.inProgressAssessments()) / this.totalAssessmentSlots()) : 0,
-    );
 
     /**
      * Bumped once the moment assessment becomes possible has passed, so that the reason below stops applying without the
@@ -821,7 +815,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                         })),
                     });
                     this.tutorParticipationStatus.set(status);
-                    this.assessmentInstructionsCollapsed.set(false);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

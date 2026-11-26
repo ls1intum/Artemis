@@ -3,7 +3,7 @@ import { getSubmissionDueDateInformation } from '../exercise-headers-information
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, OnInit, computed, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -20,8 +20,8 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -35,7 +35,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         TumAetUiTooltipDirective,
         InformationBoxComponent,
         DifficultyLevelComponent,
-        NgTemplateOutlet,
         FaIconComponent,
         ExerciseCategoriesComponent,
         TranslateDirective,
@@ -45,12 +44,13 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
+    private readonly serverDateService = inject(ArtemisServerDateService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
-    readonly dayjs = dayjs;
 
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
@@ -70,6 +70,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
     public readonly nextRelevantDateLabel = signal<string | undefined>(undefined);
     public readonly nextRelevantDateStatusBadge = signal<string | undefined>(undefined);
+    private readonly now = this.serverDateService.now();
+    readonly isNotReleased = computed(() => !!this.exercise().releaseDate?.isAfter(this.now));
     readonly pointsInformation = computed<InformationBox>(() => ({
         title: 'artemisApp.courseOverview.exerciseDetails.points',
         content: { type: 'string', value: this.exercise().maxPoints ?? 0 },
@@ -109,7 +111,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     }));
     readonly nextDateInformation = computed<InformationBox>(() => {
         const isAssessmentDueDate = !this.exam() && this.nextRelevantDateLabel() === 'assessmentDue';
-        const deadlineInformation = isAssessmentDueDate ? getSubmissionDueDateInformation(this.nextRelevantDate()) : undefined;
+        const deadlineInformation = isAssessmentDueDate ? getSubmissionDueDateInformation(this.nextRelevantDate(), this.now) : undefined;
         return {
             title: (this.exam() ? 'artemisApp.exam.' : 'artemisApp.courseOverview.exerciseDetails.') + this.nextRelevantDateLabel(),
             content: deadlineInformation?.content ?? { type: 'dateTime', value: this.nextRelevantDate() },
@@ -129,7 +131,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
                 isContentComponent: true,
             };
         }
-        return getSubmissionDueDateInformation(this.dueDate());
+        return getSubmissionDueDateInformation(this.dueDate(), this.now);
     });
     public readonly canComplainLaterOn = signal<boolean>(undefined!);
 

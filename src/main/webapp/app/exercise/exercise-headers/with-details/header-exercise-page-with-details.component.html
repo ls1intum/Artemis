@@ -1,5 +1,5 @@
 @if (exercise()) {
-    <header class="m-0! p-0! text-color" id="exercise-header">
+    <header class="text-color" id="exercise-header">
         <div class="flex w-full flex-wrap items-center justify-between gap-2" data-testid="exercise-header-heading">
             <div class="left-col">
                 <div class="title-row">
@@ -17,7 +17,7 @@
             </div>
             <div class="flex flex-wrap items-center gap-2"><ng-content select="[headerActions]" /></div>
         </div>
-        <hr class="m-0! w-full border-0! border-t! border-border! opacity-100!" />
+        <hr class="m-0 w-full border-border opacity-100" />
         <div class="flex w-full flex-wrap items-stretch gap-2 text-sm" data-testid="exercise-header-metadata">
             @if (exercise().maxPoints) {
                 <jhi-information-box [informationBoxData]="pointsInformation()" />
@@ -64,7 +64,7 @@
                     <jhi-difficulty-level contentComponent [difficultyLevel]="difficulty" />
                 </jhi-information-box>
             }
-            @if (exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) {
+            @if (isNotReleased()) {
                 <jhi-information-box
                     [informationBoxData]="releaseInformation()"
                     [tumAetUiTooltip]="('artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate) + (exercise().releaseDate | artemisDate)"
@@ -77,7 +77,29 @@
                     <jhi-exercise-categories contentComponent class="flex min-w-0 flex-wrap gap-1 whitespace-normal wrap-anywhere" [exercise]="exercise()" [isSmall]="true" />
                 </jhi-information-box>
             }
-            <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
+            @if (nextRelevantDate() && (!exam() || (!isTestRun() && nextRelevantDateLabel() !== 'endDate'))) {
+                <jhi-information-box
+                    [informationBoxData]="nextDateInformation()"
+                    [tumAetUiTooltip]="
+                        exam()
+                            ? ''
+                            : ('artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate })
+                    "
+                >
+                    <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">
+                        @let dateContent = nextDateInformation().content;
+                        @switch (dateContent.type) {
+                            @case ('timeAgo') {
+                                {{ dateContent.value | artemisTimeAgo }}
+                            }
+                            @case ('dateTime') {
+                                {{ dateContent.value | artemisDate }}
+                            }
+                            @default {}
+                        }
+                    </span>
+                </jhi-information-box>
+            }
         </div>
         @if (submissionPolicy() && submissionPolicy()!.active) {
             <div class="flex flex-wrap items-center gap-1 text-sm">
@@ -100,14 +122,6 @@
             </div>
         }
         <div class="flex flex-wrap items-center justify-end gap-2 self-start text-sm" data-testid="exercise-header-statuses">
-            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
-            } @else {
-                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
-            }
-            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
-            } @else {
-                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
-            }
             @if (!nextRelevantDate() && canComplainLaterOn()) {
                 <div class="font-medium">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
@@ -123,53 +137,3 @@
         </div>
     </header>
 }
-
-<ng-template #nextRelevantDateBadge>
-    @if (nextRelevantDate() && (!exam() || (!isTestRun() && nextRelevantDateLabel() !== 'endDate'))) {
-        <jhi-information-box
-            [informationBoxData]="nextDateInformation()"
-            [tumAetUiTooltip]="
-                exam() ? '' : ('artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate })
-            "
-        >
-            <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">
-                @let dateContent = nextDateInformation().content;
-                @switch (dateContent.type) {
-                    @case ('timeAgo') {
-                        {{ dateContent.value | artemisTimeAgo }}
-                    }
-                    @case ('dateTime') {
-                        {{ dateContent.value | artemisDate }}
-                    }
-                    @default {}
-                }
-            </span>
-        </jhi-information-box>
-    }
-</ng-template>
-
-<ng-template #presentationScoreSummary>
-    @if (exercise().presentationScoreEnabled) {
-        <div data-testid="presentation-score-summary">
-            @if (effectiveCourse()?.presentationScore) {
-                {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success" jhiTranslate="global.generic.yes"></span>
-                }
-                @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.no"></span>
-                }
-            } @else {
-                {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                @if (studentParticipation()?.presentationScore) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success">
-                        {{ studentParticipation()!.presentationScore + '%' }}
-                    </span>
-                }
-                @if (!studentParticipation()?.presentationScore) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.unset"></span>
-                }
-            }
-        </div>
-    }
-</ng-template>

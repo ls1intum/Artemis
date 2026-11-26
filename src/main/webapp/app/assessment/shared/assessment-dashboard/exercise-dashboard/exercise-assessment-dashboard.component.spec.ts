@@ -325,15 +325,19 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.totalNumberOfAssessments.set(2);
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
         expect([comp.completedAssessments(), comp.inProgressAssessments(), comp.openAssessments()]).toEqual([2, 1, 2]);
-        expect(comp.assessedPercentage()).toBe(40);
-        expect(comp.inProgressPercentage()).toBe(20);
 
         comp.isExamMode.set(true);
         comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 2 }), new DueDateStat()]);
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 }), new DueDateStat()]);
         expect(comp.totalAssessmentSlots()).toBe(10);
         expect(comp.openAssessments()).toBe(8);
-        expect(comp.assessedPercentage()).toBe(20);
+    });
+
+    it.each([undefined, TutorParticipationStatus.NOT_PARTICIPATED])('should not show the instructions panel before participation is known (%s)', (status) => {
+        fixture.detectChanges();
+        comp.tutorParticipationStatus.set(status!);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(CollapsableAssessmentInstructionsComponent))).toBeNull();
     });
 
     it.each([TutorParticipationStatus.REVIEWED_INSTRUCTIONS, TutorParticipationStatus.TRAINED, TutorParticipationStatus.COMPLETED])(
@@ -408,18 +412,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 5 }), Object.assign(new DueDateStat(), { inTime: 5 })]);
         expect(comp.totalAssessmentSlots()).toBe(10);
         expect(comp.completedAssessments()).toBe(10);
-        expect(comp.assessedPercentage()).toBe(100);
         expect(comp.openAssessments()).toBe(0);
     });
 
     it('should keep progress bounded for empty and fully locked exercises', () => {
-        expect(comp.assessedPercentage()).toBe(0);
-        expect(comp.inProgressPercentage()).toBe(0);
         comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 5 }));
         expect(comp.inProgressAssessments()).toBe(2);
         expect(comp.openAssessments()).toBe(0);
-        expect(comp.inProgressPercentage()).toBe(100);
     });
 
     it('should initialize', () => {
@@ -668,20 +668,24 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.tutorSubmissionPercentage()).toBe(50);
     });
 
-    it('should show resolved and open complaints for automatically assessed programming exercises', () => {
+    it.each([
+        { assessmentType: AssessmentType.AUTOMATIC, expected: [5, 3, 2] },
+        { assessmentType: AssessmentType.SEMI_AUTOMATIC, expected: [4, 0, 4] },
+    ])('should count complaints only for automatically assessed programming exercises ($assessmentType)', ({ assessmentType, expected }) => {
         const exercise = deepClone(modelingExercise);
         exercise.type = ExerciseType.PROGRAMMING;
+        exercise.assessmentType = assessmentType;
         exercise.allowComplaintsForAutomaticAssessments = true;
         comp.exercise.set(exercise);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 4 }));
+        comp.totalNumberOfAssessments.set(0);
         comp.statsForDashboard.update((stats) => {
             stats.numberOfComplaints = 5;
             stats.numberOfOpenComplaints = 2;
             stats.totalNumberOfAssessmentLocks = 0;
             return stats;
         });
-        expect(comp.totalAssessmentSlots()).toBe(5);
-        expect(comp.completedAssessments()).toBe(3);
-        expect(comp.openAssessments()).toBe(2);
+        expect([comp.totalAssessmentSlots(), comp.completedAssessments(), comp.openAssessments()]).toEqual(expected);
     });
 
     it('should call readInstruction', () => {
@@ -704,7 +708,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
         expect(request.request.method).toBe('POST');
         request.flush(dto);
-        expect(comp.assessmentInstructionsCollapsed()).toBe(false);
+        expect(comp.assessmentInstructionsCollapsed()).toBe(true);
 
         expect(comp.isLoading()).toBe(false);
 

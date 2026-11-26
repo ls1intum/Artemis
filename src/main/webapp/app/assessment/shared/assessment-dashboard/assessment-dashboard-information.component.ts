@@ -17,6 +17,7 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
+    styleUrls: ['./assessment-information-table.css'],
     imports: [AssessmentProgressComponent, TranslateDirective, RouterLink, TumAetUiPanelComponent, TumAetUiTableDirective],
 })
 export class AssessmentDashboardInformationComponent {
@@ -57,9 +58,6 @@ export class AssessmentDashboardInformationComponent {
 
     readonly openSubmissions = computed(() => Math.max(0, this.totalProgressItems() - this.assessedSubmissions() - this.inProgressSubmissions()));
 
-    readonly assessedPercentage = computed(() => this.toSubmissionPercentage(this.assessedSubmissions()));
-    readonly inProgressPercentage = computed(() => this.toSubmissionPercentage(this.inProgressSubmissions()));
-
     readonly openComplaints = computed(() => this.openEntryCount(this.complaints()));
     readonly openMoreFeedbackRequests = computed(() => this.openEntryCount(this.moreFeedbackRequests()));
 
@@ -79,11 +77,5 @@ export class AssessmentDashboardInformationComponent {
 
     private openEntryCount(entry: AssessmentDashboardInformationEntry): number {
         return Math.max(0, entry.total - (entry.done ?? 0));
-    }
-
-    private toSubmissionPercentage(submissions: number): number {
-        const totalProgressItems = this.totalProgressItems();
-        const percentage = totalProgressItems > 0 ? (submissions / totalProgressItems) * 100 : 0;
-        return Math.floor(percentage);
     }
 }

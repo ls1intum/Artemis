@@ -36,24 +36,21 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
     });
 
     test.describe.serial('Feedback', () => {
-        test('Assesses the file upload exercise submission', async ({ login, exerciseAssessment, fileUploadExerciseAssessment }) => {
+        test('Assesses the file upload exercise submission', async ({ page, login, exerciseAssessment, fileUploadExerciseAssessment }) => {
             await login(tutor, `/course-management/${course.id}/assessment-dashboard/${exercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
-            await exerciseAssessment.clickStartNewAssessment();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();
-            const instructions = fileUploadExerciseAssessment.getInstructionsRootElement();
-            for (const [heading, content] of [
-                ['Problem Statement', exercise.problemStatement!],
-                ['Example Solution', exercise.exampleSolution!],
-            ]) {
-                const toggle = instructions.getByRole('button', { name: heading, exact: true });
-                const text = instructions.getByTestId('expandable-section-content').getByText(content, { exact: true });
+            // The dashboard starts the reference material collapsed; the assessment editor keeps it open.
+            const dashboardInstructions = page.getByTestId('exercise-assessment-progress');
+            for (const section of ['problem-statement-section', 'example-solution-section']) {
+                const toggle = dashboardInstructions.getByTestId(section).getByTestId('expandable-section-toggle');
                 await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-                await expect(text).toBeHidden();
                 await toggle.click();
                 await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-                await expect(text).toBeVisible();
             }
+            await exerciseAssessment.clickStartNewAssessment();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.problemStatement!)).toBeVisible();
+            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.exampleSolution!)).toBeVisible();
             await expect(
                 fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.gradingInstructions!),
             ).toBeVisible();

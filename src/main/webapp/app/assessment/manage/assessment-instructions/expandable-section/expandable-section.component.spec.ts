@@ -64,7 +64,28 @@ describe('ExpandableSectionComponent', () => {
 
         expect(retrieveSpy).toHaveBeenCalledWith(component.storageKey);
         expect(component.isCollapsed()).toBe(true);
-        expect(storeSpy).toHaveBeenCalledWith(component.storageKey, true);
+        expect(storeSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        { stored: undefined, initiallyCollapsed: true, expected: true },
+        { stored: undefined, initiallyCollapsed: false, expected: false },
+        { stored: false, initiallyCollapsed: true, expected: false },
+    ])('should use the saved state $stored before the default $initiallyCollapsed', ({ stored, initiallyCollapsed, expected }) => {
+        fixture.componentRef.setInput('headerKey', 'test');
+        fixture.componentRef.setInput('initiallyCollapsed', initiallyCollapsed);
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(stored);
+
+        component.ngOnInit();
+
+        expect(component.isCollapsed()).toBe(expected);
+    });
+
+    it('should keep a scoped state apart from the unscoped one', () => {
+        fixture.componentRef.setInput('headerKey', 'test');
+        fixture.componentRef.setInput('storageScope', 'assessmentDashboard');
+
+        expect(component.storageKey).toBe(component.PREFIX + 'assessmentDashboard.test');
     });
 
     it('should toggle state on toggle of collapsed', () => {

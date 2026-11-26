@@ -21,7 +21,7 @@
 >
     {{ assessedPercentage() }}%
 </progress>
-<div class="relative my-1 h-5! overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
+<div class="relative my-1 h-5 overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
     <span class="absolute inset-y-0 left-0 bg-state-success" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
     @if (showInProgress()) {
         <span
@@ -53,5 +53,8 @@
             <span jhiTranslate="artemisApp.assessmentDashboard.remaining"></span>
         }
         {{ open() }}
+        @if (!showInProgress()) {
+            <jhi-help-icon data-testid="remaining-help-icon" text="artemisApp.assessmentDashboard.remainingTooltip" />
+        }
     </span>
 </div>

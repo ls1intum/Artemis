@@ -1,11 +1,6 @@
-<tumaet-ui-panel
-    class="instructions-panel [&[data-collapsed=false]_.tumaet-ui-panel-content-container]:!grid-rows-[max-content]"
-    [toggleable]="true"
-    [(collapsed)]="collapsed"
-    [toggleAriaLabel]="'artemisApp.assessmentInstructions.instructions.instructions' | artemisTranslate"
->
-    <div tumAetUiPanelHeader class="flex w-full items-center justify-between gap-3!">
-        <span class="flex items-center gap-3!">
+<tumaet-ui-panel [toggleable]="true" [(collapsed)]="collapsed" [toggleAriaLabel]="'artemisApp.assessmentInstructions.instructions.instructions' | artemisTranslate">
+    <div tumAetUiPanelHeader class="flex w-full items-center justify-between gap-3">
+        <span class="flex items-center gap-3">
             <fa-icon [icon]="farListAlt" />
             <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
         </span>
@@ -14,7 +9,7 @@
                 class="text-state-success"
                 [icon]="faCheckCircle"
                 role="img"
-                [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.REVIEWED_INSTRUCTIONS' | artemisTranslate"
+                [attr.aria-label]="'artemisApp.assessmentInstructions.instructions.reviewed' | artemisTranslate"
             />
         }
     </div>
@@ -24,5 +19,6 @@
         [exercise]="exercise()"
         [isAssessmentTraining]="isAssessmentTraining()"
         [showAssessmentInstructions]="showAssessmentInstructions()"
+        [collapseReferenceSections]="true"
     />
 </tumaet-ui-panel>

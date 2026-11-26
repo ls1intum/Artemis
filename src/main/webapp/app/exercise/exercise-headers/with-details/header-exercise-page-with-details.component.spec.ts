@@ -15,6 +15,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -42,7 +43,10 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisServerDateService, useValue: { now: () => dayjs() } },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
@@ -273,46 +277,5 @@ describe('HeaderExercisePageWithDetails', () => {
         fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
         expect(component.numberOfSubmissions()).toBe(expectedNumber);
-    });
-    describe.each(['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'])('presentation summary at %s', (dateLabel) => {
-        it.each([
-            { coursePresentationScore: 1, participationScore: 1, expectedBadge: 'global.generic.yes', expectedScore: undefined },
-            { coursePresentationScore: 1, participationScore: 0, expectedBadge: 'global.generic.no', expectedScore: undefined },
-            { coursePresentationScore: undefined, participationScore: 50, expectedBadge: undefined, expectedScore: '50%' },
-            { coursePresentationScore: undefined, participationScore: 0, expectedBadge: 'global.generic.unset', expectedScore: undefined },
-        ])(
-            'preserves the summary for course setting $coursePresentationScore and student score $participationScore',
-            ({ coursePresentationScore, participationScore, expectedBadge, expectedScore }) => {
-                exercise.presentationScoreEnabled = true;
-                const course = new Course();
-                course.presentationScore = coursePresentationScore;
-                participation.presentationScore = participationScore;
-                fixture.componentRef.setInput('course', course);
-                fixture.componentRef.setInput('studentParticipation', participation);
-                fixture.detectChanges();
-                component.nextRelevantDateLabel.set(dateLabel);
-                component.nextRelevantDate.set(undefined);
-                component.canComplainLaterOn.set(false);
-                fixture.detectChanges();
-
-                const summary: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]');
-                expect(summary.querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(1);
-                if (expectedBadge) {
-                    expect(summary.querySelector(`[jhiTranslate="${expectedBadge}"]`)).not.toBeNull();
-                } else {
-                    expect(summary.textContent).toContain(expectedScore);
-                }
-            },
-        );
-
-        it('omits the summary when presentation scoring is disabled', () => {
-            exercise.presentationScoreEnabled = false;
-            fixture.detectChanges();
-            component.nextRelevantDateLabel.set(dateLabel);
-            component.nextRelevantDate.set(undefined);
-            component.canComplainLaterOn.set(false);
-            fixture.detectChanges();
-            expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-statuses"]').querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(0);
-        });
     });
 });

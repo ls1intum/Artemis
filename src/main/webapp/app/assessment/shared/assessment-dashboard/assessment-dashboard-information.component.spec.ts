@@ -77,18 +77,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessedSubmissions()).toBe(5);
         expect(component.inProgressSubmissions()).toBe(1);
         expect(component.openSubmissions()).toBe(2);
-        expect(component.assessedPercentage()).toBe(62);
-        expect(component.inProgressPercentage()).toBe(12);
-    });
-
-    it('should floor progress percentages to whole numbers', () => {
-        const submissions = new DueDateStat();
-        submissions.inTime = 30;
-
-        fixture.componentRef.setInput('totalNumberOfAssessments', 11);
-        fixture.componentRef.setInput('numberOfSubmissions', submissions);
-
-        expect(component.assessedPercentage()).toBe(36);
     });
 
     it('should not render correction-round statistics when no correction rounds exist', () => {
