@@ -58,6 +58,9 @@ export HOST_HOSTNAME="nginx"
 # a token, so it is generated per run and shared by every service that reads deployment/docker/artemis/config/playwright.env.
 export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
 
+# EXPERIMENT (do not merge): measure the E2E duration and flakiness with 3 Playwright workers instead of the repository variable.
+export TEST_WORKER_PROCESSES=3
+
 # Export test paths for docker compose to pick up
 if [ -n "$TEST_PATHS" ]; then
     export PLAYWRIGHT_TEST_PATHS="$TEST_PATHS"
