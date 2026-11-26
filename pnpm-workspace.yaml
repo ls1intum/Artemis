@@ -120,6 +120,14 @@ peerDependencyRules:
 # because it never uses Vite. Without an override, @angular/build's own exact pin governs
 # and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
+  # @embedpdf/engines declares the preact, svelte and vue adapters of the PDF viewer as hard dependencies, although Artemis
+  # only imports its framework-free engine (src/main/webapp/app/core/pdf). They never reach the bundle, but they pull about
+  # 40 packages (compilers, parsers) into the production closure, and every advisory against them reaches this project.
+  # '-' removes the dependency; packageExtensions below marks the matching peers optional so autoInstallPeers does not bring
+  # them back. Re-check on every @embedpdf/engines bump with `pnpm run check:duplicate-dependencies` and `pnpm why svelte`.
+  '@embedpdf/engines>preact': '-'
+  '@embedpdf/engines>svelte': '-'
+  '@embedpdf/engines>vue': '-'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
@@ -144,10 +152,6 @@ overrides:
   ajv: '8.20.0'
   brace-expansion: '5.0.13'
   debug: '4.4.3'
-  # Must stay >= 5.9.3, which fixed the uneval/stringify advisories reached through svelte (@embedpdf/engines).
-  # Kept on the 5.x line: svelte declares ^5 and reaches the client through @embedpdf/engines, so 6.x would change shipped code that
-  # the tests do not exercise. 6.x is the only update that was not taken on 2026-11-14.
-  devalue: '5.9.4'
   diff: '9.0.0'
   dompurify: '3.4.17'
   esbuild: '0.28.2'
@@ -218,6 +222,17 @@ overrides:
   word-wrap: '1.2.5'
   ws: '8.23.0'
   yargs-parser: '22.0.0'
+
+# See the @embedpdf/engines overrides above.
+packageExtensions:
+  '@embedpdf/engines':
+    peerDependenciesMeta:
+      preact:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
