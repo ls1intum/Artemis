@@ -1,4 +1,4 @@
-# What a Spring upgrade has to respect in Artemis
+# Artemis specifics for a Spring upgrade
 
 Current version numbers are not repeated here. Read them in the files named below, together with the
 comments next to them, which give the reason for each pin.
@@ -18,14 +18,14 @@ comments next to them, which give the reason for each pin.
 | Version properties also read by other scripts             | `gradle/openapi.gradle`, `gradle/liquibase.gradle` |
 | Gradle itself                                             | `gradle/wrapper/gradle-wrapper.properties`         |
 
-## Pins with rules
+## Rules for pinned versions
 
 - **Spring Cloud.** Each Boot minor needs its release train, and each pinned module must equal the
   version the train declares. A mismatch is no startup failure: the compatibility verifier shuts the
   server down shortly after it started.
 - **Overrides of managed versions**, such as logback, Tomcat and Hibernate. An override also replaces
-  a newer version that a later Boot release manages. Compare on every bump.
-- **Jackson.** The order of the imports matters. After a minor bump run the passkey, LTI, Spring AI and
+  a newer version that a later Boot release manages. Compare them on every upgrade.
+- **Jackson.** The order of the imports matters. After a minor upgrade, run the passkey, LTI, Spring AI and
   static code analysis parser tests.
 - **Apache HttpComponents** client5 and core5 move together. A mismatched pair once broke cluster
   formation while the build stayed green. Other watched families are listed in the guard file.
@@ -64,7 +64,7 @@ interface named there still exists and is still called.
 
 ## Guard tests
 
-Run these first; each exists because something broke or could break silently. Run them with
+Run these tests first. They cover problems that compiling does not show. Run them with
 `./gradlew test --tests <name> -x webapp`.
 
 | Test                                        | Catches                                                |
@@ -84,15 +84,15 @@ Run these first; each exists because something broke or could break silently. Ru
 | `SpringFactoriesRegistrationTest`           | A `spring.factories` entry that Spring stopped reading |
 | `SAML2MetadataCompatibilityTest`            | SAML2 identity provider metadata                       |
 
-## What went wrong before
+## Earlier upgrade failures
 
-| Pull request | Failure                                                                                          | Lesson                                                              |
+| Pull request | Failure                                                                                          | What to check                                                       |
 | ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| #12769       | After Boot 4, every LTI login failed with `NoSuchMethodError` in a third-party library           | At the first broken call of a library, check the whole library      |
-| #12909       | A Cloud train mismatch shut the server down after the start                                      | Watch the server beyond the start message                           |
+| #12769       | After Boot 4, every LTI login failed with `NoSuchMethodError` in a third-party library           | When one call into a library fails, check every use of that library |
+| #12909       | A Cloud train mismatch shut the server down after the start                                      | Keep watching the server after it reports that it has started       |
 | #12909       | An empty YAML object `{}` was bound as text and broke every SAML2 test                           | Run the tests of every authentication method                        |
 | #14716       | The Boot tooling extracted `Artemis.jar` instead of `Artemis.war`, so the Docker image failed    | Check `deployment/docker/artemis/Dockerfile` and the Helm templates |
-| #14716       | A test started a second application in the shared test JVM and silenced all later log assertions | Do not boot an application inside a shared test JVM                 |
+| #14716       | A test started a second application in the shared test JVM and silenced all later log assertions | Do not start a second application inside the shared test JVM        |
 
 ## Deprecations recorded as follow-ups
 

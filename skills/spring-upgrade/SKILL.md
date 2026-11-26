@@ -5,11 +5,12 @@ description: Upgrade Spring Boot, Framework, Security, Data, Cloud or Spring AI,
 
 # Upgrade the Spring stack
 
-A green compile says little about a Spring upgrade. The failures Artemis has seen appear at runtime:
-a library calling a removed method, a server that shuts itself down after it started, a deadlock in
-the bean factory. Work through the steps in order and report after each one what you found.
+A successful compile is not enough to verify a Spring upgrade. Earlier upgrades in Artemis failed at
+runtime, for example through a library that calls a removed method, a server that shuts itself down
+after it has started, or a deadlock in the bean factory. Work through the steps in order and report
+after each one what you found.
 
-Read `reference/artemis-traps.md` before step 3. It lists what is specific to Artemis and is not in
+Read `reference/artemis-specifics.md` before step 3. It lists what is specific to Artemis and is not in
 any Spring document.
 
 ## 1. Fix the scope
@@ -73,7 +74,7 @@ Show the user the list before changing anything.
 
 ## 4. Change the versions
 
-1. Raise the versions where `reference/artemis-traps.md` says they are set.
+1. Raise the versions where `reference/artemis-specifics.md` says they are set.
 2. Compare every override, force and pin with what the new Boot release manages
    (`https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/<version>/spring-boot-dependencies-<version>.pom`)
    **and** with the newest patch release in the library's `maven-metadata.xml` on Maven Central. Being
@@ -91,7 +92,7 @@ Show the user the list before changing anything.
 ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
 ```
 
-Then run the guard tests listed in `reference/artemis-traps.md`, and:
+Then run the guard tests listed in `reference/artemis-specifics.md`, and:
 
 - **Start a server and keep watching it.** "Started ArtemisApp" is not enough. Wait for "Deferred
   eager initialization of all beans completed", and look for "Shutting down the application" and
@@ -113,6 +114,6 @@ State which of these you did not run.
 - What an operator must do, written into `documentation/docs/admin/upgrade-guide.mdx`: renamed keys,
   changed defaults, changed metrics.
 - The Spring Boot version named in `AGENTS.md`.
-- New traps added to `reference/artemis-traps.md`, so the next upgrade finds them.
+- New Artemis-specific findings, added to `reference/artemis-specifics.md` for the next upgrade.
 
 Keep notes and change lists in the chat or the pull request; do not commit plan files.
