@@ -263,12 +263,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return message.id === undefined ? undefined : this.solutionChoices().get(message.id);
     }
 
-    /** Only the latest message is an open offer: any chat after it closes the offer. A choice never travels with a staged context change. */
-    protected canChooseSolution(message: IrisMessage): boolean {
-        return !this.isInputDisabled() && !this.chatService.pendingContext() && this.latestMessage()?.id === message.id;
+    /**
+     * Only the latest message is an open offer: any chat after it closes the offer, and a choice never travels with a staged context change.
+     * At the response limit declining the summary stays available, because Iris does not answer it.
+     */
+    protected disabledSolutionChoices(message: IrisMessage, choices: IrisSolutionChoice[]): IrisSolutionChoice[] {
+        const offerIsOpen = !this.isBusy() && !this.chatService.pendingContext() && this.latestMessage()?.id === message.id;
+        return offerIsOpen ? choices.filter((choice) => this.hasReachedRateLimit() && choice !== 'SKIP_SUMMARY') : choices;
     }
 
-    /** The disabled buttons of {@link canChooseSolution} emit no choice. */
+    /** The buttons of {@link disabledSolutionChoices} emit no choice. */
     protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
         if (message.id === undefined) return;
         const label = this.translateService.instant(SOLUTION_CHOICE_LABEL_KEYS[choice]);
@@ -336,24 +340,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const decision = this.userAccepted();
         return decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly isInputDisabled = computed(
-        () =>
-            this.isLoading() ||
-            !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
-            this.awaitingAnswer(),
-    );
+    private readonly isBusy = computed(() => this.isLoading() || !this.active() || this.awaitingAnswer());
+    private readonly hasReachedRateLimit = computed(() => !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit));
+    readonly isInputDisabled = computed(() => this.isBusy() || this.hasReachedRateLimit());
     // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
     // is still loading would only lose what the user typed.
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
-        () =>
-            !!this.suggestions()?.length &&
-            this.isAIEnabled() &&
-            this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
-            !this.awaitingAnswer() &&
-            !this.offerIsOpen(),
+        () => !!this.suggestions()?.length && this.isAIEnabled() && this.active() && !this.hasReachedRateLimit() && !this.awaitingAnswer() && !this.offerIsOpen(),
     );
     /** While an offer waits for the student's choice, its buttons are the next step; the suggestions of a solution appear once the summary is declined. */
     private readonly offerIsOpen = computed(() => this.latestMessage()?.content.some(isSolutionOffer) ?? false);

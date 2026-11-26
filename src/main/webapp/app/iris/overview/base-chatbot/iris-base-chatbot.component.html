@@ -371,7 +371,7 @@
                                             } @else if (isSolutionOffer(content)) {
                                                 <jhi-iris-solution-choice
                                                     [choices]="offeredChoices(content)"
-                                                    [disabled]="!canChooseSolution(message)"
+                                                    [disabledChoices]="disabledSolutionChoices(message, offeredChoices(content))"
                                                     [selected]="selectedSolutionChoice(message)"
                                                     (choice)="onSolutionChoice(message, $event)"
                                                 />

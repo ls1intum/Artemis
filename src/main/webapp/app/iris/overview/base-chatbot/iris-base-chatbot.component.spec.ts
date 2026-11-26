@@ -222,6 +222,23 @@ describe('IrisBaseChatbotComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]') !== null).toBe(shown);
     });
 
+    it('keeps declining the summary available at the response limit, because it asks Iris nothing', () => {
+        statusMock.currentRatelimitInfo.mockReturnValue(of({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 }));
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('Here is the solution.'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+            ],
+        });
+        chatService.messages.next([offer]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-choice-SUMMARIZE"]').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-choice-SKIP_SUMMARY"]').disabled).toBe(false);
+    });
+
     it('keeps modal focus when messages arrive while the chat is hidden, then resumes chat autofocus after dismissal', () => {
         vi.useFakeTimers();
         const modalButton = document.createElement('button');

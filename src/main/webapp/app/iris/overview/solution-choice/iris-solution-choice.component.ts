@@ -19,7 +19,7 @@ import { IrisSolutionChoice, SOLUTION_CHOICE_LABEL_KEYS } from 'app/iris/shared/
                     size="small"
                     data-button-intent="workflow"
                     [attr.data-testid]="'iris-choice-' + option"
-                    [disabled]="disabled() || selected() !== undefined"
+                    [disabled]="disabledChoices().includes(option) || selected() !== undefined"
                     [attr.aria-pressed]="selected() === option"
                     (click)="choose(option)"
                     [jhiTranslate]="labelKeys[option]"
@@ -30,7 +30,7 @@ import { IrisSolutionChoice, SOLUTION_CHOICE_LABEL_KEYS } from 'app/iris/shared/
 })
 export class IrisSolutionChoiceComponent {
     readonly choices = input.required<IrisSolutionChoice[]>();
-    readonly disabled = input(false);
+    readonly disabledChoices = input<IrisSolutionChoice[]>([]);
     readonly selected = input<IrisSolutionChoice>();
     readonly choice = output<IrisSolutionChoice>();
 

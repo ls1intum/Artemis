@@ -30,16 +30,20 @@ describe('IrisSolutionChoiceComponent', () => {
         expect(buttons.map((button) => button.getAttribute('data-testid'))).toEqual(['iris-choice-SUMMARIZE', 'iris-choice-SKIP_SUMMARY']);
     });
 
-    it('disables both buttons while another answer is pending or the offer is stale', () => {
-        fixture.componentRef.setInput('disabled', true);
+    it.each([
+        [
+            ['SUMMARIZE', 'SKIP_SUMMARY'],
+            [true, true],
+        ],
+        [['SUMMARIZE'], [true, false]],
+    ])('disables exactly the blocked buttons (%s), which emit no choice', (disabledChoices, disabled) => {
+        fixture.componentRef.setInput('choices', ['SUMMARIZE', 'SKIP_SUMMARY']);
+        fixture.componentRef.setInput('disabledChoices', disabledChoices);
         fixture.detectChanges();
         const emit = vi.spyOn(fixture.componentInstance.choice, 'emit');
         const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
-        expect(buttons).toHaveLength(2);
-        for (const button of buttons) {
-            expect(button.disabled).toBe(true);
-            button.click();
-        }
+        expect(buttons.map((button) => button.disabled)).toEqual(disabled);
+        buttons[0].click();
         expect(emit).not.toHaveBeenCalled();
     });
 

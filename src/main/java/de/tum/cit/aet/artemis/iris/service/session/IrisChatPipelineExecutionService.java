@@ -183,22 +183,15 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        // An event-triggered run answers no student message, so it never continues the solution workflow
+        // A run answers its own message: it sees the history only through it, since another tab, a context switch or a late answer may have added messages since.
+        // An event-triggered run answers no student message, so it sees the whole history and never continues the solution workflow.
         var runMessageId = event.isEmpty() ? userMessageId : null;
-        var solutionStep = runMessageId == null ? null : solutionStep(chatSession, runMessageId);
+        int runMessage = runMessageId == null ? -1 : indexOf(chatSession.getMessages(), runMessageId);
+        var history = runMessage < 0 ? chatSession.getMessages() : chatSession.getMessages().subList(0, runMessage + 1);
+        var solutionStep = runMessage < 0 ? null : solutionStep(chatSession, history);
         pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId, runMessageId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
-                        latestSubmission, uncommittedFiles, context, runMessageId, solutionStep));
-    }
-
-    /**
-     * The history a run sends to Pyris: for a run a student message caused, everything through that message, because Pyris answers the last message of the history and
-     * another tab may have added messages since. An event-triggered run answers no message and sends all of them.
-     */
-    private static List<IrisMessage> historyOfTheRun(IrisChatSession session, @Nullable Long runMessageId) {
-        var messages = session.getMessages();
-        int end = runMessageId == null ? -1 : IntStream.range(0, messages.size()).filter(index -> Objects.equals(messages.get(index).getId(), runMessageId)).findFirst().orElse(-1);
-        return end < 0 ? messages : messages.subList(0, end + 1);
+                        latestSubmission, uncommittedFiles, context, history, solutionStep));
     }
 
     /**
@@ -209,8 +202,8 @@ public class IrisChatPipelineExecutionService {
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
-            List<IrisMessageContextDTO> context, @Nullable Long runMessageId, @Nullable IrisSolutionStep solutionStep) {
-        var messages = pyrisDTOService.toPyrisMessageDTOList(historyOfTheRun(session, runMessageId));
+            List<IrisMessageContextDTO> context, List<IrisMessage> history, @Nullable IrisSolutionStep solutionStep) {
+        var messages = pyrisDTOService.toPyrisMessageDTOList(history);
         // A typed reply may choose the solution, which Pyris only learns from the reply, so it needs the reference already.
         boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION || solutionStep == IrisSolutionStep.OFFER_REPLY;
 
@@ -295,20 +288,16 @@ public class IrisChatPipelineExecutionService {
     }
 
     /**
-     * The step of the solution workflow the given student message is. Only messages up to it decide, so messages added after it, by another tab, a context switch or a
-     * late answer, never change what its run does. A choice counts only if it answered an open offer of the session's current context, see {@link #validChoice}.
+     * The step of the solution workflow the run's message is, the last of its history. A choice counts only if it answered an open offer of the current context.
      * <ul>
      * <li>A message with a click is the step of its choice.</li>
-     * <li>A message right after an offer of the current context, without a click, is a typed reply to it.</li>
+     * <li>A message right after an offer, without a click, is a typed reply to it.</li>
      * <li>A message after a turn that accepted the summary is the student's explanation of the solution, unless the context switched in between.</li>
      * </ul>
      */
-    private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session, long userMessageId) {
-        var messages = session.getMessages().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
-        int reply = IntStream.range(0, messages.size()).filter(index -> Objects.equals(messages.get(index).getId(), userMessageId)).findFirst().orElse(-1);
-        if (reply < 0) {
-            return null;
-        }
+    private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session, List<IrisMessage> history) {
+        var messages = history.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
+        int reply = messages.size() - 1;
         if (IrisSolutionChoiceDTO.in(messages.get(reply)).isPresent()) {
             return validChoice(messages, reply, session).map(choice -> switch (choice) {
                 case TRY_MYSELF -> IrisSolutionStep.TRY_MYSELF;
@@ -331,27 +320,23 @@ public class IrisChatPipelineExecutionService {
     }
 
     /**
-     * The choice a message records, if it answered an open offer of the session's current context. Choices are written only by the server after it checked that the
-     * offer has the button: a click by IrisMessageResource, the choice Pyris read from a typed reply on its answer. What the write cannot know is checked here:
-     * <ul>
-     * <li>The offer belongs to the current context. Otherwise the choice would continue another exercise's workflow, for example in an answer that landed after a
-     * context switch.</li>
-     * <li>A click comes right after its offer. An offer is open only while it is the latest message, so a click after another message, such as the first click from
-     * another tab, is stale.</li>
-     * </ul>
+     * The choice a message records, if it answered an open offer: one of the current context, since a late answer can land after a context switch, and for a click the
+     * latest message before it, since a click after another one, such as from another tab, is stale. The server checked when writing that the offer has the button.
      */
     private static Optional<IrisSolutionChoice> validChoice(List<IrisMessage> messages, int index, IrisChatSession session) {
         var message = messages.get(index);
-        return IrisMessageContentTypeDTO.readFirst(message, IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class)
-                .filter(choice -> message.getSender() != IrisMessageSender.USER || (index > 0 && Objects.equals(messages.get(index - 1).getId(), choice.offerMessageId())))
-                .filter(choice -> messages.stream().filter(offerMessage -> Objects.equals(offerMessage.getId(), choice.offerMessageId())).findFirst()
-                        .flatMap(offerMessage -> offerOfTheContext(offerMessage, session)).isPresent())
-                .map(IrisSolutionChoiceDTO::choice);
+        return IrisMessageContentTypeDTO.readFirst(message, IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class).filter(choice -> {
+            int offer = indexOf(messages, choice.offerMessageId());
+            return offer >= 0 && (message.getSender() != IrisMessageSender.USER || offer == index - 1) && offerOfTheContext(messages.get(offer), session).isPresent();
+        }).map(IrisSolutionChoiceDTO::choice);
     }
 
-    /** The offer a message makes, if it belongs to the session's current context; an answer that lands after a context switch carries an offer of the previous one. */
     private static Optional<IrisSolutionOfferDTO> offerOfTheContext(IrisMessage message, IrisChatSession session) {
         return IrisSolutionOfferDTO.in(message).filter(offer -> offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId());
+    }
+
+    private static int indexOf(List<IrisMessage> messages, long id) {
+        return IntStream.range(0, messages.size()).filter(index -> Objects.equals(messages.get(index).getId(), id)).findFirst().orElse(-1);
     }
 
     private static int lastStudentMessageBefore(List<IrisMessage> messages, int end) {
