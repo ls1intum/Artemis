@@ -123,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.8"
+version = "10.9"
 description = "Interactive Learning with Individual Feedback"
 
 java {

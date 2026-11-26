@@ -31,8 +31,19 @@ import { TumAetUiTooltipDirective } from '../tooltip/tumaet-ui-tooltip.directive
 import { TumAetUiCalendarComponent } from './tumaet-ui-calendar.component';
 import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, normalizeDisplayText, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
+import type { TumAetUiInputSize } from '../input/tumaet-ui-input.variants';
 
 let nextDatePickerId = 0;
+
+/**
+ * Text size and padding of the field per size, the same sizes as the kit's input. The end padding keeps the text clear of the clear and calendar buttons,
+ * which are 24px wide each and sit 36px and 8px from the end.
+ */
+const INPUT_SIZE: Record<TumAetUiInputSize, string> = {
+    small: 'tumaet:text-sm tumaet:py-1.5 tumaet:ps-2.5 tumaet:pe-16',
+    large: 'tumaet:text-lg tumaet:py-2.5 tumaet:ps-3.5 tumaet:pe-17',
+};
+const INPUT_SIZE_NORMAL = 'tumaet:py-2 tumaet:ps-3 tumaet:pe-17';
 
 /**
  * Date-and-time field with typed input and an accessible calendar dialog; `timeOnly` reduces it to a time.
@@ -49,6 +60,7 @@ let nextDatePickerId = 0;
         '[class.tumaet-ui-date-picker--date-only]': 'dateOnly()',
         '[class.tumaet-ui-date-picker--time-only]': 'timeOnly()',
         '[class.tumaet-ui-date-picker--inline]': 'inline()',
+        '[class.tumaet-ui-date-picker--small]': "size() === 'small'",
     },
     imports: [
         A11yModule,
@@ -101,6 +113,8 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
      * time stepper the reader never has to open.
      */
     readonly inline = input(false, { transform: booleanAttribute });
+    /** Size of the field, like the kit's input. `small` is for toolbars: a field of about 34px with the text of a small input and a narrower minimum width. */
+    readonly size = input<TumAetUiInputSize | undefined>(undefined);
 
     /**
      * Opens the calendar when the input itself is clicked, not only its trigger icon. Off by default: the panel
@@ -174,6 +188,12 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private readonly isEditingText = signal(false);
     private readonly showTextError = computed(() => !this.isInputValid() && (!this.validateOnBlur() || !this.isEditingText()));
     protected readonly showErrorBorder = computed(() => this.invalid() || this.showTextError());
+
+    /** Size and border classes of the field. Spelled out as literals, so that the stylesheet build finds them. */
+    protected readonly inputClasses = computed(() => {
+        const size = this.size();
+        return `${size ? INPUT_SIZE[size] : INPUT_SIZE_NORMAL} ${this.showErrorBorder() ? 'tumaet:border-state-danger' : 'tumaet:border-control-border'}`;
+    });
     protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && this.showTextError());
     protected readonly describedBy = computed(() => {
         const ids = [this.showValidationMessage() ? `${this.inputId()}-error` : undefined, this.ariaDescribedBy()].filter(Boolean);

@@ -2,7 +2,7 @@
 id: user-registration
 title: User Management
 sidebar_label: User Management
-last_reviewed: 2026-11-15
+last_reviewed: 2026-11-25
 ---
 
 This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
@@ -177,12 +177,11 @@ credentials, and refuses a session that started earlier with `401`. The client t
 applies to the repository access token for course staff and to turning a session into a tool token.
 
 Reading a credential back is guarded the same way: the endpoints that return the access token of a participation or of a
-repository require a current session. The account that the client reads when it loads the app is the one place that does not
-refuse an outdated session, because the client would otherwise sign the user out of a session that may still read. It leaves the
-personal VCS access token and its expiry out of the answer for such a session instead.
+repository require a current session. The account that the client reads when it loads the app does not
+refuse an outdated session, because the client would otherwise sign the user out of a session that may still read. It carries no
+credential: the deprecated personal VCS access token is never sent, only the date on which it expires.
 
-The check is made when a credential is created or read back, and when the account of a user with a personal access token is
-read, which happens once per load of the app and costs one extra lookup for that user. Other ordinary requests make no check
+The check is made when a credential is created or read back. Other ordinary requests make no check
 and no database access for it. It does not end the read access of an older session, which stays valid until its token expires,
 and a side effect is that a user who has just changed their own password signs in again before adding a new SSH key or passkey.
 The student page [Your Account](/student/getting-started/account) describes what the user sees.
@@ -374,6 +373,13 @@ records. The entries relevant to account state:
 
 All of them are classified as security events, so they are written to `security_audit_event` and appear under
 the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
+To see what one account did, type its login in full into the search field of the page, or pass it as the
+`principal` parameter of the endpoint. The search matches the principal recorded with the event, which is the
+account that acted: for `DEACTIVATE_USER` that is the administrator, and the deactivated account is named in the
+data (`user=<login>`), so it is not found by this search. The login is compared exactly, as typed and in lower
+case, which keeps the search on an index; whether capital letters matter beyond that depends on the collation of the
+database, which ignores case on MySQL. A failed login attempt is recorded with the identifier as it was entered,
+which can be an e-mail address or a login with capital letters, so it is found by typing it exactly as it was entered.
 `DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
 revocation itself writes none. Retention is configured separately per log; see
 [Cleanup Service](cleanup-service.mdx).

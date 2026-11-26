@@ -78,10 +78,10 @@ class AtlasResponsesToolLoopTest {
         Response last = response(List.of(ResponseOutputItem.ofFunctionCall(terminalCall)), "terminal");
         if (firstUsageKnown) {
             withUsage(first, 10, 2);
-            when(first.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
+            when(first.usage().orElseThrow()._allProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
         }
         withUsage(last, 20, 3);
-        when(last.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.02), "cost_currency", JsonValue.from("USD")));
+        when(last.usage().orElseThrow()._allProperties()).thenReturn(Map.of("cost", JsonValue.from(0.02), "cost_currency", JsonValue.from("USD")));
         when(responseService.create(any(ResponseCreateParams.class))).thenReturn(first, last);
         // The orchestrator preset carries the model and reasoning effort; the harness passes no per-call model options.
         var adapter = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), OpenAiChatOptions.builder().deploymentName("gpt-5.6-luna").reasoningEffort("xhigh").build());
@@ -141,7 +141,7 @@ class AtlasResponsesToolLoopTest {
         var unsupported = mock(ResponseOutputItem.class);
         var billed = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall()), unsupported), "unsupported-billed");
         withUsage(billed, 10, 2);
-        when(billed.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
+        when(billed.usage().orElseThrow()._allProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
         when(responseService.create(any(ResponseCreateParams.class))).thenReturn(billed);
         List<ChatResponse> calls = new ArrayList<>();
         var tools = org.springframework.ai.chat.client.advisor.ToolCallingAdvisor.builder().build();
@@ -163,7 +163,7 @@ class AtlasResponsesToolLoopTest {
     void malformedProviderFieldsRetainCostWithoutExecutingTools(String field) {
         var billed = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "malformed-billed");
         withUsage(billed, 10, 2);
-        when(billed.usage().orElseThrow()._additionalProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
+        when(billed.usage().orElseThrow()._allProperties()).thenReturn(Map.of("cost", JsonValue.from(0.01), "cost_currency", JsonValue.from("USD")));
         var error = new OpenAIInvalidDataException("Missing required " + field);
         switch (field) {
             case "id" -> when(billed.id()).thenThrow(error);
