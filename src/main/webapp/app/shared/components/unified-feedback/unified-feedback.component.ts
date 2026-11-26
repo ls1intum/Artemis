@@ -147,6 +147,8 @@ export class UnifiedFeedbackComponent {
     feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
+    /** Emitted after the assessor removed the link to a grading instruction, which changes the feedback without changing its fields. */
+    readonly gradingInstructionUnlinked = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
@@ -415,8 +417,8 @@ export class UnifiedFeedbackComponent {
     }
 
     /**
-     * Unlinks the feedback from its grading instruction, which makes its points editable again. For an accepted AI suggestion this is
-     * an edit like any other, so it becomes adapted; the title change also tells the host that the feedback changed.
+     * Unlinks the feedback from its grading instruction, which makes its points editable again, and tells the host, whose applied
+     * instructions and score depend on the link. For an accepted AI suggestion this is an edit like any other, so it becomes adapted.
      */
     removeGradingInstructionLink(): void {
         const feedback = this.feedback();
@@ -425,6 +427,7 @@ export class UnifiedFeedbackComponent {
         }
         feedback.gradingInstruction = undefined;
         this.markAdaptedIfSuggestion();
+        this.gradingInstructionUnlinked.emit();
     }
 
     onTitleInput(value: string): void {

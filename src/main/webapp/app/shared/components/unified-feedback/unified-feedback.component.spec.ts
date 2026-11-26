@@ -433,10 +433,16 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackTitle.set('Missing null check');
         fixture.detectChanges();
 
+        const unlinkedSpy = vi.spyOn(component.gradingInstructionUnlinked, 'emit');
+        const titleChangeSpy = vi.spyOn(component.feedbackTitle, 'set');
+
         component.removeGradingInstructionLink();
 
         expect(feedback.gradingInstruction).toBeUndefined();
         expect(component.feedbackTitle()).toBe('Missing null check');
+        // The title stays the same, so only the unlink output tells the host that the feedback changed
+        expect(titleChangeSpy).toHaveBeenCalledWith('Missing null check');
+        expect(unlinkedSpy).toHaveBeenCalledOnce();
     });
 
     it('should not touch a non-suggestion title when editing', () => {
