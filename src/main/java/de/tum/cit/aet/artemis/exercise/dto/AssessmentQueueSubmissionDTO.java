@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * @param commitHash          the commit the submission was built from, for programming submissions
  * @param language            the language of the text, for text submissions
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AssessmentQueueSubmissionDTO(Long id, Boolean submitted, @Nullable SubmissionType type, Boolean exampleSubmission, @Nullable ZonedDateTime submissionDate,
         Long participationId, @Nullable InitializationState initializationState, @Nullable ZonedDateTime initializationDate, @Nullable ZonedDateTime individualDueDate,
         @Nullable String participantName, @Nullable Boolean buildFailed, @Nullable String commitHash, @Nullable Language language) {

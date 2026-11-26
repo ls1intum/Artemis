@@ -42,7 +42,9 @@ jobs:
       # that creates it. The push notification services used to create RestTemplateConfiguration, now they create RestClientConfiguration
       # and the LTI token retriever becomes the first to create RestTemplateConfiguration. The extra edge disappears when the LTI classes
       # move to RestClient, because then nothing creates RestTemplateConfiguration at startup.
-      MAX_INSTANTIATED_BEANS: 167
+      # 168 rather than 167 since the team assessment queue: SubmissionService, which is created at startup, injects
+      # TeamAssessmentService, which applies the team assessment rules in lockSubmission for every exercise type.
+      MAX_INSTANTIATED_BEANS: 168
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
