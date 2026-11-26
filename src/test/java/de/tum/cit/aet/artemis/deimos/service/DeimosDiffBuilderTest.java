@@ -78,6 +78,18 @@ class DeimosDiffBuilderTest {
     }
 
     @Test
+    void doesNotCountAnEmptyFileWithoutDiffAsOmittedOnceTheBudgetIsSpent() throws Exception {
+        var base = Map.of("a.txt", "x\n", "gone.txt", "");
+        var target = Map.of("a.txt", "y\n", "new.txt", "");
+
+        // a.txt spends the section budget exactly, so nothing is left for the files after it.
+        DiffResult result = BUILDER.buildDiff(base, target, RESERVED + utf8(A_SECTION));
+
+        assertThat(result.text()).isEqualTo(A_SECTION.stripTrailing());
+        assertThat(result.omissions()).isEmpty();
+    }
+
+    @Test
     void reportsAnExhaustedBudgetBeforeTheInputLimit() throws Exception {
         var builder = new DeimosDiffBuilder(16, 1000);
         var base = Map.of("a.txt", "x\n", "b.txt", "x\n");

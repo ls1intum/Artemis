@@ -137,12 +137,16 @@ final class DeimosDiffBuilder {
      * @return the file's section and omissions
      */
     private FileSection renderFile(String path, @Nullable String baseContent, @Nullable String targetContent, long remainingBytes) throws IOException {
-        if (baseContent != null && baseContent.equals(targetContent)) {
+        String oldContent = baseContent != null ? baseContent : "";
+        String newContent = targetContent != null ? targetContent : "";
+        // Compared with an absent side read as empty, so an empty file added or deleted, which has no diff, counts as
+        // unchanged like a file whose content stayed the same.
+        if (oldContent.equals(newContent)) {
             return FileSection.UNCHANGED;
         }
         // A per-file cap alone does not bound the payload: many individually capped diffs still add up. Stop once the
         // budget for this section is spent, and say how many files were dropped. Placed after the identity check above
-        // so files unchanged between the two snapshots are never counted as omitted.
+        // so files without a change are never counted as omitted.
         if (remainingBytes <= 0) {
             return FileSection.omitted(new DiffOmission(DeimosOmissionReason.PAYLOAD_LIMIT, path));
         }
@@ -150,14 +154,8 @@ final class DeimosDiffBuilder {
         String safePath = escapeMetadata(path);
         String headers = (baseContent == null ? "--- /dev/null" : "--- a/" + safePath) + System.lineSeparator() + (targetContent == null ? "+++ /dev/null" : "+++ b/" + safePath)
                 + System.lineSeparator();
-        String oldContent = baseContent != null ? baseContent : "";
-        String newContent = targetContent != null ? targetContent : "";
         if (utf8Length(oldContent) > maxFileInputBytes || utf8Length(newContent) > maxFileInputBytes) {
             return renderOversizedFile(path, headers, remainingBytes);
-        }
-        // An empty file added or deleted has no diff and is rendered as unchanged, so it must not reach the check below.
-        if (oldContent.equals(newContent)) {
-            return FileSection.UNCHANGED;
         }
         // renderDiff omits a file whose headers alone do not fit, so the diff is not computed for it in the first place.
         if (utf8Length(headers) + utf8Length(System.lineSeparator()) > remainingBytes) {
