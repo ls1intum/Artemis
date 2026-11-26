@@ -45,6 +45,12 @@
     cursor: grab;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .pdf-canvas-container {
+        transition: none;
+    }
+}
+
 .pdf-canvas-container.dragging {
     opacity: 0.6;
     transform: scale(0.95);

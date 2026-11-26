@@ -385,6 +385,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return EMPTY;
         }
+        if (!this.modelingAssessmentService.isFeedbackTextValid(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return EMPTY;
+        }
         const current = this.exampleSubmission();
         let metadataSave: Observable<unknown> = of(undefined);
         if (assessment.assessmentExplanation !== current.assessmentExplanation || assessment.usedForTutorial !== !!current.usedForTutorial) {
