@@ -16,6 +16,7 @@ import java.util.regex.PatternSyntaxException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.ReceiveCommand;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -248,7 +249,7 @@ public class LocalVCServletService {
         try {
             if (authenticated.agentToken() != null) {
                 // Narrower than the role of the owner: only staff repositories, and a push only while the exercise is a draft.
-                agentTokenService.authorize(authenticated.agentToken(), user, exercise, repositoryTypeOrUserName, repositoryAction);
+                agentTokenService.authorize(authenticated.agentToken(), user, exercise, localVCRepositoryUri, repositoryAction);
             }
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
             // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
@@ -351,7 +352,14 @@ public class LocalVCServletService {
 
         // A personal access token of a coding agent. It is never tried as a password or compared with the other tokens.
         if (LocalVCAgentTokenService.isAgentToken(passwordOrToken)) {
-            return new AuthenticatedUser(user, AuthenticationMechanism.AGENT_ACCESS_TOKEN, agentTokenService.authenticate(user, passwordOrToken));
+            // As for a password: the handshake request was charged before, a data transfer request is charged here, so that a guessed token costs the same as a guessed
+            // password on either request, and the token is given back once the credential is accepted.
+            if (!isHandshakeRequest(request)) {
+                spendAuthenticationRateLimit(request);
+            }
+            PersonalAccessTokenAuthentication agentToken = agentTokenService.authenticate(user, passwordOrToken);
+            rateLimitService.refundPerMinute(resolveClientAddress(request), RateLimitType.GIT_AUTHENTICATION);
+            return new AuthenticatedUser(user, AuthenticationMechanism.AGENT_ACCESS_TOKEN, agentToken);
         }
 
         // check the personal VCS access token. It is deprecated: no new one can be created, one that exists works until it expires, and its owner can revoke it.
@@ -508,6 +516,26 @@ public class LocalVCServletService {
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
         return repositoryAccessService.checkHasAccessToForcePush(exercise, user, repositoryTypeOrUserName);
+    }
+
+    /**
+     * Examines a push that a personal access token makes, once its commands are known: the exercise has to be a draft without participations still, which the check before
+     * the push could not guarantee for a push that takes long to arrive. A push that passes is written to the audit log.
+     *
+     * @param user       the owner of the token
+     * @param repository the repository that is pushed to
+     * @param command    the only command of the push
+     * @return the reason why the push has to be refused, or empty if it may go on
+     */
+    public Optional<String> examineAgentPush(User user, Repository repository, ReceiveCommand command) {
+        LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(repository.getDirectory().toPath());
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(localVCRepositoryUri.getProjectKey());
+        Optional<String> blocked = agentTokenService.pushBlockedReason(exercise);
+        if (blocked.isEmpty()) {
+            agentTokenService.auditAcceptedPush(user, exercise.getId(), localVCRepositoryUri.getRelativeRepositoryPath().getFileName().toString(), command.getRefName(),
+                    command.getNewId().name());
+        }
+        return blocked;
     }
 
     /**

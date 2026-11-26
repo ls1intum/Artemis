@@ -244,7 +244,7 @@ public class AgentToolService {
                 tool("get_programming_repositories",
                         "Locate the git repositories of a programming exercise: template, solution, tests and auxiliary. The code is changed with git, not with tools: clone over HTTPS with the "
                                 + "user name from the result and your personal access token as the password, by putting the header Authorization: Basic <base64 of user:token, without line breaks> into an environment variable and calling git "
-                                + "--config-env=http.extraHeader=<variable> clone <url> (not git -c, which shows the token in the process list), and never write the token into a clone address or a file. Push to the branch only while writable is true. "
+                                + "--config-env=http.<artemis address>/.extraHeader=<variable> clone <url> (not git -c, which shows the token in the process list; the address limits the header to Artemis), and never write the token into a clone address or a file. Push to the branch only while writable is true. "
                                 + "A push to the tests repository starts a build, which refreshes the test cases, so keep template, solution and tests consistent.",
                         true, Set.of(AgentScope.PROGRAMMING_REPOSITORIES), schema(List.of("exerciseId"), property("exerciseId", EXERCISE_ID)), ProgrammingExerciseArguments.class,
                         (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.GET, base + "/" + id(arguments.exerciseId(), "exerciseId") + "/repositories", null))),

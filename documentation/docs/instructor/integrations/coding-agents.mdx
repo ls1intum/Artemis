@@ -142,15 +142,17 @@ HTTPS with your Artemis login as the user name and the token as the password:
 
 ```bash
 ARTEMIS_GIT_AUTH="Authorization: Basic $(printf '%s:%s' "$ARTEMIS_LOGIN" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" \
-  git --config-env=http.extraHeader=ARTEMIS_GIT_AUTH clone "$REPOSITORY_URL"
+  git --config-env="http.${ARTEMIS_URL%/}/.extraHeader=ARTEMIS_GIT_AUTH" clone "$REPOSITORY_URL"
 ```
 
 The header goes to git through an environment variable on purpose. With `git -c http.extraHeader=...` it would be part of the
-command line, which other users of the same machine can read while git runs.
+command line, which other users of the same machine can read while git runs. Naming the address of Artemis in the key keeps git
+from sending the header to any other host.
 
 The token opens only the template, solution, tests and auxiliary repositories of exercises in your courses, never the
 repositories of students and never those of exams. It can read them at any time. A push needs an exercise that students
-cannot see and nobody has started, and the response of the API says so (`writable`). Pushing the tests repository starts a
+cannot see and nobody has started, and the response of the API says so (`writable`). Artemis checks this again when the push
+has arrived, and it refuses a force push, so an agent cannot rewrite the history of a repository. Pushing the tests repository starts a
 build, which refreshes the test cases. A personal VCS access token that you may still hold is deprecated and is not limited
 in these ways: delete it in the user settings and give the agent the agent token instead.
 

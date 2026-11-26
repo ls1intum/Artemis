@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAut
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
@@ -45,6 +46,8 @@ public class LocalVCAgentTokenService {
 
     /** The logger of the audit trail of token requests, shared with the REST API so that an operator routes both together. */
     private static final Logger log = LoggerFactory.getLogger("de.tum.cit.aet.artemis.agentaccess.audit");
+
+    private static final String REJECTED_MESSAGE = "The token is unknown, expired or revoked, its owner may not use tokens, or it does not belong to the user name. Use the login of the owner of the token as the user name.";
 
     /** Present only when agent access is enabled. */
     private final Optional<PersonalAccessTokenService> personalAccessTokenService;
@@ -80,15 +83,14 @@ public class LocalVCAgentTokenService {
      * @param user   the user named in the credentials
      * @param secret the token
      * @return the authentication of the token, with its id and scopes
-     * @throws LocalVCAuthException if the token is unknown, expired or revoked, its owner may not use tokens, or it belongs to another user
+     * @throws LocalVCAuthException if the token is unknown, expired or revoked, its owner may not use tokens, or it belongs to another user; the message is the same for each
      */
     public PersonalAccessTokenAuthentication authenticate(User user, String secret) throws LocalVCAuthException {
         Optional<PersonalAccessTokenAuthentication> authentication = personalAccessTokenService.flatMap(service -> service.authenticate(secret));
-        if (authentication.isEmpty()) {
-            throw new LocalVCAuthException("The token is unknown, expired or revoked, or its owner may not use tokens.");
-        }
-        if (!authentication.get().getName().equals(user.getLogin())) {
-            throw new LocalVCAuthException("The token belongs to another user. Use the login of its owner as the user name.");
+        // One answer for every reason, so that a caller cannot tell a token that exists but belongs to someone else from one that does not exist.
+        if (authentication.isEmpty() || !authentication.get().getName().equals(user.getLogin())) {
+            log.info("user={} git authentication with a personal access token was rejected", user.getLogin());
+            throw new LocalVCAuthException(REJECTED_MESSAGE);
         }
         return authentication.get();
     }
@@ -96,17 +98,18 @@ public class LocalVCAgentTokenService {
     /**
      * Decides whether a token may reach a repository, and writes the decision to the audit log.
      *
-     * @param token                    the authenticated token
-     * @param user                     the owner of the token
-     * @param exercise                 the projected exercise the repository belongs to
-     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
-     * @param repositoryAction         whether the request reads or writes
+     * @param token            the authenticated token
+     * @param user             the owner of the token
+     * @param exercise         the projected exercise the repository belongs to
+     * @param repositoryUri    the repository the request is for
+     * @param repositoryAction whether the request reads or writes
      * @throws LocalVCForbiddenException if the token may not do this
      */
-    public void authorize(PersonalAccessTokenAuthentication token, User user, GitRepositoryAccessDTO exercise, String repositoryTypeOrUserName,
+    public void authorize(PersonalAccessTokenAuthentication token, User user, GitRepositoryAccessDTO exercise, LocalVCRepositoryUri repositoryUri,
             RepositoryActionType repositoryAction) throws LocalVCForbiddenException {
+        String repositoryTypeOrUserName = repositoryUri.getRepositoryTypeOrUserName();
         try {
-            requireAllowed(token, user, exercise, repositoryTypeOrUserName, repositoryAction);
+            requireAllowed(token, user, exercise, repositoryUri, repositoryAction);
         }
         catch (LocalVCForbiddenException e) {
             log.info("token={} user={} git {} exercise={} repository={} -> refused by the token rules: {}", token.getTokenId(), token.getName(), repositoryAction,
@@ -117,7 +120,7 @@ public class LocalVCAgentTokenService {
                 repositoryAction, exercise.exerciseId(), repositoryTypeOrUserName);
     }
 
-    private void requireAllowed(PersonalAccessTokenAuthentication token, User user, GitRepositoryAccessDTO exercise, String repositoryTypeOrUserName,
+    private void requireAllowed(PersonalAccessTokenAuthentication token, User user, GitRepositoryAccessDTO exercise, LocalVCRepositoryUri repositoryUri,
             RepositoryActionType repositoryAction) throws LocalVCForbiddenException {
         if (!token.getScopes().contains(AgentScope.PROGRAMMING_REPOSITORIES)) {
             throw new LocalVCForbiddenException("The token does not have the scope " + AgentScope.PROGRAMMING_REPOSITORIES.getValue() + ".");
@@ -128,7 +131,9 @@ public class LocalVCAgentTokenService {
         if (exercise.examId() != null) {
             throw new LocalVCForbiddenException("Exam exercises cannot be accessed with a personal access token.");
         }
-        if (!isStaffRepository(exercise, repositoryTypeOrUserName)) {
+        // The name that the URI yields leaves out a "practice-" marker and digits after the project key, which would let the repository of a student whose login is
+        // "tests" pass for the tests repository. The slug has to be exactly the project key and the name.
+        if (!repositoryUri.isSlugCanonical() || !isStaffRepository(exercise, repositoryUri.getRepositoryTypeOrUserName())) {
             throw new LocalVCForbiddenException(
                     "A personal access token opens only the template, solution, tests and auxiliary repositories of an exercise, not those of students.");
         }
@@ -138,6 +143,32 @@ public class LocalVCAgentTokenService {
                 throw new LocalVCForbiddenException(blocked.get());
             }
         }
+    }
+
+    /**
+     * Tells why a token may not push any more, for the check that runs when the push has been received. A push can take long to arrive, and the exercise may have been released
+     * or may have got a participation in the meantime, which the check before the push could not see.
+     *
+     * @param exercise the exercise the repository belongs to, as stored now
+     * @return the reason, or empty if the push may go on
+     */
+    public Optional<String> pushBlockedReason(ProgrammingExercise exercise) {
+        return programmingExerciseDraftGuardService.repositoryPushBlockedReason(exercise.getId(), exercise.getReleaseDate(), exercise.getStartDate());
+    }
+
+    /**
+     * Writes a push that passed all checks to the audit log, because a push to the tests or an auxiliary repository belongs to no participation and so leaves no entry in the
+     * access log.
+     *
+     * @param user       the owner of the token
+     * @param exerciseId the exercise the repository belongs to
+     * @param repository the slug of the repository
+     * @param ref        the ref that is updated
+     * @param newCommit  the commit that the ref is moved to
+     */
+    public void auditAcceptedPush(User user, long exerciseId, String repository, String ref, String newCommit) {
+        log.info("user={} git push exercise={} repository={} ref={} commit={} -> passed the push checks of the token rules", user.getLogin(), exerciseId, repository, ref,
+                newCommit);
     }
 
     private boolean isStaffRepository(GitRepositoryAccessDTO exercise, String repositoryTypeOrUserName) {

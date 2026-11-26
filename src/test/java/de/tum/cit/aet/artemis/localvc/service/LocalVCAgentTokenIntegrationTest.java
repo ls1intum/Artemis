@@ -9,8 +9,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.Set;
 
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -191,6 +196,47 @@ class LocalVCAgentTokenIntegrationTest extends AbstractProgrammingIntegrationLoc
         finally {
             tests.deleteWorkingCopy();
         }
+    }
+
+    @Test
+    void gitRefusesAForcePushWithTheTokenWhileItsOwnerMayForcePushWithAPassword() throws Exception {
+        makeDraft();
+        SavedToken token = tokenOf(instructor1Login, AgentScope.PROGRAMMING_REPOSITORIES);
+        LocalVCTestRepository tests = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
+        try {
+            localVCLocalCITestService.commitFile(tests.workingCopyPath(), tests.workingCopy(), "first.txt");
+            localVCLocalCITestService.testPushSuccessful(tests.workingCopy(), instructor1Login, token.secret(), projectKey1, testsRepositorySlug);
+            // Go back before the pushed commit and commit something else: the history now differs from the one on the server
+            tests.workingCopy().reset().setMode(ResetCommand.ResetType.HARD).setRef("HEAD~1").call();
+            localVCLocalCITestService.commitFile(tests.workingCopyPath(), tests.workingCopy(), "second.txt");
+
+            RemoteRefUpdate withToken = forcePush(tests, instructor1Login, token.secret());
+            assertThat(withToken.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+            assertThat(withToken.getMessage()).isEqualTo("A personal access token cannot force push.");
+
+            RemoteRefUpdate withPassword = forcePush(tests, instructor1Login, USER_PASSWORD);
+            assertThat(withPassword.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        finally {
+            tests.deleteWorkingCopy();
+        }
+    }
+
+    @Test
+    void theRepositoryOfAStudentWhoseLoginIsTheNameOfAStaffRepositoryIsNotOpenedByTheToken() {
+        SavedToken token = tokenOf(instructor1Login, AgentScope.PROGRAMMING_REPOSITORIES);
+        String practiceOfStudentNamedTests = projectKey1.toLowerCase(Locale.ROOT) + "-practice-tests";
+        var request = gitRequest(practiceOfStudentNamedTests, "git-upload-pack", instructor1Login, token.secret());
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("not those of students");
+    }
+
+    private RemoteRefUpdate forcePush(LocalVCTestRepository repository, String login, String password) throws Exception {
+        String uri = localVCLocalCITestService.buildLocalVCUri(login, password, projectKey1, testsRepositorySlug);
+        PushResult result = repository.workingCopy().push().setForce(true).setRemote(uri).setCredentialsProvider(new UsernamePasswordCredentialsProvider(login, password)).call()
+                .iterator().next();
+        return result.getRemoteUpdates().iterator().next();
     }
 
     private void makeDraft() {

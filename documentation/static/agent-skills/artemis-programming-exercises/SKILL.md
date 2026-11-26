@@ -62,13 +62,15 @@ with that user name and the agent token as the password, without writing the tok
 
 ```bash
 ARTEMIS_GIT_AUTH="Authorization: Basic $(printf '%s:%s' "$USER_NAME" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" \
-  git --config-env=http.extraHeader=ARTEMIS_GIT_AUTH clone "$URL"
+  git --config-env="http.${ARTEMIS_URL%/}/.extraHeader=ARTEMIS_GIT_AUTH" clone "$URL"
 ```
 
 Hand the header to git through an environment variable, as shown, and not with `git -c http.extraHeader=...`: the arguments
-of a running process can be read by other users of the same machine, its environment cannot.
+of a running process can be read by other users of the same machine, its environment cannot. The key names the address of
+Artemis, so that git sends the header to Artemis only and not to any other host a repository may point to.
 
-Push the same way, to the branch from the response, and only while `writable` is true. A push is refused once students
+Push the same way, to the branch from the response, and only while `writable` is true. A push never rewrites history: a
+force push with the token is refused. A push is refused once students
 can see the exercise or have started it; ask the instructor to change that in Artemis, do not look for a way around it.
 The token cannot open the repositories of students or of exams. Edit the files, run the tests locally, commit and push.
 After a push to the test repository Artemis builds the exercise and the test cases appear.

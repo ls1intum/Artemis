@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,12 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.PersonalAccessTokenAuthentication;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
@@ -56,13 +60,17 @@ class LocalVCAgentTokenServiceTest {
         service = new LocalVCAgentTokenService(Optional.empty(), auxiliaryRepositoryService, draftGuard, authorizationCheckService);
     }
 
+    private static LocalVCRepositoryUri uri(String slug) {
+        return new LocalVCRepositoryUri(URI.create("https://localhost"), "PROJ", slug);
+    }
+
     private static GitRepositoryAccessDTO exercise(Long examId) {
         return new GitRepositoryAccessDTO(EXERCISE_ID, 3L, ExerciseMode.INDIVIDUAL, true, null, null, null, null, examId, null, null);
     }
 
     @Test
     void anExamExerciseIsNeverOpened() {
-        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(5L), "solution", RepositoryActionType.READ))
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(5L), uri("proj-solution"), RepositoryActionType.READ))
                 .withMessageContaining("Exam");
     }
 
@@ -70,26 +78,64 @@ class LocalVCAgentTokenServiceTest {
     void anAuxiliaryRepositoryIsOpenedAndTheRepositoryOfAStudentIsNot() {
         when(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("extras", EXERCISE_ID)).thenReturn(true);
 
-        assertThatCode(() -> service.authorize(token, owner, exercise(null), "extras", RepositoryActionType.WRITE)).doesNotThrowAnyException();
-        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), "student1", RepositoryActionType.READ))
-                .withMessageContaining("not those of students");
+        assertThatCode(() -> service.authorize(token, owner, exercise(null), uri("proj-extras"), RepositoryActionType.WRITE)).doesNotThrowAnyException();
+        assertThatExceptionOfType(LocalVCForbiddenException.class)
+                .isThrownBy(() -> service.authorize(token, owner, exercise(null), uri("proj-student1"), RepositoryActionType.READ)).withMessageContaining("not those of students");
     }
 
     @Test
     void aBlockedPushIsRefusedWithTheReasonAndAReadIsNot() {
         when(draftGuard.repositoryPushBlockedReason(EXERCISE_ID, null, null)).thenReturn(Optional.of("It is visible to students."));
 
-        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), "tests", RepositoryActionType.WRITE))
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), uri("proj-tests"), RepositoryActionType.WRITE))
                 .withMessage("It is visible to students.");
-        assertThatCode(() -> service.authorize(token, owner, exercise(null), "tests", RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatCode(() -> service.authorize(token, owner, exercise(null), uri("proj-tests"), RepositoryActionType.READ)).doesNotThrowAnyException();
     }
 
     @Test
     void aTokenOfAnOwnerBelowEditorOpensNothingEvenForReading() {
         when(authorizationCheckService.isAtLeastEditorInCourse(3L, owner)).thenReturn(false);
 
-        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), "tests", RepositoryActionType.READ))
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), uri("proj-tests"), RepositoryActionType.READ))
                 .withMessageContaining("editor");
+    }
+
+    @Test
+    void theRepositoryOfAStudentWhoseLoginIsTheNameOfAStaffRepositoryIsNotOpened() {
+        // "proj-practice-tests" is the practice repository of the student "tests", but the name derived from the slug is "tests"
+        assertThatExceptionOfType(LocalVCForbiddenException.class)
+                .isThrownBy(() -> service.authorize(token, owner, exercise(null), uri("proj-practice-tests"), RepositoryActionType.READ))
+                .withMessageContaining("not those of students");
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> service.authorize(token, owner, exercise(null), uri("proj12-tests"), RepositoryActionType.READ))
+                .withMessageContaining("not those of students");
+        assertThatCode(() -> service.authorize(token, owner, exercise(null), uri("PROJ-Tests"), RepositoryActionType.READ)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void aTokenIsRefusedWithTheSameMessageWhetherItIsUnknownOrBelongsToAnotherUser() throws Exception {
+        PersonalAccessTokenService tokens = mock(PersonalAccessTokenService.class);
+        LocalVCAgentTokenService withAgentAccess = new LocalVCAgentTokenService(Optional.of(tokens), auxiliaryRepositoryService, draftGuard, authorizationCheckService);
+        when(tokens.authenticate("art_pat_unknown")).thenReturn(Optional.empty());
+        when(tokens.authenticate("art_pat_known")).thenReturn(Optional.of(token));
+        User other = new User();
+        other.setLogin("someone-else");
+        User ownerWithLogin = new User();
+        ownerWithLogin.setLogin("editor");
+
+        assertThat(withAgentAccess.authenticate(ownerWithLogin, "art_pat_known")).isSameAs(token);
+        String unknown = catchThrowableOfType(LocalVCAuthException.class, () -> withAgentAccess.authenticate(ownerWithLogin, "art_pat_unknown")).getMessage();
+        String wrongUser = catchThrowableOfType(LocalVCAuthException.class, () -> withAgentAccess.authenticate(other, "art_pat_known")).getMessage();
+
+        assertThat(wrongUser).isEqualTo(unknown);
+    }
+
+    @Test
+    void thePushIsExaminedAgainAgainstTheStoredExercise() {
+        ProgrammingExercise stored = new ProgrammingExercise();
+        stored.setId(EXERCISE_ID);
+        when(draftGuard.repositoryPushBlockedReason(EXERCISE_ID, null, null)).thenReturn(Optional.of("Released in the meantime."));
+
+        assertThat(service.pushBlockedReason(stored)).contains("Released in the meantime.");
     }
 
     @Test
