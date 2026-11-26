@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -274,14 +275,14 @@ class IrisChatPipelineContextTest {
         assertThat(runChatPipeline().textExercise().exampleSolution()).isEqualTo(Optional.ofNullable(expectedSolution));
     }
 
+    // The summary answer of a run still running during a switch can land after the marker, because the switch and the new message are stored one after the other.
     @ParameterizedTest
-    @CsvSource({ "false, EXPLAIN_SOLUTION", "true, " })
-    void messageAfterTheSummaryRequestIsItsExplanationUnlessItSwitchedTheContext(boolean switchedContext, IrisSolutionStep step) {
+    @CsvSource({ "LLM, EXPLAIN_SOLUTION", "LLM CTXSWAP, ", "CTXSWAP LLM, " })
+    void messageAfterTheSummaryRequestIsItsExplanationUnlessTheContextSwitchedSince(String messagesBetween, IrisSolutionStep step) {
         prepareProgrammingReferenceContext();
         appendChoice(IrisSolutionChoice.SUMMARIZE);
-        session.getMessages().add(message(IrisMessageSender.LLM, "In short, the loop compares neighbours. Why does it start at 1?"));
-        if (switchedContext) {
-            session.getMessages().add(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"));
+        for (var sender : messagesBetween.split(" ")) {
+            session.getMessages().add(message(IrisMessageSender.valueOf(sender), "In short, the loop compares neighbours. Why does it start at 1?"));
         }
         session.getMessages().add(message(IrisMessageSender.USER, "Because the first element is the start value."));
         var result = runChatPipeline();
@@ -289,11 +290,15 @@ class IrisChatPipelineContextTest {
         assertThat(result.programmingExercise().solutionRepository()).isEmpty();
     }
 
+    // An offer of another context is the answer of a run that landed after a context switch: the next message is no reply to it.
     @ParameterizedTest
-    @CsvSource({ "OFFER_REPLY, INSTRUCTOR SOLUTION", "SUMMARY_REPLY, " })
-    void typedReplyToAnOfferIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step, String sentSolution) {
+    @CsvSource({ "OFFER_REPLY, true, INSTRUCTOR SOLUTION", "SUMMARY_REPLY, true, ", ", false, " })
+    void typedReplyToAnOfferOfTheContextIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step, boolean offerOfTheContext, String sentSolution) {
         prepareProgrammingReferenceContext();
-        appendOffer(step == IrisSolutionStep.OFFER_REPLY ? SOLUTION_CHOICES : SUMMARY_CHOICES);
+        appendOffer(step == IrisSolutionStep.SUMMARY_REPLY ? SUMMARY_CHOICES : SOLUTION_CHOICES);
+        if (!offerOfTheContext) {
+            session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SOLUTION_CHOICES))));
+        }
         session.getMessages().add(message(IrisMessageSender.USER, "yes"));
         var result = runChatPipeline();
         assertThat(result.solutionStep()).isEqualTo(step);

@@ -286,8 +286,9 @@ public class IrisChatPipelineExecutionService {
      * <ul>
      * <li>A clicked choice on the latest message is that step if the message right before it is its offer: an offer is open only while it is the latest message, so a
      * choice that arrives after another message, such as a context switch or a click in another tab, is no step.</li>
-     * <li>A message right after an offer, without a click, is a typed reply to it.</li>
-     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution, unless it switched the context.</li>
+     * <li>A message right after an offer of the current context, without a click, is a typed reply to it.</li>
+     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution, unless the context switched since
+     * the previous student message.</li>
      * </ul>
      */
     private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session) {
@@ -308,13 +309,16 @@ public class IrisChatPipelineExecutionService {
                 case SKIP_SUMMARY -> null;
             };
         }
-        var answeredOffer = latest > 0 ? IrisSolutionOfferDTO.in(messages.get(latest - 1)).orElse(null) : null;
+        // An answer of a run that was still running during a context switch can land after the marker: its offer belongs to the previous context.
+        var answeredOffer = latest > 0
+                ? IrisSolutionOfferDTO.in(messages.get(latest - 1)).filter(offer -> offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId()).orElse(null)
+                : null;
         if (answeredOffer != null) {
             return answeredOffer.offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
         }
         int previous = lastStudentMessageBefore(messages, latest);
-        // A context switch stores its marker right before the message, so that message starts over in the new context.
-        boolean switchedContext = latest > 0 && messages.get(latest - 1).getSender() == IrisMessageSender.CTXSWAP;
+        // A context switch since the previous student message starts the workflow over in the new context.
+        boolean switchedContext = previous >= 0 && messages.subList(previous, latest).stream().anyMatch(message -> message.getSender() == IrisMessageSender.CTXSWAP);
         boolean followsSummary = previous >= 0 && !switchedContext
                 && messages.subList(previous, latest).stream().flatMap(message -> IrisSolutionChoiceDTO.in(message).stream()).anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
         return followsSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
