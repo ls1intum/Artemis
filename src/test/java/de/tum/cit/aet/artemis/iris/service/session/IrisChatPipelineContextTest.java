@@ -273,14 +273,18 @@ class IrisChatPipelineContextTest {
         assertThat(runChatPipeline().textExercise().exampleSolution()).isEqualTo(Optional.ofNullable(expectedSolution));
     }
 
-    @Test
-    void messageAfterTheSummaryRequestIsItsExplanationWithoutTheReference() {
+    @ParameterizedTest
+    @CsvSource({ "false, EXPLAIN_SOLUTION", "true, " })
+    void messageAfterTheSummaryRequestIsItsExplanationUnlessItSwitchedTheContext(boolean switchedContext, IrisSolutionStep step) {
         prepareProgrammingReferenceContext();
         appendChoice(IrisSolutionChoice.SUMMARIZE);
-        session.getMessages().addAll(List.of(message(IrisMessageSender.LLM, "In short, the loop compares neighbours. Why does it start at 1?"),
-                message(IrisMessageSender.USER, "Because the first element is the start value.")));
+        session.getMessages().add(message(IrisMessageSender.LLM, "In short, the loop compares neighbours. Why does it start at 1?"));
+        if (switchedContext) {
+            session.getMessages().add(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"));
+        }
+        session.getMessages().add(message(IrisMessageSender.USER, "Because the first element is the start value."));
         var result = runChatPipeline();
-        assertThat(result.solutionStep()).isEqualTo(IrisSolutionStep.EXPLAIN_SOLUTION);
+        assertThat(result.solutionStep()).isEqualTo(step);
         assertThat(result.programmingExercise().solutionRepository()).isEmpty();
     }
 

@@ -284,7 +284,7 @@ public class IrisChatPipelineExecutionService {
      * <ul>
      * <li>A clicked choice on the latest message is that step.</li>
      * <li>A message right after an offer, without a click, is a typed reply to it.</li>
-     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution.</li>
+     * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution, unless it switched the context.</li>
      * </ul>
      */
     private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session) {
@@ -307,7 +307,9 @@ public class IrisChatPipelineExecutionService {
             return answeredOffer.offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
         }
         int previous = lastStudentMessageBefore(messages, latest);
-        boolean followsSummary = previous >= 0
+        // A context switch stores its marker right before the message, so that message starts over in the new context.
+        boolean switchedContext = latest > 0 && messages.get(latest - 1).getSender() == IrisMessageSender.CTXSWAP;
+        boolean followsSummary = previous >= 0 && !switchedContext
                 && messages.subList(previous, latest).stream().flatMap(message -> IrisSolutionChoiceDTO.in(message).stream()).anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
         return followsSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
     }
