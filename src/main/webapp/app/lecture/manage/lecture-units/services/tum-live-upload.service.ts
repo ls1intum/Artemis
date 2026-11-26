@@ -3,19 +3,10 @@ import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { TumLiveUploadApi } from 'app/openapi/api/tum-live-upload-api';
+import type { TumLiveUploadState } from 'app/openapi/model/tum-live-upload-state';
 import { parseJson } from 'app/foundation/util/json.util';
 
-/** The TUM.Live upload state of an attachment video unit. */
-export interface TumLiveUploadState {
-    connected?: boolean;
-    pendingRef?: string;
-    pendingSince?: string;
-    converting?: boolean;
-    progress?: number;
-    /** The reference of the upload whose video the unit shows, if Artemis uploaded it. */
-    attachedRef?: string;
-    lastError?: string;
-}
+export type { TumLiveUploadState } from 'app/openapi/model/tum-live-upload-state';
 
 /** Where to send the recording of a unit in Artemis. */
 export interface TumLiveUploadStart {
@@ -84,6 +75,8 @@ export class TumLiveUploadService {
             const request = new XMLHttpRequest();
             request.open('POST', uploadUrl);
             request.setRequestHeader('Content-Type', 'application/octet-stream');
+            // Chromium does not emit upload progress when the Angular service worker forwards the request.
+            request.setRequestHeader('ngsw-bypass', 'true');
             request.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
                     subscriber.next({ type: 'progress', percent: Math.floor((event.loaded / event.total) * 100) });
