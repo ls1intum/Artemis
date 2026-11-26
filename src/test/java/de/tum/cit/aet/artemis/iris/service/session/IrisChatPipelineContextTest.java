@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -219,11 +220,12 @@ class IrisChatPipelineContextTest {
     /** The run of the latest student message, as the client starts it right after storing the message. */
     private PyrisChatPipelineExecutionDTO runChatPipeline() {
         return runChatPipeline(Optional.empty(),
-                session.getMessages().reversed().stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElseThrow());
+                session.getMessages().reversed().stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElse(null));
     }
 
-    private PyrisChatPipelineExecutionDTO runChatPipeline(Optional<String> event, IrisMessage userMessage) {
-        service.execute(session, event, Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab", userMessage.getId());
+    private PyrisChatPipelineExecutionDTO runChatPipeline(Optional<String> event, @Nullable IrisMessage userMessage) {
+        service.execute(session, event, Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab",
+                userMessage == null ? null : userMessage.getId());
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
         verify(pipelines, atLeastOnce()).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         return builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
@@ -370,19 +372,27 @@ class IrisChatPipelineContextTest {
         assertThat(runChatPipeline().solutionStep()).isNull();
     }
 
-    @Test
-    void eachOfTwoClicksStoredBeforeTheirRunsIsAnsweredFromItsOwnMessage() {
+    @ParameterizedTest
+    @CsvSource({ "true, SHOW_SOLUTION", "false, OFFER_REPLY" })
+    void eachOfTwoRepliesStoredBeforeTheirRunsIsAnsweredFromItsOwnMessageAndHistory(boolean clicked, IrisSolutionStep firstStep) {
         prepareProgrammingReferenceContext();
-        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
-        var firstClick = session.getMessages().getLast();
-        // A second tab clicked the other button before the first run read the session.
-        var secondClick = message(IrisMessageSender.USER, "Try it myself");
-        secondClick.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.TRY_MYSELF)));
-        session.getMessages().add(secondClick);
-        var firstRun = runChatPipeline(Optional.empty(), firstClick);
-        assertThat(firstRun.solutionStep()).isEqualTo(IrisSolutionStep.SHOW_SOLUTION);
+        appendOffer(SOLUTION_CHOICES);
+        var first = message(IrisMessageSender.USER, clicked ? "Show me the complete solution" : "yes");
+        // A second tab answered the same offer before the first run read the session.
+        var second = message(IrisMessageSender.USER, clicked ? "Try it myself" : "no, I'll try");
+        if (clicked) {
+            first.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
+            second.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.TRY_MYSELF)));
+        }
+        session.getMessages().addAll(List.of(first, second));
+        var firstRun = runChatPipeline(Optional.empty(), first);
+        assertThat(firstRun.solutionStep()).isEqualTo(firstStep);
         assertThat(firstRun.programmingExercise().solutionRepository().get("Main.java")).isEqualTo("INSTRUCTOR SOLUTION");
-        assertThat(runChatPipeline(Optional.empty(), secondClick).solutionStep()).isNull();
+        assertThat(runChatPipeline(Optional.empty(), second).solutionStep()).isNull();
+        // Each run sends the history through its own message, so Pyris answers that message and never the other tab's.
+        ArgumentCaptor<List<IrisMessage>> histories = ArgumentCaptor.captor();
+        verify(dtoService, atLeastOnce()).toPyrisMessageDTOList(histories.capture());
+        assertThat(histories.getAllValues()).extracting(List::getLast).containsExactly(first, second);
     }
 
     @Test

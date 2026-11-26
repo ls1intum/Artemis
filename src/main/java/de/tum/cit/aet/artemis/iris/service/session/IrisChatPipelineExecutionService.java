@@ -188,7 +188,17 @@ public class IrisChatPipelineExecutionService {
         var solutionStep = runMessageId == null ? null : solutionStep(chatSession, runMessageId);
         pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId, runMessageId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
-                        latestSubmission, uncommittedFiles, context, solutionStep));
+                        latestSubmission, uncommittedFiles, context, runMessageId, solutionStep));
+    }
+
+    /**
+     * The history a run sends to Pyris: for a run a student message caused, everything through that message, because Pyris answers the last message of the history and
+     * another tab may have added messages since. An event-triggered run answers no message and sends all of them.
+     */
+    private static List<IrisMessage> historyOfTheRun(IrisChatSession session, @Nullable Long runMessageId) {
+        var messages = session.getMessages();
+        int end = runMessageId == null ? -1 : IntStream.range(0, messages.size()).filter(index -> Objects.equals(messages.get(index).getId(), runMessageId)).findFirst().orElse(-1);
+        return end < 0 ? messages : messages.subList(0, end + 1);
     }
 
     /**
@@ -199,8 +209,8 @@ public class IrisChatPipelineExecutionService {
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
-            List<IrisMessageContextDTO> context, @Nullable IrisSolutionStep solutionStep) {
-        var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
+            List<IrisMessageContextDTO> context, @Nullable Long runMessageId, @Nullable IrisSolutionStep solutionStep) {
+        var messages = pyrisDTOService.toPyrisMessageDTOList(historyOfTheRun(session, runMessageId));
         // A typed reply may choose the solution, which Pyris only learns from the reply, so it needs the reference already.
         boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION || solutionStep == IrisSolutionStep.OFFER_REPLY;
 
