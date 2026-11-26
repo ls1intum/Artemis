@@ -24,7 +24,7 @@ describe('Structured Grading Criteria Service', () => {
             const feedback = new Feedback();
             const dropEvent = {
                 preventDefault: () => {},
-                dataTransfer: { getData: () => JSON.stringify({ id: 1, credits: 2, criterionTitle: 'Domain Quality' }) },
+                dataTransfer: { getData: () => JSON.stringify({ id: 1, credits: 2, criterionTitle: 'Associations' }) },
             } as unknown as DragEvent;
 
             service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEvent);

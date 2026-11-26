@@ -12,6 +12,12 @@
     transition: transform 0.2s linear;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .lti-course-card {
+        transition: none;
+    }
+}
+
 .lti-course-card:hover {
     transform: scale(1.012);
     background-color: var(--hover-slightly-darker-body-bg);

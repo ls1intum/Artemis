@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_DISPLAY_TITLE_PATTERN;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -100,6 +102,49 @@ public abstract class BaseExercise extends ExerciseTimeline {
 
     public void setBonusPoints(Double bonusPoints) {
         this.bonusPoints = bonusPoints;
+    }
+
+    /**
+     * Checks that a result score entered for this exercise lies between 0 and {@code (maxPoints + bonusPoints) / maxPoints * 100} percent.
+     * This is the same limit the server applies when it calculates a score itself (see {@code ResultRepository#constrainToRange} and
+     * {@code Result#calculateTotalPointsForProgrammingExercises}), so a score above 100% stays possible as far as bonus points allow.
+     * Score and limit are rounded to four decimal places like in {@code Result#setScore}, so a score exactly at the limit is accepted.
+     *
+     * @param score the score in percent sent by the client
+     * @throws BadRequestAlertException if the score is not a finite number within the limit
+     * @throws IllegalStateException    if the stored max points or bonus points of this exercise are invalid
+     */
+    public void checkScoreWithinBoundsElseThrow(double score) {
+        // checked first: a comparison with NaN is always false, and rounding cannot handle NaN or infinity
+        checkScoreIsFiniteElseThrow(score);
+        Double storedMaxPoints = getMaxPoints();
+        double storedBonusPoints = Objects.requireNonNullElse(getBonusPoints(), 0.0);
+        if (storedMaxPoints == null || !Double.isFinite(storedMaxPoints) || storedMaxPoints <= 0 || !Double.isFinite(storedBonusPoints) || storedBonusPoints < 0) {
+            throw new IllegalStateException("Exercise " + getId() + " has invalid max points or bonus points, so the score cannot be checked");
+        }
+        double unroundedMaxScore = (storedMaxPoints + storedBonusPoints) / storedMaxPoints * 100.0;
+        // both values can be finite while their sum overflows
+        if (!Double.isFinite(unroundedMaxScore)) {
+            throw new IllegalStateException("Exercise " + getId() + " has max points and bonus points that exceed the representable range");
+        }
+        double maxScore = roundToNDecimalPlaces(unroundedMaxScore, 4);
+        double roundedScore = roundToNDecimalPlaces(score, 4);
+        if (roundedScore < 0 || roundedScore > maxScore) {
+            throw new BadRequestAlertException("The score must be between 0 and " + maxScore + " percent.", "result", "scoreOutOfRange");
+        }
+    }
+
+    /**
+     * Checks that a score sent by the client is a finite number. Call it before the score reaches {@code Result#setScore}: its rounding cannot handle
+     * NaN or infinity, and although JSON has no token for them, a valid number such as {@code 1e400} is parsed as infinity.
+     *
+     * @param score the score in percent sent by the client
+     * @throws BadRequestAlertException if the score is NaN or infinite
+     */
+    public static void checkScoreIsFiniteElseThrow(double score) {
+        if (!Double.isFinite(score)) {
+            throw new BadRequestAlertException("The score must be a finite number.", "result", "scoreOutOfRange");
+        }
     }
 
     public AssessmentType getAssessmentType() {

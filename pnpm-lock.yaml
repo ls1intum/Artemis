@@ -450,8 +450,8 @@ importers:
         specifier: 7.5.0
         version: 7.5.0
       '@tumaet/apollon':
-        specifier: 5.5.0
-        version: 5.5.0(@types/react@19.3.0)(@xyflow/react@12.12.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+        specifier: 5.5.1
+        version: 5.5.1(@types/react@19.3.0)(@xyflow/react@12.12.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@tumaet/ui-angular':
         specifier: workspace:*
         version: link:packages/tum-aet-ui
@@ -3678,8 +3678,8 @@ packages:
   '@ts-morph/common@0.29.0':
     resolution: {integrity: sha512-35oUmphHbJvQ/+UTwFNme/t2p3FoKiGJ5auTjjpNTop2dyREspirjMy82PLSC1pnDJ8ah1GU98hwpVt64YXQsg==}
 
-  '@tumaet/apollon@5.5.0':
-    resolution: {integrity: sha512-cmfaJLjIba4yXHe/HeZIbg+lo5cRqZpn1psZrCaXp5jB7Y96cK1qmGl7F8Mp1zl3v3Okt/rNSc+I4FpI6tngZQ==}
+  '@tumaet/apollon@5.5.1':
+    resolution: {integrity: sha512-+mt8nrWrQHSrjvHIr+1Chl5RASl09sJ3qjnKouJfSUZDCU08TIzO/xMyea7CZgMQ14CZceYDe1xCqnx8dlpUfg==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@xyflow/react': ^12.11.1
@@ -5141,8 +5141,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.61.0:
-    resolution: {integrity: sha512-v2SQPPPNjnr+BlhL9Spuzmo5yR+hLkftfuE4E3jaxdNPgSH0hJKPcLJBP7yAta87jQNPsSERS59PJjCJ/CorBA==}
+  lucide-react@1.77.0:
+    resolution: {integrity: sha512-VS6sOi8ZUH1qm6swBL/tpI4xAhB6pFTdHvw3pfCJD+DaTJwpyynVzfOS6mdyMZ+OCdY/GMSQbqinOMOPbNSrQA==}
     peerDependencies:
       '@types/react': '*'
       react: 19.3.1
@@ -6633,8 +6633,8 @@ packages:
       react:
         optional: true
 
-  zustand@5.0.16:
-    resolution: {integrity: sha512-Uv7e327ihlCfayfja3hDc0M64Upev1LWBKpRobdK4NyovDDPeeX4imWXc/wzC1yc6fkYPoAY/ncKVPAs2jrtQw==}
+  zustand@5.1.0:
+    resolution: {integrity: sha512-ciJZlP48M1PTQbVQq81CGVFxHTLpZNrFjKqwjtCU34AWuXTZT/jrF3p9+fI84Cf1eSCMLapxqBy/SNTfwOBuqA==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -8856,7 +8856,7 @@ snapshots:
       path-browserify: 1.0.1
       tinyglobby: 0.2.17
 
-  '@tumaet/apollon@5.5.0(@types/react@19.3.0)(@xyflow/react@12.12.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
+  '@tumaet/apollon@5.5.1(@types/react@19.3.0)(@xyflow/react@12.12.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)':
     dependencies:
       '@base-ui/react': 1.9.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@chenglou/pretext': 0.0.9
@@ -8865,12 +8865,12 @@ snapshots:
       '@dnd-kit/utilities': 3.2.2(react@19.3.1)
       '@xyflow/react': 12.12.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@xyflow/system': 0.0.78
-      lucide-react: 1.61.0(@types/react@19.3.0)(react@19.3.1)
+      lucide-react: 1.77.0(@types/react@19.3.0)(react@19.3.1)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       y-protocols: 1.0.7(yjs@13.6.33)
       yjs: 13.6.33
-      zustand: 5.0.16(@types/react@19.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+      zustand: 5.1.0(@types/react@19.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
     optionalDependencies:
       '@resvg/resvg-wasm': 2.6.2
       jspdf: 4.2.1
@@ -10526,7 +10526,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.61.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.77.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -12170,7 +12170,7 @@ snapshots:
       '@types/react': 19.3.0
       react: 19.3.1
 
-  zustand@5.0.16(@types/react@19.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)):
+  zustand@5.1.0(@types/react@19.3.0)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)):
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.1

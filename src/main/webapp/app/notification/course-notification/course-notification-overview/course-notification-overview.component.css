@@ -23,6 +23,13 @@
         notification-fade-in 0.2s ease-in-out forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .notification-item-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes notification-height-in {
     from {
         max-height: 0;

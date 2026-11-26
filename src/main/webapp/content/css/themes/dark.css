@@ -269,30 +269,7 @@
     --close-circle-background: var(--gray-900);
     --close-circle-border: rgba(206, 212, 218, 0.8);
     --close-circle-opacity: 0.9;
-}
 
-/* `html:where(…)` keeps the specificity of an element selector, see the Apollon tokens in light.css. */
-html:where([data-theme='dark']),
-[data-theme='dark'] .artemis-apollon-theme {
-    /* Apollon */
-    --apollon-primary: var(--link-color);
-    --apollon-background-variant: var(--neutral-dark-l-10);
-    --apollon-gray: var(--neutral-dark-l-5);
-    --apollon-gray-variant: var(--gray-100);
-    --apollon-grid: var(--neutral-dark-l-10);
-    --apollon-danger: var(--artemis-alert-danger-color);
-    --apollon-surface: var(--neutral-dark-l-5);
-    --apollon-surface-sunken: #121417;
-    --apollon-border-subtle: var(--neutral-dark-l-10);
-    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.55);
-    --apollon-hover-neutral: rgba(248, 249, 250, 0.1);
-    --apollon-swatch-slate: var(--gray-400);
-    --apollon-chrome-radius-sm: 0.15rem;
-    --apollon-chrome-radius-md: 0.25rem;
-    --apollon-chrome-radius-lg: 0.5rem;
-}
-
-:root[data-theme='dark'] {
     /* Feedback Suggestions (Athena) */
     --feedback-suggestions-primary: rgb(181, 78, 254);
 
@@ -409,4 +386,25 @@ html:where([data-theme='dark']),
     --overview-card-bg: #16191d;
     --overview-card-nested-bg: #343a42;
     --overview-card-hover-bg: #434c56;
+}
+
+/* `html:where(…)` keeps the specificity of an element selector, see the Apollon tokens in light.css. */
+html:where([data-theme='dark']),
+[data-theme='dark'] .artemis-apollon-theme {
+    /* Apollon */
+    --apollon-primary: var(--link-color);
+    --apollon-background-variant: var(--neutral-dark-l-10);
+    --apollon-gray: var(--neutral-dark-l-5);
+    --apollon-gray-variant: var(--gray-100);
+    --apollon-grid: var(--neutral-dark-l-10);
+    --apollon-danger: var(--artemis-alert-danger-color);
+    --apollon-surface: var(--neutral-dark-l-5);
+    --apollon-surface-sunken: #121417;
+    --apollon-border-subtle: var(--neutral-dark-l-10);
+    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.55);
+    --apollon-hover-neutral: rgba(248, 249, 250, 0.1);
+    --apollon-swatch-slate: var(--gray-400);
+    --apollon-chrome-radius-sm: 0.15rem;
+    --apollon-chrome-radius-md: 0.25rem;
+    --apollon-chrome-radius-lg: 0.5rem;
 }
