@@ -11,16 +11,17 @@ describe('Iris solution choice content', () => {
         expect(isSolutionOffer(new IrisTextMessageContent('solution-offer'))).toBe(false);
     });
 
-    it('restores the latest stored choice of a click or a typed reply and never infers one from text', () => {
-        const choice = (sender: IrisSender, offerMessageId: number, value = 'SHOW_SOLUTION') =>
+    it('restores the stored choice of a click or a typed reply and never infers one from text', () => {
+        const choice = (sender: IrisSender, offerMessageId: number) =>
             ({
                 sender,
-                content: [new IrisTextMessageContent('Show me the complete solution'), new IrisJsonMessageContent({ type: 'solution-choice', offerMessageId, choice: value })],
+                content: [
+                    new IrisTextMessageContent('Show me the complete solution'),
+                    new IrisJsonMessageContent({ type: 'solution-choice', offerMessageId, choice: 'SHOW_SOLUTION' }),
+                ],
             }) as IrisMessage;
         expect(solutionChoicesByOffer([choice(IrisSender.USER, 10)])).toEqual(new Map([[10, 'SHOW_SOLUTION']]));
         expect(solutionChoicesByOffer([choice(IrisSender.LLM, 10)])).toEqual(new Map([[10, 'SHOW_SOLUTION']]));
-        // Two tabs answered the same offer: the selected button follows the later choice, like the server's workflow.
-        expect(solutionChoicesByOffer([choice(IrisSender.USER, 10, 'TRY_MYSELF'), choice(IrisSender.USER, 10)])).toEqual(new Map([[10, 'SHOW_SOLUTION']]));
         expect(solutionChoicesByOffer([{ sender: IrisSender.USER, content: [new IrisTextMessageContent('SHOW_SOLUTION')] }])).toEqual(new Map());
     });
 

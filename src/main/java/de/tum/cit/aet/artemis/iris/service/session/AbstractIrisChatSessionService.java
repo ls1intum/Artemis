@@ -275,7 +275,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 message.addContent(IrisJsonMessageContent.of(statusUpdate.solutionOffer()));
             }
             // A typed reply to an offer: the answer records the choice Pyris read from it, as a click would, so the next step and the offer's buttons follow it.
-            // Only a choice the answered offer actually made is stored, because solutionStep trusts every stored choice.
+            // Only a choice the answered offer actually made is stored, because solutionStep does not check a stored choice against its offer again.
             if (statusUpdate.solutionChoice() != null && job.userMessageId() != null) {
                 var visible = session.getMessages().stream().filter(visibleMessage -> visibleMessage.getSender() != IrisMessageSender.SUMMARY).toList();
                 int reply = IntStream.range(0, visible.size()).filter(index -> job.userMessageId().equals(visible.get(index).getId())).findFirst().orElse(0);

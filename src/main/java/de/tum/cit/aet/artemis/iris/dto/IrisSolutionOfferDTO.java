@@ -19,11 +19,6 @@ public record IrisSolutionOfferDTO(String type, IrisChatMode chatMode, long enti
 
     public static final String TYPE = "solution-offer";
 
-    /** A Pyris payload may leave out the choices; such an offer has no buttons instead of failing every later read. */
-    public IrisSolutionOfferDTO {
-        choices = choices == null ? List.of() : List.copyOf(choices);
-    }
-
     /**
      * Reads the offer a message makes.
      *
@@ -35,7 +30,7 @@ public record IrisSolutionOfferDTO(String type, IrisChatMode chatMode, long enti
     }
 
     /**
-     * Whether a choice answers this offer; only such a choice may be stored, because the next step trusts every stored choice.
+     * Whether a choice answers this offer; only such a choice may be stored, because the next step does not check a stored choice against its offer again.
      *
      * @param choice the choice of the student
      * @return true if the offer has a button for it

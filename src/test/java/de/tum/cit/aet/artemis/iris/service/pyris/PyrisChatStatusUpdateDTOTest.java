@@ -10,6 +10,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
@@ -25,10 +26,10 @@ class PyrisChatStatusUpdateDTOTest {
     void deserializesTheStructuredSolutionOffer() {
         var dto = objectMapper.readValue("""
                 {"runState":"RUNNING","result":"Choose how to continue","final":true,
-                 "solutionOffer":{"type":"solution-offer","chatMode":"PROGRAMMING_EXERCISE_CHAT","entityId":42}}
+                 "solutionOffer":{"type":"solution-offer","chatMode":"PROGRAMMING_EXERCISE_CHAT","entityId":42,"choices":["TRY_MYSELF","SHOW_SOLUTION"]}}
                 """, PyrisChatStatusUpdateDTO.class);
-        // An offer without choices has no buttons instead of failing every later read.
-        assertThat(dto.solutionOffer()).isEqualTo(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L, List.of()));
+        assertThat(dto.solutionOffer()).isEqualTo(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L,
+                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
         assertThat(objectMapper.writeValueAsString(dto)).contains("\"solutionOffer\"");
     }
 

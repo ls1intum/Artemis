@@ -36,14 +36,12 @@ export function offeredChoices(offer: IrisJsonMessageContent): IrisSolutionChoic
     return (offer.attributes?.['choices'] as IrisSolutionChoice[] | undefined) ?? [];
 }
 
-/**
- * The choice the student made for each offer, by click or typed reply, keyed by the offer's message id; only the server writes choices.
- * The latest choice wins, as on the server, which continues the workflow with the latest student message.
- */
+/** The choice the student made for each offer, by click or typed reply, keyed by the offer's message id; only the server writes choices. */
 export function solutionChoicesByOffer(messages: IrisMessage[]): Map<number, IrisSolutionChoice> {
     const choices = new Map<number, IrisSolutionChoice>();
     for (const content of messages.flatMap((message) => message.content).filter(isSolutionChoice)) {
-        choices.set(content.attributes?.['offerMessageId'] as number, content.attributes?.['choice'] as IrisSolutionChoice);
+        const offerMessageId = content.attributes?.['offerMessageId'] as number;
+        if (!choices.has(offerMessageId)) choices.set(offerMessageId, content.attributes?.['choice'] as IrisSolutionChoice);
     }
     return choices;
 }

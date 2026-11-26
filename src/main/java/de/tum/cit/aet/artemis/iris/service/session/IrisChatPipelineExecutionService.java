@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
@@ -279,10 +281,11 @@ public class IrisChatPipelineExecutionService {
     }
 
     /**
-     * The step of the solution workflow the latest student message is. A stored choice is trusted as is: only IrisMessageResource writes one after validating
-     * its offer, and only the result of a typed reply to an offer, with the choice Pyris read from it.
+     * The step of the solution workflow the latest student message is. A stored choice is a button its offer has, so it is not checked against the offer again:
+     * only IrisMessageResource writes one after validating its offer, and only the result of a typed reply to an offer, with the choice Pyris read from it.
      * <ul>
-     * <li>A clicked choice on the latest message is that step.</li>
+     * <li>A clicked choice on the latest message is that step if the message right before it is its offer: an offer is open only while it is the latest message, so a
+     * choice that arrives after another message, such as a context switch or a click in another tab, is no step.</li>
      * <li>A message right after an offer, without a click, is a typed reply to it.</li>
      * <li>A message after a turn that accepted the summary, by click or typed reply, is the student's explanation of the solution, unless it switched the context.</li>
      * </ul>
@@ -293,9 +296,12 @@ public class IrisChatPipelineExecutionService {
         if (latest < 0) {
             return null;
         }
-        var latestChoice = IrisSolutionChoiceDTO.in(messages.get(latest));
+        var latestChoice = IrisMessageContentTypeDTO.readFirst(messages.get(latest), IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class);
         if (latestChoice.isPresent()) {
-            return switch (latestChoice.get()) {
+            if (latest == 0 || !Objects.equals(messages.get(latest - 1).getId(), latestChoice.get().offerMessageId())) {
+                return null;
+            }
+            return switch (latestChoice.get().choice()) {
                 case TRY_MYSELF -> IrisSolutionStep.TRY_MYSELF;
                 case SHOW_SOLUTION -> IrisSolutionStep.SHOW_SOLUTION;
                 case SUMMARIZE -> IrisSolutionStep.SUMMARIZE;

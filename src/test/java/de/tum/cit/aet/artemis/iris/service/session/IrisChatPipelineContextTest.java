@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -310,6 +311,27 @@ class IrisChatPipelineContextTest {
         session.getMessages().addAll(List.of(answer, message(IrisMessageSender.USER, "The loop skips the first element.")));
         var result = runChatPipeline();
         assertThat(result.solutionStep()).isEqualTo(step);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void choiceThatArrivesAfterAnotherMessageIsNoStepAndNeverSendsTheReference(boolean afterContextSwitch) {
+        prepareProgrammingReferenceContext();
+        if (afterContextSwitch) {
+            appendOffer(SOLUTION_CHOICES);
+            session.getMessages().addAll(List.of(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"), message(IrisMessageSender.USER, "New exercise")));
+        }
+        else {
+            // The first click from another tab already answered the offer.
+            appendChoice(IrisSolutionChoice.TRY_MYSELF);
+        }
+        var lateChoice = message(IrisMessageSender.USER, "Show me the complete solution");
+        lateChoice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
+        session.getMessages().add(lateChoice);
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isNull();
+        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
     }
 
     @Test
