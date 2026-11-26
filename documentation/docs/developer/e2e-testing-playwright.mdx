@@ -654,6 +654,9 @@ misread the application state.
 
 ## CI Pipeline
 
+Besides the test results, the E2E jobs report the database queries a pull request adds, see the
+[query report](./query-report.mdx).
+
 ### Overview: PR selection and full-suite runs {/* #overview-two-phase-execution */}
 
 For eligible internal pull requests, CI sets the reusable E2E workflow's `run_full_suite` input to `false`.
