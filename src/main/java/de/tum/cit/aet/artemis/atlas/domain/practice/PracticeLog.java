@@ -54,10 +54,6 @@ public class PracticeLog extends DomainObject {
     @Column(name = "answered_at")
     private ZonedDateTime answeredAt;
 
-    public PracticeSession getPracticeSession() {
-        return practiceSession;
-    }
-
     public void setPracticeSession(PracticeSession practiceSession) {
         this.practiceSession = practiceSession;
     }
@@ -70,24 +66,12 @@ public class PracticeLog extends DomainObject {
         this.poolItemId = poolItemId;
     }
 
-    public Long getCompetencyId() {
-        return competencyId;
-    }
-
     public void setCompetencyId(Long competencyId) {
         this.competencyId = competencyId;
     }
 
-    public String getDifficulty() {
-        return difficulty;
-    }
-
     public void setDifficulty(String difficulty) {
         this.difficulty = difficulty;
-    }
-
-    public boolean isAdaptive() {
-        return isAdaptive;
     }
 
     public void setAdaptive(boolean isAdaptive) {
@@ -108,10 +92,6 @@ public class PracticeLog extends DomainObject {
 
     public void setSubmittedAnswer(String submittedAnswer) {
         this.submittedAnswer = submittedAnswer;
-    }
-
-    public ZonedDateTime getAnsweredAt() {
-        return answeredAt;
     }
 
     public void setAnsweredAt(ZonedDateTime answeredAt) {

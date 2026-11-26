@@ -313,14 +313,12 @@ class PracticeQuizServiceTest {
         session.setMaxPoints(10.0);
 
         when(practiceSessionRepository.findAllByUserIdAndCourseIdOrderByStartTimeDesc(student.getId(), course.getId())).thenReturn(List.of(session));
-        when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(List.of(new PracticeLog(), new PracticeLog()));
 
         List<PracticeSessionSummaryDTO> summaries = practiceQuizService.getPracticeSessionsForStudent(course.getId(), student);
 
         assertThat(summaries).hasSize(1);
         assertThat(summaries.get(0).id()).isEqualTo(100L);
         assertThat(summaries.get(0).score()).isEqualTo(8.0);
-        assertThat(summaries.get(0).totalQuestions()).isEqualTo(2);
         assertThat(summaries.get(0).completed()).isTrue();
     }
 }

@@ -64,7 +64,6 @@ describe('PracticeQuizComponent', () => {
                         { id: 202, text: 'B', isCorrect: false },
                     ],
                 },
-                isAdaptive: true,
                 score: 2,
                 submittedAnswer: '{"selectedOptions":[{"id":201}]}',
             },

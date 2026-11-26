@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -54,9 +54,7 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     private readonly quizService = inject(ArtemisQuizService);
 
     // 2. Component inputs & signals
-    courseId = input<number>();
-    private readonly routeCourseId = signal<number | undefined>(undefined);
-    readonly activeCourseId = computed(() => this.courseId() ?? this.routeCourseId());
+    readonly activeCourseId = signal<number | undefined>(undefined);
 
     readonly state = signal<'OVERVIEW' | 'QUIZ' | 'REVIEW'>('OVERVIEW');
     readonly isLoading = signal<boolean>(false);
@@ -93,14 +91,14 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             const idParam = params.get('courseId');
             if (idParam) {
                 const id = parseInt(idParam, 10);
-                if (id !== this.routeCourseId()) {
+                if (id !== this.activeCourseId()) {
                     // The router reuses this component across courses, so drop the previous course's requests and quiz state
                     this.cancelCourseRequests();
                     this.resetView();
                     this.pastSessions.set([]);
                     this.errorMessage.set(null);
                 }
-                this.routeCourseId.set(id);
+                this.activeCourseId.set(id);
                 this.loadOverview();
             }
         });

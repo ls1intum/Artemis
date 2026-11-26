@@ -189,7 +189,7 @@ public class PracticeQuizService {
             logEntry.setSubmittedAnswer(answerJson);
             logEntry.setAnsweredAt(now);
 
-            reviewQuestions.add(new PracticeQuestionReviewDTO(questionDTO, logEntry.isAdaptive(), questionScore, answerJson, now));
+            reviewQuestions.add(new PracticeQuestionReviewDTO(questionDTO, questionScore, answerJson));
         }
 
         if (!practiceLogRepository.completeSessionWithLogs(sessionId, totalScore, maxPoints, now, logs)) {
@@ -250,8 +250,7 @@ public class PracticeQuizService {
         for (PracticeLog logEntry : logs) {
             PracticeQuestionDTO questionDTO = toPracticeQuestionDTO(itemsById.get(logEntry.getPoolItemId()), true);
             if (questionDTO != null) {
-                reviewQuestions
-                        .add(new PracticeQuestionReviewDTO(questionDTO, logEntry.isAdaptive(), logEntry.getScore(), logEntry.getSubmittedAnswer(), logEntry.getAnsweredAt()));
+                reviewQuestions.add(new PracticeQuestionReviewDTO(questionDTO, logEntry.getScore(), logEntry.getSubmittedAnswer()));
             }
         }
 
@@ -267,10 +266,7 @@ public class PracticeQuizService {
      */
     public List<PracticeSessionSummaryDTO> getPracticeSessionsForStudent(long courseId, User user) {
         List<PracticeSession> sessions = practiceSessionRepository.findAllByUserIdAndCourseIdOrderByStartTimeDesc(user.getId(), courseId);
-        return sessions.stream().map(session -> {
-            List<PracticeLog> logs = practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(session.getId());
-            return PracticeSessionSummaryDTO.of(session, logs.size());
-        }).toList();
+        return sessions.stream().map(PracticeSessionSummaryDTO::of).toList();
     }
 
     /**
@@ -349,10 +345,8 @@ public class PracticeQuizService {
         }
 
         boolean singleChoice = question.type() == QuizQuestionGenerationType.SINGLE_CHOICE;
-        String difficulty = item.getDifficulty() != null ? item.getDifficulty().name() : "MEDIUM";
         String explanation = includeSolution ? question.explanation() : null;
 
-        return new PracticeQuestionDTO(item.getId(), question.title(), question.questionText(), question.hint(), explanation, 1.0, "multiple-choice", optionDTOs, singleChoice,
-                item.getCompetencyId(), difficulty);
+        return new PracticeQuestionDTO(item.getId(), question.title(), question.questionText(), question.hint(), explanation, 1.0, "multiple-choice", optionDTOs, singleChoice);
     }
 }

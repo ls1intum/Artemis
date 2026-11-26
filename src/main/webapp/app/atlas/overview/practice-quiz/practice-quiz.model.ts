@@ -9,7 +9,6 @@ export interface PracticeSessionDTO {
     id: number;
     courseId: number;
     startTime: string;
-    completedAt?: string;
     questions: QuizQuestionWithoutSolution[];
 }
 
@@ -25,10 +24,8 @@ export interface PracticeSubmissionDTO {
 
 export interface PracticeQuestionReviewDTO {
     question: QuizQuestionWithSolution;
-    isAdaptive: boolean;
     score?: number;
     submittedAnswer?: string;
-    answeredAt?: string;
 }
 
 export interface PracticeSessionReviewDTO {

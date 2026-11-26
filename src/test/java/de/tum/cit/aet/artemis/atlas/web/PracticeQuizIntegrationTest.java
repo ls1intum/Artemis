@@ -180,7 +180,6 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
         assertThat(summaries).hasSize(1);
         assertThat(summaries.getFirst().id()).isEqualTo(sessionId);
         assertThat(summaries.getFirst().completed()).isTrue();
-        assertThat(summaries.getFirst().totalQuestions()).isEqualTo(sessionDTO.questions().size());
     }
 
     @Test
