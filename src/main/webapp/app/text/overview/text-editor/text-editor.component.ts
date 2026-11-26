@@ -24,7 +24,13 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import {
+    getAllResultsOfAllSubmissions,
+    getFirstResultWithComplaint,
+    getLatestSubmissionResult,
+    getNewestResult,
+    setLatestSubmissionResult,
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -131,6 +137,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private examSummaryReload?: Subscription;
     private failedExamSummaryReloadResultId?: number;
     private examSummaryReloadResultId?: number;
+    private loadedExamSummaryResultId?: number;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
@@ -223,7 +230,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 // A reload only returns the requested result, so an older one completing later must not replace the newer feedback.
                 const isNewerThanReloaded = newestResultId !== undefined && newestResultId > (this.examSummaryReloadResultId ?? -1);
                 const resultIdToReload = isNewerThanReloaded ? newestResultId : this.failedExamSummaryReloadResultId;
-                this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
+                // The reloaded participation holds the text blocks that the websocket copy lacks, so an update without a newer result keeps it.
+                const newestUpdateResultId = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions))?.id;
+                const isOlderThanLoaded = this.isExamSummary() && newestUpdateResultId !== undefined && newestUpdateResultId <= (this.loadedExamSummaryResultId ?? -1);
+                if (!isOlderThanLoaded) {
+                    this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
+                }
                 if (resultIdToReload !== undefined && this.isExamSummary() && this.participation()?.id !== undefined) {
                     this.reloadForExamSummary(resultIdToReload);
                 }
@@ -243,6 +255,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.examSummaryReloadResultId = resultId;
         this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
             next: (data) => {
+                this.loadedExamSummaryResultId = resultId;
                 this.updateParticipation(data, this.submissionId, resultId);
             },
             error: (error: HttpErrorResponse) => {

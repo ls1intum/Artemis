@@ -1160,6 +1160,27 @@ describe('TextEditorComponent', () => {
             expect(comp.participation()).toBe(newest);
         });
 
+        it('should keep the reloaded exam summary when a later update brings no newer result', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([{ ...athenaResult(true), id: 6 }]);
+            getTextForParticipationStub.mockReturnValue(of(reloaded));
+
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            expect(comp.participation()).toBe(reloaded);
+
+            const olderUpdate = withResults([{ ...athenaResult(true), id: 6 }]);
+            olderUpdate.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+            participationSubject.next(olderUpdate);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledOnce();
+            expect(comp.participation()).toBe(reloaded);
+
+            const newerUpdate = withResults([{ id: 9, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() } as Result]);
+            participationSubject.next(newerUpdate);
+
+            expect(comp.participation()).toBe(newerUpdate);
+        });
+
         it('should not treat an unfinished Athena request as new feedback', () => {
             const participationSubject = openWithParticipation(withResults([]));
             const alertService = TestBed.inject(AlertService);
