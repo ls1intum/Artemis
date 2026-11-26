@@ -364,52 +364,26 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('FeedbackSuggestion:adapted:Null check is missing');
     });
 
-    it('should save a cleared suggestion title as the default title once the title field is left', () => {
+    it('should leave a cleared suggestion title empty and show the default for its points as placeholder', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
         component.feedbackCredits.set(0);
         fixture.detectChanges();
 
         component.onTitleInput('');
-        expect(component.feedbackTitle()).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-
-        component.applyDefaultTitleIfEmpty();
-        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);
-    });
-
-    it('should keep a default suggestion title in line with the points until the assessor types a title', () => {
-        fixture.componentRef.setInput('editable', true);
-        component.feedbackTitle.set(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-        component.feedbackCredits.set(0);
-        fixture.detectChanges();
-        component.applyDefaultTitleIfEmpty();
-
         component.onCreditsChange(2.5);
-        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}artemisApp.feedback.type.positive`);
 
-        component.onTitleInput('Good interface');
-        component.onCreditsChange(-1);
-        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Good interface`);
+        expect(component.feedbackTitle()).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.positive');
     });
 
-    it('should fill the empty title of a regular feedback once it gets a description', () => {
+    it('should leave the empty title of a regular feedback empty once it gets a description', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(undefined);
         component.feedbackCredits.set(0);
         fixture.detectChanges();
 
         component.onDetailChange('The loop never terminates.');
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
-    });
-
-    it('should never write a title while the feedback is read-only', () => {
-        fixture.componentRef.setInput('editable', true);
-        fixture.componentRef.setInput('readOnly', true);
-        component.feedbackTitle.set(undefined);
-        fixture.detectChanges();
-
-        component.applyDefaultTitleIfEmpty();
-        component.applyDefaultTitleIfEmpty();
         expect(component.feedbackTitle()).toBeUndefined();
     });
 
@@ -928,19 +902,18 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-detail-counter').textContent.trim()).toBe('20/500');
     });
 
-    it('should fill a regular feedback title left empty, following later points changes', () => {
+    it('should show the default title for the current points as placeholder while the title is empty', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(undefined);
         component.feedbackCredits.set(-1);
         fixture.detectChanges();
-
-        component.applyDefaultTitleIfEmpty();
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.needsRevision');
 
         // e.g. a dropped grading instruction sets the points from outside the points field
         component.feedbackCredits.set(2);
         fixture.detectChanges();
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.positive');
+        expect(component.feedbackTitle()).toBeUndefined();
     });
 
     /** Binds a feedback as a reopened assessment does: its stored title and points. */
@@ -954,11 +927,12 @@ describe('UnifiedFeedbackComponent', () => {
         return saved;
     };
 
-    it('should keep a saved default title following the points, e.g. once an assessment is reopened', () => {
-        openSaved('artemisApp.feedback.type.feedback', 0);
+    it('should keep a saved title that reads like a default title when the points change', () => {
+        openSaved('artemisApp.feedback.type.positive', 2);
 
-        component.onCreditsChange(-0.5);
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        component.onCreditsChange(-1);
+        fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
     });
 
     it('should keep a typed title when only the points change', () => {
@@ -970,13 +944,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('Good interface');
     });
 
-    it('should let a cleared title follow the points again', () => {
+    it('should let the placeholder of a cleared title follow the points', () => {
         openSaved('Good interface', 2);
 
         component.onTitleInput('');
-        component.applyDefaultTitleIfEmpty();
         component.onCreditsChange(-1);
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+        fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe('');
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
     it('should cut a title and description that bypass the input limits, but keep an older description that exceeds them', () => {
@@ -1008,20 +983,6 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackDetail.set(undefined);
         fixture.detectChanges();
         expect(component.isDetailMissing()).toBe(false);
-    });
-
-    it('should let a consumer fill an untouched empty title on commit', () => {
-        fixture.componentRef.setInput('editable', true);
-        component.feedbackTitle.set(undefined);
-        component.feedbackCredits.set(0);
-        fixture.detectChanges();
-
-        component.applyDefaultTitleIfEmpty();
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
-
-        component.feedbackTitle.set('Loop never ends');
-        component.applyDefaultTitleIfEmpty();
-        expect(component.feedbackTitle()).toBe('Loop never ends');
     });
 
     describe('linked criterion chip', () => {

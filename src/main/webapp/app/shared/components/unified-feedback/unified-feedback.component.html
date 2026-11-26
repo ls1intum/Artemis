@@ -50,7 +50,6 @@
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             (input)="onTitleTextareaInput()"
-                            (blur)="applyDefaultTitleIfEmpty()"
                             [placeholder]="defaultTitlePlaceholder()"
                             [attr.aria-label]="defaultTitlePlaceholder()"
                             [disabled]="readOnly()"

@@ -203,14 +203,6 @@ export class Feedback implements BaseEntity {
         return that.detailText != undefined;
     }
 
-    /** Translation keys of the points-based default titles a feedback gets when its title is left empty. */
-    public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
-
-    /** Whether the title is one of the points-based defaults in the current language, which then follows the points. */
-    public static isDefaultTitle(title: string | undefined, translate: (key: string) => string): boolean {
-        return !!title && Feedback.DEFAULT_TITLE_KEYS.some((key) => translate(key) === title);
-    }
-
     /**
      * Applies a field's character limit the way `maxlength` does for typing, also to values that bypass it (e.g. set by
      * a script): the value cannot grow past the limit, but an older value that already exceeds it is left as it is.

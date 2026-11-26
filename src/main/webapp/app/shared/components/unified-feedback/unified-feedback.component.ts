@@ -12,7 +12,6 @@ import {
     model,
     output,
     signal,
-    untracked,
     viewChild,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
@@ -121,15 +120,6 @@ export class UnifiedFeedbackComponent {
         // The title and the criterion chip repeat themselves in a tooltip once a narrow card cuts them off
         this.observeTruncation(() => [this.titleText()?.nativeElement], this.titleTruncated);
         this.observeTruncation(() => [this.criterionTitle()?.nativeElement, this.gradingScaleSegment()?.nativeElement], this.linkedCriterionTruncated);
-
-        // The points choose the default title, and they can change from outside the points field (e.g. a dropped
-        // grading instruction), so a default title follows every points change, not only the field's own handlers.
-        // Those handlers still refresh it themselves: this effect only runs on the next change detection, while
-        // consumers read the title right away when the points change is emitted.
-        effect(() => {
-            this.feedbackCredits();
-            untracked(() => this.refreshDefaultTitle());
-        });
     }
 
     feedbackContent = input<string>('');
@@ -442,49 +432,6 @@ export class UnifiedFeedbackComponent {
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${title}`);
     }
 
-    /**
-     * Writes the points-based default title if the title is empty, and keeps it following the points until the
-     * assessor types one. An edited feedback thus never keeps an empty title: this runs when the assessor leaves the
-     * title field, and consumers call it when they commit a feedback whose title field was never visited.
-     */
-    applyDefaultTitleIfEmpty(): void {
-        // While the assessor is still in the title field (e.g. cleared it to type a new one), filling it would put
-        // the default in front of what they type; leaving the field fills it instead.
-        const titleInput = this.titleTextarea()?.nativeElement;
-        const isTyping = !!titleInput && titleInput === titleInput.ownerDocument.activeElement;
-        if (!this.isTitleEditable() || this.displayTitle().trim() || isTyping) {
-            return;
-        }
-        this.feedbackTitle.set(`${this.nextTitlePrefix()}${this.defaultTitlePlaceholder()}`);
-    }
-
-    /**
-     * Keeps a default title in line with the points, which choose it. A title counts as generated when it reads like one of the
-     * defaults, so this also holds once a new inline feedback is re-rendered after its first commit, or when an assessment is
-     * reopened. An untouched (accepted) suggestion is never rewritten, so opening one does not mark it adapted.
-     */
-    private refreshDefaultTitle(): void {
-        if (!this.isTitleEditable() || !this.isDefaultTitleShown() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
-            return;
-        }
-        const defaultTitle = this.defaultTitlePlaceholder();
-        if (this.displayTitle().trim() !== defaultTitle) {
-            this.feedbackTitle.set(`${this.nextTitlePrefix()}${defaultTitle}`);
-        }
-    }
-
-    private isDefaultTitleShown(): boolean {
-        return Feedback.isDefaultTitle(this.displayTitle().trim(), (key) => this.artemisTranslatePipe.transform(key));
-    }
-
-    /**
-     * The title is only ever written while the assessor can edit it, never for a read-only or displayed-only feedback,
-     * nor when the parent generates the title (e.g. the file and line of programming inline feedback).
-     */
-    private isTitleEditable(): boolean {
-        return this.editable() && this.titleEditable() && !this.readOnly();
-    }
-
     onTitleTextareaInput(): void {
         this.autogrowTitleTextarea();
     }
@@ -492,9 +439,6 @@ export class UnifiedFeedbackComponent {
     onDetailChange(value: string): void {
         this.feedbackDetail.set(Feedback.withinLength(value, this.feedbackDetail() ?? '', this.DETAIL_MAX_LENGTH));
         this.markAdaptedIfSuggestion();
-        // The moment a feedback gets content (a description or points), an empty title is filled with the default,
-        // so a feedback whose title field was never visited is not saved without a heading.
-        this.applyDefaultTitleIfEmpty();
     }
 
     /**
@@ -505,8 +449,6 @@ export class UnifiedFeedbackComponent {
     onCreditsChange(value: number | undefined): void {
         this.feedbackCredits.set(value);
         this.markAdaptedIfSuggestion();
-        this.refreshDefaultTitle();
-        this.applyDefaultTitleIfEmpty();
     }
 
     /**
@@ -517,8 +459,6 @@ export class UnifiedFeedbackComponent {
         const normalized = this.normalizedCredits(this.feedbackCredits());
         if (normalized !== this.feedbackCredits()) {
             this.feedbackCredits.set(normalized);
-            // Snapping can change the sign the default title follows, e.g. 0.2 to 0.
-            this.refreshDefaultTitle();
         }
     }
 
