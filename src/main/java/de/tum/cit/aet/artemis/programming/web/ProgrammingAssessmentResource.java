@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -150,7 +151,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<ProgrammingAssessmentResultDTO> saveProgrammingAssessment(@PathVariable Long participationId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ProgrammingManualResultRequestDTO manualResultBody) {
         log.debug("REST request to save a new result : {}", manualResultBody);
-        Result newManualResult = manualResultBody.toEntity();
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
         User user = userRepository.getUserWithAuthorities();
@@ -159,6 +159,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
             throw new BadRequestAlertException("The participation does not belong to a programming exercise", ENTITY_NAME, "invalidExerciseType");
         }
+        // before the conversion, which rounds the score and fails on a non-finite one
+        if (manualResultBody.score() != null) {
+            BaseExercise.checkScoreIsFiniteElseThrow(manualResultBody.score());
+        }
+        Result newManualResult = manualResultBody.toEntity();
 
         // Write the manual result the tutor loaded. A submission can hold several manual results (correction rounds, overlapping
         // lock requests), and the feedback ids in the request only belong to the loaded one. Without an id, the most recent one is used.
@@ -202,6 +207,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (newManualResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }
+        // the client calculates the score and the server stores it as it is, so the limit the client applies has to be enforced here as well
+        programmingExercise.checkScoreWithinBoundsElseThrow(newManualResult.getScore());
         if (newManualResult.getScore() < 100 && newManualResult.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         }
