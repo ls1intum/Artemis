@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -253,6 +253,27 @@ describe('PracticeQuizComponent', () => {
         expect(component.activeQuestions()).toEqual([]);
         expect(component.selectedAnswerOptions()).toEqual({});
         expect(pastSpy).toHaveBeenCalledWith(2);
+    });
+
+    it('should cancel pending requests of the previous course when the route switches to another course', () => {
+        const pendingStart = new Subject<PracticeSessionDTO>();
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));
+        vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([]));
+        vi.spyOn(practiceQuizService, 'startSession').mockReturnValue(pendingStart);
+
+        component.ngOnInit();
+        component.startNewQuiz();
+        expect(component.isLoading()).toBe(true);
+        expect(pendingStart.observed).toBe(true);
+
+        paramMap.next(convertToParamMap({ courseId: '2' }));
+
+        expect(pendingStart.observed).toBe(false);
+        pendingStart.next(mockSession);
+        expect(component.activeCourseId()).toBe(2);
+        expect(component.state()).toBe('OVERVIEW');
+        expect(component.currentSession()).toBeNull();
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should show the readable server error instead of its translation key when generation fails', () => {

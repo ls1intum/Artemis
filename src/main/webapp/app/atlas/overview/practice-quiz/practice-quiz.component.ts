@@ -85,6 +85,8 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
     readonly faHistory = faHistory;
 
     private paramSub?: Subscription;
+    /** Requests for the active course; cancelled when the course changes so a late response cannot overwrite the new course's view. */
+    private courseRequests = new Subscription();
 
     ngOnInit(): void {
         this.paramSub = this.route.parent?.paramMap.subscribe((params) => {
@@ -92,7 +94,8 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
             if (idParam) {
                 const id = parseInt(idParam, 10);
                 if (id !== this.routeCourseId()) {
-                    // The router reuses this component across courses, so drop the previous course's quiz state
+                    // The router reuses this component across courses, so drop the previous course's requests and quiz state
+                    this.cancelCourseRequests();
                     this.resetView();
                     this.pastSessions.set([]);
                     this.errorMessage.set(null);
@@ -105,6 +108,14 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.paramSub?.unsubscribe();
+        this.courseRequests.unsubscribe();
+    }
+
+    private cancelCourseRequests(): void {
+        this.courseRequests.unsubscribe();
+        this.courseRequests = new Subscription();
+        this.isLoading.set(false);
+        this.isSubmitting.set(false);
     }
 
     /**
@@ -120,32 +131,36 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         this.errorMessage.set(null);
 
         // Check for an active session in progress first
-        this.practiceQuizService.getCurrentSession(cId).subscribe({
-            next: (session) => {
-                if (session && session.questions && session.questions.length > 0) {
-                    this.setupQuizSession(session);
-                    this.isLoading.set(false);
-                } else {
+        this.courseRequests.add(
+            this.practiceQuizService.getCurrentSession(cId).subscribe({
+                next: (session) => {
+                    if (session && session.questions && session.questions.length > 0) {
+                        this.setupQuizSession(session);
+                        this.isLoading.set(false);
+                    } else {
+                        this.loadPastSessions(cId);
+                    }
+                },
+                error: () => {
                     this.loadPastSessions(cId);
-                }
-            },
-            error: () => {
-                this.loadPastSessions(cId);
-            },
-        });
+                },
+            }),
+        );
     }
 
     private loadPastSessions(cId: number): void {
-        this.practiceQuizService.getPastSessions(cId).subscribe({
-            next: (sessions) => {
-                this.pastSessions.set(sessions);
-                this.isLoading.set(false);
-            },
-            error: (err) => {
-                this.isLoading.set(false);
-                this.errorMessage.set(this.readableError(err, 'Failed to load past sessions.'));
-            },
-        });
+        this.courseRequests.add(
+            this.practiceQuizService.getPastSessions(cId).subscribe({
+                next: (sessions) => {
+                    this.pastSessions.set(sessions);
+                    this.isLoading.set(false);
+                },
+                error: (err) => {
+                    this.isLoading.set(false);
+                    this.errorMessage.set(this.readableError(err, 'Failed to load past sessions.'));
+                },
+            }),
+        );
     }
 
     /**
@@ -160,18 +175,20 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         this.errorMessage.set(null);
 
-        this.practiceQuizService.startSession(cId).subscribe({
-            next: (session) => {
-                this.setupQuizSession(session);
-                this.isLoading.set(false);
-            },
-            error: (err) => {
-                this.isLoading.set(false);
-                const msg = this.readableError(err, 'No quiz questions available for practice in this course yet.');
-                this.alertService.error(msg);
-                this.errorMessage.set(msg);
-            },
-        });
+        this.courseRequests.add(
+            this.practiceQuizService.startSession(cId).subscribe({
+                next: (session) => {
+                    this.setupQuizSession(session);
+                    this.isLoading.set(false);
+                },
+                error: (err) => {
+                    this.isLoading.set(false);
+                    const msg = this.readableError(err, 'No quiz questions available for practice in this course yet.');
+                    this.alertService.error(msg);
+                    this.errorMessage.set(msg);
+                },
+            }),
+        );
     }
 
     setupQuizSession(session: PracticeSessionDTO): void {
@@ -248,20 +265,22 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
 
         const submission: PracticeSubmissionDTO = { answers };
 
-        this.practiceQuizService.submitSession(cId, session.id, submission).subscribe({
-            next: (review) => {
-                this.setupReview(review);
-                this.currentSession.set(null);
-                this.activeQuestions.set([]);
-                this.isSubmitting.set(false);
-            },
-            error: (err) => {
-                this.isSubmitting.set(false);
-                const msg = this.readableError(err, 'Failed to submit quiz.');
-                this.alertService.error(msg);
-                this.errorMessage.set(msg);
-            },
-        });
+        this.courseRequests.add(
+            this.practiceQuizService.submitSession(cId, session.id, submission).subscribe({
+                next: (review) => {
+                    this.setupReview(review);
+                    this.currentSession.set(null);
+                    this.activeQuestions.set([]);
+                    this.isSubmitting.set(false);
+                },
+                error: (err) => {
+                    this.isSubmitting.set(false);
+                    const msg = this.readableError(err, 'Failed to submit quiz.');
+                    this.alertService.error(msg);
+                    this.errorMessage.set(msg);
+                },
+            }),
+        );
     }
 
     /**
@@ -276,17 +295,19 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         this.errorMessage.set(null);
 
-        this.practiceQuizService.getSessionReview(cId, sessionId).subscribe({
-            next: (review) => {
-                this.setupReview(review);
-                this.isLoading.set(false);
-            },
-            error: (err) => {
-                this.isLoading.set(false);
-                const msg = this.readableError(err, 'Failed to load session review.');
-                this.alertService.error(msg);
-            },
-        });
+        this.courseRequests.add(
+            this.practiceQuizService.getSessionReview(cId, sessionId).subscribe({
+                next: (review) => {
+                    this.setupReview(review);
+                    this.isLoading.set(false);
+                },
+                error: (err) => {
+                    this.isLoading.set(false);
+                    const msg = this.readableError(err, 'Failed to load session review.');
+                    this.alertService.error(msg);
+                },
+            }),
+        );
     }
 
     setupReview(review: PracticeSessionReviewDTO): void {
