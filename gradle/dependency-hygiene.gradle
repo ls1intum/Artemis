@@ -1,0 +1,164 @@
+// Guards the shipped runtime classpath against jars that should not be there and against the same class being shipped twice.
+//
+// WHY: dependency-families.gradle keeps the members of one library family on one version. It cannot see two jars that
+// carry the SAME classes, because they have different coordinates, and Gradle's conflict resolution only merges equal
+// coordinates. The JVM then loads whichever copy comes first on the classpath, so bumping only one of the two jars turns
+// into a LinkageError or a silently wrong behaviour that no build step reports. Findings of the 10.8 dependency review:
+//
+//   * org.apache.sshd:sshd-osgi repackages sshd-core and sshd-common: all 1075 of its classes were also in the other two
+//     jars. JGit's ssh.apache module asks for sshd-osgi, and Artemis also declared sshd-core, so every SSH class existed twice.
+//   * Stanford CoreNLP (through JPlag Text) brought com.sun.xml.bind:jaxb-impl and jaxb-core, which are the same classes as
+//     org.glassfish.jaxb:jaxb-runtime and jaxb-core that Hibernate brings.
+//   * The runtime classpath carried a complete Jersey client stack (jersey-client, HK2, javassist, mimepull) for the GitLab
+//     client of gitlab4j-api. GitLab support was removed in #10382, and the Sharing Platform API only uses gitlab4j-api's model
+//     classes. It also carried Lombok (declared as a runtime dependency by the Weaviate client) and two HTTP transports for
+//     the Kubernetes client, because an exclude named kubernetes-httpclient-vertx while the module had been renamed to
+//     kubernetes-httpclient-vertx-5. None of these failed anything; each was found by reading the SBOM.
+//
+// WHAT IS CHECKED, against the RESOLVED runtimeClasspath, i.e. what the WAR contains:
+//   A. No jar of `forbiddenRuntimeModules` is on the runtime classpath. These are artifacts that were removed on purpose and
+//      came back, or that must stay a compile-time-only dependency, listed with the reason.
+//   B. No class (outside module-info, package-info and the multi-release `META-INF/versions` copies) is contained in more
+//      than one jar, unless exactly that set of jars is in `allowedDuplicateClassJars` with a reason.
+//
+// A failure means: exclude the redundant jar (preferably at the dependency that brings it, with a comment), or, when the
+// overlap is unavoidable, add the set of jars to the allowlist with the reason. The list should stay short.
+//
+// Wired into `check`, and therefore into CI, but it opens every jar of runtimeClasspath, so it is deliberately not wired
+// into `compileJava`.
+
+/**
+ * Artifacts that must not be on the runtime classpath. Keyed by `group:artifact`, valued by the reason.
+ */
+def forbiddenRuntimeModules = [
+    'org.projectlombok:lombok'                     : 'Lombok is a compile-time tool and Artemis does not use it. The Weaviate client declares it as a runtime dependency; exclude it there.',
+    'org.glassfish.jersey.core:jersey-client'      : 'The Jersey client (with HK2, javassist, the Jackson 2 and multipart media modules) only served the GitLab client that gitlab4j-api carries. GitLab support was removed in #10382; exclude it where the Sharing Platform API brings it.',
+    'org.glassfish.jersey.inject:jersey-hk2'       : 'See jersey-client: the Jersey client stack is not used.',
+    'io.fabric8:kubernetes-httpclient-vertx'       : 'The Kubernetes client uses the OkHttp transport (kubernetes-httpclient-okhttp). A second transport makes the client ambiguous and pulls in Vert.x.',
+    'io.fabric8:kubernetes-httpclient-vertx-5'     : 'The Kubernetes client uses the OkHttp transport (kubernetes-httpclient-okhttp). A second transport makes the client ambiguous and pulls in Vert.x.',
+    'io.fabric8:kubernetes-httpclient-jdk'         : 'The Kubernetes client uses the OkHttp transport (kubernetes-httpclient-okhttp). A second transport makes the client ambiguous.',
+    'org.apache.sshd:sshd-osgi'                    : 'sshd-osgi repackages every class of sshd-core and sshd-common. Use the regular jars; exclude it from org.eclipse.jgit.ssh.apache.',
+    'com.sun.xml.bind:jaxb-impl'                   : 'Duplicates org.glassfish.jaxb:jaxb-runtime, which Hibernate brings. Exclude it where it comes from (Stanford CoreNLP).',
+    'com.sun.xml.bind:jaxb-core'                   : 'Duplicates org.glassfish.jaxb:jaxb-core, which Hibernate brings. Exclude it where it comes from (Stanford CoreNLP).',
+    'jakarta.servlet:jakarta.servlet-api'          : 'tomcat-embed-core (spring-boot-starter-tomcat) already contains the Servlet API. Exclude it where it is brought in (webauthn4j, Stanford CoreNLP).',
+]
+
+/**
+ * Sets of jars that legitimately share classes. Keyed by the sorted `group:artifact` coordinates joined with ' + ', valued by
+ * the reason. Every entry is a decision: it hides a second copy of those classes from this check.
+ */
+def allowedDuplicateClassJars = [
+    'commons-logging:commons-logging + org.slf4j:jcl-over-slf4j': 'jcl-over-slf4j is the deliberate bridge that routes Jakarta Commons Logging calls of libraries (PDFBox, Apache HttpClient 4) to SLF4J, while Spring Core declares ' +
+            'commons-logging itself. The five overlapping classes are the JCL API, both jars are meant to be present, and the bridge has to win. Revisit if Spring drops the commons-logging dependency.',
+]
+
+/**
+ * Finds classes that exist in more than one jar.
+ *
+ * @param jarClasses coordinate (`group:artifact`) -> the class entry names of that jar
+ * @return the sorted coordinate list joined with ' + ' -> the classes the jars share, for every group of jars that shares at least one class
+ */
+static Map<String, List<String>> findSharedClasses(Map<String, Collection<String>> jarClasses) {
+    def owners = [:].withDefault { new TreeSet<String>() }
+    jarClasses.each { coordinate, classes ->
+        classes.each { name ->
+            // Multi-release variants and the module descriptors exist once per jar by design.
+            if (name.endsWith('module-info.class') || name.endsWith('package-info.class') || name.startsWith('META-INF/')) {
+                return
+            }
+            owners[name] << coordinate
+        }
+    }
+    def shared = [:].withDefault { [] }
+    owners.each { name, coordinates ->
+        if (coordinates.size() > 1) {
+            shared[coordinates.join(' + ')] << name
+        }
+    }
+    return shared.collectEntries { key, names -> [key, names.sort()] }
+}
+
+/**
+ * Self-check for {@link #findSharedClasses}. There is no Groovy test harness in this repository, and a scanner that silently
+ * finds nothing would wave through exactly the overlap the task exists to catch, so it verifies itself before being trusted.
+ */
+static void verifyDuplicateClassScanner() {
+    def found = findSharedClasses([
+        'a:one'  : ['p/A.class', 'p/B.class', 'module-info.class', 'p/package-info.class', 'META-INF/versions/9/p/A.class'],
+        'b:two'  : ['p/A.class', 'p/B.class', 'module-info.class', 'p/package-info.class', 'META-INF/versions/9/p/A.class'],
+        'c:three': ['p/C.class'],
+        'd:four' : ['p/B.class', 'p/D.class'],
+    ])
+    // B is in three jars, A in two; the sets differ, so they are reported as two groups.
+    if (found.keySet() != ['a:one + b:two', 'a:one + b:two + d:four'] as Set || found['a:one + b:two'] != ['p/A.class'] || found['a:one + b:two + d:four'] != ['p/B.class']) {
+        throw new GradleException("Duplicate class scanner is broken: unexpected result ${found}.")
+    }
+    if (!findSharedClasses(['a:one': ['p/A.class'], 'b:two': ['p/B.class']]).isEmpty()) {
+        throw new GradleException('Duplicate class scanner is broken: disjoint jars must not report anything.')
+    }
+}
+
+tasks.register('verifyRuntimeClasspathHygiene') {
+    group = 'verification'
+    description = 'Fails if the runtime classpath contains a forbidden artifact or the same class in more than one jar.'
+
+    def artifacts = configurations.named('runtimeClasspath').flatMap { it.incoming.artifacts.resolvedArtifacts }
+    def forbidden = forbiddenRuntimeModules
+    def allowed = allowedDuplicateClassJars
+
+    doLast {
+        verifyDuplicateClassScanner()
+        def problems = []
+        def jarClasses = [:]
+        artifacts.get().each { artifact ->
+            def id = artifact.id.componentIdentifier
+            if (!(id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) || !artifact.file.name.endsWith('.jar')) {
+                return
+            }
+            def coordinate = "${id.group}:${id.module}".toString()
+            def reason = forbidden[coordinate]
+            if (reason != null) {
+                problems << "'${coordinate}:${id.version}' must not be on the runtime classpath. ${reason}"
+            }
+            def names = [] as List<String>
+            new java.util.zip.ZipFile(artifact.file).withCloseable { zip ->
+                zip.entries().each { entry ->
+                    if (!entry.directory && entry.name.endsWith('.class')) {
+                        names << entry.name
+                    }
+                }
+            }
+            jarClasses.merge(coordinate, names, { a, b -> a + b })
+        }
+
+        // The runtime classpath of the root project always carries hundreds of jars; an (almost) empty scan means this task
+        // is looking at the wrong configuration and every check below would pass for the wrong reason.
+        if (jarClasses.size() < 100) {
+            throw new GradleException("Runtime classpath verification looked at only ${jarClasses.size()} jars; expected the application's runtime classpath.")
+        }
+
+        def shared = findSharedClasses(jarClasses)
+        shared.each { jars, classes ->
+            if (!allowed.containsKey(jars)) {
+                def sample = classes.take(5).collect { it.replace('/', '.').replaceAll(/\.class$/, '') }.join(', ')
+                problems << "${classes.size()} class(es) exist in more than one jar: ${jars}\n" +
+                        "    e.g. ${sample}${classes.size() > 5 ? ', ...' : ''}\n" +
+                        '    Exclude the redundant jar where it is brought in, or add exactly this set of jars to allowedDuplicateClassJars in gradle/dependency-hygiene.gradle with the reason.'
+            }
+        }
+        allowed.each { jars, reason ->
+            if (!shared.containsKey(jars)) {
+                problems << "allowedDuplicateClassJars lists '${jars}', but those jars no longer share classes. Remove the entry (reason was: ${reason})."
+            }
+        }
+
+        if (problems) {
+            throw new GradleException("Runtime classpath verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
+        }
+        logger.lifecycle("Runtime classpath verified: ${jarClasses.size()} jars, ${forbidden.size()} forbidden artifacts absent, ${allowed.size()} allowed overlaps.")
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyRuntimeClasspathHygiene'
+}

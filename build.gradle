@@ -151,6 +151,7 @@ apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
+apply from: "gradle/dependency-hygiene.gradle"
 apply from: "gradle/sonar.gradle"
 
 // The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
