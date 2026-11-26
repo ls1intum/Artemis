@@ -1,5 +1,7 @@
 import { Service, inject } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, map, of } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -18,6 +20,9 @@ export class AthenaService {
     private readonly athenaApi = inject(AthenaApi);
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
+
+    /** The assessment shows its own error for a failed suggestion request, so the global HTTP alert stays silent. */
+    private readonly skipErrorAlert = { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) };
 
     /**
      * Get feedback suggestions for the given submission from Athena
@@ -60,7 +65,7 @@ export class AthenaService {
      * with the "FeedbackSuggestion:accepted:" prefix
      */
     public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<(TextBlockRef | Feedback)[]> {
-        return this.getFeedbackSuggestions(() => this.athenaApi.getTextFeedbackSuggestions(exercise.id!, submission.id!)).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getTextFeedbackSuggestions(exercise.id!, submission.id!, this.skipErrorAlert)).pipe(
             map((suggestions) => {
                 // Convert referenced feedback suggestions to TextBlockRefs for easier handling in the components
                 return suggestions.map((suggestion) => {
@@ -99,7 +104,7 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
-        return this.getFeedbackSuggestions(() => this.athenaApi.getProgrammingFeedbackSuggestions(exercise.id!, submissionId)).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getProgrammingFeedbackSuggestions(exercise.id!, submissionId, this.skipErrorAlert)).pipe(
             map((suggestions) => {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();

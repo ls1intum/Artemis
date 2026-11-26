@@ -334,11 +334,13 @@ describe('TextSubmissionAssessmentComponent', () => {
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
             const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
             vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 
             component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
             await fixture.whenStable();
 
             expect(refreshSpy).toHaveBeenCalled();
+            expect(errorSpy).not.toHaveBeenCalled();
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
     });
@@ -943,6 +945,25 @@ describe('TextSubmissionAssessmentComponent', () => {
         await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
+    });
+
+    it('should cancel a pending feedback-suggestions request when the component is reused for a new submission', async () => {
+        component.textBlockRefs = [];
+        component.unreferencedFeedback.set([]);
+        const subject = new Subject<(TextBlockRef | Feedback)[]>();
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(subject.asObservable());
+
+        component.loadFeedbackSuggestions();
+        // The component is reused for a new assessment before the stale request resolves.
+        component['resetComponent']();
+
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        subject.next([feedbackSuggestionTextBlockRef]);
+        subject.complete();
+        await fixture.whenStable();
+
+        // The stale response must not leak into the reused component's state.
+        expect(component.textBlockRefs).toHaveLength(0);
     });
 
     it.each([

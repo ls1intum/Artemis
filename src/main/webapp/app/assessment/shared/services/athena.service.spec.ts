@@ -17,6 +17,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 describe('AthenaService', () => {
     let service: AthenaService;
@@ -80,8 +81,20 @@ describe('AthenaService', () => {
 
     it('propagates an Athena error', async () => {
         const result = lastValueFrom(service.getProgrammingFeedbackSuggestions(exerciseBase, 9));
-        httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush(null, { status: 503, statusText: 'Service Unavailable' });
+        const request = httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions');
+        // The assessment shows its own error, so the global HTTP alert stays silent.
+        expect(request.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        request.flush(null, { status: 503, statusText: 'Service Unavailable' });
         await expect(result).rejects.toMatchObject({ status: 503 });
+    });
+
+    it('keeps the global HTTP alert silent for a failed text suggestion request', async () => {
+        const result = lastValueFrom(service.getTextFeedbackSuggestions(exerciseBase, { id: 5 } as TextSubmission));
+        const request = httpMock.expectOne('/api/athena/text-exercises/10/submissions/5/feedback-suggestions');
+        // The text assessment shows its own error, so a second, generic alert must not appear.
+        expect(request.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        request.flush(null, { status: 403, statusText: 'Forbidden' });
+        await expect(result).rejects.toMatchObject({ status: 403 });
     });
 
     it('should rehydrate grading instructions for text suggestions', async () => {

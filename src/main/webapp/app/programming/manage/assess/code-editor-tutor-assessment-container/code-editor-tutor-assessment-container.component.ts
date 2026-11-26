@@ -210,6 +210,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateFileSession: { [fileName: string]: string } = {};
 
     hasPendingChanges = false;
+    // Incremented whenever a suggestion request starts or an assessment navigation begins, so a response for an
+    // earlier request can recognise that it is stale and must not touch the current assessment.
+    private feedbackSuggestionsRequestGeneration = 0;
+    // Incremented whenever an assessment navigation begins, so a load that a later navigation replaced does not rewrite the URL.
+    // Kept apart from the suggestion generation, which every suggestion request also increments.
+    private assessmentLoadGeneration = 0;
 
     // listener, will get notified upon loading of feedback
     readonly onFeedbackLoaded = output();
@@ -275,6 +281,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
             // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
             this.assessmentNotPossibleYet.set(undefined);
+            // The previous submission stays loaded until the next one arrives, so a suggestion response arriving in
+            // between would otherwise still pass as current. Invalidate it as soon as the navigation starts.
+            this.feedbackSuggestionsRequestGeneration++;
+            this.assessmentLoadGeneration++;
+            this.loadingFeedbackSuggestions.set(false);
             this.resultNotFound.set(false);
 
             this.courseId = Number(params['courseId']);
@@ -339,12 +350,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * If a subscription exists for paramSub, unsubscribe
+     * If a subscription exists for paramSub, unsubscribe, and mark pending feedback suggestion requests as stale
      */
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        // A request still pending after the assessor left must not show its error on the next page.
+        this.feedbackSuggestionsRequestGeneration++;
+        this.assessmentLoadGeneration++;
     }
 
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
@@ -366,8 +380,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
         // validate feedback here already so that overrides are possible for assessment note changes
         // without touching the feedbacks
+        const loadGeneration = this.assessmentLoadGeneration;
         await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
-        if (submissionId === 'new') {
+        if (submissionId === 'new' && loadGeneration === this.assessmentLoadGeneration) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty and
             // using it here rewrites the address to the application root once the submission has loaded.
@@ -501,17 +516,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private async loadFeedbackSuggestions(): Promise<void> {
         // The component is reused across submissions on param-only navigation, so a response for an earlier
-        // submission can arrive after a later one has loaded. Pin the identities here and re-check them below
-        // before mutating anything, mirroring the guard in ModelingAssessmentEditorComponent.fetchAndApplyFeedbackSuggestions.
-        const submissionAtStart = this.submission();
-        const manualResultAtStart = this.manualResult();
-        if (!submissionAtStart) {
-            return;
-        }
+        // submission can arrive after the navigation to a later one has started. Only the latest request may
+        // mutate the assessment, show an error, or clear the loading state.
+        const requestGeneration = ++this.feedbackSuggestionsRequestGeneration;
+        const isStale = () => requestGeneration !== this.feedbackSuggestionsRequestGeneration;
+        // A save or submit that completes while the request is in flight replaces the manual result without starting a new
+        // request, so the generation alone cannot tell that the suggestions would end up on a result they were not requested for.
+        const requestedManualResult = this.manualResult();
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionAtStart.id!))) ?? [];
-            if (this.submission() !== submissionAtStart || this.manualResult() !== manualResultAtStart) {
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            if (isStale() || this.manualResult() !== requestedManualResult) {
                 return;
             }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
@@ -537,13 +552,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.validateFeedback();
             }
         } catch (error) {
+            if (isStale()) {
+                return;
+            }
             if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
                 // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
                 // this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
                 await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            } else {
+                // Not onError(): that also clears the save/submit busy flags, which a pending save still relies on.
+                this.alertService.error('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
             }
         } finally {
-            if (this.submission() === submissionAtStart) {
+            if (!isStale()) {
                 this.loadingFeedbackSuggestions.set(false);
             }
         }
@@ -650,6 +671,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation.set(true);
         this.submission.set(undefined);
+        // The manual result stays in place until the lookup below navigates, so a suggestion response arriving in between
+        // would otherwise still pass as current.
+        this.feedbackSuggestionsRequestGeneration++;
+        this.loadingFeedbackSuggestions.set(false);
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise().id!, true, this.correctionRound()).subscribe({
             next: (response?: ProgrammingSubmission) => {
                 this.loadingParticipation.set(false);
