@@ -1,0 +1,125 @@
+---
+id: query-report
+title: Query Report for Pull Requests
+sidebar_label: Query Report
+last_reviewed: 2026-11-26
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import queryReportDeployment from './assets/query-report/QueryReportDeployment.svg';
+
+CI reports database query anti-patterns on pull requests: which queries a request repeated while the
+[Playwright tests](./e2e-testing-playwright.mdx) ran, and which places in the server code a source scan flags. It
+compares both with `develop` and shows what the pull request adds. The report is advisory and never fails a job. For how
+to fix a finding, see the [performance guidelines](./guidelines/performance.mdx).
+
+## What It Reports
+
+Every finding is a yes/no rule about one request, without a count threshold. Query time is not measured, because it varies
+too much in CI.
+
+| Finding | Meaning |
+| --- | --- |
+| **N+1** | One request ran the same query more than once with different parameters. |
+| **Duplicate** | One request ran the same query more than once with the same parameters, from one place in the code or from several. |
+| **Row-by-row insert** | One request wrote rows one statement at a time. The SQL does not tell whether a loop or generated ids are the cause, so these rank after all other findings. |
+| **Static finding** | The source scan matched one of the rules below. |
+
+The source scan, `supporting_scripts/find_slow_queries.py`, has these rules:
+
+* Repository call in a loop
+* Several collections fetched in one query
+* Collection fetched in a paged query
+* `EAGER` to-many association
+* More than 5 `JOIN FETCH` clauses in one `@Query`
+* More than 5 `@EntityGraph` attribute paths
+
+The separate **Query Quality Check** runs the same scan and does fail a pull request when the number of over-fetching
+`@Query` or `@EntityGraph` declarations exceeds its limit.
+
+## How It Works
+
+The detector in the server is only active with the Spring profile `e2e-performance`, which
+`deployment/docker/artemis/config/playwright.env` enables for the E2E runs. The diagram shows a pull request run.
+
+<Image src={queryReportDeployment} alt="Deployment diagram of the query report: the CI runner with the tests, the server, the database and the two scripts, and GitHub with the baseline, the report and the comments" size={ImageSize.large}/>
+
+1. The Playwright tests send requests. Each request carries the test name and a phase: **action** for what the browser
+   page requests, **setup** for the API calls a test uses to prepare data.
+2. `QueryListener` receives every SQL statement through a datasource proxy.
+3. `QueryCollector` counts the statements of one request by the code that issued them. When the request ends,
+   `QueryRequestFilter` turns the repeated ones into findings.
+4. After the tests, the global teardown (`src/test/playwright/init/global-teardown.ts`) fetches the findings of every
+   server node from `GET api/admin/performance/query-report`, while the servers are still running.
+5. `supporting_scripts/analyze_query_report.sh` runs the source scan and `format_query_report.py`, which compares the
+   findings with the baseline and writes the report and the comments.
+
+The server keeps one finding per distinct case, at most `artemis.performance.max-recorded-queries` (default 30,000).
+
+## Read the Report
+
+| Where | What it shows |
+| --- | --- |
+| E2E comment on the pull request | The new repeated queries, grouped by the place a fix goes, and the new static findings. Without anything new, it is one line. Long tables are cut off and link to the full report. |
+| Review comments on lines of code | New N+1 and one-place duplicate findings, and new static findings, if their line is part of the diff. |
+| HTML artifact of the run | Every finding. The tab **New in this PR** appears when there is a baseline, next to **Repeated Queries** and **Static Findings**. |
+
+Findings carry up to two tags. **static rule agrees** means that the loop rule flags the same repository call in the same
+method. **not indexed** means that no index of the test database starts with the columns the repeated query filters on.
+This check reads the SQL text and the list of indexes, not a query plan. It is worth fixing first, because every
+repetition reads the whole table once the table is large.
+
+A review comment sits on the line where the run first saw the query. If a method issues the same query on a second line,
+the comment can therefore sit on the first one, and if that line is not part of the diff, the finding appears only in the
+summary comment. Duplicates from several places and row-by-row inserts have no single line and appear only there too.
+
+## Comparison with Develop
+
+Each finding has a key made of what identifies it: its kind, endpoint, repository method, calling method and query.
+Test names, counts and line numbers are not part of it. E2E runs on `develop` upload their keys as the artifact
+`Query Baseline`, and pull request runs mark the keys that the latest one lacks as new.
+
+A run is incomplete if the source scan failed, the server dropped findings at its limit, or the tests did not succeed.
+An incomplete run publishes no baseline and leaves earlier review comments as they are, so that missing data never looks
+like a fixed problem. Only a run of all tests removes review comments whose finding is gone.
+
+| Message in the comment | Meaning |
+| --- | --- |
+| No develop baseline is available yet | No `develop` run has published keys, so nothing is marked as new. |
+| Incomplete comparison | One of the three reasons above applies. Findings may be missing. |
+| Query Report Unavailable | The run produced no report, or formatting it failed. The job log says why. |
+
+## Limitations
+
+* The report only sees code that the E2E tests run, and only queries of HTTP requests.
+* A single query that loads a large collection is not a repeated query. Only the static rules can point at it.
+* The test data is small, so the report says nothing about query time on production data.
+
+## Run the Report Locally
+
+Start the server with the `e2e-performance` profile in addition to your usual ones, then use the application or run the
+Playwright tests. A Playwright run saves the findings as `src/test/playwright/test-reports/query-report.json`. Without
+one, save the response of the report endpoint, which requires an administrator, as `report.json`. Then run from the
+repository root:
+
+```bash
+python3 supporting_scripts/find_slow_queries.py --json static-findings.json
+python3 supporting_scripts/format_query_report.py report.json "" query-report.html static-findings.json
+```
+
+The second command prints the summary comment and writes the HTML report. Add `--baseline` with a downloaded
+`query-keys.json` to mark new findings.
+
+## Change the Report
+
+The [`query-report` skill](https://github.com/ls1intum/Artemis/blob/develop/skills/query-report/SKILL.md) describes the
+files, how to add a rule or a report field, what has to stay stable between runs and how to find out why a report is
+noisy or incomplete. It is written for [coding agents](./work-with-ai.mdx) and reads as well for developers.
+
+Run the tests of the scripts with:
+
+```bash
+python3 -m unittest discover -s supporting_scripts -p "test_*quer*.py"
+node --test supporting_scripts/tests/query-report-merge.test.mjs .github/scripts/post-inline-query-comments.test.cjs
+```

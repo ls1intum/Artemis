@@ -71,6 +71,7 @@ const sidebars: SidebarsConfig = {
         'client-style-comparison',
         'nightly-ci',
         'code-quality-analysis',
+        'query-report',
         'spring-ai',
         'ai-pipelines',
         'deimos',
