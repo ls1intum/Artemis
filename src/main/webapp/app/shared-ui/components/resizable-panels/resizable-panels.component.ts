@@ -93,12 +93,21 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      */
     readonly leftMinSizePercent = input(0);
     /**
-     * {@link leftMinSizePercent}, capped so the right panel can still be dragged as wide again as {@link collapseSnapPercent}.
+     * Smallest width (px) the left panel keeps, for content that needs a fixed room whatever the size of the split. It is turned
+     * into a share of the split's current width, and the larger of it and {@link leftMinSizePercent} applies. 0 leaves it unbounded.
+     */
+    readonly leftMinWidthPx = input(0);
+    /** Width of the split, which {@link leftMinWidthPx} is a share of; only measured when that minimum is set. */
+    private readonly hostWidth = signal(0);
+    /**
+     * The left minimum, capped so the right panel can still be dragged as wide again as {@link collapseSnapPercent}.
      * A larger minimum would leave every permitted drag below the threshold, so each drag would close the right panel.
      */
     protected readonly effectiveLeftMinSizePercent = computed(() => {
+        const width = this.hostWidth();
+        const minSize = Math.max(this.leftMinSizePercent(), width > 0 ? (this.leftMinWidthPx() / width) * 100 : 0);
         const snap = this.collapseSnapPercent();
-        return snap > 0 ? Math.max(0, Math.min(this.leftMinSizePercent(), 100 - 2 * snap)) : this.leftMinSizePercent();
+        return snap > 0 ? Math.max(0, Math.min(minSize, 100 - 2 * snap)) : minSize;
     });
 
     /**
@@ -139,6 +148,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     readonly panelSizesForSplitter = computed(() => this.savedSizes() ?? this.defaultSizes());
 
     private resizeObserver?: ResizeObserver;
+    private hostWidthObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
 
     protected readonly faChevronRight = faChevronRight;
@@ -216,10 +226,15 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             this._isNarrow.set(width < this.collapseBelowPx());
         });
         this.resizeObserver.observe(observedElement);
+        if (this.leftMinWidthPx() > 0) {
+            this.hostWidthObserver = new ResizeObserver((entries) => this.hostWidth.set(entries[0].contentRect.width));
+            this.hostWidthObserver.observe(this.elementRef.nativeElement);
+        }
     }
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.hostWidthObserver?.disconnect();
     }
 
     /** Restores compatible persisted sizes, ignoring malformed, unavailable or degenerate storage. */
