@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
@@ -42,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -57,6 +61,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "cscservicetest";
+
+    private static final ZonedDateTime FIXED_CALCULATION_TIME = ZonedDateTime.of(2030, 6, 1, 12, 0, 0, 0, ZoneId.of("Europe/Berlin"));
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -240,23 +246,34 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getScoresAndParticipationResultsIncludesManuallyAssessedExercisePointsBeforeDueDate() {
+    void getScoresAndParticipationResultsIncludesPublishedManualScoreBeforeExerciseDueDate() {
         var exercise = course.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
-        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setReleaseDate(FIXED_CALCULATION_TIME.minusDays(2));
+        exercise.setDueDate(FIXED_CALCULATION_TIME.plusDays(1));
+        exercise.setAssessmentDueDate(FIXED_CALCULATION_TIME.minusHours(1));
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        exerciseRepository.save(exercise);
+        StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+        Result ratedResult = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Result::isRated).findFirst().orElseThrow();
+        ratedResult.setCompletionDate(FIXED_CALCULATION_TIME.minusHours(2));
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        TimeUtil.setClock(Clock.fixed(FIXED_CALCULATION_TIME.toInstant(), FIXED_CALCULATION_TIME.getZone()));
+        CourseForDashboardDTO courseForDashboard;
+        try {
+            courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        }
+        finally {
+            TimeUtil.resetClock();
+        }
         CourseScoresDTO textScores = courseForDashboard.textScores();
 
         assertThat(textScores.maxPoints()).isEqualTo(5.0);
-        assertThat(textScores.reachablePoints()).isZero();
+        assertThat(textScores.reachablePoints()).isEqualTo(5.0);
         assertThat(textScores.studentScores().absoluteScore()).isEqualTo(0.6);
         assertThat(textScores.studentScores().absoluteScoreTotal()).isEqualTo(0.6);
         assertThat(textScores.studentScores().relativeScore()).isEqualTo(12.0);
-        assertThat(textScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(textScores.studentScores().currentRelativeScore()).isEqualTo(12.0);
     }
 
     @Test
@@ -497,6 +514,36 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    void achievedPointsPerVariantGroupApplyTeamPlagiarismDeductionToEveryMember() {
+        ExerciseVariantGroup group = cappedGroup(200L, 100.0);
+        Course variantCourse = variantScoringCourse();
+        TextExercise variant1 = variantExercise(101L, variantCourse, group);
+        TextExercise variant2 = variantExercise(102L, variantCourse, group);
+        User firstStudent = new User();
+        firstStudent.setId(1L);
+        User secondStudent = new User();
+        secondStudent.setId(2L);
+        Team team = new Team();
+        team.setStudents(Set.of(firstStudent, secondStudent));
+
+        StudentParticipation participation1 = ratedParticipation(variant1, 100.0);
+        participation1.setParticipant(team);
+        StudentParticipation participation2 = ratedParticipation(variant2, 100.0);
+        participation2.setParticipant(team);
+        PlagiarismCase teamPlagiarism = new PlagiarismCase();
+        teamPlagiarism.setTeam(team);
+        teamPlagiarism.setExercise(variant1);
+        teamPlagiarism.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        teamPlagiarism.setVerdictPointDeduction(50);
+
+        List<StudentParticipation> participations = List.of(participation1, participation2);
+        assertThat(courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L, participations, List.of(teamPlagiarism)))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(200L, 7.5));
+        assertThat(courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(2L, participations, List.of(teamPlagiarism)))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(200L, 7.5));
+    }
+
+    @Test
     void achievedPointsPerVariantGroupIncludesUncappedGroupsAtRawSum() {
         // A group with no configured maxPoints is deliberately uncapped; it must still appear in the map (the
         // group-detail page reads it and treats a missing entry as 0), just without a cap applied.
@@ -577,6 +624,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     /** Builds an in-memory participation for the given exercise carrying a single rated result with the given score. */
     private static StudentParticipation ratedParticipation(TextExercise exercise, double score) {
         StudentParticipation participation = new StudentParticipation();
+        // Score calculation projects persisted participation IDs, so use a stable fixture ID for this in-memory participation.
         participation.setId(exercise.getId());
         participation.setExercise(exercise);
         TextSubmission submission = new TextSubmission();

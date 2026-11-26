@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 /**
  * A student's score on one exercise, projected straight from the database for the score calculation.
  *
- * @param participationId   the participation the score belongs to
+ * @param participationId   the persisted participation the score belongs to
  * @param userId            the student
  * @param exerciseId        the exercise
  * @param score             the achieved score in percent

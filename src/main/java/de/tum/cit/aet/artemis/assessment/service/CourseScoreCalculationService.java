@@ -33,12 +33,14 @@ import de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.StudentCourseScoreInputDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
@@ -80,7 +82,7 @@ public class CourseScoreCalculationService {
     private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(@Nullable Course course, @Nullable GradingScale gradingScale, Set<ExerciseCourseScoreDTO> exercises) {
         CourseScoreSettingsDTO settings = course != null ? CourseScoreSettingsDTO.from(course) : new CourseScoreSettingsDTO(2, null);
         GradedPresentationConfigDTO presentationConfig = gradedPresentationConfig(gradingScale);
-        return CourseScoreCalculator.createContext(settings, presentationConfig, exercises, ZonedDateTime.now()).maxAndReachablePoints();
+        return CourseScoreCalculator.createContext(settings, presentationConfig, exercises, TimeUtil.now()).maxAndReachablePoints();
     }
 
     private static @Nullable GradedPresentationConfigDTO gradedPresentationConfig(@Nullable GradingScale gradingScale) {
@@ -261,7 +263,7 @@ public class CourseScoreCalculationService {
         Set<ExerciseCourseScoreDTO> exercises = participationsOfStudent.stream().map(StudentParticipation::getExercise).map(ExerciseCourseScoreDTO::from)
                 .collect(Collectors.toSet());
         Course course = participationsOfStudent.iterator().next().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), null, exercises, ZonedDateTime.now(), new MaxAndReachablePointsDTO(0.0, 0.0, 0.0));
+        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), null, exercises, TimeUtil.now(), new MaxAndReachablePointsDTO(0.0, 0.0, 0.0));
         var studentInput = new StudentCourseScoreInputDTO(userId, gradeScoresFromParticipations(participationsOfStudent, userId), plagiarismScoreDTOs(plagiarismCases), 0.0, 0L);
         return CourseScoreCalculator.calculateAchievedPointsPerVariantGroup(context, studentInput);
     }
@@ -317,7 +319,7 @@ public class CourseScoreCalculationService {
             Collection<CourseGradeScoreDTO> courseGradeScoreDTOsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases,
             Set<ExerciseCourseScoreDTO> courseExercises) {
         var presentationConfig = gradedPresentationConfig(gradingScale);
-        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), presentationConfig, courseExercises, ZonedDateTime.now(), maxAndReachablePoints);
+        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), presentationConfig, courseExercises, TimeUtil.now(), maxAndReachablePoints);
         var studentInput = studentScoreInput(course, studentId, courseGradeScoreDTOsOfStudent, plagiarismCases, context);
         return CourseScoreCalculator.calculateCourseScoreForStudent(context, studentInput);
     }
@@ -325,7 +327,7 @@ public class CourseScoreCalculationService {
     /**
      * Converts participation results into the projected input consumed by the shared score calculator.
      *
-     * @param participations the student's participations
+     * @param participations the student's persisted participations; each must have an id for the grade-score projection
      * @param studentId      the student whose scores are projected
      * @return one score input per participation, with unrated results marked as such
      */
@@ -333,9 +335,10 @@ public class CourseScoreCalculationService {
         List<CourseGradeScoreDTO> gradeScores = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             Exercise exercise = participation.getExercise();
-            Result result = getResultForParticipation(participation, exercise.getDueDate());
-            gradeScores.add(new CourseGradeScoreDTO(participation.getId(), studentId, exercise.getId(), result.getScore() != null ? result.getScore() : 0.0, result.isRated(),
-                    participation.getPresentationScore(), exercise.getExerciseType()));
+            boolean exerciseExcludedFromScore = exercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED;
+            Result result = exerciseExcludedFromScore ? null : getResultForParticipation(participation, exercise.getDueDate());
+            gradeScores.add(new CourseGradeScoreDTO(participation.getId(), studentId, exercise.getId(), result != null && result.getScore() != null ? result.getScore() : 0.0,
+                    result != null && result.isRated(), participation.getPresentationScore(), exercise.getExerciseType()));
         }
         return gradeScores;
     }
@@ -359,8 +362,8 @@ public class CourseScoreCalculationService {
     }
 
     private static List<PlagiarismCaseScoreDTO> plagiarismScoreDTOs(Collection<PlagiarismCase> plagiarismCases) {
-        return plagiarismCases.stream().map(plagiarismCase -> new PlagiarismCaseScoreDTO(plagiarismCase.getStudent().getId(), plagiarismCase.getExercise().getId(),
-                plagiarismCase.getVerdict(), plagiarismCase.getVerdictPointDeduction())).toList();
+        return plagiarismCases.stream().flatMap(plagiarismCase -> plagiarismCase.getStudents().stream().map(student -> new PlagiarismCaseScoreDTO(student.getId(),
+                plagiarismCase.getExercise().getId(), plagiarismCase.getVerdict(), plagiarismCase.getVerdictPointDeduction()))).toList();
     }
 
     /**
@@ -369,7 +372,7 @@ public class CourseScoreCalculationService {
      * @param course                  the course the scores are calculated for.
      * @param gradingScale            the grading scale of the course.
      * @param studentId               the id of the student who has participated in the course exercises.
-     * @param participationsOfStudent the exercise participations of the given student.
+     * @param participationsOfStudent the persisted exercise participations of the given student; every participation must have an id.
      * @param maxAndReachablePoints   max points and max reachable points in the given course.
      * @param plagiarismCases         the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
@@ -382,7 +385,7 @@ public class CourseScoreCalculationService {
 
         Set<ExerciseCourseScoreDTO> exercises = participationsOfStudent.stream().map(StudentParticipation::getExercise).map(ExerciseCourseScoreDTO::from)
                 .collect(Collectors.toSet());
-        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), gradedPresentationConfig(gradingScale), exercises, ZonedDateTime.now(), maxAndReachablePoints);
+        var context = new CourseScoreContextDTO(CourseScoreSettingsDTO.from(course), gradedPresentationConfig(gradingScale), exercises, TimeUtil.now(), maxAndReachablePoints);
         var gradeScores = gradeScoresFromParticipations(participationsOfStudent, studentId);
         var studentInput = studentScoreInput(course, studentId, gradeScores, plagiarismCases, context);
         return CourseScoreCalculator.calculateCourseScoreForStudent(context, studentInput);
