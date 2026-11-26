@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlace
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -127,17 +128,17 @@ public final class CourseScoreCalculator {
         }
 
         CourseScoreSettingsDTO settings = context.settings();
-        Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
+        Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         // Non-variant exercises are summed individually.
         double pointsAchievedByStudentInCourse = context.exercises().stream().filter(exercise -> !isExerciseVariant(exercise))
                 .filter(exercise -> includeIntoScoreCalculation(exercise))
-                .flatMapToDouble(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id())).stream()
+                .flatMapToDouble(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of()).stream()
                         .mapToDouble(gradeScore -> calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), settings)))
                 .sum();
 
         // Exercise variants: the points a student earns across a group's variants are capped at the group's configured maxPoints.
-        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(context, gradeScorePerExercise, plagiarismCasesForStudent);
+        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(context, gradeScoresPerExercise, plagiarismCasesForStudent);
         pointsAchievedByStudentInCourse += variantGroupAchievedPoints.total();
         double pointsCappedAwayFromVariantGroups = variantGroupAchievedPoints.uncappedTotal() - variantGroupAchievedPoints.total();
 
@@ -163,12 +164,12 @@ public final class CourseScoreCalculator {
      * @return the per-group accumulator of the points the student earns from the variant groups (see
      *         {@link VariantGroupCappedSum#total()} for the capped and {@link VariantGroupCappedSum#uncappedTotal()} for the uncapped sum)
      */
-    private static VariantGroupCappedSum calculateVariantGroupAchievedPoints(CourseScoreContextDTO context, Map<Long, CourseGradeScoreDTO> gradeScorePerExercise,
+    private static VariantGroupCappedSum calculateVariantGroupAchievedPoints(CourseScoreContextDTO context, Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise,
             Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent) {
         var achievedPointsPerGroup = new VariantGroupCappedSum();
         context.exercises().stream().filter(CourseScoreCalculator::isExerciseVariant).filter(exercise -> includeIntoScoreCalculation(exercise))
-                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
-                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+                .forEach(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of())
+                        .forEach(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
                                 calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup;
     }
@@ -188,22 +189,18 @@ public final class CourseScoreCalculator {
         if (studentHasVerdict(plagiarismCasesForStudent.values(), PlagiarismVerdict.PLAGIARISM)) {
             return Map.of();
         }
-        Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
+        Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         var achievedPointsPerGroup = new VariantGroupCappedSum();
         context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> includeIntoScoreCalculation(exercise))
-                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
-                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+                .forEach(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of())
+                        .forEach(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
                                 calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup.cappedPointsPerGroup();
     }
 
-    private static Map<Long, CourseGradeScoreDTO> ratedGradeScoresPerExercise(Collection<CourseGradeScoreDTO> gradeScores) {
-        return gradeScores.stream().filter(gradeScore -> Boolean.TRUE.equals(gradeScore.rated()))
-                // A student can hold more than one graded participation in one exercise, for instance after moving between
-                // individual and team mode. Keeping the higher score matches what the participation-based path credits,
-                // and is in any case preferable to Collectors.toMap's default of throwing.
-                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, gradeScore -> gradeScore, (first, second) -> first.score() >= second.score() ? first : second));
+    private static Map<Long, List<CourseGradeScoreDTO>> ratedGradeScoresPerExercise(Collection<CourseGradeScoreDTO> gradeScores) {
+        return gradeScores.stream().filter(gradeScore -> Boolean.TRUE.equals(gradeScore.rated())).collect(Collectors.groupingBy(CourseGradeScoreDTO::exerciseId));
     }
 
     private static Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent(StudentCourseScoreInputDTO studentInput) {

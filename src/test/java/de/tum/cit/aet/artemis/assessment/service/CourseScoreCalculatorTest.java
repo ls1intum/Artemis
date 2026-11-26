@@ -55,6 +55,30 @@ class CourseScoreCalculatorTest {
     }
 
     @Test
+    void shouldCreditSingleRatedParticipationForExercise() {
+        ExerciseCourseScoreDTO exercise = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 10.0, null, null);
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
+
+        StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context, input(List.of(grade(101L, 1L, 50.0, true)), List.of(), 0.0, 0));
+
+        assertThat(scores.absoluteScore()).isEqualTo(5.0);
+        assertThat(scores.relativeScore()).isEqualTo(50.0);
+    }
+
+    @Test
+    void shouldCreditEveryRatedParticipationForExercise() {
+        ExerciseCourseScoreDTO exercise = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 10.0, null, null);
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
+
+        StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context,
+                input(List.of(grade(101L, 1L, 50.0, true), grade(102L, 1L, 60.0, true)), List.of(), 0.0, 0));
+
+        assertThat(scores.absoluteScore()).isEqualTo(11.0);
+        assertThat(scores.absoluteScoreTotal()).isEqualTo(11.0);
+        assertThat(scores.relativeScore()).isEqualTo(110.0);
+    }
+
+    @Test
     void shouldCapVariantPointsAfterApplyingPointDeduction() {
         ExerciseCourseScoreDTO firstVariant = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 5.0, 11L, 5.0);
         ExerciseCourseScoreDTO secondVariant = exercise(2L, IncludedInOverallScore.INCLUDED_COMPLETELY, 5.0, 11L, 5.0);
@@ -265,7 +289,11 @@ class CourseScoreCalculatorTest {
     }
 
     private static CourseGradeScoreDTO grade(long exerciseId, double score, boolean rated) {
-        return new CourseGradeScoreDTO(exerciseId, STUDENT_ID, exerciseId, score, rated, null, ExerciseType.TEXT);
+        return grade(exerciseId, exerciseId, score, rated);
+    }
+
+    private static CourseGradeScoreDTO grade(long participationId, long exerciseId, double score, boolean rated) {
+        return new CourseGradeScoreDTO(participationId, STUDENT_ID, exerciseId, score, rated, null, ExerciseType.TEXT);
     }
 
     private static StudentCourseScoreInputDTO input(List<CourseGradeScoreDTO> grades, List<PlagiarismCaseScoreDTO> plagiarismCases, double presentationScoreSum,
