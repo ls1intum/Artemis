@@ -1,12 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.domain.practice;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -46,6 +50,22 @@ public class PracticeSession extends DomainObject {
 
     @Column(name = "max_points")
     private Double maxPoints;
+
+    /**
+     * Only used to persist a new session together with its question logs in one statement; read logs through {@code PracticeLogRepository}.
+     */
+    @OneToMany(mappedBy = "practiceSession", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private List<PracticeLog> logs = new ArrayList<>();
+
+    /**
+     * Attaches a question log to this new session so that saving the session also inserts the log.
+     *
+     * @param log the question log of this session
+     */
+    public void addLog(PracticeLog log) {
+        log.setPracticeSession(this);
+        logs.add(log);
+    }
 
     public User getUser() {
         return user;

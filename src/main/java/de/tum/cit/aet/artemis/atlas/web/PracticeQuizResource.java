@@ -124,6 +124,21 @@ public class PracticeQuizResource {
     }
 
     /**
+     * GET courses/{courseId}/smart-quizzes/sessions/{sessionId}/resume : Gets an unfinished practice session of the current student to resume it.
+     *
+     * @param courseId  the ID of the course
+     * @param sessionId the ID of the practice session
+     * @return the ResponseEntity with status 200 (OK) and the session DTO without solutions
+     */
+    @GetMapping("courses/{courseId}/smart-quizzes/sessions/{sessionId}/resume")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<PracticeSessionDTO> resumePracticeSession(@PathVariable long courseId, @PathVariable long sessionId) {
+        log.debug("REST request to resume practice quiz session {} in course: {}", sessionId, courseId);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok(practiceQuizService.getUnfinishedSession(courseId, sessionId, user));
+    }
+
+    /**
      * GET courses/{courseId}/smart-quizzes/current : Gets the current unfinished practice session if one exists.
      *
      * @param courseId the ID of the course

@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -51,15 +50,5 @@ public class QuizQuestionPoolApi implements AbstractApi {
      */
     public List<QuizQuestionPoolItem> findAllById(Collection<Long> itemIds) {
         return itemRepository.findAllById(itemIds);
-    }
-
-    /**
-     * Finds a single pool item by its ID.
-     *
-     * @param itemId the ID of the pool item
-     * @return an optional containing the pool item if found
-     */
-    public Optional<QuizQuestionPoolItem> findById(long itemId) {
-        return itemRepository.findById(itemId);
     }
 }

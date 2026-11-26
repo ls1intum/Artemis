@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -126,12 +127,11 @@ class PracticeQuizServiceTest {
         // Ensure question explanation is hidden during active quiz
         assertThat(result.questions().getFirst().explanation()).isNull();
 
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<PracticeLog>> logsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(practiceLogRepository).saveAll(logsCaptor.capture());
-        List<PracticeLog> savedLogs = logsCaptor.getValue();
-
-        assertThat(savedLogs).hasSize(10);
+        // The logs are inserted together with the session through the cascade, not in a separate save
+        ArgumentCaptor<PracticeSession> sessionCaptor = ArgumentCaptor.forClass(PracticeSession.class);
+        verify(practiceSessionRepository).save(sessionCaptor.capture());
+        assertThat(sessionCaptor.getValue().getUser()).isEqualTo(student);
+        verify(practiceLogRepository, never()).saveAll(anyList());
     }
 
     @Test
@@ -166,9 +166,8 @@ class PracticeQuizServiceTest {
 
         when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
         when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(logs);
-        when(quizQuestionPoolApi.findById(poolItems.get(0).getId())).thenReturn(Optional.of(poolItems.get(0)));
-        when(quizQuestionPoolApi.findById(poolItems.get(1).getId())).thenReturn(Optional.of(poolItems.get(1)));
-        when(practiceSessionRepository.save(any(PracticeSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(quizQuestionPoolApi.findAllById(anyCollection())).thenReturn(poolItems.subList(0, 2));
+        when(practiceLogRepository.completeSessionWithLogs(eq(100L), eq(1.0), eq(2.0), any(ZonedDateTime.class), eq(logs))).thenReturn(true);
 
         // Answer 1: selected option 0 (correct) -> score 1.0
         SubmittedAnswerFromLiveClientDTO answer1 = new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(poolItems.get(0).getId()), Set.of(new EntityIdRefDTO(0L)));
@@ -186,10 +185,90 @@ class PracticeQuizServiceTest {
         // Ensure question explanation is exposed in review
         assertThat(review.questions().getFirst().question().explanation()).isEqualTo("Explanation");
 
-        verify(practiceLogRepository).saveAll(logs);
-        verify(practiceSessionRepository).save(session);
+        verify(practiceLogRepository).completeSessionWithLogs(eq(100L), eq(1.0), eq(2.0), any(ZonedDateTime.class), eq(logs));
+        verify(practiceSessionRepository, never()).save(any(PracticeSession.class));
         assertThat(log1.getScore()).isEqualTo(1.0);
         assertThat(log2.getScore()).isEqualTo(0.0);
+    }
+
+    @Test
+    void testSubmitRejectsWhenConcurrentSubmissionCompletedSessionFirst() {
+        PracticeSession session = createUnfinishedSession();
+        List<PracticeLog> logs = List.of(createLog(session, 1L, poolItems.getFirst().getId()));
+
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
+        when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(logs);
+        when(quizQuestionPoolApi.findAllById(anyCollection())).thenReturn(poolItems.subList(0, 1));
+        when(practiceLogRepository.completeSessionWithLogs(eq(100L), eq(0.0), eq(1.0), any(ZonedDateTime.class), eq(logs))).thenReturn(false);
+
+        assertThatThrownBy(() -> practiceQuizService.submitPracticeSession(course.getId(), 100L, student, new PracticeSubmissionDTO(List.of())))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("already been completed");
+    }
+
+    @Test
+    void testSubmitAndReviewSkipQuestionsWhosePoolItemWasDeleted() {
+        PracticeSession session = createUnfinishedSession();
+        PracticeLog kept = createLog(session, 1L, poolItems.getFirst().getId());
+        PracticeLog deleted = createLog(session, 2L, 999L);
+        List<PracticeLog> logs = List.of(kept, deleted);
+
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
+        when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(logs);
+        when(quizQuestionPoolApi.findAllById(anyCollection())).thenReturn(poolItems.subList(0, 1));
+        when(practiceLogRepository.completeSessionWithLogs(eq(100L), eq(0.0), eq(1.0), any(ZonedDateTime.class), eq(logs))).thenReturn(true);
+
+        PracticeSessionReviewDTO review = practiceQuizService.submitPracticeSession(course.getId(), 100L, student, new PracticeSubmissionDTO(List.of()));
+
+        assertThat(review.maxPoints()).isEqualTo(1.0);
+        assertThat(review.questions()).hasSize(1);
+        assertThat(review.questions().getFirst().question()).isNotNull();
+
+        PracticeSessionReviewDTO laterReview = practiceQuizService.getPracticeSessionForReview(course.getId(), 100L, student);
+        assertThat(laterReview.questions()).hasSize(1);
+        assertThat(laterReview.questions().getFirst().question().id()).isEqualTo(poolItems.getFirst().getId());
+    }
+
+    @Test
+    void testGetUnfinishedSessionReturnsSelectedSessionWithoutSolutions() {
+        PracticeSession session = createUnfinishedSession();
+        List<PracticeLog> logs = List.of(createLog(session, 1L, poolItems.getFirst().getId()));
+
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
+        when(practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(100L)).thenReturn(logs);
+        when(quizQuestionPoolApi.findAllById(anyCollection())).thenReturn(poolItems.subList(0, 1));
+
+        PracticeSessionDTO resumed = practiceQuizService.getUnfinishedSession(course.getId(), 100L, student);
+
+        assertThat(resumed.id()).isEqualTo(100L);
+        assertThat(resumed.questions()).hasSize(1);
+        assertThat(resumed.questions().getFirst().explanation()).isNull();
+    }
+
+    @Test
+    void testGetUnfinishedSessionRejectsCompletedSession() {
+        PracticeSession session = createUnfinishedSession();
+        session.setCompletedAt(ZonedDateTime.now());
+        when(practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(100L, course.getId(), student.getId())).thenReturn(session);
+
+        assertThatThrownBy(() -> practiceQuizService.getUnfinishedSession(course.getId(), 100L, student)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("already been completed");
+    }
+
+    private PracticeSession createUnfinishedSession() {
+        PracticeSession session = new PracticeSession();
+        session.setId(100L);
+        session.setUser(student);
+        session.setCourse(course);
+        session.setStartTime(ZonedDateTime.now().minusMinutes(10));
+        return session;
+    }
+
+    private static PracticeLog createLog(PracticeSession session, long id, long poolItemId) {
+        PracticeLog log = new PracticeLog();
+        log.setId(id);
+        log.setPracticeSession(session);
+        log.setPoolItemId(poolItemId);
+        return log;
     }
 
     @Test

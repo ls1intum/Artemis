@@ -24,6 +24,13 @@ export class PracticeQuizService {
     }
 
     /**
+     * Retrieve a specific unfinished session of the student to resume it.
+     */
+    resumeSession(courseId: number, sessionId: number): Observable<PracticeSessionDTO> {
+        return this.http.get<PracticeSessionDTO>(`${this.resourceUrl}/${courseId}/smart-quizzes/sessions/${sessionId}/resume`);
+    }
+
+    /**
      * Submit answers for an active practice quiz session.
      */
     submitSession(courseId: number, sessionId: number, submission: PracticeSubmissionDTO): Observable<PracticeSessionReviewDTO> {

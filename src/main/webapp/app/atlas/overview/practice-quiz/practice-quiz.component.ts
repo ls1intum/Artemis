@@ -191,6 +191,34 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Resumes the unfinished session of the selected row.
+     */
+    resumeSession(sessionId: number): void {
+        const cId = this.activeCourseId();
+        if (!cId || this.isLoading()) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.errorMessage.set(null);
+
+        this.courseRequests.add(
+            this.practiceQuizService.resumeSession(cId, sessionId).subscribe({
+                next: (session) => {
+                    this.setupQuizSession(session);
+                    this.isLoading.set(false);
+                },
+                error: (err) => {
+                    this.isLoading.set(false);
+                    const msg = this.readableError(err, 'Failed to resume the practice session.');
+                    this.alertService.error(msg);
+                    this.errorMessage.set(msg);
+                },
+            }),
+        );
+    }
+
     setupQuizSession(session: PracticeSessionDTO): void {
         this.currentSession.set(session);
         const questions = (session.questions ?? []).map((q) => toQuizQuestion(q)).filter((q): q is MultipleChoiceQuestion => q instanceof MultipleChoiceQuestion);

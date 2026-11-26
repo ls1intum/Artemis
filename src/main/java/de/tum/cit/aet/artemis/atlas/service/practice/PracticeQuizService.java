@@ -110,28 +110,22 @@ public class PracticeQuizService {
         session.setUser(user);
         session.setCourse(course);
         session.setStartTime(ZonedDateTime.now());
-        PracticeSession savedSession = practiceSessionRepository.save(session);
 
         List<PracticeLog> logs = new ArrayList<>();
         for (QuizQuestionPoolCandidateDTO candidate : allocatedCandidates) {
             PracticeLog logEntry = new PracticeLog();
-            logEntry.setPracticeSession(savedSession);
             logEntry.setPoolItemId(candidate.id());
             logEntry.setCompetencyId(candidate.competencyId());
             logEntry.setDifficulty(candidate.difficulty() != null ? candidate.difficulty().name() : null);
             logEntry.setAdaptive(false);
+            session.addLog(logEntry);
             logs.add(logEntry);
         }
 
-        practiceLogRepository.saveAll(logs);
+        // Saving the new session also inserts its logs, so a session is never stored without its questions
+        PracticeSession savedSession = practiceSessionRepository.save(session);
 
-        List<Long> allocatedIds = allocatedCandidates.stream().map(QuizQuestionPoolCandidateDTO::id).toList();
-        List<QuizQuestionPoolItem> allocatedItems = quizQuestionPoolApi.get().findAllById(allocatedIds);
-        Map<Long, QuizQuestionPoolItem> itemsById = allocatedItems.stream().collect(Collectors.toMap(QuizQuestionPoolItem::getId, Function.identity(), (a, b) -> a));
-
-        List<PracticeQuestionDTO> questionDTOs = logs.stream().map(l -> toPracticeQuestionDTO(itemsById.get(l.getPoolItemId()), false)).filter(Objects::nonNull).toList();
-
-        return PracticeSessionDTO.of(savedSession, questionDTOs);
+        return toActiveSessionDTO(savedSession, logs);
     }
 
     /**
@@ -164,17 +158,23 @@ public class PracticeQuizService {
         double maxPoints = 0.0;
         ZonedDateTime now = ZonedDateTime.now();
         List<PracticeQuestionReviewDTO> reviewQuestions = new ArrayList<>();
+        Map<Long, QuizQuestionPoolItem> itemsById = findPoolItemsById(logs);
 
         for (PracticeLog logEntry : logs) {
-            maxPoints += 1.0;
             Long poolItemId = logEntry.getPoolItemId();
-            QuizQuestionPoolItem item = quizQuestionPoolApi.flatMap(api -> api.findById(poolItemId)).orElse(null);
+            PracticeQuestionDTO questionDTO = toPracticeQuestionDTO(itemsById.get(poolItemId), true);
+            if (questionDTO == null) {
+                // The pool item was deleted after the session started; it neither counts towards the points nor appears in the review
+                continue;
+            }
+            maxPoints += questionDTO.points();
+            QuizQuestionPoolItem item = itemsById.get(poolItemId);
 
             SubmittedAnswerFromLiveClientDTO answerDto = answersByQuestionId.get(poolItemId);
             double questionScore = 0.0;
             String answerJson = null;
 
-            if (item != null && answerDto != null) {
+            if (answerDto != null) {
                 questionScore = evaluatePoolQuestionAnswer(item, answerDto);
                 try {
                     answerJson = jsonMapper.writeValueAsString(answerDto);
@@ -189,18 +189,18 @@ public class PracticeQuizService {
             logEntry.setSubmittedAnswer(answerJson);
             logEntry.setAnsweredAt(now);
 
-            PracticeQuestionDTO questionDTO = item != null ? toPracticeQuestionDTO(item, true) : null;
             reviewQuestions.add(new PracticeQuestionReviewDTO(questionDTO, logEntry.isAdaptive(), questionScore, answerJson, now));
         }
 
+        if (!practiceLogRepository.completeSessionWithLogs(sessionId, totalScore, maxPoints, now, logs)) {
+            // A concurrent submission of the same session completed it first
+            throw new BadRequestAlertException("This practice session has already been completed", "practiceQuiz", "sessionAlreadyCompleted");
+        }
         session.setScore(totalScore);
         session.setMaxPoints(maxPoints);
         session.setCompletedAt(now);
 
-        practiceLogRepository.saveAll(logs);
-        PracticeSession completedSession = practiceSessionRepository.save(session);
-
-        return PracticeSessionReviewDTO.of(completedSession, reviewQuestions);
+        return PracticeSessionReviewDTO.of(session, reviewQuestions);
     }
 
     /**
@@ -243,12 +243,17 @@ public class PracticeQuizService {
             throw new BadRequestAlertException("This practice session is not completed yet", "practiceQuiz", "sessionNotCompleted");
         }
         List<PracticeLog> logs = practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(sessionId);
+        Map<Long, QuizQuestionPoolItem> itemsById = findPoolItemsById(logs);
 
-        List<PracticeQuestionReviewDTO> reviewQuestions = logs.stream().map(logEntry -> {
-            QuizQuestionPoolItem item = quizQuestionPoolApi.flatMap(api -> api.findById(logEntry.getPoolItemId())).orElse(null);
-            PracticeQuestionDTO questionDTO = item != null ? toPracticeQuestionDTO(item, true) : null;
-            return new PracticeQuestionReviewDTO(questionDTO, logEntry.isAdaptive(), logEntry.getScore(), logEntry.getSubmittedAnswer(), logEntry.getAnsweredAt());
-        }).toList();
+        // Questions whose pool item was deleted are left out, as they were at submission
+        List<PracticeQuestionReviewDTO> reviewQuestions = new ArrayList<>();
+        for (PracticeLog logEntry : logs) {
+            PracticeQuestionDTO questionDTO = toPracticeQuestionDTO(itemsById.get(logEntry.getPoolItemId()), true);
+            if (questionDTO != null) {
+                reviewQuestions
+                        .add(new PracticeQuestionReviewDTO(questionDTO, logEntry.isAdaptive(), logEntry.getScore(), logEntry.getSubmittedAnswer(), logEntry.getAnsweredAt()));
+            }
+        }
 
         return PracticeSessionReviewDTO.of(session, reviewQuestions);
     }
@@ -282,13 +287,40 @@ public class PracticeQuizService {
             return Optional.empty();
         }
         PracticeSession session = unfinished.get();
-        List<PracticeLog> logs = practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(session.getId());
-        List<PracticeQuestionDTO> questions = logs.stream().map(l -> {
-            QuizQuestionPoolItem item = quizQuestionPoolApi.flatMap(api -> api.findById(l.getPoolItemId())).orElse(null);
-            return item != null ? toPracticeQuestionDTO(item, false) : null;
-        }).filter(Objects::nonNull).toList();
+        return Optional.of(toActiveSessionDTO(session, practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(session.getId())));
+    }
 
-        return Optional.of(PracticeSessionDTO.of(session, questions));
+    /**
+     * Loads a specific unfinished practice session of the student so that it can be resumed, without solutions.
+     *
+     * @param courseId  the ID of the course
+     * @param sessionId the ID of the practice session
+     * @param user      the student
+     * @return the session DTO with solution-hidden questions
+     */
+    public PracticeSessionDTO getUnfinishedSession(long courseId, long sessionId, User user) {
+        PracticeSession session = practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(sessionId, courseId, user.getId());
+        if (session.getCompletedAt() != null) {
+            throw new BadRequestAlertException("This practice session has already been completed", "practiceQuiz", "sessionAlreadyCompleted");
+        }
+        return toActiveSessionDTO(session, practiceLogRepository.findAllByPracticeSessionIdOrderByIdAsc(sessionId));
+    }
+
+    private PracticeSessionDTO toActiveSessionDTO(PracticeSession session, List<PracticeLog> logs) {
+        Map<Long, QuizQuestionPoolItem> itemsById = findPoolItemsById(logs);
+        List<PracticeQuestionDTO> questions = logs.stream().map(l -> toPracticeQuestionDTO(itemsById.get(l.getPoolItemId()), false)).filter(Objects::nonNull).toList();
+        return PracticeSessionDTO.of(session, questions);
+    }
+
+    /**
+     * Loads the pool items of the given logs in one query. Items deleted from the pool are missing from the result.
+     */
+    private Map<Long, QuizQuestionPoolItem> findPoolItemsById(List<PracticeLog> logs) {
+        if (quizQuestionPoolApi.isEmpty() || logs.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> poolItemIds = logs.stream().map(PracticeLog::getPoolItemId).distinct().toList();
+        return quizQuestionPoolApi.get().findAllById(poolItemIds).stream().collect(Collectors.toMap(QuizQuestionPoolItem::getId, Function.identity(), (a, b) -> a));
     }
 
     /**

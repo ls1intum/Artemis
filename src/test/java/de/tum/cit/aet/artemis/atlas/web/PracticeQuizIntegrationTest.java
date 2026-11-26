@@ -138,6 +138,13 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
         assertThat(currentSession).isNotNull();
         assertThat(currentSession.id()).isEqualTo(sessionId);
 
+        // 2b. Resume the session by its ID; its questions were stored together with the session and stay without solutions
+        PracticeSessionDTO resumedSession = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/resume", HttpStatus.OK,
+                PracticeSessionDTO.class);
+        assertThat(resumedSession.id()).isEqualTo(sessionId);
+        assertThat(resumedSession.questions()).extracting(PracticeQuestionDTO::id).containsExactlyElementsOf(sessionDTO.questions().stream().map(PracticeQuestionDTO::id).toList());
+        assertThat(resumedSession.questions().getFirst().explanation()).isNull();
+
         // 3. Attempting to review an unfinished session should fail to prevent leaking solutions
         request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.BAD_REQUEST, PracticeSessionReviewDTO.class);
 
@@ -155,6 +162,11 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
         // Verify question explanation is exposed in review DTO
         assertThat(reviewDTO.questions().getFirst().question().explanation()).isEqualTo("Overall Explanation");
 
+        // 4b. A second submission of the completed session is rejected, and it can no longer be resumed
+        request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/submit", submission, PracticeSessionReviewDTO.class,
+                HttpStatus.BAD_REQUEST);
+        request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/resume", HttpStatus.BAD_REQUEST, PracticeSessionDTO.class);
+
         // 5. Verify review endpoint
         PracticeSessionReviewDTO fetchedReview = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.OK,
                 PracticeSessionReviewDTO.class);
@@ -168,6 +180,7 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
         assertThat(summaries).hasSize(1);
         assertThat(summaries.getFirst().id()).isEqualTo(sessionId);
         assertThat(summaries.getFirst().completed()).isTrue();
+        assertThat(summaries.getFirst().totalQuestions()).isEqualTo(sessionDTO.questions().size());
     }
 
     @Test

@@ -255,6 +255,21 @@ describe('PracticeQuizComponent', () => {
         expect(pastSpy).toHaveBeenCalledWith(2);
     });
 
+    it('should resume the session of the selected row instead of the latest one', () => {
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));
+        vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([mockSummary]));
+        const resumeSpy = vi.spyOn(practiceQuizService, 'resumeSession').mockReturnValue(of(mockSession));
+
+        component.ngOnInit();
+        component.onSelectedAnswerOptionsChange(101, [{ id: 201 } as AnswerOption]);
+        component.resumeSession(42);
+
+        expect(resumeSpy).toHaveBeenCalledWith(1, 42);
+        expect(component.state()).toBe('QUIZ');
+        expect(component.currentSession()).toEqual(mockSession);
+        expect(component.selectedAnswerOptions()).toEqual({});
+    });
+
     it('should cancel pending requests of the previous course when the route switches to another course', () => {
         const pendingStart = new Subject<PracticeSessionDTO>();
         vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));
