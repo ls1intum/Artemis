@@ -458,10 +458,9 @@ dependencies {
     implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
     // Stanford CoreNLP, which JPlag Text uses for tokenization, declares libraries for features JPlag does not call (SUTime date
-    // parsing, XML/JSON annotator output, the macOS Java extensions), and jaxb-impl/jaxb-core duplicate the classes of
+    // parsing with jollyday and joda-time, XML/JSON annotator output, the macOS Java extensions), and jaxb-impl/jaxb-core duplicate the classes of
     // org.glassfish.jaxb:jaxb-runtime/jaxb-core that Hibernate brings. Scoped to this dependency, not the global exclude block
-    // above, so other libraries that bring the same jars are not affected. joda-time deliberately stays: Lti13Service imports
-    // org.joda.time.DateTime and compiles against the copy that comes in through here.
+    // above, so other libraries that bring the same jars are not affected.
     implementation("de.jplag:text:${jplag_version}") {
         exclude group: "com.sun.xml.bind", module: "jaxb-impl"
         exclude group: "com.sun.xml.bind", module: "jaxb-core"
@@ -469,6 +468,7 @@ dependencies {
         exclude group: "com.apple", module: "AppleJavaExtensions"
         exclude group: "javax.activation", module: "javax.activation-api"
         exclude group: "de.jollyday", module: "jollyday"
+        exclude group: "joda-time", module: "joda-time"
         exclude group: "jakarta.servlet", module: "jakarta.servlet-api"
     }
     implementation "de.jplag:typescript:${jplag_version}"
