@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
 import de.tum.cit.aet.artemis.core.config.InternalAccessConfiguration;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.config.StartupTrace;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -92,6 +93,7 @@ public class ArtemisApp {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
+        StartupTrace.register(app);
         app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
             Environment environment = event.getEnvironment();
             if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {

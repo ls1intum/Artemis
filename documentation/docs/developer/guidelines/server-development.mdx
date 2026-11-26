@@ -248,6 +248,16 @@ It gets activated when a particular jar file is detected on the classpath. The s
 * Use setter-based DI only for optional dependencies.
 * Avoid circular dependencies, try constructor and setter-based DI for such cases.
 
+### Server startup time
+
+Beans are created lazily, and `DeferredEagerBeanInitializer` creates the remaining ones after the startup banner. The time to the banner is therefore the work that cannot be deferred: scanning the classpath, Liquibase, the Hibernate session factory and the few beans that are `@Lazy(false)`.
+
+* **Do not add `@Lazy(false)` or work in a `@PostConstruct` of a bean that startup needs, unless something must be ready before the first request.** Every such bean adds to the time to the banner on all nodes.
+* **Do not call external systems while a startup bean is created.** A slow remote service delays the whole node. Connect on first use or in the deferred phase.
+* **Do not build the Hibernate session factory on a background thread** with `spring.jpa.bootstrap=async`. It deadlocks: while Hibernate bootstraps, it looks up beans such as a `MultiTenantConnectionProvider` by type in the Spring bean factory, which needs the singleton lock that the main thread holds while it creates the beans of the servlet context. The main thread in turn waits for the session factory as soon as a startup bean needs a repository.
+
+To see which beans take the time, start the server with `artemis.startup-trace.enabled=true` (or the environment variable `ARTEMIS_STARTUP_TRACE_ENABLED=true`). Spring Boot then records every startup step and the log gets two reports, one up to the startup banner and one for the deferred warm-up, with every line prefixed by `Startup trace`. Each lists the own time per kind of step and the slowest steps by own time, which is their duration without the steps nested in them. `artemis.startup-trace.top-steps` (default 30) sets the number of listed steps and `artemis.startup-trace.buffer-size` (default 100000) the capacity of the recording. Leave it off in production by default, because recording every step costs memory and a little time. The own time of steps that overlap on several threads is approximate.
+
 
 ## REST API & Controllers
 
