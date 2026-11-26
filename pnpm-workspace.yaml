@@ -128,6 +128,13 @@ overrides:
   '@embedpdf/engines>preact': '-'
   '@embedpdf/engines>svelte': '-'
   '@embedpdf/engines>vue': '-'
+  # @tumaet/apollon and @xyflow/react are two halves of the modeling editor and disagree about two small libraries, so each
+  # of them shipped twice: zustand 5 (Apollon) next to zustand 4 (@xyflow/react asks for ^4.4.0), and @xyflow/system 0.0.78
+  # (pinned by Apollon) next to 0.0.83 (what @xyflow/react 12.12 uses). @xyflow/react only imports zustand/traditional and
+  # zustand/shallow, which zustand 5 still provides. Drop both entries once Apollon and @xyflow/react agree on their own
+  # (`pnpm run check:duplicate-dependencies` lists what is still duplicated).
+  '@xyflow/react>zustand': '5.1.0'
+  '@tumaet/apollon>@xyflow/system': '0.0.83'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
