@@ -81,8 +81,10 @@ describe('migrate-tum-aet-ui-imports', () => {
         expect(run(file, '--check').status).toBe(0);
     });
 
-    it('fails on a symbol that no entry point exports instead of dropping it', () => {
-        const content = `import { NotAKitSymbol } from '@tumaet/ui-angular';\n`;
+    it.each([
+        ['only an unknown symbol', `import { NotAKitSymbol } from '@tumaet/ui-angular';\n`],
+        ['an unknown symbol next to a known one', `import { NotAKitSymbol, TumAetUiButtonComponent } from '@tumaet/ui-angular';\n`],
+    ])('fails on %s and leaves the statement as it is instead of dropping the name', (_description, content) => {
         const file = write('unknown.ts', content);
 
         const result = run(file);

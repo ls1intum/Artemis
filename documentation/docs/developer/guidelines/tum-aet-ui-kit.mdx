@@ -4,7 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-26
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -236,8 +236,10 @@ output tables.
 
 Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
 tests consume `packages/tum-aet-ui/dist`; their root commands build the package first. The `paths` of the tsconfig files and the aliases of the
-test runners cannot read the `exports` of a package, so the package build writes a stub `package.json` into `dist/<entry point>` for
-each entry point (`write-entry-stubs.mjs`), and one mapping, `@tumaet/ui-angular/* -> dist/*`, serves all of them. Development serve
+test runners cannot read the `exports` of a package, so they use a directory per entry point, `dist/<entry point>`, and one mapping,
+`@tumaet/ui-angular/* -> dist/*`, serves all of them. The library builder already writes a `package.json` into each of these directories;
+the package build completes it with `main` and `sideEffects` (`write-entry-stubs.mjs`), because Vitest cannot resolve a directory
+without `main`. Development serve
 mode maps the package entry points to their sources so changes participate in Angular's normal watch and
 reload cycle.
 

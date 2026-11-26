@@ -216,7 +216,11 @@ Details: the _Exercise update forms_ subsection of
 
 ## Styling
 
-Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Bootstrap, ng-bootstrap
+Use TUM AET UI components and Tailwind v4 utilities. Import each component from its own entry point,
+`@tumaet/ui-angular/<component>` (named after the directory in `packages/tum-aet-ui/src/lib`), never from the
+package root `@tumaet/ui-angular`: the build splits code per file, so the root puts every component that any
+route uses into the first download. ESLint rejects the root. After a merge that brought in a root import, run
+`node supporting_scripts/client/migrate-tum-aet-ui-imports.mjs` to rewrite it. Bootstrap, ng-bootstrap
 and PrimeNG are removed from the client; do not add them again.
 
 Choose button severity by the established action family and its context, following
@@ -294,8 +298,10 @@ to a global stylesheet, the tokens or many component stylesheets, compare the cl
 
 If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
-primitives, and keep Artemis-specific composition in the application. See
-`documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
+primitives, and keep Artemis-specific composition in the application. A new component directory needs an
+`index.ts` with explicit `export { ... }` statements, an `exports` entry `./<directory>` in
+`packages/tum-aet-ui/package.json` and a line in `src/public-api.ts`; the package contract test checks all three.
+See `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
 ## Data tables
 

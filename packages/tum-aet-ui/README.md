@@ -210,7 +210,7 @@ build tool and its transitive dependencies separate from the library peer matrix
 ### Splitter
 
 `TumAetUiSplitterComponent` arranges two persistent template panels. Import it from
-`@tumaet/ui-angular` and mark each panel template with `#panel`:
+`@tumaet/ui-angular/splitter` and mark each panel template with `#panel`:
 
 ```html
 <tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">

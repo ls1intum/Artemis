@@ -413,7 +413,8 @@ describe('@tumaet/ui-angular integration contract', () => {
             expect(resolve(repoRoot, 'config/client', mapped)).toBe(resolve(repoRoot, 'packages/tum-aet-ui', dirname(target)));
         });
 
-        it('writes the stub manifests that the path mappings of the monorepo need whenever it builds the package', () => {
+        it('writes the stub manifests that the test runners of the monorepo need whenever it builds the package', () => {
+            // The manifest of the library builder has no `main`, and Vitest cannot resolve a directory without it.
             expect(packageJson.scripts['build:package']).toContain('node write-entry-stubs.mjs');
             expect(packageJson.scripts['build:package:dev']).toContain('node write-entry-stubs.mjs');
         });
@@ -423,6 +424,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['./packages/tum-aet-ui/dist']);
         // The entry points are directories with a stub manifest in dist (`write-entry-stubs.mjs`), or the directory of the component in the sources.
         expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toEqual(['./packages/tum-aet-ui/dist/*']);
+        // The build of the global stylesheets finds the root tsconfig on its own, and its `paths` apply to `@import` as well: the exact mapping keeps
+        // `@tumaet/ui-angular/styles.css` on the file that `start` rebuilds on every change, not on the copy in `dist`.
+        expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/styles.css']).toEqual(['./packages/tum-aet-ui/styles.css']);
         expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['../../packages/tum-aet-ui/src/public-api.ts']);
         expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toEqual(['../../packages/tum-aet-ui/src/lib/*']);
         expect(angularWorkspace.projects.artemis.architect.build.configurations['tum-aet-ui-source'].tsConfig).toBe('config/client/tsconfig.serve.json');
@@ -436,6 +440,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-aet-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-aet-ui/tailwind-theme.css"');
+        // Editing the script that completes the entry point manifests has to rerun the build of the client, like editing the theme does.
+        expect(developmentGradleProfile).toContain('"packages/tum-aet-ui/write-entry-stubs.mjs"');
+        expect(productionGradleProfile).toContain('"packages/tum-aet-ui/write-entry-stubs.mjs"');
     });
 
     it('loads the complete package stylesheet after host styles', () => {

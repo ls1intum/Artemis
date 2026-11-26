@@ -653,6 +653,10 @@ export default tseslint.config(
                             group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message: 'TUM AET UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-aet-ui-integration.',
                         },
+                        {
+                            group: ['@tumaet/ui-angular/**'],
+                            message: 'Inside TUM AET UI, import from a relative path, not the entry point of a component.',
+                        },
                     ],
                 },
             ],

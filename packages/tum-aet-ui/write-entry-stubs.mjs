@@ -1,5 +1,7 @@
 /**
- * Writes a stub `package.json` for every entry point of the built package: `dist/<entry>/package.json`.
+ * Writes a stub `package.json` for every entry point of the built package: `dist/<entry>/package.json`. The library builder writes a manifest
+ * there as well, with `module` and `types` only; the stub replaces it with one that also has `main`, which Vitest needs to resolve the directory,
+ * and `sideEffects: false`.
  *
  * The monorepo resolves `@tumaet/ui-angular` and `@tumaet/ui-angular/<entry>` with the `paths` of its tsconfig files and the aliases of its test
  * runners, which map to the directory `dist`. A path mapping cannot read the `exports` of the package, so a directory per entry is what makes

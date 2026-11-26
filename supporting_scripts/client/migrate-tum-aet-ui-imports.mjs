@@ -81,16 +81,19 @@ for (const file of targets.flatMap((target) => collectFiles(target))) {
             continue;
         }
         const byEntry = new Map();
+        let unmapped = false;
         for (const element of bindings.elements) {
             const imported = (element.propertyName ?? element.name).text;
             const entry = entryOf.get(imported);
             if (!entry) {
                 problems.push(`${relative}: '${imported}' is not exported by an entry point of ${PACKAGE}`);
+                unmapped = true;
                 continue;
             }
             (byEntry.get(entry) ?? byEntry.set(entry, []).get(entry)).push(element.getText(source));
         }
-        if (byEntry.size === 0) continue;
+        // A statement with a name that no entry point exports stays as it is: rewriting the rest would silently drop that name.
+        if (unmapped || byEntry.size === 0) continue;
         const typeOnly = isImport ? statement.importClause.isTypeOnly : statement.isTypeOnly;
         const keyword = isImport ? `import${typeOnly ? ' type' : ''}` : `export${typeOnly ? ' type' : ''}`;
         const rewritten = [...byEntry.keys()]
