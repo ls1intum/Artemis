@@ -827,9 +827,10 @@ The helpers that do not need the editor live in the light entry `@tumaet/apollon
 - **Only code that creates or renders an editor imports from the root.** `UMLDiagramType`, `DEFAULT_LABELS`, `collabColorFromName`,
   `APOLLON_SHORTCUTS` and `getAssessmentNameForArtemis` are not in the light entry yet, so a file that needs one of them as a value still
   pulls the editor into its chunk. Move such an import to `/model` once Apollon exports the symbol, and add its name to the rule.
-- **A static import of a component that contains the editor has the same effect.** A component that lists `ModelingEditorComponent` in its
-  `imports` loads the editor with every route that imports the component. Show the editor in a `@defer` block when the component is also
-  used outside modeling.
+- **A component that uses the editor outside a `@defer` block has the same effect.** When a component lists `ModelingEditorComponent` in its
+  `imports` and uses it in its template outside a `@defer` block, the import is static and the editor loads with every route that imports the
+  component. Angular loads a standalone component that a template uses only inside `@defer` blocks lazily with the block (the detail
+  overview list does this), so put the editor in a `@defer` block when the component is also used outside modeling.
 
 ### Preventing Memory Leaks
 

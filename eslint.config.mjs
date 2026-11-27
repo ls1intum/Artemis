@@ -64,6 +64,7 @@ const noDirectCloneDeepImports = [
 const noApollonModelValueImports = {
     name: '@tumaet/apollon',
     importNames: ['importDiagram', 'readModelFromYDoc', 'writeModelToYDoc', 'hasModelInYDoc', 'clearModelFromYDoc', 'MODEL_DOC_ORIGIN'],
+    allowTypeImports: true,
     message:
         "Import the model helpers from '@tumaet/apollon/model': the root entry '@tumaet/apollon' is the whole modeling editor and loads about 1.3 MB of JavaScript with the importing chunk.",
 };

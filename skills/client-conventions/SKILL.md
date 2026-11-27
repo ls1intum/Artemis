@@ -323,8 +323,8 @@ as the duplicate is gone. Do not add a direct dependency that overlaps one we al
 
 The root `@tumaet/apollon` is the whole modeling editor (about 1.3 MB raw). Import `importDiagram`, the Y.Doc helpers and the `UMLModel`
 type from `@tumaet/apollon/model`; `no-restricted-imports` fails the lint run on the values from the root. Only code that creates or
-renders an editor imports from the root. A component that lists `ModelingEditorComponent` in its `imports` loads the editor with every
-route that imports it: use `@defer`. Details:
+renders an editor imports from the root. A component that uses `ModelingEditorComponent` in its template outside a `@defer` block loads
+the editor with every route that imports it; inside `@defer` the import is lazy. Details:
 [Importing Apollon](../../documentation/docs/developer/guidelines/client-development.mdx#importing-apollon).
 
 ## Other rules worth knowing
