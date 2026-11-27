@@ -414,7 +414,7 @@ class SandboxConfigurationServiceTest {
     @Test
     void aTestsRepositoryThatCannotBeReadFailsWithAnError() throws Exception {
         // The branch points to a commit the bare repository does not contain, e.g. after a broken copy of the repository.
-        Files.writeString(remote.resolve("refs/heads/main"), "0123456789abcdef0123456789abcdef01234567\n", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(remote.resolve("refs/heads/main").toFile(), "0123456789abcdef0123456789abcdef01234567\n", StandardCharsets.UTF_8);
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> configurationService.getConfiguration(exercise(ProgrammingLanguage.JAVA)))
                 .matches(exception -> "sandboxReadFailed".equals(exception.getErrorKey()));
