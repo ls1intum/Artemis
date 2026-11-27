@@ -44,6 +44,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -2351,6 +2352,51 @@ describe('QuizExerciseUpdateComponent', () => {
             comp.openAiGenerationModal();
 
             expect(comp.aiGenerationModalVisible).toBe(true);
+        });
+
+        it('should append questions handed over from another page when a new quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            const handedOver: GeneratedQuestion[] = [
+                {
+                    id: 'pool-1',
+                    type: 'single-choice',
+                    title: 'Pooled question',
+                    questionText: 'From the pool',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ];
+            handoffService.offer(123, handedOver);
+            const newQuiz = new QuizExercise(course, undefined);
+            newQuiz.title = '';
+            newQuiz.duration = 600;
+            newQuiz.quizQuestions = [];
+            newQuiz.isEditable = true;
+            comp.quizExercise.set(newQuiz);
+            comp.course = course;
+            comp.courseId.set(123);
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(1);
+            expect((comp.quizExercise().quizQuestions?.[0] as MultipleChoiceQuestion).title).toBe('Pooled question');
+            expect(handoffService.take(123)).toEqual([]);
+        });
+
+        it('should leave handed-over questions alone when an existing quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            handoffService.offer(123, [{ id: 'pool-1', type: 'single-choice', title: 'Pooled question', questionText: 'From the pool', options: [{ text: 'A', correct: true }] }]);
+            comp.quizExercise().quizQuestions = [];
+            comp.course = course;
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(0);
+            expect(handoffService.take(123)).toHaveLength(1);
         });
 
         it('should append generated questions to existing quiz questions', () => {

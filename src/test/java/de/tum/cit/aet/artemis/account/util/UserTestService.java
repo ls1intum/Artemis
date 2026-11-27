@@ -410,12 +410,6 @@ public class UserTestService {
     }
 
     // Test
-    public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
-        var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
-    }
-
-    // Test
     public void createInternalUser_asAdmin_isSuccessful() throws Exception {
         createInternalUserIsSuccessful(Set.of(Role.STUDENT));
     }
@@ -898,25 +892,19 @@ public class UserTestService {
     }
 
     // Test
-    public void createAndDeleteUserVcsAccessToken() throws Exception {
+    public void deleteUserVcsAccessTokenAndCannotCreateAnother() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Set expiry date to already past date -> Bad Request
-        ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
-        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
-        assertThat(userDTO).isNull();
+        // The personal token is deprecated: it cannot be created any more, however the request looks
+        request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + ZonedDateTime.now().plusMonths(1), null, UserDTO.class, HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Correct expiry date -> OK
-        expiryDate = ZonedDateTime.now().plusMonths(1);
-        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        // A token that exists from before can be revoked, which is what is left of the feature for a token that leaked
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcpat-" + "c".repeat(44), ZonedDateTime.now().plusMonths(1));
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
-        // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }
