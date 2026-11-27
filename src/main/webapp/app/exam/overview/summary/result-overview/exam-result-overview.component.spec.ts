@@ -24,7 +24,7 @@ import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-
 import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -687,9 +687,14 @@ describe('ExamResultOverviewComponent', () => {
                     expect(table().classList).toContain(`[&_${cell}]:px-2`);
                     expect(table().classList).toContain(`[&_${cell}]:py-1.5`);
                 }
-                // the utility targets cells of a kit table, whose own cell styles are outside a cascade layer, so it has to be important
-                expect(table().classList).toContain('[&_tbody_th]:border-b!');
-                expect(table().querySelector('tfoot')!.classList).toContain('border-t-2');
+                // The table is border-separate, which never draws a border on a <tfoot>, so the kit puts the rule on the cells themselves.
+                for (const cell of ['tfoot_td', 'tfoot_th']) {
+                    expect(table().classList).toContain(`tumaet:[&_${cell}]:border-t-2`);
+                }
+                // The row header cells have the rule below them like the other cells, and the last row leaves it to the footer.
+                expect(table().classList).toContain('tumaet:[&_tbody_th]:border-b');
+                expect(table().classList).toContain('tumaet:[&:has(>tfoot)>tbody:last-of-type>tr:last-child>td]:border-b-0');
+                expect(table().querySelector('tfoot')!.classList).not.toContain('border-t-2');
             });
 
             it('should centre the numeric headers over their centred values and keep the text columns start aligned', () => {

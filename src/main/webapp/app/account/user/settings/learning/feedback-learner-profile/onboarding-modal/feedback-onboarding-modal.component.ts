@@ -9,14 +9,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
-    styleUrls: ['./feedback-onboarding-modal.component.scss'],
+    styleUrls: ['./feedback-onboarding-modal.component.css'],
     imports: [CommonModule, TextResultComponent, TranslateDirective, TumAetUiButtonComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class FeedbackOnboardingModalComponent {

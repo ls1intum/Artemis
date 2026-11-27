@@ -5,14 +5,10 @@ import { Observable, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteOptionEvent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -37,7 +33,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 @Component({
     selector: 'jhi-course-users-selector',
     templateUrl: './course-users-selector.component.html',
-    styleUrls: ['./course-users-selector.component.scss'],
+    styleUrls: ['./course-users-selector.component.css'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

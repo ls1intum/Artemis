@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, input, output } from '@angular/core';
 import { ComplaintApi } from 'app/openapi/api/complaint-api';
@@ -16,7 +17,7 @@ import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counte
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints-form.component.html',
-    styleUrls: ['../complaints.scss'],
+    styleUrls: ['../complaints.css'],
     imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, TextareaCounterComponent, TumAetUiButtonDirective, TumAetUiInputDirective],
     // A custom element is inline by default; its block child then splits it, so the width and margins of the card would not apply.
     host: { class: 'block' },

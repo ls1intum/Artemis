@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { toQuizExerciseReEvaluate } from 'app/quiz/shared/util/quiz-exercise-reevaluate-request.util';
@@ -17,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
-    styleUrls: ['../../../shared/quiz.scss'],
+    styleUrls: ['../../../shared/quiz.css'],
     imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {

@@ -2,7 +2,8 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckDouble, faExclamationTriangle, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { ProgrammingBuildStatusData, ProgrammingRepositoryBuildOverviewDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';

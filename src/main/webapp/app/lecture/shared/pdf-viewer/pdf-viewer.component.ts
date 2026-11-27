@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
@@ -95,7 +97,7 @@ const INITIAL_EAGER_PAGES = 3;
         TranslateDirective,
     ],
     templateUrl: './pdf-viewer.component.html',
-    styleUrls: ['./pdf-viewer.component.scss'],
+    styleUrls: ['./pdf-viewer.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfViewerComponent {

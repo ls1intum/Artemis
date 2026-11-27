@@ -50,7 +50,7 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
 @Component({
     selector: 'tumaet-ui-table-layout',
     templateUrl: './tumaet-ui-table-layout.component.html',
-    styleUrl: './tumaet-ui-table-layout.component.scss',
+    styleUrl: './tumaet-ui-table-layout.component.css',
     imports: [TumAetUiEmptyStateComponent, TumAetUiProgressSpinnerComponent, TumAetUiTranslatePipe],
     host: {
         '[class.tumaet-ui-table-layout-fill]': 'fill()',
@@ -65,8 +65,6 @@ export class TumAetUiTableLayoutComponent {
 
     /** Dims the body and shows a spinner while the consumer loads rows. */
     readonly loading = input(false, { transform: booleanAttribute });
-    /** Allows a toolbar with multiple rows to grow to its content height. */
-    readonly autoToolbarHeight = input(false, { transform: booleanAttribute });
     /** Takes the height of a flex-column parent instead of sizing to the table. */
     readonly fill = input(false, { transform: booleanAttribute });
     /** Shows the empty state in the body, under the column header, instead of leaving it blank. Bind it to "no rows and not loading". */

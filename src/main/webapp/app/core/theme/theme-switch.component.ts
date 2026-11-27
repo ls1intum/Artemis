@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -17,7 +18,7 @@ export type ThemeSwitchPopoverPlacement = 'bottom' | 'bottom-right';
 @Component({
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
-    styleUrls: ['theme-switch.component.scss'],
+    styleUrls: ['theme-switch.component.css'],
     imports: [FormsModule, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiToggleSwitchComponent, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

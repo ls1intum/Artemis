@@ -34,7 +34,7 @@
         "@ngx-translate/core": "18.1.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.5.0",
-        "@tumaet/apollon": "5.4.0",
+        "@tumaet/apollon": "5.5.1",
         "@tumaet/ui-angular": "workspace:*",
         "@vscode/codicons": "0.0.46-24",
         "@vscode/markdown-it-katex": "1.1.2",
@@ -100,16 +100,13 @@
         "ng-mocks": "14.18.6",
         "postcss": "catalog:",
         "postcss-html": "2.0.0",
-        "postcss-scss": "4.0.9",
         "prettier": "3.10.1",
         "publint": "catalog:",
         "rimraf": "6.1.4",
-        "sass": "catalog:",
         "semver": "catalog:",
         "stylelint": "catalog:",
         "stylelint-config-html": "2.0.0",
-        "stylelint-config-standard-scss": "18.0.0",
-        "stylelint-scss": "7.5.0",
+        "stylelint-config-standard": "41.0.0",
         "tailwindcss": "catalog:",
         "ts-morph": "28.0.0",
         "typescript": "catalog:",
@@ -149,8 +146,8 @@
         "postinstall": "husky",
         "prebuild": "node supporting_scripts/client/prebuild.mjs",
         "prepare": "husky",
-        "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\" \"packages/tum-aet-ui/**/*.{json,ts,js,css,scss,html}\"",
-        "prettier:write": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\" \"packages/tum-aet-ui/**/*.{json,ts,js,css,scss,html}\"",
+        "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,html}\" \"packages/tum-aet-ui/**/*.{json,ts,js,css,html}\"",
+        "prettier:write": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,html}\" \"packages/tum-aet-ui/**/*.{json,ts,js,css,html}\"",
         "start": "pnpm run prebuild -- --develop && concurrently --kill-others --names \"tumaet-ui-styles,artemis\" \"pnpm --dir packages/tum-aet-ui run build:styles -- --development --watch\" \"ng serve --hmr\"",
         "test-diff:ci": "git fetch origin develop && pnpm run prebuild && pnpm run vitest:diff",
         "test-diff": "pnpm run prebuild && pnpm run vitest:diff",
@@ -192,9 +189,12 @@
         "sbom:generate-full": "cross-env FETCH_LICENSE=false pnpm dlx @cyclonedx/cdxgen@12.4.0 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse --profile generic",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
         "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped",
-        "stylelint": "stylelint \"src/main/webapp/**/*.{css,scss}\" && pnpm run tum-aet-ui:stylelint"
+        "stylelint": "stylelint \"src/main/webapp/**/*.css\" && pnpm run tum-aet-ui:stylelint"
     },
     "stylelint": {
-        "extends": "./config/stylelint/stylelint.config.js"
+        "extends": "./config/stylelint/stylelint.config.js",
+        "ignoreFiles": [
+            "src/main/webapp/vendor-styles/**"
+        ]
     }
 }

@@ -1,0 +1,61 @@
+.tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--overview-border-color);
+}
+
+.tab-bar .tab-link {
+    display: inline-block;
+    position: relative;
+    color: var(--tab-bar-color);
+    text-decoration: none;
+    padding-bottom: 2px;
+    margin: 0.5rem 1rem 0.5rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-bar .tab-link:hover {
+    color: var(--tab-bar-color-hover);
+    border-bottom: 2px solid var(--tab-bar-color-hover);
+}
+
+.tab-bar .tab-link.active {
+    color: var(--tab-bar-color-active);
+    border-bottom: 2px solid var(--tab-bar-color-active);
+}
+
+/*
+ * Displays a red circle at the top right corner of the tab item.
+ * Used to indicate that there are new messages.
+ */
+.tab-bar .tab-link.newMessage::after {
+    position: absolute;
+    content: '';
+    border-radius: 50%;
+    background-color: var(--tumaet-ui-state-danger);
+    padding: 0.5rem;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+}
+
+@media (max-width: 720px) {
+    .tab-bar .tab-link fa-icon:first-child {
+        font-size: 1.44rem;
+    }
+}
+
+.tab-bar .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-left: auto;
+    gap: 0.5rem;
+}
+
+.tab-bar .controls button.active {
+    box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
+}

@@ -1,4 +1,5 @@
-import { TumAetUiMessageComponent, TumAetUiSkeletonComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular/skeleton';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -15,7 +16,7 @@ import { Subscription, finalize } from 'rxjs';
 @Component({
     selector: 'jhi-programming-exercise-version-history',
     templateUrl: './programming-exercise-version-history.component.html',
-    styleUrls: ['./programming-exercise-version-history.component.scss'],
+    styleUrls: ['./programming-exercise-version-history.component.css'],
     imports: [
         TranslateDirective,
         TumAetUiMessageComponent,

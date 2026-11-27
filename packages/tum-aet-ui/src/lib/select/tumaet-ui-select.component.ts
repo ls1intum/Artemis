@@ -43,7 +43,7 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
 @Component({
     selector: 'tumaet-ui-select',
     templateUrl: './tumaet-ui-select.component.html',
-    styleUrl: './tumaet-ui-select.component.scss',
+    styleUrl: './tumaet-ui-select.component.css',
     imports: [FaIconComponent, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-select',

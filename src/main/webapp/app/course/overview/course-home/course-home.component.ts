@@ -5,7 +5,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription, catchError, debounceTime, filter, fromEvent, map, of, take, timeout, timer } from 'rxjs';
-import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -26,7 +30,7 @@ import { CourseHomeTeachingTeamComponent } from './course-home-teaching-team.com
 @Component({
     selector: 'jhi-course-home',
     templateUrl: './course-home.component.html',
-    styleUrl: './course-home.component.scss',
+    styleUrl: './course-home.component.css',
     imports: [
         RouterLink,
         ArtemisDatePipe,
