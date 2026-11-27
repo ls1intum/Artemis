@@ -450,7 +450,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 [false, 12, true, 0],
             ].map((row) => [type, ...row] as [ExerciseType, boolean, number | undefined, boolean, number]),
         ),
-    )('matches team draft Continue access: type=%s, instructor=%s, assessor=%s, completed=%s', (type, isInstructor, assessorId, completed, expectedLinks) => {
+    )('matches team draft Continue and Open access: type=%s, instructor=%s, assessor=%s, completed=%s', (type, isInstructor, assessorId, completed, expectedLinks) => {
         const exercise = deepClone(modelingExercise) as TextExercise;
         exercise.type = type;
         exercise.teamMode = true;
@@ -485,6 +485,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.numberOfAssessmentsOfCorrectionRounds.update((rounds) => rounds.slice(0, 1));
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelectorAll('#continue-assessment')).toHaveLength(expectedLinks);
+        // a draft that another user holds can still be opened to view it, except in the text editor, which refuses to load it
+        const expectedOpenLinks = expectedLinks === 0 && (completed || type !== ExerciseType.TEXT) ? 1 : 0;
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="open-assessment"]')).toHaveLength(expectedOpenLinks);
         expect(!!fixture.nativeElement.querySelector('[data-testid="assessment-queue-assessor"]')).toBe(assessorId !== undefined);
     });
 

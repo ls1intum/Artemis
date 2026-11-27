@@ -7,7 +7,7 @@ import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/c
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { isAllowedToModifyFeedback, isAssessorOfResult } from 'app/assessment/manage/services/assessment.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -576,7 +576,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     private checkPermissions() {
-        this.isAssessor.set(this.result()?.assessor?.id === this.userId);
+        this.isAssessor.set(isAssessorOfResult(this.result(), this.userId, this.exercise(), this.participation()));
     }
 
     /**

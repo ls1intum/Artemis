@@ -333,7 +333,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 submission,
                 team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
                 result: getSubmissionResultByCorrectionRound(submission, correctionRound),
-                canOpen: this.canOpenTeamAssessment(submission, correctionRound),
+                canContinue: this.canContinueTeamAssessment(submission, correctionRound),
                 isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
                 link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
             });
@@ -952,11 +952,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Whether the user may open the team assessment of a submission. A tutor cannot open a draft that another user holds, which the assessment editors refuse as well.
+     * Whether the user may continue the team assessment of a submission. A tutor cannot continue a draft that another user holds, which the assessment editors refuse as
+     * well, but may open it to view it, except for text exercises, whose editor refuses to load a draft of another user.
      * @param submission      the displayed submission
      * @param correctionRound the displayed correction round
      */
-    private canOpenTeamAssessment(submission: Submission, correctionRound: number): boolean {
+    private canContinueTeamAssessment(submission: Submission, correctionRound: number): boolean {
         if (!this.exercise().teamMode || this.isTestRun()) {
             return true;
         }

@@ -595,9 +595,9 @@
                                                                             <span jhiTranslate="artemisApp.result.assessor"></span>: {{ assessor.name || assessor.login }}
                                                                         </span>
                                                                     }
-                                                                    @if (((isTestRun() && complaints().length === 0) || !isTestRun()) && row.canOpen) {
+                                                                    @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
                                                                         <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
-                                                                            @if (submission && row.isDraft) {
+                                                                            @if (submission && row.isDraft && row.canContinue) {
                                                                                 <a
                                                                                     [routerLink]="assessmentNotPossibleYetReason() ? null : row.link"
                                                                                     [queryParams]="round.queryParams"
@@ -614,7 +614,7 @@
                                                                                     }}
                                                                                 </a>
                                                                             } @else {
-                                                                                @if (!!row.result) {
+                                                                                @if (!!row.result && (row.canContinue || exercise().type !== ExerciseType.TEXT)) {
                                                                                     <a
                                                                                         [routerLink]="assessmentNotPossibleYetReason() ? null : row.link"
                                                                                         [queryParams]="round.queryParams"

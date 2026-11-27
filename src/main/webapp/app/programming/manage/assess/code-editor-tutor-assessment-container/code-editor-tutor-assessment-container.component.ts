@@ -38,7 +38,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { isAllowedToModifyFeedback, isAssessorOfResult } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faClockRotateLeft, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -831,7 +831,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private checkPermissions() {
         const assessor = this.manualResult()?.assessor;
         if (assessor) {
-            this.isAssessor.set(assessor.id === this.userId);
+            this.isAssessor.set(isAssessorOfResult(this.manualResult(), this.userId, this.exercise(), this.participation()));
         } else {
             this.isAssessor.set(true);
         }
