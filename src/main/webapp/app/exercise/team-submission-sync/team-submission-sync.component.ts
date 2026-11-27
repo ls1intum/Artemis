@@ -11,7 +11,6 @@ import { Observable, Subscription } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
-import { ApollonEditor } from '@tumaet/apollon';
 
 @Component({
     selector: 'jhi-team-submission-sync',
@@ -112,15 +111,22 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 filter((state: ConnectionState) => state.connected),
             )
             .subscribe({
-                next: () => {
-                    const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
-                    this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
+                next: async () => {
+                    try {
+                        // Loaded here and not at the top of the file: this component is part of the text editor route, and only a team
+                        // exercise ever gets here, so an individual exercise never downloads the editor.
+                        const { ApollonEditor } = await import('@tumaet/apollon');
+                        const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
+                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
 
-                    if (this.exerciseType() === ExerciseType.MODELING) {
-                        const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
-                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
+                        if (this.exerciseType() === ExerciseType.MODELING) {
+                            const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
+                            this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
+                        }
+                        this.reconnected.emit();
+                    } catch (error: unknown) {
+                        this.onError(error);
                     }
-                    this.reconnected.emit();
                 },
                 error: (error: unknown) => this.onError(error),
             });

@@ -12,7 +12,7 @@ import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.
 import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
-import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
+import type { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
@@ -257,7 +257,9 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        const ref = this.dialogService.open<ApollonDiagramImportDialogComponent, DragAndDropQuestion, { courseId: number }>(ApollonDiagramImportDialogComponent, {
+        // The dialog hosts the diagram editor. It is loaded when it is opened, so that editing a quiz does not download the editor.
+        const { ApollonDiagramImportDialogComponent: importDialog } = await import('app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component');
+        const ref = this.dialogService.open<ApollonDiagramImportDialogComponent, DragAndDropQuestion, { courseId: number }>(importDialog, {
             size: 'large',
             // This dialog hosts a short list and a full diagram editor, so the view decides its own size and spacing.
             contentPadding: 'none',

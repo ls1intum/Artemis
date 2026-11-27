@@ -8,9 +8,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { Service, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { filter, map } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { filter, map, switchMap } from 'rxjs/operators';
+import { Observable, from } from 'rxjs';
 
 @Service()
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -19,7 +18,16 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     private courseService = inject(CourseManagementService);
     private exerciseGroupService = inject(ExerciseGroupService);
 
-    resolve(route: ActivatedRouteSnapshot) {
+    /**
+     * The diagram type of a new exercise. Apollon is loaded on first use and not imported at the top of the file: this resolver
+     * is part of the exam management routes, which would otherwise download the whole modeling editor without ever showing a diagram.
+     * Opening the page that creates a modeling exercise needs the editor right afterwards anyway.
+     */
+    private defaultDiagramType() {
+        return from(import('@tumaet/apollon')).pipe(map(({ UMLDiagramType }) => UMLDiagramType.ClassDiagram));
+    }
+
+    resolve(route: ActivatedRouteSnapshot): Observable<ModelingExercise> {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),
@@ -29,23 +37,31 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
-                    map(
-                        (exerciseGroup: HttpResponse<ExerciseGroup>) =>
-                            exerciseForImportFromFile<ModelingExercise>(this.router, undefined, exerciseGroup.body!) ??
-                            new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined),
+                    switchMap((exerciseGroup: HttpResponse<ExerciseGroup>) =>
+                        this.defaultDiagramType().pipe(
+                            map(
+                                (diagramType) =>
+                                    exerciseForImportFromFile<ModelingExercise>(this.router, undefined, exerciseGroup.body!) ??
+                                    new ModelingExercise(diagramType, undefined, exerciseGroup.body || undefined),
+                            ),
+                        ),
                     ),
                 );
             } else {
                 return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map(
-                        (course: HttpResponse<Course>) =>
-                            exerciseForImportFromFile<ModelingExercise>(this.router, course.body!, undefined) ??
-                            new ModelingExercise(UMLDiagramType.ClassDiagram, course.body || undefined, undefined),
+                    switchMap((course: HttpResponse<Course>) =>
+                        this.defaultDiagramType().pipe(
+                            map(
+                                (diagramType) =>
+                                    exerciseForImportFromFile<ModelingExercise>(this.router, course.body!, undefined) ??
+                                    new ModelingExercise(diagramType, course.body || undefined, undefined),
+                            ),
+                        ),
                     ),
                 );
             }
         }
-        return of(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        return this.defaultDiagramType().pipe(map((diagramType) => new ModelingExercise(diagramType, undefined, undefined)));
     }
 }

@@ -28,6 +28,15 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ConnectionState } from 'app/foundation/service/websocket.service';
 import { ApollonEditor } from '@tumaet/apollon';
 
+/**
+ * The reconnect sync loads the editor with a dynamic import (so that an individual text exercise never downloads it) and sends
+ * after it resolved: let the import and the continuation after it finish before asserting on what was sent.
+ */
+async function flushDynamicImport(): Promise<void> {
+    await vi.dynamicImportSettled();
+    await new Promise<void>((resolve) => setTimeout(resolve));
+}
+
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
     let component: TeamSubmissionSyncComponent;
@@ -84,7 +93,7 @@ describe('Team Submission Sync Component', () => {
         vi.restoreAllMocks();
     });
 
-    it('ngOnInit should work correctly', () => {
+    it('ngOnInit should work correctly', async () => {
         const expectedWebsocketTopic = '/topic/participations/3/team/text-submissions';
         submissionSyncPayload.sender = otherUser;
         const submissionSyncObservable = of(submissionSyncPayload);
@@ -93,7 +102,9 @@ describe('Team Submission Sync Component', () => {
         const websocketSubscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
         const websocketSendSpy = vi.spyOn(websocketService, 'send');
 
-        component.ngOnInit();
+        // The first change detection runs ngOnInit. Awaiting in a zoneless test lets the fixture run it on its own, so do it explicitly once.
+        fixture.detectChanges();
+        await flushDynamicImport();
 
         expect(component.websocketTopic).toBe(expectedWebsocketTopic);
         expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
@@ -144,7 +155,7 @@ describe('Team Submission Sync Component', () => {
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });
 
-    it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
+    it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', async () => {
         const mock = websocketService as unknown as MockWebsocketService;
         const expectedTopic = '/app/participations/3/team/text-submissions/patch';
         const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
@@ -156,7 +167,9 @@ describe('Team Submission Sync Component', () => {
         const sendSpy = vi.spyOn(websocketService, 'send');
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
-        component.ngOnInit();
+        // The first change detection runs ngOnInit. Awaiting in a zoneless test lets the fixture run it on its own, so do it explicitly once.
+        fixture.detectChanges();
+        await flushDynamicImport();
 
         // BehaviorSubject in MockWebsocketService starts as connected=true → exactly one initial sync + one reconnect emission
         expect(sendSpy).toHaveBeenCalledTimes(1);
@@ -167,24 +180,27 @@ describe('Team Submission Sync Component', () => {
 
         // Disconnect — no fresh sync, no fresh reconnect signal
         mock.setConnectionState(new ConnectionState(false, true));
+        await flushDynamicImport();
         expect(sendSpy).toHaveBeenCalledTimes(1);
         expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         // Reconnect — initial sync and reconnect signal fire again
         mock.setConnectionState(new ConnectionState(true, true));
+        await flushDynamicImport();
         expect(sendSpy).toHaveBeenCalledTimes(2);
         expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
         expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         // A duplicate connected=true must not re-fire (distinctUntilChanged on the `connected` field)
         mock.setConnectionState(new ConnectionState(true, true));
+        await flushDynamicImport();
         expect(sendSpy).toHaveBeenCalledTimes(2);
         expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         generateInitialSyncSpy.mockRestore();
     });
 
-    it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', () => {
+    it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', async () => {
         // The shared (re)connect lifecycle is covered by the test above; this asserts only the modeling delta:
         // modeling sends a second patch carrying the initial awareness sync, on the first connect and on every reconnect.
         const mock = websocketService as unknown as MockWebsocketService;
@@ -196,7 +212,9 @@ describe('Team Submission Sync Component', () => {
         const sendSpy = vi.spyOn(websocketService, 'send');
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
-        component.ngOnInit();
+        // The first change detection runs ngOnInit. Awaiting in a zoneless test lets the fixture run it on its own, so do it explicitly once.
+        fixture.detectChanges();
+        await flushDynamicImport();
 
         expect(sendSpy.mock.calls.map((call) => [call[0], (call[1] as SubmissionPatch).patch])).toEqual([
             [expectedTopic, 'initial-sync-stub'],
@@ -205,6 +223,7 @@ describe('Team Submission Sync Component', () => {
 
         mock.setConnectionState(new ConnectionState(false, true));
         mock.setConnectionState(new ConnectionState(true, true));
+        await flushDynamicImport();
         expect(sendSpy).toHaveBeenCalledTimes(4);
         expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
 
@@ -212,7 +231,7 @@ describe('Team Submission Sync Component', () => {
         generateInitialAwarenessSyncSpy.mockRestore();
     });
 
-    it('should stop reacting to connection-state changes after ngOnDestroy', () => {
+    it('should stop reacting to connection-state changes after ngOnDestroy', async () => {
         const mock = websocketService as unknown as MockWebsocketService;
         vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
         const reconnectedSpy = vi.fn();
@@ -220,12 +239,15 @@ describe('Team Submission Sync Component', () => {
         fixture.componentRef.setInput('submissionObservable', undefined);
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
-        component.ngOnInit();
+        // The first change detection runs ngOnInit. Awaiting in a zoneless test lets the fixture run it on its own, so do it explicitly once.
+        fixture.detectChanges();
+        await flushDynamicImport();
         expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         component.ngOnDestroy();
         mock.setConnectionState(new ConnectionState(false, true));
         mock.setConnectionState(new ConnectionState(true, true));
+        await flushDynamicImport();
         expect(reconnectedSpy).toHaveBeenCalledTimes(1);
     });
 });
