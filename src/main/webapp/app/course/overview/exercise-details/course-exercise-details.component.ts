@@ -593,6 +593,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
                     updatedExercise.studentParticipations = participationsAfterTeamAssignment(this.exercise.studentParticipations, teamAssignment);
+                    // The participations that the assignment replaced must not stay in the cache that loadExercise() seeds the page from when it is opened again.
+                    const remainingIds = new Set(updatedExercise.studentParticipations?.map((participation) => participation.id));
+                    const replacedIds = (this.exercise.studentParticipations ?? []).flatMap((participation) =>
+                        participation.id !== undefined && !remainingIds.has(participation.id) ? [participation.id] : [],
+                    );
+                    if (replacedIds.length) {
+                        this.participationWebsocketService.removeCachedParticipations(replacedIds);
+                    }
                     this.exercise = updatedExercise;
                     if (updatedExercise.studentParticipations?.length) {
                         this.mergeResultsAndSubmissionsForParticipations();

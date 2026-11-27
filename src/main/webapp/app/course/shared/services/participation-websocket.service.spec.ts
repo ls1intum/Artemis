@@ -86,6 +86,20 @@ describe('ParticipationWebsocketService', () => {
         vi.restoreAllMocks();
     });
 
+    it('should evict removed participations from the cache and keep the others', () => {
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        expect(participationWebsocketService.getParticipationsForExercise(exercise1.id!)).toHaveLength(1);
+
+        // for example the participation of a team that the student left, which a page that opens later must not restore from the cache
+        participationWebsocketService.removeCachedParticipations([participation.id!, 12345]);
+
+        expect(participationWebsocketService.getParticipationsForExercise(exercise1.id!)).toEqual([]);
+        expect(participationWebsocketService.participationSubscriptionTypes.has(participation.id!)).toBe(false);
+        expect(participationWebsocketService.getParticipationsForExercise(exercise2.id!)).toHaveLength(1);
+    });
+
     it('should not open the topic of an exercise without an exercise id', () => {
         // Without the exercise there is no topic to subscribe to, `/topic/exercise/undefined/newResults` is rejected by the server for every user.
         const resultObservable = participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, undefined);

@@ -339,6 +339,37 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.studentParticipations).toEqual([]);
         });
 
+        it('should evict the participations of the team the student left from the cache, but not the practice participation', async () => {
+            const removeCachedParticipations = vi.spyOn(participationWebsocketService, 'removeCachedParticipations');
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42 } as TeamAssignmentPayload);
+
+            // a page that opens again seeds itself from the cache, and the server response without participations would not replace what the cache restores
+            expect(removeCachedParticipations).toHaveBeenCalledExactlyOnceWith([1]);
+        });
+
+        it('should not evict anything when the assignment brings a team without participations', async () => {
+            const removeCachedParticipations = vi.spyOn(participationWebsocketService, 'removeCachedParticipations');
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42, teamId: 8 } as TeamAssignmentPayload);
+
+            expect(removeCachedParticipations).not.toHaveBeenCalled();
+        });
+
         it('should keep the participations when the assignment brings a team without participations', async () => {
             const assignments = await subscribeToAssignments({
                 id: 42,
