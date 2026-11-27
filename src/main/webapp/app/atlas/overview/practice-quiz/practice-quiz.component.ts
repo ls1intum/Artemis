@@ -394,6 +394,10 @@ export class PracticeQuizComponent implements OnInit, OnDestroy {
      * Returns back to the overview dashboard.
      */
     backToOverview(): void {
+        // Leaving while a submission is pending would let its response replace the next quiz
+        if (this.isSubmitting()) {
+            return;
+        }
         this.resetView();
         const cId = this.activeCourseId();
         if (cId) {

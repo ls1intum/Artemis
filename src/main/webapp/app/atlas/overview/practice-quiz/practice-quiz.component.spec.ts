@@ -280,8 +280,13 @@ describe('PracticeQuizComponent', () => {
 
         const navButtons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('.quiz-nav-step'));
         expect(navButtons.map((button) => button.getAttribute('aria-label'))).toEqual(['Question 1']);
-        const cancelButton = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('#quiz-header button')).find((button) => button.textContent?.trim() === 'Cancel');
-        expect(cancelButton?.disabled).toBe(true);
+        const cancelButtons = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).filter((button) => button.textContent?.trim() === 'Cancel');
+        expect(cancelButtons).toHaveLength(2);
+        expect(cancelButtons.every((button) => button.disabled)).toBe(true);
+
+        // Even if leaving is triggered, a pending submission keeps the quiz on screen
+        component.backToOverview();
+        expect(component.state()).toBe('QUIZ');
     });
 
     it('should cancel pending requests of the previous course when the route switches to another course', () => {

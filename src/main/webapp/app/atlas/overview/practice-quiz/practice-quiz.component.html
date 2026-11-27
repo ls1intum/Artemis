@@ -186,7 +186,7 @@
 
                             <!-- Bottom Submit Action -->
                             <div class="flex items-center justify-between pt-4 border-t border-surface-200">
-                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="backToOverview()">Cancel</button>
+                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" [disabled]="isSubmitting()" (click)="backToOverview()">Cancel</button>
                                 <button tumAetUiButton type="button" [disabled]="isSubmitting()" (click)="submitQuiz()">
                                     <fa-icon [icon]="faCheck" class="me-1" />
                                     <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
