@@ -8,6 +8,7 @@ import { QuizQuestionPoolItem } from 'app/openapi/model/quiz-question-pool-item'
 import { QuizQuestionPoolProgress } from 'app/openapi/model/quiz-question-pool-progress';
 import { QuizQuestionPoolBuild } from 'app/openapi/model/quiz-question-pool-build';
 import { QuizQuestionPoolLectureUnit } from 'app/openapi/model/quiz-question-pool-lecture-unit';
+import { QuizQuestionPoolSelection } from 'app/openapi/model/quiz-question-pool-selection';
 import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settings';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import {
@@ -20,6 +21,9 @@ import {
     PoolQuestionPage,
     PoolQuestionQuery,
     PoolReviewState,
+    PoolSelection,
+    PoolSelectionCandidate,
+    PoolSelectionRequest,
     PoolSettings,
 } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
@@ -159,6 +163,43 @@ export class QuizQuestionPoolService {
      */
     deleteQuestions(courseId: number, competencyId?: number): Observable<number> {
         return this.api.deleteQuizQuestionPoolQuestions(courseId, competencyId).pipe(map((result) => result.deleted));
+    }
+
+    /**
+     * Draws approved questions from the pool for a new quiz and records the draw on the server.
+     *
+     * @param courseId the course
+     * @param request  the competencies, lecture units, count, question types and difficulties to draw
+     */
+    selectQuestions(courseId: number, request: PoolSelectionRequest): Observable<PoolSelection> {
+        return this.api.selectQuizQuestionPoolQuestions(courseId, request).pipe(map((selection) => this.toSelection(selection, request.count)));
+    }
+
+    /**
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty.
+     *
+     * @param courseId the course
+     */
+    getSelectionCandidates(courseId: number): Observable<PoolSelectionCandidate[]> {
+        return this.api.getQuizQuestionPoolSelectionCandidates(courseId).pipe(
+            map((candidates) =>
+                candidates.map((candidate) => ({
+                    competencyId: candidate.competencyId ?? 0,
+                    lectureUnitId: candidate.lectureUnitId ?? 0,
+                    questionType: candidate.questionType,
+                    difficulty: candidate.difficulty,
+                    count: candidate.count ?? 0,
+                })),
+            ),
+        );
+    }
+
+    private toSelection(selection: QuizQuestionPoolSelection, requested: number): PoolSelection {
+        return {
+            questions: (selection.questions ?? []).map((item) => this.toPoolQuestion(item)),
+            requested: selection.requested ?? requested,
+            competencyIdsWithoutQuestions: selection.competencyIdsWithoutQuestions ?? [],
+        };
     }
 
     private toProgress(progress: QuizQuestionPoolProgress): PoolProgress {

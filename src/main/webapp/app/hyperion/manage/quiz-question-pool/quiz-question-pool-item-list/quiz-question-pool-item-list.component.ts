@@ -3,6 +3,7 @@ import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { QuizQuestionPoolItemComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-item/quiz-question-pool-item.component';
 import {
     PoolFilterVerdict,
@@ -61,6 +62,8 @@ export class QuizQuestionPoolItemListComponent {
     readonly delete = output<number>();
 
     readonly expandedIds = signal<ReadonlySet<number>>(new Set());
+    /** The questions whose explanations are shown. */
+    readonly explainedIds = signal<ReadonlySet<number>>(new Set());
 
     readonly judged = computed(() => this.questions().filter((question) => question.state === 'FILTERED' && !!question.question && !!question.decision));
     readonly needsReview = computed(() => this.judged().filter((question) => question.decision!.accepted && question.flagged === true));
@@ -74,15 +77,11 @@ export class QuizQuestionPoolItemListComponent {
     readonly rejectedViews = computed(() => this.rejected().map((question) => this.toView(question)));
 
     toggleRationale(id: number): void {
-        this.expandedIds.update((ids) => {
-            const next = new Set(ids);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
+        this.expandedIds.update((ids) => toggled(ids, id));
+    }
+
+    toggleExplanations(id: number): void {
+        this.explainedIds.update((ids) => toggled(ids, id));
     }
 
     private toView(question: PoolQuestion): PoolQuestionView {
@@ -97,9 +96,27 @@ export class QuizQuestionPoolItemListComponent {
             verdicts: verdicts.map(toVerdictView),
             scorePercent: asPercent(question.decision!.aggregateScore),
             expanded: this.expandedIds().has(question.id),
+            hasExplanations: hasExplanations(question.question),
+            explanationsShown: this.explainedIds().has(question.id),
             busy: this.busyQuestionIds().has(question.id),
             reviewSeverity: reviewStateSeverity(question.reviewState),
             reviewLabelKey: `artemisApp.hyperion.quizQuestionPool.list.reviewState.${question.reviewState}`,
         };
     }
+}
+
+/** The set with the id added when it was missing and removed when it was present. */
+function toggled(ids: ReadonlySet<number>, id: number): ReadonlySet<number> {
+    const next = new Set(ids);
+    if (next.has(id)) {
+        next.delete(id);
+    } else {
+        next.add(id);
+    }
+    return next;
+}
+
+/** Whether the question or one of its options carries an explanation. */
+function hasExplanations(question: GeneratedQuestion | undefined): boolean {
+    return !!question && (!!question.explanation || question.options.some((option) => !!option.explanation));
 }
