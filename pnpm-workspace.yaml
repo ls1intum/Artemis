@@ -128,6 +128,10 @@ overrides:
   '@embedpdf/engines>preact': '-'
   '@embedpdf/engines>svelte': '-'
   '@embedpdf/engines>vue': '-'
+  # @angular/cdk lists parse5 as a dependency for its own schematics (`ng add`, `ng generate @angular/cdk:...`), which this project does not run.
+  # It never reaches the bundle, but it brought a second copy of `entities` (9, next to the 8 that markdown-it uses) into the production
+  # closure. Drop this entry if the project ever runs those schematics.
+  '@angular/cdk>parse5': '-'
   # @tumaet/apollon and @xyflow/react are two halves of the modeling editor and disagree about two small libraries, so each
   # of them shipped twice: zustand 5 (Apollon) next to zustand 4 (@xyflow/react asks for ^4.4.0), and @xyflow/system 0.0.78
   # (pinned by Apollon) next to 0.0.83 (what @xyflow/react 12.12 uses). @xyflow/react only imports zustand/traditional and
