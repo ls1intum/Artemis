@@ -1068,6 +1068,43 @@ class LocalCIResultProcessingServiceTest {
         verify(aggregationLocks).unlock("group-1");
     }
 
+    /** The group reports later: its result, which shows the unmerged container as failed, or its failure once its last container has finished. */
+    @Test
+    void aContainerWhoseResultCannotBeMergedWhileASiblingRunsSendsNoErrorYet() {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
+                .thenThrow(new IllegalStateException("the result could not be merged"));
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null),
+                new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.BUILDING, null)));
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+    }
+
+    @Test
+    void theLastContainerWhoseResultCannotBeMergedEndsAGroupWithoutAResultInAnError() {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_b"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull(), any()))
+                .thenThrow(new IllegalStateException("the result could not be merged"));
+        // the sibling's result could not be merged either, so the complete group has no aggregate to report
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null),
+                new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.ERROR, null)));
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingSubmissionMessagingService).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+    }
+
     @Test
     void theLastContainerReportsTheAssessmentItsFeedbackWasMergedIntoEvenWithoutACompletionDate() {
         withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));

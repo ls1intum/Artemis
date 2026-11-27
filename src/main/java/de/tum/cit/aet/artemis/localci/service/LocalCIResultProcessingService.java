@@ -341,7 +341,7 @@ public class LocalCIResultProcessingService {
                         result = outcome.result();
                         savedBuildJob = outcome.savedBuildJob();
                         completedResult = outcome.completed();
-                        resultExpected = !outcome.arrivedTooLate();
+                        resultExpected = outcome.resultExpected();
                     }
                 }
                 else {

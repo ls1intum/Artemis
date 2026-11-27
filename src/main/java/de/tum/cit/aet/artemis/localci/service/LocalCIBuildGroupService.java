@@ -289,7 +289,7 @@ public class LocalCIBuildGroupService {
                 if (finishedJob.isPresent()) {
                     log.info("The result of container {} of build job {} of build group {} arrived after the job had finished and is not merged", buildGroup.containerName(),
                             buildJob.id(), buildGroupId);
-                    return new ContainerOutcome(null, finishedJob.get(), false, true);
+                    return new ContainerOutcome(null, finishedJob.get(), false, false);
                 }
                 linked = appendAndLinkContainer(participation, buildJob, buildGroup, effectiveBuildResult, buildStatus, testsExpected, aggregationLocks);
                 if (linked != null) {
@@ -384,8 +384,12 @@ public class LocalCIBuildGroupService {
     private ContainerOutcome recordUnmergedContainer(BuildJobQueueItem buildJob, BuildJobQueueItem.BuildGroupMembership buildGroup, BuildResult buildResult,
             ProgrammingExerciseParticipation participation, boolean containerFailed) {
         BuildJob savedContainerJob = finishedBuildJobService.saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null, containerFailed, false);
-        Result finalizedResult = finalizeIfGroupComplete(buildGroup.buildGroupId(), buildGroup.expectedContainerCount(), participation, buildResult.buildRunDate(), buildResult);
-        return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
+        List<BuildJob> jobs = buildJobRepository.findAllByBuildGroupId(buildGroup.buildGroupId());
+        // While a sibling is still running, the student is not told that the result could not be processed: the group
+        // reports its result, which shows this container as failed, or its failure once its last container has finished.
+        boolean groupComplete = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count() >= buildGroup.expectedContainerCount();
+        Result finalizedResult = finalizeIfGroupComplete(jobs, buildGroup.expectedContainerCount(), participation, buildResult.buildRunDate(), buildResult);
+        return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null, groupComplete);
     }
 
     /** a container whose result was appended to the aggregated result, and its job linked to that */
@@ -507,11 +511,15 @@ public class LocalCIBuildGroupService {
         });
     }
 
-    /** What processing one container produced; {@code arrivedTooLate} marks a result skipped because its job had already finished. */
-    record ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed, boolean arrivedTooLate) {
+    /**
+     * What processing one container produced. {@code resultExpected} is false where a missing result is not an error to
+     * report: the container's job had already finished, or the container's result could not be merged while its group is
+     * still running, which then reports the group's result or its failure once its last container has finished.
+     */
+    record ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed, boolean resultExpected) {
 
         ContainerOutcome(Result result, BuildJob savedBuildJob, boolean completed) {
-            this(result, savedBuildJob, completed, false);
+            this(result, savedBuildJob, completed, true);
         }
     }
 }
