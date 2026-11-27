@@ -232,7 +232,7 @@ describe('markdownFileDestinations', () => {
             ['pre and code', `<pre><code>![x](${P})</code></pre>`, []],
             ['unclosed code hides the rest', `a <code>b ![x](${P}) c`, []],
             ['closed code in a sentence', `a <code>b</code> ![x](${P}) c`, [P]],
-            ['unclosed script style and textarea do not hide links', `<script> ![x](${P})`, []],
+            ['a script block runs to the end of the text', `<script> ![x](${P})`, []],
         ])('%s', (_, source, urls) => {
             expect(destinationTexts(source)).toEqual(urls);
         });
@@ -303,6 +303,65 @@ describe('markdownFileDestinations', () => {
         });
     });
 
+    describe('raw text elements inside a paragraph', () => {
+        // After prose, a script, style or textarea tag is inline HTML. Closed, it hides the Markdown inside it; left open, as a stray tag in a
+        // sentence, it does not hide the links after it.
+        it.each(['script', 'style', 'textarea'])('keeps the links after an unclosed %s and hides those inside a closed one', (tag) => {
+            expect(destinationTexts(`text <${tag}>![x](${P})</${tag}> ![y](${P})`)).toEqual([P]);
+            expect(destinationTexts(`text <${tag}>![x](${P})`)).toEqual([P]);
+        });
+
+        it.each(['code', 'pre'])('hides the links after an unclosed %s, as the element has no end', (tag) => {
+            expect(destinationTexts(`text <${tag}>![x](${P})`)).toEqual([]);
+        });
+    });
+
+    describe('escapes', () => {
+        it('keeps a backslash that does not escape anything as part of a value, and ignores one that does', () => {
+            // The tag is not valid HTML in Markdown (no space between the attributes), so it is read as text and the escape rules apply to it.
+            expect(destinationTexts('<IMG src="\\b"p>')).toEqual(['\\b']);
+            expect(destinationTexts('<IMG src="\\)"p>')).toEqual([]);
+        });
+    });
+
+    describe('definitions and list items', () => {
+        it('does not read an indented line after a definition as paragraph text when it starts in a new list item', () => {
+            // The first child of the list item is indented code, in which nothing is a destination.
+            expect(destinationTexts(`[r]: /d\n1.     ![x](${P})`)).toEqual(['/d']);
+            // In the same block the indented line continues the paragraph of the definition.
+            expect(destinationTexts(`[r]: /d\n    ![x](${P})`)).toEqual(['/d', P]);
+        });
+    });
+
+    describe('values that continue on container lines', () => {
+        it.each([
+            ['block quote', `> <img src="${P}\n> x">`],
+            ['list', `- <img src="${P}\n  x">`],
+            ['paragraph break', '<img src="\n\n">'],
+        ])('returns no destination for a quoted value that crosses a line of a %s', (_, source) => {
+            expect(markdownFileDestinations(source)).toEqual([]);
+        });
+
+        it('returns a quoted value over several lines of one paragraph', () => {
+            expect(destinationTexts(`<img src="a\nb">`)).toEqual(['a\nb']);
+            expect(destinationTexts(`text\n  <img src="a\n  b">`)).toEqual(['a\n  b']);
+        });
+    });
+
+    describe('large documents', () => {
+        it('finds one destination per line in a long paragraph and per link on a long line', () => {
+            const lines = Array.from({ length: 3000 }, (_, index) => `line ${index} [x](/a/${index}.png)`);
+            expect(destinationTexts(lines.join('\n'))).toEqual(lines.map((_, index) => `/a/${index}.png`));
+            expect(destinationTexts('[a](/b) '.repeat(5000))).toHaveLength(5000);
+        });
+
+        it('copes with a text that contains every private-use character', () => {
+            const privateUse = Array.from({ length: 0xf8ff - 0xe000 + 1 }, (_, index) => String.fromCharCode(0xe000 + index)).join('');
+            // No character is left to mark destinations, so none is excluded; the links are found and nothing hangs.
+            expect(destinationTexts(`${privateUse} <code>![x](${P})</code>`)).toEqual([P]);
+        });
+    });
+
     describe('safety', () => {
         /** Checks what the importer relies on: sorted, non-empty and disjoint ranges inside the text, so replacing them cannot damage anything else. */
         function expectSafe(source: string): void {
@@ -325,26 +384,29 @@ describe('markdownFileDestinations', () => {
             expect(markdownFileDestinations(source)).toEqual(destinations);
         }
 
-        it.each([
-            ['empty', ''],
-            ['lone brackets', '[ ] ( ) ![ ]( [ ] ['],
-            ['unterminated constructs', '[x](<' + P + '\n![y](' + P + ' "title\n<img src="' + P + "\n<a href='" + P],
-            ['unterminated tags', '<'.repeat(50) + '<a' + '<img src=' + '<!--' + '<![CDATA[' + '<?php'],
-            ['lone surrogates and null characters', '\ud800![x](' + P + ')\udc00\0<img src="' + P + '">\0'],
-            ['line and paragraph separators', `![x](${P})\u2028[y](${P})\u2029<img src="${P}">`],
-            ['astral characters before tags', '😀'.repeat(50) + `<img src="${P}">` + '😀' + `![x](${P})`],
-            ['many unterminated links', '[a](b'.repeat(5000)],
-            ['many opening brackets', '['.repeat(5000) + `](${P})`],
-            ['deeply nested block quotes', '> '.repeat(1000) + `![x](${P})`],
-            ['deeply nested lists', '- '.repeat(1000) + `![x](${P})`],
-            ['deeply nested elements', '<div>'.repeat(1000) + `<img src="${P}">`],
-            ['many backticks', '`'.repeat(10000) + `![x](${P})`],
-            ['very long line', 'x'.repeat(300000) + `![x](${P})`],
-            ['very long destination', `[x](${'a'.repeat(100000)})`],
-            ['very long attribute value', `<img src="${'a'.repeat(100000)}">`],
-            ['many definitions', Array.from({ length: 2000 }, (_, index) => `[r${index}]: ${P}`).join('\n')],
-        ])('returns safe ranges and does not throw for %s', (_, source) => {
+        // Each source is valid or malformed in a way that is known: the count says how many destinations it has, as a parser that fails
+        // would also pass the checks on safe ranges with none. Past the nesting limit of the parser (100 levels) nothing is read inside.
+        it.each<[string, string, number]>([
+            ['empty', '', 0],
+            ['lone brackets', '[ ] ( ) ![ ]( [ ] [', 0],
+            ['unterminated constructs', '[x](<' + P + '\n![y](' + P + ' "title\n<img src="' + P + "\n<a href='" + P, 0],
+            ['unterminated tags', '<'.repeat(50) + '<a' + '<img src=' + '<!--' + '<![CDATA[' + '<?php', 0],
+            ['lone surrogates and null characters', '\ud800![x](' + P + ')\udc00\0<img src="' + P + '">\0', 2],
+            ['line and paragraph separators', `![x](${P})\u2028[y](${P})\u2029<img src="${P}">`, 3],
+            ['astral characters before tags', '😀'.repeat(50) + `<img src="${P}">` + '😀' + `![x](${P})`, 2],
+            ['many unterminated links', '[a](b'.repeat(5000), 0],
+            ['many opening brackets', '['.repeat(5000) + `](${P})`, 1],
+            ['deeply nested block quotes', '> '.repeat(1000) + `![x](${P})`, 0],
+            ['deeply nested lists', '- '.repeat(1000) + `![x](${P})`, 0],
+            ['deeply nested elements', '<div>'.repeat(1000) + `<img src="${P}">`, 1],
+            ['many backticks', 'a ' + '`'.repeat(10000) + ` ![x](${P})`, 1],
+            ['very long line', 'x'.repeat(300000) + `![x](${P})`, 1],
+            ['very long destination', `[x](${'a'.repeat(100000)})`, 1],
+            ['very long attribute value', `<img src="${'a'.repeat(100000)}">`, 1],
+            ['many definitions', Array.from({ length: 2000 }, (_, index) => `[r${index}]: ${P}`).join('\n'), 2000],
+        ])('returns safe ranges and the right number of destinations for %s', (_, source, count) => {
             expectSafe(source);
+            expect(markdownFileDestinations(source)).toHaveLength(count);
         });
 
         // A small generator with fixed seeds: random documents from pieces that interact (containers, code, HTML, links, definitions).

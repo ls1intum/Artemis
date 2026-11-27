@@ -11,7 +11,8 @@ import MarkdownIt, { type MarkdownIt as Parser, type StateBlock, type StateInlin
  *    interrupt a paragraph, but definitions right next to setext underlines or list markers can still differ;
  *  - a lone tag on a lazy continuation line in a block quote or list is paragraph text here and raw HTML in micromark;
  *  - a Markdown link inside the start tag of a `code`, `pre`, `script`, `style` or `textarea`, or after an unterminated quote in one, is
- *    found here; and a link after an unclosed `script`, `style` or `textarea` is found as before.
+ *    found here; and a link after an unclosed `script`, `style` or `textarea` is found as before;
+ *  - a quoted `href` or `src` that continues on a line of a block quote or list is not returned, as its range would contain the markers.
  * A destination that is missed leaves a link on the archived file, so any difference only ever costs a link, never a corrupted document:
  * the result is always sorted, inside the text and free of overlaps.
  */
@@ -62,11 +63,15 @@ function locateDestinations(source: string): Destination[] {
     createParser(run).parse(run.normalized, {});
     const markdown = run.destinations.map(([start, end]): OffsetRange => [run.toSource(start), run.toSource(end)]);
     const view = htmlView(run);
+    const kept = mergeRanges(run.kept.map(([start, end]): OffsetRange => [run.toSource(start), run.toSource(end)]));
     const excluded = excludedMarkdownDestinations(view, source, markdown);
     const destinations: Destination[] = markdown
         .filter((_, index) => !excluded.has(index))
         .map(([start, end]) => ({ start, end, url: source.slice(start, end) }))
-        .concat(htmlDestinations(view));
+        // A quoted value that continues on a block quote or list line has the markers or indentation of that line in its range. The range is
+        // then not the value, and replacing it would damage them, so the link is left as it is. Only a value in one stretch of the text that
+        // the parser read as prose or HTML, and that Markdown syntax does not touch, counts.
+        .concat(htmlDestinations(view).filter((destination) => isPlainText(destination, view, source, kept)));
 
     // Whatever the parsers report, only non-empty ranges inside the text that do not overlap are handed on, as the importer replaces them one by one.
     const result: Destination[] = [];
@@ -78,6 +83,24 @@ function locateDestinations(source: string): Destination[] {
         }
     }
     return result;
+}
+
+/** Sorts ranges and joins those that touch or overlap. */
+function mergeRanges(ranges: OffsetRange[]): OffsetRange[] {
+    const merged: OffsetRange[] = [];
+    for (const [start, end] of [...ranges].sort((a, b) => a[0] - b[0])) {
+        const last = merged[merged.length - 1];
+        if (last && start <= last[1]) {
+            last[1] = Math.max(last[1], end);
+        } else {
+            merged.push([start, end]);
+        }
+    }
+    return merged;
+}
+
+function isPlainText({ start, end }: Destination, view: string, source: string, kept: OffsetRange[]): boolean {
+    return view.slice(start, end) === source.slice(start, end) && kept.some(([keptStart, keptEnd]) => keptStart <= start && end <= keptEnd);
 }
 
 // =====================
@@ -138,12 +161,31 @@ interface Segment {
  * is made of one segment per line.
  */
 function segmentFrame(segments: Segment[], leadingTrimmed = 0): Frame {
-    return (start, end) =>
-        segments.flatMap(({ textStart, textEnd, documentStart }): OffsetRange[] => {
-            const from = Math.max(start + leadingTrimmed, textStart);
-            const to = Math.min(end + leadingTrimmed, textEnd);
-            return from < to ? [[documentStart + from - textStart, documentStart + to - textStart]] : [];
-        });
+    return (start, end) => {
+        const textStart = start + leadingTrimmed;
+        const textEnd = end + leadingTrimmed;
+        // The segments are in order and do not overlap, so the ones that the span touches are a run that begins at the first one ending after it starts.
+        let low = 0;
+        let high = segments.length;
+        while (low < high) {
+            const middle = (low + high) >> 1;
+            if (segments[middle].textEnd > textStart) {
+                high = middle;
+            } else {
+                low = middle + 1;
+            }
+        }
+        const ranges: OffsetRange[] = [];
+        for (let index = low; index < segments.length && segments[index].textStart < textEnd; index++) {
+            const segment = segments[index];
+            const from = Math.max(textStart, segment.textStart);
+            const to = Math.min(textEnd, segment.textEnd);
+            if (from < to) {
+                ranges.push([segment.documentStart + from - segment.textStart, segment.documentStart + to - segment.textStart]);
+            }
+        }
+        return ranges;
+    };
 }
 
 function isSpace(code: number): boolean {
@@ -209,7 +251,8 @@ function createParser(run: Run): Parser {
     const frames = new WeakMap<Token, Frame>();
     /** The frames inline rules use: the one of the inline token being parsed, with the one of an image's label on top while that is parsed. */
     let frameStack: Frame[] = [];
-    let lineAfterDefinition = -1;
+    /** Where the line after the last definition is parsed: the line, and the block context (nesting and indentation) that accepted the definition. */
+    let afterDefinition = { line: -1, level: -1, blkIndent: -1 };
     let definitionDestinations: OffsetRange[] | undefined;
 
     const topFrame = (): Frame | undefined => frameStack[frameStack.length - 1];
@@ -238,9 +281,11 @@ function createParser(run: Run): Parser {
     helpers.parseLinkDestination = (text, start, max) => {
         let result = parseLinkDestination(text, start, max);
         const angle = text.charCodeAt(start) === 0x3c;
-        const lineEnd = text.indexOf('\n', start);
-        if (result.ok && lineEnd >= 0 && lineEnd < result.pos) {
-            result = angle ? { ok: false, pos: 0, str: '' } : parseLinkDestination(text, start, lineEnd);
+        if (result.ok) {
+            const lineEnd = text.slice(start, result.pos).indexOf('\n');
+            if (lineEnd >= 0) {
+                result = angle ? { ok: false, pos: 0, str: '' } : parseLinkDestination(text, start, start + lineEnd);
+            }
         }
         if (result.ok) {
             definitionDestinations?.push([start + (angle ? 1 : 0), result.pos - (angle ? 1 : 0)]);
@@ -261,7 +306,14 @@ function createParser(run: Run): Parser {
         parser.block.ruler.at(
             name,
             (state, startLine, endLine, silent) => {
-                if (holdBack && !silent && lineAfterDefinition === startLine && !(alt.includes('paragraph') && fn(state, startLine, endLine, true))) {
+                if (
+                    holdBack &&
+                    !silent &&
+                    afterDefinition.line === startLine &&
+                    afterDefinition.level === state.level &&
+                    afterDefinition.blkIndent === state.blkIndent &&
+                    !(alt.includes('paragraph') && fn(state, startLine, endLine, true))
+                ) {
                     return false;
                 }
                 const matched = fn(state, startLine, endLine, silent);
@@ -328,7 +380,7 @@ function createParser(run: Run): Parser {
             const destination = definitionDestinations[definitionDestinations.length - 1];
             definitionDestinations = undefined;
             if (matched && !silent) {
-                lineAfterDefinition = state.line;
+                afterDefinition = { line: state.line, level: state.level, blkIndent: state.blkIndent };
                 if (destination && destination[1] > destination[0]) {
                     run.destinations.push(destination);
                 }
@@ -413,7 +465,15 @@ function createParser(run: Run): Parser {
             maskInline(start, state.pos);
         }
     });
-    wrapInlineRule('escape', (state, start) => maskInline(start, state.pos));
+    // A backslash only escapes the next character if that is ASCII punctuation, and before a line end it is a hard break; otherwise it is text.
+    wrapInlineRule('escape', (state, start) => {
+        const next = state.src[start + 1] ?? '';
+        if (next === '\n') {
+            maskInline(start, start + 1);
+        } else if (/^[!-/:-@[-`{-~]$/.test(next)) {
+            maskInline(start, start + 2);
+        }
+    });
     wrapInlineRule('entity', (state, start) => maskInline(start, state.pos));
     return parser;
 }
@@ -468,12 +528,14 @@ function parseHtml(markup: string): DocumentFragment {
     return template.content;
 }
 
-function unusedCharacter(source: string, from: number): string {
-    let code = from;
-    while (source.includes(String.fromCharCode(code))) {
-        code++;
+/** A private-use character that the text does not contain, or undefined if it contains all of them from `from` on. */
+function unusedCharacter(source: string, from: number): string | undefined {
+    for (let code = from; code <= 0xf8ff; code++) {
+        if (!source.includes(String.fromCharCode(code))) {
+            return String.fromCharCode(code);
+        }
     }
-    return String.fromCharCode(code);
+    return undefined;
 }
 
 /**
@@ -490,7 +552,11 @@ function excludedMarkdownDestinations(view: string, source: string, destinations
     // Each destination is marked by a private-use character pair around its index, which the parser keeps as text wherever it ends up; the
     // end of the text is marked by a comment, whose parents are the elements that are still open there.
     const open = unusedCharacter(source, 0xe000);
-    const close = unusedCharacter(source, open.charCodeAt(0) + 1);
+    const close = open && unusedCharacter(source, open.charCodeAt(0) + 1);
+    if (!open || !close) {
+        // A text with all the private-use characters (which only hostile input has) leaves no way to mark a destination, so none is excluded.
+        return excluded;
+    }
     let markup = view;
     destinations
         .map(([start], index) => ({ start, text: `${open}${index}${close}` }))
