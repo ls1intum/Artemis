@@ -18,24 +18,22 @@ import { NgTemplateOutlet } from '@angular/common';
 import { CdkConnectedOverlay, ConnectedPosition } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    faAt,
-    faBold,
-    faChevronUp,
-    faCircleQuestion,
-    faCode,
-    faEllipsis,
-    faFileCode,
-    faHashtag,
-    faItalic,
-    faLink,
-    faListOl,
-    faListUl,
-    faQuoteLeft,
-    faStrikethrough,
-    faUnderline,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAt } from '@fortawesome/free-solid-svg-icons/faAt';
+import { faBold } from '@fortawesome/free-solid-svg-icons/faBold';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis';
+import { faFileCode } from '@fortawesome/free-solid-svg-icons/faFileCode';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faItalic } from '@fortawesome/free-solid-svg-icons/faItalic';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faListOl } from '@fortawesome/free-solid-svg-icons/faListOl';
+import { faListUl } from '@fortawesome/free-solid-svg-icons/faListUl';
+import { faQuoteLeft } from '@fortawesome/free-solid-svg-icons/faQuoteLeft';
+import { faStrikethrough } from '@fortawesome/free-solid-svg-icons/faStrikethrough';
+import { faUnderline } from '@fortawesome/free-solid-svg-icons/faUnderline';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

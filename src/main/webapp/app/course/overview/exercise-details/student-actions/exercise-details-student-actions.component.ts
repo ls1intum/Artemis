@@ -9,7 +9,11 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
-import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
+import { faRedo } from '@fortawesome/free-solid-svg-icons/faRedo';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 

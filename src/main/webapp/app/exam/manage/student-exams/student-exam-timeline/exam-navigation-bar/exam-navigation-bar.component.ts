@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit, inject, input, output, signal } from 
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -10,7 +10,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { FormsModule } from '@angular/forms';

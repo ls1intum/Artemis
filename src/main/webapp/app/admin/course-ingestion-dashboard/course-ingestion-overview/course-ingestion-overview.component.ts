@@ -5,7 +5,7 @@ import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';

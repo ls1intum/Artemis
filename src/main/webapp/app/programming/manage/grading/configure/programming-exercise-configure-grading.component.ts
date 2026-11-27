@@ -3,7 +3,7 @@ import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-con
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faSquare } from '@fortawesome/free-solid-svg-icons';
+import { faSquare } from '@fortawesome/free-solid-svg-icons/faSquare';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';

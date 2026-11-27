@@ -3,7 +3,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnDestroy, effect, input, signal } from '@angular/core';
 
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';

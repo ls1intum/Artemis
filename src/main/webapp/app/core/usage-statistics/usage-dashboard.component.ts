@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { PublicUsageStatistics, UsageSemester } from 'app/core/usage-statistics/usage-statistics.model';
 import { UsageStatisticsService } from 'app/core/usage-statistics/usage-statistics.service';

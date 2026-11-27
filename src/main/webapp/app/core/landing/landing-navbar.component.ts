@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';

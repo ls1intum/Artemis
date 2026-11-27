@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { FormsModule } from '@angular/forms';
 
 import { MetricsService } from './metrics.service';

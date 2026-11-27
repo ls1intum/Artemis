@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretRight, faCheck, faCircleNotch, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCaretRight } from '@fortawesome/free-solid-svg-icons/faCaretRight';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons/faCircleXmark';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { IrisActivityItem, IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';

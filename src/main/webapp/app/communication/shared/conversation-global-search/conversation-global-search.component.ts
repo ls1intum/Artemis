@@ -1,6 +1,9 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
 import { isChannelDTO } from '../entities/conversation/channel.model';
 import { isGroupChatDTO } from '../entities/conversation/group-chat.model';

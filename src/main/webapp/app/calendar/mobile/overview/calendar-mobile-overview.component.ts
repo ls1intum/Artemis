@@ -6,7 +6,9 @@ import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/mo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowRotateRight, faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRotateRight } from '@fortawesome/free-solid-svg-icons/faArrowRotateRight';
+import { faArrowUpFromBracket } from '@fortawesome/free-solid-svg-icons/faArrowUpFromBracket';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';

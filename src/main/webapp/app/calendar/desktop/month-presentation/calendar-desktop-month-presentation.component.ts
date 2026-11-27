@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

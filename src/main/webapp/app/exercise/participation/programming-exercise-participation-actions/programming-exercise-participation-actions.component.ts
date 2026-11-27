@@ -1,7 +1,8 @@
 import { Component, input, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
-import { faPlayCircle, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';

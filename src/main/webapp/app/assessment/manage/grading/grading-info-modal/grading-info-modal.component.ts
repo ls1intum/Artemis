@@ -2,7 +2,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Component, signal } from '@angular/core';
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

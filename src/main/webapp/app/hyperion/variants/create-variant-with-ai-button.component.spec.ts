@@ -1,5 +1,5 @@
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
-import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

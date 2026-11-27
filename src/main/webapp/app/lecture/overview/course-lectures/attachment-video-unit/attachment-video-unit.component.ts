@@ -30,22 +30,20 @@ import { YouTubePlayerComponent } from 'app/lecture/shared/youtube-player/youtub
 import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import {
-    faDownload,
-    faFile,
-    faFileArchive,
-    faFileCode,
-    faFileCsv,
-    faFileExcel,
-    faFileImage,
-    faFileLines,
-    faFilePdf,
-    faFilePen,
-    faFilePowerpoint,
-    faFileVideo,
-    faFileWord,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFileArchive } from '@fortawesome/free-solid-svg-icons/faFileArchive';
+import { faFileCode } from '@fortawesome/free-solid-svg-icons/faFileCode';
+import { faFileCsv } from '@fortawesome/free-solid-svg-icons/faFileCsv';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons/faFileExcel';
+import { faFileImage } from '@fortawesome/free-solid-svg-icons/faFileImage';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFilePen } from '@fortawesome/free-solid-svg-icons/faFilePen';
+import { faFilePowerpoint } from '@fortawesome/free-solid-svg-icons/faFilePowerpoint';
+import { faFileVideo } from '@fortawesome/free-solid-svg-icons/faFileVideo';
+import { faFileWord } from '@fortawesome/free-solid-svg-icons/faFileWord';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

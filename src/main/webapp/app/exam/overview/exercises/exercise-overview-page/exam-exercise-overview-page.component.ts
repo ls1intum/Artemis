@@ -4,7 +4,7 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/exam/shared/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons/faHourglassHalf';
 import { ExerciseButtonStatus } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';

@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserManagementDropdownComponent } from './user-management-dropdown.component';
-import { faGraduationCap, faListAlt, faPersonChalkboard, faSchool } from '@fortawesome/free-solid-svg-icons';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
+import { faSchool } from '@fortawesome/free-solid-svg-icons/faSchool';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';

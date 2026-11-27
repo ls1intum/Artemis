@@ -8,7 +8,9 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { isEqual } from 'lodash-es';
-import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
 import { GradingScaleAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-scale.action';
 import { GradingDescriptionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-description.action';

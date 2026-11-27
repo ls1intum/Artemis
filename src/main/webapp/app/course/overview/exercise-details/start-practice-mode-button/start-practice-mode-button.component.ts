@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
-import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';

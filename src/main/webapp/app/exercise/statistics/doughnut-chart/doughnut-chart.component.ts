@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';

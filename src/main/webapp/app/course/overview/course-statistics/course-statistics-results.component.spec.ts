@@ -9,7 +9,9 @@ import { CourseStatisticsResultsComponent } from './course-statistics-results.co
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
-import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons/faCheckCircle';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons/faTimesCircle';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('CourseStatisticsResultsComponent', () => {

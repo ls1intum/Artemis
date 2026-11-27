@@ -3,7 +3,7 @@ import { TutorEffort } from 'app/openapi/model/tutor-effort';
 import { TutorEffortApi } from 'app/openapi/api/tutor-effort-api';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { TranslateService } from '@ngx-translate/core';
 import { median } from 'app/foundation/util/statistics.util';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';

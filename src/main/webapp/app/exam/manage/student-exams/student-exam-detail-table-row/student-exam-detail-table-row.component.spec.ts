@@ -19,7 +19,10 @@ import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exam
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { provideRouter } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';

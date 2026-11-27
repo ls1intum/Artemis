@@ -29,7 +29,11 @@ import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-mate
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { setInputs } from 'app/foundation/util/set-inputs.util';
 import { IrisCitationNavigationComponent } from './iris-citation-navigation.component';
-import { IconDefinition, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFileVideo } from '@fortawesome/free-solid-svg-icons/faFileVideo';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 /**
  * Sanitizer settings for the finished markup. The markup contains the citation bubbles (spans, an inline SVG and the navigation buttons) next to the rendered markdown,

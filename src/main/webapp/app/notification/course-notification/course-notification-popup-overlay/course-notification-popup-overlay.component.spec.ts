@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';

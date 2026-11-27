@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';

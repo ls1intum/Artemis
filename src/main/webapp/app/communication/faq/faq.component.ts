@@ -1,6 +1,13 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel } from '@fortawesome/free-solid-svg-icons/faCancel';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';

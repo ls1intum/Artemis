@@ -7,7 +7,7 @@ import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDi
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { faCaretDown } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';

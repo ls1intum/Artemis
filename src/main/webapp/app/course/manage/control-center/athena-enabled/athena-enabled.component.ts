@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
 
 /**
  * The single course-level Athena toggle shown on the course overview, next to the Iris toggle. Each change is saved

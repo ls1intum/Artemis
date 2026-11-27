@@ -1,6 +1,10 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faBan, faCircleInfo, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';

@@ -1,20 +1,18 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../communication.util';
-import {
-    faAt,
-    faBan,
-    faChalkboardUser,
-    faCheckDouble,
-    faFile,
-    faFileUpload,
-    faFont,
-    faHashtag,
-    faKeyboard,
-    faMessage,
-    faPaperclip,
-    faProjectDiagram,
-    faQuestion,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAt } from '@fortawesome/free-solid-svg-icons/faAt';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faMessage } from '@fortawesome/free-solid-svg-icons/faMessage';
+import { faPaperclip } from '@fortawesome/free-solid-svg-icons/faPaperclip';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DialogData, EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';

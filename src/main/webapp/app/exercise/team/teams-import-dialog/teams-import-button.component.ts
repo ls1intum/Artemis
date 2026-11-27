@@ -1,5 +1,5 @@
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { Component, inject, input, output } from '@angular/core';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { faPlus, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamStudentsMenuButtonComponent, ExamStudentsMenuItem } from './exam-students-menu-button.component';

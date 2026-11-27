@@ -1,4 +1,4 @@
-import { faQuoteLeft } from '@fortawesome/free-solid-svg-icons';
+import { faQuoteLeft } from '@fortawesome/free-solid-svg-icons/faQuoteLeft';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 

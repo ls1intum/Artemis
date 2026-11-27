@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { FormsModule } from '@angular/forms';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';

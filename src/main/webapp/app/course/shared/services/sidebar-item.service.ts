@@ -1,30 +1,28 @@
 import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import {
-    faBullseye,
-    faCalendarDays,
-    faChalkboardTeacher,
-    faChartColumn,
-    faCode,
-    faCog,
-    faComments,
-    faDumbbell,
-    faFileAlt,
-    faHouse,
-    faList,
-    faListCheck,
-    faNetworkWired,
-    faPersonChalkboard,
-    faPuzzlePiece,
-    faQuestion,
-    faRobot,
-    faTable,
-    faTableCells,
-    faUserCheck,
-    faUsers,
-    faVideo,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
+import { faChartColumn } from '@fortawesome/free-solid-svg-icons/faChartColumn';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faDumbbell } from '@fortawesome/free-solid-svg-icons/faDumbbell';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons/faFileAlt';
+import { faHouse } from '@fortawesome/free-solid-svg-icons/faHouse';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons/faListCheck';
+import { faNetworkWired } from '@fortawesome/free-solid-svg-icons/faNetworkWired';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
+import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable';
+import { faTableCells } from '@fortawesome/free-solid-svg-icons/faTableCells';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
+import { faVideo } from '@fortawesome/free-solid-svg-icons/faVideo';
 
 import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
 

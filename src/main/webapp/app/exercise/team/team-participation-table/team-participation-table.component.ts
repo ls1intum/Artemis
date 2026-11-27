@@ -1,5 +1,6 @@
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';

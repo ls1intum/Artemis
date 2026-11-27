@@ -1,21 +1,19 @@
-import {
-    faAnglesRight,
-    faArrowDown,
-    faCheck,
-    faChevronDown,
-    faCircleInfo,
-    faCircleNotch,
-    faCompress,
-    faCopy,
-    faExpand,
-    faLink,
-    faMagnifyingGlass,
-    faPaperPlane,
-    faPenToSquare,
-    faThumbsDown,
-    faThumbsUp,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAnglesRight } from '@fortawesome/free-solid-svg-icons/faAnglesRight';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
+import { faExpand } from '@fortawesome/free-solid-svg-icons/faExpand';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons/faPaperPlane';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
+import { faThumbsDown } from '@fortawesome/free-solid-svg-icons/faThumbsDown';
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons/faThumbsUp';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';

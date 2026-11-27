@@ -5,8 +5,8 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { NgClass } from '@angular/common';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';

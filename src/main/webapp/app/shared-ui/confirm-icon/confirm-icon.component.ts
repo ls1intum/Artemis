@@ -1,6 +1,7 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 

@@ -6,7 +6,16 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { faClipboard, faEye, faFlaskVial, faGraduationCap, faInfoCircle, faListAlt, faThList, faUser, faVial, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons/faFlaskVial';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faThList } from '@fortawesome/free-solid-svg-icons/faThList';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faVial } from '@fortawesome/free-solid-svg-icons/faVial';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter } from 'rxjs/operators';

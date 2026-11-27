@@ -2,7 +2,9 @@ import { Component, type ResourceParamsContext, type ResourceSnapshot, computed,
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
 import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
 import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';

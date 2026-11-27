@@ -17,7 +17,7 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';

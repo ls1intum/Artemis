@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';

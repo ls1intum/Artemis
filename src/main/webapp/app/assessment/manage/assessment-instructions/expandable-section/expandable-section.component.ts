@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';

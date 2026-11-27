@@ -10,7 +10,8 @@ import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faChair } from '@fortawesome/free-solid-svg-icons/faChair';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 

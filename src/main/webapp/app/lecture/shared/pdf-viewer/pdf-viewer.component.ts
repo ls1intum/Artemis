@@ -25,17 +25,15 @@ import type { Dayjs } from 'dayjs/esm';
 import { firstValueFrom, map } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    faChevronDown,
-    faChevronUp,
-    faDownload,
-    faExpand,
-    faMagnifyingGlass,
-    faMagnifyingGlassMinus,
-    faMagnifyingGlassPlus,
-    faTimes,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faExpand } from '@fortawesome/free-solid-svg-icons/faExpand';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassMinus';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassPlus';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

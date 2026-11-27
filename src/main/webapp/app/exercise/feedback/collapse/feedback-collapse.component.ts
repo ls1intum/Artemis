@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, input, signal } from '@angular/core';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';

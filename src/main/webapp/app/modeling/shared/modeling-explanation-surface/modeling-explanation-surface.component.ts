@@ -2,7 +2,7 @@ import { Component, ElementRef, contentChild, input, signal, viewChild } from '@
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons/faCommentDots';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';

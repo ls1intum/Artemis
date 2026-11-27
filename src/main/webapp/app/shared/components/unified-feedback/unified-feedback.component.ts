@@ -3,7 +3,12 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons/faTrashAlt';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,

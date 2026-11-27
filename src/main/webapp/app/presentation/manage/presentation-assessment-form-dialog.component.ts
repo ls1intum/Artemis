@@ -5,7 +5,8 @@ import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, Validat
 import { Observable, startWith } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';

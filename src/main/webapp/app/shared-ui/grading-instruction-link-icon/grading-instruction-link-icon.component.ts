@@ -2,7 +2,8 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 

@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { debounceTime, filter, map } from 'rxjs/operators';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';

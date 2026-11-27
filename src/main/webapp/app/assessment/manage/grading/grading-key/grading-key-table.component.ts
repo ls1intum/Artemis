@@ -3,7 +3,7 @@ import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { BonusApi } from 'app/openapi/api/bonus-api';
 import { toBonus } from 'app/assessment/shared/util/bonus-response.util';

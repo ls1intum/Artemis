@@ -1,7 +1,10 @@
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
-import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe, NgClass } from '@angular/common';

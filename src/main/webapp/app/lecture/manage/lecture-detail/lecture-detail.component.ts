@@ -1,7 +1,8 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';

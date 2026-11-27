@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { EMPTY, Subject, timer } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';

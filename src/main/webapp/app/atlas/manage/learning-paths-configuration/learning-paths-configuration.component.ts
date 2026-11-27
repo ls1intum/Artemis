@@ -3,7 +3,7 @@ import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { LearningPathApiService } from '../../shared/services/learning-path-api.service';
 import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/foundation/service/alert.service';

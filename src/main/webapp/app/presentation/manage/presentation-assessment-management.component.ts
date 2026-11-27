@@ -5,7 +5,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableCellsLarge, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faTableCellsLarge } from '@fortawesome/free-solid-svg-icons/faTableCellsLarge';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

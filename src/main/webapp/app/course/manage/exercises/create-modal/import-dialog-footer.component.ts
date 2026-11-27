@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /** Sentinel the import dialog closes with when the user presses "Back", so the caller can reopen the manage-exercises modal. */

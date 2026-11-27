@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';

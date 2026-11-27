@@ -7,7 +7,8 @@ import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Observable, Subscription, finalize } from 'rxjs';
-import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

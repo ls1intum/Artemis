@@ -3,7 +3,7 @@ import { Component, computed, input, linkedSignal, output, signal, viewChild } f
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FormsModule } from '@angular/forms';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

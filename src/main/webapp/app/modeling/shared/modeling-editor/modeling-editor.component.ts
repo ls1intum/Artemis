@@ -15,8 +15,13 @@ import {
     viewChild,
 } from '@angular/core';
 import { ApollonEditor, ApollonMode, type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { faAlignLeft, faCheck, faCircleNotch, faDownLeftAndUpRightToCenter, faTimes, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faAlignLeft } from '@fortawesome/free-solid-svg-icons/faAlignLeft';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

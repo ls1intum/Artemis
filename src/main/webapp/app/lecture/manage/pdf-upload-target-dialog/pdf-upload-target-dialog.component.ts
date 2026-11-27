@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFilePdf, faFolderOpen, faFolderPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
+import { faFolderPlus } from '@fortawesome/free-solid-svg-icons/faFolderPlus';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';

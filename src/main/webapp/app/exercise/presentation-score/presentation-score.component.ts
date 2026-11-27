@@ -2,7 +2,7 @@ import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';

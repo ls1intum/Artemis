@@ -1,5 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';

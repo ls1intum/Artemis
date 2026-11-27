@@ -25,26 +25,24 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import {
-    IconDefinition,
-    faCheck,
-    faExclamationTriangle,
-    faEye,
-    faEyeSlash,
-    faFile,
-    faFileCircleQuestion,
-    faFileLines,
-    faFilePdf,
-    faFileVideo,
-    faFlag,
-    faGripVertical,
-    faLink,
-    faPencilAlt,
-    faRepeat,
-    faScroll,
-    faSpinner,
-    faTrash,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFileCircleQuestion } from '@fortawesome/free-solid-svg-icons/faFileCircleQuestion';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFileVideo } from '@fortawesome/free-solid-svg-icons/faFileVideo';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faGripVertical } from '@fortawesome/free-solid-svg-icons/faGripVertical';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faRepeat } from '@fortawesome/free-solid-svg-icons/faRepeat';
+import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

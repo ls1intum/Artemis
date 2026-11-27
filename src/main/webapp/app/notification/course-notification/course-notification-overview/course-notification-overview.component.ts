@@ -1,7 +1,11 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faEnvelopeOpen } from '@fortawesome/free-solid-svg-icons/faEnvelopeOpen';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

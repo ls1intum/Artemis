@@ -1,7 +1,9 @@
 import { Component, OnDestroy, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
-import { faBookmark, faChevronLeft, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';

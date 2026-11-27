@@ -6,8 +6,10 @@ import { Submission, getNewestResult } from 'app/exercise/shared/entities/submis
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons/faCheckCircle';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons/faTimesCircle';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { isParticipationInDueTime } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

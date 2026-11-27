@@ -13,7 +13,8 @@ import {
 import { By } from '@angular/platform-browser';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faMinus } from '@fortawesome/free-solid-svg-icons/faMinus';
 import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('UnifiedFeedbackComponent', () => {

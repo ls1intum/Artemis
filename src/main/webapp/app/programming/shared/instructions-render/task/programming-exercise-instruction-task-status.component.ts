@@ -1,5 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons/faCheckCircle';
+import { faCircleDot } from '@fortawesome/free-regular-svg-icons/faCircleDot';
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons/faTimesCircle';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';

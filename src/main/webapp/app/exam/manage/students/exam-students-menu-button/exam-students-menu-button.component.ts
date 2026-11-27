@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
-import { IconDefinition, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';

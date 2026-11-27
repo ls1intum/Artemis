@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
-import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';

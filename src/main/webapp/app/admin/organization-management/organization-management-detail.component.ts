@@ -7,7 +7,8 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { faUserPlus, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons/faUserSlash';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';

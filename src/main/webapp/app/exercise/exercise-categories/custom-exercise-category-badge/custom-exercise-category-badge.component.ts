@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import type { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CommonModule } from '@angular/common';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { getReadableTextColor } from 'app/foundation/util/color.utils';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';

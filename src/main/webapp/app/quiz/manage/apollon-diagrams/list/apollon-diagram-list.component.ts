@@ -10,7 +10,9 @@ import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.mod
 import { SortService } from 'app/foundation/service/sort.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

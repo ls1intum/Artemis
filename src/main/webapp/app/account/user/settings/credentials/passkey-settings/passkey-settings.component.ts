@@ -3,7 +3,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBan, faKey, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faKey } from '@fortawesome/free-solid-svg-icons/faKey';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { User } from 'app/account/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { PasskeyDTO } from 'app/account/user/settings/credentials/passkey-settings/dto/passkey.dto';

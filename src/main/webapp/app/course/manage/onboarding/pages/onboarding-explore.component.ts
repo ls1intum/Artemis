@@ -3,7 +3,14 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons/faFileAlt';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faRocket } from '@fortawesome/free-solid-svg-icons/faRocket';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 

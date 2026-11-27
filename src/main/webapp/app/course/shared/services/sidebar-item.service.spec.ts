@@ -1,25 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import {
-    faBullseye,
-    faChalkboardTeacher,
-    faChartColumn,
-    faCode,
-    faCog,
-    faComments,
-    faDumbbell,
-    faFileAlt,
-    faList,
-    faPuzzlePiece,
-    faQuestion,
-    faRobot,
-    faTable,
-    faTableCells,
-    faUserCheck,
-    faUsers,
-    faVideo,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
+import { faChartColumn } from '@fortawesome/free-solid-svg-icons/faChartColumn';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faDumbbell } from '@fortawesome/free-solid-svg-icons/faDumbbell';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons/faFileAlt';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable';
+import { faTableCells } from '@fortawesome/free-solid-svg-icons/faTableCells';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
+import { faVideo } from '@fortawesome/free-solid-svg-icons/faVideo';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
 

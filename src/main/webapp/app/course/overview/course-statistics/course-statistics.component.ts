@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';

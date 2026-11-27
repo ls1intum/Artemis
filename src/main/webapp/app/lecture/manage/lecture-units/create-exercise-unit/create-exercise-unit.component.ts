@@ -11,7 +11,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { Observable, combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitApi } from 'app/openapi/api/exercise-unit-api';
 import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

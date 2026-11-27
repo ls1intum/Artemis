@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

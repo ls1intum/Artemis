@@ -7,7 +7,9 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 
 @Directive()
 export abstract class CalendarOverviewComponent {

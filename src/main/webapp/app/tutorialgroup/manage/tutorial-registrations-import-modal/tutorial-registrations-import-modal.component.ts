@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';

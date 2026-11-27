@@ -12,7 +12,12 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

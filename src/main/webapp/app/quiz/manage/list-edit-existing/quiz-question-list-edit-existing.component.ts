@@ -33,7 +33,7 @@ import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
 export enum State {

@@ -1,8 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
+import { faBoxArchive } from '@fortawesome/free-solid-svg-icons/faBoxArchive';
+import { faBoxOpen } from '@fortawesome/free-solid-svg-icons/faBoxOpen';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faGear } from '@fortawesome/free-solid-svg-icons/faGear';
+import { faHeart as faHearthSolid } from '@fortawesome/free-solid-svg-icons/faHeart';
+import { faVolumeUp } from '@fortawesome/free-solid-svg-icons/faVolumeUp';
+import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons/faVolumeXmark';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons/faHeart';
 import { Subject, debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';

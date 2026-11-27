@@ -6,7 +6,7 @@ import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, inject, input } from '@angular/core';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';

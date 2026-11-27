@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { faLocationArrow } from '@fortawesome/free-solid-svg-icons';
+import { faLocationArrow } from '@fortawesome/free-solid-svg-icons/faLocationArrow';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

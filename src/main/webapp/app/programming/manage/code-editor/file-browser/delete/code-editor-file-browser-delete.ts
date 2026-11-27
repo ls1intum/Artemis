@@ -1,6 +1,7 @@
 import { Component, inject, input, model, output, signal } from '@angular/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
-import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons/faTrashAlt';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

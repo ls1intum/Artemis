@@ -6,7 +6,7 @@ import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';

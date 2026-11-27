@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';

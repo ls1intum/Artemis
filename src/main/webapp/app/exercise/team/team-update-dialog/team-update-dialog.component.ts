@@ -15,7 +15,11 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
-import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons/faTrashAlt';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

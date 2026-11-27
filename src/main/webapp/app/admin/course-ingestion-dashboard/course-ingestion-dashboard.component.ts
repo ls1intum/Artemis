@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
-import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseIngestionOverviewComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-overview/course-ingestion-overview.component';

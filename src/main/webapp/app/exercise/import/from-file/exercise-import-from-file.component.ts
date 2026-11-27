@@ -5,7 +5,7 @@ import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/enti
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
 import { strFromU8 } from 'fflate';
 import { parseJson } from 'app/foundation/util/json.util';

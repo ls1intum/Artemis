@@ -1,4 +1,5 @@
-import { faLink, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { describe, expect, it } from 'vitest';
 
 import { createPresentationSidebarData } from 'app/presentation/manage/presentation-assessment-management.helper';

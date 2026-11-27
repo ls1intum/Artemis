@@ -1,5 +1,5 @@
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { faHeading } from '@fortawesome/free-solid-svg-icons';
+import { faHeading } from '@fortawesome/free-solid-svg-icons/faHeading';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 
 function getTranslationKeyForLevel(level: number): string {

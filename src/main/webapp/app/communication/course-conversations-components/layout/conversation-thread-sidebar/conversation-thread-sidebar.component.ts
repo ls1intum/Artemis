@@ -1,7 +1,11 @@
 import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { faArrowLeft, faChevronLeft, faCompress, faExpand, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faCompress } from '@fortawesome/free-solid-svg-icons/faCompress';
+import { faExpand } from '@fortawesome/free-solid-svg-icons/faExpand';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

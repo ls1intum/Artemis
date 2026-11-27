@@ -1,5 +1,5 @@
 import { Component, ElementRef, afterRenderEffect, effect, input, output, signal, untracked, viewChild } from '@angular/core';
-import { faShare } from '@fortawesome/free-solid-svg-icons';
+import { faShare } from '@fortawesome/free-solid-svg-icons/faShare';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';

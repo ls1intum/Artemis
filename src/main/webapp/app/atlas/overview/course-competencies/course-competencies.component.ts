@@ -8,7 +8,8 @@ import { Competency, CourseCompetencyType, compareSoftDueDate, getMastery } from
 import { Subscription } from 'rxjs';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleUp } from '@fortawesome/free-solid-svg-icons/faAngleUp';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';

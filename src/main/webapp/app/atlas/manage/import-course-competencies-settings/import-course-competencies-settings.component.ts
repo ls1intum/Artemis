@@ -8,7 +8,7 @@ import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Dayjs } from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

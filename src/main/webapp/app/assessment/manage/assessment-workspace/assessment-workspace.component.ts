@@ -3,8 +3,8 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, inpu
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons/faCommentDots';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 const STACK_PRIMARY_AT = 840;

@@ -1,7 +1,10 @@
 import { Component, DestroyRef, ElementRef, TemplateRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleCheck, faEye, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';

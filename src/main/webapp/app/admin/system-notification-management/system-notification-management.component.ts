@@ -10,7 +10,10 @@ import { SystemNotification } from 'app/admin/system-notification-management/sys
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faEye, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';

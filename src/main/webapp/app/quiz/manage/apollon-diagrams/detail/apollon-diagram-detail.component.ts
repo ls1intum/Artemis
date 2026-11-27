@@ -6,7 +6,13 @@ import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.mod
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
-import { faArrowLeft, faCheck, faCropSimple, faDownload, faFloppyDisk, faPen, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCropSimple } from '@fortawesome/free-solid-svg-icons/faCropSimple';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons/faFloppyDisk';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';

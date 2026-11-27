@@ -10,7 +10,7 @@ import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons/faClockRotateLeft';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';

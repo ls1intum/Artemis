@@ -6,7 +6,9 @@ import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multip
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';

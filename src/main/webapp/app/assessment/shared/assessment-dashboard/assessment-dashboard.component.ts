@@ -25,7 +25,12 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faArrowUpRightFromSquare, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faHeartBroken } from '@fortawesome/free-solid-svg-icons/faHeartBroken';
+import { faShieldAlt } from '@fortawesome/free-solid-svg-icons/faShieldAlt';
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

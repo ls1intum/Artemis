@@ -12,7 +12,10 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faChevronDown, faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';

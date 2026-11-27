@@ -3,7 +3,7 @@ import { Component, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';

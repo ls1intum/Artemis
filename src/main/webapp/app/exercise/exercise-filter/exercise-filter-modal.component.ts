@@ -3,7 +3,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
 import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';

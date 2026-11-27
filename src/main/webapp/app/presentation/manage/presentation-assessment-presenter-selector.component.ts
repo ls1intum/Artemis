@@ -2,7 +2,7 @@ import { Component, computed, inject, input, model, signal } from '@angular/core
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable, Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
-import { faUserMinus } from '@fortawesome/free-solid-svg-icons';
+import { faUserMinus } from '@fortawesome/free-solid-svg-icons/faUserMinus';
 import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';

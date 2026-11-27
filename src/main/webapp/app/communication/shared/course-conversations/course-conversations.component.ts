@@ -4,23 +4,21 @@ import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-    faBookmark,
-    faBoxArchive,
-    faClock,
-    faComment,
-    faComments,
-    faEnvelopeOpenText,
-    faFile,
-    faFilter,
-    faGraduationCap,
-    faHeart,
-    faList,
-    faMessage,
-    faPersonChalkboard,
-    faPlus,
-    faTimes,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faBoxArchive } from '@fortawesome/free-solid-svg-icons/faBoxArchive';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faEnvelopeOpenText } from '@fortawesome/free-solid-svg-icons/faEnvelopeOpenText';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faMessage } from '@fortawesome/free-solid-svg-icons/faMessage';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';

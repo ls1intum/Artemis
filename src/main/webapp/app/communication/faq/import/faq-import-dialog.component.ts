@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Subject, Subscription, debounceTime } from 'rxjs';
-import { faFileImport, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';

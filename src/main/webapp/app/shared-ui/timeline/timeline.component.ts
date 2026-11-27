@@ -1,6 +1,6 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Dayjs } from 'dayjs/esm';

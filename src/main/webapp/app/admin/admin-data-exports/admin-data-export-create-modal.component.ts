@@ -5,7 +5,7 @@ import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';

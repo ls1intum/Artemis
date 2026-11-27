@@ -34,7 +34,9 @@ import { LinkPreviewService } from 'app/communication/link-preview/services/link
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faHashtag, faPeopleGroup, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons/faPeopleGroup';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 

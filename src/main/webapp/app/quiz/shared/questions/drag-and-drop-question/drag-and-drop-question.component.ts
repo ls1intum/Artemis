@@ -6,7 +6,10 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
-import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass } from '@angular/common';

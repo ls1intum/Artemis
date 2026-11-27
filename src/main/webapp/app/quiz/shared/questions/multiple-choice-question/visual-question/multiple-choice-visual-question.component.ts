@@ -1,7 +1,15 @@
 import { Component, ViewEncapsulation, effect, input, output } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { faBan, faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
+import { faCircle } from '@fortawesome/free-regular-svg-icons/faCircle';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';

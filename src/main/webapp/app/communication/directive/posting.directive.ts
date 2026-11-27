@@ -4,8 +4,8 @@ import { CommunicationService } from 'app/communication/service/communication.se
 import { DisplayPriority } from 'app/communication/communication.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
-import { faBookmark } from '@fortawesome/free-solid-svg-icons';
-import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons/faBookmark';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';

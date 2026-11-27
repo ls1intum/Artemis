@@ -1,6 +1,7 @@
 import { Component, input } from '@angular/core';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

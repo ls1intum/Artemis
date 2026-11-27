@@ -15,7 +15,9 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons/faCheckCircle';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons/faTimesCircle';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';

@@ -17,7 +17,7 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

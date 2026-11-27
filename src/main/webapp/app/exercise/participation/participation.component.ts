@@ -23,21 +23,19 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import {
-    faCheck,
-    faChevronDown,
-    faCircleNotch,
-    faComment,
-    faDownload,
-    faEraser,
-    faFilePowerpoint,
-    faFolderOpen,
-    faPencil,
-    faSync,
-    faTimes,
-    faTrash,
-} from '@fortawesome/free-solid-svg-icons';
-import { faFileCode } from '@fortawesome/free-regular-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faEraser } from '@fortawesome/free-solid-svg-icons/faEraser';
+import { faFilePowerpoint } from '@fortawesome/free-solid-svg-icons/faFilePowerpoint';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faFileCode } from '@fortawesome/free-regular-svg-icons/faFileCode';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

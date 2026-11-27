@@ -18,7 +18,13 @@ import {
 import { hasLargeSummaryCount } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBan, faCheck, faExclamationTriangle, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

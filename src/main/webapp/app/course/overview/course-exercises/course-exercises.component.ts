@@ -24,7 +24,7 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faCode } from '@fortawesome/free-solid-svg-icons';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
 import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 
 /**

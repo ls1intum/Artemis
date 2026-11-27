@@ -35,8 +35,10 @@ import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIRes
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faChevronDown, faCircleNotch, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';

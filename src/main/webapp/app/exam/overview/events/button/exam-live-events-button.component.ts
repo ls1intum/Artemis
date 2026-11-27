@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';

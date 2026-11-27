@@ -5,7 +5,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockProvider } from 'ng-mocks';
-import { faPencil } from '@fortawesome/free-solid-svg-icons';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { Observable, Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';

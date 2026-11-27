@@ -3,7 +3,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Subscription, map } from 'rxjs';
 
-import { faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

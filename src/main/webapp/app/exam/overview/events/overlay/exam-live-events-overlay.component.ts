@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
 import {

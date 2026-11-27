@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
-import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';

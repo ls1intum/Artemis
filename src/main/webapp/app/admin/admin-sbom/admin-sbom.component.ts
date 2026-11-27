@@ -2,20 +2,18 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import {
-    faArrowUp,
-    faDesktop,
-    faDownload,
-    faEnvelope,
-    faExclamationTriangle,
-    faExternalLinkAlt,
-    faInfoCircle,
-    faRefresh,
-    faSearch,
-    faServer,
-    faShieldAlt,
-    faSpinner,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faDesktop } from '@fortawesome/free-solid-svg-icons/faDesktop';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons/faExternalLinkAlt';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faRefresh } from '@fortawesome/free-solid-svg-icons/faRefresh';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faServer } from '@fortawesome/free-solid-svg-icons/faServer';
+import { faShieldAlt } from '@fortawesome/free-solid-svg-icons/faShieldAlt';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

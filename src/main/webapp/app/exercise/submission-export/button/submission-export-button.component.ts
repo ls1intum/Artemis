@@ -1,7 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { SubmissionExportDialogComponent } from '../dialog/submission-export-dialog.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

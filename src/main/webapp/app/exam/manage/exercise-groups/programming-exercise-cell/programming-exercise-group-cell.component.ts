@@ -2,7 +2,7 @@ import { Component, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';

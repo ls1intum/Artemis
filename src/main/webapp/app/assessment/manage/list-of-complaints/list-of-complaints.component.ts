@@ -21,7 +21,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
-import { faExclamationTriangle, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 

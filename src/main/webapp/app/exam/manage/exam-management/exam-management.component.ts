@@ -19,7 +19,7 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 

@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from '../submission-export.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

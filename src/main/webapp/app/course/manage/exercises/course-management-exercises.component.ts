@@ -15,21 +15,19 @@ import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button'
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import {
-    faCalendarDays,
-    faCheckDouble,
-    faCircleInfo,
-    faCode,
-    faFileExport,
-    faFileImport,
-    faLayerGroup,
-    faList,
-    faMagnifyingGlass,
-    faPen,
-    faPlus,
-    faTrash,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays } from '@fortawesome/free-solid-svg-icons/faCalendarDays';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

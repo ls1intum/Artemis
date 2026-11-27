@@ -5,7 +5,9 @@ import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tuma
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
-import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';

@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';

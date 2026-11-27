@@ -12,7 +12,11 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -3,7 +3,10 @@ import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription } from 'rxjs';
-import { faCircleCheck, faPause, faPauseCircle, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
+import { faPause } from '@fortawesome/free-solid-svg-icons/faPause';
+import { faPauseCircle } from '@fortawesome/free-solid-svg-icons/faPauseCircle';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';

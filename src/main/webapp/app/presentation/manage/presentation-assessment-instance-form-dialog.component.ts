@@ -7,7 +7,10 @@ import { forkJoin, map, merge, of, pairwise, startWith, switchMap, tap } from 'r
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCheck, faSave, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';

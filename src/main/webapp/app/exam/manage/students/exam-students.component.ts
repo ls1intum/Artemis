@@ -11,27 +11,25 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isActingAsTestExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import {
-    faChair,
-    faCheck,
-    faCircleInfo,
-    faEye,
-    faFileCirclePlus,
-    faFileExport,
-    faFileImport,
-    faFilePen,
-    faIdCard,
-    faPlay,
-    faThLarge,
-    faTimes,
-    faTriangleExclamation,
-    faUpload,
-    faUser,
-    faUserMinus,
-    faUserPen,
-    faUserPlus,
-    faUserTimes,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChair } from '@fortawesome/free-solid-svg-icons/faChair';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFileCirclePlus } from '@fortawesome/free-solid-svg-icons/faFileCirclePlus';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faFilePen } from '@fortawesome/free-solid-svg-icons/faFilePen';
+import { faIdCard } from '@fortawesome/free-solid-svg-icons/faIdCard';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faThLarge } from '@fortawesome/free-solid-svg-icons/faThLarge';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faUserMinus } from '@fortawesome/free-solid-svg-icons/faUserMinus';
+import { faUserPen } from '@fortawesome/free-solid-svg-icons/faUserPen';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
+import { faUserTimes } from '@fortawesome/free-solid-svg-icons/faUserTimes';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

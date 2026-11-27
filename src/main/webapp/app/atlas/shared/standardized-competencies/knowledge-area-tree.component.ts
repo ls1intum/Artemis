@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, computed, contentChild, inject, input, signal } from '@angular/core';
 import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
-import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';

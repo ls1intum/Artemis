@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { faEraser } from '@fortawesome/free-solid-svg-icons';
+import { faEraser } from '@fortawesome/free-solid-svg-icons/faEraser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

@@ -1,5 +1,7 @@
 import { Component, input } from '@angular/core';
-import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

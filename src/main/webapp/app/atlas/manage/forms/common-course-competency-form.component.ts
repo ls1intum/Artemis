@@ -2,7 +2,8 @@ import { Component, effect, inject, input, output, signal } from '@angular/core'
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
-import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { Subscription, merge } from 'rxjs';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';

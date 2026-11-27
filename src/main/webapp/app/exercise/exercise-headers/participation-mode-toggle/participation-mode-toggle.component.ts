@@ -4,7 +4,8 @@ import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, input, model } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBook, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

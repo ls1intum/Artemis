@@ -1,5 +1,12 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faDiagramProject } from '@fortawesome/free-solid-svg-icons/faDiagramProject';
+import { faFileArrowUp } from '@fortawesome/free-solid-svg-icons/faFileArrowUp';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
 import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
 
 const eventTypeIconMap: Record<CalendarEventTypeEnum, IconProp> = {

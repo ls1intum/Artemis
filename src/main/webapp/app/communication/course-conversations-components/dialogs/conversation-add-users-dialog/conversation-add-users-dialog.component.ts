@@ -1,6 +1,6 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';

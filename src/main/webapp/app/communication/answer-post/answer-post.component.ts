@@ -20,7 +20,14 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faShare } from '@fortawesome/free-solid-svg-icons/faShare';
+import { faSmile } from '@fortawesome/free-solid-svg-icons/faSmile';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';

@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation, input } from '@a
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faClock, faExclamationCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';

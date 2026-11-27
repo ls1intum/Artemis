@@ -9,7 +9,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { StepperComponent } from './stepper/stepper.component';
 import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 

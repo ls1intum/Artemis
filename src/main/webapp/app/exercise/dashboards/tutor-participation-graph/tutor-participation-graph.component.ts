@@ -5,7 +5,8 @@ import { Router } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
 import { NgClass } from '@angular/common';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

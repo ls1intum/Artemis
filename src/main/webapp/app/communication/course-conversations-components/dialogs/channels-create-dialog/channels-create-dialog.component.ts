@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ChannelFormData, ChannelType } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { Course } from 'app/course/shared/entities/course.model';

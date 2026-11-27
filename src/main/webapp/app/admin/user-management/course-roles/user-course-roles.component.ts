@@ -17,7 +17,8 @@ import {
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { faGraduationCap, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';

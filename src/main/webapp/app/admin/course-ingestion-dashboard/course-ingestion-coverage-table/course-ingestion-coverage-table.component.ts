@@ -11,7 +11,7 @@ import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

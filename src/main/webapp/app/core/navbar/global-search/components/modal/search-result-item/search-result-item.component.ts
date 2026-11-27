@@ -1,7 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons/faCalendarAlt';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faLevelDownAlt } from '@fortawesome/free-solid-svg-icons/faLevelDownAlt';
+import { faReply } from '@fortawesome/free-solid-svg-icons/faReply';
+import { faTrophy } from '@fortawesome/free-solid-svg-icons/faTrophy';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';

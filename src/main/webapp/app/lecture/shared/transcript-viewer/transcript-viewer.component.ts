@@ -4,7 +4,10 @@ import { Component, ElementRef, computed, input, output, signal, viewChild } fro
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { escapeString } from 'app/foundation/util/text.utils';

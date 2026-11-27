@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';

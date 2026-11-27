@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseTaskService } from '../programming-exercise-task.service';

@@ -4,7 +4,9 @@ import { SystemNotification, SystemNotificationType } from 'app/admin/system-not
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { User } from 'app/account/user/user.model';
-import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';

@@ -2,7 +2,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Component, booleanAttribute, computed, input, signal } from '@angular/core';
 import { orderBy } from 'lodash-es';

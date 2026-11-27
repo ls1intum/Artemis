@@ -3,7 +3,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { EMPTY, catchError, switchMap, tap } from 'rxjs';
 
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';

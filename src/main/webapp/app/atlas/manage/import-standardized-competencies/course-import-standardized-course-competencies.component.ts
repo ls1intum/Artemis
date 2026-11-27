@@ -9,7 +9,11 @@ import {
     StandardizedCompetencyForTree,
     sourceToString,
 } from 'app/atlas/shared/entities/standardized-competency.model';
-import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';

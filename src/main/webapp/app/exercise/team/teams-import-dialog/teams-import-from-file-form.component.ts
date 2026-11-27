@@ -1,5 +1,5 @@
 import { Component, inject, output, signal } from '@angular/core';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { StudentWithTeam, Team } from 'app/exercise/shared/entities/team/team.model';

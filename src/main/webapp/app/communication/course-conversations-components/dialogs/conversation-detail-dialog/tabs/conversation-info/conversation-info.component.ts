@@ -19,7 +19,9 @@ import { GroupChatService } from 'app/communication/conversations/service/group-
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCalendarPlus, faUser, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarPlus } from '@fortawesome/free-solid-svg-icons/faCalendarPlus';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons/faVolumeXmark';
 import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';

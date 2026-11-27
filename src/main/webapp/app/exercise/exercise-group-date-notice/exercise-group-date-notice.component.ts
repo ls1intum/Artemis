@@ -1,7 +1,7 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

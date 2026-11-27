@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

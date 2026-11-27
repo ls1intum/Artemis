@@ -2,7 +2,8 @@ import { Component, OnDestroy, computed, inject, input } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCodeCompare, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons/faCodeCompare';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { GitDiffReportModalComponent, GitDiffReportModalData } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';

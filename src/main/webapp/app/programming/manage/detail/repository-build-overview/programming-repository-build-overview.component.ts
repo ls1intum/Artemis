@@ -1,7 +1,9 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheckDouble, faExclamationTriangle, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { ProgrammingBuildStatusData, ProgrammingRepositoryBuildOverviewDetail } from 'app/shared-ui/detail-overview-list/detail.model';

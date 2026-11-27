@@ -1,7 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
-import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
+import { faCircle } from '@fortawesome/free-regular-svg-icons/faCircle';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleLeft } from '@fortawesome/free-solid-svg-icons/faAngleLeft';
 import { RouterLink } from '@angular/router';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';

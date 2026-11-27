@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
 import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, TitleCasePipe } from '@angular/common';

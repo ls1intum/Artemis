@@ -5,7 +5,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
 
 describe('GradingInfoModalComponent', () => {
     let component: GradingInfoModalComponent;

@@ -21,7 +21,8 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

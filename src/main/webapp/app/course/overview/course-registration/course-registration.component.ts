@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
 import { ASC, DESC, SORT } from 'app/foundation/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';

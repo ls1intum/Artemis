@@ -21,7 +21,15 @@ import { PostingDirective } from 'app/communication/directive/posting.directive'
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../communication.util';
-import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faEnvelopeOpenText } from '@fortawesome/free-solid-svg-icons/faEnvelopeOpenText';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faShare } from '@fortawesome/free-solid-svg-icons/faShare';
+import { faSmile } from '@fortawesome/free-solid-svg-icons/faSmile';
+import { faThumbtack } from '@fortawesome/free-solid-svg-icons/faThumbtack';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import dayjs from 'dayjs/esm';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';

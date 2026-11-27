@@ -5,7 +5,7 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

@@ -11,7 +11,16 @@ import dayjs from 'dayjs/esm';
 
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFileSignature } from '@fortawesome/free-solid-svg-icons/faFileSignature';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons/faPaperPlane';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faSignal } from '@fortawesome/free-solid-svg-icons/faSignal';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

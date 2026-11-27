@@ -1,4 +1,7 @@
-import { IconDefinition, faCheck, faHashtag, faTableCellsLarge } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faTableCellsLarge } from '@fortawesome/free-solid-svg-icons/faTableCellsLarge';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 import { PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 

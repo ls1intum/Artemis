@@ -1,5 +1,8 @@
 import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ConnectedPosition } from '@angular/cdk/overlay';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

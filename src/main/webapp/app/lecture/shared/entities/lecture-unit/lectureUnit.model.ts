@@ -3,7 +3,10 @@ import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faDownload, faLink, faQuestion, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java

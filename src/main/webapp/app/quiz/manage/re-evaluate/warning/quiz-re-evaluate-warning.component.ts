@@ -10,7 +10,11 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

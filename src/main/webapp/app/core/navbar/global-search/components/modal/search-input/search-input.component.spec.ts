@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { faCube } from '@fortawesome/free-solid-svg-icons';
+import { faCube } from '@fortawesome/free-solid-svg-icons/faCube';
 
 describe('SearchInputComponent', () => {
     let component: SearchInputComponent;

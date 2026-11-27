@@ -6,7 +6,8 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap }
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EMPTY, Subject, map } from 'rxjs';
-import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';

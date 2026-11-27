@@ -3,9 +3,14 @@ import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChil
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faDownLeftAndUpRightToCenter, faExclamationTriangle, faTriangleExclamation, faUpRightAndDownLeftFromCenter, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';

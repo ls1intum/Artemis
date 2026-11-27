@@ -6,7 +6,10 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faLocationDot } from '@fortawesome/free-solid-svg-icons/faLocationDot';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 

@@ -3,7 +3,8 @@ import { AbstractControl, AsyncValidatorFn, FormBuilder, FormGroup, Validators }
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
-import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 

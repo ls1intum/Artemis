@@ -12,7 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -27,7 +27,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FileService } from 'app/foundation/service/file.service';
-import { faCloudArrowUp, faFile, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons/faCloudArrowUp';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { finalize } from 'rxjs/operators';
 
 @Component({

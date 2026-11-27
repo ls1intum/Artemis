@@ -2,7 +2,7 @@ import { Component, inject, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, OperatorFunction, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/account/user/shared/user.service';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
 import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';

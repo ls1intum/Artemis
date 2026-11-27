@@ -9,7 +9,7 @@ import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exe
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';

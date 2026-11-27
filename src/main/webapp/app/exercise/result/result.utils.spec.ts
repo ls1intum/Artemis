@@ -19,8 +19,10 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
-import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons/faCheckCircle';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
+import { faTimesCircle } from '@fortawesome/free-regular-svg-icons/faTimesCircle';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';

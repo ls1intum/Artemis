@@ -1,6 +1,10 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
-import { faChevronRight, faPen, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';

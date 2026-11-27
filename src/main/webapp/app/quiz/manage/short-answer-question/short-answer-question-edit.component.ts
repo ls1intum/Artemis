@@ -31,7 +31,13 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
-import { faAngleDown, faAngleRight, faBan, faBars, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faUnlink } from '@fortawesome/free-solid-svg-icons/faUnlink';
 import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD, MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';

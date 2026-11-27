@@ -52,7 +52,8 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
-import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';

@@ -1,7 +1,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 

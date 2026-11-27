@@ -13,7 +13,9 @@ import { ResultApi } from 'app/openapi/api/result-api';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { faChevronDown, faChevronRight, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 

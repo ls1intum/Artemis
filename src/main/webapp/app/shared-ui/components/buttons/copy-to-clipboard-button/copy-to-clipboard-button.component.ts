@@ -1,6 +1,6 @@
 import { Component, input, signal } from '@angular/core';
-import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCopy } from '@fortawesome/free-regular-svg-icons/faCopy';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

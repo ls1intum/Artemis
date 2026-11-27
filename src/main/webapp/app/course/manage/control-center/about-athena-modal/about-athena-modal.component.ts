@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faClipboardCheck, faGaugeHigh, faLayerGroup, faPenSquare, faToggleOn, faUserCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons/faClipboardCheck';
+import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faPenSquare } from '@fortawesome/free-solid-svg-icons/faPenSquare';
+import { faToggleOn } from '@fortawesome/free-solid-svg-icons/faToggleOn';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -1,6 +1,11 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faDownLeftAndUpRightToCenter } from '@fortawesome/free-solid-svg-icons/faDownLeftAndUpRightToCenter';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons/faUpRightAndDownLeftFromCenter';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,

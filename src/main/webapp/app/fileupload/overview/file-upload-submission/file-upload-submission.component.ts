@@ -26,8 +26,8 @@ import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils'
 import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
