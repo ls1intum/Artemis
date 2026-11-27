@@ -69,7 +69,7 @@ class LocalCIQueueWebsocketServiceTest {
 
         localCIQueueWebsocketService.sendChangedFinishedBuildJobOverWebsocket(finishedBuildJob);
 
-        verify(localCIWebsocketMessagingService).sendFinishedBuildJobChange(finishedBuildJob);
+        verify(localCIWebsocketMessagingService).sendFinishedBuildJobChange(eq(finishedBuildJob), anyList());
         verify(localCIWebsocketMessagingService).sendFinishedBuildJobDetailUpdate(eq(finishedBuildJob), anyList());
         // the clients count every job announced as finished, so a changed job must not be announced again
         verify(localCIWebsocketMessagingService, never()).sendFinishedBuildJobUpdate(any(), any());

@@ -270,8 +270,9 @@ public class LocalCIQueueWebsocketService {
         if (finishedBuildJob == null) {
             return;
         }
-        localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob);
-        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob, distributedDataAccessService.getBuildAgentInformation());
+        var agents = distributedDataAccessService.getBuildAgentInformation();
+        localCIWebsocketMessagingService.sendFinishedBuildJobChange(finishedBuildJob, agents);
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob, agents);
     }
 
     /**

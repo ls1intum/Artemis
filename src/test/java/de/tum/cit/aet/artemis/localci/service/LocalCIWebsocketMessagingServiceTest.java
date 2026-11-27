@@ -100,4 +100,22 @@ class LocalCIWebsocketMessagingServiceTest {
         assertThat(courseDetail.buildAgentDisplayName()).isEqualTo("Original Agent One");
         assertThat(JsonObjectMapper.get().writeValueAsString(courseDetail)).contains("Original Agent One").doesNotContain("10.0.0.1", "buildAgentAddress");
     }
+
+    @Test
+    void finishedBuildJobChangeSendsTheSameReducedViewToTheCourseTopicAsTheAnnouncement() {
+        FinishedBuildJobDTO job = new FinishedBuildJobDTO("job3", "job3", "[10.0.0.1]:5701", 1L, COURSE_ID, 3L, BuildStatus.SUCCESSFUL, RepositoryType.USER, "repo",
+                RepositoryType.USER, ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), "commit", null, "Agent One");
+
+        messagingService.sendFinishedBuildJobChange(job, List.of());
+
+        ArgumentCaptor<WebsocketDestination> destinations = ArgumentCaptor.captor();
+        ArgumentCaptor<Object> payloads = ArgumentCaptor.captor();
+        verify(websocketMessagingService, times(2)).sendMessage(destinations.capture(), payloads.capture());
+        int admin = destinations.getAllValues().indexOf(LocalCIWebsocketTopics.ADMIN_FINISHED_JOB_UPDATES.at());
+        int course = destinations.getAllValues().indexOf(LocalCIWebsocketTopics.COURSE_FINISHED_JOB_UPDATES.at(COURSE_ID));
+        assertThat(payloads.getAllValues().get(admin)).isEqualTo(job);
+        var courseChange = (CourseFinishedBuildJobDTO) payloads.getAllValues().get(course);
+        assertThat(courseChange.buildAgentDisplayName()).isEqualTo("Agent One");
+        assertThat(JsonObjectMapper.get().writeValueAsString(courseChange)).contains("Agent One").doesNotContain("10.0.0.1", "buildAgentAddress");
+    }
 }

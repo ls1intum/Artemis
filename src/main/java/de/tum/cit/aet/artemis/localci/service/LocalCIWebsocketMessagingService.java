@@ -146,17 +146,19 @@ public class LocalCIWebsocketMessagingService {
 
     /**
      * Sends a finished build job whose data changed after it was announced as finished to both the admin and the course topic.
+     * The course topic gets the same reduced view as when the job was announced, see {@link #sendFinishedBuildJobUpdate}.
      *
      * @param finishedBuildJob the finished build job DTO to send
+     * @param agents           the known build agents, to resolve the display name of the agent for the course topic
      */
-    public void sendFinishedBuildJobChange(FinishedBuildJobDTO finishedBuildJob) {
+    public void sendFinishedBuildJobChange(FinishedBuildJobDTO finishedBuildJob, List<BuildAgentInformation> agents) {
         var adminChannel = ADMIN_FINISHED_JOB_UPDATES.at();
         log.debug("Sending changed finished build job on topic {}", adminChannel);
         websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
 
         var courseChannel = COURSE_FINISHED_JOB_UPDATES.at(finishedBuildJob.courseId());
         log.debug("Sending changed finished build job on topic {}", courseChannel);
-        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+        websocketMessagingService.sendMessage(courseChannel, CourseFinishedBuildJobDTO.of(finishedBuildJob, agents));
     }
 
     /**
