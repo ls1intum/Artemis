@@ -10,7 +10,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SlicePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiInputDirective, TumAetUiTableVirtualScrollComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTableVirtualScrollComponent } from '@tumaet/ui-angular/table-directive';
 /**
  * Component for managing application log levels.
  * Allows viewing and changing log levels for different loggers.

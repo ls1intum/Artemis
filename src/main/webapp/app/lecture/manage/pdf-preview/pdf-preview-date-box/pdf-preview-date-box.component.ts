@@ -10,7 +10,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 
 interface CategorizedExercise {
     type: ExerciseType;

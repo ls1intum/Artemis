@@ -34,7 +34,8 @@ For a minimal standalone application, use this `src/main.ts` with `<app-root></a
 ```ts
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 @Component({
     selector: 'app-root',
@@ -55,9 +56,11 @@ void bootstrapApplication(App);
 ```
 
 In an existing application, add the components to the consuming component's `imports` instead of
-replacing its bootstrap. Import supported symbols from `@tumaet/ui-angular`; deep imports are
-not supported. See the [component reference](https://docs.artemis.tum.de/developer/tum-aet-ui-reference)
-for forms, tables, charts, and keyboard interactions.
+replacing its bootstrap. Import each component from its own entry point (`@tumaet/ui-angular/<component>`, named after the
+component directory): a bundler that splits code per file, such as esbuild in the Angular build, then loads only the components
+that a route uses. The package root `@tumaet/ui-angular` exports every component, for applications that import a few of them or
+do not split their code. Paths below an entry point are not supported. See the
+[component reference](https://docs.artemis.tum.de/developer/tum-aet-ui-reference) for forms, tables, charts, and keyboard interactions.
 
 ## Cascade layers
 
@@ -207,7 +210,7 @@ build tool and its transitive dependencies separate from the library peer matrix
 ### Splitter
 
 `TumAetUiSplitterComponent` arranges two persistent template panels. Import it from
-`@tumaet/ui-angular` and mark each panel template with `#panel`:
+`@tumaet/ui-angular/splitter` and mark each panel template with `#panel`:
 
 ```html
 <tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">

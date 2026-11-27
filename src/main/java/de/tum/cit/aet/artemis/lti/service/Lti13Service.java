@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,7 +16,6 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,12 @@ public class Lti13Service {
 
     /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
     private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
+
+    /**
+     * ISO 8601 with millisecond precision and the offset of the server ("Z" for UTC), the format Joda-Time's DateTime.toString() produced
+     * for the score timestamp of the LTI Assignment and Grade Services.
+     */
+    private static final DateTimeFormatter SCORE_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
     /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
     private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
@@ -389,7 +396,7 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) {
-        ScorePublishRequest requestBody = new ScorePublishRequest(userId, new DateTime().toString(), "Submitted", "FullyGraded", comment, score, 100D);
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, SCORE_TIMESTAMP_FORMAT.format(ZonedDateTime.now()), "Submitted", "FullyGraded", comment, score, 100D);
         return JsonObjectMapper.get().writeValueAsString(requestBody);
     }
 

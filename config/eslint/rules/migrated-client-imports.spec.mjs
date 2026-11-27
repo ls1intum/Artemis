@@ -48,9 +48,21 @@ describe('migrated client import restrictions', () => {
         expect(await importErrors(filePath, 'import { SelectModule } from "primeng/select";')).toHaveLength(1);
     });
 
+    it.each([picker, ...otherMigratedFiles])('rejects the package root and an unknown entry point of TUM AET UI in %s', async (filePath) => {
+        for (const source of [
+            'import { TumAetUiChipComponent } from "@tumaet/ui-angular";',
+            'import { TumAetUiChipComponent } from "@tumaet/ui-angular/chip/index";',
+            'import * as dependency from "@tumaet/ui-angular/unknown";',
+        ]) {
+            const errors = await importErrors(filePath, source);
+            expect(errors, `${filePath}: ${source}`).toHaveLength(1);
+            expect(errors[0]).toMatchObject({ ruleId: 'no-restricted-imports', severity: 2 });
+        }
+    });
+
     it.each([picker, ...otherMigratedFiles])('keeps supported public imports available in %s', async (filePath) => {
         const imports = [
-            'import { TumAetUiChipComponent } from "@tumaet/ui-angular";',
+            'import { TumAetUiChipComponent } from "@tumaet/ui-angular/chip";',
             'import { Component } from "@angular/core";',
             'import dayjs from "dayjs/esm";',
             'import { debounce } from "lodash-es";',
