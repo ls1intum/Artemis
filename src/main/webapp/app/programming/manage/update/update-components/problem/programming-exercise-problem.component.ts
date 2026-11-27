@@ -34,7 +34,7 @@ import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-ba
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css', './programming-exercise-problem.component.css'],
     imports: [
         TranslateDirective,
         ProgrammingExerciseInstructionComponent,

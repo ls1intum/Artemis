@@ -1,0 +1,70 @@
+:host {
+    display: contents;
+}
+
+.event-wrapper {
+    display: block;
+    border: 1px solid;
+    border-radius: 3px;
+    padding: 3px 10px 10px;
+    margin-bottom: 10px;
+    box-shadow: var(--tumaet-ui-shadow-lg);
+}
+
+.event-wrapper.examAttendanceCheck {
+    background-color: var(--artemis-alert-info-background);
+    border-color: var(--artemis-alert-info-border);
+}
+
+.event-wrapper.examAttendanceCheck .wt-title {
+    font-weight: bold;
+    font-size: 1.3em;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.event-wrapper.examWideAnnouncement {
+    background-color: var(--artemis-alert-info-background);
+    border-color: var(--artemis-alert-info-border);
+}
+
+.event-wrapper.workingTimeUpdate {
+    background-color: var(--artemis-alert-warning-background);
+    border-color: var(--artemis-alert-warning-border);
+}
+
+.event-wrapper.workingTimeUpdate .wt-title {
+    font-weight: bold;
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.event-wrapper.problemStatementUpdate {
+    background-color: var(--artemis-alert-info-background);
+    border-color: var(--artemis-alert-info-border);
+}
+
+.event-wrapper .headline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.event-wrapper .headline .type {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.event-wrapper .headline .author span:first-child {
+    font-size: 0.8em;
+}
+
+.event-wrapper .headline .author span:last-child {
+    font-weight: bold;
+}
+
+.event-wrapper .date {
+    margin-bottom: 20px;
+    color: var(--text-body-secondary);
+}

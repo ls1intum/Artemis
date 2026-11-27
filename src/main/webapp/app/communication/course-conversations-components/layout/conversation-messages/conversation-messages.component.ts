@@ -73,7 +73,7 @@ const NEW_MESSAGES_LINE_MARGIN_PX = 8;
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
-    styleUrls: ['./conversation-messages.component.scss'],
+    styleUrls: ['./conversation-messages.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,

@@ -68,7 +68,7 @@ export enum LectureDraftState {
         LectureSeriesDraftEditModalComponent,
     ],
     templateUrl: './lecture-series-create.component.html',
-    styleUrl: './lecture-series-create.component.scss',
+    styleUrl: './lecture-series-create.component.css',
 })
 export class LectureSeriesCreateComponent {
     private lectureApi = inject(LectureApi);

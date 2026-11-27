@@ -86,7 +86,7 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
-    styleUrl: './lecture-units.component.scss',
+    styleUrl: './lecture-units.component.css',
     // Enter is handled on the host: the form of the item that is edited in place is no control itself, so it takes no key handlers.
     host: { '(keydown.enter)': 'onEditorEnter($event)' },
     imports: [

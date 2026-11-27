@@ -17,7 +17,7 @@ interface ContextSwitchInfo {
 @Component({
     selector: 'jhi-iris-context-switch-divider',
     templateUrl: './iris-context-switch-divider.component.html',
-    styleUrls: ['./iris-context-switch-divider.component.scss'],
+    styleUrls: ['./iris-context-switch-divider.component.css'],
     imports: [RouterLink, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,

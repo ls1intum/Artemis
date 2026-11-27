@@ -24,7 +24,7 @@ interface TutorEffortRange {
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
-    styleUrls: ['./tutor-effort-statistics.component.scss'],
+    styleUrls: ['./tutor-effort-statistics.component.css'],
     imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumAetUiBarChartComponent, TumAetUiTableDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {

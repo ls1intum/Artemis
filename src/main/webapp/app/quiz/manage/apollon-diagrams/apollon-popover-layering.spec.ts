@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { Logger, compile } from 'sass';
+import { readFileSync } from 'node:fs';
 
-const THEME_STYLES = 'src/main/webapp/content/scss/themes/theme-default.scss';
+const OVERLAY_STYLES = 'src/main/webapp/content/css/third-party.css';
 
-/** The declarations of the first compiled rule that has exactly this selector. */
+/** The declarations of the first rule of the stylesheet that has exactly this selector. */
 function declarationsOf(css: string, selector: string): Record<string, string> {
     const escaped = selector.replace(/[.*+?^${}()|[\]\\>]/g, '\\$&');
     const rule = new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`).exec(css);
     if (!rule) {
-        throw new Error(`the compiled theme has no rule for ${selector}`);
+        throw new Error(`${OVERLAY_STYLES} has no rule for ${selector}`);
     }
     return Object.fromEntries(
         rule[1]
@@ -19,11 +19,7 @@ function declarationsOf(css: string, selector: string): Record<string, string> {
 }
 
 describe('layering of the Apollon popovers', () => {
-    const { css } = compile(THEME_STYLES, {
-        loadPaths: [process.cwd()],
-        logger: Logger.silent,
-        silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
-    });
+    const css = readFileSync(OVERLAY_STYLES, 'utf8');
 
     it('paints the portal of a popover opened inside a kit dialog above the overlay container of the dialog', () => {
         // Without a layer of its own the portal is painted behind the dialog, and the pen of a selected class opens a popup nobody can see.

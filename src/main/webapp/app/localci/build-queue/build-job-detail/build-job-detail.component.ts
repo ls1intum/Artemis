@@ -30,7 +30,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-build-job-detail',
     templateUrl: './build-job-detail.component.html',
-    styleUrl: './build-job-detail.component.scss',
+    styleUrl: './build-job-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

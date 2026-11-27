@@ -91,7 +91,7 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
 @Component({
     selector: 'jhi-course-management-exercises',
     templateUrl: './course-management-exercises.component.html',
-    styleUrl: './course-management-exercises.component.scss',
+    styleUrl: './course-management-exercises.component.css',
     imports: [
         FormsModule,
         TumAetUiSelectButtonComponent,
