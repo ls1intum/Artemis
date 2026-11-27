@@ -370,6 +370,26 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(removeCachedParticipations).not.toHaveBeenCalled();
         });
 
+        it('should neither replace nor merge the shown participations when the assignment brings a team without participations', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+            comp.mergeResultsAndSubmissionsForParticipations();
+            // The shown participations are updated by the result handler and can be newer than those of the exercise, so merging them again from the exercise would roll them back.
+            const shown = comp.studentParticipations;
+            const merge = vi.spyOn(comp, 'mergeResultsAndSubmissionsForParticipations');
+
+            assignments.next({ exerciseId: 42, teamId: 8 } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBe(8);
+            expect(merge).not.toHaveBeenCalled();
+            expect(comp.studentParticipations).toBe(shown);
+        });
+
         it('should keep the participations when the assignment brings a team without participations', async () => {
             const assignments = await subscribeToAssignments({
                 id: 42,

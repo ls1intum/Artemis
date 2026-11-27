@@ -592,6 +592,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 if (this.exercise) {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
+                    if (teamAssignment.studentParticipations === undefined && teamAssignment.teamId !== undefined) {
+                        // A team without participations leaves the participations as they are. The shown ones are updated by the result handler and can be newer than those of the
+                        // exercise, so they are neither replaced nor merged again from the exercise, which would roll them back.
+                        this.exercise = updatedExercise;
+                        return;
+                    }
                     updatedExercise.studentParticipations = participationsAfterTeamAssignment(this.exercise.studentParticipations, teamAssignment);
                     // The participations that the assignment replaced must not stay in the cache that loadExercise() seeds the page from when it is opened again.
                     const remainingIds = new Set(updatedExercise.studentParticipations?.map((participation) => participation.id));
