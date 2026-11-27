@@ -7,6 +7,9 @@
  * declaration whose value the page cannot read back, such as the longhands of `padding: var(--gap)`: they read as an
  * empty string, and writing that string back would delete them.
  *
+ * A rule in `@supports` is judged like one in a media query: when the browser does not support the condition, the
+ * rule is reported with zero matches instead of being probed.
+ *
  * Whether a container query applies depends on the query container of each element, which the page does not
  * expose. A declaration in a container query is therefore only reported when it changes an element. If it changes
  * none, it is reported with zero matches, because it may just not apply.
@@ -79,6 +82,8 @@ export default function importantAudit(sample = 40) {
                 visit(rule.cssRules, `${context}@media ${rule.conditionText} `, applies && matchMedia(rule.conditionText).matches, conditional);
             } else if (rule instanceof CSSContainerRule) {
                 visit(rule.cssRules, `${context}@container ${rule.conditionText} `, applies, true);
+            } else if (rule instanceof CSSSupportsRule) {
+                visit(rule.cssRules, `${context}@supports ${rule.conditionText} `, applies && CSS.supports(rule.conditionText), conditional);
             } else if (rule instanceof CSSLayerBlockRule) {
                 visit(rule.cssRules, `${context}@layer ${rule.name} `, applies, conditional);
             } else if (rule.cssRules) {
