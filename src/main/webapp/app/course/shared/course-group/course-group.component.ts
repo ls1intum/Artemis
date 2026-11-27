@@ -200,9 +200,9 @@ export class CourseGroupComponent {
     }
 
     /**
-     * Remove user from course group.
+     * Remove the shown course role from a user.
      *
-     * @param member Member that should be removed from the currently viewed course group
+     * @param member Member who loses the currently viewed course role
      */
     removeFromGroup(member: CourseRoleMember): void {
         if (member.login) {

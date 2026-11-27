@@ -76,8 +76,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * <li><b>Step 3b (synthetic):</b> {@link #syntheticJwtSignedWithMoodleKeyValidates()} - sanity check that signs with
  * Moodle's extracted private key and a minimal claim set. Isolates the signature/JWKS mechanics from claim shape.</li>
  * <li><b>Full success:</b> {@link #fullLaunchSucceedsWithCourseAndExerciseFixture()} - Moodle signs an id_token whose
- * target_link_uri matches a Course + TextExercise in the test DB; performLaunch auto-creates the user, joins them to
- * the course's student group, and returns 200 with the success JSON. The deepest end-to-end coverage achievable in
+ * target_link_uri matches a Course + TextExercise in the test DB; performLaunch auto-creates the user, gives them
+ * the student role in the course, and returns 200 with the success JSON. The deepest end-to-end coverage achievable in
  * a MockMvc test JVM.</li>
  * </ul>
  * <p>
