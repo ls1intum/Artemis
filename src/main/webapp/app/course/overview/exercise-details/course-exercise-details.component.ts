@@ -25,7 +25,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 }
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
+import { hasExerciseDueDatePassed, participationsAfterTeamAssignment } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -589,12 +589,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((teamAssignment) => {
-                if (this.exercise && teamAssignment.studentParticipations) {
+                if (this.exercise) {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
-                    updatedExercise.studentParticipations = withPracticeParticipations(this.exercise.studentParticipations, teamAssignment.studentParticipations);
+                    updatedExercise.studentParticipations = participationsAfterTeamAssignment(this.exercise.studentParticipations, teamAssignment);
                     this.exercise = updatedExercise;
-                    this.mergeResultsAndSubmissionsForParticipations();
+                    if (updatedExercise.studentParticipations?.length) {
+                        this.mergeResultsAndSubmissionsForParticipations();
+                    } else {
+                        // The merge only replaces the shown participations by a non-empty list, so those of the team that the student left are cleared here.
+                        this._studentParticipations.set([]);
+                    }
                 }
             });
     }
