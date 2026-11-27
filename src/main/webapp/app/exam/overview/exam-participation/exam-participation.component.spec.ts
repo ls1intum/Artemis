@@ -12,6 +12,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -2040,6 +2041,59 @@ describe('ExamParticipationComponent', () => {
         studentExam.exercises = [exercise0, exercise1];
         comp.examStarted(studentExam);
         expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    describe('prefetching the modeling editor', () => {
+        // The modeling submission is rendered in a deferred block, so that the exam overview and every exam without a modeling exercise
+        // never download the diagram editor. An exam with a modeling exercise asks for it when it starts, while the connection is known to work.
+        function startExamWith(exercises: Exercise[]) {
+            const loadSpy = vi.spyOn(comp as unknown as { loadModelingSubmission: () => Promise<unknown> }, 'loadModelingSubmission').mockResolvedValue(undefined);
+            comp.ngOnInit();
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs().subtract(1, 'hours');
+            const studentExam = new StudentExam();
+            studentExam.exercises = exercises;
+            comp.examStarted(studentExam);
+            return loadSpy;
+        }
+
+        it('requests the modeling submission when the exam has a modeling exercise', () => {
+            const modelingExercise = new ModelingExercise(undefined as unknown as UMLDiagramType, undefined, undefined);
+            modelingExercise.id = 7;
+            const quizExercise = new QuizExercise(undefined, undefined);
+            quizExercise.id = 8;
+
+            const loadSpy = startExamWith([quizExercise, modelingExercise]);
+
+            expect(loadSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not request the modeling submission for an exam without a modeling exercise', () => {
+            const quizExercise = new QuizExercise(undefined, undefined);
+            quizExercise.id = 8;
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.id = 9;
+
+            const loadSpy = startExamWith([quizExercise, programmingExercise]);
+
+            expect(loadSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not fail the exam start when the modeling submission cannot be loaded', async () => {
+            const modelingExercise = new ModelingExercise(undefined as unknown as UMLDiagramType, undefined, undefined);
+            modelingExercise.id = 7;
+            const loadSpy = vi.spyOn(comp as unknown as { loadModelingSubmission: () => Promise<unknown> }, 'loadModelingSubmission').mockRejectedValue(new Error('offline'));
+            comp.ngOnInit();
+            comp.exam.set(new Exam());
+            comp.exam().startDate = dayjs().subtract(1, 'hours');
+            const studentExam = new StudentExam();
+            studentExam.exercises = [modelingExercise];
+
+            expect(() => comp.examStarted(studentExam)).not.toThrow();
+            await Promise.resolve();
+
+            expect(loadSpy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should reset Exam Layout if the summary is loaded and displayed', () => {

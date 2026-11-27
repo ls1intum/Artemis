@@ -166,14 +166,16 @@
                                         />
                                     }
                                     @case (MODELING) {
-                                        <jhi-modeling-exam-summary
-                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
-                                            [exercise]="exercise"
-                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
-                                            [isPrinting]="isPrinting()"
-                                            [expandProblemStatement]="expandProblemStatement()"
-                                            [isAfterResultsArePublished]="resultsArePublished"
-                                        />
+                                        @defer (on immediate) {
+                                            <jhi-modeling-exam-summary
+                                                [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
+                                                [exercise]="exercise"
+                                                [submission]="exerciseInfos()[exercise.id!]!.submission!"
+                                                [isPrinting]="isPrinting()"
+                                                [expandProblemStatement]="expandProblemStatement()"
+                                                [isAfterResultsArePublished]="resultsArePublished"
+                                            />
+                                        }
                                     }
                                     @case (QUIZ) {
                                         <jhi-quiz-exam-summary

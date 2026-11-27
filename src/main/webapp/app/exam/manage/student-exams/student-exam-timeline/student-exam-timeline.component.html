@@ -68,12 +68,14 @@
                                 />
                             }
                             @case (ExerciseType.MODELING) {
-                                <jhi-modeling-submission-exam
-                                    [exercise]="exercise"
-                                    [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                    [readonly]="true"
-                                    [examTimeline]="true"
-                                />
+                                @defer (on immediate) {
+                                    <jhi-modeling-submission-exam
+                                        [exercise]="exercise"
+                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                        [readonly]="true"
+                                        [examTimeline]="true"
+                                    />
+                                }
                             }
                             @case (ExerciseType.PROGRAMMING) {
                                 <jhi-programming-exam-diff

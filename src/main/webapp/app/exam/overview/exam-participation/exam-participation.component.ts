@@ -508,6 +508,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * The modeling editor is a large chunk that the exam page loads on demand (the modeling exercise is rendered in a deferred
+     * block). A student must not depend on the network at the moment they open a modeling exercise, so the chunk is requested
+     * as soon as the exam starts, while the connection is known to work. The deferred block then resolves from the module cache.
+     */
+    private prefetchModelingEditor(studentExam: StudentExam) {
+        if (studentExam.exercises?.some((exercise) => exercise.type === ExerciseType.MODELING)) {
+            this.loadModelingSubmission().catch(() => undefined);
+        }
+    }
+
+    /** Starts the download of the deferred modeling submission. A method of its own, so that a test can observe the request. */
+    protected loadModelingSubmission(): Promise<unknown> {
+        return import('app/exam/overview/exercises/modeling/modeling-exam-submission.component');
+    }
+
+    /**
      * exam start text confirmed and name entered, start button clicked and exam active
      *
      * @param studentExam            the student exam to start
@@ -536,6 +552,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.initIndividualEndDates(this.exam().startDate!);
             }
+            this.prefetchModelingEditor(studentExam);
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited.set(new Array(studentExam.exercises!.length).fill(false));
             this.prepareSidebarData();
