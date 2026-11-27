@@ -23,15 +23,10 @@ import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
-import {
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabsComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
 import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
 import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
@@ -119,7 +114,7 @@ const TAB_VISUAL_ID = 'editor_visual';
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
-    styleUrls: ['./markdown-editor-monaco.component.scss'],
+    styleUrls: ['./markdown-editor-monaco.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTabsComponent,

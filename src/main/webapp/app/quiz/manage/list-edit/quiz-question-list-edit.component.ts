@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -22,7 +22,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/hyperion/quiz/quiz-a
     selector: 'jhi-quiz-question-list-edit',
     templateUrl: './quiz-question-list-edit.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./quiz-question-list-edit.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-question-list-edit.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,

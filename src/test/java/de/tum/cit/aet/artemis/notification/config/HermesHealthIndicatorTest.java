@@ -13,15 +13,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
+
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 /**
  * Unit tests for {@link HermesHealthIndicator}.
  * <p>
  * Verify that the verdict is based solely on the relay's {@code /api/health} endpoint and that the indicator
- * reports {@code DOWN} both when that endpoint fails (no false-positive {@code UP} from a base-URL fallback)
+ * reports {@code DEGRADED} both when that endpoint fails (no false-positive {@code UP} from a base-URL fallback)
  * and when the relay reports a disconnected push provider (e.g. a missing/expired APNs certificate).
  * </p>
  */
@@ -35,9 +38,9 @@ class HermesHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        RestTemplate restTemplate = new RestTemplate();
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        hermesHealthIndicator = new HermesHealthIndicator(restTemplate);
+        RestClient.Builder builder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(builder).build();
+        hermesHealthIndicator = new HermesHealthIndicator(builder.build());
         ReflectionTestUtils.setField(hermesHealthIndicator, "hermesUrl", HERMES_URL);
     }
 
@@ -54,22 +57,22 @@ class HermesHealthIndicatorTest {
     }
 
     @Test
-    void healthDown_whenApnsDisconnected() {
+    void healthDegraded_whenApnsDisconnected() {
         // Reproduces a missing/expired APNs certificate on the Hermes host: the relay still answers 2xx but
-        // cannot deliver, so the indicator must report DOWN rather than hide the outage behind UP.
+        // cannot deliver, so the indicator must report DEGRADED rather than hide the outage behind UP.
         mockServer.expect(requestTo(HERMES_URL + "/api/health"))
                 .andRespond(withSuccess("{\"isApnsConnected\":false,\"isFirebaseConnected\":true,\"versionNumber\":\"1.2.3\"}", MediaType.APPLICATION_JSON));
 
         Health health = hermesHealthIndicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails()).containsEntry("apns_up", "down").containsEntry("firebase_up", "up");
         mockServer.verify();
     }
 
     @Test
     void healthUp_whenFlagsAbsent_doesNotPenalize() {
-        // A relay that does not report the connectivity flags (or adds unknown fields) must not flip to DOWN:
+        // A relay that does not report the connectivity flags (or adds unknown fields) must not flip to DEGRADED:
         // only an explicit `false` marks a provider as disconnected.
         mockServer.expect(requestTo(HERMES_URL + "/api/health")).andRespond(withSuccess("{\"versionNumber\":\"1.2.3\",\"newUnknownField\":42}", MediaType.APPLICATION_JSON));
 
@@ -81,25 +84,40 @@ class HermesHealthIndicatorTest {
     }
 
     @Test
-    void healthDown_onServerError() {
+    void healthDegraded_onServerError() {
         mockServer.expect(requestTo(HERMES_URL + "/api/health")).andRespond(withServerError());
 
         Health health = hermesHealthIndicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails()).containsKey("error").containsEntry("url", HERMES_URL);
         mockServer.verify();
     }
 
     @Test
-    void healthDown_onTimeout_withoutBaseUrlFallback() {
+    void healthDegraded_onTimeout_withoutBaseUrlFallback() {
         // Reproduces the hung /api/health observed in production: the request times out. Only /api/health is
         // expected, so if the indicator fell back to pinging the base URL this test would fail on an unexpected request.
         mockServer.expect(requestTo(HERMES_URL + "/api/health")).andRespond(withException(new SocketTimeoutException("Read timed out")));
 
         Health health = hermesHealthIndicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         mockServer.verify();
+    }
+
+    @Test
+    void healthDegraded_whenRelayUrlIsBlank_withoutThrowing() {
+        // Reproduces #14680: overriding artemis.push-notification-relay with an empty value left a URL that is not absolute, and the
+        // IllegalArgumentException of the request factory escaped the indicator. A misconfigured optional relay must report DEGRADED, not fail the health request.
+        // The production client uses the SimpleClientHttpRequestFactory, which converts the URI with toURL() and throws for a relative URI. The mock server accepts any URI
+        // and the default factory of RestClient.create() fails with another exception, so only this factory reaches the code under test.
+        var indicatorWithBlankUrl = new HermesHealthIndicator(RestClient.builder().requestFactory(new SimpleClientHttpRequestFactory()).build());
+        ReflectionTestUtils.setField(indicatorWithBlankUrl, "hermesUrl", "");
+
+        Health health = indicatorWithBlankUrl.health();
+
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
+        assertThat(health.getDetails()).containsEntry("error", "URI is not absolute");
     }
 }

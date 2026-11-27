@@ -11,7 +11,7 @@ import { urlRegex } from 'app/communication/link-preview/services/linkify.servic
 @Component({
     selector: 'jhi-link-preview',
     templateUrl: './link-preview.component.html',
-    styleUrls: ['./link-preview.component.scss'],
+    styleUrls: ['./link-preview.component.css'],
     imports: [ConfirmIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class LinkPreviewComponent implements OnInit {

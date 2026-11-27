@@ -6,7 +6,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
@@ -30,12 +30,12 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
 
     let fixture: ComponentFixture<ProgrammingExerciseTriggerAllButtonComponent>;
     let submissionService: ProgrammingSubmissionService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
@@ -48,7 +48,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseTriggerAllButtonComponent);
         submissionService = TestBed.inject(ProgrammingSubmissionService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         const buildRunService = TestBed.inject(ProgrammingBuildRunService);
         vi.spyOn(buildRunService, 'getBuildRunUpdates').mockReturnValue(new Subject<BuildRunState>());
 
@@ -102,8 +102,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         const [dialogComponent, options] = openSpy.mock.calls[0];
         expect(dialogComponent).toBe(ProgrammingExerciseInstructorTriggerAllDialogComponent);
         expect(options).toMatchObject({
-            width: '50rem',
-            modal: true,
+            size: 'medium',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,

@@ -36,7 +36,9 @@ import {
     faUnderline,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
@@ -55,7 +57,7 @@ type ToolbarItem = { id: string; kind: 'format'; tag: FormatTag; icon: IconDefin
 @Component({
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
-    styleUrl: './message-editor.component.scss',
+    styleUrl: './message-editor.component.css',
     imports: [
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -217,7 +219,7 @@ export class MessageEditorComponent {
                 this.editor ??= new MessageEditorDom(element, (value) => {
                     this.linkOpen.set(false);
                     this.lastValue = value;
-                    this.empty.set(value === '');
+                    this.empty.set(this.editor?.isBlank(value) ?? value === '');
                     this.contentChange.emit(value);
                     this.refreshFormatState();
                 });
@@ -225,7 +227,7 @@ export class MessageEditorComponent {
                     this.editor.load(content);
                     this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
-                    this.empty.set(content === '');
+                    this.empty.set(this.editor.isBlank(content));
                     this.existingLink = undefined;
                     this.composing = false;
                     this.composingText.set(false);

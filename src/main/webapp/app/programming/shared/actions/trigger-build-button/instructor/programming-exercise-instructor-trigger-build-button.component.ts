@@ -4,7 +4,7 @@ import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-e
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 @Component({

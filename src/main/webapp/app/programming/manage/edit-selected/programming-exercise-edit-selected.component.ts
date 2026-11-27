@@ -11,7 +11,11 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
@@ -24,7 +28,9 @@ import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
         ProgrammingExerciseTimelineComponent,
         ButtonComponent,
         FaIconComponent,
+        TumAetUiButtonDirective,
         TumAetUiDialogComponent,
+        TumAetUiInputDirective,
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
     ],

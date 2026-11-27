@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -31,7 +31,7 @@ interface RepoGroup {
 @Component({
     selector: 'jhi-hyperion-file-change-list',
     templateUrl: './hyperion-file-change-list.component.html',
-    styleUrl: './hyperion-file-change-list.component.scss',
+    styleUrl: './hyperion-file-change-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, HyperionEmptyComponent, TumAetUiTagComponent],
 })

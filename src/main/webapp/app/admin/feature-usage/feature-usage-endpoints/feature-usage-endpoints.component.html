@@ -25,11 +25,11 @@
                 <th scope="col" [tumAetUiSortableColumn]="'identifier'"><span jhiTranslate="artemisApp.featureUsage.column.endpoint"></span></th>
                 <th scope="col" [tumAetUiSortableColumn]="'interaction'"><span jhiTranslate="artemisApp.featureUsage.column.interaction"></span></th>
                 <th scope="col" [tumAetUiSortableColumn]="'featureLabel'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
-                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
-                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
-                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
-                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
-                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'durationMaxMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
+                <th scope="col" class="text-right" [tumAetUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
+                <th scope="col" class="text-right" [tumAetUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
+                <th scope="col" class="text-right" [tumAetUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
+                <th scope="col" class="text-right" [tumAetUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
+                <th scope="col" class="text-right" [tumAetUiSortableColumn]="'durationMaxMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
                 <th scope="col" [tumAetUiSortableColumn]="'lastUsedDay'"><span jhiTranslate="artemisApp.featureUsage.column.lastUsed"></span></th>
                 <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
             </tr>
@@ -68,11 +68,11 @@
                             <span class="text-muted-color" jhiTranslate="artemisApp.featureUsage.uncatalogued"></span>
                         }
                     </td>
-                    <td class="text-end">{{ row.endpoint.callCount }}</td>
-                    <td class="text-end">{{ row.endpoint.activeDays }}</td>
-                    <td class="text-end" [class.text-state-danger]="row.errorRate >= 5">{{ row.endpoint.callCount ? row.errorRate.toFixed(1) + '%' : '-' }}</td>
-                    <td class="text-end">{{ row.endpoint.callCount ? row.meanDurationMs : '-' }}</td>
-                    <td class="text-end">{{ row.endpoint.callCount ? row.endpoint.durationMaxMs : '-' }}</td>
+                    <td class="text-right">{{ row.endpoint.callCount }}</td>
+                    <td class="text-right">{{ row.endpoint.activeDays }}</td>
+                    <td class="text-right" [class.text-state-danger]="row.errorRate >= 5">{{ row.endpoint.callCount ? row.errorRate.toFixed(1) + '%' : '-' }}</td>
+                    <td class="text-right">{{ row.endpoint.callCount ? row.meanDurationMs : '-' }}</td>
+                    <td class="text-right">{{ row.endpoint.callCount ? row.endpoint.durationMaxMs : '-' }}</td>
                     <td class="whitespace-nowrap">{{ row.endpoint.lastUsedDay ?? '-' }}</td>
                     <td>
                         @if (row.endpoint.callCount > 0) {

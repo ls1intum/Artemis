@@ -1,0 +1,110 @@
+.dnd-question.disabled,
+.mc-question.disabled,
+.sa-question.disabled {
+    color: var(--quiz-participation-question-disabled-color);
+    background: var(--quiz-participation-question-disabled-background);
+}
+
+.dnd-question.result,
+.mc-question.result,
+.sa-question.result {
+    border-color: var(--quiz-participation-question-result-border-color);
+}
+
+.dnd-question.result .show-explanation,
+.mc-question.result .show-explanation,
+.sa-question.result .show-explanation {
+    display: inline-block;
+}
+
+.dnd-question.result.incorrect,
+.mc-question.result.incorrect,
+.sa-question.result.incorrect {
+    border-color: var(--quiz-participation-question-result-incorrect-border-color);
+}
+
+.dnd-question h2,
+.mc-question h2,
+.sa-question h2 {
+    margin: 0 90px 0 0;
+}
+
+.dnd-question h2 span,
+.mc-question h2 span,
+.sa-question h2 span {
+    color: var(--quiz-participation-question-h2-span-color);
+}
+
+.dnd-question p,
+.mc-question p,
+.sa-question p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.dnd-question .question-title-display,
+.mc-question .question-title-display,
+.sa-question .question-title-display {
+    max-width: 80%;
+}
+
+.dnd-question .question-score,
+.mc-question .question-score,
+.sa-question .question-score {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    max-width: 30%;
+}
+
+@media (max-width: 900px) {
+    .dnd-question .question-score,
+    .mc-question .question-score,
+    .sa-question .question-score {
+        position: relative;
+        top: 0;
+        right: 0;
+        max-width: 100%;
+    }
+}
+
+.dnd-question .question-score.result,
+.mc-question .question-score.result,
+.sa-question .question-score.result {
+    font-weight: bold;
+    color: var(--quiz-participation-question-score-result);
+}
+
+.dnd-question .question-score.result.incorrect,
+.mc-question .question-score.result.incorrect,
+.sa-question .question-score.result.incorrect {
+    color: var(--quiz-participation-question-score-incorrect-result);
+}
+
+.dnd-question .label,
+.mc-question .label,
+.sa-question .label {
+    cursor: pointer;
+    margin: 2px 0;
+}
+
+.question-highlight {
+    animation: highlightPulse 1.5s ease-in-out;
+}
+
+@keyframes highlightPulse {
+    0% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 60%, transparent);
+    }
+
+    50% {
+        background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 60%, transparent);
+    }
+}

@@ -8,7 +8,7 @@ let nextMarkdownExplanationEditorId = 0;
 @Component({
     selector: 'jhi-modeling-markdown-explanation-editor',
     templateUrl: './modeling-markdown-explanation-editor.component.html',
-    styleUrls: ['./modeling-markdown-explanation-editor.component.scss'],
+    styleUrls: ['./modeling-markdown-explanation-editor.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [MarkdownEditorMonacoComponent, ModelingExplanationSurfaceComponent],
 })

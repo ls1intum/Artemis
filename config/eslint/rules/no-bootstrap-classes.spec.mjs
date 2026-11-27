@@ -18,7 +18,7 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="me-1"></div>' },
                 { code: '<div class="gap-2"></div>' },
                 { code: '<div class="flex"></div>' },
-                // text-primary is a tailwindcss-primeui token (PrimeNG primary), NOT Bootstrap — must stay valid.
+                // text-primary is an Artemis colour token defined in tailwind.css, not a removed Bootstrap class; it must stay valid.
                 { code: '<div class="text-primary"></div>' },
                 { code: '<div class="col-span-3"></div>' },
                 { code: '<div class="h-full w-full"></div>' },

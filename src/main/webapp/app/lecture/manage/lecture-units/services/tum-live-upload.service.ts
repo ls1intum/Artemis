@@ -1,19 +1,12 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { TumLiveUploadApi } from 'app/openapi/api/tum-live-upload-api';
+import type { TumLiveUploadState } from 'app/openapi/model/tum-live-upload-state';
 import { parseJson } from 'app/foundation/util/json.util';
 
-/** The TUM.Live upload state of an attachment video unit. */
-export interface TumLiveUploadState {
-    connected?: boolean;
-    pendingRef?: string;
-    pendingSince?: string;
-    converting?: boolean;
-    progress?: number;
-    /** The reference of the upload whose video the unit shows, if Artemis uploaded it. */
-    attachedRef?: string;
-    lastError?: string;
-}
+export type { TumLiveUploadState } from 'app/openapi/model/tum-live-upload-state';
 
 /** Where to send the recording of a unit in Artemis. */
 export interface TumLiveUploadStart {
@@ -45,12 +38,20 @@ export class TumLiveTransferError extends Error {
 export class TumLiveUploadService {
     private readonly httpClient = inject(HttpClient);
 
+    private readonly api = inject(TumLiveUploadApi);
+
+    isAvailable(courseId: number): Observable<boolean> {
+        return this.api.getTumLiveUploadAvailability(courseId, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) }).pipe(map((result) => result.available === true));
+    }
+
     getState(lectureUnitId: number): Observable<TumLiveUploadState> {
         return this.httpClient.get<TumLiveUploadState>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`);
     }
 
     start(lectureUnitId: number): Observable<TumLiveUploadStart> {
-        return this.httpClient.post<TumLiveUploadStart>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`, undefined);
+        return this.httpClient.post<TumLiveUploadStart>(`api/lecture/lecture-units/${lectureUnitId}/tumlive-upload`, undefined, {
+            context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+        });
     }
 
     discard(lectureUnitId: number, ref: string): Observable<void> {
@@ -74,9 +75,11 @@ export class TumLiveUploadService {
             const request = new XMLHttpRequest();
             request.open('POST', uploadUrl);
             request.setRequestHeader('Content-Type', 'application/octet-stream');
+            // Chromium does not emit upload progress when the Angular service worker forwards the request.
+            request.setRequestHeader('ngsw-bypass', 'true');
             request.upload.onprogress = (event) => {
                 if (event.lengthComputable) {
-                    subscriber.next({ type: 'progress', percent: Math.round((event.loaded / event.total) * 100) });
+                    subscriber.next({ type: 'progress', percent: Math.floor((event.loaded / event.total) * 100) });
                 }
             };
             request.onload = () => {
@@ -103,6 +106,9 @@ function transferError(request: XMLHttpRequest): TumLiveTransferError {
     const fallback = `HTTP ${request.status}`;
     try {
         const problem = parseJson<{ detail?: unknown; message?: unknown } | null>(request.responseText);
+        if (typeof problem?.message === 'string' && problem.message.startsWith('error.')) {
+            return new TumLiveTransferError(fallback, request.status, problem.message);
+        }
         const message = problem?.detail ?? problem?.message;
         if (typeof message === 'string' && message) {
             return message.startsWith('error.') ? new TumLiveTransferError(fallback, request.status, message) : new TumLiveTransferError(message, request.status);

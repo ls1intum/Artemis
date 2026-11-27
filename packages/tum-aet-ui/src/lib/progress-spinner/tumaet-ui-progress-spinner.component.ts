@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
     selector: 'tumaet-ui-progress-spinner',
     templateUrl: './tumaet-ui-progress-spinner.component.html',
-    styleUrl: './tumaet-ui-progress-spinner.component.scss',
+    styleUrl: './tumaet-ui-progress-spinner.component.css',
     host: {
         class: 'tumaet-ui-progress-spinner',
         role: 'status',

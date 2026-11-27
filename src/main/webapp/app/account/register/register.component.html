@@ -46,7 +46,7 @@
             <div class="w-full md:w-2/3">
                 @if (!success()) {
                     <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
-                        <tumaet-ui-form-field class="mb-4!" controlId="firstName" required>
+                        <tumaet-ui-form-field class="mb-4" controlId="firstName" required>
                             <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.firstname"></span>
                             <input
                                 aria-labelledby="firstName-label"
@@ -61,7 +61,7 @@
                                 required
                             />
                         </tumaet-ui-form-field>
-                        <tumaet-ui-form-field class="mb-4!" controlId="lastName" required>
+                        <tumaet-ui-form-field class="mb-4" controlId="lastName" required>
                             <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="global.form.lastname"></span>
                             <input
                                 aria-labelledby="lastName-label"
@@ -77,7 +77,7 @@
                             />
                         </tumaet-ui-form-field>
                         <tumaet-ui-form-field
-                            class="mb-4!"
+                            class="mb-4"
                             controlId="login"
                             required
                             [invalid]="registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)"
@@ -112,13 +112,13 @@
                             </ng-container>
                         </tumaet-ui-form-field>
                         @if (allowedEmailPatternReadable()) {
-                            <div class="mb-4!">
+                            <div class="mb-4">
                                 <strong jhiTranslate="global.form.email.pattern"></strong>
                                 {{ allowedEmailPatternReadable() }}
                             </div>
                         }
                         <tumaet-ui-form-field
-                            class="mb-4!"
+                            class="mb-4"
                             controlId="email"
                             required
                             [invalid]="registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)"
@@ -155,7 +155,7 @@
                             </ng-container>
                         </tumaet-ui-form-field>
                         <tumaet-ui-form-field
-                            class="mb-4!"
+                            class="mb-4"
                             controlId="password"
                             required
                             [invalid]="registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)"
@@ -190,7 +190,7 @@
                             <jhi-password-strength-bar [passwordToCheck]="registerForm.controls.password.value" />
                         </tumaet-ui-form-field>
                         <tumaet-ui-form-field
-                            class="mb-4!"
+                            class="mb-4"
                             controlId="confirmPassword"
                             required
                             [invalid]="

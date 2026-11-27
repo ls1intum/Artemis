@@ -9,17 +9,15 @@ import org.semver4j.Semver;
 import org.semver4j.SemverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,7 +63,7 @@ public class ArtemisVersionService {
      */
     private static final String VERSION_CACHE_KEY_PREFIX = "latestVersion:";
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final CacheManager cacheManager;
 
@@ -75,11 +73,11 @@ public class ArtemisVersionService {
     /**
      * Creates a new ArtemisVersionService with the required dependencies.
      *
-     * @param restTemplate the REST client for making HTTP requests to GitHub API
+     * @param restClient   the REST client for making HTTP requests to GitHub API
      * @param cacheManager the cache manager for distributed caching (Hazelcast)
      */
-    public ArtemisVersionService(RestTemplate restTemplate, CacheManager cacheManager) {
-        this.restTemplate = restTemplate;
+    public ArtemisVersionService(@Qualifier("githubRestClient") RestClient restClient, CacheManager cacheManager) {
+        this.restClient = restClient;
         this.cacheManager = cacheManager;
     }
 
@@ -145,12 +143,8 @@ public class ArtemisVersionService {
      */
     private ArtemisVersionDTO fetchVersionFromGitHub() {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/vnd.github+json");
-            headers.set("User-Agent", "Artemis-Version-Check");
-            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-
-            ResponseEntity<GitHubReleaseResponse[]> response = restTemplate.exchange(GITHUB_RELEASES_API_URL, HttpMethod.GET, requestEntity, GitHubReleaseResponse[].class);
+            ResponseEntity<GitHubReleaseResponse[]> response = restClient.get().uri(GITHUB_RELEASES_API_URL).header("Accept", "application/vnd.github+json")
+                    .header("User-Agent", "Artemis-Version-Check").retrieve().toEntity(GitHubReleaseResponse[].class);
 
             GitHubReleaseResponse release = findHighestRelease(response.getBody());
             if (release == null) {

@@ -30,21 +30,15 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabPanelComponent,
-    TumAetUiTabPanelsComponent,
-    TumAetUiTabsComponent,
-    TumAetUiTagComponent,
-    TumAetUiToggleSwitchComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -59,7 +53,7 @@ interface SaveSettingsOptions {
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    styleUrl: './iris-settings-update.component.scss',
+    styleUrl: './iris-settings-update.component.css',
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

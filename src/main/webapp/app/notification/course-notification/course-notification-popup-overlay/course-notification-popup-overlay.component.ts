@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronUp, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-course-notification-popup-overlay',
     imports: [CourseNotificationComponent, CommonModule, FaIconComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-notification-popup-overlay.component.html',
-    styleUrls: ['./course-notification-popup-overlay.component.scss'],
+    styleUrls: ['./course-notification-popup-overlay.component.css'],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);

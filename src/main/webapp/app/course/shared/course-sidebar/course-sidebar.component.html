@@ -12,7 +12,7 @@
                     <button
                         type="button"
                         [hidden]="!anyItemHidden()"
-                        class="three-dots nav-link-sidebar px-2 py-2"
+                        class="three-dots nav-link-sidebar px-2! py-2!"
                         [class]="{ collapsed: isNavbarCollapsed() }"
                         [tumAetUiMenuTrigger]="moreMenu"
                         [tumAetUiMenuPosition]="moreMenuPositions"
@@ -72,7 +72,7 @@
                     @for (courseActionItem of courseActionItems(); track courseActionItem; let i = $index) {
                         <a
                             [id]="'action-item-' + i"
-                            class="nav-link-sidebar py-2"
+                            class="nav-link-sidebar py-2!"
                             [ngClass]="{ collapsed: isNavbarCollapsed() }"
                             (click)="courseActionItemClick.emit(courseActionItem)"
                             [title]="courseActionItem.title"
@@ -96,7 +96,7 @@
                     <li [hidden]="bottomItem.hidden">
                         <div [class.flex]="!isNavbarCollapsed() && canExpand()">
                             <a
-                                class="nav-link-sidebar px-2 py-2"
+                                class="nav-link-sidebar px-2! py-2!"
                                 [id]="bottomItem.testId ?? ''"
                                 [ngClass]="{
                                     newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
@@ -153,7 +153,7 @@
             </ul>
             @if ((isNavbarCollapsed() || !sidebarItemsBottom().length) && canExpand()) {
                 <div
-                    class="double-arrow mb-4!"
+                    class="double-arrow mb-4"
                     [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
                     [tumAetUiTooltipDescribesHost]="false"
                     [tumAetUiTooltip]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
@@ -199,7 +199,7 @@
 
     <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
         <a
-            class="nav-link-sidebar px-2 py-2"
+            class="nav-link-sidebar px-2! py-2!"
             [id]="sidebarItem.testId ?? ''"
             [ngClass]="{
                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',

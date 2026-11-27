@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -35,7 +35,7 @@ interface FeedbackTypeConfig {
     selector: 'jhi-unified-feedback',
     standalone: true,
     templateUrl: './unified-feedback.component.html',
-    styleUrls: ['./unified-feedback.component.scss'],
+    styleUrls: ['./unified-feedback.component.css'],
     imports: [
         NgClass,
         FaIconComponent,

@@ -14,20 +14,16 @@ import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/gen
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
-    styleUrl: './create-exercise-unit.component.scss',
+    styleUrl: './create-exercise-unit.component.css',
     imports: [
         TranslateDirective,
         FaIconComponent,

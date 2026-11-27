@@ -14,7 +14,9 @@ import {
     viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiChipComponent, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
@@ -56,7 +58,7 @@ let nextDestinationListboxId = 0;
 @Component({
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
-    styleUrls: ['./forward-message-dialog.component.scss'],
+    styleUrls: ['./forward-message-dialog.component.css'],
     imports: [
         ArtemisTranslatePipe,
         ProfilePictureComponent,

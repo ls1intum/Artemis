@@ -61,7 +61,7 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-4! flex items-center gap-2">
+                        <div class="px-2 mt-2! mb-4! flex items-center gap-2">
                             <jhi-search-filter class="w-full" (newSearchEvent)="setSearchValue($event)" />
                             <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
@@ -162,7 +162,7 @@
                                 size="small"
                                 severity="secondary"
                                 variant="text"
-                                class="mx-2 mb-2 w-[calc(100%-1rem)] justify-start!"
+                                class="mx-2 mb-2! w-[calc(100%-1rem)] justify-start!"
                                 data-onboarding-target="info-icon"
                                 (click)="openAboutIrisModal()"
                             >
@@ -200,11 +200,11 @@
                         />
                     </button>
                     <ng-template #sessionMenu>
-                        <!-- Important: the menu's own unlayered `max-height: inherit` would otherwise beat this utility and let a long list grow to the viewport height. -->
-                        <tumaet-ui-menu class="w-[300px] max-h-[220px]! overflow-y-auto">
+                        <!-- The maximum height overrides the `max-height: inherit` of the menu, so a long list does not grow to the viewport height. -->
+                        <tumaet-ui-menu class="w-[300px] max-h-[220px] overflow-y-auto!">
                             @for (group of sessionMenuGroups(); track group.labelKey) {
                                 <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
-                                    <div class="iris-chat__menu-group-label px-3! pt-2 pb-1 text-xs font-medium!" aria-hidden="true" [jhiTranslate]="group.labelKey"></div>
+                                    <div class="iris-chat__menu-group-label px-3 pt-2 pb-1 text-xs font-medium" aria-hidden="true" [jhiTranslate]="group.labelKey"></div>
                                     @for (item of group.items; track item.session.id) {
                                         <button
                                             type="button"
@@ -438,7 +438,7 @@
                         }
                         @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
-                                <div class="suggestions-container flex flex-wrap gap-4! justify-center items-stretch">
+                                <div class="suggestions-container flex flex-wrap gap-4 justify-center items-stretch">
                                     @for (suggestion of suggestions(); track $index) {
                                         <button
                                             type="button"
@@ -446,7 +446,7 @@
                                             severity="secondary"
                                             variant="outlined"
                                             size="small"
-                                            class="iris-chat__suggestion flex-1 whitespace-normal!"
+                                            class="iris-chat__suggestion flex-1 whitespace-normal"
                                             [attr.aria-label]="suggestion"
                                             (click)="onSuggestionClick(suggestion)"
                                             [disabled]="isLoading()"

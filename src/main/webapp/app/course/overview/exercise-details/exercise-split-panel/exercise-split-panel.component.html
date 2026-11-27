@@ -1,7 +1,7 @@
 <!-- Only the modeling editor may sit flush, because it draws its own frame. Before the participation starts there is
      no editor panel, so the problem statement takes the left panel, and flush would put its text on the panel edge. -->
 <jhi-resizable-panels
-    class="h-full! flex-auto overflow-hidden"
+    class="h-full! flex-auto overflow-hidden!"
     [useViewportWidthForCollapse]="true"
     [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()"
     storageKey="exercise-details-split"
@@ -24,7 +24,7 @@
                 [practiceParticipation]="practiceParticipation()"
                 [gradedParticipation]="gradedStudentParticipation()"
             />
-            <div class="mb-4!">
+            <div class="mb-4">
                 <jhi-exercise-headers-information
                     [exercise]="exercise()"
                     [studentParticipation]="studentParticipation()"
@@ -58,10 +58,10 @@
                             </dd>
                         }
                         @if (exampleSolutionInfo()?.exampleSolution) {
-                            <dd class="editor-outline-background" [innerHTML]="exampleSolutionInfo()?.exampleSolution"></dd>
+                            <dd class="max-w-max bg-(--editor-outline-background)" [innerHTML]="exampleSolutionInfo()?.exampleSolution"></dd>
                         }
                         @if (exercise().type === ExerciseType.PROGRAMMING) {
-                            <dd class="editor-outline-background">
+                            <dd class="max-w-max bg-(--editor-outline-background)">
                                 <jhi-programming-exercise-example-solution-repo-download
                                     class="ms-2"
                                     [exerciseId]="exercise().id!"
@@ -70,7 +70,7 @@
                                 />
                             </dd>
                             @if (exampleSolutionInfo()?.programmingExercise?.releaseTestsWithExampleSolution) {
-                                <dd class="editor-outline-background">
+                                <dd class="max-w-max bg-(--editor-outline-background)">
                                     <jhi-programming-exercise-example-solution-repo-download
                                         class="ms-2"
                                         [exerciseId]="exercise().id!"
@@ -113,7 +113,7 @@
     @if (exercise().type === ExerciseType.QUIZ) {
         <!-- A quiz has no problem statement panel to lead, so its details get one of their own. It is never first:
              a quiz always has an editor panel, and panels()[0] becomes the left pane. -->
-        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo" [startsCollapsed]="collapseSidePanels()">
             <jhi-exercise-headers-information
                 [exercise]="exercise()"
                 [studentParticipation]="studentParticipation()"
@@ -141,7 +141,7 @@
     }
 
     @if (showDiscussion()) {
-        <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
+        <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment" [startsCollapsed]="collapseSidePanels()">
             @defer (on idle) {
                 <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
             }

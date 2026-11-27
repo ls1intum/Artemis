@@ -1,5 +1,8 @@
 import { Component, input, output } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

@@ -424,12 +424,14 @@ describe('IrisChatService', () => {
             it('should load that session instead of resolving the current one', async () => {
                 const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
                 const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+                const sendStub = vi.spyOn(service, 'sendMessage');
 
                 service.openChat(ChatServiceMode.COURSE, courseId, 777);
                 await waitForSessionIdValue(777);
 
                 expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
                 expect(currentStub).not.toHaveBeenCalled();
+                expect(sendStub).not.toHaveBeenCalled();
                 // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
                 expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
             });

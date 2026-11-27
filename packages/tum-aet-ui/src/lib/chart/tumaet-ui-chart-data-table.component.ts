@@ -16,17 +16,19 @@ export interface TumAetUiChartDataTableRow {
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tumaet-ui-chart-data-table' },
     styles: `
-        :host {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            margin: -1px;
-            padding: 0;
-            overflow: hidden;
-            clip-path: inset(50%);
-            white-space: nowrap;
-            border: 0;
-            user-select: none;
+        @layer tumaet-ui {
+            :host {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                margin: -1px;
+                padding: 0;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+                border: 0;
+                user-select: none;
+            }
         }
     `,
     template: `

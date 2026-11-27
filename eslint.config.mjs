@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -54,14 +56,25 @@ const noDirectCloneDeepImports = [
         message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
     },
 ];
+// The entry points of TUM AET UI: one per component, listed in the `exports` of the package. A bundler that splits code per file loads everything that a
+// lazy route takes from the package root, so the client imports from the entry point of each component. Both rules follow the `exports`.
+const tumAetUiEntryPoints = Object.keys(JSON.parse(readFileSync(resolve(import.meta.dirname, 'packages/tum-aet-ui/package.json'), 'utf8')).exports)
+    .filter((subpath) => subpath !== '.')
+    .map((subpath) => `@tumaet/ui-angular/${subpath.slice(2)}`);
 const tumAetUiConsumerImportPatterns = [
     {
-        group: ['@tumaet/ui-angular/**'],
-        message: 'Import TUM AET UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
+        regex: '^@tumaet/ui-angular$',
+        message:
+            'Import from the entry point of the component, for example @tumaet/ui-angular/button, not from the package root: the root pulls the code of every component into the bundle.',
+    },
+    {
+        group: ['@tumaet/ui-angular/**', ...tumAetUiEntryPoints.map((entryPoint) => `!${entryPoint}`)],
+        message: 'Import from an entry point of TUM AET UI (@tumaet/ui-angular/<component>), not from a package-internal path.',
     },
 ];
-// Modules that are fully migrated to TUM AET UI and Tailwind. Every regression lock below is generated from this list:
-// the Bootstrap class and spacing rules for external and inline templates, the Bootstrap classes built in code, and the
+// The client modules, all of which use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the
+// client; every lock below is generated from this list and keeps them out:
+// the Bootstrap class rules for external and inline templates, the Bootstrap classes built in code, and the
 // ban on importing PrimeNG or ng-bootstrap. config/stylelint/stylelint.config.json names the same modules for SCSS, and
 // the `migration-source-coverage` test keeps both lists and the `@source` entries of tailwind.css consistent.
 const migratedModules = [
@@ -90,6 +103,7 @@ const migratedModules = [
     'notification',
     'plagiarism',
     'presentation',
+    'programming',
     'quiz',
     'shared',
     'shared-ui',
@@ -104,7 +118,7 @@ const migratedFolders = (extension) => [...migratedModules, ...migratedComponent
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
     message:
-        'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+        'The client uses TUM AET UI (@tumaet/ui-angular) and Tailwind. PrimeNG, ng-bootstrap and Bootstrap are removed and must not be imported; host dialogs declaratively in tumaet-ui-dialog.',
 };
 export default tseslint.config(
     {
@@ -639,6 +653,10 @@ export default tseslint.config(
                             group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message: 'TUM AET UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-aet-ui-integration.',
                         },
+                        {
+                            group: ['@tumaet/ui-angular/**'],
+                            message: 'Inside TUM AET UI, import from a relative path, not the entry point of a component.',
+                        },
                     ],
                 },
             ],
@@ -743,9 +761,9 @@ export default tseslint.config(
         processor: buttonInlineTemplates,
     },
     {
-        // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
-        // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
-        // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
+        // Forbid raw Tailwind color palette classes (e.g. text-green-500) and root classes of the removed PrimeNG
+        // library (e.g. class="p-button") in ALL client templates: use semantic tokens and TUM AET UI components
+        // instead. The stylelint
         // hex/--bs- guard (config/stylelint/stylelint.config.json) is scoped per migrated module. See client-development.mdx (### Styling).
         files: ['src/main/webapp/app/**/*.html', 'packages/tum-aet-ui/src/lib/**/*.html'],
         languageOptions: {
@@ -765,8 +783,8 @@ export default tseslint.config(
         },
     },
     {
-        // Regression lock: these modules are fully migrated to Tailwind + TUM AET UI, so Bootstrap CSS classes are
-        // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
+        // Regression lock: Bootstrap is removed from the client, so its CSS classes are forbidden in the templates of
+        // these modules. A new module joins through `migratedModules`. See client-development.mdx
         // (### Styling).
         files: [
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
@@ -779,8 +797,6 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
-            'src/main/webapp/app/programming/manage/detail/**/*.html',
-            'src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.html',
             'src/main/webapp/app/quiz/manage/detail/**/*.html',
             'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
             'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',
@@ -808,24 +824,6 @@ export default tseslint.config(
         },
     },
     {
-        // Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different values for
-        // 3 to 5, and Bootstrap wins while it is loaded, so a bare one renders differently once Bootstrap is removed.
-        // These templates (every migrated module and component folder, and the student pages for complaints and the text editor)
-        // are laid out with Tailwind and must say which value they mean. Add a folder
-        // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
-        // See client-development.mdx (### Styling).
-        files: ['src/main/webapp/app/app.component.html', ...migratedFolders('html')],
-        languageOptions: {
-            parser: angularTemplateParser,
-        },
-        plugins: {
-            localRules: localRulesPlugin,
-        },
-        rules: {
-            'localRules/no-ambiguous-spacing-utility': 'error',
-        },
-    },
-    {
         // The same locks for `template:` strings: button-inline-templates.mjs hands every inline template to ESLint a second
         // time as `.lock-template`. Only the migrated modules are listed, so no other module is affected.
         files: migratedFolders('lock-template'),
@@ -837,7 +835,6 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
-            'localRules/no-ambiguous-spacing-utility': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/no-raw-tailwind-color-palette': 'error',
         },
@@ -853,7 +850,7 @@ export default tseslint.config(
             'localRules/no-bootstrap-classes-in-code': 'error',
         },
     },
-    // These modules are migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in them, including specs.
+    // The client uses TUM AET UI and Tailwind: the removed PrimeNG, ng-bootstrap and Bootstrap may not be imported anywhere in these modules, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
         files: [

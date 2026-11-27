@@ -11,7 +11,7 @@
         <p class="m-0 mb-1 text-sm text-muted-color" [attr.data-testid]="'pool-item-context-' + question.id">{{ question.competencyTitle }} · {{ question.lectureUnitName }}</p>
     }
     @if (question.question; as generated) {
-        <jhi-quiz-ai-generated-question-card [question]="generated" [questionIndex]="view.index" />
+        <jhi-quiz-ai-generated-question-card [question]="generated" [questionIndex]="view.index" [showExplanations]="view.explanationsShown" />
     }
     <div class="mt-2 flex flex-wrap items-center gap-2">
         <span class="text-xs font-semibold uppercase text-muted-color" [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
@@ -37,12 +37,30 @@
                 <span class="ms-1 font-normal">{{ flagged.percent }} %</span>
             </tumaet-ui-tag>
         }
-        <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" class="ms-auto" (click)="toggleRationale.emit(question.id)">
+        @if (view.hasExplanations) {
+            <button
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="text"
+                size="small"
+                class="ms-auto"
+                [attr.data-testid]="'pool-toggle-explanations-' + question.id"
+                (click)="toggleExplanations.emit(question.id)"
+            >
+                <span
+                    [jhiTranslate]="
+                        view.explanationsShown ? 'artemisApp.hyperion.quizQuestionPool.list.hideExplanations' : 'artemisApp.hyperion.quizQuestionPool.list.showExplanations'
+                    "
+                ></span>
+            </button>
+        }
+        <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" [class.ms-auto]="!view.hasExplanations" (click)="toggleRationale.emit(question.id)">
             <span [jhiTranslate]="view.expanded ? 'artemisApp.hyperion.quizQuestionPool.list.hideRationale' : 'artemisApp.hyperion.quizQuestionPool.list.showRationale'"></span>
         </button>
     </div>
     @if (view.expanded && question.decision; as decision) {
-        <div class="mt-2 rounded-md border border-border p-4! text-sm" [attr.data-testid]="'pool-rationale-' + question.id">
+        <div class="mt-2 rounded-md border border-(--border-color) p-4 text-sm" [attr.data-testid]="'pool-rationale-' + question.id">
             <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.score" [translateValues]="{ score: view.scorePercent }"></p>
             @if (decision.rationale) {
                 <p class="mt-1 mb-0">{{ decision.rationale }}</p>

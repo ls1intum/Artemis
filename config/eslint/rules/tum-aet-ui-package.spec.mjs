@@ -1,8 +1,7 @@
-import { globSync, readFileSync } from 'node:fs';
+import { globSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
-import { compile } from 'sass';
 import semver from 'semver';
 import ts from 'typescript';
 import { BindingType, parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
@@ -27,7 +26,7 @@ const productionGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_p
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/tailwind.css'), 'utf8');
 const packageTailwindTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/tailwind-theme.css'), 'utf8');
 const packageStyleBuilder = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/build-styles.mjs'), 'utf8');
-const packageRuntimeFiles = globSync(['packages/tum-aet-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
+const packageRuntimeFiles = globSync(['packages/tum-aet-ui/src/**/*.{html,css,ts}'], { cwd: repoRoot })
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
     .map((file) => ({ file, source: readFileSync(resolve(repoRoot, file), 'utf8') }));
 const packageRuntimeSources = packageRuntimeFiles.map(({ source }) => source).join('\n');
@@ -41,7 +40,7 @@ const artemisExternalTemplates = globSync('src/main/webapp/**/*.html', { cwd: re
     source: readFileSync(resolve(repoRoot, file), 'utf8'),
 }));
 const packageStyles = globSync(
-    ['packages/tum-aet-ui/src/**/*.{css,scss}', 'packages/tum-aet-ui/tailwind.css', 'packages/tum-aet-ui/tailwind-theme.css', 'packages/tum-aet-ui/themes.css'],
+    ['packages/tum-aet-ui/src/**/*.css', 'packages/tum-aet-ui/tailwind.css', 'packages/tum-aet-ui/tailwind-theme.css', 'packages/tum-aet-ui/themes.css'],
     {
         cwd: repoRoot,
     },
@@ -50,8 +49,9 @@ const packageStyles = globSync(
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-aet-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
-const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
-const artemisPrimeTheme = readFileSync(resolve(repoRoot, 'src/main/webapp/app/primeng-artemis-theme.ts'), 'utf8');
+const hostGlobalStyles = globSync('src/main/webapp/content/css/*.css', { cwd: repoRoot })
+    .map((file) => readFileSync(resolve(repoRoot, file), 'utf8'))
+    .join('\n');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = workspace.catalog ?? {};
 const namedCatalogs = workspace.catalogs ?? {};
@@ -133,17 +133,17 @@ function contrastRatio(first, second) {
     return (lighter + 0.05) / (darker + 0.05);
 }
 
-function compiledThemeProperties(file) {
-    const css = compile(resolve(repoRoot, file), {
-        loadPaths: [repoRoot, resolve(repoRoot, 'node_modules')],
-        quietDeps: true,
-        silenceDeprecations: ['color-functions', 'global-builtin', 'if-function', 'import'],
-    }).css;
-    const properties = {};
-    postcss.parse(css).walkDecls(/^--(?:artemis-alert|module-bg|danger$|success$|warning$|info$)/, (declaration) => {
-        properties[declaration.prop] = declaration.value;
-    });
-    return properties;
+/** The tokens of an Artemis theme as the browser resolves them: light.css, for the dark theme overridden by dark.css. */
+function themeProperties(theme) {
+    const declared = {};
+    for (const file of theme === 'dark' ? ['light.css', 'dark.css'] : ['light.css']) {
+        postcss.parse(readFileSync(resolve(repoRoot, 'src/main/webapp/content/css/themes', file), 'utf8')).walkDecls(/^--/, (declaration) => {
+            declared[declaration.prop] = declaration.value;
+        });
+    }
+    const resolved = (value, depth = 0) =>
+        depth > 20 ? value : value.replace(/var\((--[\w-]+)\)/g, (reference, name) => (name in declared ? resolved(declared[name], depth + 1) : reference));
+    return Object.fromEntries(Object.entries(declared).map(([name, value]) => [name, resolved(value)]));
 }
 
 function dependencyCatalog(specifier) {
@@ -359,10 +359,76 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(libraryBuild.options.assets).not.toContain('packages/tum-aet-ui/tailwind-theme.css');
     });
 
+    describe('entry points', () => {
+        const libraryRoot = resolve(repoRoot, 'packages/tum-aet-ui/src/lib');
+        const componentDirectories = readdirSync(libraryRoot, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name);
+        const subpathEntries = Object.entries(packageJson.exports).filter(([subpath]) => subpath !== '.' && subpath !== './styles.css');
+
+        /** The names that an `export { ... } from '<specifier>'` statement list exports, with `type ` where the name is exported as a type. */
+        function exportedNames(source, fileName, moduleSpecifier) {
+            const names = [];
+            for (const statement of ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true).statements) {
+                expect(ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause), `${fileName}: ${statement.getText()}`).toBe(true);
+                if (moduleSpecifier(statement.moduleSpecifier.text)) {
+                    names.push(...statement.exportClause.elements.map((element) => `${statement.isTypeOnly || element.isTypeOnly ? 'type ' : ''}${element.name.text}`));
+                }
+            }
+            return names.sort();
+        }
+
+        it('offers one entry point per component directory and no other', () => {
+            // A bundler that splits code per file (esbuild) loads everything that a lazy route takes from the package root, so a component that
+            // has no entry point of its own cannot stay out of the routes that do not use it.
+            expect(subpathEntries.map(([, target]) => target).sort()).toEqual(componentDirectories.map((directory) => `./src/lib/${directory}/index.ts`).sort());
+            expect(new Set(subpathEntries.map(([subpath]) => subpath)).size).toBe(subpathEntries.length);
+        });
+
+        it.each(componentDirectories)('lists the exports of %s explicitly, with paths inside the directory', (directory) => {
+            const source = readFileSync(resolve(libraryRoot, directory, 'index.ts'), 'utf8');
+
+            expect(exportedNames(source, `${directory}/index.ts`, (specifier) => /^\.\/[^/]+$/.test(specifier))).not.toEqual([]);
+            expect(source).not.toMatch(/export\s+\*/);
+        });
+
+        it('exports from the package root exactly what the entry points export', () => {
+            for (const directory of componentDirectories) {
+                const entrySource = readFileSync(resolve(libraryRoot, directory, 'index.ts'), 'utf8');
+
+                expect(
+                    exportedNames(publicApi, 'public-api.ts', (specifier) => specifier === `./lib/${directory}`),
+                    directory,
+                ).toEqual(exportedNames(entrySource, `${directory}/index.ts`, () => true));
+            }
+            // nothing else: every statement of the public API belongs to the entry point of a directory
+            expect(exportedNames(publicApi, 'public-api.ts', (specifier) => !componentDirectories.some((directory) => specifier === `./lib/${directory}`))).toEqual([]);
+        });
+
+        it.each(subpathEntries)('maps %s to the directory of its component in development serve mode', (subpath, target) => {
+            // The mapping is explicit where the name of the entry point differs from its directory (`set-inputs`), and `src/lib/*` otherwise.
+            const paths = serveTsconfig.compilerOptions.paths;
+            const mapped = (paths[`@tumaet/ui-angular/${subpath.slice(2)}`] ?? [paths['@tumaet/ui-angular/*'][0].split('*').join(subpath.slice(2))])[0];
+
+            expect(resolve(repoRoot, 'config/client', mapped)).toBe(resolve(repoRoot, 'packages/tum-aet-ui', dirname(target)));
+        });
+
+        it('writes the stub manifests that the test runners of the monorepo need whenever it builds the package', () => {
+            // The manifest of the library builder has no `main`, and Vitest cannot resolve a directory without it.
+            expect(packageJson.scripts['build:package']).toContain('node write-entry-stubs.mjs');
+            expect(packageJson.scripts['build:package:dev']).toContain('node write-entry-stubs.mjs');
+        });
+    });
+
     it('keeps production on the built entry point and development on the public source entry point', () => {
         expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['./packages/tum-aet-ui/dist']);
-        expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toBeUndefined();
+        // The entry points are directories with a stub manifest in dist (`write-entry-stubs.mjs`), or the directory of the component in the sources.
+        expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toEqual(['./packages/tum-aet-ui/dist/*']);
+        // The build of the global stylesheets finds the root tsconfig on its own, and its `paths` apply to `@import` as well: the exact mapping keeps
+        // `@tumaet/ui-angular/styles.css` on the file that `start` rebuilds on every change, not on the copy in `dist`.
+        expect(rootTsconfig.compilerOptions.paths['@tumaet/ui-angular/styles.css']).toEqual(['./packages/tum-aet-ui/styles.css']);
         expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular']).toEqual(['../../packages/tum-aet-ui/src/public-api.ts']);
+        expect(serveTsconfig.compilerOptions.paths['@tumaet/ui-angular/*']).toEqual(['../../packages/tum-aet-ui/src/lib/*']);
         expect(angularWorkspace.projects.artemis.architect.build.configurations['tum-aet-ui-source'].tsConfig).toBe('config/client/tsconfig.serve.json');
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-aet-ui-source');
         expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toEqual({ exclude: ['@tumaet/ui-angular'] });
@@ -374,6 +440,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-aet-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-aet-ui/tailwind-theme.css"');
+        // Editing the script that completes the entry point manifests has to rerun the build of the client, like editing the theme does.
+        expect(developmentGradleProfile).toContain('"packages/tum-aet-ui/write-entry-stubs.mjs"');
+        expect(productionGradleProfile).toContain('"packages/tum-aet-ui/write-entry-stubs.mjs"');
     });
 
     it('loads the complete package stylesheet after host styles', () => {
@@ -384,7 +453,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(styles.filter((style) => style === packageStylesheet)).toHaveLength(1);
         expect(styles).not.toContain(packageTheme);
         expect(hostTailwind).not.toContain(packageTheme);
-        expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/scss/themes/theme-default.scss'));
+        expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/css/application.css'));
         expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/tailwind.css'));
     });
 
@@ -420,7 +489,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         const packageElementsWithNativeControls = uniqueSorted(
             packageRuntimeFiles.filter(({ file }) => templatesWithNativeControls.has(file)).flatMap(({ source }) => componentElementSelectors(source)),
         );
-        const stylesheet = postcss.parse(packageTailwind);
+        // The rules of the package are in the cascade layer `tumaet-ui`.
+        const stylesheet = postcss.parse(packageTailwind).nodes.find((node) => node.type === 'atrule' && node.name === 'layer' && node.params === 'tumaet-ui' && node.nodes);
         const typographyRule = stylesheet.nodes.find(
             (node) => node.type === 'rule' && node.nodes.some((child) => child.type === 'decl' && child.prop === 'font-family' && child.value === 'var(--tumaet-ui-font-family)'),
         );
@@ -525,7 +595,6 @@ describe('@tumaet/ui-angular integration contract', () => {
             ['disabled-color', 'control-disabled-color'],
         ]) {
             expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-${packageToken}:\\s*var\\(--artemis-${artemisToken}\\)`, 's'));
-            expect(artemisPrimeTheme).toContain(`var(--artemis-${artemisToken})`);
         }
         for (const state of ['success', 'warning', 'info']) {
             expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-state-${state}:\\s*var\\(--${state}\\)`, 's'));
@@ -540,11 +609,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         }
     });
 
-    it.each([
-        ['light', 'src/main/webapp/content/scss/themes/theme-default.scss'],
-        ['dark', 'src/main/webapp/content/scss/themes/theme-dark.scss'],
-    ])('keeps %s Artemis filled, alert, and tinted state colors readable', (theme, file) => {
-        const properties = compiledThemeProperties(file);
+    it.each(['light', 'dark'])('keeps %s Artemis filled, alert, and tinted state colors readable', (theme) => {
+        const properties = themeProperties(theme);
 
         if (theme === 'light') {
             for (const [state, contrast] of [

@@ -10,6 +10,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseUpdateComponent } from 'app/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { InitialCommitAuthorMode } from 'app/course/shared/entities/course-configuration.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -40,7 +41,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -135,6 +136,77 @@ describe('Course Management Update Component', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('loads instructor welcome context and saves an intentional clear without dropping course configuration', () => {
+        course.courseConfiguration = { studentWelcomeContext: 'Learn through practice.', gradeRelevant: false, dataRetentionHold: true };
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+        vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(comp.courseForm.controls['studentWelcomeContext'].value).toBe('Learn through practice.');
+        const update = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        comp.courseForm.controls['studentWelcomeContext'].setValue('');
+        comp.save();
+        const saved = update.mock.calls[0][1];
+        expect(toCourseUpdateDTO(saved).studentWelcomeContext).toBe('');
+        expect(saved.courseConfiguration?.gradeRelevant).toBe(false);
+        expect(saved.courseConfiguration?.dataRetentionHold).toBe(true);
+    });
+
+    describe('first commit author', () => {
+        function open(configuration: Course['courseConfiguration']) {
+            course.courseConfiguration = configuration;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            return vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        }
+
+        it('offers the setting for a stored course and keeps the exercise creator by default', () => {
+            const update = open({ gradeRelevant: true });
+            expect(fixture.nativeElement.querySelector('[data-testid="course-initial-commit-author"]')).not.toBeNull();
+
+            comp.save();
+
+            expect(toCourseUpdateDTO(update.mock.calls[0][1]).initialCommitAuthor).toEqual({ mode: InitialCommitAuthorMode.EXERCISE_CREATOR, name: undefined, email: undefined });
+        });
+
+        it('saves the stored custom identity and drops it when another mode is chosen', () => {
+            const update = open({ gradeRelevant: true, initialCommitAuthor: { mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email: 'team@university.example' } });
+            comp.courseForm.get('initialCommitAuthor.name')!.setValue('  Teaching Team ');
+
+            comp.save();
+            expect(toCourseUpdateDTO(update.mock.calls[0][1]).initialCommitAuthor).toEqual({
+                mode: InitialCommitAuthorMode.CUSTOM,
+                name: 'Teaching Team',
+                email: 'team@university.example',
+            });
+
+            comp.courseForm.get('initialCommitAuthor.mode')!.setValue(InitialCommitAuthorMode.PLACEHOLDER);
+            comp.save();
+            expect(toCourseUpdateDTO(update.mock.calls[1][1]).initialCommitAuthor).toEqual({ mode: InitialCommitAuthorMode.PLACEHOLDER, name: undefined, email: undefined });
+        });
+
+        it('keeps the course from being saved while the custom identity is incomplete', () => {
+            open({ gradeRelevant: true });
+            comp.courseForm.get('initialCommitAuthor.mode')!.setValue(InitialCommitAuthorMode.CUSTOM);
+
+            expect(comp.courseForm.get('initialCommitAuthor')!.invalid).toBe(true);
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(expect.arrayContaining(['initialCommitAuthorName', 'initialCommitAuthorEmail']));
+        });
+
+        it('does not offer the setting while a course is created', () => {
+            course.id = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.courseForm.get('initialCommitAuthor')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="course-initial-commit-author"]')).toBeNull();
+        });
     });
 
     describe('previousState', () => {

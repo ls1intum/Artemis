@@ -140,7 +140,6 @@ public class CourseUpdateResource {
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         // Note: only admins or instructors of the existing course may change it (enforced by the annotation).
-        // this is important, otherwise someone could put themselves into the instructor group of the updated course
 
         // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones. This
         // runs right after the authorization and before the mandatory configuration lookup below, so such a course stays editable.
@@ -237,6 +236,13 @@ public class CourseUpdateResource {
         courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isPresentationAssessmentsEnabled(),
                 requestedConfiguration.isAutoOrchestratorEnabled(), requestedConfiguration.getDebounceWindowSecondsOverride(),
                 requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.studentWelcomeContext() != null) {
+            courseConfigurationRepository.updateStudentWelcomeContext(courseId, requestedConfiguration.getStudentWelcomeContext());
+        }
+        if (courseUpdateDTO.initialCommitAuthor() != null) {
+            courseConfigurationRepository.updateInitialCommitAuthor(courseId, requestedConfiguration.getInitialCommitAuthorMode(),
+                    requestedConfiguration.getInitialCommitAuthorName(), requestedConfiguration.getInitialCommitAuthorEmail());
+        }
         if (courseUpdateDTO.dataRetentionHold() != null) {
             courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }

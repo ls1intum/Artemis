@@ -8,15 +8,10 @@ import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-publi
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTableDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -29,7 +24,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-ssh-user-settings',
     templateUrl: './ssh-user-settings.component.html',
-    styleUrls: ['../../user-settings.scss', './ssh-user-settings.component.scss'],
+    styleUrls: ['../../user-settings.css', './ssh-user-settings.component.css'],
     imports: [
         TranslateDirective,
         DocumentationLinkComponent,

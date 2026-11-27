@@ -18,11 +18,11 @@
         }
     </div>
     @if (buildAgent(); as agent) {
-        <div class="mb-6!">
-            <div class="mb-4!">
+        <div class="mb-6">
+            <div class="mb-4">
                 <span class="text-muted-color" id="build-agent-info">{{ agent.buildAgent?.name }} - {{ agent.buildAgent?.memberAddress }}</span>
             </div>
-            <div class="mb-6!">
+            <div class="mb-6">
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.status"></span>
                     <span class="font-bold">:</span>
@@ -79,14 +79,14 @@
                 }
             </div>
 
-            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-6!" />
+            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-6" />
 
             <div>
                 <h4 id="build-queue-running-heading" class="flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
                     <tumaet-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h4>
-                <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-4!"></div>
+                <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-4"></div>
                 <jhi-running-jobs-table
                     [buildJobs]="runningBuildJobs()"
                     [showCourseId]="true"
@@ -98,7 +98,7 @@
         </div>
     }
     @if (agentNotFound()) {
-        <tumaet-ui-message severity="warn" class="mb-6! block">
+        <tumaet-ui-message severity="warn" class="mb-6">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />
@@ -108,7 +108,7 @@
     }
     @if (buildAgent() || agentNotFound()) {
         <div>
-            <h4 id="build-agents-recent-builds-heading" class="mb-4! flex items-center gap-2">
+            <h4 id="build-agents-recent-builds-heading" class="mb-4 flex items-center gap-2">
                 <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
                 <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
             </h4>

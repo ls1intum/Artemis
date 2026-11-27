@@ -6,7 +6,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
@@ -19,7 +20,7 @@ interface FeatureCard {
 @Component({
     selector: 'jhi-about-iris-modal',
     templateUrl: './about-iris-modal.component.html',
-    styleUrl: './about-iris-modal.component.scss',
+    styleUrl: './about-iris-modal.component.css',
     imports: [IrisLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

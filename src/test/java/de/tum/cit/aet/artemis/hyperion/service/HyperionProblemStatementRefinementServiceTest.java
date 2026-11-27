@@ -53,7 +53,8 @@ class HyperionProblemStatementRefinementServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementRefinementService = new HyperionProblemStatementRefinementService(chatClient, templateService, llmTokenUsageService, userRepository);
+        this.hyperionProblemStatementRefinementService = new HyperionProblemStatementRefinementService(HyperionTestChatClients.returning(chatClient), templateService,
+                llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -178,17 +179,6 @@ class HyperionProblemStatementRefinementServiceTest {
         // Should throw exception when input is blank
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, "   ", "Refine this")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Cannot refine empty problem statement");
-    }
-
-    @Test
-    void refineProblemStatement_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
-
-        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatement(course, "Original problem statement", "Refine this"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
     }
 
     @Test
@@ -326,16 +316,6 @@ class HyperionProblemStatementRefinementServiceTest {
         var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Change something");
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("same after refinement");
-    }
-
-    @Test
-    void refineProblemStatementTargeted_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementRefinementService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
-        String originalText = "Some text";
-
-        var request = new ProblemStatementTargetedRefinementRequestDTO(originalText, 1, 1, null, null, "Fix this");
-        assertThatThrownBy(() -> serviceWithNullClient.refineProblemStatementTargeted(createTestCourse(), request)).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("AI chat client is not configured");
     }
 
     @Test

@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';

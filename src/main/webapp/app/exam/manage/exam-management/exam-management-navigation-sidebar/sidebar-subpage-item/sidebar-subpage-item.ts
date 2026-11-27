@@ -7,7 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-sidebar-subpage-item',
     imports: [RouterLinkActive, RouterLink, FaIconComponent],
     templateUrl: './sidebar-subpage-item.html',
-    styleUrl: './sidebar-subpage-item.scss',
+    styleUrl: './sidebar-subpage-item.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarSubpageItem {

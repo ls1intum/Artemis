@@ -83,6 +83,20 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findWithExercisesById(@Param("studentExamId") Long studentExamId);
 
+    /**
+     * Finds the id of the exam a student exam belongs to, without loading the student exam or the exam.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the id of the exam, or empty if the student exam does not exist
+     */
+    @Query("""
+            SELECT e.id
+            FROM StudentExam se
+                JOIN se.exam e
+            WHERE se.id = :studentExamId
+            """)
+    Optional<Long> findExamIdById(@Param("studentExamId") Long studentExamId);
+
     // exercises.exerciseGroup and its exam are eager @ManyToOne associations, so without them here Hibernate issues one
     // secondary select per exercise of the student exam
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.exerciseGroup", "exercises.exerciseGroup.exam", "studentParticipations" })

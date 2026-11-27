@@ -1,4 +1,4 @@
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -24,7 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
-    styleUrl: './assessment-instructions.component.scss',
+    styleUrl: './assessment-instructions.component.css',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,

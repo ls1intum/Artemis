@@ -1,13 +1,9 @@
 @if (programmingExercise(); as exercise) {
-    <div class="mx-auto w-full max-w-7xl -mt-2 px-0!" data-testid="programming-exercise-detail">
+    <div class="mx-auto w-full max-w-7xl -mt-2 px-0" data-testid="programming-exercise-detail">
         <jhi-exercise-detail-header [exercise]="exercise" [documentationType]="documentationType">
             <ng-container detailHeaderSecondary>
                 @if (exercise.isAtLeastEditor) {
-                    <a
-                        [routerLink]="[baseResource(), 'version-history']"
-                        class="inline-flex items-center gap-2 text-sm text-(--tumaet-ui-accent-color) hover:underline"
-                        data-testid="exercise-version-history"
-                    >
+                    <a [routerLink]="[baseResource(), 'version-history']" class="inline-flex items-center gap-2 text-sm hover:underline" data-testid="exercise-version-history">
                         <fa-icon [icon]="faHistory" />
                         <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
                     </a>
@@ -155,7 +151,7 @@
             </ng-container>
         </jhi-exercise-detail-actions>
         @if (!exercise.releaseDate || dayjs(exercise.releaseDate).isBefore(dayjs())) {
-            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="doughnutStats()" [exerciseType]="PROGRAMMING" class="block mb-8!" />
+            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="doughnutStats()" [exerciseType]="PROGRAMMING" class="block mb-8" />
         }
         @if (exerciseDetailSections()) {
             <ng-template #competencyActions>
@@ -225,7 +221,6 @@
         <jhi-deimos-date-range-modal
             #deimosDateRangeModal
             [titleTranslationKey]="'artemisApp.deimos.modal.title.exercise'"
-            [maxWindowDays]="31"
             [isSubmitting]="deimosSubmitting()"
             (confirmSelection)="triggerExerciseDeimosBatch($event)"
         />

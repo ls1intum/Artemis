@@ -1,18 +1,18 @@
 <!--Folder-->
-<div class="list-group-item list-group-item--folder" id="file-browser-folder">
+<div class="file-tree-item file-tree-item--folder" id="file-browser-folder">
     <button
         type="button"
         (click)="onCollapseExpand()()"
         [attr.aria-label]="item().text"
         [attr.aria-expanded]="!item().collapsed"
-        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
         [class.flex-1]="!isBeingRenamed()"
     >
         <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
         <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
             <span class="file-label-group">
-                <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
+                <span class="ms-1 file-tree-item__fileName">{{ item().text }}</span>
                 @for (badge of badges(); track badges().indexOf(badge)) {
                     <jhi-file-browser-badge [badge]="badge" />
                 }
@@ -30,7 +30,7 @@
                     (keyup.enter)="renameNode($event)"
                     (focusout)="renameNode($event)"
                     (keyup.esc)="clearRenamingNode($event)"
-                    class="list-group-item__input"
+                    class="file-tree-item__input"
             /></span>
         </span>
     }

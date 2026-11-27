@@ -1,17 +1,13 @@
 <tumaet-ui-dialog [(visible)]="visible" [showHeader]="false" [closeOnEscape]="false" [ariaLabel]="'artemisApp.quizExercise.aiGeneration.modalTitle' | artemisTranslate">
-    <div class="w-[min(84rem,calc(90dvw-2.5rem))] pt-4!" data-testid="quiz-ai-generation-modal">
-        <div class="grid grid-cols-1 gap-4! min-[993px]:grid-cols-[minmax(18rem,23rem)_1fr]">
-            <section class="flex max-h-[72vh] min-h-[38rem] flex-col gap-4! overflow-y-auto rounded-xl border border-border bg-surface-raised p-4!">
-                <h6
-                    class="m-0! text-xl! font-bold! text-text"
-                    data-testid="quiz-ai-configuration-title"
-                    jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"
-                ></h6>
+    <div class="w-[min(84rem,calc(90dvw-2.5rem))] pt-4" data-testid="quiz-ai-generation-modal">
+        <div class="grid grid-cols-1 gap-4 min-[993px]:grid-cols-[minmax(18rem,23rem)_1fr]">
+            <section class="flex max-h-[72vh] min-h-[38rem] flex-col gap-4 overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
+                <h6 class="m-0 text-xl font-bold" data-testid="quiz-ai-configuration-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
 
                 <!-- Mode toggle — competency mode only shown when the course has competencies -->
                 @if (isLoadingCompetencies() || hasCompetencies()) {
                     <div>
-                        <span class="mb-1.5 inline-block font-semibold text-text" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
+                        <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.mode"></span>
                         <div class="flex flex-wrap gap-2" role="group">
                             <button
                                 tumAetUiButton
@@ -45,11 +41,7 @@
                 <!-- Free-topic mode: topic input -->
                 @if (!isCompetencyMode()) {
                     <div>
-                        <label
-                            class="mb-1.5 inline-block font-semibold text-text"
-                            for="quiz-ai-topic"
-                            jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"
-                        ></label>
+                        <label class="mb-1.5 font-semibold text-color" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
                         <input id="quiz-ai-topic" tumAetUiInput class="w-full" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
                     </div>
                 }
@@ -57,10 +49,10 @@
                 <!-- Competency-graph mode: multi-select -->
                 @if (isCompetencyMode()) {
                     <div>
-                        <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-text">
+                        <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-color">
                             <label for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
                             <span
-                                class="inline-flex items-center text-text-secondary"
+                                class="inline-flex items-center text-muted-color"
                                 role="img"
                                 tabindex="0"
                                 [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
@@ -89,10 +81,10 @@
                 }
 
                 <div>
-                    <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-text">
+                    <div class="mb-1.5 flex items-center gap-1.5 font-semibold text-color">
                         <label for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
                         <span
-                            class="inline-flex items-center text-text-secondary"
+                            class="inline-flex items-center text-muted-color"
                             role="img"
                             tabindex="0"
                             [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
@@ -113,7 +105,7 @@
                 </div>
 
                 <div>
-                    <span class="mb-1.5 inline-block font-semibold text-text" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.language"></span>
+                    <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.language"></span>
                     <div class="flex flex-wrap gap-2" role="group">
                         @for (languageOption of languages; track languageOption) {
                             <button
@@ -134,7 +126,7 @@
 
                 <div>
                     <label
-                        class="mb-1.5 inline-block font-semibold text-text"
+                        class="mb-1.5 font-semibold text-color"
                         for="quiz-ai-number-of-questions"
                         jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.numberOfQuestions"
                     ></label>
@@ -152,7 +144,7 @@
                 </div>
 
                 <div>
-                    <span class="mb-1.5 inline-block font-semibold text-text" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.questionType"></span>
+                    <span class="mb-1.5 inline-block font-semibold text-color" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.questionType"></span>
                     <div class="flex flex-wrap gap-2" role="group">
                         @for (questionType of questionTypes; track questionType) {
                             <button
@@ -174,7 +166,7 @@
                 <div class="mt-1">
                     <span
                         id="quiz-ai-difficulty-label"
-                        class="mb-1.5 inline-block font-semibold text-text"
+                        class="mb-1.5 inline-block font-semibold text-color"
                         jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficulty"
                     ></span>
                     <!-- The kit has no slider, so this is a native range input: it is a slider for assistive tech, is focusable and handles the arrow, Home, End and Page keys. -->
@@ -190,7 +182,7 @@
                         [value]="difficulty()"
                         (input)="difficulty.set(difficultyInput.valueAsNumber)"
                     />
-                    <div class="mt-2 flex justify-between text-sm text-text-secondary">
+                    <div class="mt-2 flex justify-between text-sm text-muted-color">
                         <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.easy"></span>
                         <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.medium"></span>
                         <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.hard"></span>
@@ -215,15 +207,15 @@
                 </button>
             </section>
 
-            <section class="relative max-h-[72vh] min-h-[38rem] overflow-y-auto rounded-xl border border-border bg-surface-raised p-4!">
-                <div class="mb-4! flex items-center justify-between border-b border-border pb-3!" data-testid="quiz-ai-preview-header">
-                    <h6 class="m-0! text-xl! font-bold! text-text" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
+            <section class="relative max-h-[72vh] min-h-[38rem] overflow-y-auto rounded-xl border border-(--border-color) bg-surface-raised p-4">
+                <div class="mb-4 flex items-center justify-between border-b border-border pb-3" data-testid="quiz-ai-preview-header">
+                    <h6 class="m-0 text-xl font-bold" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
                     <button
                         tumAetUiButton
                         type="button"
                         severity="secondary"
                         variant="text"
-                        class="size-8 rounded-full! p-0!"
+                        class="size-8 rounded-full p-0!"
                         data-testid="quiz-ai-close-button"
                         [attr.aria-label]="'entity.action.close' | artemisTranslate"
                         [tumAetUiTooltip]="'entity.action.close' | artemisTranslate"
@@ -234,8 +226,8 @@
                 </div>
 
                 @if (!hasGeneratedQuestions()) {
-                    <div class="preview-empty rounded-xl border border-dashed border-border p-5! text-text-secondary">
-                        <h6 class="mb-2! text-base! font-medium!" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
+                    <div class="preview-empty rounded-xl border border-(--border-color) p-5 text-muted-color">
+                        <h6 class="mb-2 text-base font-medium" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
                         <p class="m-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
                     </div>
                 } @else {
@@ -248,7 +240,7 @@
                         tumAetUiButton
                         type="button"
                         severity="success"
-                        class="sticky bottom-0 float-right mt-4! shadow-lg"
+                        class="bottom-0 float-right mt-4 shadow-lg"
                         data-testid="quiz-ai-add-to-quiz"
                         (click)="addGeneratedQuestionsToQuiz()"
                     >

@@ -8,106 +8,97 @@
         <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
     }
     @if (isEditFieldDisplayedRecord().participationMode) {
-        <div class="form-group">
+        <div class="mb-4">
             <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise()" [isImport]="programmingExerciseCreationConfig().isImportFromExistingExercise" />
         </div>
     }
-    <div class="form-group">
+    <div class="mb-4">
         @if (isEditFieldDisplayedRecord().allowOfflineIde) {
-            <div class="form-check">
-                <label [class]="!programmingExerciseCreationConfig().validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="allowOfflineIde"
-                        id="field_allowOfflineIde"
-                        [(ngModel)]="programmingExercise().allowOfflineIde"
-                        checked
-                        (ngModelChange)="triggerValidation.emit()"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"></span>
-                    @if (!programmingExerciseCreationConfig().validIdeSelection()) {
-                        @if (theiaEnabled()) {
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-danger"
-                                [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
-                            />
-                        } @else {
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-danger"
-                                [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alertNoTheia' | artemisTranslate }}"
-                            />
-                        }
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
+                    name="allowOfflineIde"
+                    inputId="field_allowOfflineIde"
+                    [(ngModel)]="programmingExercise().allowOfflineIde"
+                    (ngModelChange)="triggerValidation.emit()"
+                />
+                <label
+                    class="mb-0"
+                    [class.text-state-danger]="!programmingExerciseCreationConfig().validIdeSelection()"
+                    for="field_allowOfflineIde"
+                    jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"
+                ></label>
+                @if (!programmingExerciseCreationConfig().validIdeSelection()) {
+                    @if (theiaEnabled()) {
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-state-danger"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate"
+                        />
                     } @else {
-                        <jhi-help-icon text="artemisApp.programmingExercise.allowOfflineIde.description" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-state-danger"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.allowOfflineIde.alertNoTheia' | artemisTranslate"
+                        />
                     }
-                </label>
+                } @else {
+                    <jhi-help-icon text="artemisApp.programmingExercise.allowOfflineIde.description" />
+                }
             </div>
         }
         @if (ProjectType.XCODE !== programmingExerciseCreationConfig().selectedProjectType && isEditFieldDisplayedRecord().allowOnlineCodeEditor) {
-            <div class="form-check">
-                <label [class]="!programmingExerciseCreationConfig().validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="allowOnlineEditor"
-                        id="field_allowOnlineEditor"
-                        [(ngModel)]="programmingExercise().allowOnlineEditor"
-                        checked
-                        (ngModelChange)="triggerValidation.emit()"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"></span>
-                    @if (!programmingExerciseCreationConfig().validIdeSelection()) {
-                        @if (theiaEnabled()) {
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-danger"
-                                [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
-                            />
-                        } @else {
-                            <fa-icon
-                                [icon]="faQuestionCircle"
-                                class="text-danger"
-                                [placement]="'top'"
-                                ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia' | artemisTranslate }}"
-                            />
-                        }
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
+                    name="allowOnlineEditor"
+                    inputId="field_allowOnlineEditor"
+                    [(ngModel)]="programmingExercise().allowOnlineEditor"
+                    (ngModelChange)="triggerValidation.emit()"
+                />
+                <label
+                    class="mb-0"
+                    [class.text-state-danger]="!programmingExerciseCreationConfig().validIdeSelection()"
+                    for="field_allowOnlineEditor"
+                    jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"
+                ></label>
+                @if (!programmingExerciseCreationConfig().validIdeSelection()) {
+                    @if (theiaEnabled()) {
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-state-danger"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate"
+                        />
                     } @else {
-                        <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineEditor.description" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-state-danger"
+                            [tumAetUiTooltip]="'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia' | artemisTranslate"
+                        />
                     }
-                </label>
+                } @else {
+                    <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineEditor.description" />
+                }
             </div>
         }
         <!-- only show this for non-exam exercises -->
         @if (!programmingExercise().exerciseGroup && theiaEnabled() && isEditFieldDisplayedRecord().allowOnlineIde) {
-            <div class="form-check">
-                <label [class]="!programmingExerciseCreationConfig().validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineIde">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="allowOnlineIde"
-                        id="field_allowOnlineIde"
-                        [(ngModel)]="programmingExercise().allowOnlineIde"
-                        checked
-                        (ngModelChange)="triggerValidation.emit()"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.allowOnlineIde.title"></span>
-                    @if (!programmingExerciseCreationConfig().validIdeSelection()) {
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            class="text-danger"
-                            [placement]="'top'"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineIde.alert' | artemisTranslate }}"
-                        />
-                    } @else {
-                        <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineIde.description" />
-                    }
-                </label>
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
+                    name="allowOnlineIde"
+                    inputId="field_allowOnlineIde"
+                    [(ngModel)]="programmingExercise().allowOnlineIde"
+                    (ngModelChange)="triggerValidation.emit()"
+                />
+                <label
+                    class="mb-0"
+                    [class.text-state-danger]="!programmingExerciseCreationConfig().validIdeSelection()"
+                    for="field_allowOnlineIde"
+                    jhiTranslate="artemisApp.programmingExercise.allowOnlineIde.title"
+                ></label>
+                @if (!programmingExerciseCreationConfig().validIdeSelection()) {
+                    <fa-icon [icon]="faQuestionCircle" class="text-state-danger" [tumAetUiTooltip]="'artemisApp.programmingExercise.allowOnlineIde.alert' | artemisTranslate" />
+                } @else {
+                    <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineIde.description" />
+                }
             </div>
         }
     </div>

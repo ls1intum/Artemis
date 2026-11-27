@@ -66,15 +66,11 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scor
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import {
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -93,7 +89,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss'],
+    styleUrls: ['./exam-scores.component.css'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,

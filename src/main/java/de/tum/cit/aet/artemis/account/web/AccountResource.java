@@ -3,10 +3,8 @@ package de.tum.cit.aet.artemis.account.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 
 import jakarta.validation.Valid;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
@@ -212,36 +209,8 @@ public class AccountResource {
     }
 
     /**
-     * PUT user-vcs-access-token : creates a vcsAccessToken for a user
-     *
-     * @param expiryDate The expiry date which should be set for the token
-     * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), with status 400 (Bad Request), or with status 401
-     *         (Unauthorized) if the session was established before the credentials of the account last changed
-     */
-    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
-    @PutMapping("user-vcs-access-token")
-    @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
-        sessionFreshnessService.requireCurrentSession();
-        User user = userRepository.getUser();
-        log.debug("REST request to create a new VCS access token for user {}", user.getLogin());
-        if (expiryDate.isBefore(ZonedDateTime.now()) || expiryDate.isAfter(ZonedDateTime.now().plusYears(1))) {
-            throw new BadRequestException("Invalid expiry date provided");
-        }
-
-        String token = LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken();
-        userVcsAccessTokenService.store(user.getId(), token, expiryDate);
-        log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        UserDTO userDTO = new UserDTO();
-        userDTO.setLogin(user.getLogin());
-        // Returned from what was just generated rather than read back: the plaintext exists only here.
-        userDTO.setVcsAccessToken(token);
-        userDTO.setVcsAccessTokenExpiryDate(expiryDate);
-        return ResponseEntity.ok(userDTO);
-    }
-
-    /**
-     * DELETE user-vcs-access-token : deletes the vcsAccessToken of a user
+     * DELETE user-vcs-access-token : deletes the personal vcsAccessToken of a user, for a token that leaked or is not needed any more. The personal token is deprecated and
+     * cannot be created any more; the access tokens of a single participation or repository replace it.
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */

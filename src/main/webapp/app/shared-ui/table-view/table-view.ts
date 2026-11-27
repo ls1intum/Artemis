@@ -19,17 +19,15 @@ import {
     viewChildren,
 } from '@angular/core';
 import { get } from 'lodash-es';
-import {
-    TumAetUiCheckboxComponent,
-    TumAetUiInputDirective,
-    TumAetUiPaginatorComponent,
-    TumAetUiRadioButtonComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleQuestion, faComment, faHashtag, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCircleQuestion, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -45,8 +43,8 @@ export interface ColumnDef<T> {
     field?: string;
     header?: string;
     headerKey?: string;
-    /** PrimeIcons CSS class string, e.g. 'pi pi-hashtag'. Rendered as <i> in the column header. */
-    headerIcon?: string;
+    /** Icon shown after the header text; a column with only a `headerTooltip` shows a question mark. */
+    headerIcon?: IconDefinition;
     /** Translation key shown as a the table tooltip on the column header. */
     headerTooltip?: string;
     width?: string;
@@ -106,10 +104,8 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
     searchPlaceholder: string;
-    /** Search input size. Leave undefined for the default size. */
+    /** Search input size. Default: 'small', the height that fits the 40px toolbar of the table layout (a large field is 42px and is clipped by it). */
     searchSize?: 'small' | 'large';
-    /** Put search above the other toolbar controls and stretch it to the available width. Default: false. */
-    searchFullWidth?: boolean;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
     /** Take the height of a flex-column parent instead of sizing to the rows (up to the free viewport height). Default: false */
@@ -137,6 +133,14 @@ export interface TableConfig {
  */
 export interface TableViewOptions extends Partial<TableConfig> {
     hidePageSizeOptions?: boolean;
+}
+
+/** Options for {@link TableViewComponent.reload}. */
+export interface TableReloadOptions {
+    /** 0-based page to load. Default: the current page. */
+    page?: number;
+    /** Number of rows removed since the last load, subtracted from the known total before the page is clamped. Default: 0. */
+    rowsRemoved?: number;
 }
 
 const DEFAULT_TABLE_CONFIG: TableConfig = {
@@ -181,7 +185,7 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     ],
     host: { '[class.jhi-table-view-fill]': 'resolvedOptions().fill' },
     templateUrl: './table-view.html',
-    styleUrl: './table-view.scss',
+    styleUrl: './table-view.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class TableViewComponent<T> {
@@ -242,8 +246,6 @@ export class TableViewComponent<T> {
     protected readonly faSort = faSort;
     protected readonly faSortUp = faSortUp;
     protected readonly faSortDown = faSortDown;
-    protected readonly faHashtag = faHashtag;
-    protected readonly faComment = faComment;
     protected readonly faCircleQuestion = faCircleQuestion;
     protected readonly sortField = computed(() => this.query().field ?? this.resolvedOptions().initialSortField);
     protected readonly sortOrder = computed(() => (this.query().field ? this.query().order : this.resolvedOptions().initialSortOrder));
@@ -315,8 +317,7 @@ export class TableViewComponent<T> {
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
-            searchSize: opts.searchSize,
-            searchFullWidth: opts.searchFullWidth,
+            searchSize: opts.searchSize ?? 'small',
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             fill: opts.fill ?? DEFAULT_TABLE_CONFIG.fill,
             rowActionsFrozen: opts.rowActionsFrozen ?? DEFAULT_TABLE_CONFIG.rowActionsFrozen,
@@ -570,40 +571,36 @@ export class TableViewComponent<T> {
     }
 
     /**
-     * Clears the search field and all pagination state, then fires an immediate lazy load at page 0.
-     * Use this when the underlying data has changed and you want a clean slate (e.g. after registering a student).
-     * No-op in non-lazy mode.
+     * Restores the table to its initial state: clears the search and filters, restores the initial sort and the
+     * configured page size, then fires an immediate lazy load at page 0. Use this when the table switches to a
+     * different dataset. No-op in non-lazy mode.
      */
     reset(): void {
         if (!this.resolvedOptions().lazy) return;
         this.currentFirst.set(0);
         this.currentPageSizeOverride.set(undefined);
+        // resetSearchValue() synchronously emits newSearchEvent('') → onGlobalSearch('') → queues a debounce.
+        // We cancel that debounce immediately so only the load below fires.
         this.searchFilter()?.resetSearchValue();
         clearTimeout(this.debounceTimer);
-        this.query.update((query) => cloneWith(query, { search: '' }));
+        // A query without a sort field falls back to the initial sort.
+        this.query.set({ order: 1, search: '' });
         this.columnFilters.set({});
         this.emitQuery();
     }
 
-    /** Reload a page in place while preserving the user's page size, sort and filters. */
-    reload(page = this.currentPageNumber()): void {
-        if (!this.resolvedOptions().lazy) return;
-        this.currentFirst.set(page * this.effectivePageSize());
-        this.emitQuery();
-    }
-
     /**
-     * Reload after removing `removedCount` rows from the dataset, staying on the current page unless that page
-     * is no longer valid (e.g. the removed row was the last one on the last page), in which case it steps back
-     * to the last valid page. Uses only the table's own last-known total, so it always resolves in a single
-     * request — unlike {@link reload}, it never needs to fetch a page first to discover it came back empty.
+     * Fires an immediate lazy load, preserving the current search term, sort, filters and page size. Loads the current
+     * page unless `page` is given, and clamps it to the last page that still has rows, using the last-known total minus
+     * `rowsRemoved`. So a removal that empties the last page steps back in a single request.
      * No-op in non-lazy mode.
      */
-    reloadAfterRemoval(removedCount = 1): void {
+    reload({ page = this.currentPageNumber(), rowsRemoved = 0 }: TableReloadOptions = {}): void {
         if (!this.resolvedOptions().lazy) return;
-        const newTotal = Math.max(0, this.effectiveTotalRows() - removedCount);
-        const lastValidPage = Math.max(0, Math.ceil(newTotal / this.effectivePageSize()) - 1);
-        this.reload(Math.min(this.currentPageNumber(), lastValidPage));
+        const remainingRows = Math.max(0, this.effectiveTotalRows() - rowsRemoved);
+        const lastValidPage = Math.max(0, Math.ceil(remainingRows / this.effectivePageSize()) - 1);
+        this.currentFirst.set(Math.min(page, lastValidPage) * this.effectivePageSize());
+        this.emitQuery();
     }
 
     private currentPageNumber(): number {

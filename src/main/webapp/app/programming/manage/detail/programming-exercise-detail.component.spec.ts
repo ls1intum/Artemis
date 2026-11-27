@@ -54,8 +54,6 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -75,7 +73,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import * as downloadUtil from 'app/foundation/util/download.util';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
@@ -167,7 +165,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             providers: [
                 { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,
                 SessionStorageService,
@@ -175,7 +173,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
@@ -184,7 +181,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             ],
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in
-            // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
+            // their own dependencies (e.g. TumAetUiDialogService) or crash on missing inputs (doughnut chart).
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
                     imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],

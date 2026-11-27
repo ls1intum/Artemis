@@ -121,6 +121,10 @@ KNOWN_TYPE_NAMESPACES = ("java.sql.types.", "pg_catalog.")
 # blob/bytea are intentionally not covered; they are not unbounded free-form text. Deliberately decoupled
 # from the baseline so a re-cut cannot grow it -- only a reviewed edit here can.
 GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
+    ("ai_session", "metadata"),
+    ("ai_session_event", "message_content"),
+    ("ai_session_event", "metadata"),
+    ("ai_session_event", "payload"),
     ("answer_post", "content"),
     ("apollon_diagram", "json_representation"),
     ("assessment_note", "note"),
@@ -134,6 +138,7 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
     ("exam", "confirmation_end_text"),
     ("exam", "confirmation_start_text"),
     ("exam", "end_text"),
+    ("exam", "exam_mode"),
     ("exam", "start_text"),
     ("exam_live_event", "problem_statement"),
     ("exam_live_event", "text_content"),
@@ -173,6 +178,7 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
     ("submission_version", "content"),
     ("system_notification", "text"),
     ("text_block", "text"),
+    ("tum_live_unit_upload", "expected_video_source"),
     ("tutorial_group", "additional_information"),
     ("tutorial_group_schedule", "location"),
     ("tutorial_group_session", "location"),
@@ -183,6 +189,18 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
 # Keyed by the full Liquibase changeset identity (id + author + file) so that reusing an id in the same file
 # under a different author does not inherit this approval.
 ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str, str], str] = {
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session", "metadata"):
+        "The metadata JSON of a Spring AI session, a map of attributes that Artemis leaves empty. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "message_content"):
+        "The text of a message of the Atlas chat agent, searchable by the repository. The conversation of a user with an LLM has no sensible bound; it replaces spring_ai_chat_memory.content, which is grandfathered too.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "payload"):
+        "The JSON of the parts and metadata of a message, for example the arguments of a tool call. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "metadata"):
+        "The metadata JSON of an event. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
+    ("config/liquibase/changelog/20260624180225_changelog.xml", "20260624180225-1-postgres", "matyasht", "exam", "exam_mode"):
+        "A short enum ('REAL'/'TEST'/'TEST_WITH_SUPERVISED_SESSION'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
+    ("config/liquibase/changelog/20261029130730_changelog.xml", "20261029130730-1-create-tum-live-unit-upload", "pat", "tum_live_unit_upload", "expected_video_source"):
+        "The unit's video URL when a TUM.Live upload started, compared for equality with lecture_unit.source when the upload finishes. It has to hold whatever that column holds, and lecture_unit.source is itself unbounded text, so a bound here would make long URLs fail to save.",
     ("config/liquibase/changelog/20260808192146_changelog.xml", "20260808192146-1", "nayerkotry", "weaviate_outbox", "params"):
         "Transactional-outbox payload for the Weaviate search sync; an internal, serialized operation record, not a user-facing free-text field.",
     ("config/liquibase/changelog/20261004235109_changelog.xml", "20261004235109-1-add-sender-origin-postgres", "senan-aslan", "iris_message", "sender_origin"):

@@ -4,14 +4,10 @@ import { User } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject, takeUntil } from 'rxjs';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogService,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -38,7 +34,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
-    styleUrls: ['./conversation-member-row.component.scss'],
+    styleUrls: ['./conversation-member-row.component.css'],
     host: {
         '[class.active]': 'isCurrentUser()',
     },

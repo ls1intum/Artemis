@@ -2,7 +2,8 @@ import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/met
 import { isEqual } from 'lodash-es';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
-import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -41,7 +42,7 @@ import {
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
@@ -98,7 +99,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../shared/programming-exercise-form.css'],
     providers: [HyperionGenerationActivityFacade, TumAetUiConfirmationService],
     imports: [
         TumAetUiButtonDirective,
@@ -458,7 +459,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
-            btnClass: 'btn-secondary',
         }));
 
         if (languageChanged) {
@@ -1142,6 +1142,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param language to switch to.
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
+        // Choosing the language that is already selected changes nothing. Running the setter again would reset the
+        // options that depend on the language and reload the problem statement template.
+        if (language === this.selectedProgrammingLanguage) {
+            return language;
+        }
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
@@ -1534,6 +1539,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:
