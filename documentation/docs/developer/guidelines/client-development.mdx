@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-26
+last_reviewed: 2026-11-27
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -793,6 +793,28 @@ model does not — whether the title is already used, which plagiarism control i
 - Keep Angular lifecycle hooks synchronous and start async work in a separate method (`@angular-eslint/no-async-lifecycle-method`). Avoid repeating entries in component
   metadata arrays (`@angular-eslint/no-duplicates-in-metadata-arrays`).
 
+### Duplicate dependencies
+
+The production client must resolve every package to one version. A second copy ships twice in the bundle, doubles
+the advisories to follow and breaks libraries that keep module-level state. It usually appears silently when one
+dependency is bumped and another still asks for the old range.
+
+`pnpm run check:duplicate-dependencies` reads `pnpm-lock.yaml`, follows the `dependencies` of every workspace project
+and fails when a package resolves to more than one version. It runs in the **Client Code Style** job of CI.
+When it fails:
+
+1. Run `pnpm why <package>` to see which two dependencies disagree.
+2. Align them: bump the dependency that asks for the old version, or add a scoped override to `pnpm-workspace.yaml`
+   (for example `'@xyflow/react>zustand': '5.1.0'`) with a comment that says why it is safe and when to drop it.
+3. Only if neither works yet, add the package to `supporting_scripts/client/duplicate-dependencies-allowlist.json`
+   with the exact versions and the reason. The check fails again once an allowlisted package is no longer
+   duplicated or resolves to other versions, so the list only shrinks.
+
+Before adding a direct dependency, check that no package of the same kind is already there (one markdown parser,
+one HTML parser, one diff library, one icon set) and that it does not pull in a second copy of something we ship.
+To check what users actually download, build with `ng build --configuration production --stats-json` and pass the
+metafile: `node supporting_scripts/client/check_duplicate_dependencies.mjs --stats <output>/browser-stats.json`.
+
 ### Preventing Memory Leaks
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -1443,6 +1465,14 @@ with a development build: only the production build minifies the scripts and mer
   pointer or key press of the visitor. When the sign-in page, its alerts or its footer show a key that is not in the slice, add the key
   to `LANDING_NAMESPACES`; until the full catalog has loaded, the page shows `translation-not-found[...]` for it.
 - **Preload only what the route uses.** `index.html` preloads the poster of the landing page on `/` only.
+- **The size of the initial files has a limit.** The `initial` entry of `budgets` in the `production` configuration of `angular.json` is
+  the sum of the uncompressed files that the first page loads (`main` and the styles). The production build warns above the first value and
+  fails above the second, so a change that adds code to the shell shows up in the pull request that adds it. The values sit a little above
+  the size of the client that is built from `develop`: they are a guard against growth, not a target. When the build exceeds the limit, find
+  out which import grew `main` (the eager-chunk report of the pull request names the files that a route imports with a normal `import`), and
+  defer it with `@defer` or `import()`. Raise the limit only for growth that you have decided to accept, in the same pull request and with the
+  reason in its description; lower it when a pull request makes the bundle smaller, so that the gain stays. The build that only produces
+  the metafile for the eager-chunk report uses the `stats` configuration, which is unoptimized and has no limit for the initial files.
 
 ## Advanced Topics
 

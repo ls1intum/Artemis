@@ -326,6 +326,7 @@
 
     textarea {
         background-color: var(--form-control-focus-background);
+        resize: vertical;
     }
 
     button,
@@ -366,10 +367,6 @@
     ::-moz-focus-inner {
         padding: 0;
         border-style: none;
-    }
-
-    textarea {
-        resize: vertical;
     }
 
     fieldset {
