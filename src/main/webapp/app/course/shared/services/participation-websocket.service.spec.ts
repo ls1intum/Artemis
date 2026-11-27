@@ -86,6 +86,18 @@ describe('ParticipationWebsocketService', () => {
         vi.restoreAllMocks();
     });
 
+    it('should not open the topic of an exercise without an exercise id', () => {
+        // Without the exercise there is no topic to subscribe to, `/topic/exercise/undefined/newResults` is rejected by the server for every user.
+        const resultObservable = participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, undefined);
+
+        expect(subscribeSpy).not.toHaveBeenCalled();
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+        expect(participationWebsocketService.subscribedExercises.size).toBe(0);
+        expect(participationWebsocketService.participationSubscriptionTypes.size).toBe(0);
+        // the caller still gets its observable, which delivers as soon as a subscription for the participation exists
+        expect(resultObservable.value).toBeUndefined();
+    });
+
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exercise2.id);
         expect(subscribeSpy).toHaveBeenCalledOnce();

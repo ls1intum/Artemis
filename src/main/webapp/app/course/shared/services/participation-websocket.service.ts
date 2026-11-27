@@ -352,6 +352,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *                   only needed if personal == false
      */
     private openResultWebsocketSubscriptionIfNotExisting(participationId: number, personal: boolean, exerciseId?: number) {
+        if (!personal && exerciseId === undefined) {
+            // The topic of an exercise needs the exercise. Subscribing to `/topic/exercise/undefined/newResults` is rejected by the server for every user.
+            return;
+        }
         if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
             let participationResultTopic: string;
             if (personal) {
