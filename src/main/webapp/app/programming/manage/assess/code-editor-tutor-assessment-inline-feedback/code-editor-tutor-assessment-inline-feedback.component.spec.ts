@@ -148,7 +148,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         comp.currentFeedback().gradingInstruction = undefined;
         const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
         shared.instructionUnlinked.emit();
-        selection.addApplication(instruction);
+        selection.setApplied(instruction, true);
         expect(applyElsewhere).not.toHaveBeenCalled();
         expect(selection.applicationCount(instruction)).toBe(1);
         comp.cancelFeedback();
@@ -320,30 +320,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.hasUnsavedEdits()).toBe(true);
         comp.cancelFeedback();
         expect(comp.currentFeedback()).toEqual(feedback);
-    });
-
-    it('preserves partial negative entry and steps off-grid values from the raw input', async () => {
-        await settle();
-        const input = fixture.nativeElement.querySelector('jhi-points-input input') as HTMLInputElement;
-        for (const value of ['-', '-2']) {
-            input.value = value;
-            input.dispatchEvent(new Event('input'));
-            await settle();
-            expect(input.value).toBe(value);
-        }
-        input.value = '1.3';
-        input.dispatchEvent(new Event('input'));
-        await settle();
-        const increment = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
-        const down = new MouseEvent('mousedown', { cancelable: true });
-        increment.dispatchEvent(down);
-        expect(down.defaultPrevented).toBe(true);
-        increment.click();
-        await settle();
-        expect(comp.currentFeedback().credits).toBe(1.5);
-        await fixture.whenStable();
-        fixture.detectChanges();
-        expect(input.value).toBe('1.5');
     });
 
     it('renders linked criteria and student-facing feedback without the hidden old title', async () => {

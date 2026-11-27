@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnDestroy, computed, effect, inject, input, viewChildren } from '@angular/core';
@@ -8,14 +16,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -35,15 +35,15 @@ export interface SortedGradingCriterion {
         FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
         MarkdownDirective,
         TumAetUiCheckboxComponent,
         TumAetUiTagComponent,
-        TumAetUiButtonComponent,
-        TumAetUiButtonDirective,
-        TumAetUiMessageComponent,
-        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnDestroy {

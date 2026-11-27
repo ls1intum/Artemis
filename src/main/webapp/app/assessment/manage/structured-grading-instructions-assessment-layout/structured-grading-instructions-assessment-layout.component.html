@@ -105,7 +105,7 @@
                                                 data-testid="increase-instruction-usage"
                                                 [disabled]="!isDraggable(instruction)"
                                                 [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
-                                                (click)="selectionService.addApplication(instruction)"
+                                                (click)="selectionService.setApplied(instruction, true)"
                                             >
                                                 <fa-icon [icon]="faPlus" />
                                             </button>

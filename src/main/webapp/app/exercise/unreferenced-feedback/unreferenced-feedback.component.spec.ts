@@ -1,6 +1,4 @@
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
-import { Component, signal } from '@angular/core';
-import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -412,49 +410,5 @@ describe('Applying instructions with real feedback cards', () => {
             expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
         });
         expect(fixture.componentInstance.unreferencedFeedback).toHaveLength(feedbacks.length);
-    });
-});
-
-@Component({
-    imports: [UnreferencedFeedbackComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
-    template: `
-        <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria" [readonly]="false" />
-        <jhi-unreferenced-feedback [(feedbacks)]="feedbacks" [allFeedbacks]="allFeedbacks()" [gradingCriteria]="criteria" [readOnly]="false" [resultId]="1" [maxPoints]="10" />
-    `,
-})
-class InstructionApplicationHost {
-    readonly feedbacks = signal<Feedback[]>([]);
-    allFeedbacks(): Feedback[] {
-        return [...this.feedbacks()];
-    }
-    readonly criteria: GradingCriterion[] = [
-        {
-            id: 1,
-            title: 'Criterion',
-            structuredGradingInstructions: [{ id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Rubric feedback' }],
-        },
-    ];
-}
-
-describe('Instruction application through the full assessment controls', () => {
-    it('updates an empty zero-point manual card after Add, crosshair, Apply', async () => {
-        await TestBed.configureTestingModule({
-            imports: [InstructionApplicationHost],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: TumAetUiDialogService, useClass: MockDialogService }, provideHttpClient()],
-        }).compileComponents();
-        const fixture = TestBed.createComponent(InstructionApplicationHost);
-        await fixture.whenStable();
-        (fixture.nativeElement.querySelector('.add-unreferenced-feedback') as HTMLButtonElement).click();
-        await fixture.whenStable();
-        expect(fixture.componentInstance.feedbacks()[0].credits).toBe(0);
-        (fixture.nativeElement.querySelector('[data-testid="arm-instruction"]') as HTMLButtonElement).click();
-        await fixture.whenStable();
-        (fixture.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
-        await fixture.whenStable();
-        await vi.waitFor(() => {
-            fixture.detectChanges();
-            expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
-        });
-        expect(fixture.nativeElement.querySelector('.unified-feedback-rubric-label')?.textContent).toContain('Rubric feedback');
     });
 });

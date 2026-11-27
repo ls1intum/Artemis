@@ -52,31 +52,6 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.allowDrop()).toBe(false);
     });
 
-    it('uses a dedicated arming button and hides it when the instructions become read-only', async () => {
-        const instruction: GradingInstruction = { id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Feedback' };
-        fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
-        fixture.componentRef.setInput('readonly', false);
-        await fixture.whenStable();
-        const card: HTMLElement = fixture.nativeElement.querySelector('#criterion-0-instruction-0');
-        expect(card.getAttribute('role')).toBeNull();
-        expect(card.getAttribute('tabindex')).toBeNull();
-        const selection = TestBed.inject(GradingInstructionSelectionService);
-        card.click();
-        card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-        expect(selection.hasArmedInstruction()).toBe(false);
-        const arm = card.querySelector<HTMLButtonElement>('[data-testid="arm-instruction"]')!;
-        expect(arm.type).toBe('button');
-        expect(arm.tabIndex).toBe(0);
-        arm.click();
-        expect(selection.hasArmedInstruction()).toBe(true);
-        fixture.componentRef.setInput('readonly', true);
-        await fixture.whenStable();
-        expect(card.getAttribute('role')).toBeNull();
-        expect(card.getAttribute('tabindex')).toBeNull();
-        expect(card.getAttribute('aria-pressed')).toBeNull();
-        expect(card.querySelector('[data-testid="arm-instruction"]')).toBeNull();
-    });
-
     it('should hand over the title of the criterion with a dragged instruction', () => {
         const instruction = { id: 5, credits: 1, feedback: 'Correct association' } as GradingInstruction;
         fixture.componentRef.setInput('criteria', [{ title: 'Associations', structuredGradingInstructions: [instruction] }]);
@@ -231,6 +206,9 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(document.activeElement).toBe(arm);
             arm.click();
             expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(true);
+            fixture.componentRef.setInput('readonly', true);
+            fixture.detectChanges();
+            expect(card.querySelector('[data-testid="arm-instruction"]')).toBeNull();
         });
 
         it('supports arming, unarming and single-application stepper actions', () => {

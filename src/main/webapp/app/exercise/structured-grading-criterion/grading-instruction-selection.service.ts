@@ -208,11 +208,6 @@ export class GradingInstructionSelectionService {
         this.armedInstruction.set(undefined);
     }
 
-    /** Adds one more application of the instruction in the registered feedback list. */
-    addApplication(instruction: GradingInstruction): void {
-        this.setApplied(instruction, true);
-    }
-
     /** Removes one application of the instruction owned by the registered feedback list. */
     removeOneApplication(instruction: GradingInstruction): void {
         this.host()?.unapplyOneInstruction(instruction);

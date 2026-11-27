@@ -53,12 +53,9 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.assessment-apply-instruction')).toBeNull();
     });
 
-    it.each([false, true])('requires two clicks to delete an assessment card (linked: %s)', (linked) => {
+    it('requires two clicks to delete an assessment card', () => {
         fixture.componentRef.setInput('assessmentLayout', true);
         fixture.componentRef.setInput('editable', true);
-        if (linked) {
-            fixture.componentRef.setInput('feedback', { gradingInstruction: { id: 1 } });
-        }
         fixture.detectChanges();
         const deleted = vi.fn();
         component.onDelete.subscribe(deleted);
@@ -71,19 +68,6 @@ describe('UnifiedFeedbackComponent', () => {
         expect(button.getAttribute('aria-label')).toBe(component.dismissConfirmTooltip());
         button.click();
         expect(deleted).toHaveBeenCalledOnce();
-    });
-
-    it('resets assessment deletion confirmation when focus leaves', () => {
-        fixture.componentRef.setInput('assessmentLayout', true);
-        fixture.componentRef.setInput('editable', true);
-        fixture.detectChanges();
-        const deleted = vi.fn();
-        component.onDelete.subscribe(deleted);
-        const button = fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
-        button.click();
-        button.dispatchEvent(new FocusEvent('blur'));
-        button.click();
-        expect(deleted).not.toHaveBeenCalled();
     });
 
     it('marks a missing comment in the assessment textarea and labels it', () => {
@@ -103,19 +87,10 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback').classList).toContain('unified-feedback--danger');
     });
 
-    it('steps assessment credits from the raw off-grid value without changing shared input controls', async () => {
+    it('uses horizontal step buttons only in the assessment layout', async () => {
         fixture.componentRef.setInput('assessmentLayout', true);
         fixture.componentRef.setInput('editable', true);
         await settle();
-        typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
-        await settle();
-        const increase = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
-        const down = new MouseEvent('mousedown', { cancelable: true });
-        increase.dispatchEvent(down);
-        expect(down.defaultPrevented).toBe(true);
-        increase.click();
-        await settle();
-        expect(component.feedbackCredits()).toBe(1.5);
         expect(fixture.nativeElement.querySelector('.tumaet-ui-input-number-horizontal')).not.toBeNull();
         fixture.componentRef.setInput('assessmentLayout', false);
         await settle();

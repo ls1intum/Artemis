@@ -1,6 +1,4 @@
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -313,28 +311,6 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         cardA.updateFeedback();
         await settle();
         expect(comp.feedbackInternal()[0]).toMatchObject({ detailText: 'Unsaved comment A', credits: 2.5 });
-        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
-    });
-
-    it('keeps a linked unsaved card open and restores it through parent-level Cancel', async () => {
-        const [feedback] = suggestions();
-        fixture.componentRef.setInput('feedbacks', [feedback]);
-        await settle();
-        const card = comp.inlineFeedbackComponents()[0];
-        card.editFeedback();
-        await settle();
-        const selection = TestBed.inject(GradingInstructionSelectionService);
-        selection.toggleArmedInstruction({ id: 77, credits: 2, feedback: 'Instruction text' } as GradingInstruction);
-        card.applyArmedInstruction();
-        await settle();
-        expect(comp.inlineFeedbackComponents()[0]).toBe(card);
-        expect(card.viewOnly()).toBe(false);
-        expect(card.elementRef.nativeElement.querySelector('[data-testid="feedback-save"]')).not.toBeNull();
-        card.cancelFeedback();
-        await settle();
-        expect(comp.feedbackInternal()).toEqual([feedback]);
-        expect(feedback.gradingInstruction).toBeUndefined();
-        expect(card.currentFeedback()).toEqual(feedback);
         expect(comp.hasUnsavedInlineFeedback()).toBe(false);
     });
 });

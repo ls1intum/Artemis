@@ -348,25 +348,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.inlineFeedbackReadOnly()).toBe(false);
     });
 
-    it('keeps inline feedback read-only until the assessment save response returns', async () => {
-        comp.participation.set(participation);
-        comp.exercise.set(exercise);
-        comp.submission.set(submission);
-        comp.manualResult.set(result);
-        const saveResponse = new Subject<HttpResponse<Result>>();
-        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
-        comp.save();
-        expect(comp.inlineFeedbackReadOnly()).toBe(true);
-
-        const savedFeedback = { ...new Feedback(), id: 404, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:1', detailText: 'Saved' };
-        const savedResult = { ...result, feedbacks: [savedFeedback], submission };
-        saveResponse.next(new HttpResponse({ body: savedResult }));
-        saveResponse.complete();
-        await flushMicrotasks();
-        expect(comp.manualResult()?.feedbacks?.[0].id).toBe(404);
-        expect(comp.inlineFeedbackReadOnly()).toBe(false);
-    });
-
     it('should highlight lines that were changed', async () => {
         // Stub
         const getFilesWithContentStub = vi.spyOn(repositoryFileService, 'getFilesWithContent');

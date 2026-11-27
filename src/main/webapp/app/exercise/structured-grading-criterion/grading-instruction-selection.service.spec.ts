@@ -93,7 +93,7 @@ describe('GradingInstructionSelectionService', () => {
     it('should delegate single application changes to the host', () => {
         service.register(host);
 
-        service.addApplication(instruction);
+        service.setApplied(instruction, true);
         expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
 
         service.removeOneApplication(instruction);
