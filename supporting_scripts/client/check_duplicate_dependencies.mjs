@@ -8,7 +8,7 @@
  * dependencies that ask for incompatible ranges, so it shows up silently when one of them is bumped.
  *
  * The production closure is read from pnpm-lock.yaml: everything reachable from the `dependencies`
- * (not `devDependencies`) of every workspace project, following `dependencies` and
+ * and `optionalDependencies` (not `devDependencies`) of every workspace project, following `dependencies` and
  * `optionalDependencies` of each resolved package. Peer dependencies are already part of the
  * resolved snapshots, so they count.
  *
@@ -68,10 +68,12 @@ export function findDuplicates(lockfile) {
     const snapshots = lockfile.snapshots ?? {};
     const pending = [];
     for (const importer of Object.values(lockfile.importers ?? {})) {
-        for (const [name, entry] of Object.entries(importer.dependencies ?? {})) {
-            const key = snapshotKeyFor(name, entry.version);
-            if (key) {
-                pending.push(key);
+        for (const entries of [importer.dependencies, importer.optionalDependencies]) {
+            for (const [name, entry] of Object.entries(entries ?? {})) {
+                const key = snapshotKeyFor(name, entry.version);
+                if (key) {
+                    pending.push(key);
+                }
             }
         }
     }

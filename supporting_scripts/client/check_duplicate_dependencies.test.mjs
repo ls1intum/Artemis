@@ -6,9 +6,10 @@ function lockfile({ importers, snapshots }) {
     return { importers, snapshots };
 }
 
-const importer = (dependencies, devDependencies = {}) => ({
+const importer = (dependencies, devDependencies = {}, optionalDependencies = {}) => ({
     dependencies: Object.fromEntries(Object.entries(dependencies).map(([name, version]) => [name, { specifier: version, version }])),
     devDependencies: Object.fromEntries(Object.entries(devDependencies).map(([name, version]) => [name, { specifier: version, version }])),
+    optionalDependencies: Object.fromEntries(Object.entries(optionalDependencies).map(([name, version]) => [name, { specifier: version, version }])),
 });
 
 describe('splitSnapshotKey', () => {
@@ -62,6 +63,20 @@ describe('findDuplicates', () => {
             }),
         );
         assert.equal(duplicates.size, 0);
+    });
+
+    it('seeds the closure with the optional dependencies of a workspace project', () => {
+        const duplicates = findDuplicates(
+            lockfile({
+                importers: { '.': importer({ a: '1.0.0' }, {}, { shared: '2.0.0' }) },
+                snapshots: {
+                    'a@1.0.0': { dependencies: { shared: '1.0.0' } },
+                    'shared@1.0.0': {},
+                    'shared@2.0.0': {},
+                },
+            }),
+        );
+        assert.deepEqual([...duplicates], [['shared', ['1.0.0', '2.0.0']]]);
     });
 
     it('follows optional dependencies and the dependencies of every workspace project', () => {
