@@ -32,7 +32,12 @@ public final class TestRepositoryCommitFiles {
     }
 
     /**
+     * Reads the Ares version that the build file of a commit pins.
+     *
+     * @param repository the exercise-tests repository
+     * @param tree       the tree of the commit
      * @return the Ares version the build file of the commit pins; empty if it pins none
+     * @throws IOException if the build file cannot be read
      */
     public static Optional<String> aresVersion(Repository repository, RevTree tree) throws IOException {
         String gradleBuild = readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null);
@@ -44,12 +49,25 @@ public final class TestRepositoryCommitFiles {
      * Applies {@link TestRepositoryFiles#evaluate(Map, Function, BuildFiles)}
      * to a commit of the repository. Like the scan of a checkout, it only considers regular files, never symbolic links, and selects the Java sources with
      * {@link TestRepositoryFiles#isJavaSourcePath}, so build output is skipped in the same way.
+     *
+     * @param repository the exercise-tests repository
+     * @param tree       the tree of the commit
+     * @return the state of the sandbox in the commit
+     * @throws IOException if a file of the commit cannot be read
      */
     public static SandboxState evaluate(Repository repository, RevTree tree) throws IOException {
         BuildFiles buildFiles = new BuildFiles(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null), readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null));
         return TestRepositoryFiles.evaluate(javaSources(repository, tree), path -> readPolicyFile(repository, tree, path), buildFiles);
     }
 
+    /**
+     * Reads the Java sources of a commit: only regular files, never symbolic links, selected with {@link TestRepositoryFiles#isJavaSourcePath}.
+     *
+     * @param repository the exercise-tests repository
+     * @param tree       the tree of the commit
+     * @return the content of each Java source, by its path in the repository
+     * @throws IOException if a file of the commit cannot be read
+     */
     public static Map<String, String> javaSources(Repository repository, RevTree tree) throws IOException {
         Map<String, ObjectId> files = new TreeMap<>();
         try (TreeWalk treeWalk = new TreeWalk(repository)) {
@@ -74,6 +92,11 @@ public final class TestRepositoryCommitFiles {
     /**
      * Reads a policy file of a commit: only a regular file is read, and only if it is not larger than {@link SecurityPolicyYaml#MAX_POLICY_SIZE}, which is
      * checked before its content is loaded.
+     *
+     * @param repository the exercise-tests repository
+     * @param tree       the tree of the commit
+     * @param path       the path of the policy file in the repository
+     * @return the content of the policy file, or the problem that prevents reading it
      */
     public static PolicyFileContent readPolicyFile(Repository repository, RevTree tree, String path) {
         try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, tree)) {
