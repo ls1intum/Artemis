@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.FileSystemResource;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -385,5 +386,49 @@ class SandboxConfigurationServiceTest {
 
         assertThat(service.getConfiguration(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SandboxStatus.INACTIVE);
         assertThat(configurationService.getConfiguration(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SandboxStatus.CONFIGURED);
+    }
+
+    @Test
+    void versionsOlderThanTheMinimumOrUnparseableAreNeverSelectableAndTheNewestComesFirst() {
+        SandboxConfigurationService service = createService("2.1.0", " ", "2.2.10", "not-a-version", "2.3.0", "2.3.0");
+
+        // The template version 2.2.1 is always selectable; blank and repeated entries are ignored like the versions Ares 2 does not support.
+        assertThat(service.getFrameworkVersions().selectableVersions()).containsExactly("2.3.0", "2.2.10", "2.2.1");
+        assertThat(SandboxConfigurationService.isAtLeastMinimumVersion("2.3.0-SNAPSHOT")).isTrue();
+        assertThat(SandboxConfigurationService.isAtLeastMinimumVersion("2.2.1-SNAPSHOT")).isFalse();
+        assertThat(SandboxConfigurationService.isAtLeastMinimumVersion("not-a-version")).isFalse();
+    }
+
+    @Test
+    void unreadableTemplatesAndManifestLeaveOnlyTheConfiguredVersionsUnverified() {
+        when(resourceLoaderService.getResource(any(Path.class))).thenReturn(new FileSystemResource(root.resolve("missing.yml")));
+        SandboxConfigurationService service = createService("2.2.1");
+
+        assertThat(service.getFrameworkVersions().templateVersions()).isEmpty();
+        assertThat(service.getFrameworkVersions().selectableVersions()).containsExactly("2.2.1");
+        // Without the manifest no release can be checked, so the version is reported as not verified instead of blocking it.
+        assertThat(service.getConfiguration(exercise(ProgrammingLanguage.JAVA)).versionCompatibilities())
+                .containsExactly(new SandboxConfigurationDTO.SandboxVersionCompatibilityDTO("2.2.1", CompatibilityVerdict.UNVERIFIED, List.of()));
+    }
+
+    @Test
+    void aTestsRepositoryThatCannotBeReadFailsWithAnError() throws Exception {
+        // The branch points to a commit the bare repository does not contain, e.g. after a broken copy of the repository.
+        Files.writeString(remote.resolve("refs/heads/main"), "0123456789abcdef0123456789abcdef01234567\n", StandardCharsets.UTF_8);
+
+        assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> configurationService.getConfiguration(exercise(ProgrammingLanguage.JAVA)))
+                .matches(exception -> "sandboxReadFailed".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void reportsThePartsOfAresTheTestsUseBesidesTheSandbox() throws Exception {
+        String testImport = "import org.junit.jupiter.api.Test;\n";
+        String strictTimeoutImport = testImport + "\nimport de.tum.cit.ase.ares.api.StrictTimeout;\n";
+        pushTestClassChange(source -> source.replace(testImport, strictTimeoutImport).replace("class SortingTest {", "@StrictTimeout(5)\nclass SortingTest {"));
+
+        SandboxConfigurationDTO config = configurationService.getConfiguration(exercise(ProgrammingLanguage.JAVA));
+
+        assertThat(config.status()).isEqualTo(SandboxStatus.CONFIGURED);
+        assertThat(config.aresApiUses()).containsExactly(new SandboxConfigurationDTO.SandboxAresApiUseDTO("test/de/example/SortingTest.java", "StrictTimeout"));
     }
 }
