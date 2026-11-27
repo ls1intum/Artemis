@@ -75,12 +75,6 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
 
     readonly filterPlaceholder = input<string>();
 
-    /**
-     * Boolean property marking object options that stay visible but cannot be selected, e.g. a choice that is
-     * offered for reference only. Pointer, keyboard and typeahead skip such options.
-     */
-    readonly optionDisabled = input<string>();
-
     readonly size = input<TumAetUiSelectSize>();
 
     /**
@@ -148,7 +142,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     protected readonly showClearButton = computed(() => this.showClear() && this.hasSelection() && !this.isDisabled());
     protected readonly triggerClasses = computed(() => `${this.buildTriggerClasses()} ${this.showClearButton() ? 'tumaet:pe-17' : 'tumaet:pe-10'}`);
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
-    private readonly keyManagerOptions = computed(() => this.visibleOptions().map((option) => ({ getLabel: () => this.label(option), disabled: this.isOptionDisabled(option) })));
+    private readonly keyManagerOptions = computed(() => this.visibleOptions().map((option) => ({ getLabel: () => this.label(option) })));
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(TYPEAHEAD_DEBOUNCE_MS);
     private typeaheadSequence = '';
     private pendingFilterFocus = false;
@@ -189,12 +183,9 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             if (optionCount === 0) {
                 this.keyManager.setActiveItem(-1);
             } else if (this.activeIndex() >= optionCount) {
-                // The last option that can be chosen; -1 if none can be chosen.
-                this.keyManager.setActiveItem(this.visibleOptions().findLastIndex((option) => !this.isOptionDisabled(option)));
-            } else if (this.isOpen() && (this.activeIndex() < 0 || this.isDisabledUnselectedOption(this.visibleOptions()[this.activeIndex()]))) {
-                // The first option that can be chosen, also when the active one became disabled while the panel is open; -1 if none can be chosen. The
-                // selected option stays active although it is disabled, so the panel shows the current value.
-                this.keyManager.setActiveItem(this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option)));
+                this.keyManager.setActiveItem(optionCount - 1);
+            } else if (this.isOpen() && this.activeIndex() < 0) {
+                this.keyManager.setFirstItemActive();
             }
         });
     }
@@ -267,8 +258,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             return;
         }
         const selectedIndex = this.visibleOptions().findIndex((option) => this.isSelected(option));
-        // Without a selection, the first option that can be chosen is active, so Enter selects it; -1 if none can be chosen.
-        const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option));
+        const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
         this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', {
@@ -306,9 +296,6 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     }
 
     protected selectOption(option: unknown): void {
-        if (this.isOptionDisabled(option)) {
-            return;
-        }
         // Choosing the option that is already selected is no change, as with a native select. Reporting it would let
         // a consumer redo the work of a selection, such as resetting fields that depend on the value.
         if (this.isSelected(option)) {
@@ -353,12 +340,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             if (event.key === 'Home' || event.key === 'End') {
                 event.preventDefault();
                 this.open();
-                // The first and last options that can be chosen, as with the arrow keys.
-                if (event.key === 'Home') {
-                    this.keyManager.setFirstItemActive();
-                } else {
-                    this.keyManager.setLastItemActive();
-                }
+                this.setActive(event.key === 'Home' ? 0 : this.visibleOptions().length - 1);
                 return;
             }
             if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -384,11 +366,10 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
                 this.close();
                 break;
             case 'Tab':
-                if (this.activeIndex() >= 0 && this.activeIndex() < count && !this.isOptionDisabled(this.visibleOptions()[this.activeIndex()])) {
+                if (this.activeIndex() >= 0 && this.activeIndex() < count) {
                     this.selectOption(this.visibleOptions()[this.activeIndex()]);
                 } else {
-                    // Closing removes the filter field with the panel, so focus goes back to the trigger and Tab moves on from there.
-                    this.close(this.document.activeElement === this.filterInput()?.nativeElement);
+                    this.close(false);
                 }
                 break;
             default:
@@ -402,8 +383,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
 
     protected onFilterInput(event: Event): void {
         this.filterText.set((event.target as HTMLInputElement).value);
-        // The previous active option may have been filtered away, so start again at the first option of what is left that can be chosen; -1 if none can be chosen.
-        this.keyManager.setActiveItem(this.visibleOptions().findIndex((option) => !this.isOptionDisabled(option)));
+        // The previous active option may have been filtered away, so start again at the top of what is left.
+        this.keyManager.setActiveItem(this.visibleOptions().length > 0 ? 0 : -1);
     }
 
     protected onFilterKeydown(event: KeyboardEvent): void {
@@ -427,10 +408,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             this.keyManager.cancelTypeahead();
             const options = this.keyManagerOptions();
             const start = Math.max(this.activeIndex(), -1);
-            const nextMatch = options.findIndex((_, offset) => {
-                const candidate = options[(start + offset + 1) % options.length];
-                return !candidate?.disabled && candidate?.getLabel().toLocaleLowerCase().startsWith(character);
-            });
+            const nextMatch = options.findIndex((_, offset) => options[(start + offset + 1) % options.length]?.getLabel().toLocaleLowerCase().startsWith(character));
             if (nextMatch >= 0) {
                 this.keyManager.setActiveItem((start + nextMatch + 1) % options.length);
             }
@@ -469,19 +447,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         }
         return `${base} ${size} ${state}`;
     }
-    protected isOptionDisabled(option: unknown): boolean {
-        const key = this.optionDisabled();
-        return !!(key && option !== null && typeof option === 'object' && (option as Record<string, unknown>)[key]);
-    }
-
-    private isDisabledUnselectedOption(option: unknown): boolean {
-        return this.isOptionDisabled(option) && !this.isSelected(option);
-    }
-
     protected optionClasses(option: unknown, index: number): string {
-        if (this.isOptionDisabled(option)) {
-            return 'tumaet-ui-select-option tumaet:flex tumaet:cursor-default tumaet:items-center tumaet:px-3 tumaet:py-2 tumaet:text-disabled';
-        }
         const base = 'tumaet-ui-select-option tumaet:flex tumaet:cursor-pointer tumaet:items-center tumaet:px-3 tumaet:py-2';
         const active = this.activeIndex() === index;
         if (this.isSelected(option)) {

@@ -7,6 +7,8 @@ artemis:
             enabled: false
     deimos:
         enabled: false
+    sandbox:
+        enabled: true
     hyperion:
         enabled: false
     iris:

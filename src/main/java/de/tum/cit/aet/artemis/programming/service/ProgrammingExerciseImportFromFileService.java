@@ -29,7 +29,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -44,9 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ExportedExerciseDetailsDTO;
-import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
-import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -77,13 +74,11 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService;
 
-    private final SecurityFrameworkService securityFrameworkService;
-
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
             FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService,
-            Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService, SecurityFrameworkService securityFrameworkService) {
+            Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
@@ -95,7 +90,6 @@ public class ProgrammingExerciseImportFromFileService {
         this.buildPlanRepository = buildPlanRepository;
         this.tempFileUtilService = tempFileUtilService;
         this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
-        this.securityFrameworkService = securityFrameworkService;
     }
 
     /**
@@ -113,26 +107,6 @@ public class ProgrammingExerciseImportFromFileService {
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig, MultipartFile zipFile,
             Course course, User user, boolean isImportFromSharing) throws IOException, GitAPIException {
-        return importProgrammingExerciseFromFile(originalProgrammingExercise, buildConfig, zipFile, course, user, isImportFromSharing, null);
-    }
-
-    /**
-     * Imports a programming exercise from a zip file like {@link #importProgrammingExerciseFromFile(ProgrammingExercise, ProgrammingExerciseBuildConfig,
-     * MultipartFile, Course, User, boolean)} and applies a Security Framework choice to the imported tests repository before the first builds run.
-     *
-     * @param originalProgrammingExercise the programming exercise that should be imported
-     * @param buildConfig                 the build configuration read out of the archive, which is stored as a row of its own
-     * @param zipFile                     the zip file that contains the exercise
-     * @param course                      the course to which the exercise should be added
-     * @param user                        the user initiating the import
-     * @param isImportFromSharing         flag whether file import (false) of sharing import
-     * @param securityFrameworkChoice     the validated Security Framework setting; null to keep the imported one
-     * @return the imported programming exercise
-     * @throws IOException     if the zip file cannot be read
-     * @throws GitAPIException if the repositories cannot be written
-     */
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig, MultipartFile zipFile,
-            Course course, User user, boolean isImportFromSharing, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws IOException, GitAPIException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -188,10 +162,6 @@ public class ProgrammingExerciseImportFromFileService {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
             }
 
-            if (securityFrameworkChoice != null) {
-                applySecurityFrameworkChoice(newProgrammingExercise, securityFrameworkChoice, user);
-            }
-
             if (importedJenkinsBuildPlan.isPresent()) {
                 buildPlanRepository.setBuildPlanForExercise(importedJenkinsBuildPlan.orElseThrow(), newProgrammingExercise);
             }
@@ -202,23 +172,6 @@ public class ProgrammingExerciseImportFromFileService {
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return newProgrammingExercise;
-    }
-
-    /**
-     * Applies the Security Framework choice to the imported tests repository. If the imported repository cannot be changed, e.g. because it uses Ares 1, or
-     * the change cannot be checked out, written or pushed, the import still completes, so the exercise gets its build plans and initial builds instead of
-     * being left half imported. The client reads the resulting state from the repository, compares it with the choice and warns the instructor.
-     */
-    private void applySecurityFrameworkChoice(ProgrammingExercise exercise, SecurityFrameworkChoiceDTO securityFrameworkChoice, User user) {
-        try {
-            securityFrameworkService.applyChoiceToImportedExercise(exercise, securityFrameworkChoice, user);
-        }
-        catch (BadRequestAlertException e) {
-            log.warn("The Security Framework choice was not applied to the imported exercise {}: {}", exercise.getId(), e.getMessage());
-        }
-        catch (InternalServerErrorAlertException e) {
-            log.error("The Security Framework choice could not be pushed to the tests repository of the imported exercise {}", exercise.getId(), e);
-        }
     }
 
     /**

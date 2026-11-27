@@ -204,11 +204,10 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance. A Security Framework choice
-     * is dropped as well, because it is made by the instructor who imports, never by the source.
+     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance.
      *
      * @param details the exercise details as exported by the source instance
-     * @return the same details with a {@code null} id and no Security Framework choice
+     * @return the same details with a {@code null} id
      */
     private static ImportProgrammingExerciseRequestDTO withoutId(ImportProgrammingExerciseRequestDTO details) {
         return new ImportProgrammingExerciseRequestDTO(null, details.title(), details.shortName(), details.channelName(), details.packageName(), details.problemStatement(),
@@ -219,7 +218,7 @@ public class ExerciseSharingService {
                 details.allowOfflineIde(), details.allowOnlineIde(), details.staticCodeAnalysisEnabled(), details.maxStaticCodeAnalysisPenalty(), details.showTestNamesToStudents(),
                 details.releaseTestsWithExampleSolution(), details.programmingLanguage(), details.projectType(), details.projectKey(), details.testRepositoryUri(),
                 details.buildConfig(), details.gradingCriteria(), details.competencyLinks(), details.auxiliaryRepositories(), details.submissionPolicy(),
-                details.plagiarismDetectionConfig(), details.course(), details.exerciseGroup(), details.templateParticipation(), details.solutionParticipation(), null);
+                details.plagiarismDetectionConfig(), details.course(), details.exerciseGroup(), details.templateParticipation(), details.solutionParticipation());
     }
 
     /**

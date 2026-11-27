@@ -86,7 +86,7 @@ class ProgrammingExerciseRepositoryInitializationTest {
         creator.setLastName("Creator");
         creator.setEmail("creator@example.com");
 
-        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, null, false, null);
+        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, null, false);
 
         for (LocalVCRepositoryUri uri : uris) {
             try (Git remote = Git.open(uri.getLocalRepositoryPath(bareBase).toFile())) {
@@ -142,7 +142,7 @@ class ProgrammingExerciseRepositoryInitializationTest {
         creator.setLastName("Creator");
         creator.setEmail("creator@example.com");
 
-        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, new InitialCommitAuthorDTO(mode, "Course Team", "team@example.org"), false, null);
+        service.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), creator, new InitialCommitAuthorDTO(mode, "Course Team", "team@example.org"), false);
 
         PersonIdent expected = switch (mode) {
             case EXERCISE_CREATOR -> new PersonIdent(creator.getName(), "creator@example.com");

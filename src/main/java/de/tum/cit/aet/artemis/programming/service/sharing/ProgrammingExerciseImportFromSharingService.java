@@ -19,9 +19,7 @@ import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
-import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
-import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 /**
  * Orchestrates importing programming exercises from the Sharing Platform into Artemis.
@@ -47,14 +45,11 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final SecurityFrameworkService securityFrameworkService;
-
     private final CourseService courseService;
 
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
             ExerciseSharingService exerciseSharingService, UserRepository userRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService, AuthorizationCheckService authorizationCheckService, CourseService courseService,
-            SecurityFrameworkService securityFrameworkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, AuthorizationCheckService authorizationCheckService, CourseService courseService) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
         this.userRepository = userRepository;
@@ -62,7 +57,6 @@ public class ProgrammingExerciseImportFromSharingService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseService = courseService;
-        this.securityFrameworkService = securityFrameworkService;
     }
 
     /**
@@ -114,14 +108,6 @@ public class ProgrammingExerciseImportFromSharingService {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        // A Security Framework choice changes the imported tests repository, so it needs the instructor role in the target course, like the endpoints that
-        // change the sandbox later.
-        SecurityFrameworkChoiceDTO securityFrameworkChoice = sharingSetupInfo.exercise().securityFramework();
-        if (securityFrameworkChoice != null) {
-            securityFrameworkService.validateChoice(exercise.getProgrammingLanguage(), exercise.getProjectType(), securityFrameworkChoice);
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        }
-
         try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             // An exam exercise reaches its course over the exercise group, which the request only references by id. A
@@ -136,7 +122,7 @@ public class ProgrammingExerciseImportFromSharingService {
             // exercise, exactly as the entity request body used to leave them there.
             competencyExerciseLinkService.updateCompetencyLinks(sharingSetupInfo.exercise(), exercise);
 
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true, securityFrameworkChoice);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true);
         }
     }
 }
