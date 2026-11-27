@@ -152,7 +152,10 @@ public final class TestRepositoryCommitFiles {
     }
 
     /**
-     * @param path a validated policy path
+     * Finds the last version of a policy file in the history of the repository, so that activating the sandbox again restores it.
+     *
+     * @param repository the exercise-tests repository
+     * @param path       a validated policy path
      * @return the content of the policy file in the most recent commit that still contained it as a regular file, if the repository ever had one
      */
     public static Optional<String> findPreviousPolicy(Repository repository, String path) {

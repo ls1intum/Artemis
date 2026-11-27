@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.sandbox.service.SandboxConfigurationService
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
