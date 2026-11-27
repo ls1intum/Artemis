@@ -4,7 +4,7 @@ import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiBarChartConfig, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { TumAetUiBarChartConfig, TumAetUiChartDatumContext } from '@tumaet/ui-angular/chart';
 
 @Component({
     template: '',

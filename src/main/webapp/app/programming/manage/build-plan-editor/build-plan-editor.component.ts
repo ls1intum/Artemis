@@ -10,7 +10,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

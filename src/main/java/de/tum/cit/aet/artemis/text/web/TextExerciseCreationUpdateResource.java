@@ -223,7 +223,7 @@ public class TextExerciseCreationUpdateResource {
      *
      * @param updateTextExerciseDTO the textExercise DTO to update
      * @param notificationText      about the text exercise update that should be
-     *                                  displayed for the student group
+     *                                  displayed for the students
      * @return the ResponseEntity with status 200 (OK) and with body the updated
      *         textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated

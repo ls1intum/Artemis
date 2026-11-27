@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * {@code NON_EMPTY}, "variant" simply means "sub-graph absent" — exactly how the entity serializes uninitialized lazy
  * relations today.
  * <p>
- * The nested {@code course} and {@code exerciseGroup} objects must never be flattened to ids: access rights are
- * computed from the course group names and exam navigation walks {@code exerciseGroup.exam.course}.
+ * The nested {@code course} and {@code exerciseGroup} objects must never be flattened to ids: the client computes
+ * access rights from the nested course and exam navigation walks {@code exerciseGroup.exam.course}.
  *
  * @param id                                         the exercise id
  * @param type                                       the constant discriminator {@code "programming"}

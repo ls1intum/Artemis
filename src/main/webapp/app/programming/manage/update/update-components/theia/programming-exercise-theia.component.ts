@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';

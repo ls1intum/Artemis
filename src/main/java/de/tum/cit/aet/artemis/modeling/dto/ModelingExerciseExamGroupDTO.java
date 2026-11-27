@@ -38,7 +38,7 @@ public record ModelingExerciseExamGroupDTO(Long id, String title, Boolean isMand
      * @param publishResultsDate             when exam results are published (post-publish behavior)
      * @param exampleSolutionPublicationDate when the example solution becomes visible
      * @param numberOfCorrectionRoundsInExam number of correction rounds (assessment controls)
-     * @param course                         light course projection (id, title, group names, ...); {@code null} when the
+     * @param course                         light course projection (id, title, ...); {@code null} when the
      *                                           exam's course is not loaded
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -10,7 +10,7 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 
 describe('ChannelsCreateDialogComponent', () => {

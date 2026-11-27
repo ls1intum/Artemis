@@ -1,4 +1,4 @@
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';

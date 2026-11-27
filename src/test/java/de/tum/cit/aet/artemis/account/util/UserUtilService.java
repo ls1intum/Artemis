@@ -693,7 +693,7 @@ public class UserUtilService {
      * Gets the User with the given username from the database. Throws an IllegalArgumentException if the User does not exist.
      *
      * @param login The username of the User
-     * @return The User with eagerly loaded groups and authorities
+     * @return The User with eagerly loaded authorities
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case

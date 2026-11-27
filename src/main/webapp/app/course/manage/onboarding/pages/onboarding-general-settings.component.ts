@@ -2,7 +2,11 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';

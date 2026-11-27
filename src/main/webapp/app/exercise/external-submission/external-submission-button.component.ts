@@ -3,11 +3,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { Result } from 'app/openapi/model/result';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 @Component({
     selector: 'jhi-external-submission',

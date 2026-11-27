@@ -22,7 +22,9 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';

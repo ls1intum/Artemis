@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -27,7 +27,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];

@@ -1,7 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, inject, input, model, output, signal } from '@angular/core';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';

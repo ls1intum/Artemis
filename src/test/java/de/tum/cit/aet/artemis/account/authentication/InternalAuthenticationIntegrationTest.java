@@ -408,8 +408,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_internalAuth_successful() throws Exception {
-        // Note: ManagedUserVM no longer carries group strings (UserDTO dropped groups in Phase 6);
-        // the admin update API does not modify user_groups — course membership is via user_course_role.
+        // The admin update API does not modify course memberships, which are stored in user_course_role.
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
 

@@ -4,15 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { UrlTree } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheckDouble, faChevronDown, faClone, faListCheck, faPaperPlane, faPen, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiPopoverComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
