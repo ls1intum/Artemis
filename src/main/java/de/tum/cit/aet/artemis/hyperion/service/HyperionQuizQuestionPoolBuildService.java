@@ -650,27 +650,31 @@ public class HyperionQuizQuestionPoolBuildService {
             leaseHeld = renewLease(courseId, leaseToken);
         }
         long seconds = Duration.ofNanos(System.nanoTime() - startedAt).toSeconds();
+        StopReason stopReason;
         if (cancelled) {
+            stopReason = StopReason.CANCELLED;
             int dropped = itemRepository.deleteAllByCourseIdAndState(courseId, QuizQuestionPoolItemState.PENDING);
             log.info("Quiz question pool build of course [{}] was cancelled after {} s; {} items that were not generated yet are dropped; {}", courseId, seconds, dropped,
                     counters);
         }
         else if (deadlineReached) {
+            stopReason = StopReason.DEADLINE;
             log.info("Quiz question pool build of course [{}] stops at its deadline after {} s; the remaining items wait for the next build; {}", courseId, seconds, counters);
         }
         else if (generationUnavailable) {
+            stopReason = StopReason.GENERATION_UNAVAILABLE;
             log.warn(
                     "Quiz question pool build of course [{}] stops after {} s: the generation calls of {} different batches in a row failed; the remaining items wait for the next build; {}",
                     courseId, seconds, MAX_CONSECUTIVE_FAILED_BATCHES, counters);
         }
         else if (!leaseHeld) {
+            stopReason = StopReason.LEASE_LOST;
             log.warn("Quiz question pool build of course [{}] stops after {} s: its lease expired and another build took over the course; {}", courseId, seconds, counters);
         }
         else {
+            stopReason = StopReason.COMPLETED;
             log.info("Quiz question pool build of course [{}] finished after {} s; {}", courseId, seconds, counters);
         }
-        StopReason stopReason = cancelled ? StopReason.CANCELLED
-                : deadlineReached ? StopReason.DEADLINE : generationUnavailable ? StopReason.GENERATION_UNAVAILABLE : leaseHeld ? StopReason.COMPLETED : StopReason.LEASE_LOST;
         return counters.toOutcome(stopReason);
     }
 
