@@ -821,9 +821,11 @@ Tools that only a few commands need are not dependencies of the project. They ar
 version, which keeps their packages out of every `pnpm install` and out of every advisory scan of the lockfile.
 Each version is declared once, in the script that runs the tool:
 
-| Tool                      | Command                          | Version declared in            |
-| ------------------------- | -------------------------------- | ------------------------------ |
-| publint, AreTheTypesWrong | `pnpm run tum-aet-ui:pack:check` | `packages/tum-aet-ui/pack.mjs` |
+| Tool                      | Command                          | Version declared in                                |
+| ------------------------- | -------------------------------- | -------------------------------------------------- |
+| publint, AreTheTypesWrong | `pnpm run tum-aet-ui:pack:check` | `packages/tum-aet-ui/pack.mjs`                     |
+| knip                      | `pnpm run dead-code:client`      | `supporting_scripts/client/knip.mjs`               |
+| Lighthouse                | `pnpm run lighthouse`            | `supporting_scripts/lighthouse/run-lighthouse.mjs` |
 
 Run the command to use the tool; there is nothing to install first. To use a newer release, change the version constant
 and run the command once. A `// renovate:` comment above the constant lets Renovate propose the update. Do not add such a

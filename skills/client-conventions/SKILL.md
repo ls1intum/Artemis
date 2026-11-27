@@ -319,6 +319,13 @@ use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with 
 as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
 [Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
 
+## Tools fetched on demand
+
+publint, AreTheTypesWrong, knip and Lighthouse are not dependencies: the script that runs them fetches an exact version
+with `pnpm dlx` and declares it as a constant under a `// renovate:` comment. Follow that pattern for a tool that only a
+script uses instead of adding a dependency. Details:
+[Tools fetched on demand](../../documentation/docs/developer/guidelines/client-development.mdx#tools-fetched-on-demand).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
