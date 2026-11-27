@@ -377,6 +377,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             // The topic of an exercise needs the exercise. Subscribing to `/topic/exercise/undefined/newResults` is rejected by the server for every user.
             return;
         }
+        // Every participation is registered, also when the connection already exists: the connection is shared, and it is only closed once no registered participation needs it.
+        this.participationSubscriptionTypes.set(participationId, personal);
+        if (!this.subscribedExercises.has(exerciseId!)) {
+            this.subscribedExercises.set(exerciseId!, new Set<number>());
+        }
+        this.subscribedExercises.get(exerciseId!)!.add(participationId);
+
         if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
             let participationResultTopic: string;
             if (personal) {
@@ -384,13 +391,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             } else {
                 participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
             }
-            this.participationSubscriptionTypes.set(participationId, personal);
-            if (!this.subscribedExercises.has(exerciseId!)) {
-                this.subscribedExercises.set(exerciseId!, new Set<number>());
-            }
-            const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
-            subscribedParticipations!.add(participationId);
-
             const subscription = this.websocketService.subscribe<Result>(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
             if (personal) {
                 this.openPersonalWebsocketSubscription = subscription;
