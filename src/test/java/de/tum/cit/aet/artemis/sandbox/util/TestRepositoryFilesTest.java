@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.sandbox.domain.AresApiUse;
 import de.tum.cit.aet.artemis.sandbox.domain.BuildFiles;
 import de.tum.cit.aet.artemis.sandbox.domain.PolicyFileContent;
 import de.tum.cit.aet.artemis.sandbox.domain.PolicyFileProblem;
@@ -376,5 +377,99 @@ class TestRepositoryFilesTest {
 
         assertThat(state.status()).isEqualTo(SandboxStatus.CONFIGURED);
         assertThat(state.policyFiles()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def example = /aresVersion = '2.3.0'/\n", "def example = $/aresVersion = '2.3.0'/$\n", "def example() {\n    return /aresVersion = '2.3.0'/\n}\n" })
+    void ignoresAresVersionsInGradleSlashyStrings(String example) {
+        assertThat(TestRepositoryFiles.parseAresVersion(example + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def half = total / 2\n", "def half = n++ / 2\n", "def half = n-- / 2\n", "def half = this / 2\n", "def half = (total) / 2\n",
+            "def half = values[0] / 2\n", "def half = { total } / 2\n", "def half = \"total\" / 2\n" })
+    void readsAnAresVersionAfterADivision(String division) {
+        // A / after an operand divides and opens no slashy string, which would otherwise hide the pin after it.
+        assertThat(TestRepositoryFiles.parseAresVersion(division + "ext { aresVersion = '2.2.1' }\ndef third = total / 3\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def notes = \"\"\"\naresVersion = '9.9.9'\n\"\"\"\n", "def notes = '''aresVersion = \"9.9.9\"'''\n", "def quote = 'it\\'s aresVersion = \"9.9.9\"'\n",
+            "def path = $/ $$ $/ aresVersion = '9.9.9' /$\n", "def pattern = / \\/ aresVersion = '9.9.9' /\n" })
+    void ignoresAresVersionsInGradleStringsWithEscapesAndTripleQuotes(String example) {
+        assertThat(TestRepositoryFiles.parseAresVersion(example + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ext { aresVersion = '2.2.1' }\n/* aresVersion = '9.9.9'", "ext { aresVersion = '2.2.1' }\n// aresVersion = '9.9.9'",
+            "ext { aresVersion = '2.2.1' }\ndef notes = 'aresVersion = \"9.9.9\"", "def notes = 'unclosed\next { aresVersion = '2.2.1' }\n",
+            "def broken = + /\next { aresVersion = '2.2.1' }\n", "ext { aresVersion = '2.2.1' }\napply" })
+    void readsTheAresVersionNextToCommentsAndStringsThatAreNotClosed(String gradleBuild) {
+        assertThat(TestRepositoryFiles.parseAresVersion(gradleBuild, null)).contains("2.2.1");
+        assertThat(TestRepositoryFiles.parseAresVersion(null, "<ares.version>2.2.1</ares.version>\n<!-- <ares.version>9.9.9</ares.version>")).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "def helper() {\n    def aresVersion = '2.3.0'\n    return aresVersion\n}\n", "tasks.register('notes') {\n    String aresVersion = \"2.3.0\"\n}\n",
+            "def describe = {\n    final aresVersion = '2.3.0'\n}\n" })
+    void aLocalVariableOfAGradleMethodOrClosureIsNoPin(String helper) {
+        assertThat(TestRepositoryFiles.parseAresVersion(helper + "ext { aresVersion = '2.2.1' }\n", null)).contains("2.2.1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ext { aresVersion = '2.2' + '.1' }\n", "ext { aresVersion = \"${base}.1\" }\n", "ext.aresVersion = '2.2.1'.trim()\n",
+            "ext { aresVersion = '2.2.1' }\next.aresVersion = \"${base}.1\"\n", "ext { aresVersion = '2.2.' /* comment */ + '1' }\n",
+            "ext.aresVersion = '2.2.' /* first */ /* multi\nline */ + '1'\n", "project.ext.aresVersion = '2.3.0'\nproject.ext.aresVersion = '2.2.1'\n" })
+    void aGradleExpressionOrPinsOfDifferentVersionsPinNoVersion(String gradleBuild) {
+        // Artemis can read neither the version of an expression nor the one of two different pins, of which the later one wins in Gradle.
+        assertThat(TestRepositoryFiles.parseAresVersion(gradleBuild, null)).isEmpty();
+    }
+
+    @Test
+    void pinsOfTheSameVersionAndComparisonsPinIt() {
+        assertThat(TestRepositoryFiles.parseAresVersion("project.ext.aresVersion = '2.2.1'\nproject.ext.aresVersion = '2.2.1'\n", null)).contains("2.2.1");
+        assertThat(TestRepositoryFiles.parseAresVersion("ext { aresVersion = '2.2.1' }\nif (aresVersion == '2.2.1') { println 'Ares 2' }\n", null)).contains("2.2.1");
+        assertThat(TestRepositoryFiles.parseAresVersion(null, "<properties><ares.version >2.2.1</ares.version\n></properties>")).contains("2.2.1");
+        // A reference to another property is no pin, and next to a pin it leaves the version the build uses unknown.
+        assertThat(TestRepositoryFiles.parseAresVersion(null, "<properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
+        assertThat(TestRepositoryFiles.parseAresVersion(null,
+                "<properties><ares.version>2.2.1</ares.version></properties><properties><ares.version>${base.version}</ares.version></properties>")).isEmpty();
+    }
+
+    @Test
+    void reportsThePartsOfAresTheTestsUseBesidesTheSandbox() throws IOException {
+        writeBuildFile();
+        writeSource(TestRepositoryFiles.POLICY_FILE_NAME, POLICY);
+        writeSource("test/de/example/SortingTest.java", """
+                package de.example;
+
+                import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.*;
+                import de.tum.cit.ase.ares.api.structural.*;
+
+                // de.tum.cit.ase.ares.api.InAComment is no use
+                @Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                @StrictTimeout(5)
+                class SortingTest {
+
+                    private static final String TEXT = "de.tum.cit.ase.ares.api.InAString";
+
+                    @Test
+                    void runs() {
+                        de.tum.cit.ase.ares.api.structural.ClassTestProvider provider = null;
+                    }
+                }
+                """);
+        writeTestClass("test/de/example/OnlySandboxTest.java", "de.example", "OnlySandboxTest");
+
+        // The jupiter markers and the policy belong to the sandbox, and a name in a comment or a string is no use.
+        assertThat(evaluateFiles().aresApiUses()).containsExactly(new AresApiUse("test/de/example/SortingTest.java", "StrictTimeout"),
+                new AresApiUse("test/de/example/SortingTest.java", "structural.*"), new AresApiUse("test/de/example/SortingTest.java", "structural.ClassTestProvider"),
+                new AresApiUse("test/de/example/SortingTest.java", "util.ReflectionTestUtils"));
     }
 }
