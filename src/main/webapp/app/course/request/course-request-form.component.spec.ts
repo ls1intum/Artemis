@@ -6,14 +6,12 @@ import { By } from '@angular/platform-browser';
 import { MockDirective, MockPipe } from 'ng-mocks';
 
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';

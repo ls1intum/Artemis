@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular/dialog';
 
 export interface DialogData {
     slideToReference: string;

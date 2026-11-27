@@ -15,7 +15,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 describe('ExternalSubmissionDialogComponent', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;

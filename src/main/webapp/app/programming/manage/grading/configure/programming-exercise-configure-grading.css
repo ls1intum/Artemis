@@ -40,7 +40,7 @@
     }
 
     .grading-table-layout > div {
-        width: 100% !important;
+        width: 100%;
     }
 
     .grading-table-layout > div:last-child {
