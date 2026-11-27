@@ -4,9 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -29,6 +29,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.session.EventFilter;
+import org.springframework.ai.session.SessionService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -53,8 +55,7 @@ class AtlasAgentServiceTest {
     @Mock
     private AtlasPromptTemplateService templateService;
 
-    @Mock
-    private ChatMemory chatMemory;
+    private SessionService sessionService;
 
     @Mock
     private ExecutionPlanStateManagerService executionPlanStateManagerService;
@@ -84,9 +85,10 @@ class AtlasAgentServiceTest {
         // options, which must be non-null (lenient: not every nested test exercises the chat path).
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        previewService = new AtlasAgentPreviewService(chatMemory);
-        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, chatClient, chatClient, templateService, chatMemory);
-        atlasAgentService = new AtlasAgentService(chatMemory, delegationService, new AtlasToolSurface(mainAgentToolCallbackProvider),
+        sessionService = spy(AtlasSessionTestSupport.newSessionService());
+        previewService = new AtlasAgentPreviewService(sessionService);
+        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, chatClient, chatClient, templateService, sessionService);
+        atlasAgentService = new AtlasAgentService(sessionService, delegationService, new AtlasToolSurface(mainAgentToolCallbackProvider),
                 new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
                 new AtlasToolSurface(exerciseMapperToolCallbackProvider), executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
     }
@@ -146,12 +148,14 @@ class AtlasAgentServiceTest {
 
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
 
-        // Pin the GHSA-q62f-h9x2-gcqc fix: the memory advisor must scope chat memory strictly by the
-        // per-(course,user) session id supplied as request-time advisor param (Spring AI 2.0.0-M6 API),
-        // and must never fall back to the formerly shared "default" conversation id.
-        verify(chatMemory, atLeastOnce()).get(instructor1SessionId);
-        verify(chatMemory, atLeastOnce()).get(instructor2SessionId);
-        verify(chatMemory, never()).get("default");
+        // Pin the GHSA-q62f-h9x2-gcqc fix: the memory advisor must scope the conversation strictly by the
+        // per-(course,user) session id supplied as request-time advisor param, and must never fall back to
+        // a shared "default" session. Each instructor's session holds that instructor's turn and no other.
+        assertThat(sessionService.getMessages(instructor1SessionId)).extracting(Message::getText).contains(instructor1Message, "Response for instructor 1")
+                .doesNotContain(instructor2Message, "Response for instructor 2");
+        assertThat(sessionService.getMessages(instructor2SessionId)).extracting(Message::getText).contains(instructor2Message, "Response for instructor 2")
+                .doesNotContain(instructor1Message, "Response for instructor 1");
+        assertThat(sessionService.findById("default")).isNull();
     }
 
     @Test
@@ -161,7 +165,7 @@ class AtlasAgentServiceTest {
         Message assistantMessage = new AssistantMessage("Competencies are learning objectives that define what students should know and be able to do.");
         List<Message> messages = List.of(userMessage, assistantMessage);
 
-        when(chatMemory.get(sessionId)).thenReturn(messages);
+        AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
         when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -172,7 +176,7 @@ class AtlasAgentServiceTest {
         assertThat(result.getFirst().isUser()).isTrue();
         assertThat(result.get(1).content()).isEqualTo("Competencies are learning objectives that define what students should know and be able to do.");
         assertThat(result.get(1).isUser()).isFalse();
-        verify(chatMemory).get(sessionId);
+        verify(sessionService).getEvents(eq(sessionId), any(EventFilter.class));
     }
 
     @Test
@@ -180,17 +184,17 @@ class AtlasAgentServiceTest {
         String sessionId = "course_789_user_101";
         List<Message> emptyMessages = List.of();
 
-        when(chatMemory.get(sessionId)).thenReturn(emptyMessages);
+        AtlasSessionTestSupport.givenConversation(sessionService, sessionId, emptyMessages);
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
-        verify(chatMemory).get(sessionId);
+        verify(sessionService).getEvents(eq(sessionId), any(EventFilter.class));
     }
 
     @Test
-    void testGetConversationHistoryAsDTO_NullChatMemory() {
+    void testGetConversationHistoryAsDTO_NullSessionMemory() {
         String sessionId = "course_456_user_789";
         AtlasAgentService serviceWithNullMemory = new AtlasAgentService(null,
                 new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templateService, null),
@@ -208,13 +212,13 @@ class AtlasAgentServiceTest {
     void testGetConversationHistoryAsDTO_ExceptionHandling() {
         String sessionId = "course_321_user_202";
 
-        when(chatMemory.get(sessionId)).thenThrow(new RuntimeException("Database error"));
+        doThrow(new RuntimeException("Database error")).when(sessionService).getEvents(eq(sessionId), any(EventFilter.class));
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
 
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
-        verify(chatMemory).get(sessionId);
+        verify(sessionService).getEvents(eq(sessionId), any(EventFilter.class));
     }
 
     @Test
@@ -223,7 +227,7 @@ class AtlasAgentServiceTest {
         List<Message> messages = List.of(new UserMessage("Hello"), new AssistantMessage("Hi there!"), new UserMessage("How are you?"),
                 new AssistantMessage("I'm doing well, thanks!"));
 
-        when(chatMemory.get(sessionId)).thenReturn(messages);
+        AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
         when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
         List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -234,7 +238,7 @@ class AtlasAgentServiceTest {
         assertThat(result.get(1).isUser()).isFalse();
         assertThat(result.get(2).isUser()).isTrue();
         assertThat(result.get(3).isUser()).isFalse();
-        verify(chatMemory).get(sessionId);
+        verify(sessionService).getEvents(eq(sessionId), any(EventFilter.class));
     }
 
     @Nested
@@ -443,7 +447,7 @@ class AtlasAgentServiceTest {
             var preview = new CompetencyPreviewDTO("OOP Basics", "Object-Oriented Programming fundamentals", "UNDERSTAND", null, null);
             var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview), null, null, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -469,7 +473,7 @@ class AtlasAgentServiceTest {
             var comp2 = new CompetencyPreviewDTO("Comp 2", "Description 2", "APPLY", null, null);
             var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(comp1, comp2), null, null, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -487,7 +491,7 @@ class AtlasAgentServiceTest {
             String sessionId = "course_123_user_101";
             List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("Competency created successfully"));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -504,7 +508,7 @@ class AtlasAgentServiceTest {
                     new AssistantMessage("TOPIC: Competency Management\nREQUIREMENTS: List all competencies\nCONSTRAINTS: Read-only\nCONTEXT: Course 123"),
                     new AssistantMessage("Here are your competencies"));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -520,7 +524,7 @@ class AtlasAgentServiceTest {
             List<Message> messages = List.of(new UserMessage("What are competencies?"),
                     new AssistantMessage("Competencies are learning objectives that define what students should know and be able to do."));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -536,7 +540,7 @@ class AtlasAgentServiceTest {
             String sessionId = "course_123_user_404";
             List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage("Message"));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -551,7 +555,7 @@ class AtlasAgentServiceTest {
             String sessionId = "course_123_user_505";
             List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage("Message"));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -572,7 +576,7 @@ class AtlasAgentServiceTest {
             var preview2 = new CompetencyPreviewDTO("Test 2", "Desc 2", "ANALYZE", null, null);
             var previewData2 = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview2), null, null, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData1, 2, previewData2));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -604,7 +608,7 @@ class AtlasAgentServiceTest {
             var preview = new CompetencyPreviewDTO("OOP", "Test", "APPLY", null, null);
             var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(List.of(preview), null, null, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             // Index 0 = briefing (skipped), index 1 = "Competency created", index 2 = "Task completed"
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(1, previewData));
 
@@ -646,7 +650,7 @@ class AtlasAgentServiceTest {
             var relationPreview = new CompetencyRelationPreviewDTO(null, 1L, "OOP", 2L, "Patterns", RelationType.ASSUMES, false);
             var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(null, List.of(relationPreview), null, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -667,7 +671,7 @@ class AtlasAgentServiceTest {
             var graphPreview = new RelationGraphPreviewDTO(nodes, edges, false);
             var previewData = new AtlasAgentSessionCacheService.MessagePreviewData(null, null, graphPreview, null);
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of(0, previewData));
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -682,7 +686,7 @@ class AtlasAgentServiceTest {
             String sessionId = "course_123_user_action_confirm";
             List<Message> messages = List.of(new UserMessage("Approve"), new AssistantMessage("[CREATE_APPROVED_RELATION]"), new AssistantMessage("Relation created"));
 
-            when(chatMemory.get(sessionId)).thenReturn(messages);
+            AtlasSessionTestSupport.givenConversation(sessionService, sessionId, messages);
             when(atlasAgentSessionCacheService.getPreviewHistory(sessionId)).thenReturn(Map.of());
 
             List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
@@ -702,7 +706,7 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldReturnFalseWhenChatMemoryNull() {
+        void shouldReturnFalseWhenSessionMemoryNull() {
             AtlasAgentService serviceWithNullMemory = new AtlasAgentService(null,
                     new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templateService, null),
                     new AtlasToolSurface(mainAgentToolCallbackProvider), new AtlasToolSurface(competencyExpertToolCallbackProvider),
