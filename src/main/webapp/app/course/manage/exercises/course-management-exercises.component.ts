@@ -8,14 +8,11 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiEmptyStateComponent,
-    TumAetUiPanelComponent,
-    TumAetUiSelectButtonComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {

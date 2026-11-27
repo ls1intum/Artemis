@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 interface TaxonomyOption {

@@ -11,9 +11,6 @@ interface SeedCourse {
     id: number;
     shortName: string;
     title: string;
-    studentGroup: string;
-    tutorGroup: string;
-    instructorGroup: string;
 }
 
 function makeSeedCourse(id: number, shortName: string, title: string): SeedCourse {
@@ -21,9 +18,6 @@ function makeSeedCourse(id: number, shortName: string, title: string): SeedCours
         id,
         shortName,
         title,
-        studentGroup: `artemis-${shortName}-students`,
-        tutorGroup: `artemis-${shortName}-tutors`,
-        instructorGroup: `artemis-${shortName}-instructors`,
     };
 }
 
