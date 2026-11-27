@@ -8,7 +8,6 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { hashElement } from 'folder-hash';
 import { fileURLToPath } from 'url';
 import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
@@ -122,20 +121,32 @@ for (const group of groups) {
     }
 }
 
+/** A hash of the names and the content of all JSON files below a directory, which changes whenever one of them is added, removed, renamed or edited. */
+function hashJsonFiles(directory) {
+    const files = fs
+        .readdirSync(directory, { recursive: true })
+        .map((file) => file.split(path.sep).join('/'))
+        .filter((file) => file.endsWith('.json'))
+        .sort();
+    const hash = crypto.createHash('sha256');
+    for (const file of files) {
+        hash.update(`${file}\0`);
+        hash.update(fs.readFileSync(path.resolve(directory, file)));
+        hash.update('\0');
+    }
+    return hash.digest('hex');
+}
+
 // The hash that the client appends to the URLs of the catalog and of the slice, which browsers cache for a long time. It is computed after
 // the merge, so that it covers the generated files: a change of the slice alone, without a change of a source file, changes it as well.
-const languagesHash = await hashElement(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'), {
-    algo: 'md5',
-    encoding: 'hex',
-    files: { include: ['*.json'] },
-});
+const languagesHash = hashJsonFiles(path.resolve(repoRoot, 'src', 'main', 'webapp', 'i18n'));
 const environmentConfig = `// Don't change this file manually, it will be overwritten by the build process!
 export const __DEBUG_INFO_ENABLED__ = ${developFlag};
 export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
 // The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
 // If you use an API server, in \`prod\` mode, you will need to enable CORS
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
-export const I18N_HASH = '${languagesHash.hash}';
+export const I18N_HASH = '${languagesHash}';
 `;
 fs.writeFileSync(path.resolve(repoRoot, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 
