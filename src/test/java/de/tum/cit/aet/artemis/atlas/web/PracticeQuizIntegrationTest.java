@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -69,15 +70,19 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
 
     private QuizQuestionPoolItem poolItemUnreleased;
 
+    private Competency competency;
+
+    private LectureUnit lectureUnit;
+
     @BeforeEach
     void initTestCase() {
         featureToggleService.enableFeature(Feature.SmartQuizzes);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
-        Competency competency = competencyUtilService.createCompetency(course, "Practice Competency");
+        competency = competencyUtilService.createCompetency(course, "Practice Competency");
         Lecture lecture = lectureUtilService.createLecture(course);
-        LectureUnit lectureUnit = lectureUtilService.createTextUnit(lecture);
+        lectureUnit = lectureUtilService.createTextUnit(lecture);
 
         // Create practice-eligible questions in the AI question pool
         poolItem1 = createPoolItem(0, "Item 1 Title", "Item 1 Text", competency.getId(), lectureUnit.getId());
@@ -115,6 +120,29 @@ class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalV
         item.setQuestion(question);
 
         return quizQuestionPoolItemRepository.save(item);
+    }
+
+    @Test
+    void testPracticeEligibilityFollowsPoolReviewRules() {
+        QuizQuestionPoolItem flaggedPending = createPoolItem(3, "Flagged", "Text", competency.getId(), lectureUnit.getId());
+        flaggedPending.setReviewState(QuizQuestionReviewState.PENDING);
+        flaggedPending.setFlagged(true);
+        QuizQuestionPoolItem materialChanged = createPoolItem(4, "Material changed", "Text", competency.getId(), lectureUnit.getId());
+        materialChanged.setMaterialChanged(true);
+        QuizQuestionPoolItem excluded = createPoolItem(5, "Excluded", "Text", competency.getId(), lectureUnit.getId());
+        excluded.setReviewState(QuizQuestionReviewState.EXCLUDED);
+        QuizQuestionPoolItem acceptedPending = createPoolItem(6, "Accepted and not flagged", "Text", competency.getId(), lectureUnit.getId());
+        acceptedPending.setReviewState(QuizQuestionReviewState.PENDING);
+        acceptedPending.setFlagged(false);
+        // An instructor approval overrides the filter's rejection
+        QuizQuestionPoolItem approvedRejected = createPoolItem(7, "Approved after rejection", "Text", competency.getId(), lectureUnit.getId());
+        approvedRejected.setAccepted(false);
+        quizQuestionPoolItemRepository.saveAll(List.of(flaggedPending, materialChanged, excluded, acceptedPending, approvedRejected));
+
+        List<Long> eligibleIds = quizQuestionPoolItemRepository.findAllPracticeEligibleCandidatesByCourseId(course.getId()).stream().map(QuizQuestionPoolCandidateDTO::id).toList();
+
+        assertThat(eligibleIds).contains(poolItem1.getId(), acceptedPending.getId(), approvedRejected.getId()).doesNotContain(flaggedPending.getId(), materialChanged.getId(),
+                excluded.getId(), poolItemUnreleased.getId());
     }
 
     @Test

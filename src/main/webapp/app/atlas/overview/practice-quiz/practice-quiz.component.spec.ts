@@ -289,6 +289,31 @@ describe('PracticeQuizComponent', () => {
         expect(component.state()).toBe('QUIZ');
     });
 
+    it('should keep the review open while a new quiz from Practice Again is still loading', () => {
+        const pendingStart = new Subject<PracticeSessionDTO>();
+        vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));
+        vi.spyOn(practiceQuizService, 'getPastSessions').mockReturnValue(of([mockSummary]));
+        vi.spyOn(practiceQuizService, 'getSessionReview').mockReturnValue(of(mockReview));
+        vi.spyOn(practiceQuizService, 'startSession').mockReturnValue(pendingStart);
+        fixture.detectChanges();
+        component.openReview(42);
+        component.startNewQuiz();
+        fixture.detectChanges();
+
+        const backButtons = Array.from<HTMLButtonElement>(fixture.nativeElement.querySelectorAll('button')).filter((button) => button.textContent?.trim() === 'Back to Overview');
+        expect(backButtons).toHaveLength(2);
+        expect(backButtons.every((button) => button.disabled)).toBe(true);
+
+        // Leaving is ignored, so the delayed response cannot replace a quiz started later
+        component.backToOverview();
+        expect(component.state()).toBe('REVIEW');
+        expect(component.isLoading()).toBe(true);
+
+        pendingStart.next(mockSession);
+        expect(component.state()).toBe('QUIZ');
+        expect(component.currentSession()).toEqual(mockSession);
+    });
+
     it('should cancel pending requests of the previous course when the route switches to another course', () => {
         const pendingStart = new Subject<PracticeSessionDTO>();
         vi.spyOn(practiceQuizService, 'getCurrentSession').mockReturnValue(of(null));

@@ -222,7 +222,9 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="backToOverview()">Back to Overview</button>
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [disabled]="isLoading()" (click)="backToOverview()">
+                                Back to Overview
+                            </button>
                             <button tumAetUiButton type="button" size="small" [disabled]="isLoading()" (click)="startNewQuiz()">
                                 <fa-icon [icon]="faRedo" class="me-1" />
                                 <span>Practice Again</span>
@@ -283,7 +285,9 @@
 
                             <!-- Bottom Return Action -->
                             <div class="flex justify-center pt-4">
-                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="backToOverview()">Back to Overview</button>
+                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" [disabled]="isLoading()" (click)="backToOverview()">
+                                    Back to Overview
+                                </button>
                             </div>
                         </div>
                     </div>
