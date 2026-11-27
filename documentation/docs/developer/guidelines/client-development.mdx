@@ -793,6 +793,28 @@ model does not — whether the title is already used, which plagiarism control i
 - Keep Angular lifecycle hooks synchronous and start async work in a separate method (`@angular-eslint/no-async-lifecycle-method`). Avoid repeating entries in component
   metadata arrays (`@angular-eslint/no-duplicates-in-metadata-arrays`).
 
+### Duplicate dependencies
+
+The production client must resolve every package to one version. A second copy ships twice in the bundle, doubles
+the advisories to follow and breaks libraries that keep module-level state. It usually appears silently when one
+dependency is bumped and another still asks for the old range.
+
+`pnpm run check:duplicate-dependencies` reads `pnpm-lock.yaml`, follows the `dependencies` of every workspace project
+and fails when a package resolves to more than one version. It runs in the **Client Code Style** job of CI.
+When it fails:
+
+1. Run `pnpm why <package>` to see which two dependencies disagree.
+2. Align them: bump the dependency that asks for the old version, or add a scoped override to `pnpm-workspace.yaml`
+   (for example `'@xyflow/react>zustand': '5.1.0'`) with a comment that says why it is safe and when to drop it.
+3. Only if neither works yet, add the package to `supporting_scripts/client/duplicate-dependencies-allowlist.json`
+   with the exact versions and the reason. The check fails again once an allowlisted package is no longer
+   duplicated or resolves to other versions, so the list only shrinks.
+
+Before adding a direct dependency, check that no package of the same kind is already there (one markdown parser,
+one HTML parser, one diff library, one icon set) and that it does not pull in a second copy of something we ship.
+To check what users actually download, build with `ng build --configuration production --stats-json` and pass the
+metafile: `node supporting_scripts/client/check_duplicate_dependencies.mjs --stats <output>/browser-stats.json`.
+
 ### Preventing Memory Leaks
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.

@@ -85,7 +85,8 @@ jobs:
           node --test .github/scripts/sonar-pr.test.cjs .github/scripts/sonar-duplication.test.cjs .github/scripts/cancel-closed-pr-ci.test.cjs supporting_scripts/tests/sonar-test-artifacts.test.mjs .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs .github/scripts/limit-issue-body.test.cjs .github/scripts/verify-war-client.test.mjs \
             supporting_scripts/client/run-affected-tests.test.mjs \
             supporting_scripts/ci/E2E-tests/selection.test.mjs \
-            supporting_scripts/chunk-eager-loading/diff_eager_chunks.test.mjs
+            supporting_scripts/chunk-eager-loading/diff_eager_chunks.test.mjs \
+            supporting_scripts/client/check_duplicate_dependencies.test.mjs
           pnpm exec vitest run --config supporting_scripts/ci/E2E-tests/vitest.config.mjs
       - name: Setup Java for the Gradle filtering contract
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
