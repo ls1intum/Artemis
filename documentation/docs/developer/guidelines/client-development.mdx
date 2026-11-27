@@ -104,7 +104,7 @@ Key principles:
 
 <Callout variant={CalloutVariant.danger}>
     **TUM AET UI is the Artemis component system. Bootstrap, ng-bootstrap, and PrimeNG are removed from the client; do not add them again.** Use a component from
-    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists. The [TUM AET UI component kit](/developer/guidelines/tum-aet-ui-kit) is built on Angular Aria,
+    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists, and import it from its entry point (`@tumaet/ui-angular/<component>`), not from the package root. The [TUM AET UI component kit](/developer/guidelines/tum-aet-ui-kit) is built on Angular Aria,
     Angular CDK, and Tailwind tokens. When it lacks a capability, add the capability to the kit.
 </Callout>
 
@@ -983,7 +983,11 @@ only resolves `@import`, runs Tailwind and adds the vendor prefixes that the sup
 - **Do not import a stylesheet from TypeScript.** The build leaves CSS that a JavaScript module imports out of the
   bundles (`loader` in `angular.json`): the modules of the Monaco editor import their CSS, and the build used to write
   an unused copy of it next to every lazy chunk. A library that needs its stylesheet gets an `@import` in
-  `application.css` or an entry in `styles` of `angular.json`, as Monaco has.
+  `application.css` or an entry in `styles` of `angular.json`, as Monaco has. A stylesheet that embeds its fonts as
+  base64 data URIs (Apollon, Monaco) is not listed as it is: every visitor would download the fonts with every page.
+  Add it to `VENDOR_STYLESHEETS` in `supporting_scripts/client/prebuild.mjs` and list the copy in `vendor-styles/`, in which
+  the fonts are files that the browser fetches only when a glyph needs them (see
+  [First load of the sign-in page](#first-load-of-the-sign-in-page)).
 - **Do not write vendor prefixes** next to the standard property. The build adds `-webkit-user-select` and the
   like from the list of supported browsers in `.browserslistrc`. A property that exists only with a prefix
   (`-webkit-line-clamp`) stays as it is.
@@ -1440,6 +1444,27 @@ The application utility re-exports it, so existing callers keep their import pat
 member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
 `call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The package helper is the
 only place that disables the rule.
+
+### First load of the sign-in page
+
+A visitor of `/sign-in` is often on a slow connection and has downloaded nothing yet. On a slow 3G connection (400 kbit/s) every 100 KB is
+about two seconds. The page is meant to load with less than 500 KB of compressed data (the sum of the transfer sizes of one cold visit, not
+the size of the files), and what goes into the `main` bundle decides most of it. Measure with a production build (`pnpm run webapp:prod`), not
+with a development build: only the production build minifies the scripts and merges the chunks.
+
+- **Keep what only a signed-in user sees out of the application shell.** `AppComponent` and `NavbarComponent` are in `main`, and everything they
+  import statically is too. A part of them that only an authenticated user sees, such as the AI activity tray, the global search or the
+  notification overview, goes into a `@defer` block inside the `@if` that shows it. Imported statically, the tray brings the markdown renderer,
+  highlight.js, KaTeX and the exercise wizard into every visit. A deferred block is not loaded for an anonymous visitor.
+  In a spec, set `deferBlockBehavior: DeferBlockBehavior.Manual` and render the blocks with `fixture.getDeferBlocks()`.
+- **Import a large library when you need it.** The browser fingerprint library is loaded with `import()` in `BrowserFingerprintService`: the
+  fingerprint is sent with requests that come later, so the application does not wait for it.
+- **Translations start from a slice on `/` and `/sign-in`.** `prebuild.mjs` writes `i18n/{language}-landing.json` with the entries of
+  `LANDING_NAMESPACES` (a namespace, or a path into one such as `error.http`), and `SplitTranslateLoader` fetches it instead of the whole catalog.
+  The full catalog follows when the router leaves these routes, on the landing page when the browser is idle, and on the sign-in page with the first
+  pointer or key press of the visitor. When the sign-in page, its alerts or its footer show a key that is not in the slice, add the key
+  to `LANDING_NAMESPACES`; until the full catalog has loaded, the page shows `translation-not-found[...]` for it.
+- **Preload only what the route uses.** `index.html` preloads the poster of the landing page on `/` only.
 
 ## Advanced Topics
 

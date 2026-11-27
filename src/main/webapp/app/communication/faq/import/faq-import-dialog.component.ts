@@ -4,14 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 import { faFileImport, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogComponent,
-    TumAetUiEmptyStateComponent,
-    TumAetUiInputDirective,
-    TumAetUiPaginatorComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqImportCandidate } from 'app/communication/shared/entities/faq.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

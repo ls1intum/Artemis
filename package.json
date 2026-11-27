@@ -189,6 +189,9 @@
         "stylelint": "stylelint \"src/main/webapp/**/*.css\" && pnpm run tum-aet-ui:stylelint"
     },
     "stylelint": {
-        "extends": "./config/stylelint/stylelint.config.js"
+        "extends": "./config/stylelint/stylelint.config.js",
+        "ignoreFiles": [
+            "src/main/webapp/vendor-styles/**"
+        ]
     }
 }
