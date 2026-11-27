@@ -297,28 +297,30 @@ public class HyperionQuizQuestionPoolBuildService {
 
         private int consecutiveFailedBatches;
 
-        @Nullable
-        private Long lastFailedBatchItemId;
+        private Set<Long> lastFailedBatchItemIds = Set.of();
 
         private final Map<String, Integer> failures = new TreeMap<>();
 
         /**
          * Notes that the generation call of a batch failed. A failed batch goes back to the pool and is claimed again first, so its attempts follow one another and count as one
-         * batch; the generator counts as unavailable after {@link #MAX_CONSECUTIVE_FAILED_BATCHES} different batches in a row.
+         * batch; the generator counts as unavailable after {@link #MAX_CONSECUTIVE_FAILED_BATCHES} different batches in a row. Every failed call adds an attempt to each item, so
+         * the
+         * items whose attempts are used up leave the batch one by one: a retry is the same batch when all its items belong to the batch that failed, whichever of them it starts
+         * with.
          *
-         * @param firstItemId the id of the first item of the batch, which identifies the batch while the same items are claimed again
+         * @param itemIds the ids of the items of the batch whose call failed
          */
-        private void callFailed(@Nullable Long firstItemId) {
-            if (consecutiveFailedBatches == 0 || !Objects.equals(lastFailedBatchItemId, firstItemId)) {
+        private void callFailed(List<Long> itemIds) {
+            if (consecutiveFailedBatches == 0 || !lastFailedBatchItemIds.containsAll(itemIds)) {
                 consecutiveFailedBatches++;
-                lastFailedBatchItemId = firstItemId;
+                lastFailedBatchItemIds = Set.copyOf(itemIds);
             }
         }
 
         /** Notes that the generator answered, whatever the answer was. */
         private void callAnswered() {
             consecutiveFailedBatches = 0;
-            lastFailedBatchItemId = null;
+            lastFailedBatchItemIds = Set.of();
         }
 
         private boolean generatorUnavailable() {
@@ -636,7 +638,13 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             generate(course, userId, batch, materials, settings, counters);
             if (counters.generatorUnavailable()) {
-                generationUnavailable = true;
+                // The loop checks for a cancellation before its next unit of work, which this exit skips. An accepted cancellation still has to drop the pending items.
+                if (isCancelRequested(leaseToken)) {
+                    cancelled = true;
+                }
+                else {
+                    generationUnavailable = true;
+                }
                 break;
             }
             leaseHeld = renewLease(courseId, leaseToken);
@@ -732,7 +740,7 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         catch (Exception e) {
             log.warn("Generation of {} pool questions for lecture unit [{}] in course [{}] failed", batch.size(), first.getLectureUnitId(), course.getId(), e);
-            counters.callFailed(first.getId());
+            counters.callFailed(batch.stream().map(QuizQuestionPoolItem::getId).toList());
             batch.forEach(item -> recordGenerationFailure(item, FAILURE_CALL_FAILED, true, counters));
             return;
         }
