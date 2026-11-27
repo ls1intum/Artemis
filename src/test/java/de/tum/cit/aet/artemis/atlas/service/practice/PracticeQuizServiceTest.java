@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -269,6 +271,17 @@ class PracticeQuizServiceTest {
         log.setPracticeSession(session);
         log.setPoolItemId(poolItemId);
         return log;
+    }
+
+    @Test
+    void testSubmitKeepsSessionOpenWhenPoolIsUnavailable() {
+        PracticeQuizService serviceWithoutPool = new PracticeQuizService(practiceSessionRepository, practiceLogRepository, courseCompetencyRepository, Optional.empty(),
+                practiceAllocationPolicy, jsonMapper);
+
+        assertThatThrownBy(() -> serviceWithoutPool.submitPracticeSession(course.getId(), 100L, student, new PracticeSubmissionDTO(List.of())))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("not available");
+
+        verify(practiceLogRepository, never()).completeSessionWithLogs(anyLong(), anyDouble(), anyDouble(), any(), anyList());
     }
 
     @Test

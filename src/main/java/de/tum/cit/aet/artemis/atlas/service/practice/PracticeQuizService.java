@@ -139,6 +139,10 @@ public class PracticeQuizService {
      * @return the review DTO with solutions, explanations, and scores
      */
     public PracticeSessionReviewDTO submitPracticeSession(long courseId, long sessionId, User user, PracticeSubmissionDTO submissionDTO) {
+        // Without the pool, no question could be graded, and the session would be completed with zero points
+        if (quizQuestionPoolApi.isEmpty()) {
+            throw new BadRequestAlertException("Quiz question pool service is not available", "practiceQuiz", "poolNotAvailable");
+        }
         PracticeSession session = practiceSessionRepository.findByIdAndCourseIdAndUserIdOrElseThrow(sessionId, courseId, user.getId());
         if (session.getCompletedAt() != null) {
             throw new BadRequestAlertException("This practice session has already been completed", "practiceQuiz", "sessionAlreadyCompleted");
