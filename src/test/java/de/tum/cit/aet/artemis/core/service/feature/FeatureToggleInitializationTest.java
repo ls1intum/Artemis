@@ -48,6 +48,22 @@ class FeatureToggleInitializationTest {
     }
 
     @Test
+    void irisSolutionChoiceDefaultsToEnabledAndPreservesTheGlobalChoiceAcrossServiceReinitialization() {
+        var provider = new LocalDataProviderService();
+        var websocket = mock(WebsocketMessagingService.class);
+        var profiles = mock(ProfileService.class);
+        var rateLimit = mock(RateLimitConfigurationService.class);
+        var service = new FeatureToggleService(websocket, provider, profiles, rateLimit, false, false, false, false);
+        assertThat(service.isFeatureEnabled(Feature.IrisSolutionChoice)).isTrue();
+        service.disableFeature(Feature.IrisSolutionChoice);
+
+        var restarted = new FeatureToggleService(websocket, provider, profiles, rateLimit, false, false, false, false);
+        assertThat(restarted.isFeatureEnabled(Feature.IrisSolutionChoice)).isFalse();
+        restarted.enableFeature(Feature.IrisSolutionChoice);
+        assertThat(service.isFeatureEnabled(Feature.IrisSolutionChoice)).isTrue();
+    }
+
+    @Test
     void smartQuizzesDefaultsToDisabledAndKeepsAnExistingEnabledChoice() {
         var provider = new LocalDataProviderService();
         var websocket = mock(WebsocketMessagingService.class);

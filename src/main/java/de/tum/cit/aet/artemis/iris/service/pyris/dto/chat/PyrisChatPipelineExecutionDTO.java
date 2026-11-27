@@ -21,11 +21,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 /**
  * Everything Pyris needs for one chat run.
  *
- * @param solutionStep the step of the solution workflow the latest student message is, or null when Pyris should classify the message itself
+ * @param solutionStep          the step of the solution workflow the latest student message is, or null when no workflow step applies
+ * @param solutionChoiceEnabled whether Pyris may offer and execute the solution workflow for this run
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisChatPipelineExecutionDTO(IrisChatMode chatMode, List<PyrisMessageDTO> chatHistory, PyrisPipelineExecutionSettingsDTO settings, @Nullable String sessionTitle,
         PyrisUserDTO user, @Nullable String customInstructions, PyrisCourseDTO course, @Nullable PyrisProgrammingExerciseDTO programmingExercise,
         @Nullable PyrisTextExerciseDTO textExercise, @Nullable PyrisLectureDTO lecture, @Nullable Long lectureUnitId, @Nullable PyrisSubmissionDTO programmingExerciseSubmission,
-        @Nullable String textExerciseSubmission, @Nullable List<IrisMessageContextDTO> context, @Nullable IrisSolutionStep solutionStep) {
+        @Nullable String textExerciseSubmission, @Nullable List<IrisMessageContextDTO> context, @Nullable IrisSolutionStep solutionStep, boolean solutionChoiceEnabled) {
 }

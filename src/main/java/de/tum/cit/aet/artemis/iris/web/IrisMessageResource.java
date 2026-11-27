@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -93,9 +95,11 @@ public class IrisMessageResource {
 
     private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
+    private final FeatureToggleService featureToggleService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository,
-            IrisProactiveEpisodeService irisProactiveEpisodeService) {
+            IrisProactiveEpisodeService irisProactiveEpisodeService, FeatureToggleService featureToggleService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -103,6 +107,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -144,6 +149,9 @@ public class IrisMessageResource {
 
         var pendingContext = requestDTO.pendingContext();
         var solutionChoice = requestDTO.solutionChoice();
+        if (solutionChoice != null && !featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice)) {
+            throw new AccessForbiddenException("The Iris solution workflow is disabled");
+        }
         if (solutionChoice != null && (!(session instanceof IrisChatSession) || pendingContext != null)) {
             throw new BadRequestException("A solution choice must answer an offer in the current chat context");
         }

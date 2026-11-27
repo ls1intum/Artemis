@@ -55,6 +55,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 // Must match the constants in the component
@@ -220,6 +221,37 @@ describe('IrisBaseChatbotComponent', () => {
         chatService.messages.next([offer]);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]') !== null).toBe(shown);
+    });
+
+    it('reacts to the global toggle by hiding existing offers and summary invitations and restoring suggestions', () => {
+        const features = TestBed.inject(FeatureToggleService);
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('Here is the solution.'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+            ],
+        });
+        chatService.messages.next([offer]);
+        chatService.suggestions.next(['Explain the loop']);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).not.toBeNull();
+        expect(component.canShowSuggestions()).toBe(false);
+
+        features.initializeFeatureToggles([]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]')).toBeNull();
+        expect(component.canShowSuggestions()).toBe(true);
+        const send = vi.spyOn(chatService, 'sendMessage');
+        component['onSolutionChoice'](offer, 'SKIP_SUMMARY');
+        expect(send).not.toHaveBeenCalled();
+
+        features.initializeFeatureToggles([FeatureToggle.IrisSolutionChoice]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]')).not.toBeNull();
+        expect(component.canShowSuggestions()).toBe(false);
     });
 
     it('keeps declining the summary available at the response limit, because it asks Iris nothing', () => {

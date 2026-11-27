@@ -160,6 +160,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.GlobalSearchReconcile]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
         [FeatureToggle.GlobalSearchReconcileOrphan]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
         [FeatureToggle.SmartQuizzes]: 'https://docs.artemis.tum.de/admin/hyperion#configure-the-quiz-question-pool',
+        [FeatureToggle.IrisSolutionChoice]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#iris-solution-choice',
     };
 
     /** Documentation links for profile-based features */

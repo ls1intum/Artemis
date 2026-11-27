@@ -26,8 +26,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -83,6 +87,8 @@ class IrisChatPipelineContextTest {
 
     private AuthorizationCheckService authCheck;
 
+    private FeatureToggleService features;
+
     private IrisChatPipelineExecutionService service;
 
     private IrisChatSession session;
@@ -104,9 +110,11 @@ class IrisChatPipelineContextTest {
         dtoService = mock(PyrisDTOService.class);
         authCheck = mock(AuthorizationCheckService.class);
         texts = mock(TextRepositoryApi.class);
+        features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.IrisSolutionChoice)).thenReturn(true);
         service = new IrisChatPipelineExecutionService(sessions, courses, exercises, programmingExercises, mock(ProgrammingExerciseStudentParticipationRepository.class),
                 mock(ProgrammingSubmissionRepository.class), mock(StudentParticipationRepository.class), Optional.of(texts), Optional.of(lectures), null, dtoService, pipelines,
-                authCheck);
+                authCheck, features);
         course = new Course();
         course.setId(1L);
         user = new User();
@@ -236,6 +244,7 @@ class IrisChatPipelineContextTest {
         var exercise = prepareProgrammingReferenceContext();
         appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
         var dto = runChatPipeline();
+        assertThat(dto.solutionChoiceEnabled()).isTrue();
         assertThat(dto.solutionStep()).isEqualTo(IrisSolutionStep.SHOW_SOLUTION);
         var result = dto.programmingExercise();
         assertThat(result.solutionRepository()).containsEntry("Main.java", "INSTRUCTOR SOLUTION");
@@ -243,6 +252,26 @@ class IrisChatPipelineContextTest {
         assertThat(result.testRepository()).isEmpty();
         verify(dtoService).toPyrisProgrammingExerciseWithSolutionDTO(exercise);
         verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void disabledSolutionChoiceIgnoresStoredClicksAndTypedReplies(boolean typedReply) {
+        prepareProgrammingReferenceContext();
+        if (typedReply) {
+            appendOffer(SOLUTION_CHOICES);
+            session.getMessages().add(message(IrisMessageSender.USER, "yes"));
+        }
+        else {
+            appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
+        }
+        when(features.isFeatureEnabled(Feature.IrisSolutionChoice)).thenReturn(false);
+        var dto = runChatPipeline();
+        assertThat(dto.solutionChoiceEnabled()).isFalse();
+        assertThat(JsonMapper.builder().build().writeValueAsString(dto)).contains("\"solutionChoiceEnabled\":false");
+        assertThat(dto.solutionStep()).isNull();
+        assertThat(dto.programmingExercise().solutionRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
     }
 
     /** Every choice but the explicit one for the solution is its own step and keeps the reference back; a declined summary is no step. */

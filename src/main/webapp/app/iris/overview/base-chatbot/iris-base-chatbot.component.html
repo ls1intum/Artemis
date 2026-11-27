@@ -368,7 +368,7 @@
                                                     [citationInfo]="citationInfo()"
                                                     (answerChanged)="onMcqAnswerChanged(message, $event)"
                                                 />
-                                            } @else if (isSolutionOffer(content)) {
+                                            } @else if (solutionChoiceEnabled() && isSolutionOffer(content)) {
                                                 <jhi-iris-solution-choice
                                                     [choices]="offeredChoices(content)"
                                                     [disabledChoices]="disabledSolutionChoices(message, offeredChoices(content))"

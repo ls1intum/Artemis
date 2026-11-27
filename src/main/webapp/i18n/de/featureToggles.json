@@ -216,6 +216,11 @@
                     "description": "Durchsucht den Suchindex der globalen Suche nach Einträgen, deren zugehöriges Objekt nicht mehr existiert, und entfernt sie – abgeleitet allein aus dem Index, nicht für jedes Objekt einzeln anhand der Datenbank bestätigt. Zuerst „Globale Suche: Abgleich“ einschalten und beobachten, bevor dies aktiviert wird.",
                     "disableWarning": "Suchergebnisse können Einträge für bereits gelöschte Objekte enthalten, bis dies wieder eingeschaltet wird."
                 },
+                "IrisSolutionChoice": {
+                    "name": "Iris-Lösungsauswahl",
+                    "description": "Erlaubt Iris, in Aufgaben-Chats vollständige Lösungen anzubieten und anschließend optional um eine Zusammenfassung in eigenen Worten zu bitten.",
+                    "disableWarning": "Lösungsangebote und Zusammenfassungsaufforderungen werden ausgeblendet. Iris unterstützt wieder regulär, ohne vollständige Lösungen bereitzustellen."
+                },
                 "SmartQuizzes": {
                     "name": "Smart Quizzes",
                     "description": "Ermöglicht es Lehrenden, Quizfragenpools zu verwalten und sie manuell oder zeitgesteuert aufzubauen. Erfordert Hyperion und Atlas.",

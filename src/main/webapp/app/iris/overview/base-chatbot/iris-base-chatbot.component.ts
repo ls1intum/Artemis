@@ -16,6 +16,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -166,6 +167,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
+    private readonly featureToggleService = inject(FeatureToggleService);
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
@@ -246,6 +248,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
     readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
+    readonly solutionChoiceEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisSolutionChoice), { initialValue: false });
+
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
@@ -257,7 +261,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     /** The fixed invitation to summarize ends the last text of an answer that offers the summary, so it reads as part of the answer. */
     protected endsWithSummaryInvitation(message: IrisMessage, content: IrisMessageContent): boolean {
-        return message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) && message.content.filter(isTextContent).at(-1) === content;
+        return (
+            this.solutionChoiceEnabled() &&
+            message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) &&
+            message.content.filter(isTextContent).at(-1) === content
+        );
     }
     protected selectedSolutionChoice(message: IrisMessage): IrisSolutionChoice | undefined {
         return message.id === undefined ? undefined : this.solutionChoices().get(message.id);
@@ -274,7 +282,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     /** The buttons of {@link disabledSolutionChoices} emit no choice. */
     protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
-        if (message.id === undefined) return;
+        if (!this.solutionChoiceEnabled() || message.id === undefined) return;
         const label = this.translateService.instant(SOLUTION_CHOICE_LABEL_KEYS[choice]);
         const provider = this.contextProvider();
         this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
@@ -350,7 +358,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () => !!this.suggestions()?.length && this.isAIEnabled() && this.active() && !this.hasReachedRateLimit() && !this.awaitingAnswer() && !this.offerIsOpen(),
     );
     /** While an offer waits for the student's choice, its buttons are the next step; the suggestions of a solution appear once the summary is declined. */
-    private readonly offerIsOpen = computed(() => this.latestMessage()?.content.some(isSolutionOffer) ?? false);
+    private readonly offerIsOpen = computed(() => this.solutionChoiceEnabled() && (this.latestMessage()?.content.some(isSolutionOffer) ?? false));
     readonly isScrolledToBottom = signal(true);
     readonly exchangeSpacerPx = signal(0);
     private pendingAnchorScroll = false;

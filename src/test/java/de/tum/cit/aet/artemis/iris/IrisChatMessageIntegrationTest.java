@@ -54,6 +54,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -157,6 +159,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @Autowired
     private PyrisJobService pyrisJobService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private AtomicBoolean pipelineDone;
 
     @Override
@@ -194,6 +199,30 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(((IrisTextMessageContent) userMessage.getContent().getFirst()).getTextContent()).isEqualTo("Button label");
         var action = ((IrisJsonMessageContent) userMessage.getContent().getLast()).readAs(IrisSolutionChoiceDTO.class);
         assertThat(action).isEqualTo(new IrisSolutionChoiceDTO(savedOffer.getId(), choice));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "PROGRAMMING_EXERCISE_CHAT,SHOW_SOLUTION", "TEXT_EXERCISE_CHAT,SHOW_SOLUTION", "PROGRAMMING_EXERCISE_CHAT,SKIP_SUMMARY" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsClicksWhenGloballyDisabled(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(solutionOffer(mode, session.getEntityId(), List.of(choice)));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
+        boolean previouslyEnabled = featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice);
+        featureToggleService.disableFeature(Feature.IrisSolutionChoice);
+        try {
+            request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.FORBIDDEN);
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).noneMatch(message -> message.getSender() == IrisMessageSender.USER);
+        }
+        finally {
+            if (previouslyEnabled) {
+                featureToggleService.enableFeature(Feature.IrisSolutionChoice);
+            }
+        }
     }
 
     /** An offer of another session, an offer bound to another exercise, and a choice the offer does not make. */

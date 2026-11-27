@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -110,11 +112,13 @@ public class IrisChatPipelineExecutionService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final FeatureToggleService featureToggleService;
+
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
-            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService) {
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, FeatureToggleService featureToggleService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -128,6 +132,7 @@ public class IrisChatPipelineExecutionService {
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.authCheckService = authCheckService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -188,10 +193,11 @@ public class IrisChatPipelineExecutionService {
         var runMessageId = event.isEmpty() ? userMessageId : null;
         int runMessage = runMessageId == null ? -1 : indexOf(chatSession.getMessages(), runMessageId);
         var history = runMessage < 0 ? chatSession.getMessages() : chatSession.getMessages().subList(0, runMessage + 1);
-        var solutionStep = runMessage < 0 ? null : solutionStep(chatSession, history);
+        boolean solutionChoiceEnabled = featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice);
+        var solutionStep = !solutionChoiceEnabled || runMessage < 0 ? null : solutionStep(chatSession, history);
         pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId, runMessageId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
-                        latestSubmission, uncommittedFiles, context, history, solutionStep));
+                        latestSubmission, uncommittedFiles, context, history, solutionStep, solutionChoiceEnabled));
     }
 
     /**
@@ -202,7 +208,7 @@ public class IrisChatPipelineExecutionService {
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
-            List<IrisMessageContextDTO> context, List<IrisMessage> history, @Nullable IrisSolutionStep solutionStep) {
+            List<IrisMessageContextDTO> context, List<IrisMessage> history, @Nullable IrisSolutionStep solutionStep, boolean solutionChoiceEnabled) {
         var messages = pyrisDTOService.toPyrisMessageDTOList(history);
         // A typed reply may choose the solution, which Pyris only learns from the reply, so it needs the reference already.
         boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION || solutionStep == IrisSolutionStep.OFFER_REPLY;
@@ -284,7 +290,7 @@ public class IrisChatPipelineExecutionService {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
-                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext, solutionStep);
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext, solutionStep, solutionChoiceEnabled);
     }
 
     /**
