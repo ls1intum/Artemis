@@ -82,6 +82,19 @@ describe('migrated client import restrictions', () => {
         }
     });
 
+    it('lets the specs of TUM AET UI import icons from the package root, as the kit does, and keeps the other restrictions there', async () => {
+        const kitSpec = 'packages/tum-aet-ui/src/lib/button/tumaet-ui-button.component.spec.ts';
+
+        expect(await importErrors(kitSpec, 'import { faTrash } from "@fortawesome/free-solid-svg-icons";')).toEqual([]);
+        for (const source of [
+            'import * as dependency from "lodash";',
+            'import { NgZone } from "@angular/core";',
+            'import { TumAetUiButtonComponent } from "@tumaet/ui-angular";',
+        ]) {
+            expect(await importErrors(kitSpec, source), source).toHaveLength(1);
+        }
+    });
+
     it.each(iconRestrictedFiles)('allows an icon from its own module and the other FontAwesome packages in %s', async (filePath) => {
         for (const source of [
             'import { faTrash } from "@fortawesome/free-solid-svg-icons/faTrash";',

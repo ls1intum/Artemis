@@ -160,6 +160,21 @@ describe('migrate-fontawesome-imports', () => {
             expect(run(rewritten, '--check').status).toBe(0);
         });
 
+        it('recognizes an import with double quotes, which prettier would turn into single quotes', () => {
+            const content = `import { faTrash } from "@fortawesome/free-solid-svg-icons";\n`;
+            const file = join(directory, 'double-quotes.ts');
+            writeFileSync(file, content);
+
+            const check = run(file, '--check');
+            const migrate = run(file);
+
+            expect(check.status).toBe(1);
+            expect(check.stderr).toContain('imports the root of an icon package');
+            expect(migrate.status).toBe(0);
+            expect(readFileSync(file, 'utf8')).toContain(`from '@fortawesome/free-solid-svg-icons/faTrash';`);
+            expect(run(file, '--check').status).toBe(0);
+        });
+
         it('exits with 1 for a name it cannot place', () => {
             const file = join(directory, 'unknown.ts');
             writeFileSync(file, `import { notAnIcon } from '@fortawesome/free-solid-svg-icons';\n`);

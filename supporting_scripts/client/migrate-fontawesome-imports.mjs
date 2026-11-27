@@ -135,14 +135,15 @@ function main() {
     const check = args.includes('--check');
     const paths = args.filter((arg) => !arg.startsWith('--'));
     const targets = paths.length > 0 ? paths : [join(repoRoot, 'src/main/webapp'), join(repoRoot, 'src/test')];
-    const importsRoot = [...packages.keys()].map((name) => `'${name}'`);
+    // A cheap filter before parsing, independent of the quote style: the parser decides whether a file really imports a package root.
+    const packageNames = [...packages.keys()];
 
     let changedFiles = 0;
     const stillImporting = [];
     const problems = [];
     for (const file of targets.flatMap((target) => collectFiles(target))) {
         const text = readFileSync(file, 'utf8');
-        if (!importsRoot.some((specifier) => text.includes(specifier))) continue;
+        if (!packageNames.some((name) => text.includes(name))) continue;
         const relative = file.startsWith(repoRoot) ? file.slice(repoRoot.length + 1) : file;
         const plan = planRewrite(file, text);
         problems.push(...plan.problems.map((problem) => `${relative}: ${problem}`));

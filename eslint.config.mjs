@@ -359,6 +359,25 @@ export default tseslint.config(
             'localRules/require-chart-accessible-name': 'error',
         },
     },
+    // The specs of TUM AET UI import icons from the package root, as its sources do: the kit is a published package, so it cannot depend on the modules that
+    // the prebuild of this repository generates. The block repeats the other restrictions of the one above, which it overrides.
+    {
+        files: ['packages/tum-aet-ui/**/*.spec.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: tumAetUiConsumerImportPatterns,
+                },
+            ],
+        },
+    },
     // Force JSON.parse results to carry an explicit type. `JSON.parse` is declared to return `any`, which
     // silently disables type checking on everything derived from it — a typo like `obj.colour` compiles and
     // yields `undefined` at runtime. Route parsing through `parseJson<T>()` (app/foundation/util/json.util),

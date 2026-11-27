@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { ICON_PACKAGES, OUTPUT_DIRECTORY, generateIconModules, iconModuleSource, iconNames } from './fontawesome-icons.mjs';
+import { ICON_PACKAGES, OUTPUT_DIRECTORY, PROVENANCE_FILE, generateIconModules, iconModuleSource, iconNames } from './fontawesome-icons.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const require = createRequire(join(repoRoot, 'package.json'));
@@ -77,5 +77,15 @@ describe('FontAwesome icon modules', () => {
         const solid = readFileSync(join(repoRoot, OUTPUT_DIRECTORY, 'free-solid-svg-icons', 'faTrash.ts'), 'utf8');
         expect(solid).toContain('export const faTrash = ');
         expect(existsSync(join(repoRoot, OUTPUT_DIRECTORY, 'free-regular-svg-icons', 'faCircleCheck.ts'))).toBe(true);
+    });
+
+    it('records the version of each package next to the modules, for the SBOM of a release', () => {
+        generateIconModules();
+
+        const provenance = JSON.parse(readFileSync(join(repoRoot, OUTPUT_DIRECTORY, PROVENANCE_FILE), 'utf8'));
+
+        expect(provenance).toEqual(
+            Object.fromEntries(ICON_PACKAGES.map((packageName) => [`@fortawesome/${packageName}`, require(`@fortawesome/${packageName}/package.json`).version])),
+        );
     });
 });

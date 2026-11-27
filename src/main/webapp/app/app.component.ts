@@ -18,6 +18,7 @@ import { BrowserFingerprintService } from 'app/account/fingerprint/browser-finge
 import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionLoadErrorComponent } from 'app/logos/llm-selection-load-error.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
@@ -37,6 +38,7 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
         FooterComponent,
         CourseNotificationPopupOverlayComponent,
         LLMSelectionModalComponent,
+        LLMSelectionLoadErrorComponent,
         GlobalSearchModalComponent,
         SetupPasskeyModalComponent,
     ],

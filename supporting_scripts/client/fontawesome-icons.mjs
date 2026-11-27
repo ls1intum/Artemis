@@ -25,6 +25,8 @@ export const ICON_PACKAGES = ['free-solid-svg-icons', 'free-regular-svg-icons'];
 export const OUTPUT_DIRECTORY = 'build/fontawesome';
 
 const STAMP_FILE = '.generated';
+/** The file in the output directory that names the package, with its version, that each directory of generated modules comes from. */
+export const PROVENANCE_FILE = 'packages.json';
 // An icon is a file `fa<Name>.js`: the name of an icon starts with `fa` and goes on with a capital letter or a digit.
 const ICON_FILE = /^(fa[A-Z0-9][A-Za-z0-9]*)\.js$/;
 
@@ -84,6 +86,12 @@ export function generateIconModules(root = repoRoot) {
             written++;
         }
     }
+    // The data of the icons ships in the client, so the SBOM of a release has to name the packages that it comes from: the paths of the generated modules in
+    // the source maps of the build do not, and supporting_scripts/sbom-filter-by-bundle.mjs reads the versions from here.
+    writeFileSync(
+        join(output, PROVENANCE_FILE),
+        `${JSON.stringify(Object.fromEntries(packages.map(({ packageName, version }) => [`@fortawesome/${packageName}`, version])), null, 2)}\n`,
+    );
     writeFileSync(join(output, STAMP_FILE), stamp);
     return written;
 }

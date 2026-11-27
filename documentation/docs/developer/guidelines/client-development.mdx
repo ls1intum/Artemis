@@ -1467,6 +1467,9 @@ with a development build: only the production build minifies the scripts and mer
   not for a visitor of the sign-in page. A popup that does not exist yet cannot hear an event, so `LLMSelectionModalService` keeps the request as
   state (`pendingRequest`) until the user answers, and the popup reads it when it is created. Use the same shape for another popup that is opened
   from a service: a `Subject` alone loses a request that comes before the popup exists, and the caller that awaits the answer waits for ever.
+  The block has an `@error` branch for a download that fails, for example when a deployment has replaced the file of the popup while a tab is open:
+  `LLMSelectionLoadErrorComponent` answers every request as dismissed, so that no caller waits, and offers a reload, which is the only way to get the
+  code again.
 - **Import each icon from its own module.** `import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'`, and likewise for
   `@fortawesome/free-regular-svg-icons`; never from the package root. The root is one file with all icons, and the build puts everything that any
   lazy route takes from one file into the chunk that `main` loads, so the icons of the whole application would be part of the first download.
@@ -1475,6 +1478,8 @@ with a development build: only the production build minifies the scripts and mer
   for the icon. ESLint rejects the package root. `node supporting_scripts/client/migrate-fontawesome-imports.mjs` rewrites imports after a merge
   (`--check` only lists them), and moves `IconDefinition` and the other types that the packages re-export to `@fortawesome/fontawesome-svg-core`.
   A name that is not an icon file of the package, such as a deprecated alias that only the root exports, stays as it is and is reported.
+  The generated modules record the version of each package in `build/fontawesome/packages.json`, because their paths in the source maps do not name the
+  package: `supporting_scripts/sbom-filter-by-bundle.mjs` reads it, so that the SBOM of a release still lists the packages whose icon data ships.
 - **Let the server compress the scripts.** `server.compression.mime-types` of `application-prod.yml` lists `text/javascript`, which is what the
   client scripts are served as. A proxy in front of Artemis then caches the compressed response once; a response that the proxy compresses
   on its way out is recompressed for every request.

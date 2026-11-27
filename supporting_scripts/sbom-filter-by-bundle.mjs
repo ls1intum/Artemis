@@ -20,6 +20,7 @@
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
 
 const [, , inputPath, outputPath, buildDir] = process.argv;
 if (!inputPath || !outputPath || !buildDir) {
@@ -28,6 +29,29 @@ if (!inputPath || !outputPath || !buildDir) {
 }
 
 const PNPM_ID_RE = /\.pnpm\/([^/]+)\/node_modules\//;
+
+// The icons of FontAwesome are imported from modules that the prebuild generates from the installed packages
+// (supporting_scripts/client/fontawesome-icons.mjs), so their paths in the source maps (`build/fontawesome/<package>/<icon>.ts`) do not name the
+// package or its version, although the data of the icons ships. The generator records the versions in a file beside the modules.
+const GENERATED_ICON_RE = /(?:^|\/)build\/fontawesome\/([^/]+)\//;
+const ICON_PROVENANCE_FILE = process.env.FONTAWESOME_PROVENANCE_FILE ?? fileURLToPath(new URL('../build/fontawesome/packages.json', import.meta.url));
+let iconProvenance;
+
+function generatedIconPackage(directory) {
+    if (!iconProvenance) {
+        if (!existsSync(ICON_PROVENANCE_FILE)) {
+            console.error(`sbom filter: the bundle contains generated icon modules, but ${ICON_PROVENANCE_FILE} that names their packages is missing — run the prebuild.`);
+            process.exit(1);
+        }
+        iconProvenance = JSON.parse(readFileSync(ICON_PROVENANCE_FILE, 'utf8'));
+    }
+    const name = `@fortawesome/${directory}`;
+    if (!iconProvenance[name]) {
+        console.error(`sbom filter: the bundle contains generated icon modules of ${name}, which ${ICON_PROVENANCE_FILE} does not list.`);
+        process.exit(1);
+    }
+    return { name, version: iconProvenance[name] };
+}
 
 function parsePnpmId(eid) {
     // `@angular+core@21.2.12_<peer hash>` -> { name: '@angular/core', version: '21.2.12' }
@@ -70,6 +94,13 @@ function scanMaps(dir) {
             process.exit(1);
         }
         for (const src of sm.sources || []) {
+            const generated = src.match(GENERATED_ICON_RE);
+            if (generated) {
+                const parsed = generatedIconPackage(generated[1]);
+                seenNames.add(parsed.name);
+                shipped.set(`${parsed.name}@${parsed.version}`, parsed);
+                continue;
+            }
             if (!src.includes('/.pnpm/')) continue;
             const m = src.match(PNPM_ID_RE);
             if (!m) continue;
@@ -194,9 +225,7 @@ const missing = [...shipped.values()].filter((s) => {
     return true;
 });
 
-console.log(
-    `sbom filter: ${mapCount} maps scanned, ${shipped.size} shipped packages, ${newComponents.length} components kept`,
-);
+console.log(`sbom filter: ${mapCount} maps scanned, ${shipped.size} shipped packages, ${newComponents.length} components kept`);
 
 if (fallbackMatches.length > 0) {
     console.warn(`sbom filter: ${fallbackMatches.length} opaque-version fallback match(es):`);

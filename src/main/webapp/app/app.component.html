@@ -23,6 +23,9 @@
     @if (isAuthenticated()) {
         @defer (when isLlmSelectionModalOpen(); prefetch on idle) {
             <jhi-llm-selection-modal />
+        } @error {
+            <!-- The code of the popup could not be loaded: answer the request as dismissed and offer a reload, instead of leaving the caller waiting. -->
+            <jhi-llm-selection-load-error />
         }
     }
     <jhi-setup-passkey-modal />
