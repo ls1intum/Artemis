@@ -638,11 +638,13 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             generate(course, userId, batch, materials, settings, counters);
             if (counters.generatorUnavailable()) {
-                // The loop checks for a cancellation before its next unit of work, which this exit skips. An accepted cancellation still has to drop the pending items.
-                if (isCancelRequested(leaseToken)) {
+                // The loop renews the lease and checks for a cancellation before its next unit of work, which this exit skips. The lease comes first: a build that lost it must not
+                // drop the pending items of the course, which belong to the build that took the course over. An accepted cancellation still drops them.
+                leaseHeld = renewLease(courseId, leaseToken);
+                if (leaseHeld && isCancelRequested(leaseToken)) {
                     cancelled = true;
                 }
-                else {
+                else if (leaseHeld) {
                     generationUnavailable = true;
                 }
                 break;

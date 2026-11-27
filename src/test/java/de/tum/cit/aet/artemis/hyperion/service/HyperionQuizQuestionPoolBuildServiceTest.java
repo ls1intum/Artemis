@@ -525,6 +525,29 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         assertThat(items).hasSize(10);
     }
 
+    @Test
+    void build_doesNotDropTheItemsOfTheBuildThatTookTheCourseWhenItsLeaseWasLostDuringTheCallThatReachedTheLimit() {
+        stubPendingItemsOfOneCell(10, 1);
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+        int limitReachingCall = (HyperionQuizQuestionPoolBuildService.MAX_CONSECUTIVE_FAILED_BATCHES - 1) * HyperionQuizQuestionPoolBuildService.MAX_ATTEMPTS + 1;
+        AtomicInteger calls = new AtomicInteger();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == limitReachingCall) {
+                // The call takes longer than the lease: another build took over the course, and a cancellation was accepted for this build in the meantime.
+                assertThat(service.requestCancel(5L)).isTrue();
+                leases.put(5L, "other-node/replacement|" + System.currentTimeMillis());
+            }
+            throw new IllegalStateException("Network is unreachable");
+        });
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        // The pending items of the course now belong to the other build, so this build must not drop them.
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.LEASE_LOST);
+        verify(itemRepository, never()).deleteAllByCourseIdAndState(anyLong(), any());
+    }
+
     /**
      * Stubs a course whose pool holds the given number of pending items of one cell, handed out oldest first as long as they are pending, up to the batch size per generation call.
      */
