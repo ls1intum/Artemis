@@ -324,8 +324,9 @@ as the duplicate is gone. Do not add a direct dependency that overlaps one we al
 A page that does not show a diagram must not download the Apollon editor (about 330 KB compressed). Put
 `<jhi-modeling-editor>` and components that create it in `@defer (on idle)` (`on immediate` where it is needed at once), load
 `ApollonEditor` or `UMLDiagramType` with `import()` where code only sometimes needs it, and use `import type` for types. An exam
-prefetches the deferred modeling submission when it starts, so that a student does not depend on the network when opening an
-exercise. In a spec use `DeferBlockBehavior.Manual`. Details:
+prefetches the deferred modeling submission when it starts (best effort: a failure is ignored and the block loads the chunk itself), and
+every deferred block of an exam page has an `@error` block. Code that continues after an `import()` checks that its component still
+exists. In a spec use `DeferBlockBehavior.Manual`. Details:
 [Loading the diagram editor](../../documentation/docs/developer/guidelines/client-development.mdx#loading-the-diagram-editor).
 
 ## Other rules worth knowing

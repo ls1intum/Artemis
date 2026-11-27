@@ -1489,9 +1489,16 @@ single static import of a value from it, or of a component that creates the edit
   editor is opened after `await import(...)`. Use `import type` for types: they are erased and cost nothing.
 - **Keep constants out of files that import the editor.** `MAX_SIZE_UNIT` lives in `drop-location.model.ts` and not next to the quiz generator,
   so that the question editor can read it without the generator and Apollon.
-- **An exam must not depend on the network when a student opens an exercise.** The exam page defers the modeling submission, and
+- **An exam should not depend on the network when a student opens an exercise.** The exam page defers the modeling submission, and
   `ExamParticipationComponent` requests the chunk when the exam starts (`prefetchModelingEditor`), while the connection is known to work.
+  The prefetch is best effort: it does not wait for the request and ignores a failure. When the chunk is still missing at the moment the
+  exercise opens, the deferred block loads it itself, shows a loading indicator and, if that fails, an `@error` message
+  (`artemisApp.modelingEditor.loadFailed`). A deferred block that holds a component with live listeners (the update highlighter of an exam
+  exercise) also needs a fallback for the time before the component exists, see `ExamParticipationComponent.updateProblemStatement`.
   Do the same for any deferred part of the exam that a student needs during the exam.
+- **Give every deferred block of an exam page an `@error` block**, and make an action that depends on its content (the PDF export of the
+  summary) wait for the code of the block (`ExamResultSummaryComponent.printPDF`). Async work that continues after an `import()` checks that
+  the component still exists (`TeamSubmissionSyncComponent`, `QuizQuestionListEditComponent`).
 - **In a spec**, set `deferBlockBehavior: DeferBlockBehavior.Manual` and render the blocks with `fixture.getDeferBlocks()`, as in the
   [first load of the sign-in page](#first-load-of-the-sign-in-page). A spec of code that loads Apollon with `import()` awaits
   `vi.dynamicImportSettled()` before it asserts on what the code did afterwards.
