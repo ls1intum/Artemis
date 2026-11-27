@@ -8,7 +8,7 @@ import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-
 import { PoolQuestionView, PoolReviewRequest, PoolReviewState } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 /**
- * One judged pool question: the question card, the filter's flagged verdicts, the expandable rationale and the review decision.
+ * One judged pool question: the question card, the filter's flagged verdicts, the expandable explanations and rationale, and the review decision.
  */
 @Component({
     selector: 'jhi-quiz-question-pool-item',
@@ -34,6 +34,7 @@ export class QuizQuestionPoolItemComponent {
     /** Disables the delete button and explains why, while a build runs. */
     readonly deletionBlocked = input(false);
     readonly toggleRationale = output<number>();
+    readonly toggleExplanations = output<number>();
     readonly review = output<PoolReviewRequest>();
     readonly delete = output<number>();
 
