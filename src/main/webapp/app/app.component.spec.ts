@@ -27,6 +27,10 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { LtiService } from 'app/foundation/service/lti.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { User } from 'app/account/user/user.model';
 
 class MockThemeService {
     initialize() {
@@ -119,6 +123,42 @@ describe('AppComponent', () => {
 
     // Driven through real navigations to the routes registered above, so the router reports the NavigationError the
     // same way it does in the browser rather than the test pushing a synthetic event into its event stream.
+    describe('LLM selection popup', () => {
+        it('should not create the popup, and so not load its code, before a request to open it', async () => {
+            TestBed.inject(AccountService).userIdentity.set({ id: 1, login: 'student' } as User);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-llm-selection-modal'))).toBeNull();
+        });
+
+        it('should create the popup when a signed-in user makes a request to open it, although no popup existed to hear the request', async () => {
+            TestBed.inject(AccountService).userIdentity.set({ id: 1, login: 'student' } as User);
+            fixture.detectChanges();
+            void TestBed.inject(LLMSelectionModalService).open();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-llm-selection-modal'))).not.toBeNull();
+        });
+    });
+
+    describe('browser fingerprint', () => {
+        it('should start the fingerprint for a signed-in user only, so a visitor of the sign-in page never loads it', () => {
+            const startWhenIdle = vi.spyOn(TestBed.inject(BrowserFingerprintService), 'startWhenIdle');
+            const accountService = TestBed.inject(AccountService);
+
+            fixture.detectChanges();
+            expect(startWhenIdle).not.toHaveBeenCalled();
+
+            accountService.userIdentity.set({ id: 1, login: 'student' } as User);
+            fixture.detectChanges();
+
+            expect(startWhenIdle).toHaveBeenCalled();
+        });
+    });
+
     describe('navigation errors', () => {
         it('should hand a failed route chunk to the recovery service', async () => {
             const router = TestBed.inject(Router);

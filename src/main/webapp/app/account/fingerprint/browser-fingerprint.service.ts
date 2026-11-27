@@ -5,10 +5,20 @@ import { BehaviorSubject } from 'rxjs';
 import type { GetResult } from '@fingerprintjs/fingerprintjs';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
+/** How long a request that needs the fingerprint waits for it, so that a slow or blocked library never holds a request back. */
+const FINGERPRINT_WAIT_MILLISECONDS = 3000;
+
+interface IdleWindow {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => void;
+}
+
 /**
  * Service for generating and managing browser fingerprints and instance identifiers.
- * Used for security purposes such as detecting suspicious login patterns or
- * identifying the same browser across sessions.
+ * The server records them with an exam session, to recognize the browser that takes an exam.
+ *
+ * The fingerprint comes from a library that is loaded on demand: {@link startWhenIdle} starts it for a signed-in user once the browser is idle,
+ * and {@link ensureFingerprint} starts it at once and waits for it, for the request that creates an exam session. A visitor of the sign-in page
+ * never loads it.
  *
  * - Browser Fingerprint: A hash generated from browser characteristics (screen size, plugins, etc.)
  *   that remains relatively stable across sessions on the same browser.
@@ -24,6 +34,12 @@ export class BrowserFingerprintService {
     private readonly INSTANCE_STORAGE_KEY = 'instanceIdentifier';
     /** Session storage key for persisting the browser session identifier */
     private readonly SESSION_STORAGE_KEY = 'sessionIdentifier';
+
+    /** Whether the server wants fingerprints: set by {@link initialize}, and false until then. */
+    private fingerprintsEnabled = false;
+    /** The generation of the fingerprint, once it has started. */
+    private fingerprint?: Promise<string | undefined>;
+    private idleStartScheduled = false;
 
     /**
      * Observable containing the browser fingerprint hash.
@@ -57,8 +73,8 @@ export class BrowserFingerprintService {
         this.initializeSessionIdentifier();
 
         // Default to enabled for backwards compatibility with older configurations
-        if (browserFingerprintsEnabled !== false) {
-            this.generateBrowserFingerprint();
+        this.fingerprintsEnabled = browserFingerprintsEnabled !== false;
+        if (this.fingerprintsEnabled) {
             this.initializeInstanceIdentifier();
         } else {
             this.clearStoredInstanceData();
@@ -66,23 +82,64 @@ export class BrowserFingerprintService {
     }
 
     /**
-     * Generates a browser fingerprint using FingerprintJS.
-     * The fingerprint is a hash based on browser characteristics like
+     * Starts generating the browser fingerprint once the browser is idle. Call it when a user is signed in: the server reads the fingerprint
+     * when an exam session starts, which is well after the sign-in, and an anonymous visitor does not need it. Safe to call repeatedly.
+     */
+    public startWhenIdle(): void {
+        if (!this.fingerprintsEnabled || this.fingerprint || this.idleStartScheduled || typeof window === 'undefined') {
+            return;
+        }
+        this.idleStartScheduled = true;
+        const start = () => void this.generateBrowserFingerprint();
+        const idleWindow = window as IdleWindow;
+        if (idleWindow.requestIdleCallback) {
+            idleWindow.requestIdleCallback(start, { timeout: 5000 });
+        } else {
+            window.setTimeout(start, 3000);
+        }
+    }
+
+    /** Whether fingerprints are enabled and the fingerprint is not available yet, so that a request which has to carry it must wait for {@link ensureFingerprint}. */
+    public isFingerprintPending(): boolean {
+        return this.fingerprintsEnabled && this.browserFingerprint.value === undefined;
+    }
+
+    /**
+     * Returns the fingerprint for a request that has to carry it, starting the generation if it has not started yet. The wait is bounded: when the
+     * library is slow, blocked or fails to load, this resolves to `undefined` and the request goes without a fingerprint, as it did before.
+     *
+     * @returns the fingerprint, or `undefined` when fingerprints are disabled or it is not available in time
+     */
+    public ensureFingerprint(): Promise<string | undefined> {
+        if (!this.fingerprintsEnabled) {
+            return Promise.resolve(undefined);
+        }
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const timeout = new Promise<undefined>((resolve) => {
+            timer = setTimeout(() => resolve(undefined), FINGERPRINT_WAIT_MILLISECONDS);
+        });
+        return Promise.race([this.generateBrowserFingerprint(), timeout]).finally(() => clearTimeout(timer));
+    }
+
+    /**
+     * Generates a browser fingerprint using FingerprintJS, once. The fingerprint is a hash based on browser characteristics like
      * screen resolution, installed fonts, plugins, and other attributes.
      */
-    private generateBrowserFingerprint(): void {
-        // The library is imported when it is needed, not with the main bundle: the fingerprint is only sent along with requests
-        // that come later, so the application does not have to wait for the library to start.
-        void import('@fingerprintjs/fingerprintjs')
+    private generateBrowserFingerprint(): Promise<string | undefined> {
+        // The library is imported when it is needed, not with the main bundle (see the class description for who needs it and when).
+        this.fingerprint ??= import('@fingerprintjs/fingerprintjs')
             .then(({ default: FingerprintJS }) => FingerprintJS.load())
             .then((fingerprintAgent: { get: () => Promise<GetResult> }) => fingerprintAgent.get())
             .then((result) => {
                 this.browserFingerprint.next(result.visitorId);
+                return result.visitorId;
             })
             .catch(() => {
                 // The library is a separate file, which can fail to load (a stale tab after a deployment, a content blocker, a bad connection).
-                // The fingerprint then stays unset: requests go without it, as they do before the library has loaded.
+                // The fingerprint then stays unset: requests go without it.
+                return undefined;
             });
+        return this.fingerprint;
     }
 
     /**

@@ -2,7 +2,8 @@ import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
-import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionModalRequest, LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { WritableSignal, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,12 +20,15 @@ describe('LLMSelectionModalComponent', () => {
     let modalService: LLMSelectionModalService;
     let router: Router;
     let openModalSubject: Subject<LLMSelectionDecision | undefined>;
+    let pendingRequest: WritableSignal<LLMSelectionModalRequest | undefined>;
 
     beforeEach(async () => {
         openModalSubject = new Subject<LLMSelectionDecision | undefined>();
+        pendingRequest = signal<LLMSelectionModalRequest | undefined>(undefined);
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
+            pendingRequest,
             emitChoice: vi.fn(),
         };
 
@@ -292,6 +296,89 @@ describe('LLMSelectionModalComponent', () => {
 
             expect(component.currentSelection()).toBeUndefined();
         });
+    });
+
+    describe('a request that was made before the popup existed', () => {
+        it('should open with the pending request and its selection when it is created', () => {
+            pendingRequest.set({ currentSelection: LLMSelectionDecision.LOCAL_AI });
+
+            fixture.detectChanges();
+
+            expect(component.isVisible()).toBe(true);
+            expect(component.currentSelection()).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should open with a pending request that has no selection yet', () => {
+            pendingRequest.set({});
+
+            fixture.detectChanges();
+
+            expect(component.isVisible()).toBe(true);
+            expect(component.currentSelection()).toBeUndefined();
+        });
+
+        it('should stay closed when no request is pending', () => {
+            fixture.detectChanges();
+
+            expect(component.isVisible()).toBe(false);
+        });
+    });
+});
+
+describe('LLM selection with the real service', () => {
+    async function createModalService(): Promise<LLMSelectionModalService> {
+        const modalService = new LLMSelectionModalService();
+        await TestBed.configureTestingModule({
+            imports: [LLMSelectionModalComponent],
+            providers: [
+                { provide: LLMSelectionModalService, useValue: modalService },
+                { provide: ProfileService, useValue: { isLLMDeploymentEnabled: () => false } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        return modalService;
+    }
+
+    it('shows a request that was made before the popup was created and resolves it with the choice', async () => {
+        const modalService = await createModalService();
+        // AppComponent creates the popup after the request: nothing subscribed to the request yet, which must neither lose it nor leave the caller waiting
+        const result = modalService.open(LLMSelectionDecision.LOCAL_AI);
+        const popup = TestBed.createComponent(LLMSelectionModalComponent);
+        popup.detectChanges();
+
+        expect(popup.componentInstance.isVisible()).toBe(true);
+        expect(popup.componentInstance.currentSelection()).toBe(LLMSelectionDecision.LOCAL_AI);
+
+        popup.componentInstance.selectCloud();
+
+        expect(await result).toBe(LLMSelectionDecision.CLOUD_AI);
+        expect(modalService.isOpen()).toBe(false);
+    });
+
+    it('does not show a request that has been answered when a popup is created later', async () => {
+        const modalService = await createModalService();
+        const result = modalService.open();
+        modalService.emitChoice(LLMSelectionDecision.NO_AI);
+        await result;
+
+        const popup = TestBed.createComponent(LLMSelectionModalComponent);
+        popup.detectChanges();
+
+        expect(popup.componentInstance.isVisible()).toBe(false);
+    });
+
+    it('shows a second request through the event when the popup already exists', async () => {
+        const modalService = await createModalService();
+        const popup = TestBed.createComponent(LLMSelectionModalComponent);
+        popup.detectChanges();
+        expect(popup.componentInstance.isVisible()).toBe(false);
+
+        const result = modalService.open(LLMSelectionDecision.CLOUD_AI);
+
+        expect(popup.componentInstance.isVisible()).toBe(true);
+        popup.componentInstance.selectNone();
+        expect(await result).toBe(LLMSelectionDecision.NO_AI);
     });
 });
 

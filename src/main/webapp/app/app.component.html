@@ -18,7 +18,13 @@
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />
-    <jhi-llm-selection-modal />
+    <!-- Only a signed-in user can ask for the popup. It is created when a request to open it arrives (the service keeps the request until the popup exists),
+         and its code is prefetched when the browser is idle, so that a visitor of the sign-in page never loads it. -->
+    @if (isAuthenticated()) {
+        @defer (when isLlmSelectionModalOpen(); prefetch on idle) {
+            <jhi-llm-selection-modal />
+        }
+    }
     <jhi-setup-passkey-modal />
     @if (showSkeleton() && !isShownViaLti()) {
         @if (isTestRunExam() || !isExamStarted()) {

@@ -6,8 +6,8 @@ import { BrowserFingerprintService } from 'app/account/fingerprint/browser-finge
 
 /**
  * HTTP interceptor that adds browser fingerprint, instance ID, and session ID headers to requests.
- * These headers are used by the server for security purposes like detecting
- * suspicious login patterns or session anomalies.
+ * The server records them with an exam session, and the session ID routes messages between the tabs of a user.
+ * A request that goes out before the fingerprint is available carries the other two identifiers only.
  */
 @Injectable()
 export class BrowserFingerprintInterceptor implements HttpInterceptor {
