@@ -137,8 +137,8 @@
                             "budgets": [
                                 {
                                     "type": "initial",
-                                    "maximumWarning": "4.5mb",
-                                    "maximumError": "10mb"
+                                    "maximumWarning": "2.35mb",
+                                    "maximumError": "2.5mb"
                                 },
                                 {
                                     "type": "anyComponentStyle",
@@ -162,6 +162,17 @@
                                 {
                                     "replace": "src/main/webapp/app/core/environments/environment.ts",
                                     "with": "src/main/webapp/app/core/environments/environment.override.ts"
+                                }
+                            ]
+                        },
+                        "stats": {
+                            "optimization": false,
+                            "statsJson": true,
+                            "budgets": [
+                                {
+                                    "type": "anyComponentStyle",
+                                    "maximumWarning": "1mb",
+                                    "maximumError": "1.6mb"
                                 }
                             ]
                         },
