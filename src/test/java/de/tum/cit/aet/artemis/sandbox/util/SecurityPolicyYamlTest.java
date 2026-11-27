@@ -56,4 +56,14 @@ class SecurityPolicyYamlTest {
         assertThat(SecurityPolicyYaml.read("- just\n- a list\n").valid()).isFalse();
         assertThat(SecurityPolicyYaml.read("key: !!java.io.File /etc/passwd\n").valid()).isFalse();
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "thisPolicyFileCompliesToThePolicyVersion: 1\n", "regardingTheSupervisedCode: []\n",
+            "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: de.example.SortingTest\n" })
+    void readsNoTestClassesWithoutAListOfThem(String yaml) {
+        SecurityPolicyYaml.ReadPolicy policy = SecurityPolicyYaml.read(yaml);
+
+        assertThat(policy.valid()).isTrue();
+        assertThat(policy.testClasses()).isEmpty();
+    }
 }
