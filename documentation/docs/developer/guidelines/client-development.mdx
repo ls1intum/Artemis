@@ -1474,6 +1474,30 @@ with a development build: only the production build minifies the scripts and mer
   reason in its description; lower it when a pull request makes the bundle smaller, so that the gain stays. The build that only produces
   the metafile for the eager-chunk report uses the `stats` configuration, which is unoptimized and has no limit for the initial files.
 
+### Loading the diagram editor
+
+The modeling editor (Apollon, with React and its UI libraries) is one of the largest chunks of the client: about 1.3 MB, around 330 KB
+compressed. A page that does not show or edit a diagram must not download it. The root entry `@tumaet/apollon` is one module, so a
+single static import of a value from it, or of a component that creates the editor, makes the whole chunk part of that page.
+
+- **Show the editor in a `@defer` block.** A component that sometimes shows a diagram (the sample solution in the assessment instructions,
+  the example solution, the exercise dashboard, an exam summary or timeline) puts `<jhi-modeling-editor>` and the components that create it
+  inside `@defer (on idle)`, or `@defer (on immediate)` where the user needs it at once. The compiler then moves the component into a
+  separate chunk, as long as nothing else in the file refers to it.
+- **Load code that needs the editor with `import()`.** A resolver, a service or an event handler that only sometimes needs `ApollonEditor` or
+  `UMLDiagramType` loads the package where it needs it (see `ModelingExerciseResolver` and `TeamSubmissionSyncComponent`). A dialog that hosts the
+  editor is opened after `await import(...)`. Use `import type` for types: they are erased and cost nothing.
+- **Keep constants out of files that import the editor.** `MAX_SIZE_UNIT` lives in `drop-location.model.ts` and not next to the quiz generator,
+  so that the question editor can read it without the generator and Apollon.
+- **An exam must not depend on the network when a student opens an exercise.** The exam page defers the modeling submission, and
+  `ExamParticipationComponent` requests the chunk when the exam starts (`prefetchModelingEditor`), while the connection is known to work.
+  Do the same for any deferred part of the exam that a student needs during the exam.
+- **In a spec**, set `deferBlockBehavior: DeferBlockBehavior.Manual` and render the blocks with `fixture.getDeferBlocks()`, as in the
+  [first load of the sign-in page](#first-load-of-the-sign-in-page). A spec of code that loads Apollon with `import()` awaits
+  `vi.dynamicImportSettled()` before it asserts on what the code did afterwards.
+- **Check with the eager-chunk report.** The pull request comment of the _Client Eager-Chunk Loading Report_ lists every route whose
+  eager chunks grew. A route that loads the editor chunk without showing a diagram appears there as a regression.
+
 ## Advanced Topics
 
 ### Checking access before a request

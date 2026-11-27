@@ -319,6 +319,15 @@ use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with 
 as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
 [Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
 
+## Loading the diagram editor
+
+A page that does not show a diagram must not download the Apollon editor (about 330 KB compressed). Put
+`<jhi-modeling-editor>` and components that create it in `@defer (on idle)` (`on immediate` where it is needed at once), load
+`ApollonEditor` or `UMLDiagramType` with `import()` where code only sometimes needs it, and use `import type` for types. An exam
+prefetches the deferred modeling submission when it starts, so that a student does not depend on the network when opening an
+exercise. In a spec use `DeferBlockBehavior.Manual`. Details:
+[Loading the diagram editor](../../documentation/docs/developer/guidelines/client-development.mdx#loading-the-diagram-editor).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
