@@ -1472,12 +1472,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
         const index = this.studentExam().exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const exercise = this.studentExam().exercises![index];
         const wasExerciseOpened = this.pageComponentVisited()[index];
-        if (wasExerciseOpened) {
+        if (wasExerciseOpened && this.hasSubmissionComponent(exercise)) {
             this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
         } else {
-            const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
+    }
+
+    /**
+     * Whether the submission component of an opened exercise exists, which is when its update highlighter listens for live updates.
+     * The modeling submission is rendered in a deferred block, so for a moment after the exercise was opened (while the diagram editor
+     * downloads) it is marked as opened but nobody listens: an update sent through the {@link ExamExerciseUpdateService} then reaches no
+     * one, is acknowledged and is lost. The exercise object is updated directly in that case, as for an exercise that was not opened, and
+     * the component shows the new problem statement when it appears.
+     */
+    private hasSubmissionComponent(exercise: Exercise): boolean {
+        if (exercise.type !== ExerciseType.MODELING) {
+            return true;
+        }
+        return this.currentPageComponents().some((component) => component.getExerciseId() === exercise.id);
     }
 }

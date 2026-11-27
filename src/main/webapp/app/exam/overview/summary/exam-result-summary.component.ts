@@ -362,12 +362,35 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isPrinting.set(true);
         this.expandProblemStatement.set(true);
 
+        await this.waitForDeferredSummaries();
         await this.themeService.print();
 
         this.isPrinting.set(false);
         this.expandProblemStatement.set(false);
 
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
+    }
+
+    /**
+     * The modeling summaries are rendered in deferred blocks, because they bring the diagram editor. On a page that has just loaded, the
+     * chunk may still be downloading when the student exports the PDF, and the print dialog would capture the page without the diagram.
+     * The import resolves when the chunk of the summary and the editor it imports are loaded; the blocks render with it, and the delay of
+     * {@link ThemeService.print} covers the rendering itself. A chunk that cannot be loaded does not stop the export.
+     */
+    private async waitForDeferredSummaries(): Promise<void> {
+        if (!this.studentExam().exercises?.some((exercise) => exercise.type === ExerciseType.MODELING)) {
+            return;
+        }
+        try {
+            await this.loadModelingSummary();
+        } catch {
+            // print what is there
+        }
+    }
+
+    /** Loads the code of the modeling summary. A method of its own, so that a test can hold the download back. */
+    protected loadModelingSummary(): Promise<unknown> {
+        return import('app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component');
     }
 
     scrollToOverviewOrTop() {

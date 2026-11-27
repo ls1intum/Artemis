@@ -75,6 +75,8 @@
                                         [readonly]="true"
                                         [examTimeline]="true"
                                     />
+                                } @error {
+                                    <p data-testid="modeling-editor-load-failed" jhiTranslate="artemisApp.modelingEditor.loadFailed"></p>
                                 }
                             }
                             @case (ExerciseType.PROGRAMMING) {

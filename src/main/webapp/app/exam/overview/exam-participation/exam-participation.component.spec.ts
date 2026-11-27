@@ -36,6 +36,7 @@ import { ExamParticipationComponent } from 'app/exam/overview/exam-participation
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/programming/programming-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
@@ -1029,6 +1030,50 @@ describe('ExamParticipationComponent', () => {
             comp.pageComponentVisited()[1] = true;
             comp['subscribeToProblemStatementUpdates']();
             expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(2, 'new problem statement');
+        });
+    });
+
+    describe('problem statement update of a modeling exercise whose submission is still loading', () => {
+        // The modeling submission sits in a deferred block (it brings the diagram editor). After the exercise was opened, its update
+        // highlighter, the only listener for live updates, exists only once the block has loaded.
+        let modelingExercise: ModelingExercise;
+        let event: ExamLiveEvent;
+
+        beforeEach(() => {
+            comp.studentExam.set(new StudentExam());
+            comp.exam.set(new Exam());
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 1;
+            modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+            modelingExercise.id = 2;
+            modelingExercise.problemStatement = 'old problem statement modeling exercise';
+            comp.studentExam().exercises = [textExercise, modelingExercise];
+            event = { problemStatement: 'new problem statement', exerciseId: 2, exerciseName: 'exercise2' } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+            vi.spyOn(examExerciseUpdateService, 'updateLiveExamExercise');
+            // examStarted subscribes once, while the exercise is not opened yet: start from a clean state for the update under test
+            comp.examStarted(comp.studentExam());
+            modelingExercise.problemStatement = 'old problem statement modeling exercise';
+            vi.mocked(examExerciseUpdateService.updateLiveExamExercise).mockClear();
+            comp.pageComponentVisited()[1] = true;
+        });
+
+        it('updates the exercise directly while its submission component does not exist yet', () => {
+            vi.spyOn(comp, 'currentPageComponents').mockReturnValue([]);
+
+            comp['subscribeToProblemStatementUpdates']();
+
+            expect(examExerciseUpdateService.updateLiveExamExercise).not.toHaveBeenCalled();
+            expect(modelingExercise.problemStatement).toBe('new problem statement');
+        });
+
+        it('sends the update to the highlighter once the submission component exists', () => {
+            vi.spyOn(comp, 'currentPageComponents').mockReturnValue([{ getExerciseId: () => 2 } as unknown as ExamSubmissionComponent]);
+
+            comp['subscribeToProblemStatementUpdates']();
+
+            expect(examExerciseUpdateService.updateLiveExamExercise).toHaveBeenCalledExactlyOnceWith(2, 'new problem statement');
+            expect(modelingExercise.problemStatement).toBe('old problem statement modeling exercise');
         });
     });
 

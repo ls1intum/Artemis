@@ -113,6 +113,10 @@
                                                                 />
                                                             } @loading (after 200ms; minimum 300ms) {
                                                                 <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+                                                            } @error {
+                                                                <tumaet-ui-message severity="error" data-testid="modeling-editor-load-failed">{{
+                                                                    'artemisApp.modelingEditor.loadFailed' | artemisTranslate
+                                                                }}</tumaet-ui-message>
                                                             }
                                                         }
                                                     }

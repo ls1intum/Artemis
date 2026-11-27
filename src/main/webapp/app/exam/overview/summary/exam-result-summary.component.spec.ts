@@ -283,6 +283,67 @@ describe('ExamResultSummaryComponent', () => {
         printStub.mockRestore();
     });
 
+    it('shows a message instead of the modeling summary when its chunk cannot be loaded', async () => {
+        fixture.detectChanges();
+        const failedBlocks = await fixture.getDeferBlocks();
+        expect(failedBlocks.length).toBeGreaterThan(0);
+
+        for (const deferBlock of failedBlocks) {
+            await deferBlock.render(DeferBlockState.Error);
+        }
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="modeling-editor-load-failed"]')).not.toBeNull();
+    });
+
+    describe('export as PDF while the modeling summary is still loading', () => {
+        // The modeling summaries sit in deferred blocks (they bring the diagram editor). On a page that has just loaded they may still be
+        // downloading when the student exports the PDF, and the export must not capture the page before that.
+        function loadModelingSummary() {
+            return vi.spyOn(component as unknown as { loadModelingSummary: () => Promise<unknown> }, 'loadModelingSummary');
+        }
+
+        it('prints only after the code of the modeling summary has loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            let finishDownload!: () => void;
+            loadModelingSummary().mockReturnValue(new Promise<void>((resolve) => (finishDownload = resolve)));
+            fixture.detectChanges();
+
+            const printing = component.printPDF();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(printStub).not.toHaveBeenCalled();
+
+            finishDownload();
+            await printing;
+
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('still prints when the modeling summary cannot be loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            loadModelingSummary().mockRejectedValue(new Error('offline'));
+            fixture.detectChanges();
+
+            await component.printPDF();
+
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('does not wait for a download when the exam has no modeling exercise', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            const loadSpy = loadModelingSummary().mockReturnValue(new Promise<void>(() => {}));
+            fixture.componentRef.setInput('studentExam', { ...studentExam, exercises: exercises.filter((exercise) => exercise.type !== ExerciseType.MODELING) });
+            fixture.detectChanges();
+
+            await component.printPDF();
+
+            expect(loadSpy).not.toHaveBeenCalled();
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should use supplied management grade info without a second request', () => {
         fixture.componentRef.setInput('instructorView', true);
         fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo });

@@ -175,6 +175,10 @@
                                                 [expandProblemStatement]="expandProblemStatement()"
                                                 [isAfterResultsArePublished]="resultsArePublished"
                                             />
+                                        } @error {
+                                            <tumaet-ui-message severity="error" data-testid="modeling-editor-load-failed">{{
+                                                'artemisApp.modelingEditor.loadFailed' | artemisTranslate
+                                            }}</tumaet-ui-message>
                                         }
                                     }
                                     @case (QUIZ) {
