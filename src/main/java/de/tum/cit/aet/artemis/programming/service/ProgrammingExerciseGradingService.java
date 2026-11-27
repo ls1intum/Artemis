@@ -219,7 +219,7 @@ public class ProgrammingExerciseGradingService {
 
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
-            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, true);
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, true, null);
             var buildResult = parsed.buildResult();
             Result newResult = parsed.result();
             var latestSubmission = parsed.submission();
@@ -281,24 +281,36 @@ public class ProgrammingExerciseGradingService {
      * @param testsExpected             whether test results are expected from this build (false for compile-only phases)
      * @param deactivateAbsentTestCases whether a solution build may deactivate the test cases that are missing from this
      *                                      result, which only holds for a result covering every test case of the exercise
+     * @param buildTriggeredAt          when the container's build was triggered, to leave the test cases alone once a
+     *                                      newer build of the submission has finalized; null for a single-container build
      * @return the parsed build result
      */
-    private ParsedBuildResult parseBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, boolean testsExpected, boolean deactivateAbsentTestCases) {
+    private ParsedBuildResult parseBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, boolean testsExpected, boolean deactivateAbsentTestCases,
+            @Nullable ZonedDateTime buildTriggeredAt) {
         ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
         var buildResult = ciResultService.convertBuildResult(requestBody);
 
         checkCorrectBranchElseThrow(participation, buildResult);
         checkHasCommitHashElseThrow(buildResult);
 
-        if (participation instanceof SolutionProgrammingExerciseParticipation) {
-            feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, participation.getProgrammingExercise(), deactivateAbsentTestCases);
-        }
-
-        Result result = ciResultService.createResultFromBuildResult(buildResult, participation);
-
         // A matched submission is a detached skeleton (see BuildResultSubmissionDTO#toDetachedSubmission). Never save
         // it: its results cascade with orphan removal, so merging it would delete the results it does not carry.
         var submission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            // The finalization discards the result of a build that a newer build of the submission has already finalized
+            // (see LocalCIBuildGroupService#finalizeIfGroupComplete). Its containers must not register or reactivate test
+            // cases either: that would undo the newer build's test cases, which nothing reconciles again.
+            if (buildTriggeredAt != null && buildJobRepository.existsFinalizedBuildOfSubmissionIdTriggeredAfter(submission.getId(), buildTriggeredAt)) {
+                log.info("Leaving the test cases of exercise {} unchanged: a newer build of solution submission {} has already finalized",
+                        participation.getProgrammingExercise().getId(), submission.getId());
+            }
+            else {
+                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, participation.getProgrammingExercise(), deactivateAbsentTestCases);
+            }
+        }
+
+        Result result = ciResultService.createResultFromBuildResult(buildResult, participation);
 
         // Determine if the build failed based on whether tests were expected.
         // When tests are expected: build failed if the build reported no test results at all. What decides is
@@ -327,13 +339,15 @@ public class ProgrammingExerciseGradingService {
      * @param containerName      the name of the container that produced this result, used to label its build logs
      * @param aggregatedResultId the id of the result the earlier containers of the same build merged into, or null if this
      *                               is the first container of the build to report
+     * @param buildTriggeredAt   when the build was triggered, which orders it against the other builds of the submission;
+     *                               null if unknown
      * @return the aggregated result and whether this container failed to build, or null if the result could not be created
      */
     public AppendedContainerResult appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
-            @Nullable String containerName, @Nullable Long aggregatedResultId) {
+            @Nullable String containerName, @Nullable Long aggregatedResultId, @Nullable ZonedDateTime buildTriggeredAt) {
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
-            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false);
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false, buildTriggeredAt);
             var buildResult = parsed.buildResult();
             // A result without an exit code is the one the agent builds for a job that timed out, was cancelled or
             // threw. The shared verdict treats a missing code as unknown, since other CI systems never report one.

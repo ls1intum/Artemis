@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.MergedBuildRun;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
@@ -327,14 +328,17 @@ public class LocalCIBuildGroupService {
         // group, and a tutor's draft assessment on the submission must not be taken for it.
         Long aggregatedResultId = findAggregatedResultId(buildGroup.buildGroupId());
         // The container that creates the aggregate holds the participation's lock until its job links to it, so
-        // that the cleanup in a finalization never takes the unlinked aggregate for an abandoned one.
-        String creationLock = aggregatedResultId == null ? participationLockKey(participation.getId()) : null;
-        if (creationLock != null) {
-            aggregationLocks.lock(creationLock);
+        // that the cleanup in a finalization never takes the unlinked aggregate for an abandoned one. Every container of a
+        // solution build holds it too: it updates the exercise's test cases only if no newer build has finalized, and a
+        // finalization of a newer build must not reconcile them between that check and the update.
+        boolean holdsParticipationLock = aggregatedResultId == null || participation instanceof SolutionProgrammingExerciseParticipation;
+        String participationLock = holdsParticipationLock ? participationLockKey(participation.getId()) : null;
+        if (participationLock != null) {
+            aggregationLocks.lock(participationLock);
         }
         try {
             AppendedContainerResult appended = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, buildGroup.containerName(),
-                    aggregatedResultId);
+                    aggregatedResultId, buildJob.jobTimingInfo().submissionDate());
             if (appended == null) {
                 return null;
             }
@@ -346,8 +350,8 @@ public class LocalCIBuildGroupService {
             return new LinkedContainer(appended.result(), linkedJob);
         }
         finally {
-            if (creationLock != null) {
-                aggregationLocks.unlock(creationLock);
+            if (participationLock != null) {
+                aggregationLocks.unlock(participationLock);
             }
         }
     }
@@ -477,8 +481,9 @@ public class LocalCIBuildGroupService {
 
     /**
      * The key of the lock that serializes the creation of a build group's aggregate, up to the link of its job, with the
-     * cleanup of abandoned aggregates in a finalization. It covers every submission of the participation, since a build
-     * result is matched to its submission only while it is merged. It is always taken after the lock of a build group.
+     * cleanup of abandoned aggregates in a finalization, and a solution container's update of the test cases with the
+     * finalization of a newer build. It covers every submission of the participation, since a build result is matched to
+     * its submission only while it is merged. It is always taken after the lock of a build group.
      *
      * @param participationId the id of the participation
      * @return the key in the aggregation lock map

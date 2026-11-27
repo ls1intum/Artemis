@@ -155,6 +155,23 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsFinalizedBuildOfSubmissionTriggeredAfter(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedAfter") ZonedDateTime submittedAfter);
 
     /**
+     * Checks whether a build of the submission that was triggered after the given date has already finalized, like
+     * {@link #existsFinalizedBuildOfSubmissionTriggeredAfter}, for a container that has no aggregated result yet.
+     *
+     * @param submissionId   the id of the submission
+     * @param submittedAfter only builds triggered after this date
+     * @return true if such a build has finalized
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b
+            WHERE b.result.submission.id = :submissionId
+                AND b.buildSubmissionDate > :submittedAfter
+                AND (b.result.completionDate IS NOT NULL OR b.result.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
+            """)
+    boolean existsFinalizedBuildOfSubmissionIdTriggeredAfter(@Param("submissionId") long submissionId, @Param("submittedAfter") ZonedDateTime submittedAfter);
+
+    /**
      * Finds the completed automatic results of the aggregated result's submission that builds triggered before the given
      * date produced, but that were created after the aggregated result and would therefore be taken for the latest result.
      *

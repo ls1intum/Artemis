@@ -995,7 +995,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         when(buildJobRepository.findAllByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the group's jobs could not be read"));
 
@@ -1026,7 +1026,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, containerFailed));
         // the recovery records the job without a link, and the group of two is not complete with it alone
         when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null)));
@@ -1055,7 +1055,7 @@ class LocalCIResultProcessingServiceTest {
         withSavedBuildJob();
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenThrow(new IllegalStateException("the result could not be merged"));
 
         resultProcessingService.processResultAsync();
@@ -1078,7 +1078,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         when(buildJobRepository.findAllByBuildGroupId("group-1"))
                 .thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult)));
@@ -1164,7 +1164,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         BuildJob jobOfGroup = new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult);
         when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(jobOfGroup));
@@ -1190,7 +1190,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         // one of the two containers has finished, so the group is not complete
         when(buildJobRepository.findAllByBuildGroupId("group-1"))
@@ -1404,7 +1404,7 @@ class LocalCIResultProcessingServiceTest {
     }
 
     private void verifyTheLateResultWasNotMerged() {
-        verify(programmingExerciseGradingService, never()).appendContainerResult(any(), any(), anyBoolean(), any(), any());
+        verify(programmingExerciseGradingService, never()).appendContainerResult(any(), any(), anyBoolean(), any(), any(), any());
         verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
         // the job keeps the outcome the sweep gave it
         verify(buildJobRepository, never()).save(any(BuildJob.class));
@@ -1441,7 +1441,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L)))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         // the sibling has not reported yet, so the group of two is not complete
         when(buildJobRepository.findAllByBuildGroupId("group-1"))
@@ -1464,7 +1464,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         when(buildJobRepository.findAllByBuildGroupId("group-1"))
                 .thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResult)));
@@ -1476,7 +1476,7 @@ class LocalCIResultProcessingServiceTest {
         String participationLock = LocalCIBuildGroupService.participationLockKey(PARTICIPATION_ID);
         InOrder order = inOrder(aggregationLocks, programmingExerciseGradingService, buildJobRepository);
         order.verify(aggregationLocks).lock(participationLock);
-        order.verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull());
+        order.verify(programmingExerciseGradingService).appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), isNull(), any());
         order.verify(buildJobRepository).save(any(BuildJob.class));
         order.verify(aggregationLocks).unlock(participationLock);
         verify(buildJobRepository, never()).existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(anyLong(), any(), any());
@@ -1505,7 +1505,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull(), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, true));
         // the job as saved above, read back with the verdict the container recorded on it
         when(buildJobRepository.findAllByBuildGroupId("group-1"))
@@ -1542,7 +1542,7 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
         Result aggregatedResult = new Result();
         aggregatedResult.setId(7L);
-        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L)))
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L), any()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
         // the last container's script exited cleanly and reported no failed test
         when(buildResult.buildScriptExitCode()).thenReturn(0);
