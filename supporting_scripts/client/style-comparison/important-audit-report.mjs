@@ -3,6 +3,7 @@
 
 /** Shorthands whose longhands do not start with the name of the shorthand. */
 const LONGHANDS = {
+    font: /^line-height$/,
     inset: /^(?:top|right|bottom|left)$/,
     overflow: /^overflow-[xy]$/,
     gap: /^(?:row|column)-gap$/,

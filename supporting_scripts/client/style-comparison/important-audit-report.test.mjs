@@ -47,6 +47,11 @@ test('a shorthand is judged by its longhands', () => {
     assert.equal(groups.needed.length, 1);
 });
 
+test('the font shorthand is judged by its line-height longhand', () => {
+    const groups = audit([declaration({ property: 'font' })], [entry({ property: 'font-size' }), entry({ property: 'line-height', changed: 1 })]);
+    assert.equal(groups.needed.length, 1);
+});
+
 test('a declaration without matches or about an animation is not judged', () => {
     const groups = audit(
         [declaration({ line: 1 }), declaration({ selector: '.spin', property: 'animation', line: 2 })],
