@@ -8,6 +8,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1302,6 +1303,36 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(ProgrammingExerciseTestCase::getTestName)
                 .as("a current build still reactivates a test case it reports").contains("keptTest", "retiredTest");
+    }
+
+    /**
+     * While a multi-container rebuild of the solution is running, the queries behind Hyperion and the instructor and exam
+     * views keep returning the last finished result instead of the rebuild's unscored aggregate.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheLatestResultQueriesSkipTheAggregateOfARunningBuild() {
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        String commitHash = "00000000000000000000000000000000000000f2";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(solutionParticipation);
+        submission = programmingSubmissionRepository.save(submission);
+        Result finished = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(5)).score(100D)
+                .successful(true);
+        finished.setExerciseId(programmingExercise.getId());
+        finished = resultRepository.save(finished);
+
+        Result running = programmingExerciseGradingService.appendContainerResult(solutionParticipation, passedResult(commitHash), true, "container_a", null, null).result();
+        assertThat(running.getId()).as("the running build's aggregate is the newest result").isGreaterThan(finished.getId());
+        assertThat(running.getCompletionDate()).isNull();
+
+        assertThat(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).map(Result::getId).contains(finished.getId());
+        assertThat(resultRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId()))).extracting(Result::getId).containsExactly(finished.getId());
+        assertThat(resultRepository.findLatestResultsByParticipationIds(Set.of(solutionParticipation.getId()))).extracting(Result::getId).containsExactly(finished.getId());
     }
 
     /** The logs of a rebuild of an old submission are retained from the build's run, not from the submission date. */

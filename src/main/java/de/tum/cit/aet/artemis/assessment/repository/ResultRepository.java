@@ -909,6 +909,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return results;
     }
 
+    /**
+     * Finds the latest result of the submission with its feedback. An automatic result whose build is still running has no
+     * completion date and is skipped, so the previous result stays the latest until the build finishes.
+     *
+     * @param submissionId the id of the submission
+     * @return the latest result that is not an unfinished automatic result, if any
+     */
     @Query("""
             SELECT r
             FROM Result r
@@ -918,10 +925,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = :submissionId
+                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR r2.completionDate IS NOT NULL)
                )
             """)
     Optional<Result> findLatestResultWithFeedbacksForSubmission(@Param("submissionId") long submissionId);
 
+    /**
+     * Finds the latest result of each of the submissions, skipping automatic results whose build is still running.
+     *
+     * @param submissionIds the ids of the submissions
+     * @return the latest result of each submission that has one that is not an unfinished automatic result
+     */
     @Query("""
             SELECT r
             FROM Result r
@@ -930,6 +944,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
+                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR r2.completionDate IS NOT NULL)
                )
             """)
     Set<Result> findLatestResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
@@ -981,7 +996,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
     /**
-     * Find the latest results for the given participation IDs.
+     * Find the latest results for the given participation IDs, skipping automatic results whose build is still running.
      *
      * @param participationIds the participation IDs for which to find the latest results
      * @return a set of latest results
@@ -994,6 +1009,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.participation.id = r.submission.participation.id
+                 AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC OR r2.completionDate IS NOT NULL)
                )
             """)
     Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);

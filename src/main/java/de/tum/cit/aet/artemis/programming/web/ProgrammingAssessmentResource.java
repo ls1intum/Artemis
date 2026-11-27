@@ -108,8 +108,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise,
-                assessmentUpdate.toAssessmentUpdate());
+        // The result the complaint is about, not the latest one: a rebuild of the submission adds an automatic result that
+        // stays the latest while its build is running. Without a complaint the latest result is passed, which the check
+        // in the service then rejects.
+        Result complainedResult = Objects.requireNonNullElseGet(programmingSubmission.getResultWithComplaint(), programmingSubmission::getLatestResult);
+        if (complainedResult != null) {
+            complainedResult.setSubmission(programmingSubmission);
+        }
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(complainedResult, programmingExercise, assessmentUpdate.toAssessmentUpdate());
         // Load the sub-graphs the response carries: the editor decides whether the current user may still override the
         // assessment from result.assessor, and it replaces its in-memory result with this one. Without the explicit
         // reload the assessor would arrive as null and the override controls would wrongly stay enabled.
