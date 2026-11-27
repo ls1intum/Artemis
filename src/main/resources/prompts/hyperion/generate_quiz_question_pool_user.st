@@ -25,6 +25,6 @@ Difficulty: {{difficulty}} on a scale where 0 is very easy and 100 is very hard.
 - above 70: a multi-step derivation, or recognising a subtle failure case or exception
 
 ## Output Requirements
-Each question in the output must include a `title`, `questionText`, `options` and an `explanation`.
+Each question in the output must include a `title`, `questionText`, `options` and an `explanation`, and every option an `explanation`.
 Produce a JSON response that strictly follows this format:
 {{format}}

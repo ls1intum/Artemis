@@ -107,8 +107,8 @@
                             "src/main/webapp/content/css/application.css",
                             "src/main/webapp/tailwind.css",
                             "@tumaet/ui-angular/styles.css",
-                            "node_modules/monaco-editor/min/vs/editor/editor.main.css",
-                            "node_modules/@tumaet/apollon/dist/assets/style.css"
+                            "src/main/webapp/vendor-styles/monaco-editor.css",
+                            "src/main/webapp/vendor-styles/apollon.css"
                         ],
                         "scripts": []
                     },

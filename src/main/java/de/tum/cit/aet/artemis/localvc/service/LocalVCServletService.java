@@ -340,7 +340,8 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("Account is not active");
         }
 
-        // check user VCS access token. findUsableToken already excludes an expired one, so the expiry is not compared here.
+        // check the personal VCS access token. It is deprecated: no new one can be created, one that exists works until it expires, and its owner can revoke it.
+        // findUsableToken already excludes an expired one, so the expiry is not compared here.
         var personalToken = userVcsAccessTokenService.findUsableToken(user.getId());
         if (personalToken.isPresent() && secretMatches(personalToken.get().getToken(), passwordOrToken)) {
             return new AuthenticatedUser(user, AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);

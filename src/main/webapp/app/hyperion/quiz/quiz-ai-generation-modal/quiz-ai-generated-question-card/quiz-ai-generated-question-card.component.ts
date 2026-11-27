@@ -12,6 +12,8 @@ import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz
 export class QuizAiGeneratedQuestionCardComponent {
     question = input.required<GeneratedQuestion>();
     questionIndex = input.required<number>();
+    /** Shows the explanation of the question and of each option. */
+    showExplanations = input(false);
 
     getQuestionTypeLabelKey(type: GeneratedQuestionType): string {
         return `artemisApp.quizExercise.aiGeneration.types.${type}`;
