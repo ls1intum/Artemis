@@ -94,6 +94,7 @@
         "knip": "6.44.1",
         "lint-staged": "17.6.0",
         "ng-mocks": "14.18.6",
+        "parse5": "8.1.1",
         "postcss": "catalog:",
         "postcss-html": "2.0.0",
         "prettier": "3.10.1",

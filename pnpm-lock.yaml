@@ -629,6 +629,9 @@ importers:
       ng-mocks:
         specifier: 14.18.6
         version: 14.18.6(a0405c9348c94944b6667de3002be31c)
+      parse5:
+        specifier: 8.1.1
+        version: 8.1.1
       postcss:
         specifier: 8.5.32
         version: 8.5.32
