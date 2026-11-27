@@ -681,6 +681,36 @@ class LocalVCAccessLogRecorderServiceTest {
         verify(session, never()).setAttribute(eq(SshConstants.PARTICIPATION_KEY), any());
     }
 
+    @Test
+    void aFailedAuthenticationOnTheRepositoryOfAStudentNamedLikeAnAuxiliaryRepositoryIsWrittenForTheParticipation() {
+        HttpServletRequest request = failedRequest();
+        lenient().when(testRepositoryUri.getRepositoryTypeOrUserName()).thenReturn("extras");
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.of(testParticipation));
+
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.READ);
+
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(testParticipation.getId()), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""),
+                eq("10.0.0.1"));
+        verifyNoInteractions(auxiliaryRepositoryService);
+    }
+
+    @Test
+    void aFailedAuthenticationOnAnAuxiliaryRepositoryIsWrittenForTheExerciseWhenNoParticipationHasTheName() {
+        HttpServletRequest request = failedRequest();
+        lenient().when(testRepositoryUri.getRepositoryTypeOrUserName()).thenReturn("extras");
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.empty());
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("extras", testExercise.getId())).thenReturn(Optional.of(9L));
+
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.WRITE);
+
+        verify(vcsAccessLogService).saveStaffRepositoryAccessLog(testUser, new AccessLogTarget.OfStaffRepository(testExercise.getId(), RepositoryType.AUXILIARY, 9L, "extras"),
+                RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.PASSWORD, "", "10.0.0.1");
+    }
+
     @ParameterizedTest
     @EnumSource(value = RepositoryActionType.class, names = { "READ", "WRITE" })
     void aFailedAuthenticationOnTheTestsRepositoryIsWrittenForTheExerciseAndNotForTheSolution(RepositoryActionType action) {

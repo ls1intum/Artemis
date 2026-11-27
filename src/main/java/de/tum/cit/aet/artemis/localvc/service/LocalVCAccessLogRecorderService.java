@@ -459,20 +459,22 @@ public class LocalVCAccessLogRecorderService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = resolveHTTPSAuthenticationMechanism(authorizationHeader, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
-            // The tests and auxiliary repositories have no participation: their entries refer to the exercise and the repository
-            var staffRepository = staffRepositoryTargetOf(exerciseId, localVCRepositoryUri.getRepositoryTypeOrUserName());
-            if (staffRepository.isPresent()) {
-                vcsAccessLogService.ifPresent(service -> service.saveStaffRepositoryAccessLog(user, staffRepository.get(), action, mechanism, "", request.getRemoteAddr()));
-                return;
-            }
+            String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+            // The tests repository is looked up as the solution participation, which it is not: its entries refer to the exercise and the repository, like those of the auxiliary
+            // repositories. A participation comes first for any other name, as for an accepted request: a student whose login is the name of an auxiliary repository owns the
+            // repository of that name.
             // One id, no entity: the entry only references the participation.
-            var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
-            if (participation.isEmpty()) {
+            var participation = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) ? Optional.<ProgrammingExerciseParticipation>empty()
+                    : programmingExerciseParticipationService.getParticipationReferenceForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
+                            localVCRepositoryUri.getProjectKey());
+            if (participation.isPresent()) {
+                long participationId = participation.get().getId();
+                vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participationId, action, mechanism, "", request.getRemoteAddr()));
                 return;
             }
-            long participationId = participation.get().getId();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participationId, action, mechanism, "", request.getRemoteAddr()));
+            var staffRepository = staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName);
+            staffRepository.ifPresent(
+                    target -> vcsAccessLogService.ifPresent(service -> service.saveStaffRepositoryAccessLog(user, target, action, mechanism, "", request.getRemoteAddr())));
         }
         catch (LocalVCAuthException | EntityNotFoundException _) {
             // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases is there anybody to attribute an entry to

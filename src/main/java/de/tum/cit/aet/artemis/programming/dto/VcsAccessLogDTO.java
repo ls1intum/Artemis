@@ -4,9 +4,9 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.AbstractVcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLogEntry;
 
 /**
  * DTO representing a VCS access log entry.
@@ -33,7 +33,7 @@ public record VcsAccessLogDTO(Long id, Long userId, String name, String email, S
      * @param vcsAccessLog the entry to convert, from the access log of a participation or of the tests or an auxiliary repository
      * @return the DTO, with a null user id for an access by a build agent
      */
-    public static VcsAccessLogDTO of(VcsAccessLogEntry vcsAccessLog) {
+    public static VcsAccessLogDTO of(AbstractVcsAccessLogEntry vcsAccessLog) {
         // A build agent clone has no user: it authenticates with the token of the build job it is processing, and the
         // agent and job are recorded in the name instead.
         Long userId = vcsAccessLog.getUser() != null ? vcsAccessLog.getUser().getId() : null;
@@ -45,7 +45,7 @@ public record VcsAccessLogDTO(Long id, Long userId, String name, String email, S
      * A build agent has no user, like a person whose account was deleted afterwards, so the user alone does not tell them apart. The token of a build job is only ever used by a
      * build agent, and the entry of an agent that connected by SSH carries the name the agent was given.
      */
-    private static boolean isBuildAgentAccess(VcsAccessLogEntry vcsAccessLog) {
+    private static boolean isBuildAgentAccess(AbstractVcsAccessLogEntry vcsAccessLog) {
         if (vcsAccessLog.getUser() != null) {
             return false;
         }

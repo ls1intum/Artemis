@@ -276,11 +276,16 @@ public class LocalVCServletService {
             RepositoryActionType repositoryAction) {
         try {
             // The tests and auxiliary repositories have no participation, so the attempt is written for the exercise and the repository. It used to be written for the solution
-            // participation, which put it in the log of the solution repository.
-            Optional<AccessLogTarget.OfStaffRepository> staffRepository = accessLogRecorder.staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName);
-            Optional<Long> participationId = staffRepository.isPresent() ? Optional.empty()
-                    : Optional.of(tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
-                            participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId)).getId());
+            // participation, which put it in the log of the solution repository. A participation comes first, as for an accepted request: a student whose login is the name of an
+            // auxiliary repository owns the repository of that name.
+            boolean testsRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+            Optional<Long> participationId = testsRepository ? Optional.empty() : findParticipationId(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId);
+            Optional<AccessLogTarget.OfStaffRepository> staffRepository = participationId.isPresent() ? Optional.empty()
+                    : accessLogRecorder.staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName);
+            if (participationId.isEmpty() && staffRepository.isEmpty()) {
+                throw new LocalVCInternalException(
+                        "No participation or staff repository found for repository type or username " + repositoryTypeOrUserName + " in exercise " + exerciseId);
+            }
             // A request that advertises the references is refused before the repository is reached, so the entry carries no commit. That is what lets the log tell it from a
             // transfer that was refused after an advertisement was stored, see VcsAccessLogOperations.
             boolean refusedBeforeAdvertisement = context instanceof AuthenticationContext.Request(var request) && "GET".equals(request.getMethod());
@@ -699,6 +704,23 @@ public class LocalVCServletService {
         // instructor. Loading the course roles and authorities here keeps that check in memory; without them it re-reads
         // the whole user row (User#authorities is lazy) and then issues its own membership query, on every push.
         return userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
+     * The id of the participation behind a repository, without the fallback of {@link #tryToLoadParticipation} that takes an auxiliary repository for the solution.
+     *
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
+     * @param localVCRepositoryUri     the URI of the requested repository
+     * @param exerciseId               the id of the exercise the repository belongs to
+     * @return the id, or empty if the repository has no participation
+     */
+    private Optional<Long> findParticipationId(String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri, long exerciseId) {
+        try {
+            return Optional.of(participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId).get().getId());
+        }
+        catch (EntityNotFoundException e) {
+            return Optional.empty();
+        }
     }
 
     /**

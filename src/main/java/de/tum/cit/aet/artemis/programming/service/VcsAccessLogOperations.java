@@ -14,8 +14,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import de.tum.cit.aet.artemis.programming.domain.AbstractVcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -66,12 +66,12 @@ public final class VcsAccessLogOperations {
      * @param entries the stored entries of one repository, in the order in which they were stored
      * @return the entries that are operations or accesses of their own, in the same order
      */
-    public static <T extends VcsAccessLogEntry> List<T> oneEntryPerOperation(List<T> entries) {
+    public static <T extends AbstractVcsAccessLogEntry> List<T> oneEntryPerOperation(List<T> entries) {
         Map<AdvertisementKey, Deque<T>> untaken = new HashMap<>();
         Set<T> advertisementsOfTransfers = Collections.newSetFromMap(new IdentityHashMap<>());
         // An advertisement can be stored after the transfer that follows it, so the entries are read in the order of their times. Entries of the same time keep their order.
         List<T> byTime = new ArrayList<>(entries);
-        byTime.sort(Comparator.comparing(VcsAccessLogEntry::getTimestamp, Comparator.nullsFirst(Comparator.naturalOrder())));
+        byTime.sort(Comparator.comparing(AbstractVcsAccessLogEntry::getTimestamp, Comparator.nullsFirst(Comparator.naturalOrder())));
         for (T entry : byTime) {
             if (entry.getUser() == null || !HTTPS_MECHANISMS.contains(entry.getAuthenticationMechanism())) {
                 continue;
@@ -97,7 +97,7 @@ public final class VcsAccessLogOperations {
     }
 
     /** Which stored kind advertises a transfer of this kind, null if the entry is not a transfer that was preceded by an advertisement. */
-    private static RepositoryActionType advertisementOf(VcsAccessLogEntry entry) {
+    private static RepositoryActionType advertisementOf(AbstractVcsAccessLogEntry entry) {
         return switch (entry.getRepositoryActionType()) {
             case CLONE, PULL -> RepositoryActionType.READ;
             case PUSH -> RepositoryActionType.WRITE;
@@ -107,11 +107,11 @@ public final class VcsAccessLogOperations {
         };
     }
 
-    private static AdvertisementKey keyOf(VcsAccessLogEntry entry, RepositoryActionType advertisement) {
+    private static AdvertisementKey keyOf(AbstractVcsAccessLogEntry entry, RepositoryActionType advertisement) {
         return new AdvertisementKey(entry.getUser().getId(), entry.getAuthenticationMechanism(), entry.getIpAddress(), advertisement);
     }
 
-    private static boolean isCloseEnough(VcsAccessLogEntry advertisement, VcsAccessLogEntry transfer) {
+    private static boolean isCloseEnough(AbstractVcsAccessLogEntry advertisement, AbstractVcsAccessLogEntry transfer) {
         return Duration.between(advertisement.getTimestamp(), transfer.getTimestamp()).compareTo(MAX_TIME_BETWEEN_ADVERTISEMENT_AND_TRANSFER) <= 0;
     }
 }

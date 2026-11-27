@@ -16,7 +16,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
@@ -25,13 +24,11 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * <p>
  * These repositories belong to the exercise and have no participation, so the entry refers to the exercise and to the repository instead. The entries of the template and
  * solution repositories, and of those of students, stay in {@link VcsAccessLog}, where they refer to the participation.
- * <p>
- * The action and the mechanism are stored by name, so that the order of the constants is not part of the schema.
  */
 @Entity
 @Table(name = "vcs_staff_repository_access_log")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class VcsStaffRepositoryAccessLog extends DomainObject implements VcsAccessLogEntry {
+public class VcsStaffRepositoryAccessLog extends AbstractVcsAccessLogEntry {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", nullable = false)
@@ -51,33 +48,6 @@ public class VcsStaffRepositoryAccessLog extends DomainObject implements VcsAcce
     /** The name of the auxiliary repository, which tells the entries of a removed one apart. Absent for the tests repository. */
     @Column(name = "repository_name")
     private String repositoryName;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "email")
-    private String email;
-
-    @Column(name = "repository_action_type", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RepositoryActionType repositoryActionType;
-
-    @Column(name = "authentication_mechanism", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AuthenticationMechanism authenticationMechanism;
-
-    @Column(name = "commit_hash")
-    private String commitHash;
-
-    @Column(name = "ip_address")
-    private String ipAddress;
-
-    @Column(name = "timestamp", nullable = false)
-    private ZonedDateTime timestamp;
 
     public VcsStaffRepositoryAccessLog() {
         // for Hibernate
@@ -102,18 +72,11 @@ public class VcsStaffRepositoryAccessLog extends DomainObject implements VcsAcce
     public VcsStaffRepositoryAccessLog(ProgrammingExercise exercise, RepositoryType repositoryType, @Nullable AuxiliaryRepository auxiliaryRepository,
             @Nullable String repositoryName, User user, String name, String email, RepositoryActionType repositoryActionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress, ZonedDateTime timestamp) {
+        super(user, name, email, repositoryActionType, authenticationMechanism, commitHash, ipAddress, timestamp);
         this.exercise = exercise;
         this.repositoryType = repositoryType;
         this.auxiliaryRepository = auxiliaryRepository;
         this.repositoryName = repositoryName;
-        this.user = user;
-        this.name = name;
-        this.email = email;
-        this.repositoryActionType = repositoryActionType;
-        this.authenticationMechanism = authenticationMechanism;
-        this.commitHash = commitHash;
-        this.ipAddress = ipAddress;
-        this.timestamp = timestamp;
     }
 
     public ProgrammingExercise getExercise() {
@@ -130,45 +93,5 @@ public class VcsStaffRepositoryAccessLog extends DomainObject implements VcsAcce
 
     public String getRepositoryName() {
         return repositoryName;
-    }
-
-    @Override
-    public User getUser() {
-        return user;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getEmail() {
-        return email;
-    }
-
-    @Override
-    public RepositoryActionType getRepositoryActionType() {
-        return repositoryActionType;
-    }
-
-    @Override
-    public AuthenticationMechanism getAuthenticationMechanism() {
-        return authenticationMechanism;
-    }
-
-    @Override
-    public String getCommitHash() {
-        return commitHash;
-    }
-
-    @Override
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    @Override
-    public ZonedDateTime getTimestamp() {
-        return timestamp;
     }
 }

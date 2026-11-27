@@ -7,7 +7,7 @@
         <!--
         The access log of a participation (vcs_access_log) cannot hold these entries: a tests or auxiliary repository belongs to the exercise, not to a participation, and
         the entries that were written for them so far were attached to the solution participation, so they showed up in the log of the solution repository.
-        The enums are stored by name here, so that the order of their constants is not part of the schema.
+        The action and the mechanism are stored by position, like in vcs_access_log, whose entries share the class they are read through. The repository type is stored by name.
         -->
         <createTable tableName="vcs_staff_repository_access_log">
             <column name="id" type="bigint" autoIncrement="true">
@@ -24,10 +24,10 @@
             <column name="user_id" type="bigint"/>
             <column name="name" type="varchar(255)"/>
             <column name="email" type="varchar(255)"/>
-            <column name="repository_action_type" type="varchar(20)">
+            <column name="repository_action_type" type="tinyint(3)">
                 <constraints nullable="false"/>
             </column>
-            <column name="authentication_mechanism" type="varchar(40)">
+            <column name="authentication_mechanism" type="tinyint(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="commit_hash" type="varchar(40)"/>

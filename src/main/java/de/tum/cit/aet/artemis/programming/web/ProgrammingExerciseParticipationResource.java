@@ -65,13 +65,13 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckSe
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.AbstractVcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
@@ -736,7 +736,7 @@ public class ProgrammingExerciseParticipationResource {
             return ResponseEntity.badRequest().build();
         }
         log.info("Fetching VCS access logs for exercise ID: {} and repository type: {}", exerciseId, repositoryType);
-        List<? extends VcsAccessLogEntry> entries = switch (repositoryType) {
+        List<? extends AbstractVcsAccessLogEntry> entries = switch (repositoryType) {
             case TEMPLATE, SOLUTION -> {
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -760,7 +760,7 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(toDTOs(entries));
     }
 
-    private static <T extends VcsAccessLogEntry> List<VcsAccessLogDTO> toDTOs(List<T> entries) {
+    private static <T extends AbstractVcsAccessLogEntry> List<VcsAccessLogDTO> toDTOs(List<T> entries) {
         return VcsAccessLogOperations.oneEntryPerOperation(entries).stream().map(VcsAccessLogDTO::of).toList();
     }
 
