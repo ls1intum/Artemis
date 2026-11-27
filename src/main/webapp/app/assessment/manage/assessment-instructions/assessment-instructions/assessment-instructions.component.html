@@ -57,7 +57,9 @@
             @let sampleSolutionModelValue = this.sampleSolutionModel();
             @let sampleSolutionExplanationValue = this.sampleSolutionExplanation();
             @if (sampleSolutionModelValue) {
-                <jhi-modeling-editor [readOnly]="true" [diagramType]="sampleSolutionDiagramType()!" [umlModel]="sampleSolutionModelValue!" />
+                @defer (on idle) {
+                    <jhi-modeling-editor [readOnly]="true" [diagramType]="sampleSolutionDiagramType()!" [umlModel]="sampleSolutionModelValue!" />
+                }
             }
             @if (sampleSolutionExplanationValue) {
                 <p class="markdown-preview" [innerHTML]="sampleSolutionExplanationValue!"></p>

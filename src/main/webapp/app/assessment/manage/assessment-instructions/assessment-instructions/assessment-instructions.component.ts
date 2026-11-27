@@ -1,7 +1,8 @@
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import type { UMLDiagramType } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/model';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
