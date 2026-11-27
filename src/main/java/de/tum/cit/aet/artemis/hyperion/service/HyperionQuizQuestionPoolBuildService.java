@@ -84,6 +84,13 @@ public class HyperionQuizQuestionPoolBuildService {
     /** Attempts an item gets per stage before it is marked as failed, and questions it may use up before a rejected one is kept. */
     static final int MAX_ATTEMPTS = 3;
 
+    /**
+     * Different batches in a row whose generation call failed before the build stops. A generator that cannot be reached fails every call, and without this limit the build tried
+     * every pending item of the pool in turn, hundreds of failed calls within seconds with a stack trace each, and used up the attempts of the items. The attempts of one batch
+     * count once: a batch that the generator rejects every time, for example because of its content, uses up its own attempts and the build goes on with the next batch.
+     */
+    static final int MAX_CONSECUTIVE_FAILED_BATCHES = 3;
+
     /** The generation call itself failed; the item is revived at the next build. */
     static final String FAILURE_CALL_FAILED = "CALL_FAILED";
 
@@ -131,6 +138,9 @@ public class HyperionQuizQuestionPoolBuildService {
 
     /** The failure a build records when its lease expired and another build took over the course. */
     static final String STOPPED_LEASE_LOST = "Stopped: another build took over the course";
+
+    /** The failure a build records when the generator did not answer repeatedly; the items that were not generated yet wait for the next build. */
+    static final String STOPPED_GENERATION_UNAVAILABLE = "Stopped: the question generator did not answer; the next build generates the remaining questions";
 
     /** The failure a build records when it failed; the exception itself is only logged, since the record is shown to course staff. */
     static final String BUILD_FAILED = "The build failed; the server log has the details";
@@ -252,7 +262,9 @@ public class HyperionQuizQuestionPoolBuildService {
         /** An instructor cancelled the build. */
         CANCELLED,
         /** The build's lease expired and another build took over the course. */
-        LEASE_LOST;
+        LEASE_LOST,
+        /** The generation calls of {@link #MAX_CONSECUTIVE_FAILED_BATCHES} different batches in a row failed. */
+        GENERATION_UNAVAILABLE;
 
         /** The failure the build record shows for this reason, {@code null} for a completed build. */
         @Nullable
@@ -262,6 +274,7 @@ public class HyperionQuizQuestionPoolBuildService {
                 case DEADLINE -> STOPPED_AT_DEADLINE;
                 case CANCELLED -> STOPPED_BY_CANCEL;
                 case LEASE_LOST -> STOPPED_LEASE_LOST;
+                case GENERATION_UNAVAILABLE -> STOPPED_GENERATION_UNAVAILABLE;
             };
         }
     }
@@ -282,7 +295,35 @@ public class HyperionQuizQuestionPoolBuildService {
 
         private int regenerated;
 
+        private int consecutiveFailedBatches;
+
+        @Nullable
+        private Long lastFailedBatchItemId;
+
         private final Map<String, Integer> failures = new TreeMap<>();
+
+        /**
+         * Notes that the generation call of a batch failed. A failed batch goes back to the pool and is claimed again first, so its attempts follow one another and count as one
+         * batch; the generator counts as unavailable after {@link #MAX_CONSECUTIVE_FAILED_BATCHES} different batches in a row.
+         *
+         * @param firstItemId the id of the first item of the batch, which identifies the batch while the same items are claimed again
+         */
+        private void callFailed(@Nullable Long firstItemId) {
+            if (consecutiveFailedBatches == 0 || !Objects.equals(lastFailedBatchItemId, firstItemId)) {
+                consecutiveFailedBatches++;
+                lastFailedBatchItemId = firstItemId;
+            }
+        }
+
+        /** Notes that the generator answered, whatever the answer was. */
+        private void callAnswered() {
+            consecutiveFailedBatches = 0;
+            lastFailedBatchItemId = null;
+        }
+
+        private boolean generatorUnavailable() {
+            return consecutiveFailedBatches >= MAX_CONSECUTIVE_FAILED_BATCHES;
+        }
 
         private void failed(@Nullable String reason) {
             failures.merge(reason == null ? "UNKNOWN" : reason, 1, Integer::sum);
@@ -573,6 +614,7 @@ public class HyperionQuizQuestionPoolBuildService {
         boolean leaseHeld = true;
         boolean cancelled = false;
         boolean deadlineReached = false;
+        boolean generationUnavailable = false;
         while (leaseHeld) {
             if (isCancelRequested(leaseToken)) {
                 cancelled = true;
@@ -593,6 +635,10 @@ public class HyperionQuizQuestionPoolBuildService {
                 break;
             }
             generate(course, userId, batch, materials, settings, counters);
+            if (counters.generatorUnavailable()) {
+                generationUnavailable = true;
+                break;
+            }
             leaseHeld = renewLease(courseId, leaseToken);
         }
         long seconds = Duration.ofNanos(System.nanoTime() - startedAt).toSeconds();
@@ -604,13 +650,19 @@ public class HyperionQuizQuestionPoolBuildService {
         else if (deadlineReached) {
             log.info("Quiz question pool build of course [{}] stops at its deadline after {} s; the remaining items wait for the next build; {}", courseId, seconds, counters);
         }
+        else if (generationUnavailable) {
+            log.warn(
+                    "Quiz question pool build of course [{}] stops after {} s: the generation calls of {} different batches in a row failed; the remaining items wait for the next build; {}",
+                    courseId, seconds, MAX_CONSECUTIVE_FAILED_BATCHES, counters);
+        }
         else if (!leaseHeld) {
             log.warn("Quiz question pool build of course [{}] stops after {} s: its lease expired and another build took over the course; {}", courseId, seconds, counters);
         }
         else {
             log.info("Quiz question pool build of course [{}] finished after {} s; {}", courseId, seconds, counters);
         }
-        StopReason stopReason = cancelled ? StopReason.CANCELLED : deadlineReached ? StopReason.DEADLINE : leaseHeld ? StopReason.COMPLETED : StopReason.LEASE_LOST;
+        StopReason stopReason = cancelled ? StopReason.CANCELLED
+                : deadlineReached ? StopReason.DEADLINE : generationUnavailable ? StopReason.GENERATION_UNAVAILABLE : leaseHeld ? StopReason.COMPLETED : StopReason.LEASE_LOST;
         return counters.toOutcome(stopReason);
     }
 
@@ -680,9 +732,11 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         catch (Exception e) {
             log.warn("Generation of {} pool questions for lecture unit [{}] in course [{}] failed", batch.size(), first.getLectureUnitId(), course.getId(), e);
+            counters.callFailed(first.getId());
             batch.forEach(item -> recordGenerationFailure(item, FAILURE_CALL_FAILED, true, counters));
             return;
         }
+        counters.callAnswered();
 
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
