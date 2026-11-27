@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.sandbox.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -514,4 +515,11 @@ final class AresTestSources {
         }
     }
 
+    /**
+     * @return the top-level type of the summary that takes part in the sandbox decision, if there is exactly one
+     */
+    static Optional<TypeDeclaration> relevantType(Summary summary) {
+        List<TypeDeclaration> relevant = summary.topLevelTypes().stream().filter(TypeDeclaration::isRelevant).toList();
+        return relevant.size() == 1 ? Optional.of(relevant.getFirst()) : Optional.empty();
+    }
 }

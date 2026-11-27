@@ -6,11 +6,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.sandbox.domain.BuildFiles;
@@ -19,10 +24,12 @@ import de.tum.cit.aet.artemis.sandbox.domain.PolicyFileProblem;
 import de.tum.cit.aet.artemis.sandbox.domain.SandboxState;
 
 /**
- * Reads the files of a commit of an exercise-tests repository: the state of the sandbox, the pinned Ares version and the policy files. Unlike a checkout,
- * it never follows symbolic links.
+ * Reads the files of a commit of an exercise-tests repository: the state of the sandbox, the pinned Ares version and the policy files, also from earlier
+ * commits. Unlike a checkout, it never follows symbolic links.
  */
 public final class TestRepositoryCommitFiles {
+
+    private static final Logger log = LoggerFactory.getLogger(TestRepositoryCommitFiles.class);
 
     private static final String GRADLE_BUILD_FILE = "build.gradle";
 
@@ -121,4 +128,23 @@ public final class TestRepositoryCommitFiles {
         }
     }
 
+    /**
+     * @param path a validated policy path
+     * @return the content of the policy file in the most recent commit that still contained it as a regular file, if the repository ever had one
+     */
+    public static Optional<String> findPreviousPolicy(Repository repository, String path) {
+        try (Git git = new Git(repository)) {
+            for (RevCommit commit : git.log().addPath(path).call()) {
+                PolicyFileContent policy = readPolicyFile(repository, commit.getTree(), path);
+                if (policy.content() != null) {
+                    return Optional.of(policy.content());
+                }
+            }
+            return Optional.empty();
+        }
+        catch (GitAPIException e) {
+            log.warn("Could not read the policy history of {}, generating a default policy instead", repository.getLocalPath(), e);
+            return Optional.empty();
+        }
+    }
 }

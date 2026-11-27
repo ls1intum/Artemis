@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.sandbox.domain.SandboxState;
 import de.tum.cit.aet.artemis.sandbox.domain.SandboxStatus;
 import de.tum.cit.aet.artemis.sandbox.dto.SandboxConfigurationDTO;
 import de.tum.cit.aet.artemis.sandbox.dto.SandboxFrameworkVersionsDTO;
+import de.tum.cit.aet.artemis.sandbox.util.TestRepositoryCheckout;
 import de.tum.cit.aet.artemis.sandbox.util.TestRepositoryCommitFiles;
 import de.tum.cit.aet.artemis.sandbox.util.TestRepositoryFiles;
 
@@ -226,6 +227,18 @@ public class SandboxConfigurationService {
     }
 
     /**
+     * Reads the sandbox configuration of a checkout of the exercise-tests repository, e.g. the one a change was just committed in.
+     *
+     * @param root the root of the checkout
+     * @return the configuration
+     */
+    public SandboxConfigurationDTO getConfiguration(Path root) {
+        SandboxState state = TestRepositoryCheckout.evaluate(root);
+        return SandboxConfigurationDTO.of(state, TestRepositoryCheckout.readAresVersion(root).orElse(null),
+                versionCompatibilities(state, path -> TestRepositoryCheckout.readPolicyFile(root, path).content()));
+    }
+
+    /**
      * Checks every selectable Ares version against the policy files of a state, so the client can tell which versions can be pinned before the instructor
      * picks one. A version is {@code INCOMPATIBLE} as soon as one file uses something it does not accept, and {@code UNVERIFIED} if it is not incompatible but
      * one file could not be checked.
@@ -322,4 +335,13 @@ public class SandboxConfigurationService {
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }
 
+    /**
+     * @param frameworkVersion an Ares version an instructor asked for
+     * @throws BadRequestAlertException if it is not one of the selectable versions
+     */
+    public void requireSelectableVersion(String frameworkVersion) {
+        if (!getFrameworkVersions().selectableVersions().contains(frameworkVersion)) {
+            throw new BadRequestAlertException("Unsupported Security Framework version: " + frameworkVersion, ENTITY_NAME, "unsupportedFrameworkVersion");
+        }
+    }
 }

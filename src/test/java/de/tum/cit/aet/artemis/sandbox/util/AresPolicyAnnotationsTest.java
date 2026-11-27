@@ -22,12 +22,67 @@ class AresPolicyAnnotationsTest {
         return "package de.example;\n\n" + imports + "\n" + annotation + "\nclass SortingTest {\n}\n";
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")", "@de.tum.cit.ase.ares.api.Policy(value = (\"SecurityPolicy.yaml\"))",
+            "@de.tum.cit.ase.ares.api.Policy(value = \"a, b)\", withinPath = \"test\")", "@de.tum.cit.ase.ares.api.Policy(value = \"\"\"\n        x)\n        \"\"\")",
+            "@de.tum.cit.ase.ares.api.Policy", "@de.tum.cit.ase.ares.api.Policy(/* policy file */ value = \"SecurityPolicy.yaml\")",
+            "@de.tum.cit.ase.ares.api.Policy(value /* policy file */ = /* yaml */ \"SecurityPolicy.yaml\", /* scope */ withinPath = \"test\" /* tests */)",
+            "@de.tum.cit.ase.ares.api.Policy(// policy file\n        value = \"SecurityPolicy.yaml\")", "@ de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")",
+            "@/* Ares */ de . tum.cit.ase.ares.api.Policy", "@de.tum.cit.ase.ares.api.Policy /* course policy */ (value = \"SecurityPolicy.yaml\")" })
+    void switchingOffAndOnRestoresTheAnnotationExactly(String annotation) {
+        String original = source("", annotation);
+
+        String deactivated = AresPolicyAnnotations.setActive(original, false);
+        assertThat(isDeactivated(deactivated)).isTrue();
+        assertThat(AresPolicyAnnotations.setActive(deactivated, false)).isEqualTo(deactivated);
+
+        assertThat(AresPolicyAnnotations.setActive(deactivated, true)).isEqualTo(original);
+    }
+
+    @Test
+    void keepsACommentBeforeTheArgumentListWhenTheLastArgumentIsRemoved() {
+        String deactivated = source("", "@de.tum.cit.ase.ares.api.Policy // course policy\n(activated = false) @SuppressWarnings(\"unused\")");
+
+        // Without the parentheses, the line comment would swallow the annotation after them.
+        assertThat(AresPolicyAnnotations.setActive(deactivated, true)).contains("@de.tum.cit.ase.ares.api.Policy // course policy\n() @SuppressWarnings(\"unused\")");
+    }
+
     @Test
     void findsTheAnnotationBelowALineCommentInAFileWithCarriageReturnLineEndings() {
         String source = "package de.example;\r\r// The policy of the sorting tests\r@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\rclass SortingTest {\r}\r";
 
         assertThat(AresPolicyAnnotations.find(source)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml"));
         assertThat(AresPolicyAnnotations.mask(source)).hasSameSizeAs(source).contains("\r@de.tum.cit.ase.ares.api.Policy(value = \"                   \")\r");
+    }
+
+    @Test
+    void addsTheFlagAfterAParenthesizedValue() {
+        String deactivated = AresPolicyAnnotations.setActive(source("", "@de.tum.cit.ase.ares.api.Policy(value = (\"SecurityPolicy.yaml\"))"), false);
+
+        assertThat(deactivated).contains("@de.tum.cit.ase.ares.api.Policy(value = (\"SecurityPolicy.yaml\"), activated = false)");
+    }
+
+    @Test
+    void readsArgumentsBehindComments() {
+        String deactivated = AresPolicyAnnotations.setActive(source("", "@de.tum.cit.ase.ares.api.Policy(/* policy file */ value = \"SecurityPolicy.yaml\")"), false);
+
+        assertThat(deactivated).contains("@de.tum.cit.ase.ares.api.Policy(/* policy file */ value = \"SecurityPolicy.yaml\", activated = false)");
+        AresPolicyAnnotations.Annotation annotation = AresPolicyAnnotations.find(deactivated).getFirst();
+        assertThat(annotation.isActivated()).isFalse();
+        assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml");
+
+        AresPolicyAnnotations.Annotation commentedFlag = AresPolicyAnnotations.find(source("", "@de.tum.cit.ase.ares.api.Policy(activated = /* off */ false)")).getFirst();
+        assertThat(commentedFlag.isActivated()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "activated = (false)", "activated = ( /* off */ (false) )" })
+    void recognizesAParenthesizedFlag(String flag) {
+        String original = source("", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", " + flag + ")");
+
+        assertThat(isDeactivated(original)).isTrue();
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")").doesNotContain("activated");
     }
 
     @ParameterizedTest
@@ -57,6 +112,85 @@ class AresPolicyAnnotationsTest {
     }
 
     @Test
+    void neverAppendsTheFlagBehindALineComment() {
+        String deactivated = AresPolicyAnnotations.setActive(source("", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" // policy file\n)"), false);
+
+        assertThat(deactivated).contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+    }
+
+    @Test
+    void keepsABlockCommentWithASlashSlashAtTheEndOfAnArgument() {
+        String annotation = "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */)";
+
+        // The // of the URL lies in the block comment, so it starts no line comment that would comment out the appended flag.
+        assertThat(AresPolicyAnnotations.setActive(source("", annotation), false))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */, activated = false)");
+        assertThat(AresPolicyAnnotations.setActive(source("", annotation.replace("*/)", "*/ // policy file\n)")), false))
+                .contains("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\" /* https://example.org/course */, activated = false)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "public@Policy(\"SecurityPolicy.yaml\")", "@SuppressWarnings(\"unused\")@Policy(\"SecurityPolicy.yaml\")" })
+    void rewritesAPolicyRightAfterAModifierOrAnotherAnnotation(String annotation) {
+        String deactivated = AresPolicyAnnotations.setActive(source("import de.tum.cit.ase.ares.api.Policy;", annotation), false);
+
+        // Java needs no whitespace before an @, so the annotation is the imported Ares one.
+        assertThat(deactivated).contains("@Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+        assertThat(isDeactivated(deactivated)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "import de.tum.cit.ase.ares.api.Policy;", "import de.tum.cit.ase.ares.api.*;", "import de.tum.cit.ase.ares.api . Policy;",
+            "import de . tum.cit.ase.ares.api /* Ares */ . *;" })
+    void rewritesTheSimpleNameIfItRefersToAres(String imports) {
+        String deactivated = AresPolicyAnnotations.setActive(source(imports, "@Policy(\"SecurityPolicy.yaml\")"), false);
+
+        assertThat(deactivated).contains("@Policy(value = \"SecurityPolicy.yaml\", activated = false)");
+        assertThat(isDeactivated(deactivated)).isTrue();
+        assertThat(AresPolicyAnnotations.setActive(deactivated, true)).contains("@Policy(value = \"SecurityPolicy.yaml\")").doesNotContain("activated");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "import org.example.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport org.example.Policy;",
+            "import de.tum.cit.ase.ares.api.*;\nimport com.bücher.Policy;", "import de.tum.cit.ase.ares.api.*;\nimport static org.example.Annotations.Policy;" })
+    void keepsOtherPolicyAnnotationsUntouched(String imports) {
+        String original = source(imports, "@Policy(activated = false)");
+
+        assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
+        assertThat(isDeactivated(original)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@Policy$Tag(\"metadata\")", "@PolicyÜ(\"metadata\")", "@de.tum.cit.ase.ares.api.Policy$Tag(\"metadata\")" })
+    void leavesAnAnnotationAloneWhoseNameOnlyStartsWithPolicy(String annotation) {
+        String original = source("import de.tum.cit.ase.ares.api.*;", annotation);
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
+    }
+
+    @Test
+    void leavesAPolicyAnnotationAloneThatTheFileDeclaresItself() {
+        // The declared annotation shadows the Ares one that the wildcard import provides, so adding the flag would break the file.
+        String original = """
+                package de.example;
+
+                import de.tum.cit.ase.ares.api.*;
+
+                @interface Policy {
+                    String value();
+                }
+
+                @Policy("SecurityPolicy.yaml")
+                class SortingTest {
+                }
+                """;
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(isDeactivated(original)).isFalse();
+    }
+
+    @Test
     void aNestedPolicyTypeShadowsTheAresAnnotationOnlyWithinItsBody() {
         String original = """
                 package de.example;
@@ -81,6 +215,23 @@ class AresPolicyAnnotationsTest {
 
         // Only the annotation on SortingTest refers to Ares; the one inside Helper refers to Helper.Policy.
         assertThat(AresPolicyAnnotations.find(original)).singleElement().satisfies(annotation -> assertThat(annotation.policyPath()).contains("SecurityPolicy.yaml"));
+    }
+
+    @Test
+    void ignoresAnnotationsInCommentsAndStrings() {
+        String original = """
+                package de.example;
+
+                // @de.tum.cit.ase.ares.api.Policy(value = "commented")
+                /* @de.tum.cit.ase.ares.api.Policy(activated = false) */
+                class SortingTest {
+                    String text = "@de.tum.cit.ase.ares.api.Policy(value = \\"string\\")";
+                }
+                """;
+
+        assertThat(AresPolicyAnnotations.setActive(original, false)).isEqualTo(original);
+        assertThat(AresPolicyAnnotations.setActive(original, true)).isEqualTo(original);
+        assertThat(isDeactivated(original)).isFalse();
     }
 
     @Test

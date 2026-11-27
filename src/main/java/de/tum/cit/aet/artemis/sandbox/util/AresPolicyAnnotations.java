@@ -80,6 +80,10 @@ final class AresPolicyAnnotations {
      * @param expression the value expression without comments, for evaluating it
      */
     record Argument(boolean named, String text, String expression) {
+
+        private String render() {
+            return named ? text : VALUE_ARGUMENT + " = " + text;
+        }
     }
 
     /**
@@ -179,6 +183,46 @@ final class AresPolicyAnnotations {
 
     private AresPolicyAnnotations() {
         throw new UnsupportedOperationException("Utility class");
+    }
+
+    /**
+     * Switches every Ares {@code @Policy} annotation of the source on or off. Only the {@code activated} argument changes; the policy path and every other
+     * argument are kept, so switching an annotation off and on again restores its policy and its activation. Its spelling may change: an implicit
+     * {@code value} becomes a named one, e.g. {@code @Policy(value = "custom.yaml")} for {@code @Policy("custom.yaml")}, and an explicit
+     * {@code activated = true} is left out. An annotation that already has the requested state is not touched.
+     *
+     * @param source the content of a Java file
+     * @param active whether the annotations should enforce their policy
+     * @return the rewritten source
+     */
+    static String setActive(String source, boolean active) {
+        StringBuilder result = new StringBuilder(source);
+        List<Annotation> annotations = find(source);
+        // Replace from the end, so the offsets of the annotations before stay valid.
+        for (int i = annotations.size() - 1; i >= 0; i--) {
+            Annotation annotation = annotations.get(i);
+            if (annotation.isActivated() != active) {
+                result.replace(annotation.start(), annotation.end(), render(annotation, active));
+            }
+        }
+        return result.toString();
+    }
+
+    private static String render(Annotation annotation, boolean active) {
+        Map<String, Argument> arguments = new LinkedHashMap<>(annotation.arguments());
+        if (active) {
+            arguments.remove(ACTIVATED_ARGUMENT);
+        }
+        else {
+            arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = " + FALSE_LITERAL, FALSE_LITERAL));
+        }
+        if (arguments.isEmpty()) {
+            // A comment before the argument list stays, and so do its parentheses, because a line comment would otherwise swallow the code after them.
+            return annotation.beforeArguments().isBlank() ? annotation.name() : annotation.name() + annotation.beforeArguments() + "()";
+        }
+        StringJoiner rendered = new StringJoiner(", ", annotation.name() + annotation.beforeArguments() + "(", ")");
+        arguments.values().forEach(argument -> rendered.add(argument.render()));
+        return rendered.toString();
     }
 
     /**

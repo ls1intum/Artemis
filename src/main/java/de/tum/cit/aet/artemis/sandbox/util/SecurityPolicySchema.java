@@ -228,6 +228,14 @@ public final class SecurityPolicySchema {
     }
 
     /**
+     * @param yaml the content of a policy file
+     * @return whether Ares {@value #VERIFIED_ARES_VERSION} accepts the policy
+     */
+    public static boolean isValid(String yaml) {
+        return read(yaml).valid();
+    }
+
+    /**
      * Reads a policy file the way Ares reads it, without checking it against the rules of any Ares version.
      *
      * @param yaml the content of a policy file
