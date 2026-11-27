@@ -48,6 +48,7 @@ api/quiz-training-api.ts
 api/rating-api.ts
 api/request-options.ts
 api/result-api.ts
+api/sandbox-api.ts
 api/text-unit-api.ts
 api/tum-live-upload-api.ts
 api/tutor-effort-api.ts
@@ -343,6 +344,13 @@ model/result-with-points-per-grading-criterion.ts
 model/result.ts
 model/rewrite-faq-request.ts
 model/rewrite-faq-response.ts
+model/sandbox-ares-api-use.ts
+model/sandbox-configuration.ts
+model/sandbox-framework-version.ts
+model/sandbox-framework-versions.ts
+model/sandbox-policy-file.ts
+model/sandbox-unsupported-reason.ts
+model/sandbox-version-compatibility.ts
 model/score.ts
 model/search-result-page-dto-feedback-detail.ts
 model/search-result-page-dto-grading-scale.ts

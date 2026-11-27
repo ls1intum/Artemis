@@ -4904,6 +4904,106 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/sandbox/programming-exercises/{exerciseId}/configuration:
+    get:
+      tags: [sandbox]
+      operationId: getConfiguration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxConfiguration'}
+  /api/sandbox/programming-exercises/{exerciseId}/framework-versions:
+    get:
+      tags: [sandbox]
+      operationId: getFrameworkVersions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxFrameworkVersions'}
+  /api/sandbox/programming-exercises/{exerciseId}/configuration/activate:
+    post:
+      tags: [sandbox]
+      operationId: activate
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SandboxFrameworkVersion'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxConfiguration'}
+  /api/sandbox/programming-exercises/{exerciseId}/configuration/deactivate:
+    post:
+      tags: [sandbox]
+      operationId: deactivate
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxConfiguration'}
+  /api/sandbox/programming-exercises/{exerciseId}/configuration/framework-version:
+    put:
+      tags: [sandbox]
+      operationId: updateFrameworkVersion
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SandboxFrameworkVersion'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxConfiguration'}
+  /api/sandbox/programming-exercises/{exerciseId}/configuration/add-missing-test-classes:
+    post:
+      tags: [sandbox]
+      operationId: addMissingTestClasses
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SandboxConfiguration'}
 components:
   schemas:
     CourseCompetency:
@@ -9900,3 +10000,76 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    SandboxConfiguration:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [INACTIVE, CONFIGURED, MISCONFIGURED, UNSUPPORTED]
+        frameworkVersion: {type: string}
+        disabledTestClasses:
+          type: array
+          items: {type: string}
+        policyFiles:
+          type: array
+          items: {$ref: '#/components/schemas/SandboxPolicyFile'}
+        unsupportedReasons:
+          type: array
+          items: {$ref: '#/components/schemas/SandboxUnsupportedReason'}
+        versionCompatibilities:
+          type: array
+          items: {$ref: '#/components/schemas/SandboxVersionCompatibility'}
+        aresApiUses:
+          type: array
+          items: {$ref: '#/components/schemas/SandboxAresApiUse'}
+    SandboxPolicyFile:
+      type: object
+      properties:
+        policyPath: {type: string}
+        referencedBy:
+          type: array
+          items: {type: string}
+        problem:
+          type: string
+          enum: [INVALID_PATH, MISSING, TOO_LARGE, UNPARSEABLE, TEST_CLASS_LIST_NOT_FOUND]
+        missingTestClasses:
+          type: array
+          items: {type: string}
+    SandboxUnsupportedReason:
+      type: object
+      properties:
+        location: {type: string}
+        type:
+          type: string
+          enum: [UNEVALUABLE_ARGUMENTS, POLICY_NOT_ON_TOP_LEVEL_TYPE, POLICY_ON_ANNOTATION_TYPE,
+            MULTIPLE_TOP_LEVEL_TYPES, TESTS_IN_NESTED_TYPE, TEST_CLASS_WITHOUT_POLICY,
+            TEST_CLASS_WITHOUT_ARES, ARES_1, NO_ARES_2, NO_ARES_VERSION_PINNED, ARES_VERSION_IN_MAVEN_PROFILE]
+    SandboxVersionCompatibility:
+      type: object
+      properties:
+        version: {type: string}
+        verdict:
+          type: string
+          enum: [COMPATIBLE, INCOMPATIBLE, UNVERIFIED]
+        incompatibilities:
+          type: array
+          items: {type: string}
+    SandboxAresApiUse:
+      type: object
+      properties:
+        location: {type: string}
+        api: {type: string}
+    SandboxFrameworkVersions:
+      type: object
+      properties:
+        selectableVersions:
+          type: array
+          items: {type: string}
+        templateVersions:
+          type: object
+          additionalProperties: {type: string}
+    SandboxFrameworkVersion:
+      type: object
+      properties:
+        frameworkVersion: {type: string, minLength: 1}
+      required: [frameworkVersion]

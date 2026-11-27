@@ -40,7 +40,8 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_SANDBOX, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
@@ -535,6 +536,52 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 state.set(false);
             }
             expect(find).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('sandbox card', () => {
+        let accountService: AccountService;
+
+        beforeEach(() => {
+            accountService = TestBed.inject(AccountService);
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.programmingExercise.id = 42;
+            comp.isEdit = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+        });
+
+        it('is available when an instructor edits an existing exercise and the sandbox module is enabled', () => {
+            const moduleFeature = vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_SANDBOX);
+            vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
+
+            comp['updateSandboxCardAvailability']();
+
+            expect(moduleFeature).toHaveBeenCalledWith(MODULE_FEATURE_SANDBOX);
+            expect(comp.sandboxCardAvailable()).toBe(true);
+        });
+
+        it('is not available without the sandbox module, for an editor, or while creating or importing an exercise', () => {
+            const moduleFeature = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+            const instructor = vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
+            comp['updateSandboxCardAvailability']();
+            expect(comp.sandboxCardAvailable()).toBe(false);
+
+            moduleFeature.mockReturnValue(true);
+            instructor.mockReturnValue(false);
+            comp['updateSandboxCardAvailability']();
+            expect(comp.sandboxCardAvailable()).toBe(false);
+
+            instructor.mockReturnValue(true);
+            comp.isImportFromExistingExercise = true;
+            comp['updateSandboxCardAvailability']();
+            expect(comp.sandboxCardAvailable()).toBe(false);
+
+            comp.isImportFromExistingExercise = false;
+            comp.programmingExercise.id = undefined;
+            comp['updateSandboxCardAvailability']();
+            expect(comp.sandboxCardAvailable()).toBe(false);
         });
     });
 

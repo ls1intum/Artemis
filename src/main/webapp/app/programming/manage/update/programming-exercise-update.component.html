@@ -64,6 +64,10 @@
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-12" />
+                @if (sandboxCardAvailable()) {
+                    <jhi-sandbox-configuration-card [programmingExercise]="programmingExercise" />
+                    <hr class="mb-12" />
+                }
             }
             <!-- Shown in the advanced mode, collapsed until a window is wanted. The simple mode shows it only for a window that a date change there invalidated, which blocks saving -->
             @if (isBuildTimeWindowDisplayed()) {
