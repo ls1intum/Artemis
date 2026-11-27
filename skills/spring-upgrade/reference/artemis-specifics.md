@@ -5,19 +5,21 @@ comments next to them, which give the reason for each pin.
 
 ## Where versions are set
 
-| What                                                                             | Where                                              |
-| -------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Spring Boot, Spring Cloud train and most shared versions                         | `gradle.properties`                                |
-| Spring Cloud modules, pinned one by one                                          | `build.gradle`                                     |
-| Spring AI bill of materials                                                      | `build.gradle`                                     |
-| Jackson 2, Jackson 3 and OpenTelemetry bills of materials                        | `build.gradle`, block `dependencyManagement`       |
-| Guards for libraries that must move together                                     | `gradle/dependency-families.gradle`                |
-| Netty and OpenTelemetry, forced on every configuration                           | `build.gradle`, `resolutionStrategy`               |
-| `strictly` pins and constraints                                                  | `build.gradle`, block `dependencies`               |
-| Libraries with their version in the declaration, such as `spring-security-lti13` | `build.gradle`, block `dependencies`               |
-| Forces for the build script classpath                                            | `build.gradle`, block `buildscript`                |
-| Version properties also read by other scripts                                    | `gradle/openapi.gradle`, `gradle/liquibase.gradle` |
-| Gradle itself                                                                    | `gradle/wrapper/gradle-wrapper.properties`         |
+| What                                                                                            | Where                                              |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Spring Boot, Spring Cloud train and most shared versions                                        | `gradle.properties`                                |
+| Spring Cloud modules, pinned one by one                                                         | `build.gradle`                                     |
+| Spring AI bill of materials                                                                     | `build.gradle`                                     |
+| Jackson 2, Jackson 3 and OpenTelemetry bills of materials                                       | `build.gradle`, block `dependencyManagement`       |
+| Guards for libraries that must move together                                                    | `gradle/dependency-families.gradle`                |
+| Netty and OpenTelemetry, forced on every configuration                                          | `build.gradle`, `resolutionStrategy`               |
+| `strictly` pins and constraints                                                                 | `build.gradle`, block `dependencies`               |
+| Libraries with their version in the declaration, such as `spring-security-lti13`                | `build.gradle`, block `dependencies`               |
+| Forces for the build script classpath                                                           | `build.gradle`, block `buildscript`                |
+| Version properties also read by other scripts                                                   | `gradle/openapi.gradle`, `gradle/liquibase.gradle` |
+| Gradle plugins with their version in the declaration, such as `io.spring.dependency-management` | `build.gradle`, block `plugins`                    |
+| Gradle distribution and its checksum, `distributionSha256Sum`                                   | `gradle/wrapper/gradle-wrapper.properties`         |
+| Gradle version of the wrapper task                                                              | `build.gradle`, block `wrapper`                    |
 
 ## Rules for pinned versions
 
