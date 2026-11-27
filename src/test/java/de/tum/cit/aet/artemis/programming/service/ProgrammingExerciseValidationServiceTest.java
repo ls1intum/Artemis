@@ -638,6 +638,44 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateContainerPlan_rejectsAContainerPlanThatViolatesTheSharedRules() {
+        when(profileService.isLocalCIActive()).thenReturn(true);
+        var phase = new BuildPhaseDTO("test", "echo test", null, false, List.of());
+        var container = new BuildContainerDTO("review_duplicate", null, List.of(phase));
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container, container)).toBuildPlanConfiguration());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateContainerPlan(buildConfig))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("duplicateBuildContainerName"));
+    }
+
+    @Test
+    void validateContainerPlan_leavesPlansWithoutContainersToTheImport() {
+        when(profileService.isLocalCIActive()).thenReturn(true);
+        var flatPlan = new ProgrammingExerciseBuildConfig();
+        flatPlan.setBuildPlanConfiguration(
+                new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("test", "echo test", null, false, List.of())), "ubuntu:24.04").toBuildPlanConfiguration());
+        var legacyConfiguration = new ProgrammingExerciseBuildConfig();
+        // a legacy configuration does not follow the strict format, so the import keeps accepting it as before
+        legacyConfiguration.setBuildPlanConfiguration("{\"actions\":[{\"name\":\"tests\",\"script\":\"echo\"}]}");
+        var noConfiguration = new ProgrammingExerciseBuildConfig();
+
+        assertThatCode(() -> validationService.validateContainerPlan(flatPlan)).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateContainerPlan(legacyConfiguration)).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateContainerPlan(noConfiguration)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateContainerPlan_doesNothingWithoutLocalCI() {
+        when(profileService.isLocalCIActive()).thenReturn(false);
+        var container = new BuildContainerDTO("review_duplicate", null, List.of(new BuildPhaseDTO("test", "echo test", null, false, List.of())));
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container, container)).toBuildPlanConfiguration());
+
+        assertThatCode(() -> validationService.validateContainerPlan(buildConfig)).doesNotThrowAnyException();
+    }
+
+    @Test
     void validateBuildConfigSize_rejectsABranchRegexThatCannotBeCompiled() {
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         buildConfig.setAllowBranching(true);

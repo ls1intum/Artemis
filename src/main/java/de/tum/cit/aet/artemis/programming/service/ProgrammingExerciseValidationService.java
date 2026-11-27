@@ -604,6 +604,32 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Validates a build plan that defines containers explicitly with the existing rules of the other save paths. The
+     * import of an exercise takes the plan as a string, supplied by the request or copied from the source exercise, so the
+     * bean validation of the build plan endpoint never sees it.
+     *
+     * @param buildConfig the build configuration whose plan is about to be saved
+     */
+    public void validateContainerPlan(ProgrammingExerciseBuildConfig buildConfig) {
+        if (!profileService.isLocalCIActive() || buildConfig.getBuildPlanConfiguration() == null) {
+            return;
+        }
+        BuildPlanPhasesDTO buildPlan;
+        try {
+            buildPlan = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
+        }
+        catch (JacksonException _) {
+            // a legacy configuration does not follow the strict format and defines no containers
+            return;
+        }
+        if (buildPlan == null || buildPlan.containers() == null || buildPlan.containers().isEmpty()) {
+            return;
+        }
+        BuildPlanConfigurationValidator.validate(buildPlan, buildConfig.getTimeoutSeconds());
+        validateContainerDockerFlags(buildPlan, buildConfig);
+    }
+
+    /**
      * Validates custom build phase names in phases-based build plan configurations.
      * Phase names must match the configured pattern and be unique case-insensitively.
      *
