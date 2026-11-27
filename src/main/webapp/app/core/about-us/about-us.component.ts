@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { MODULE_FEATURE_EXAM, VERSION } from 'app/app.constants';
 import { BUG_REPORT_URL, CITATION, CONTRIBUTORS_URL, FEATURE_REQUEST_URL, HIGHLIGHTS, ICONS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
 import { AboutUsMaintainer, AboutUsModel } from 'app/core/about-us/models/about-us-model';

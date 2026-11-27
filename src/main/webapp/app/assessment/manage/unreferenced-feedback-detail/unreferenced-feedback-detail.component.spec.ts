@@ -8,7 +8,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Unreferenced Feedback Detail Component', () => {

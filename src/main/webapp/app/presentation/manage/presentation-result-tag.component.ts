@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationAssessment, PresentationAssessmentInstance, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';

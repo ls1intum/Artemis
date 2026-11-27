@@ -6,13 +6,11 @@
     :host {
         display: block;
         position: relative;
-    }
 
-    /*
-     * Filling the parent is only a default. A consumer gives the chart a fixed size with a utility class, which
-     * overrides the styles of this package because they are in the cascade layer `tumaet-ui`.
-     */
-    :host {
+        /*
+         * Filling the parent is only a default. A consumer gives the chart a fixed size with a utility class, which
+         * overrides the styles of this package because they are in the cascade layer `tumaet-ui`.
+         */
         width: 100%;
         height: 100%;
     }

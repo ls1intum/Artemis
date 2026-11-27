@@ -10,6 +10,7 @@ import { Title } from '@angular/platform-browser';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { MockProvider } from 'ng-mocks';
 import { Renderer2, RendererFactory2 } from '@angular/core';
+import { of } from 'rxjs';
 
 describe('Language Helper', () => {
     const renderer2: Renderer2 = {
@@ -34,6 +35,21 @@ describe('Language Helper', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('updates the title again when the translations change', () => {
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        router.routerState = { snapshot: { root: { data: { pageTitle: 'overview.title' } } } } as unknown as MockRouter['routerState'];
+        const getSpy = vi.spyOn(translateService, 'get').mockReturnValue(of('Courses'));
+        const titleService = TestBed.inject(Title);
+        const setTitleSpy = vi.spyOn(titleService, 'setTitle');
+        TestBed.inject(JhiLanguageHelper);
+
+        translateService.onTranslationChangeSubject.next('en');
+
+        expect(getSpy).toHaveBeenCalledWith('overview.title');
+        expect(setTitleSpy).toHaveBeenCalledWith('Courses');
     });
 
     it('determinePreferredLanguages should respect user preference', inject([JhiLanguageHelper], (service: JhiLanguageHelper) => {

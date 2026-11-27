@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
@@ -758,6 +759,8 @@ public class BuildJobContainerService implements EnvironmentAware {
         IOException lastException = null;
 
         for (int attempt = 1; attempt <= MAX_TAR_OPERATION_RETRIES; attempt++) {
+            // The build is cancelled by interrupting its thread, and its container is stopped. Another attempt would only fail on the stopped container.
+            throwIfCancelled(operationName);
             try {
                 T result = operation.execute();
                 if (attempt > 1) {
@@ -769,6 +772,8 @@ public class BuildJobContainerService implements EnvironmentAware {
                 return result;
             }
             catch (IOException e) {
+                // The failure comes from the container being stopped by the cancellation, so it is not an infrastructure problem
+                throwIfCancelled(operationName);
                 lastException = e;
                 log.warn("{} failed on attempt {} of {}: {} - {}", operationName, attempt, MAX_TAR_OPERATION_RETRIES, e.getClass().getSimpleName(), e.getMessage());
 
@@ -783,7 +788,7 @@ public class BuildJobContainerService implements EnvironmentAware {
                     }
                     catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        throw new IOException("Interrupted while waiting to retry " + operationName, ie);
+                        throw new CancellationException(operationName + " was cancelled while waiting to retry");
                     }
                 }
             }
@@ -791,6 +796,19 @@ public class BuildJobContainerService implements EnvironmentAware {
 
         // All retries exhausted — callers handle Docker-unavailability vs. generic error logging
         throw lastException;
+    }
+
+    /**
+     * Stops an operation of a build that has been cancelled, for example because it timed out. The cancellation interrupts the thread of the build, and
+     * the container is stopped at the same time, so the operation fails for a reason that neither needs a retry nor says anything about the infrastructure.
+     *
+     * @param operationName the operation that would continue
+     * @throws CancellationException if the current thread has been interrupted
+     */
+    private static void throwIfCancelled(String operationName) {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException(operationName + " was cancelled");
+        }
     }
 
     /**

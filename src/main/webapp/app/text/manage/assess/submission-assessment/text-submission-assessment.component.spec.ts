@@ -38,7 +38,7 @@ import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AlertService } from 'app/foundation/service/alert.service';

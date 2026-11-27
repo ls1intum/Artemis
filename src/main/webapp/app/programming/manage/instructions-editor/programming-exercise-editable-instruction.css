@@ -29,9 +29,12 @@
     border-bottom: var(--border-color) 1px solid;
 }
 
-.editable-instruction-container .markdown-editor-wrapper {
-    /* override scoped styling */
-    background-color: var(--markdown-preview-editor-background) !important;
+.editable-instruction-container jhi-markdown-editor-monaco .markdown-editor-wrapper {
+    /*
+     * The child's scoped rule is .markdown-editor-wrapper[_ngcontent-*] (0,2,0) and loads after this stylesheet.
+     * The element selector raises this rule to (0,2,1), so it wins whatever the insertion order.
+     */
+    background-color: var(--markdown-preview-editor-background);
 }
 
 .editable-instruction-container .instructions__content__markdown,
