@@ -231,6 +231,45 @@ describe('Team Submission Sync Component', () => {
         generateInitialAwarenessSyncSpy.mockRestore();
     });
 
+    it('reports an error and sends nothing when the editor cannot be downloaded', async () => {
+        vi.spyOn(component as unknown as { loadApollon: () => Promise<unknown> }, 'loadApollon').mockRejectedValue(new Error('offline'));
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const reconnectedSpy = vi.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        fixture.detectChanges();
+        await flushDynamicImport();
+
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('offline');
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(reconnectedSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not send or emit when the component is destroyed while the editor downloads', async () => {
+        let finishDownload!: (module: typeof import('@tumaet/apollon')) => void;
+        const download = new Promise<typeof import('@tumaet/apollon')>((resolve) => (finishDownload = resolve));
+        vi.spyOn(component as unknown as { loadApollon: () => Promise<unknown> }, 'loadApollon').mockReturnValue(download);
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        fixture.detectChanges();
+        // The student leaves the exercise while the download is still running.
+        component.ngOnDestroy();
+        finishDownload({ ApollonEditor } as unknown as typeof import('@tumaet/apollon'));
+        await flushDynamicImport();
+
+        expect(generateInitialSyncSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(reconnectedSpy).not.toHaveBeenCalled();
+    });
+
     it('should stop reacting to connection-state changes after ngOnDestroy', async () => {
         const mock = websocketService as unknown as MockWebsocketService;
         vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');

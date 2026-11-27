@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -38,14 +39,23 @@ export class QuizQuestionListEditComponent {
     private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
     private cdr = inject(ChangeDetectorRef);
+    private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
 
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
     disabled = input(false);
     hyperionEnabled = input(false);
 
+    private destroyed = false;
+    private importDialogLoading = false;
+
     onQuestionAdded = output<QuizQuestion>();
     onQuestionUpdated = output<void>();
+
+    constructor() {
+        this.destroyRef.onDestroy(() => (this.destroyed = true));
+    }
     onQuestionDeleted = output<QuizQuestion>();
     onAiGenerateRequested = output<void>();
 
@@ -257,18 +267,34 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        // The dialog hosts the diagram editor. It is loaded when it is opened, so that editing a quiz does not download the editor.
-        const { ApollonDiagramImportDialogComponent: importDialog } = await import('app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component');
-        const ref = this.dialogService.open<ApollonDiagramImportDialogComponent, DragAndDropQuestion, { courseId: number }>(importDialog, {
-            size: 'large',
-            // This dialog hosts a short list and a full diagram editor, so the view decides its own size and spacing.
-            contentPadding: 'none',
-            closeOnEscape: true,
-            dismissableMask: false,
-            showHeader: false,
-            ariaLabel: this.translateService.instant('artemisApp.quizExercise.addApollonDragAndDropQuestion'),
-            data: { courseId: this.courseId() },
-        });
+        // A second click while the dialog is still loading must not open a second dialog, which would add the question twice.
+        if (this.importDialogLoading) {
+            return;
+        }
+        this.importDialogLoading = true;
+        let ref;
+        try {
+            const importDialog = await this.loadImportDialog();
+            if (this.destroyed) {
+                // The user left the quiz editor while the dialog loaded: the dialog would open on the page they went to.
+                return;
+            }
+            ref = this.dialogService.open<ApollonDiagramImportDialogComponent, DragAndDropQuestion, { courseId: number }>(importDialog, {
+                size: 'large',
+                // This dialog hosts a short list and a full diagram editor, so the view decides its own size and spacing.
+                contentPadding: 'none',
+                closeOnEscape: true,
+                dismissableMask: false,
+                showHeader: false,
+                ariaLabel: this.translateService.instant('artemisApp.quizExercise.addApollonDragAndDropQuestion'),
+                data: { courseId: this.courseId() },
+            });
+        } catch {
+            this.alertService.error('artemisApp.modelingEditor.loadFailed');
+            return;
+        } finally {
+            this.importDialogLoading = false;
+        }
         if (!ref) {
             return;
         }
@@ -277,6 +303,15 @@ export class QuizQuestionListEditComponent {
         if (question) {
             this.addQuestion(question);
         }
+    }
+
+    /**
+     * Loads the dialog that hosts the diagram editor when it is opened, so that editing a quiz does not download the editor.
+     * A method of its own, so that a test can hold the download back.
+     */
+    protected async loadImportDialog() {
+        const { ApollonDiagramImportDialogComponent: importDialog } = await import('app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component');
+        return importDialog;
     }
 
     /**

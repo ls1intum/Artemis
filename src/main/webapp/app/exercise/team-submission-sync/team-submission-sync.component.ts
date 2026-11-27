@@ -20,6 +20,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private teamSubmissionWebsocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
+    private destroyed = false;
     private websocketSubscription?: Subscription;
     private connectionStateSubscription?: Subscription;
 
@@ -55,8 +56,14 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.destroyed = true;
         this.websocketSubscription?.unsubscribe();
         this.connectionStateSubscription?.unsubscribe();
+    }
+
+    /** Loads Apollon. A method of its own, so that a test can hold the download back. */
+    protected loadApollon() {
+        return import('@tumaet/apollon');
     }
 
     /**
@@ -115,7 +122,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                     try {
                         // Loaded here and not at the top of the file: this component is part of the text editor route, and only a team
                         // exercise ever gets here, so an individual exercise never downloads the editor.
-                        const { ApollonEditor } = await import('@tumaet/apollon');
+                        const { ApollonEditor } = await this.loadApollon();
+                        if (this.destroyed) {
+                            // The student left the exercise while the editor downloaded: unsubscribing does not cancel this callback.
+                            return;
+                        }
                         const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
                         this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
 
