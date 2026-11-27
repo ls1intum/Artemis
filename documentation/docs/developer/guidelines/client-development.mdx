@@ -815,6 +815,20 @@ one HTML parser, one diff library, one icon set) and that it does not pull in a 
 To check what users actually download, build with `ng build --configuration production --stats-json` and pass the
 metafile: `node supporting_scripts/client/check_duplicate_dependencies.mjs --stats <output>/browser-stats.json`.
 
+### Tools fetched on demand
+
+Tools that only a few commands need are not dependencies of the project. They are fetched with `pnpm dlx` at an exact
+version, which keeps their packages out of every `pnpm install` and out of every advisory scan of the lockfile.
+Each version is declared once, in the script that runs the tool:
+
+| Tool                      | Command                          | Version declared in            |
+| ------------------------- | -------------------------------- | ------------------------------ |
+| publint, AreTheTypesWrong | `pnpm run tum-aet-ui:pack:check` | `packages/tum-aet-ui/pack.mjs` |
+
+Run the command to use the tool; there is nothing to install first. To use a newer release, change the version constant
+and run the command once. A `// renovate:` comment above the constant lets Renovate propose the update. Do not add such a
+tool back as a dependency to run it faster: a package that only a script uses belongs in this table.
+
 ### Preventing Memory Leaks
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
