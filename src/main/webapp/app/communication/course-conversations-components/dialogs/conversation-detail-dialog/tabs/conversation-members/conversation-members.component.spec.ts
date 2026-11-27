@@ -8,7 +8,7 @@ import { ChangeDetectorRef, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';

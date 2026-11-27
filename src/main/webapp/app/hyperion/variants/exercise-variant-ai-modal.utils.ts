@@ -2,7 +2,7 @@ import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration } fro
 import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
-import { TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';

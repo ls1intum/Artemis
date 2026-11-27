@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -111,8 +111,18 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
+    /** Renders the deferred blocks of the navbar (the tray, the global search and the notification overview), which load after the first render. */
+    async function renderDeferredBlocks(): Promise<void> {
+        fixture.detectChanges();
+        for (const deferBlock of await fixture.getDeferBlocks()) {
+            await deferBlock.render(DeferBlockState.Complete);
+        }
+        fixture.detectChanges();
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            deferBlockBehavior: DeferBlockBehavior.Manual,
             imports: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
@@ -213,12 +223,12 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', () => {
+    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', async () => {
         fixture.detectChanges();
         component.currAccount.set({ login: 'editor' } as User);
         component.hyperionExerciseGenerationEnabled.set(true);
         TestBed.inject(ExerciseVariantGenerationService).jobs.set([{ jobId: 'quiz', phase: 'TRANSFORMING' }]);
-        fixture.detectChanges();
+        await renderDeferredBlocks();
         expect(fixture.nativeElement.querySelectorAll('jhi-hyperion-activity-tray')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
         expect(fixture.nativeElement.querySelector('jhi-hyperion-jobs-indicator')).toBeNull();
@@ -1107,11 +1117,11 @@ describe('NavbarComponent', () => {
     });
 
     describe('course controls in navbar', () => {
-        it('should render the notification overview when a course is active', () => {
+        it('should render the notification overview when a course is active', async () => {
             setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
 
-            fixture.detectChanges();
+            await renderDeferredBlocks();
 
             const notificationOverview = fixture.nativeElement.querySelector('jhi-course-notification-overview');
             const themeSwitch = fixture.nativeElement.querySelector('jhi-theme-switch');
@@ -1120,11 +1130,11 @@ describe('NavbarComponent', () => {
             expect(notificationOverview.compareDocumentPosition(themeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
         });
 
-        it('should render the notification overview for instructors in course management view', () => {
+        it('should render the notification overview for instructors in course management view', async () => {
             setCurrentCourse({ id: 1, isAtLeastTutor: true } as Course);
             router.setUrl('/course-management/1/exercises');
 
-            fixture.detectChanges();
+            await renderDeferredBlocks();
 
             expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
         });

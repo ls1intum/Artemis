@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
 
 /**
@@ -280,6 +283,37 @@ public class HyperionQuizQuestionPoolResource {
         courseRepository.findByIdElseThrow(courseId);
         poolService.updateLectureUnitRelevance(courseId, lectureUnitId, relevance.excluded());
         return ResponseEntity.ok(relevance);
+    }
+
+    /**
+     * GET /courses/{courseId}/quiz-question-pool/selection-candidates : Count the questions a draw may take, per competency, lecture
+     * unit, question type and difficulty.
+     *
+     * @param courseId the id of the course
+     * @return one count per cell that holds questions a draw may take
+     */
+    @EnforceAtLeastEditorInCourse
+    @GetMapping("courses/{courseId}/quiz-question-pool/selection-candidates")
+    public ResponseEntity<List<QuizQuestionPoolSelectionCandidateDTO>> getQuizQuestionPoolSelectionCandidates(@PathVariable long courseId) {
+        log.debug("REST request to count the questions a draw may take from the Hyperion quiz question pool of course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.getSelectionCandidates(courseId));
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-question-pool/select : Draw questions from the pool for a new quiz and record the draw.
+     *
+     * @param courseId the id of the course
+     * @param request  the competencies, lecture units, count, question types and difficulties to draw
+     * @return the drawn questions, fewer than requested when the pool holds fewer eligible ones, and the competencies that yielded nothing
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-question-pool/select")
+    public ResponseEntity<QuizQuestionPoolSelectionDTO> selectQuizQuestionPoolQuestions(@PathVariable long courseId,
+            @Valid @RequestBody QuizQuestionPoolSelectionRequestDTO request) {
+        log.debug("REST request to draw {} questions from the Hyperion quiz question pool of course [{}]", request.count(), courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.selectQuestions(courseId, request));
     }
 
     private void requireCompetencies(long courseId) {

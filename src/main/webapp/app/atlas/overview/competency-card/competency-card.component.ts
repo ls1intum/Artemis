@@ -1,4 +1,5 @@
-import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import dayjs from 'dayjs/esm';
 import { Component, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TUM_AET_UI_TRANSLATOR } from '@tumaet/ui-angular';
+import { TUM_AET_UI_TRANSLATOR } from '@tumaet/ui-angular/i18n';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideArtemisTumAetUiTranslator } from './artemis-tumaet-ui-translator';
 

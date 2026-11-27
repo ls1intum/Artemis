@@ -17,7 +17,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DialogData, EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
-import { TumAetUiCardComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -197,6 +197,16 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.9: Personal VCS Access Tokens Are Deprecated
+
+<Callout variant={CalloutVariant.warning}>
+    The personal VCS access token of a user, one token that opens every repository of its owner, is deprecated. Users cannot create one any
+    more (`PUT /api/account/user-vcs-access-token` is removed). Tokens that exist keep working until they expire, which is at most one year
+    after their creation, and the account page no longer sends their secret to the client. Their owners can still delete them, which is what
+    to do for a token that leaked. The access tokens of a single participation or repository replace the personal token, and the clone dialog
+    creates them. The e-mail that tells a user that a personal token has expired now says so.
+</Callout>
+
 ### 10.8: Configuration Keys That Spring Cannot Bind Any More
 
 Artemis now refuses to start when the configuration sets a key that Spring Boot or one of its libraries marks as removed or deprecated without a replacement key of the same type (`spring.properties.migrator.fail: on-error`, using `spring-boot-properties-migrator`). Before, such a key was ignored without a message, so a setting could stop working unnoticed.

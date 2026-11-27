@@ -5,7 +5,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
