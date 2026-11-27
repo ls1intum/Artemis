@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FinishedResultRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -154,7 +154,7 @@ public class HyperionCodeGenerationExecutionService {
 
     private final BuildLogEntryService buildLogEntryService;
 
-    private final ResultRepository resultRepository;
+    private final FinishedResultRepository finishedResultRepository;
 
     private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
@@ -173,7 +173,7 @@ public class HyperionCodeGenerationExecutionService {
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            BuildLogEntryService buildLogEntryService, ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            BuildLogEntryService buildLogEntryService, FinishedResultRepository finishedResultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
@@ -187,7 +187,7 @@ public class HyperionCodeGenerationExecutionService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.buildLogEntryService = buildLogEntryService;
-        this.resultRepository = resultRepository;
+        this.finishedResultRepository = finishedResultRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.repositoryStructureService = repositoryStructureService;
@@ -800,7 +800,7 @@ public class HyperionCodeGenerationExecutionService {
                         .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commitHash);
 
                 if (submission != null) {
-                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId());
+                    Optional<Result> result = finishedResultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId());
 
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);

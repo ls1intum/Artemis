@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.repository.FinishedResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -83,6 +84,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Autowired
+    private FinishedResultRepository finishedResultRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -1330,9 +1334,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(running.getId()).as("the running build's aggregate is the newest result").isGreaterThan(finished.getId());
         assertThat(running.getCompletionDate()).isNull();
 
-        assertThat(resultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).map(Result::getId).contains(finished.getId());
-        assertThat(resultRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId()))).extracting(Result::getId).containsExactly(finished.getId());
-        assertThat(resultRepository.findLatestResultsByParticipationIds(Set.of(solutionParticipation.getId()))).extracting(Result::getId).containsExactly(finished.getId());
+        assertThat(finishedResultRepository.findLatestResultWithFeedbacksForSubmission(submission.getId())).map(Result::getId).contains(finished.getId());
+        assertThat(finishedResultRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId()))).extracting(Result::getId).containsExactly(finished.getId());
+        assertThat(finishedResultRepository.findLatestResultsByParticipationIds(Set.of(solutionParticipation.getId()))).extracting(Result::getId).containsExactly(finished.getId());
     }
 
     /** The logs of a rebuild of an old submission are retained from the build's run, not from the submission date. */

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.FinishedResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -62,6 +63,8 @@ public class ProgrammingExerciseService {
 
     private final ResultRepository resultRepository;
 
+    private final FinishedResultRepository finishedResultRepository;
+
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
@@ -69,12 +72,14 @@ public class ProgrammingExerciseService {
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ResultRepository resultRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ExerciseSpecificationService exerciseSpecificationService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            FinishedResultRepository finishedResultRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ExerciseSpecificationService exerciseSpecificationService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.resultRepository = resultRepository;
+        this.finishedResultRepository = finishedResultRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.exerciseSpecificationService = exerciseSpecificationService;
@@ -212,7 +217,7 @@ public class ProgrammingExerciseService {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(programmingExerciseId);
         // if there are no submissions we can neither access a submission nor does it make sense to load a result
         if (!programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().isEmpty()) {
-            Optional<Result> latestResultForLatestSubmissionOfTemplate = resultRepository
+            Optional<Result> latestResultForLatestSubmissionOfTemplate = finishedResultRepository
                     .findLatestResultWithFeedbacksForSubmission(programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().getId());
             // the automatic test-case and SCA feedback lives in typed tables - attach the synthesized legacy
             // views so the method keeps its feedback promise (explicit exercise context, the result graph is detached)
@@ -226,7 +231,7 @@ public class ProgrammingExerciseService {
                 .findWithLatestSubmissionByExerciseIdElseThrow(programmingExerciseId);
 
         if (!solutionParticipationWithLatestSubmission.getSubmissions().isEmpty()) {
-            Optional<Result> latestResultForLatestSubmissionOfSolution = resultRepository
+            Optional<Result> latestResultForLatestSubmissionOfSolution = finishedResultRepository
                     .findLatestResultWithFeedbacksForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
             latestResultForLatestSubmissionOfSolution
                     .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, true));
@@ -267,10 +272,10 @@ public class ProgrammingExerciseService {
         Set<Long> templateSubmissionIds = templateParticipationsWithLatestSubmission.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
                 .collect(Collectors.toSet());
 
-        Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
+        Map<Long, Result> latestResultsForSolutionSubmissions = finishedResultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
                 .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1)); // In case of multiple, take first
 
-        Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
+        Map<Long, Result> latestResultsForTemplateSubmissions = finishedResultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
                 .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
 
         Map<Long, SolutionProgrammingExerciseParticipation> solutionParticipationMap = solutionParticipationsWithLatestSubmission.stream()

@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FinishedResultRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
@@ -96,7 +96,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     private BuildLogEntryService buildLogEntryService;
 
     @Mock
-    private ResultTestRepository resultRepository;
+    private FinishedResultRepository resultRepository;
 
     @Mock
     private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
