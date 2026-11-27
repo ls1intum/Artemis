@@ -5,18 +5,19 @@ comments next to them, which give the reason for each pin.
 
 ## Where versions are set
 
-| What                                                      | Where                                              |
-| --------------------------------------------------------- | -------------------------------------------------- |
-| Spring Boot, Spring Cloud train and most shared versions  | `gradle.properties`                                |
-| Spring Cloud modules, pinned one by one                   | `build.gradle`                                     |
-| Spring AI bill of materials                               | `build.gradle`                                     |
-| Jackson 2, Jackson 3 and OpenTelemetry bills of materials | `build.gradle`, block `dependencyManagement`       |
-| Guards for libraries that must move together              | `gradle/dependency-families.gradle`                |
-| Netty and OpenTelemetry, forced on every configuration    | `build.gradle`, `resolutionStrategy`               |
-| `strictly` pins and constraints                           | `build.gradle`, block `dependencies`               |
-| Forces for the build script classpath                     | `build.gradle`, block `buildscript`                |
-| Version properties also read by other scripts             | `gradle/openapi.gradle`, `gradle/liquibase.gradle` |
-| Gradle itself                                             | `gradle/wrapper/gradle-wrapper.properties`         |
+| What                                                                             | Where                                              |
+| -------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Spring Boot, Spring Cloud train and most shared versions                         | `gradle.properties`                                |
+| Spring Cloud modules, pinned one by one                                          | `build.gradle`                                     |
+| Spring AI bill of materials                                                      | `build.gradle`                                     |
+| Jackson 2, Jackson 3 and OpenTelemetry bills of materials                        | `build.gradle`, block `dependencyManagement`       |
+| Guards for libraries that must move together                                     | `gradle/dependency-families.gradle`                |
+| Netty and OpenTelemetry, forced on every configuration                           | `build.gradle`, `resolutionStrategy`               |
+| `strictly` pins and constraints                                                  | `build.gradle`, block `dependencies`               |
+| Libraries with their version in the declaration, such as `spring-security-lti13` | `build.gradle`, block `dependencies`               |
+| Forces for the build script classpath                                            | `build.gradle`, block `buildscript`                |
+| Version properties also read by other scripts                                    | `gradle/openapi.gradle`, `gradle/liquibase.gradle` |
+| Gradle itself                                                                    | `gradle/wrapper/gradle-wrapper.properties`         |
 
 ## Rules for pinned versions
 
@@ -40,7 +41,7 @@ Check each condition on every upgrade.
 | Workaround                                                                                                      | Remove when                                                                                                                                                                                     |
 | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/main/java/de/tum/cit/aet/artemis/core/config/BeanNamesByTypeCacheWorkaround.java`, a bean factory deadlock | The Framework release contains the fix. The class comment lists everything to delete. A test fails as soon as it does not deadlock any more. A newer JDK than 25 may refuse its reflection      |
-| Two replacement resolvers in `src/main/java/de/tum/cit/aet/artemis/lti/config/CustomLti13Configurer.java`       | `spring-security-lti13` releases a version for the new Framework                                                                                                                                |
+| Two replacement resolvers in `src/main/java/de/tum/cit/aet/artemis/lti/config/CustomLti13Configurer.java`       | `spring-security-lti13` releases a version for the new Framework, its version in `build.gradle` is raised to that release, and `Lti13InitiationIntegrationTest` passes without the replacements |
 | Pins in `src/main/java/de/tum/cit/aet/artemis/core/config/ArtemisJacksonDefaults.java`                          | The comment on the pin is satisfied, `JacksonSerializationContractTest` has a case for the pin (add a missing one, for example for UTC dates) and passes without it, and the client is migrated |
 | `commons-codec` held back in `build.gradle`                                                                     | The condition next to it is met and `SAML2MetadataCompatibilityTest` passes                                                                                                                     |
 | `src/main/java/de/tum/cit/aet/artemis/core/config/EurekaClientConfiguration.java`, copied set-up code           | Keep it, but compare it with the new Spring Cloud Netflix release. A difference may show only across nodes                                                                                      |
