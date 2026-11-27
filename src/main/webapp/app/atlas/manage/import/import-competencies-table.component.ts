@@ -1,7 +1,9 @@
 import { Component, TemplateRef, contentChild, input, model } from '@angular/core';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';

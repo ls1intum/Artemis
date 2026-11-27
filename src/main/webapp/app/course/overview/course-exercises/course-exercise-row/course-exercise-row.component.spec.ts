@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { provideTranslateService } from '@ngx-translate/core';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';

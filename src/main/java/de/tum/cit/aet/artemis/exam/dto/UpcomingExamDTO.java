@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * Slim projection of an {@link Exam} for the admin "upcoming exams" overview table.
  * <p>
  * Carries only what that table renders: the exam link (id / title), the test-exam badge, the linked course (id /
- * title) and the three schedule dates. All other exam fields (review window, results-publication date, course group
- * names, etc.) are intentionally dropped as the page reads none of them.
+ * title) and the three schedule dates. All other exam fields (review window, results-publication date, etc.) are
+ * intentionally dropped as the page reads none of them.
  *
  * @param id          the id of the exam
  * @param title       the title of the exam

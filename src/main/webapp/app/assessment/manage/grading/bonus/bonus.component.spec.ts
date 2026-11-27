@@ -19,7 +19,7 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';

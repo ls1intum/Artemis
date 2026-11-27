@@ -26,7 +26,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';

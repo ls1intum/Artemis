@@ -1,4 +1,4 @@
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';

@@ -30,7 +30,7 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { strToU8 } from 'fflate';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';

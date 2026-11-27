@@ -1,22 +1,19 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCardComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiEmptyStateComponent,
-    TumAetUiMessageComponent,
-    TumAetUiPanelComponent,
-    TumAetUiProgressBarComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
-import { ActivatedRoute } from '@angular/router';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCircleCheck, faCircleInfo, faGear, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleCheck, faCircleInfo, faGear, faListCheck, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Observable, Subject, Subscription, forkJoin, interval, of } from 'rxjs';
 import { catchError, defaultIfEmpty, exhaustMap, finalize, map, switchMap, tap, timeout } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -36,8 +33,11 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionPoolService } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.service';
 import { QuizQuestionPoolItemListComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-item-list/quiz-question-pool-item-list.component';
+import { QuizQuestionPoolCreateQuizDialogComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-create-quiz-dialog/quiz-question-pool-create-quiz-dialog.component';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 import { QuizQuestionPoolSettingsDialogComponent } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool-settings-dialog/quiz-question-pool-settings-dialog.component';
 import {
+    CompetencyOption,
     PoolBuildTrigger,
     PoolCompetency,
     PoolLectureUnit,
@@ -47,6 +47,8 @@ import {
     PoolQuestion,
     PoolQuestionPage,
     PoolReviewRequest,
+    PoolSelectionCandidate,
+    PoolSelectionRequest,
     PoolSettings,
     PoolSettingsFact,
 } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
@@ -141,12 +143,15 @@ function buildFactsOf(settings: PoolSettings, reference?: PoolSettings): PoolSet
         CourseTitleBarActionsDirective,
         QuizQuestionPoolItemListComponent,
         QuizQuestionPoolSettingsDialogComponent,
+        QuizQuestionPoolCreateQuizDialogComponent,
     ],
     providers: [TumAetUiConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly handoffService = inject(QuizQuestionHandoffService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly poolService = inject(QuizQuestionPoolService);
@@ -157,6 +162,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     readonly faPlay = faPlay;
     readonly faRotate = faRotate;
+    readonly faListCheck = faListCheck;
     readonly faGear = faGear;
     readonly faTrash = faTrash;
     readonly faCircleCheck = faCircleCheck;
@@ -192,6 +198,21 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     private readonly deleteError = new Subject<string>();
     readonly settings = signal<PoolSettings | undefined>(undefined);
     readonly settingsDialogVisible = signal(false);
+    readonly createQuizDialogVisible = signal(false);
+    /** The questions a draw may take, counted per cell; loaded when the create-quiz dialog opens. */
+    readonly selectionCandidates = signal<PoolSelectionCandidate[]>([]);
+    readonly isLoadingCandidates = signal(false);
+    readonly isCreatingQuiz = signal(false);
+    /** The competencies the create-quiz dialog offers: those with a lecture unit on the page. */
+    readonly quizCompetencies = computed<CompetencyOption[]>(() => {
+        const competencies = new Map<number, CompetencyOption>();
+        for (const unit of this.lectureUnits()) {
+            if (!competencies.has(unit.competencyId)) {
+                competencies.set(unit.competencyId, { id: unit.competencyId, title: unit.competencyTitle });
+            }
+        }
+        return [...competencies.values()];
+    });
     readonly selectedCompetencyId = signal<number | undefined>(undefined);
     readonly isLoading = signal(false);
     readonly isStartingBuild = signal(false);
@@ -201,6 +222,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly busyQuestionIds = signal<ReadonlySet<number>>(new Set());
 
     private pollingSubscription?: Subscription;
+
+    /** The pending draw for a new quiz; closing the create-quiz dialog or changing the course cancels it. */
+    private createQuizSubscription?: Subscription;
 
     /** Advances whenever polling is requested; a final refresh stops polling only while no later request has been made. */
     private pollGeneration = 0;
@@ -219,6 +243,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     /** Whether a decision was made after the queue was last loaded, so polling must not stop before a newer queue response is applied. */
     private queueOutdated = false;
+
+    /** Whether every flagged question had a decision at the last queue response; the queue folds and unfolds only when this changes. */
+    private queueFullyReviewed = false;
 
     readonly isInstructor = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
@@ -346,12 +373,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.needsReviewTotal.set(0);
         this.pendingInQueue.set(0);
         this.queueCollapsed.set(false);
+        this.queueFullyReviewed = false;
         this.lectureUnits.set([]);
         this.unitsCollapsed.set(true);
         this.busyLectureUnitIds.set(new Set());
         this.competencyOptions.set([]);
         this.settings.set(undefined);
         this.settingsDialogVisible.set(false);
+        this.cancelDraw();
+        this.createQuizDialogVisible.set(false);
+        this.selectionCandidates.set([]);
         this.selectedCompetencyId.set(undefined);
         this.busyQuestionIds.set(new Set());
         this.isCancelling.set(false);
@@ -364,6 +395,92 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     private isCurrent(courseId: number): boolean {
         return this.courseId() === courseId;
+    }
+
+    /** Loads how many questions a draw may take, then opens the create-quiz dialog for the course shown when it was requested. */
+    openCreateQuizDialog(): void {
+        const courseId = this.courseId();
+        if (!courseId || this.isLoadingCandidates()) {
+            return;
+        }
+        this.isLoadingCandidates.set(true);
+        this.poolService
+            .getSelectionCandidates(courseId)
+            .pipe(
+                finalize(() => this.isLoadingCandidates.set(false)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: (candidates) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
+                    this.selectionCandidates.set(candidates);
+                    this.createQuizDialogVisible.set(true);
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.createQuiz.failed'),
+            });
+    }
+
+    /**
+     * Draws the requested questions from the pool and opens the quiz editor with them. A draw that yields nothing keeps the dialog
+     * open; a draw that yields fewer than requested opens the editor with what it yielded and says so.
+     */
+    createQuiz(request: PoolSelectionRequest): void {
+        const courseId = this.courseId();
+        if (!courseId || this.isCreatingQuiz()) {
+            return;
+        }
+        this.isCreatingQuiz.set(true);
+        this.createQuizSubscription = this.poolService
+            .selectQuestions(courseId, request)
+            .pipe(
+                finalize(() => this.isCreatingQuiz.set(false)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: (selection) => {
+                    if (!this.isCurrent(courseId)) {
+                        return;
+                    }
+                    const questions = selection.questions.flatMap((question) => (question.question ? [question.question] : []));
+                    if (!questions.length) {
+                        this.alertService.warning('artemisApp.hyperion.quizQuestionPool.createQuiz.none');
+                        return;
+                    }
+                    if (questions.length < selection.requested) {
+                        this.alertService.info('artemisApp.hyperion.quizQuestionPool.createQuiz.fewer', { selected: questions.length, requested: selection.requested });
+                    }
+                    const offerId = this.handoffService.offer(courseId, questions);
+                    this.createQuizDialogVisible.set(false);
+                    this.router.navigate(['/course-management', courseId, 'quiz-exercises', 'new']).then(
+                        (opened) => {
+                            if (!opened) {
+                                this.handoffService.clear(offerId);
+                            }
+                        },
+                        () => this.handoffService.clear(offerId),
+                    );
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.createQuiz.failed'),
+            });
+    }
+
+    /**
+     * Shows or hides the create-quiz dialog; hiding it cancels a pending draw, so the quiz editor does not open afterwards.
+     *
+     * @param visible whether the dialog is shown
+     */
+    setCreateQuizDialogVisible(visible: boolean): void {
+        if (!visible) {
+            this.cancelDraw();
+        }
+        this.createQuizDialogVisible.set(visible);
+    }
+
+    private cancelDraw(): void {
+        this.createQuizSubscription?.unsubscribe();
+        this.createQuizSubscription = undefined;
     }
 
     /**
@@ -436,9 +553,21 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
                 this.needsReviewTotal.set(page.totalCount);
                 this.pendingInQueue.set(this.pendingOf(page));
-                this.queueCollapsed.set(this.allFlaggedReviewed());
+                this.foldQueueWhenReviewChanges();
             }),
         );
+    }
+
+    /**
+     * Folds the queue when its last flagged question gets a decision and unfolds it when undecided ones arrive again. A fold or unfold by
+     * the user holds until that changes, so refreshes during a build keep it.
+     */
+    private foldQueueWhenReviewChanges(): void {
+        const allReviewed = this.allFlaggedReviewed();
+        if (allReviewed !== this.queueFullyReviewed) {
+            this.queueFullyReviewed = allReviewed;
+            this.queueCollapsed.set(allReviewed);
+        }
     }
 
     /** The pending count of a queue response, which was requested after the last decision or deletion on the page. */
@@ -948,9 +1077,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         }
                         this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
                         this.needsReviewQuestions.update((queue) => queue.map((question) => (question.id === updated.id ? updated : question)));
-                        if (this.allFlaggedReviewed()) {
-                            this.queueCollapsed.set(true);
-                        }
+                        this.foldQueueWhenReviewChanges();
                     }
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.list.reviewFailed'),
@@ -1015,7 +1142,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         if (queued.reviewState === 'PENDING') {
                             this.changePending(-1);
                         }
-                        this.queueCollapsed.set(this.allFlaggedReviewed());
+                        this.foldQueueWhenReviewChanges();
                         if (this.needsReviewQuestions().length === 0 && this.needsReviewTotal() > 0) {
                             this.reloadNeedsReview(courseId, PAGE_SIZE)
                                 .pipe(takeUntilDestroyed(this.destroyRef))
