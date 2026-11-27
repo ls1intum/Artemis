@@ -74,8 +74,6 @@
             "switchToToken": "Zu Token wechseln",
             "passwordAuthenticationWarning": "Nutze besser <strong>Token</strong> oder <strong>SSH</strong>. Klonen über <strong>HTTPS</strong> kann ein Sicherheitsrisiko darstellen.",
             "passwordAuthenticationWarningTooltip": "Beim Klonen über HTTPS wird dein Artemis-Passwort verwendet. Es kann dabei passieren, dass Git das Passwort unsicher als Klartext zwischenspeichert.",
-            "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
-            "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",
             "repositoryAccessTokenError": "Das Repository-Zugriffstoken konnte nicht abgerufen werden. Bitte versuche es erneut.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
