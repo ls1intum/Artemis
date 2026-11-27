@@ -13,7 +13,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { By } from '@angular/platform-browser';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {

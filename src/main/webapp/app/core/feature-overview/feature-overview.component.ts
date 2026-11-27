@@ -2,7 +2,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ExamFeature, INSTRUCTOR_FEATURES, STUDENT_FEATURES, TargetAudience } from 'app/core/feature-overview/feature-overview-data';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

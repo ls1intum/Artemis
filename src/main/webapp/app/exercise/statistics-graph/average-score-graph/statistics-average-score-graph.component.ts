@@ -1,11 +1,6 @@
-import {
-    TumAetUiBarChartComponent,
-    TumAetUiBarChartConfig,
-    TumAetUiButtonDirective,
-    TumAetUiChartSelectEvent,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';

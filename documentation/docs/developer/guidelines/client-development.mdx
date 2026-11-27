@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-24
+last_reviewed: 2026-11-26
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -104,7 +104,7 @@ Key principles:
 
 <Callout variant={CalloutVariant.danger}>
     **TUM AET UI is the Artemis component system. Bootstrap, ng-bootstrap, and PrimeNG are removed from the client; do not add them again.** Use a component from
-    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists. The [TUM AET UI component kit](/developer/guidelines/tum-aet-ui-kit) is built on Angular Aria,
+    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists, and import it from its entry point (`@tumaet/ui-angular/<component>`), not from the package root. The [TUM AET UI component kit](/developer/guidelines/tum-aet-ui-kit) is built on Angular Aria,
     Angular CDK, and Tailwind tokens. When it lacks a capability, add the capability to the kit.
 </Callout>
 

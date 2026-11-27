@@ -25,7 +25,7 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.

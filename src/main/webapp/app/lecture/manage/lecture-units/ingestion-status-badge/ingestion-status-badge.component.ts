@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTagComponent, TumAetUiTagSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LectureUnitProcessingStatus, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';

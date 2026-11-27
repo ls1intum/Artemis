@@ -6,7 +6,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';

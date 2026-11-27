@@ -7,7 +7,8 @@ import {
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
