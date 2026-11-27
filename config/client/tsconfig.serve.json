@@ -6,7 +6,9 @@
             "src/*": ["../../src/*"],
             "@tumaet/ui-angular": ["../../packages/tum-aet-ui/src/public-api.ts"],
             "@tumaet/ui-angular/set-inputs": ["../../packages/tum-aet-ui/src/lib/internal"],
-            "@tumaet/ui-angular/*": ["../../packages/tum-aet-ui/src/lib/*"]
+            "@tumaet/ui-angular/*": ["../../packages/tum-aet-ui/src/lib/*"],
+            "@fortawesome/free-solid-svg-icons/*": ["../../build/fontawesome/free-solid-svg-icons/*"],
+            "@fortawesome/free-regular-svg-icons/*": ["../../build/fontawesome/free-regular-svg-icons/*"]
         }
     }
 }

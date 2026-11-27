@@ -29,7 +29,9 @@
             "src/*": ["./src/*"],
             "@tumaet/ui-angular": ["./packages/tum-aet-ui/dist"],
             "@tumaet/ui-angular/styles.css": ["./packages/tum-aet-ui/styles.css"],
-            "@tumaet/ui-angular/*": ["./packages/tum-aet-ui/dist/*"]
+            "@tumaet/ui-angular/*": ["./packages/tum-aet-ui/dist/*"],
+            "@fortawesome/free-solid-svg-icons/*": ["./build/fontawesome/free-solid-svg-icons/*"],
+            "@fortawesome/free-regular-svg-icons/*": ["./build/fontawesome/free-regular-svg-icons/*"]
         },
         "importHelpers": true
     },

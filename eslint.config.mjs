@@ -10,6 +10,7 @@ import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import localRulesPlugin from './config/eslint/rules/index.mjs';
+import { ICON_PACKAGES } from './supporting_scripts/client/fontawesome-icons.mjs';
 import buttonInlineTemplates from './config/eslint/rules/button-inline-templates.mjs';
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -72,6 +73,15 @@ const tumAetUiConsumerImportPatterns = [
         message: 'Import from an entry point of TUM AET UI (@tumaet/ui-angular/<component>), not from a package-internal path.',
     },
 ];
+// FontAwesome icons: one module per icon, for the same reason as the entry points of TUM AET UI. The root of an icon package is one file with all icons, so
+// everything that any lazy route takes from it is part of the first download. The migration script rewrites the imports; the Angular build maps
+// `@fortawesome/<package>/<icon>` to a generated ES module (see supporting_scripts/client/fontawesome-icons.mjs).
+const fontAwesomeIconImportPatterns = ICON_PACKAGES.map((packageName) => ({
+    regex: `^@fortawesome/${packageName}$`,
+    message: `Import an icon from its own module, for example import { faTrash } from '@fortawesome/${packageName}/faTrash', not from the package root. Run node supporting_scripts/client/migrate-fontawesome-imports.mjs to rewrite imports.`,
+}));
+// The restrictions on packages that every client block repeats (the foundation/ and shared-ui/ blocks override the rule rather than extending it).
+const clientPackageImportPatterns = [...tumAetUiConsumerImportPatterns, ...fontAwesomeIconImportPatterns];
 // The client modules, all of which use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the
 // client; every lock below is generated from this list and keeps them out:
 // the Bootstrap class rules for external and inline templates, the Bootstrap classes built in code, and the
@@ -324,7 +334,7 @@ export default tseslint.config(
                         noNgZoneImport,
                         ...noDirectCloneDeepImports,
                     ],
-                    patterns: tumAetUiConsumerImportPatterns,
+                    patterns: clientPackageImportPatterns,
                 },
             ],
             'no-restricted-syntax': [
@@ -531,7 +541,7 @@ export default tseslint.config(
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [
-                        ...tumAetUiConsumerImportPatterns,
+                        ...clientPackageImportPatterns,
                         {
                             // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
@@ -564,7 +574,7 @@ export default tseslint.config(
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [
-                        ...tumAetUiConsumerImportPatterns,
+                        ...clientPackageImportPatterns,
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
                             group: blockLayerImportPatterns('editor'),
@@ -869,7 +879,7 @@ export default tseslint.config(
                         noNgZoneImport,
                         ...noDirectCloneDeepImports,
                     ],
-                    patterns: [...tumAetUiConsumerImportPatterns, legacyUiLibraryImportPattern],
+                    patterns: [...clientPackageImportPatterns, legacyUiLibraryImportPattern],
                 },
             ],
         },
