@@ -42,9 +42,11 @@ jobs:
       # that creates it. The push notification services used to create RestTemplateConfiguration, now they create RestClientConfiguration
       # and the LTI token retriever becomes the first to create RestTemplateConfiguration. The extra edge disappears when the LTI classes
       # move to RestClient, because then nothing creates RestTemplateConfiguration at startup.
-      # 168 rather than 167 since the team assessment queue: SubmissionService, which is created at startup, injects
+      # 169 rather than 167 since git access for agent tokens: LocalVCServletService injects LocalVCAgentTokenService, which in turn
+      # injects ProgrammingExerciseDraftGuardService, so both start with the servlet service. Measured: 167 startup beans on develop and 169 with it.
+      # 170 rather than 169 since the team assessment queue: SubmissionService, which is created at startup, injects
       # TeamAssessmentService, which applies the team assessment rules in lockSubmission for every exercise type.
-      MAX_INSTANTIATED_BEANS: 168
+      MAX_INSTANTIATED_BEANS: 170
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

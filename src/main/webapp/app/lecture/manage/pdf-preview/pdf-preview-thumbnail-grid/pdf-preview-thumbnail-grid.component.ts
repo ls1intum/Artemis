@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';

@@ -152,6 +152,12 @@ If you cannot find the correct helper function, add a new one to the most fittin
 Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values.
 </Callout>
 
+A user takes part in a course only through a course role, stored in `user_course_role`. A test user without one is not a member of the course, so requests that need a course role are refused with `403 Forbidden`. Give the users their roles when you set up the course:
+
+* `userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT)` gives one user one role.
+* `userUtilService.enrollPrefixedUsersInCourse(course, userPrefix)` gives all test users of a prefix the role that their login names: student, tutor, editor or instructor.
+* `courseUtilService.addEnrolledEmptyCourse(userPrefix)` creates an empty course and enrolls these users.
+
 
 ## Test performance tips
 

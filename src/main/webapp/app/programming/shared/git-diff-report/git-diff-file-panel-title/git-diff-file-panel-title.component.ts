@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

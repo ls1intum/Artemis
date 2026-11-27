@@ -19,7 +19,10 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { NgTemplateOutlet } from '@angular/common';
 import { LtiLoginContinuationService } from 'app/lti/overview/lti13-exercise-launch/lti-login-continuation.service';
 

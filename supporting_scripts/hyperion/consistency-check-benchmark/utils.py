@@ -24,7 +24,6 @@ try:
     SPECIAL_CHARACTER_REGEX: str = config.get('PECVCourseSettings', 'special_character_regex')
     CREATE_COURSE: bool = config.getboolean('PECVCourseSettings', 'create_course')
     COURSE_NAME: str = config.get('PECVCourseSettings', 'course_name')
-    IS_LOCAL_COURSE: bool = config.getboolean('PECVCourseSettings', 'is_local_course')
     PECV_BENCH_DIR: str = config.get('PECVCourseSettings', 'pecv_bench_dir', fallback="pecv-bench")
     PECV_BENCH_URL: str = config.get('PECVCourseSettings', 'pecv_bench_url', fallback="https://github.com/ls1intum/PECV-bench.git")
     PECV_BENCH_BRANCH: str = config.get('PECVCourseSettings', 'pecv_bench_branch', fallback="main")

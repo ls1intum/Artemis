@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.allowedScopes;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 public final class AgentDraftRules {
 
     private static final String ENTITY_NAME = "agentAccess";
+
+    private static final String PUBLISHED_MESSAGE = "This content is already visible to students. Content that is published can be changed only in the Artemis web interface.";
 
     private AgentDraftRules() {
     }
@@ -77,10 +80,21 @@ public final class AgentDraftRules {
         if (!isTokenRequest()) {
             return;
         }
-        if (!isDraft(currentReleaseDate, currentStartDate)) {
-            throw new AccessForbiddenException("This content is already visible to students. Content that is published can be changed only in the Artemis web interface.");
-        }
+        publishedReason(currentReleaseDate, currentStartDate).ifPresent(reason -> {
+            throw new AccessForbiddenException(reason);
+        });
         requireDraftDatesForCreate(newReleaseDate, newStartDate);
+    }
+
+    /**
+     * Tells whether content is already visible to students, so that a caller can explain why it may not be changed instead of failing.
+     *
+     * @param releaseDate the release date of the stored object
+     * @param startDate   the start date of the stored object
+     * @return the reason if the object is already visible to students, otherwise empty
+     */
+    public static Optional<String> publishedReason(@Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate) {
+        return isDraft(releaseDate, startDate) ? Optional.empty() : Optional.of(PUBLISHED_MESSAGE);
     }
 
     private static boolean isDraft(@Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate) {
