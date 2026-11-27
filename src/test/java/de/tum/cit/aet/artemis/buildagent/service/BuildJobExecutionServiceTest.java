@@ -213,12 +213,13 @@ class BuildJobExecutionServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = RepositoryType.class, names = { "TESTS", "AUXILIARY" })
-    void pushesToSharedRepositoriesDoNotCheckOutAssignmentCommit(RepositoryType trigger) throws Exception {
+    void pushesToSharedRepositoriesCheckOutTheRecordedAssignmentCommit(RepositoryType trigger) throws Exception {
+        // the containers of a multi-container build of such a push must not run assignment revisions pushed in between
         when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(new TarArchiveInputStream(new ByteArrayInputStream(archive(Map.of()))), 0, completedAt, () -> {
         }));
         var result = service.runBuildJob(buildJob(trigger, true, null, new String[0]));
         assertThat(result.assignmentRepoCommitHash()).isEqualTo("assignment-commit");
-        verify(git, never()).checkoutRepositoryAtCommit(any(), eq("assignment-commit"));
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-student")), eq("assignment-commit"));
         verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-tests")), eq("test-commit"));
         verify(git).clearCloneTokenForCurrentThread();
     }
