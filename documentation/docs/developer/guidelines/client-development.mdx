@@ -815,6 +815,22 @@ one HTML parser, one diff library, one icon set) and that it does not pull in a 
 To check what users actually download, build with `ng build --configuration production --stats-json` and pass the
 metafile: `node supporting_scripts/client/check_duplicate_dependencies.mjs --stats <output>/browser-stats.json`.
 
+### Importing Apollon
+
+`@tumaet/apollon` is the whole modeling editor: React, Base UI, xyflow and the editor code, about 1.3 MB of raw JavaScript in the production
+bundle. A lazy route that imports one value from the package root loads all of it with its own chunk, even when it never shows a diagram.
+The helpers that do not need the editor live in the light entry `@tumaet/apollon/model` (a few KB): `importDiagram`, the Y.Doc helpers
+(`readModelFromYDoc`, `writeModelToYDoc`, `hasModelInYDoc`, `clearModelFromYDoc`, `MODEL_DOC_ORIGIN`) and the `UMLModel` type.
+
+- **Import those helpers from `@tumaet/apollon/model`.** `no-restricted-imports` fails the lint run on `importDiagram` and the other values
+  above from the root. Types are erased at build time and may come from the root.
+- **Only code that creates or renders an editor imports from the root.** `UMLDiagramType`, `DEFAULT_LABELS`, `collabColorFromName`,
+  `APOLLON_SHORTCUTS` and `getAssessmentNameForArtemis` are not in the light entry yet, so a file that needs one of them as a value still
+  pulls the editor into its chunk. Move such an import to `/model` once Apollon exports the symbol, and add its name to the rule.
+- **A static import of a component that contains the editor has the same effect.** A component that lists `ModelingEditorComponent` in its
+  `imports` loads the editor with every route that imports the component. Show the editor in a `@defer` block when the component is also
+  used outside modeling.
+
 ### Preventing Memory Leaks
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.

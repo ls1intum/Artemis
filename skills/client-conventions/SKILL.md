@@ -319,6 +319,14 @@ use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with 
 as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
 [Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
 
+## Importing Apollon
+
+The root `@tumaet/apollon` is the whole modeling editor (about 1.3 MB raw). Import `importDiagram`, the Y.Doc helpers and the `UMLModel`
+type from `@tumaet/apollon/model`; `no-restricted-imports` fails the lint run on the values from the root. Only code that creates or
+renders an editor imports from the root. A component that lists `ModelingEditorComponent` in its `imports` loads the editor with every
+route that imports it: use `@defer`. Details:
+[Importing Apollon](../../documentation/docs/developer/guidelines/client-development.mdx#importing-apollon).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
