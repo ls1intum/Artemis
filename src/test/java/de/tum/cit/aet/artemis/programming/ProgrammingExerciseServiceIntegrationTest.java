@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
@@ -392,6 +393,34 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, newBuildConfig));
+
+        assertThat(toBeImported.getId()).isNull();
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeImport);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_rejectsAnInvalidContainerPlanBeforePersistence(boolean suppliedByTheImport) {
+        long exerciseCountBeforeImport = programmingExerciseRepository.count();
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
+        var container = new BuildContainerDTO("review_duplicate", null, List.of(phase));
+        String planWithDuplicateContainers = new BuildPlanPhasesDTO(null, null, List.of(container, container)).toBuildPlanConfiguration();
+        var toBeImported = createToBeImported();
+        var source = sourceBuildConfig();
+        ProgrammingExerciseBuildConfig newBuildConfig = null;
+        if (suppliedByTheImport) {
+            newBuildConfig = ProgrammingExerciseFactory.generateDefaultBuildConfig();
+            newBuildConfig.setBuildPlanConfiguration(planWithDuplicateContainers);
+        }
+        else {
+            source.setBuildPlanConfiguration(planWithDuplicateContainers);
+        }
+        var suppliedBuildConfig = newBuildConfig;
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, source, toBeImported, suppliedBuildConfig))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("duplicateBuildContainerName"));
 
         assertThat(toBeImported.getId()).isNull();
         assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeImport);

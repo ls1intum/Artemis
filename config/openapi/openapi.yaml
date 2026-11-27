@@ -8890,6 +8890,7 @@ components:
         connected: {type: boolean}
         pendingRef: {type: string}
         pendingSince: {type: string, format: date-time}
+        transferAccepted: {type: boolean}
         converting: {type: boolean}
         progress: {type: integer, format: int32}
         attachedRef: {type: string}

@@ -170,6 +170,7 @@ public class ProgrammingExerciseImportBasicService {
         // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
         programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
         programmingExerciseValidationService.validateDockerImageRegistry(buildConfig);
+        programmingExerciseValidationService.validateContainerPlan(buildConfig);
         if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
             try {
                 newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, buildConfig));
