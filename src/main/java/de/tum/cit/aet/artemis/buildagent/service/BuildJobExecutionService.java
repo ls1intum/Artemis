@@ -215,7 +215,10 @@ public class BuildJobExecutionService {
                     && buildJob.repositoryInfo().triggeredByPushTo() != RepositoryType.AUXILIARY;
             assignmentRepositoryPath = cloneRepository(assignmentRepositoryUri, useSpecificAssignmentCommit ? assignmentCommitHash : null, useSpecificAssignmentCommit,
                     buildJob.id());
-            testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, null, false, buildJob.id()) : null;
+            // The tests are checked out at the commit the build was triggered with, which is the one the result reports: the
+            // containers of a multi-container build are graded together and must not run tests the branch moved to in between.
+            String configuredTestCommitHash = buildJob.buildConfig().testCommitHash();
+            testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, configuredTestCommitHash, configuredTestCommitHash != null, buildJob.id()) : null;
 
             if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
                 solutionRepositoryUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri());
@@ -492,8 +495,8 @@ public class BuildJobExecutionService {
      * <p>
      * <b>Commit Hash Usage:</b>
      * The {@code commitHash} parameter is ONLY used when {@code checkout=true} to checkout a specific
-     * commit after cloning. For repositories that should use the default branch (test, solution, auxiliary),
-     * pass {@code null} for commitHash and {@code false} for checkout.
+     * commit after cloning. For repositories that should use the default branch (solution, auxiliary, and the test
+     * repository of a job without a recorded test commit), pass {@code null} for commitHash and {@code false} for checkout.
      *
      * @param repositoryUri the URI of the repository to clone
      * @param commitHash    the commit hash to checkout after cloning (only used if checkout=true);
@@ -527,7 +530,7 @@ public class BuildJobExecutionService {
 
         try {
             // Only checkout a specific commit if explicitly requested (checkout=true) and a commit hash is provided.
-            // For test/solution/auxiliary repos, checkout=false so they use the default branch.
+            // For solution/auxiliary repos, checkout=false so they use the default branch.
             if (checkout && commitHash != null) {
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }

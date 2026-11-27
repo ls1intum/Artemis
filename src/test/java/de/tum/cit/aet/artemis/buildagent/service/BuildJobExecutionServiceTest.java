@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -217,8 +218,21 @@ class BuildJobExecutionServiceTest {
         }));
         var result = service.runBuildJob(buildJob(trigger, true, null, new String[0]));
         assertThat(result.assignmentRepoCommitHash()).isEqualTo("assignment-commit");
-        verify(git, never()).checkoutRepositoryAtCommit(any(), any());
+        verify(git, never()).checkoutRepositoryAtCommit(any(), eq("assignment-commit"));
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-tests")), eq("test-commit"));
         verify(git).clearCloneTokenForCurrentThread();
+    }
+
+    @Test
+    void testsAreCheckedOutAtTheRecordedCommitRatherThanTheCurrentHead() throws Exception {
+        when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(null, 0, completedAt, () -> {
+        }));
+
+        var result = service.runBuildJob(buildJob(RepositoryType.USER, true, null, new String[0]));
+
+        assertThat(result.testsRepoCommitHash()).isEqualTo("test-commit");
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-tests")), eq("test-commit"));
+        verify(git, never()).getLastCommitHash(any());
     }
 
     @Test
@@ -335,6 +349,10 @@ class BuildJobExecutionServiceTest {
         Repository repository = mock(Repository.class);
         when(repository.getLocalPath()).thenReturn(path);
         return repository;
+    }
+
+    private static boolean isCloneOf(Repository repository, String slug) {
+        return repository != null && repository.getLocalPath().getFileName().toString().contains(slug);
     }
 
     private String uri(String slug) {
