@@ -143,6 +143,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    protected readonly DESCRIPTION_MAX_LENGTH = 50_000;
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -176,6 +177,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     readonly pdfUploadConfirmation = signal<PdfUploadConfirmation | undefined>(undefined);
     readonly pdfUploadConfirmationText = computed(() => this.computePdfUploadConfirmationText());
     readonly isPeriodValid = signal(true);
+    private readonly descriptionLength = signal(0);
+    protected readonly isDescriptionTooLong = computed(() => this.descriptionLength() > this.DESCRIPTION_MAX_LENGTH);
     /** Translation key of why the lecture details cannot be saved, or undefined when they can. */
     readonly saveBlockedReason = computed(() => this.computeSaveBlockedReason());
     /** The lecture as last sent to the server, which becomes the saved state when the server accepts it. */
@@ -240,6 +243,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
                 newLecture.course = course;
             }
             this.lecture.set(newLecture);
+            this.descriptionLength.set(newLecture.description?.length ?? 0);
             if (lecture) {
                 this.isTutorialLecture.set(lecture.isTutorialLecture ?? false);
             }
@@ -318,7 +322,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: this.titleSection()?.isValid() ?? false,
+                valid: (this.titleSection()?.isValid() ?? false) && !this.isDescriptionTooLong(),
             },
             {
                 title: 'artemisApp.lecture.sections.period',
@@ -365,6 +369,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
         this.changedSections.set(changedSections);
         this.isChangeMadeToTitleOrPeriodSection.set(changedSections.length > 0);
+    }
+
+    protected onDescriptionChange(description: string): void {
+        this.descriptionLength.set(description.length);
+        this.updateIsChangesMadeToTitleOrPeriodSection();
     }
 
     /**
@@ -528,6 +537,9 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             return;
         }
         this.descriptionEditor()?.flushPendingTextChange();
+        if (this.isDescriptionTooLong()) {
+            return;
+        }
         const recording = this.recording();
         if (!this.isEditMode() && (recording || this.savedRecording())) {
             if (recording && !this.isLectureSeriesCreationMode() && !this.recordingInvalid()) {
@@ -728,6 +740,9 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
         if (!(this.titleSection()?.isValid() ?? false)) {
             return 'artemisApp.lecture.editFooter.detailsIncomplete';
+        }
+        if (this.isDescriptionTooLong()) {
+            return 'artemisApp.lecture.editFooter.descriptionTooLong';
         }
         if (!this.isPeriodValid()) {
             return 'artemisApp.lecture.editFooter.periodInvalid';
