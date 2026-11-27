@@ -830,7 +830,9 @@ The helpers that do not need the editor live in the light entry `@tumaet/apollon
 - **A component that uses the editor outside a `@defer` block has the same effect.** When a component lists `ModelingEditorComponent` in its
   `imports` and uses it in its template outside a `@defer` block, the import is static and the editor loads with every route that imports the
   component. Angular loads a standalone component that a template uses only inside `@defer` blocks lazily with the block (the detail
-  overview list does this), so put the editor in a `@defer` block when the component is also used outside modeling.
+  overview list does this), so put the editor in a `@defer` block when the component is also used outside modeling. This only works while
+  the editor component is standalone and the file references it nowhere else: a `viewChild` query or any other use in the class body makes
+  the import static again.
 
 ### Preventing Memory Leaks
 
