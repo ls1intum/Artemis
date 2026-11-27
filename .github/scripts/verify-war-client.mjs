@@ -19,7 +19,7 @@ const MAIN_SOURCE = /^(?:\/|\.\/)?(main-[a-zA-Z0-9_-]+\.js)(?:[?#].*)?$/;
 // An optimized main bundle averages several hundred bytes per line and an unoptimized one about 60, so this separates them with a wide margin.
 export const MIN_AVERAGE_LINE_BYTES = 200;
 
-/** The `src` of every `<script>` of the HTML that names a `main-*.js` file (comments are not scripts). */
+/** The `src` of every `<script>` of the HTML that names a `main-*.js` file. Comments and the contents of a `<template>` are inert: they do not run. */
 export function referencedMainScripts(html) {
     const bundles = [];
     const visit = (node) => {
@@ -30,8 +30,8 @@ export function referencedMainScripts(html) {
                 bundles.push(match[1]);
             }
         }
-        // the content of a <template> is a separate fragment that childNodes does not contain
-        for (const child of [...(node.childNodes ?? []), ...(node.content ? [node.content] : [])]) {
+        // parse5 keeps the contents of a <template> in `node.content`, a fragment that childNodes does not contain, and it stays out of the walk
+        for (const child of node.childNodes ?? []) {
             visit(child);
         }
     };

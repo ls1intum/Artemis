@@ -65,6 +65,22 @@ test('rejects an index without a main script, and ignores a script in a comment'
     assert.match(result.stdout, /found 0/);
 });
 
+test('ignores a script inside a template, which does not run, and rejects an index with no other main script', () => {
+    const result = verify('<template><script src="main-served.js"></script></template>', { 'main-served.js': OPTIMIZED });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /found 0/);
+});
+
+test('selects the active main script next to a script inside a template', () => {
+    const result = verify('<template><script src="main-inert.js"></script></template><script src="main-served.js"></script>', {
+        'main-served.js': OPTIMIZED,
+        'main-inert.js': UNOPTIMIZED,
+    });
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
 test('rejects multiple main scripts', () => {
     const result = verify('<script src="main-first.js"></script><script src="main-second.js"></script>', {
         'main-first.js': OPTIMIZED,
