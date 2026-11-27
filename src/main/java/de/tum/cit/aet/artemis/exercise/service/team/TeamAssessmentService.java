@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service.team;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public class TeamAssessmentService {
         if (!startsNewAssessment) {
             return;
         }
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         if (ExerciseDateService.getDueDate(participation).filter(now::isBefore).isPresent()) {
             throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
         }
@@ -97,7 +98,7 @@ public class TeamAssessmentService {
 
         // A team has either a submission without a manual result or an assessed one, so the two lists never share a participation.
         Map<Long, AssessmentQueueSubmissionDTO> submissionByParticipation = new HashMap<>();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         if (canStartAssessments(exercise, now)) {
             teamAssessmentQueueRepository.findCandidateSubmissions(exercise.getId(), now, teamOwnerId)
                     .forEach(submission -> submissionByParticipation.put(submission.participationId(), submission));

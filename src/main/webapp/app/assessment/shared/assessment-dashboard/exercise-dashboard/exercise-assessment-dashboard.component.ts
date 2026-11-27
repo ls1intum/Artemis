@@ -468,11 +468,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.exerciseService.getForTutors(this.exerciseId()).subscribe({
             next: (res: HttpResponse<Exercise>) => {
                 const exercise = res.body!;
-                if (exercise.teamMode && this.exercise()?.id !== exercise.id) {
-                    this.assessmentQueueTeams.set(new Map());
-                    this.teamUnassessedSubmissionsByRound.set([]);
-                    this.assessedSubmissionsByRound.set([]);
-                }
                 this.exercise.set(exercise);
                 this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
                 this.formattedGradingInstructions.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.gradingInstructions));
@@ -701,6 +696,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
+        // team exercises are course exercises, so their queue has only the first correction round
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            if (!this.assessmentNotPossibleYetReason()) {
+                this.loadTeamQueueForCorrectionRound(0);
+            }
+            return;
+        }
         if (this.isExamMode()) {
             for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
                 this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
@@ -716,13 +718,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * in the exercise dashboard.
      */
     private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
-        if (this.exercise().teamMode && !this.isTestRun()) {
-            if (!this.assessmentNotPossibleYetReason()) {
-                this.loadTeamQueueForCorrectionRound(correctionRound);
-            }
-            return;
-        }
-
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun()) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
@@ -798,6 +793,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * If not in examMode correction rounds defaults to 0.
      */
     private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
+        // team exercises are course exercises, so their queue has only the first correction round
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            this.loadTeamQueueForCorrectionRound(0);
+            return;
+        }
         if (this.isExamMode()) {
             for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled()) {
@@ -817,10 +817,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * the server will respond with a BAD REQUEST response here.
      */
     private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
-        if (this.exercise().teamMode && !this.isTestRun()) {
-            this.loadTeamQueueForCorrectionRound(correctionRound);
-            return;
-        }
         let submissionObservable: Observable<Submission | undefined> = of();
         switch (this.exercise().type) {
             case ExerciseType.TEXT:
