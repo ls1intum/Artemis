@@ -92,7 +92,9 @@ server:
     port: 8080
     compression:
         enabled: true
-        mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,image/svg+xml,application/wasm
+        # The scripts of the client are served as text/javascript. A proxy in front of Artemis can cache the compressed response, which a
+        # response that the proxy compresses on its way out never is: it recompresses that one for every request.
+        mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,image/svg+xml,application/wasm
         min-response-size: 1024
 
 # ===================================================================
