@@ -1465,6 +1465,14 @@ with a development build: only the production build minifies the scripts and mer
   pointer or key press of the visitor. When the sign-in page, its alerts or its footer show a key that is not in the slice, add the key
   to `LANDING_NAMESPACES`; until the full catalog has loaded, the page shows `translation-not-found[...]` for it.
 - **Preload only what the route uses.** `index.html` preloads the poster of the landing page on `/` only.
+- **The size of the initial files has a limit.** The `initial` entry of `budgets` in the `production` configuration of `angular.json` is
+  the sum of the uncompressed files that the first page loads (`main` and the styles). The production build warns above the first value and
+  fails above the second, so a change that adds code to the shell shows up in the pull request that adds it. The values sit a little above
+  the size of the client that is built from `develop`: they are a guard against growth, not a target. When the build exceeds the limit, find
+  out which import grew `main` (the eager-chunk report of the pull request names the files that a route imports with a normal `import`), and
+  defer it with `@defer` or `import()`. Raise the limit only for growth that you have decided to accept, in the same pull request and with the
+  reason in its description; lower it when a pull request makes the bundle smaller, so that the gain stays. The build that only produces
+  the metafile for the eager-chunk report uses the `stats` configuration, which is unoptimized and has no limit for the initial files.
 
 ## Advanced Topics
 
