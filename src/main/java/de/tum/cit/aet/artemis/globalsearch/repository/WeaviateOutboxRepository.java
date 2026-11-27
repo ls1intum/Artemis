@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO;
 
 /**
  * Spring Data JPA repository for {@link WeaviateOutboxEntry}.
@@ -77,6 +79,20 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
      * @return {@code true} if a row for this entity is already queued
      */
     boolean existsByEntityTypeAndEntityId(String entityType, Long entityId);
+
+    /**
+     * Counts the queued rows of one origin, due or backing off, and finds the enqueue time of the oldest. The dispatcher uses it to notice a queue that does not shrink.
+     * One query reads both, so the rows of the origin are visited once.
+     *
+     * @param origin the origin of the rows
+     * @return the number of queued rows and the enqueue time of the oldest, which is {@code null} if no row is queued
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO(COUNT(e), MIN(e.createdAt))
+            FROM WeaviateOutboxEntry e
+            WHERE e.origin = :origin
+            """)
+    WeaviateOutboxBacklogDTO findBacklogByOrigin(@Param("origin") WeaviateOutboxOrigin origin);
 
     /**
      * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a
