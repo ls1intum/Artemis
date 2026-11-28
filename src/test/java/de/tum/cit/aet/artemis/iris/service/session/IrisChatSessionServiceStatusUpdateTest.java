@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -46,9 +48,11 @@ import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -359,6 +363,40 @@ class IrisChatSessionServiceStatusUpdateTest {
         // The live view still gets the whole run.
         verify(irisChatWebsocketService).sendMessage(eq(session), eq(savedMessage), eq(PyrisRunState.RUNNING), isNull(), isNull(), anyList(), eq("run-1"), eq(wholeRun), eq(4),
                 isNull());
+    }
+
+    @Test
+    void choiceReadFromATypedReplyIsStoredForTheOfferTheReplyAnswers() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, 11L, null);
+        stubJobLock(job);
+        var offer = new IrisMessage();
+        offer.setId(10L);
+        offer.setSender(IrisMessageSender.LLM);
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 3L, List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        var reply = new IrisMessage();
+        reply.setId(11L);
+        reply.setSender(IrisMessageSender.USER);
+        session.setMessages(new ArrayList<>(List.of(offer, reply)));
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(12L);
+            return message;
+        });
+        var statusUpdate = new PyrisChatStatusUpdateDTO("Here is the solution.", PyrisRunState.RUNNING, null, null, null, null, null, null, null, null, true, null, null, null,
+                null, IrisSolutionChoice.SHOW_SOLUTION);
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        assertThat(messageCaptor.getValue().getContent().stream().filter(content -> content instanceof IrisJsonMessageContent)
+                .map(content -> ((IrisJsonMessageContent) content).readAs(IrisSolutionChoiceDTO.class)))
+                .containsExactly(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION));
     }
 
     @Test

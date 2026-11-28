@@ -5,10 +5,13 @@ import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -19,6 +22,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -27,13 +32,20 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionStep;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -100,11 +112,13 @@ public class IrisChatPipelineExecutionService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final FeatureToggleService featureToggleService;
+
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
             Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
-            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService) {
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, FeatureToggleService featureToggleService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -118,6 +132,7 @@ public class IrisChatPipelineExecutionService {
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.authCheckService = authCheckService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -133,7 +148,7 @@ public class IrisChatPipelineExecutionService {
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
-        execute(session, event, settings, latestSubmission, uncommittedFiles, context, null);
+        execute(session, event, settings, latestSubmission, uncommittedFiles, context, null, null);
     }
 
     /**
@@ -147,9 +162,11 @@ public class IrisChatPipelineExecutionService {
      * @param context          list of context information (e.g. current page, video timestamp, fullscreen mode) sent to Pyris for contextual responses
      * @param clientId         identifies the browser tab that started the run, so a command Iris issues mid-pipeline is addressed back to that tab instead of all of the user's
      *                             tabs. Null for runs nobody is waiting in front of, such as the event-triggered ones.
+     * @param userMessageId    the student message the run answers. The run continues the solution workflow from this message, not from whatever is latest when it reads the
+     *                             session: another tab, a context switch or a late answer may have added messages since. Null for runs no student message caused.
      */
     public void execute(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
+            Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId, @Nullable Long userMessageId) {
         IrisSession loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (loadedSession == null) {
             throw new EntityNotFoundException("IrisSession", session.getId());
@@ -171,9 +188,16 @@ public class IrisChatPipelineExecutionService {
             }
         }
 
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId,
+        // A run answers its own message: it sees the history only through it, since another tab, a context switch or a late answer may have added messages since.
+        // An event-triggered run answers no student message, so it sees the whole history and never continues the solution workflow.
+        var runMessageId = event.isEmpty() ? userMessageId : null;
+        int runMessage = runMessageId == null ? -1 : indexOf(chatSession.getMessages(), runMessageId);
+        var history = runMessage < 0 ? chatSession.getMessages() : chatSession.getMessages().subList(0, runMessage + 1);
+        boolean solutionChoiceEnabled = featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice);
+        var solutionStep = !solutionChoiceEnabled || runMessage < 0 ? null : solutionStep(chatSession, history);
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.supportLevel().jsonValue(), chatSession, event, clientId, runMessageId,
                 (executionDto, user, pyrisUser) -> buildChatDTO(chatSession.getMode(), chatSession, executionDto, actualSettings.customInstructions(), course, user, pyrisUser,
-                        latestSubmission, uncommittedFiles, context));
+                        latestSubmission, uncommittedFiles, context, history, solutionStep, solutionChoiceEnabled));
     }
 
     /**
@@ -184,8 +208,10 @@ public class IrisChatPipelineExecutionService {
      */
     private PyrisChatPipelineExecutionDTO buildChatDTO(IrisChatMode chatMode, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
             Course course, User user, PyrisUserDTO pyrisUser, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles,
-            List<IrisMessageContextDTO> context) {
-        var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
+            List<IrisMessageContextDTO> context, List<IrisMessage> history, @Nullable IrisSolutionStep solutionStep, boolean solutionChoiceEnabled) {
+        var messages = pyrisDTOService.toPyrisMessageDTOList(history);
+        // A typed reply may choose the solution, which Pyris only learns from the reply, so it needs the reference already.
+        boolean includeSolutionReference = solutionStep == IrisSolutionStep.SHOW_SOLUTION || solutionStep == IrisSolutionStep.OFFER_REPLY;
 
         // Base data shared across all chat modes (course chat is the baseline)
         long courseLoadStart = System.nanoTime();
@@ -212,8 +238,9 @@ public class IrisChatPipelineExecutionService {
         switch (chatMode) {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
-                // The chat pipelines work on the problem statement and on the submission of the student, so the template, solution and test repositories stay home
-                programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseMetadataDTO(progExercise);
+                // Only an explicit, context-bound choice unlocks the instructor solution. Template and test repositories stay home.
+                programmingExercise = includeSolutionReference ? pyrisDTOService.toPyrisProgrammingExerciseWithSolutionDTO(progExercise)
+                        : pyrisDTOService.toPyrisProgrammingExerciseMetadataDTO(progExercise);
                 // Reload via the eager graph instead of trusting the caller-supplied entity: latestSubmission may be an event
                 // payload handed off across a thread boundary (e.g. CompletableFuture.runAsync) with no Hibernate session,
                 // so its lazy buildLogEntries/results associations would throw LazyInitializationException otherwise.
@@ -223,7 +250,7 @@ public class IrisChatPipelineExecutionService {
             }
             case TEXT_EXERCISE_CHAT -> {
                 var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getEntityId());
-                textExercise = PyrisTextExerciseDTO.withoutExampleSolution(exercise);
+                textExercise = includeSolutionReference ? PyrisTextExerciseDTO.of(exercise) : PyrisTextExerciseDTO.withoutExampleSolution(exercise);
                 // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
                 // Try practice participation (testRun=true) first, then fall back to graded participation (testRun=false)
                 var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), true)
@@ -263,7 +290,68 @@ public class IrisChatPipelineExecutionService {
         }
 
         return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
-                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext);
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext, solutionStep, solutionChoiceEnabled);
+    }
+
+    /**
+     * The step of the solution workflow the run's message is, the last of its history. A choice counts only if it answered an open offer of the current context.
+     * <ul>
+     * <li>A message with a click is the step of its choice.</li>
+     * <li>A message right after an offer, without a click, is a typed reply to it.</li>
+     * <li>A message after a turn that accepted the summary is the student's explanation of the solution, unless the context switched in between.</li>
+     * </ul>
+     */
+    private static @Nullable IrisSolutionStep solutionStep(IrisChatSession session, List<IrisMessage> history) {
+        var messages = history.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
+        int reply = messages.size() - 1;
+        if (IrisSolutionChoiceDTO.in(messages.get(reply)).isPresent()) {
+            return validChoice(messages, reply, session).map(choice -> switch (choice) {
+                case TRY_MYSELF -> IrisSolutionStep.TRY_MYSELF;
+                case SHOW_SOLUTION -> IrisSolutionStep.SHOW_SOLUTION;
+                case SUMMARIZE -> IrisSolutionStep.SUMMARIZE;
+                case SKIP_SUMMARY -> null;
+            }).orElse(null);
+        }
+        var answeredOffer = reply > 0 ? offerOfTheContext(messages.get(reply - 1), session) : Optional.<IrisSolutionOfferDTO>empty();
+        if (answeredOffer.isPresent()) {
+            return answeredOffer.get().offersSolution() ? IrisSolutionStep.OFFER_REPLY : IrisSolutionStep.SUMMARY_REPLY;
+        }
+        int previous = lastStudentMessageBefore(messages, reply);
+        if (previous < 0 || messages.subList(previous, reply).stream().anyMatch(message -> message.getSender() == IrisMessageSender.CTXSWAP)) {
+            return null;
+        }
+        boolean acceptedSummary = IntStream.range(previous, reply).mapToObj(index -> validChoice(messages, index, session)).flatMap(Optional::stream)
+                .anyMatch(IrisSolutionChoice.SUMMARIZE::equals);
+        return acceptedSummary ? IrisSolutionStep.EXPLAIN_SOLUTION : null;
+    }
+
+    /**
+     * The choice a message records, if it answered an open offer: one of the current context, since a late answer can land after a context switch, and for a click the
+     * latest message before it, since a click after another one, such as from another tab, is stale. The server checked when writing that the offer has the button.
+     */
+    private static Optional<IrisSolutionChoice> validChoice(List<IrisMessage> messages, int index, IrisChatSession session) {
+        var message = messages.get(index);
+        return IrisMessageContentTypeDTO.readFirst(message, IrisSolutionChoiceDTO.TYPE, IrisSolutionChoiceDTO.class).filter(choice -> {
+            int offer = indexOf(messages, choice.offerMessageId());
+            return offer >= 0 && (message.getSender() != IrisMessageSender.USER || offer == index - 1) && offerOfTheContext(messages.get(offer), session).isPresent();
+        }).map(IrisSolutionChoiceDTO::choice);
+    }
+
+    private static Optional<IrisSolutionOfferDTO> offerOfTheContext(IrisMessage message, IrisChatSession session) {
+        return IrisSolutionOfferDTO.in(message).filter(offer -> offer.chatMode() == session.getMode() && offer.entityId() == session.getEntityId());
+    }
+
+    private static int indexOf(List<IrisMessage> messages, long id) {
+        return IntStream.range(0, messages.size()).filter(index -> Objects.equals(messages.get(index).getId(), id)).findFirst().orElse(-1);
+    }
+
+    private static int lastStudentMessageBefore(List<IrisMessage> messages, int end) {
+        for (int index = end - 1; index >= 0; index--) {
+            if (messages.get(index).getSender() == IrisMessageSender.USER) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

@@ -35,6 +35,14 @@ Feature flags and properties control whether Artemis loads or invokes these capa
 
 Conversely, source-level implementation choices such as Artemis Global Search schemas, callback routes, job tracking, and feature gates are part of the integration contract. Consult the [developer AI pipeline catalog](/developer/ai-pipelines) before changing an Artemis-side boundary, and use the linked service documentation for service-owned implementation details.
 
+## Iris solution choice
+
+In **Administration → Features**, use **Iris Solution Choice** (`IrisSolutionChoice`) to enable or disable the solution workflow across all courses. It starts enabled and can be changed at runtime without restarting Artemis. Its state uses the same distributed store as the other runtime toggles: Redis and Valkey retain it across restarts; a stopped Hazelcast cluster or a restarted local provider loses it and seeds the enabled default again.
+
+When enabled, Iris can offer students a choice between working on an exercise with help and seeing its complete solution, followed by an optional summary in their own words. When disabled, Iris uses regular tutoring: it does not classify solution requests or enter the solution workflow, Artemis does not attach instructor solutions, and existing solution buttons and summary invitations are hidden. Existing conversation text is retained.
+
+Update both Artemis and Iris/Pyris to versions supporting the `solutionChoiceEnabled` request field before using this switch. An older Iris/Pyris version ignores the field and can still offer solutions.
+
 ## Lecture ingestion operations
 
 Artemis keeps the queue and the state of lecture-unit ingestion; Iris runs the ingestion pipelines. A few operational rules apply when both sides are updated or tuned.

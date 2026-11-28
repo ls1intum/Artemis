@@ -1,5 +1,6 @@
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisSolutionChoiceRequest } from './iris-solution-choice.model';
 
 /**
  * Pending context change forwarded with a new user message so the server can apply the switch
@@ -24,4 +25,5 @@ export interface IrisMessageRequestDTO {
     context?: IrisMessageContextDTO[];
     /** Identifies the sending browser tab, so a command Iris issues while answering is addressed back to it. */
     clientId?: string;
+    solutionChoice?: IrisSolutionChoiceRequest;
 }

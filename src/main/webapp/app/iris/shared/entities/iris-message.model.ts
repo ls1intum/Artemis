@@ -30,7 +30,8 @@ export class IrisAssistantMessage implements BaseEntity {
 
 export interface IrisUserMessage extends BaseEntity {
     id?: number;
-    content: IrisTextMessageContent[];
+    /** Typed text and server-generated metadata for explicit button actions. */
+    content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
     messageDifferentiator?: number;

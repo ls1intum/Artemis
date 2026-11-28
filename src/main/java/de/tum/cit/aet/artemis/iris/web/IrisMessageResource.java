@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -52,9 +55,13 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqStoredResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentTypeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -88,9 +95,11 @@ public class IrisMessageResource {
 
     private final IrisProactiveEpisodeService irisProactiveEpisodeService;
 
+    private final FeatureToggleService featureToggleService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository,
-            IrisProactiveEpisodeService irisProactiveEpisodeService) {
+            IrisProactiveEpisodeService irisProactiveEpisodeService, FeatureToggleService featureToggleService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -98,6 +107,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.irisProactiveEpisodeService = irisProactiveEpisodeService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -136,9 +146,27 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        irisSessionService.checkRateLimit(session, user);
 
         var pendingContext = requestDTO.pendingContext();
+        var solutionChoice = requestDTO.solutionChoice();
+        if (solutionChoice != null && !featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice)) {
+            throw new AccessForbiddenException("The Iris solution workflow is disabled");
+        }
+        if (solutionChoice != null && (!(session instanceof IrisChatSession) || pendingContext != null)) {
+            throw new BadRequestException("A solution choice must answer an offer in the current chat context");
+        }
+        var validatedChoice = solutionChoice == null ? null : validateSolutionChoice((IrisChatSession) session, solutionChoice);
+        // Declining the summary only records the choice: Iris has nothing to say to it, so it costs no response of the rate limit.
+        boolean asksIris = validatedChoice == null || validatedChoice.choice() != IrisSolutionChoice.SKIP_SUMMARY;
+        if (asksIris) {
+            irisSessionService.checkRateLimit(session, user);
+        }
+        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
+        // Choices are written only here after validating the offer, so a client must never send one itself.
+        // Checked before the context change, so a rejected request does not move the session.
+        if (contentEntities.stream().map(IrisMessageContentTypeDTO::typeOf).anyMatch(type -> IrisSolutionChoiceDTO.TYPE.equals(type) || IrisSolutionOfferDTO.TYPE.equals(type))) {
+            throw new BadRequestException("Solution workflow content must be created by the server");
+        }
         if (pendingContext != null) {
             if (!(session instanceof IrisChatSession chatSession)) {
                 throw new BadRequestException("Pending context change is only supported for chat sessions");
@@ -147,22 +175,42 @@ public class IrisMessageResource {
         }
 
         IrisMessage message = new IrisMessage();
-        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
-        message.setContent(contentEntities);
+        message.setContent(new ArrayList<>(contentEntities));
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
         message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
 
+        if (validatedChoice != null) {
+            message.addContent(IrisJsonMessageContent.of(validatedChoice));
+        }
         IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
+        if (asksIris) {
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId(), savedMessage.getId());
+        }
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
+    }
+
+    /**
+     * A choice must answer an offer of this session in its current context, with a button the offer has. Whether the offer is still the latest message is the
+     * client's concern: it only enables the buttons of the latest message.
+     */
+    private IrisSolutionChoiceDTO validateSolutionChoice(IrisChatSession session, IrisSolutionChoiceRequestDTO request) {
+        var offerMessage = irisMessageRepository.findByIdElseThrow(request.offerMessageId());
+        if (!session.getId().equals(offerMessage.getSession().getId())) {
+            throw new BadRequestException("The solution offer belongs to a different session");
+        }
+        var offer = IrisSolutionOfferDTO.in(offerMessage).orElseThrow(() -> new BadRequestException("The message contains no solution offer"));
+        if (offer.chatMode() != session.getMode() || offer.entityId() != session.getEntityId() || !offer.offers(request.choice())) {
+            throw new BadRequestException("The solution offer does not offer this choice in the current chat context");
+        }
+        return new IrisSolutionChoiceDTO(request.offerMessageId(), request.choice());
     }
 
     /**
@@ -225,7 +273,7 @@ public class IrisMessageResource {
         var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
         message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
         irisMessageRepository.save(message);
-        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId);
+        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId, message.getId());
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));
     }

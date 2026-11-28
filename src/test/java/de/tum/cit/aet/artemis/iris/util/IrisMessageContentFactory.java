@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 
 public class IrisMessageContentFactory {
 
@@ -37,5 +41,17 @@ public class IrisMessageContentFactory {
             messageContents.add(createMockTextContent());
         }
         return messageContents;
+    }
+
+    /**
+     * Creates the structured content of an assistant message offering the given choices, as Pyris sends it.
+     *
+     * @param chatMode the chat mode the offer is bound to
+     * @param entityId the entity the offer is bound to
+     * @param choices  the offered choices in order
+     * @return the offer content
+     */
+    public static IrisJsonMessageContent solutionOffer(IrisChatMode chatMode, long entityId, List<IrisSolutionChoice> choices) {
+        return IrisJsonMessageContent.of(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, chatMode, entityId, choices));
     }
 }

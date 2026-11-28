@@ -16,6 +16,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -37,9 +38,20 @@ import {
     getMcqSetData,
     isMcqContent,
     isMcqSetContent,
+    isTextContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
+import { IrisSolutionChoiceComponent } from 'app/iris/overview/solution-choice/iris-solution-choice.component';
+import {
+    IrisSolutionChoice,
+    SOLUTION_CHOICE_LABEL_KEYS,
+    isClickedChoiceMessage,
+    isSolutionOffer,
+    offeredChoices,
+    offersSummary,
+    solutionChoicesByOffer,
+} from 'app/iris/shared/entities/iris-solution-choice.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
@@ -130,6 +142,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
+        IrisSolutionChoiceComponent,
         IrisActivityFeedComponent,
         TumAetUiConfirmDialogComponent,
         TumAetUiMenuComponent,
@@ -148,6 +161,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
+    private readonly featureToggleService = inject(FeatureToggleService);
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
@@ -228,9 +242,45 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
     readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
+    readonly solutionChoiceEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.IrisSolutionChoice), { initialValue: false });
+
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    /** The chat service never lists summaries, so this is the latest message the student sees. */
+    private readonly latestMessage = computed(() => this.rawMessages().at(-1));
+    private readonly solutionChoices = computed(() => solutionChoicesByOffer(this.rawMessages()));
+    protected readonly isSolutionOffer = isSolutionOffer;
+    protected readonly offeredChoices = offeredChoices;
+
+    /** The fixed invitation to summarize ends the last text of an answer that offers the summary, so it reads as part of the answer. */
+    protected endsWithSummaryInvitation(message: IrisMessage, content: IrisMessageContent): boolean {
+        return (
+            this.solutionChoiceEnabled() &&
+            message.content.some((entry) => isSolutionOffer(entry) && offersSummary(entry)) &&
+            message.content.filter(isTextContent).at(-1) === content
+        );
+    }
+    protected selectedSolutionChoice(message: IrisMessage): IrisSolutionChoice | undefined {
+        return message.id === undefined ? undefined : this.solutionChoices().get(message.id);
+    }
+
+    /**
+     * Only the latest message is an open offer: any chat after it closes the offer, and a choice never travels with a staged context change.
+     * At the response limit declining the summary stays available, because Iris does not answer it.
+     */
+    protected disabledSolutionChoices(message: IrisMessage, choices: IrisSolutionChoice[]): IrisSolutionChoice[] {
+        const offerIsOpen = !this.isBusy() && !this.chatService.pendingContext() && this.latestMessage()?.id === message.id;
+        return offerIsOpen ? choices.filter((choice) => this.hasReachedRateLimit() && choice !== 'SKIP_SUMMARY') : choices;
+    }
+
+    /** The buttons of {@link disabledSolutionChoices} emit no choice. */
+    protected onSolutionChoice(message: IrisMessage, choice: IrisSolutionChoice): void {
+        if (!this.solutionChoiceEnabled() || message.id === undefined) return;
+        const label = this.translateService.instant(SOLUTION_CHOICE_LABEL_KEYS[choice]);
+        const provider = this.contextProvider();
+        this.chatService.sendMessage(label, {}, provider?.(), { offerMessageId: message.id, choice }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
     // Tracks whether the chat service has finished its first session-load attempt for the
     // current context. Prevents downstream gates (notably the onboarding tour) from acting
     // on the BehaviorSubject's empty initial value before the real messages arrive.
@@ -292,24 +342,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const decision = this.userAccepted();
         return decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly isInputDisabled = computed(
-        () =>
-            this.isLoading() ||
-            !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
-            this.awaitingAnswer(),
-    );
+    private readonly isBusy = computed(() => this.isLoading() || !this.active() || this.awaitingAnswer());
+    private readonly hasReachedRateLimit = computed(() => !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit));
+    readonly isInputDisabled = computed(() => this.isBusy() || this.hasReachedRateLimit());
     // Without a session there is nothing to send to: the chat service rejects the message, so sending while the session
     // is still loading would only lose what the user typed.
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled() || this.currentSessionId() === undefined);
     readonly canShowSuggestions = computed(
-        () =>
-            !!this.suggestions()?.length &&
-            this.isAIEnabled() &&
-            this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
-            !this.awaitingAnswer(),
+        () => !!this.suggestions()?.length && this.isAIEnabled() && this.active() && !this.hasReachedRateLimit() && !this.awaitingAnswer() && !this.offerIsOpen(),
     );
+    /** While an offer waits for the student's choice, its buttons are the next step; the suggestions of a solution appear once the summary is declined. */
+    private readonly offerIsOpen = computed(() => this.solutionChoiceEnabled() && (this.latestMessage()?.content.some(isSolutionOffer) ?? false));
     readonly isScrolledToBottom = signal(true);
     readonly exchangeSpacerPx = signal(0);
     private pendingAnchorScroll = false;
@@ -798,7 +841,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        return deepClone(rawMessages);
+        // A click answers right away; its message stays stored for the server and Iris but is not shown.
+        return deepClone(rawMessages.filter((message) => !isClickedChoiceMessage(message)));
     }
 
     protected isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
@@ -892,12 +936,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (message.sender !== IrisSender.USER) {
             return;
         }
+        const text = message.content.find(isTextContent)?.textContent;
         let observable;
         if (message.id) {
             observable = this.chatService.resendMessage(message);
             this.resendAnimationActive.set(true);
-        } else if (message.content?.[0]?.textContent) {
-            observable = this.chatService.sendMessage(message.content[0].textContent);
+        } else if (text) {
+            observable = this.chatService.sendMessage(text);
         } else {
             this.resendAnimationActive.set(false);
             return;

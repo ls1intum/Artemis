@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,21 +11,37 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionStep;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -32,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -48,6 +66,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class IrisChatPipelineContextTest {
@@ -68,6 +87,8 @@ class IrisChatPipelineContextTest {
 
     private AuthorizationCheckService authCheck;
 
+    private FeatureToggleService features;
+
     private IrisChatPipelineExecutionService service;
 
     private IrisChatSession session;
@@ -75,6 +96,8 @@ class IrisChatPipelineContextTest {
     private User user;
 
     private Course course;
+
+    private TextRepositoryApi texts;
 
     @BeforeEach
     void setUp() {
@@ -86,8 +109,12 @@ class IrisChatPipelineContextTest {
         programmingExercises = mock(ProgrammingExerciseTestRepository.class);
         dtoService = mock(PyrisDTOService.class);
         authCheck = mock(AuthorizationCheckService.class);
+        texts = mock(TextRepositoryApi.class);
+        features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.IrisSolutionChoice)).thenReturn(true);
         service = new IrisChatPipelineExecutionService(sessions, courses, exercises, programmingExercises, mock(ProgrammingExerciseStudentParticipationRepository.class),
-                mock(ProgrammingSubmissionRepository.class), null, Optional.empty(), Optional.of(lectures), null, dtoService, pipelines, authCheck);
+                mock(ProgrammingSubmissionRepository.class), mock(StudentParticipationRepository.class), Optional.of(texts), Optional.of(lectures), null, dtoService, pipelines,
+                authCheck, features);
         course = new Course();
         course.setId(1L);
         user = new User();
@@ -123,9 +150,9 @@ class IrisChatPipelineContextTest {
         List<IrisMessageContextDTO> context = List.of(slides, videoContext, onlySlides, onlyVideo, both, new IrisVideoContextDTO(99L, 0.0), new IrisSlidesContextDTO(99L, 1),
                 new IrisCombinedViewContextDTO(null, null), new IrisCombinedViewContextDTO(slides, videoContext),
                 new IrisCombinedViewContextDTO(new IrisSlidesContextDTO(99L, 1), null), new IrisCombinedViewContextDTO(null, new IrisVideoContextDTO(99L, 0.0)));
-        service.execute(session, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), context, "tab");
+        service.execute(session, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), context, "tab", null);
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         var dto = builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
         assertThat(dto.context()).containsExactly(slides, videoContext, onlySlides, onlyVideo, both);
         assertThat(dto.lectureUnitId()).isEqualTo(5L);
@@ -189,20 +216,268 @@ class IrisChatPipelineContextTest {
         when(dtoService.toPyrisProgrammingExerciseMetadataDTO(exercise))
                 .thenReturn(new PyrisProgrammingExerciseDTO(20L, "title", null, Map.of(), Map.of(), Map.of(), "", null, null));
 
-        service.execute(programmingSession, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab");
+        service.execute(programmingSession, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab", null);
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
 
         verify(dtoService).toPyrisProgrammingExerciseMetadataDTO(exercise);
         verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
     }
 
+    /** The run of the latest student message, as the client starts it right after storing the message. */
     private PyrisChatPipelineExecutionDTO runChatPipeline() {
-        service.execute(session, Optional.empty(), Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab");
+        return runChatPipeline(Optional.empty(),
+                session.getMessages().reversed().stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElse(null));
+    }
+
+    private PyrisChatPipelineExecutionDTO runChatPipeline(Optional<String> event, @Nullable IrisMessage userMessage) {
+        service.execute(session, event, Optional.of(IrisCourseSettings.defaultSettings()), Optional.empty(), Map.of(), List.of(), "tab",
+                userMessage == null ? null : userMessage.getId());
         var builder = ArgumentCaptor.forClass(PyrisPipelineService.ChatPipelineDTOBuilder.class);
-        verify(pipelines, atLeastOnce()).executeChatPipeline(any(), any(), any(), any(), any(), builder.capture());
+        verify(pipelines, atLeastOnce()).executeChatPipeline(any(), any(), any(), any(), any(), any(), builder.capture());
         return builder.getValue().apply(new PyrisPipelineExecutionDTO(null), user, null);
+    }
+
+    @Test
+    void solutionChoiceSendsOnlyTheProgrammingSolution() {
+        var exercise = prepareProgrammingReferenceContext();
+        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
+        var dto = runChatPipeline();
+        assertThat(dto.solutionChoiceEnabled()).isTrue();
+        assertThat(dto.solutionStep()).isEqualTo(IrisSolutionStep.SHOW_SOLUTION);
+        var result = dto.programmingExercise();
+        assertThat(result.solutionRepository()).containsEntry("Main.java", "INSTRUCTOR SOLUTION");
+        assertThat(result.templateRepository()).isEmpty();
+        assertThat(result.testRepository()).isEmpty();
+        verify(dtoService).toPyrisProgrammingExerciseWithSolutionDTO(exercise);
+        verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void disabledSolutionChoiceIgnoresStoredClicksAndTypedReplies(boolean typedReply) {
+        prepareProgrammingReferenceContext();
+        if (typedReply) {
+            appendOffer(SOLUTION_CHOICES);
+            session.getMessages().add(message(IrisMessageSender.USER, "yes"));
+        }
+        else {
+            appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
+        }
+        when(features.isFeatureEnabled(Feature.IrisSolutionChoice)).thenReturn(false);
+        var dto = runChatPipeline();
+        assertThat(dto.solutionChoiceEnabled()).isFalse();
+        assertThat(JsonMapper.builder().build().writeValueAsString(dto)).contains("\"solutionChoiceEnabled\":false");
+        assertThat(dto.solutionStep()).isNull();
+        assertThat(dto.programmingExercise().solutionRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
+    }
+
+    /** Every choice but the explicit one for the solution is its own step and keeps the reference back; a declined summary is no step. */
+    @ParameterizedTest
+    @CsvSource({ "TRY_MYSELF, TRY_MYSELF", "SUMMARIZE, SUMMARIZE", "SKIP_SUMMARY, " })
+    void otherChoicesWithholdTheProgrammingSolution(IrisSolutionChoice choice, IrisSolutionStep step) {
+        prepareProgrammingReferenceContext();
+        appendChoice(choice);
+        var dto = runChatPipeline();
+        assertThat(dto.solutionStep()).isEqualTo(step);
+        var result = dto.programmingExercise();
+        assertThat(result.solutionRepository()).isEmpty();
+        assertThat(result.templateRepository()).isEmpty();
+        assertThat(result.testRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
+        verify(dtoService, never()).toPyrisProgrammingExerciseDTO(any());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "SHOW_SOLUTION, INSTRUCTOR TEXT SOLUTION", "TRY_MYSELF, " })
+    void textExampleSolutionIsSentOnlyForTheExplicitSolutionChoice(IrisSolutionChoice choice, String expectedSolution) {
+        var exercise = new TextExercise();
+        exercise.setId(30L);
+        exercise.setCourse(course);
+        exercise.setExampleSolution("INSTRUCTOR TEXT SOLUTION");
+        session = new IrisChatSession(exercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
+        session.setId(4L);
+        when(sessions.findByIdWithMessagesAndContents(4L)).thenReturn(session);
+        when(courses.findByIdElseThrow(1L)).thenReturn(course);
+        when(pipelines.loadCourseWithParticipationOfStudent(1L, 2L)).thenReturn(course);
+        when(exercises.findByIdElseThrow(30L)).thenReturn(exercise);
+        when(texts.findByIdElseThrow(30L)).thenReturn(exercise);
+        appendChoice(choice);
+        assertThat(runChatPipeline().textExercise().exampleSolution()).isEqualTo(Optional.ofNullable(expectedSolution));
+    }
+
+    // The summary answer of a run still running during a switch can land after the marker, because the switch and the new message are stored one after the other.
+    @ParameterizedTest
+    @CsvSource({ "LLM, EXPLAIN_SOLUTION", "LLM CTXSWAP, ", "CTXSWAP LLM, " })
+    void messageAfterTheSummaryRequestIsItsExplanationUnlessTheContextSwitchedSince(String messagesBetween, IrisSolutionStep step) {
+        prepareProgrammingReferenceContext();
+        appendChoice(IrisSolutionChoice.SUMMARIZE);
+        for (var sender : messagesBetween.split(" ")) {
+            session.getMessages().add(message(IrisMessageSender.valueOf(sender), "In short, the loop compares neighbours. Why does it start at 1?"));
+        }
+        session.getMessages().add(message(IrisMessageSender.USER, "Because the first element is the start value."));
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(step);
+        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+    }
+
+    // An offer of another context is the answer of a run that landed after a context switch: the next message is no reply to it.
+    @ParameterizedTest
+    @CsvSource({ "OFFER_REPLY, true, INSTRUCTOR SOLUTION", "SUMMARY_REPLY, true, ", ", false, " })
+    void typedReplyToAnOfferOfTheContextIsItsReplyStepAndOnlyTheSolutionOfferSendsTheReference(IrisSolutionStep step, boolean offerOfTheContext, String sentSolution) {
+        prepareProgrammingReferenceContext();
+        appendOffer(step == IrisSolutionStep.SUMMARY_REPLY ? SUMMARY_CHOICES : SOLUTION_CHOICES);
+        if (!offerOfTheContext) {
+            session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SOLUTION_CHOICES))));
+        }
+        session.getMessages().add(message(IrisMessageSender.USER, "yes"));
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(step);
+        assertThat(result.programmingExercise().solutionRepository().get("Main.java")).isEqualTo(sentSolution);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "SUMMARIZE, EXPLAIN_SOLUTION", "SKIP_SUMMARY, " })
+    void messageAfterATypedSummaryChoiceIsAnExplanationOnlyIfItAccepted(IrisSolutionChoice choice, IrisSolutionStep step) {
+        prepareProgrammingReferenceContext();
+        appendOffer(SUMMARY_CHOICES);
+        session.getMessages().add(message(IrisMessageSender.USER, "ok"));
+        var answer = message(IrisMessageSender.LLM, "Then explain in your own words: why does it start at 1?");
+        answer.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, choice)));
+        session.getMessages().addAll(List.of(answer, message(IrisMessageSender.USER, "The loop skips the first element.")));
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isEqualTo(step);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "SWITCH_BEFORE_CHOICE", "OTHER_TAB", "SWITCH_AFTER_CHOICE" })
+    void choiceThatIsStaleOrOfAnotherContextIsNoStepAndNeverSendsTheReference(String race) {
+        prepareProgrammingReferenceContext();
+        switch (race) {
+            case "SWITCH_BEFORE_CHOICE" -> {
+                appendOffer(SOLUTION_CHOICES);
+                session.getMessages().addAll(List.of(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"), message(IrisMessageSender.USER, "New exercise")));
+            }
+            // The first click from another tab already answered the offer.
+            case "OTHER_TAB" -> appendChoice(IrisSolutionChoice.TRY_MYSELF);
+            // The choice answered the offer of another exercise, and the session switched before its run read it.
+            default -> {
+                appendOffer(SOLUTION_CHOICES);
+                session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SOLUTION_CHOICES))));
+            }
+        }
+        var choice = message(IrisMessageSender.USER, "Show me the complete solution");
+        choice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
+        session.getMessages().add(choice);
+        if ("SWITCH_AFTER_CHOICE".equals(race)) {
+            session.getMessages().add(message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"));
+        }
+        var result = runChatPipeline();
+        assertThat(result.solutionStep()).isNull();
+        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void staleOrOtherContextSummaryChoiceNeverMakesTheNextQuestionAnExplanation(boolean otherTab) {
+        prepareProgrammingReferenceContext();
+        var lateChoice = message(otherTab ? IrisMessageSender.USER : IrisMessageSender.LLM, "Summarize it");
+        lateChoice.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SUMMARIZE)));
+        if (otherTab) {
+            // One tab declined the summary, another accepted it a moment later.
+            appendChoice(IrisSolutionChoice.SKIP_SUMMARY);
+        }
+        else {
+            // The typed acceptance of another exercise's summary offer was answered after the switch to this exercise.
+            appendOffer(SUMMARY_CHOICES);
+            session.getMessages().getLast().setContent(new ArrayList<>(List.of(solutionOffer(session.getMode(), 99L, SUMMARY_CHOICES))));
+            session.getMessages().addAll(List.of(message(IrisMessageSender.USER, "yes"), message(IrisMessageSender.CTXSWAP, "{\"transition\":\"switched\"}"),
+                    message(IrisMessageSender.USER, "New exercise")));
+        }
+        session.getMessages().addAll(List.of(lateChoice, message(IrisMessageSender.LLM, "How can I help?"), message(IrisMessageSender.USER, "What is a loop invariant?")));
+        assertThat(runChatPipeline().solutionStep()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "true, SHOW_SOLUTION", "false, OFFER_REPLY" })
+    void eachOfTwoRepliesStoredBeforeTheirRunsIsAnsweredFromItsOwnMessageAndHistory(boolean clicked, IrisSolutionStep firstStep) {
+        prepareProgrammingReferenceContext();
+        appendOffer(SOLUTION_CHOICES);
+        var first = message(IrisMessageSender.USER, clicked ? "Show me the complete solution" : "yes");
+        // A second tab answered the same offer before the first run read the session.
+        var second = message(IrisMessageSender.USER, clicked ? "Try it myself" : "no, I'll try");
+        if (clicked) {
+            first.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.SHOW_SOLUTION)));
+            second.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, IrisSolutionChoice.TRY_MYSELF)));
+        }
+        session.getMessages().addAll(List.of(first, second));
+        var firstRun = runChatPipeline(Optional.empty(), first);
+        assertThat(firstRun.solutionStep()).isEqualTo(firstStep);
+        assertThat(firstRun.programmingExercise().solutionRepository().get("Main.java")).isEqualTo("INSTRUCTOR SOLUTION");
+        assertThat(runChatPipeline(Optional.empty(), second).solutionStep()).isNull();
+        // Each run sends the history through its own message, so Pyris answers that message and never the other tab's.
+        ArgumentCaptor<List<IrisMessage>> histories = ArgumentCaptor.captor();
+        verify(dtoService, atLeastOnce()).toPyrisMessageDTOList(histories.capture());
+        assertThat(histories.getAllValues()).extracting(List::getLast).containsExactly(first, second);
+    }
+
+    @Test
+    void eventTriggeredRunNeverContinuesTheStudentsChoice() {
+        prepareProgrammingReferenceContext();
+        appendChoice(IrisSolutionChoice.SHOW_SOLUTION);
+        var result = runChatPipeline(Optional.of("build_failed"), session.getMessages().getLast());
+        assertThat(result.solutionStep()).isNull();
+        assertThat(result.programmingExercise().solutionRepository()).isEmpty();
+        verify(dtoService, never()).toPyrisProgrammingExerciseWithSolutionDTO(any());
+    }
+
+    private ProgrammingExercise prepareProgrammingReferenceContext() {
+        var exercise = new ProgrammingExercise();
+        exercise.setId(20L);
+        exercise.setCourse(course);
+        session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
+        session.setId(4L);
+        when(sessions.findByIdWithMessagesAndContents(4L)).thenReturn(session);
+        when(courses.findByIdElseThrow(1L)).thenReturn(course);
+        when(pipelines.loadCourseWithParticipationOfStudent(1L, 2L)).thenReturn(course);
+        when(exercises.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(programmingExercises.findByIdWithTemplateAndSolutionParticipationElseThrow(20L)).thenReturn(exercise);
+        when(dtoService.toPyrisProgrammingExerciseMetadataDTO(exercise))
+                .thenReturn(new PyrisProgrammingExerciseDTO(20L, "title", null, Map.of(), Map.of(), Map.of(), "task", null, null));
+        when(dtoService.toPyrisProgrammingExerciseWithSolutionDTO(exercise))
+                .thenReturn(new PyrisProgrammingExerciseDTO(20L, "title", null, Map.of(), Map.of("Main.java", "INSTRUCTOR SOLUTION"), Map.of(), "task", null, null));
+        return exercise;
+    }
+
+    private static final List<IrisSolutionChoice> SOLUTION_CHOICES = List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION);
+
+    private static final List<IrisSolutionChoice> SUMMARY_CHOICES = List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY);
+
+    private void appendChoice(IrisSolutionChoice choice) {
+        appendOffer(SOLUTION_CHOICES.contains(choice) ? SOLUTION_CHOICES : SUMMARY_CHOICES);
+        var action = message(IrisMessageSender.USER, "Show me the complete solution");
+        action.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(10L, choice)));
+        session.getMessages().add(action);
+    }
+
+    private void appendOffer(List<IrisSolutionChoice> choices) {
+        var offer = message(IrisMessageSender.LLM, "Trying it yourself is worth it here.");
+        offer.setId(10L);
+        offer.addContent(solutionOffer(session.getMode(), session.getEntityId(), choices));
+        session.getMessages().add(offer);
+    }
+
+    private static long nextMessageId = 100;
+
+    private static IrisMessage message(IrisMessageSender sender, String text) {
+        var message = new IrisMessage();
+        message.setId(nextMessageId++);
+        message.setSender(sender);
+        message.addContent(new IrisTextMessageContent(text));
+        return message;
     }
 
     @Test

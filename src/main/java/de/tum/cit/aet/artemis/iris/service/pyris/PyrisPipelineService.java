@@ -26,8 +26,6 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
@@ -159,21 +157,19 @@ public class PyrisPipelineService {
      * Execute the chat pipeline for any chat session context.
      * The caller provides a DTO builder lambda that constructs the context-specific {@link PyrisChatPipelineExecutionDTO}.
      *
-     * @param variant      the variant of the pipeline
-     * @param supportLevel the instructional support level ("low" / "moderate" / "high")
-     * @param session      the chat session
-     * @param eventVariant the event variant to trigger, if any
-     * @param clientId     identifies the browser tab the run was started from, so a mid-pipeline command can be addressed back to it; null when there is no originating client
-     * @param dtoBuilder   a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
+     * @param variant       the variant of the pipeline
+     * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
+     * @param session       the chat session
+     * @param eventVariant  the event variant to trigger, if any
+     * @param clientId      identifies the browser tab the run was started from, so a mid-pipeline command can be addressed back to it; null when there is no originating client
+     * @param userMessageId the student message the run answers, whose client origin decides where the response notification goes; null for a run no student message
+     *                          caused, such as an event-triggered one
+     * @param dtoBuilder    a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
      */
-    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, String clientId,
+    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, String clientId, @Nullable Long userMessageId,
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        // The run's user message, whose client origin decides where the response notification goes. Event-triggered runs (e.g. build failure, stalled progress) are not
-        // caused by a user message, so they carry no user message id. The last row of a session can be a stored conversation summary, which is not a user message.
-        var userMessageId = eventVariant.isPresent() ? null
-                : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
         var runId = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
         materialVersionService.capture(runId, session.getCourseId());
         // @formatter:off

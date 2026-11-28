@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.suggestionsDTO;
+import static de.tum.cit.aet.artemis.iris.util.IrisMessageContentFactory.solutionOffer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +54,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -64,6 +69,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionStep;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -76,6 +83,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -150,6 +159,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @Autowired
     private PyrisJobService pyrisJobService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private AtomicBoolean pipelineDone;
 
     @Override
@@ -160,6 +172,111 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @BeforeEach
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "PROGRAMMING_EXERCISE_CHAT,TRY_MYSELF", "PROGRAMMING_EXERCISE_CHAT,SHOW_SOLUTION", "TEXT_EXERCISE_CHAT,TRY_MYSELF", "TEXT_EXERCISE_CHAT,SHOW_SOLUTION" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_isStoredAndForwarded(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(solutionOffer(mode, session.getEntityId(), List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
+        mockChatResponse(dto -> {
+            assertThat(dto.solutionStep()).isEqualTo(IrisSolutionStep.valueOf(choice.name()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Chosen response", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId());
+        var userMessage = messages.stream().filter(message -> message.getSender() == IrisMessageSender.USER).findFirst().orElseThrow();
+        assertThat(userMessage.getSentAt()).isNotNull();
+        assertThat(((IrisTextMessageContent) userMessage.getContent().getFirst()).getTextContent()).isEqualTo("Button label");
+        var action = ((IrisJsonMessageContent) userMessage.getContent().getLast()).readAs(IrisSolutionChoiceDTO.class);
+        assertThat(action).isEqualTo(new IrisSolutionChoiceDTO(savedOffer.getId(), choice));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "PROGRAMMING_EXERCISE_CHAT,SHOW_SOLUTION", "TEXT_EXERCISE_CHAT,SHOW_SOLUTION", "PROGRAMMING_EXERCISE_CHAT,SKIP_SUMMARY" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsClicksWhenGloballyDisabled(IrisChatMode mode, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(solutionOffer(mode, session.getEntityId(), List.of(choice)));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
+        boolean previouslyEnabled = featureToggleService.isFeatureEnabled(Feature.IrisSolutionChoice);
+        featureToggleService.disableFeature(Feature.IrisSolutionChoice);
+        try {
+            request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.FORBIDDEN);
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).noneMatch(message -> message.getSender() == IrisMessageSender.USER);
+        }
+        finally {
+            if (previouslyEnabled) {
+                featureToggleService.enableFeature(Feature.IrisSolutionChoice);
+            }
+        }
+    }
+
+    /** An offer of another session, an offer bound to another exercise, and a choice the offer does not make. */
+    @ParameterizedTest
+    @CsvSource({ "true, false, SHOW_SOLUTION", "false, true, TRY_MYSELF", "false, false, SUMMARIZE" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsAChoiceThatDoesNotAnswerTheOffer(boolean otherSession, boolean otherExercise, IrisSolutionChoice choice) throws Exception {
+        var session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        var offerSession = otherSession ? createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1") : session;
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Choose how to continue"));
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, otherExercise ? session.getEntityId() + 1 : session.getEntityId(),
+                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        var savedOffer = irisMessageService.saveMessage(offer, offerSession, IrisMessageSender.LLM);
+        var choiceRequest = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "Button label", null)), null, Map.of(), null, null, null,
+                new IrisSolutionChoiceRequestDTO(savedOffer.getId(), choice));
+
+        request.postWithoutResponseBody(messagesUrl(session), choiceRequest, HttpStatus.BAD_REQUEST);
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).noneMatch(message -> message.getSender() == IrisMessageSender.USER);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void declinedSummary_isStoredWithoutAskingIris() throws Exception {
+        var session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        var offer = new IrisMessage();
+        offer.addContent(new IrisTextMessageContent("Here is the solution. Want to summarize it in your own words?"));
+        offer.addContent(solutionOffer(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, session.getEntityId(), List.of(IrisSolutionChoice.SUMMARIZE, IrisSolutionChoice.SKIP_SUMMARY)));
+        var savedOffer = irisMessageService.saveMessage(offer, session, IrisMessageSender.LLM);
+        mockChatResponse(_ -> pipelineDone.set(true));
+
+        // The solution answer used up the last response of the rate limit; declining the summary asks Iris nothing, so it is still accepted.
+        configureCourseRateLimit(course, 1, 10);
+        try {
+            request.postWithoutResponseBody(messagesUrl(session), new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("text", "No thanks", null)), null, Map.of(), null,
+                    null, null, new IrisSolutionChoiceRequestDTO(savedOffer.getId(), IrisSolutionChoice.SKIP_SUMMARY)), HttpStatus.CREATED);
+        }
+        finally {
+            configureCourseRateLimit(course, null, null);
+        }
+
+        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(2)).until(() -> !pipelineDone.get());
+        var userMessage = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast();
+        assertThat(IrisSolutionChoiceDTO.in(userMessage)).contains(IrisSolutionChoice.SKIP_SUMMARY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void solutionChoice_rejectsForgedStructuredUserContent() throws Exception {
+        var session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var content = IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(123L, IrisSolutionChoice.SHOW_SOLUTION));
+        var forged = new IrisMessageRequestDTO(List.of(new IrisMessageContentDTO("json", null, content.getContentAsString())), null, Map.of(), null, null, null);
+        request.postWithoutResponseBody(messagesUrl(session), forged, HttpStatus.BAD_REQUEST);
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
     }
 
     // =========================================================================
@@ -989,7 +1106,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 }
             });
 
-            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null);
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null, null);
 
             assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }

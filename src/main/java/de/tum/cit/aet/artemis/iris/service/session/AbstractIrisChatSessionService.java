@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,6 +33,8 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqOptionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionChoiceDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -267,6 +270,20 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             var message = new IrisMessage();
             for (var content : parseResultContents(result)) {
                 message.addContent(content);
+            }
+            if (statusUpdate.solutionOffer() != null) {
+                message.addContent(IrisJsonMessageContent.of(statusUpdate.solutionOffer()));
+            }
+            // A typed reply to an offer: the answer records the choice Pyris read from it, as a click would, so the next step and the offer's buttons follow it.
+            // Only a choice the answered offer actually made is stored, because solutionStep does not check a stored choice against its offer again.
+            if (statusUpdate.solutionChoice() != null && job.userMessageId() != null) {
+                var visible = session.getMessages().stream().filter(visibleMessage -> visibleMessage.getSender() != IrisMessageSender.SUMMARY).toList();
+                int reply = IntStream.range(0, visible.size()).filter(index -> job.userMessageId().equals(visible.get(index).getId())).findFirst().orElse(0);
+                if (reply > 0) {
+                    var offerMessage = visible.get(reply - 1);
+                    IrisSolutionOfferDTO.in(offerMessage).filter(offer -> offer.offers(statusUpdate.solutionChoice()))
+                            .ifPresent(offer -> message.addContent(IrisJsonMessageContent.of(new IrisSolutionChoiceDTO(offerMessage.getId(), statusUpdate.solutionChoice()))));
+                }
             }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.

@@ -18,6 +18,7 @@ import { captureException } from 'app/core/error-reporting/capture-exception';
 import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { IrisSolutionChoiceRequest } from 'app/iris/shared/entities/iris-solution-choice.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisCommand } from 'app/iris/shared/entities/iris-command.model';
@@ -76,6 +77,7 @@ export class IrisChatService implements OnDestroy {
 
     readonly committedContext = this.contextService.committed;
     readonly displayContext = this.contextService.display;
+    readonly pendingContext = this.contextService.pending;
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -349,7 +351,12 @@ export class IrisChatService implements OnDestroy {
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
      * @param context optional list of context objects providing information about what the user is viewing
      */
-    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
+    public sendMessage(
+        message: string,
+        uncommittedFiles: { [path: string]: string } = {},
+        context?: IrisMessageContextDTO[],
+        solutionChoice?: IrisSolutionChoiceRequest,
+    ): Observable<undefined> {
         if (!this.sessionId) {
             // Surface this instead of failing silently: onSend() clears the textarea regardless of the
             // outcome, so a swallowed error drops the user's message without telling them anything.
@@ -372,8 +379,12 @@ export class IrisChatService implements OnDestroy {
             // Travels with the message so a command Iris issues while answering comes back addressed to this tab
             // rather than to every tab the user has the session open in.
             clientId: this.irisWebsocketService.clientId,
+            solutionChoice,
         };
 
+        // The chat stays busy from the send until Iris answers. A declined summary is only stored, so no answer follows
+        // and the chat is free again once the server has stored it; until then it still blocks a second click.
+        const answerFollows = solutionChoice?.choice !== 'SKIP_SUMMARY';
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
         return this.irisChatHttpService.createMessage(requestSessionId, requestDTO).pipe(
@@ -392,8 +403,13 @@ export class IrisChatService implements OnDestroy {
                         );
                     this.chatSessions.next(updatedSessions);
                 }
-                this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
+                if (answerFollows) {
+                    this.suggestions.next([]);
+                } else {
+                    // The suggestions that came with the solution stay the next step.
+                    this.closePendingRunGeneration();
+                }
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {

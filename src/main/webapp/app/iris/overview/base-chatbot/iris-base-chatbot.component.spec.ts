@@ -55,6 +55,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 // Must match the constants in the component
@@ -174,6 +175,100 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it.each(['SHOW_SOLUTION', 'TRY_MYSELF'])('sends the %s choice without showing a student message and keeps the clicked button selected after a reload', (choice) => {
+        const testId = `iris-choice-${choice}`;
+        const question = cloneWith(mockClientMessage, { id: 1, content: [new IrisTextMessageContent('Give me the solution.')] });
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('How would you like to continue?'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['TRY_MYSELF', 'SHOW_SOLUTION'] }),
+            ],
+        });
+        const action = cloneWith(mockClientMessage, {
+            id: 11,
+            content: [new IrisTextMessageContent('Button label'), new IrisJsonMessageContent({ type: 'solution-choice', offerMessageId: 10, choice })],
+        });
+        chatService.messages.next([question, offer]);
+        fixture.detectChanges();
+        const send = vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+        fixture.nativeElement.querySelector(`[data-testid="${testId}"]`).click();
+        expect(send).toHaveBeenCalledExactlyOnceWith(expect.any(String), {}, undefined, { offerMessageId: 10, choice });
+
+        chatService.messages.next([question, offer, action]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-message-id="11"]')).toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('Button label');
+        const selected = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLButtonElement;
+        expect(selected.getAttribute('aria-pressed')).toBe('true');
+        expect(selected.disabled).toBe(true);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="iris-solution-choice"] button')).toHaveLength(1);
+    });
+
+    it.each([
+        [['SUMMARIZE', 'SKIP_SUMMARY'], true],
+        [['TRY_MYSELF', 'SHOW_SOLUTION'], false],
+    ])('shows the fixed summary invitation only above the summary offer (%s)', (choices, shown) => {
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('Here is the solution.'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices }),
+            ],
+        });
+        chatService.messages.next([offer]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]') !== null).toBe(shown);
+    });
+
+    it('reacts to the global toggle by hiding existing offers and summary invitations and restoring suggestions', () => {
+        const features = TestBed.inject(FeatureToggleService);
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('Here is the solution.'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+            ],
+        });
+        chatService.messages.next([offer]);
+        chatService.suggestions.next(['Explain the loop']);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).not.toBeNull();
+        expect(component.canShowSuggestions()).toBe(false);
+
+        features.initializeFeatureToggles([]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]')).toBeNull();
+        expect(component.canShowSuggestions()).toBe(true);
+        const send = vi.spyOn(chatService, 'sendMessage');
+        component['onSolutionChoice'](offer, 'SKIP_SUMMARY');
+        expect(send).not.toHaveBeenCalled();
+
+        features.initializeFeatureToggles([FeatureToggle.IrisSolutionChoice]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-solution-choice"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-summary-offer"]')).not.toBeNull();
+        expect(component.canShowSuggestions()).toBe(false);
+    });
+
+    it('keeps declining the summary available at the response limit, because it asks Iris nothing', () => {
+        statusMock.currentRatelimitInfo.mockReturnValue(of({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 }));
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        const offer = cloneWith(mockServerMessage, {
+            id: 10,
+            content: [
+                new IrisTextMessageContent('Here is the solution.'),
+                new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+            ],
+        });
+        chatService.messages.next([offer]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-choice-SUMMARIZE"]').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-choice-SKIP_SUMMARY"]').disabled).toBe(false);
     });
 
     it('keeps modal focus when messages arrive while the chat is hidden, then resumes chat autofocus after dismissal', () => {
@@ -1379,6 +1474,21 @@ describe('IrisBaseChatbotComponent', () => {
             suggestionButtons.forEach((button, index) => {
                 expect(button.textContent).toBe(expectedSuggestions[index]);
             });
+        });
+
+        it('holds back suggestions while an offer waits for the choice', () => {
+            const offer = cloneWith(mockServerMessage, {
+                content: [
+                    new IrisTextMessageContent('Here is the solution.'),
+                    new IrisJsonMessageContent({ type: 'solution-offer', chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 42, choices: ['SUMMARIZE', 'SKIP_SUMMARY'] }),
+                ],
+            });
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, offer]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelectorAll('.iris-chat__suggestion')).toHaveLength(0);
         });
 
         it('should disable suggestion buttons if isLoading is true', () => {

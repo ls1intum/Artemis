@@ -22,10 +22,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param clientId              optional opaque id of the browser tab sending the message, so a command Iris issues while answering is addressed back to that same tab rather than
  *                                  to every tab of the user (see {@code IrisCommandService}). Not persisted and never sent to Pyris. The client sends a UUID; the bound is only
  *                                  there so this free-form field cannot be used to push an arbitrarily large string through the job store and back out over the WebSocket.
+ * @param solutionChoice        optional explicit choice answering the latest solution offer in this chat
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
-        @Valid @Nullable IrisPendingContextDTO pendingContext, @Nullable List<@Valid IrisMessageContextDTO> context, @Size(max = 64) @Nullable String clientId) {
+        @Valid @Nullable IrisPendingContextDTO pendingContext, @Nullable List<@Valid IrisMessageContextDTO> context, @Size(max = 64) @Nullable String clientId,
+        @Valid @Nullable IrisSolutionChoiceRequestDTO solutionChoice) {
+
+    public IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles,
+            @Valid @Nullable IrisPendingContextDTO pendingContext, @Nullable List<@Valid IrisMessageContextDTO> context, @Nullable String clientId) {
+        this(content, messageDifferentiator, uncommittedFiles, pendingContext, context, clientId, null);
+    }
 
     /**
      * Compact constructor that normalizes null content and uncommittedFiles to empty collections.

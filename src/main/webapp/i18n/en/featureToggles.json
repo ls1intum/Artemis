@@ -216,6 +216,11 @@
                     "description": "Scans the global search index for entries whose entity no longer exists and removes them, inferred from the index alone rather than confirmed per entity against the database. Switch on Global Search Reconcile first and observe it before enabling this.",
                     "disableWarning": "Search results may include entries for entities that were deleted, until this is switched back on."
                 },
+                "IrisSolutionChoice": {
+                    "name": "Iris Solution Choice",
+                    "description": "Allow Iris to offer complete solutions in exercise chats, followed by an optional summary in the student’s own words.",
+                    "disableWarning": "Solution offers and summary prompts disappear. Iris returns to regular tutoring without providing complete solutions."
+                },
                 "SmartQuizzes": {
                     "name": "Smart Quizzes",
                     "description": "Lets course staff manage quiz question pools and start manual or scheduled builds. Requires Hyperion and Atlas.",

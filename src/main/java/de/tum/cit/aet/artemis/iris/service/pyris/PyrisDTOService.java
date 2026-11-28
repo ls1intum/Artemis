@@ -80,8 +80,7 @@ public class PyrisDTOService {
 
         Map<String, String> testsRepositoryContents = getFilteredRepositoryContents(exercise.getVcsTestRepositoryUri(), exercise.getProgrammingLanguage()).files();
 
-        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
-                testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+        return toPyrisProgrammingExerciseDTO(exercise, templateRepositoryContents, solutionRepositoryContents, testsRepositoryContents);
     }
 
     /**
@@ -94,8 +93,25 @@ public class PyrisDTOService {
      * @return the converted DTO without any repository contents
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseMetadataDTO(ProgrammingExercise exercise) {
-        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), Map.of(), Map.of(), Map.of(),
-                exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+        return toPyrisProgrammingExerciseDTO(exercise, Map.of(), Map.of(), Map.of());
+    }
+
+    /**
+     * The exercise and its instructor solution for a student who explicitly chose to see a complete solution.
+     * Template and test repositories are not part of this reference; a missing or unreadable solution remains empty.
+     *
+     * @param exercise the exercise whose solution is the reference
+     * @return the metadata and available solution files
+     */
+    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseWithSolutionDTO(ProgrammingExercise exercise) {
+        var solution = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
+        return toPyrisProgrammingExerciseDTO(exercise, Map.of(), solution, Map.of());
+    }
+
+    private static PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise, Map<String, String> template, Map<String, String> solution,
+            Map<String, String> tests) {
+        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), template, solution, tests, exercise.getProblemStatement(),
+                toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
     }
 
     /**

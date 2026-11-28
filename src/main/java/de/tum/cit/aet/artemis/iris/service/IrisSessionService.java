@@ -113,10 +113,10 @@ public class IrisSessionService {
     /**
      * @param session The session to get a message for
      * @param <S>     The type of the session
-     * @see #requestMessageFromIris(IrisSession, Map, List, String)
+     * @see #requestMessageFromIris(IrisSession, Map, List, String, Long)
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
-        requestMessageFromIris(session, Map.of(), List.of(), null);
+        requestMessageFromIris(session, Map.of(), List.of(), null, null);
     }
 
     /**
@@ -127,14 +127,16 @@ public class IrisSessionService {
      * @param uncommittedFiles The uncommitted files from the client
      * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      * @param clientId         Identifies the browser tab the message was sent from, so a command Iris issues mid-pipeline is addressed back to it; null if the client sent none
+     * @param userMessageId    The student message the run answers; null if no student message caused the request
      * @param <S>              The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId,
+            @Nullable Long userMessageId) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             if (session instanceof IrisChatSession chatSession) {
-                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context, clientId);
+                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context, clientId, userMessageId);
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);

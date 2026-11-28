@@ -2,13 +2,17 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisSolutionChoice;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.dto.IrisSolutionOfferDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
@@ -17,6 +21,17 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 class PyrisChatStatusUpdateDTOTest {
 
     private final JsonMapper objectMapper = JsonObjectMapper.get();
+
+    @Test
+    void deserializesTheStructuredSolutionOffer() {
+        var dto = objectMapper.readValue("""
+                {"runState":"RUNNING","result":"Choose how to continue","final":true,
+                 "solutionOffer":{"type":"solution-offer","chatMode":"PROGRAMMING_EXERCISE_CHAT","entityId":42,"choices":["TRY_MYSELF","SHOW_SOLUTION"]}}
+                """, PyrisChatStatusUpdateDTO.class);
+        assertThat(dto.solutionOffer()).isEqualTo(new IrisSolutionOfferDTO(IrisSolutionOfferDTO.TYPE, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, 42L,
+                List.of(IrisSolutionChoice.TRY_MYSELF, IrisSolutionChoice.SHOW_SOLUTION)));
+        assertThat(objectMapper.writeValueAsString(dto)).contains("\"solutionOffer\"");
+    }
 
     @Test
     void deserializesPartialFields() throws JacksonException {
