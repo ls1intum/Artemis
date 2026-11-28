@@ -6,6 +6,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.PendingEmailChange;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * An e-mail change the account has requested and that is waiting for both addresses to confirm it. The keys are deliberately not part
@@ -18,7 +19,9 @@ import de.tum.cit.aet.artemis.account.domain.PendingEmailChange;
  * @param newAddressConfirmed     whether the owner of the new address has confirmed
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PendingEmailChangeDTO(String newEmail, Instant requestedAt, Instant expiresAt, boolean currentAddressConfirmed, boolean newAddressConfirmed) {
+public record PendingEmailChangeDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String newEmail, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant requestedAt,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant expiresAt, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean currentAddressConfirmed,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean newAddressConfirmed) {
 
     /**
      * @param change   the pending change

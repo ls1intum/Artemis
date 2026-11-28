@@ -224,6 +224,12 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rejectedProfilePictureReplacementPreservesImage() throws Exception {
+        userTestService.rejectedProfilePictureReplacementPreservesImage();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_alreadyExists() throws Exception {
         User newUser = userTestService.student;

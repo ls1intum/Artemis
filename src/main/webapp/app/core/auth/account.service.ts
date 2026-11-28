@@ -1,7 +1,7 @@
 import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Observable, lastValueFrom, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
@@ -16,6 +16,8 @@ import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountApi } from 'app/openapi/api/account-api';
+import { User as ApiUser } from 'app/openapi/model/user';
 import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
@@ -66,6 +68,7 @@ export class AccountService implements IAccountService {
     private readonly websocketService = inject(WebsocketService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountApi = inject(AccountApi);
 
     // cached value of the user to avoid unnecessary requests to the server
     userIdentity = signal<User | undefined>(undefined);
@@ -119,7 +122,22 @@ export class AccountService implements IAccountService {
      * The caller shows failures inline, so no global error alert is raised.
      */
     save(user: User): Observable<UpdateBasicInformationResponseDTO> {
-        return this.http.put<UpdateBasicInformationResponseDTO>('api/account/basic-information', user, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+        if (user.login === undefined) {
+            return throwError(() => new Error('Cannot save account information without a login'));
+        }
+
+        const profile: ApiUser = {
+            login: user.login,
+            name: user.name,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            langKey: user.langKey,
+            imageUrl: user.imageUrl,
+        };
+        return this.accountApi
+            .saveAccount(profile, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) })
+            .pipe(map((response) => ({ pendingEmailChange: response.pendingEmailChange ?? null })));
     }
 
     /**

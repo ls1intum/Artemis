@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -38,7 +38,7 @@ describe('AccountSettingsDialogComponent', () => {
         userIdentity = signal<User | undefined>({ ...user });
         accountService = {
             userIdentity,
-            save: vi.fn().mockReturnValue(of(new HttpResponse<User>({ body: userIdentity() }))),
+            save: vi.fn().mockReturnValue(of({ pendingEmailChange: null })),
             authenticate: vi.fn(),
         };
         profileService = {
@@ -137,7 +137,7 @@ describe('AccountSettingsDialogComponent', () => {
         let requestName: string | undefined;
         accountService.save.mockImplementation((userToSave: User) => {
             requestName = userToSave.name;
-            return of(new HttpResponse<User>({ body: userToSave }));
+            return of({ pendingEmailChange: null });
         });
         createComponent();
         component.initializeForm();
@@ -159,6 +159,7 @@ describe('AccountSettingsDialogComponent', () => {
         component.saveSettings();
 
         expect(userIdentity()).toEqual(expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' }));
+        expect(accountService.authenticate).not.toHaveBeenCalled();
         expect(component.visible()).toBe(true);
     });
 

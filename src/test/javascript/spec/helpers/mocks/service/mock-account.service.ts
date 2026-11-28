@@ -45,7 +45,7 @@ export class MockAccountService implements IAccountService {
     isOwnerOfParticipation = () => true;
     readonly isAdmin = signal(true);
     readonly isSuperAdmin = signal(true);
-    save = (account: any) => of({ pendingEmailChange: null } as UpdateBasicInformationResponseDTO);
+    save = (_account: User) => of({ pendingEmailChange: null } as UpdateBasicInformationResponseDTO);
     getPendingEmailChange = () => of(undefined as PendingEmailChangeDTO | undefined);
     cancelPendingEmailChange = () => of(undefined as void);
     resendPendingEmailChange = () => of({} as PendingEmailChangeDTO);
