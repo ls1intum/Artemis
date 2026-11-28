@@ -4,9 +4,9 @@ import java.util.Map;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.util.SharingChecksum;
 
 /**
  * the sharing info to request a specific exercise from the sharing platform.
@@ -21,6 +21,6 @@ public record SharingInfoDTO(@NotNull String basketToken, @NotNull String return
      * @return true, if checksum is correct
      */
     public boolean checkChecksum(String secretKey) {
-        return SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), secretKey, checksum);
+        return SharingChecksum.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), secretKey, checksum);
     }
 }

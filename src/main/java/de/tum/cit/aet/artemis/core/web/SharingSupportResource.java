@@ -6,7 +6,6 @@ import java.net.URL;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingPluginConfig;
 
 /**
  * REST controller that exposes Artemis ↔ Sharing Platform integration endpoints.

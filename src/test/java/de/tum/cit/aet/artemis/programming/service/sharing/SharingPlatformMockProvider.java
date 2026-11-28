@@ -9,8 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.HashMap;
 import java.util.Map;
 
-import org.codeability.sharing.plugins.api.SharingPluginConfig;
-import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
@@ -25,6 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.connector.MockRestClientServers;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.core.util.SharingChecksum;
 
 /**
  * Test utility class that provides infrastructure to mock the sharing platform
@@ -87,7 +86,7 @@ public class SharingPlatformMockProvider {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
         SharingPluginConfig sharingPluginConfig = objectMapper.readerFor(SharingPluginConfig.class).readValue(content);
-        assertThat(sharingPluginConfig.pluginName).isEqualTo("Artemis Sharing Connector");
+        assertThat(sharingPluginConfig.pluginName()).isEqualTo("Artemis Sharing Connector");
 
         mockSharingServer = mockRestClientServers.serverOf("sharingRestClient");
         // A new connection request starts from a clean server, like the fresh server that it replaced.
@@ -130,7 +129,7 @@ public class SharingPlatformMockProvider {
      */
     public static String calculateCorrectChecksum(String sharingApiKey, String... params) {
         Map<String, String> paramsToCheckSum = parseParamsToMap(params);
-        return SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
+        return SharingChecksum.calculateChecksum(paramsToCheckSum, sharingApiKey);
     }
 
     /**

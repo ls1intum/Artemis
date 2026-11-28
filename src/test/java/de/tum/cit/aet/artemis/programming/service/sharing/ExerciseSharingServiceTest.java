@@ -14,7 +14,6 @@ import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 
-import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
