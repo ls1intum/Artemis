@@ -166,14 +166,20 @@
                                         />
                                     }
                                     @case (MODELING) {
-                                        <jhi-modeling-exam-summary
-                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
-                                            [exercise]="exercise"
-                                            [submission]="exerciseInfos()[exercise.id!]!.submission!"
-                                            [isPrinting]="isPrinting()"
-                                            [expandProblemStatement]="expandProblemStatement()"
-                                            [isAfterResultsArePublished]="resultsArePublished"
-                                        />
+                                        @defer (on immediate) {
+                                            <jhi-modeling-exam-summary
+                                                [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
+                                                [exercise]="exercise"
+                                                [submission]="exerciseInfos()[exercise.id!]!.submission!"
+                                                [isPrinting]="isPrinting()"
+                                                [expandProblemStatement]="expandProblemStatement()"
+                                                [isAfterResultsArePublished]="resultsArePublished"
+                                            />
+                                        } @error {
+                                            <tumaet-ui-message severity="error" data-testid="modeling-editor-load-failed">{{
+                                                'artemisApp.modelingEditor.loadFailed' | artemisTranslate
+                                            }}</tumaet-ui-message>
+                                        }
                                     }
                                     @case (QUIZ) {
                                         <jhi-quiz-exam-summary

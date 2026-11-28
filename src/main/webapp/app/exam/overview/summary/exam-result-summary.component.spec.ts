@@ -1,6 +1,6 @@
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -181,6 +181,8 @@ function sharedSetup(url: string[], renderScoreHeaders = false) {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExamResultSummaryComponent],
+            // The modeling summary sits in a deferred block (it brings the diagram editor), which a test renders explicitly.
+            deferBlockBehavior: DeferBlockBehavior.Manual,
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -259,6 +261,11 @@ describe('ExamResultSummaryComponent', () => {
     it('should expand all exercises and call print when Export PDF is clicked', async () => {
         const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
         fixture.detectChanges();
+        // The export waits for the modeling summary, which sits in a deferred block
+        for (const deferBlock of await fixture.getDeferBlocks()) {
+            await deferBlock.render(DeferBlockState.Complete);
+        }
+        fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
 
         expect(exportToPDFButton).not.toBeNull();
@@ -277,8 +284,171 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.exerciseInfos()[4].isCollapsed).toBe(false);
 
         await fixture.whenStable();
-        expect(printStub).toHaveBeenCalledOnce();
+        await vi.waitFor(() => expect(printStub).toHaveBeenCalledOnce());
         printStub.mockRestore();
+    });
+
+    it('shows a message instead of the modeling summary when its chunk cannot be loaded', async () => {
+        fixture.detectChanges();
+        const failedBlocks = await fixture.getDeferBlocks();
+        expect(failedBlocks.length).toBeGreaterThan(0);
+
+        for (const deferBlock of failedBlocks) {
+            await deferBlock.render(DeferBlockState.Error);
+        }
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="modeling-editor-load-failed"]')).not.toBeNull();
+    });
+
+    describe('export as PDF while the modeling summary is still loading', () => {
+        // The modeling summaries sit in deferred blocks (they bring the diagram editor) and each of them then loads its submission. On a
+        // page that has just loaded, both may still be going on when the student exports the PDF, and the export must not capture the
+        // page before that. The deferred blocks stay unrendered in these specs, so a summary and its submission are put into the page by hand.
+        function loadModelingSummary() {
+            return vi.spyOn(component as unknown as { loadModelingSummary: () => Promise<unknown> }, 'loadModelingSummary');
+        }
+
+        function addRenderedModelingSummary(busy: boolean): HTMLElement {
+            const summary = document.createElement('jhi-modeling-exam-summary');
+            const submission = document.createElement('jhi-modeling-submission');
+            submission.setAttribute('aria-busy', String(busy));
+            summary.appendChild(submission);
+            fixture.nativeElement.appendChild(summary);
+            return submission;
+        }
+
+        it('prints only after the code of the modeling summary has loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            let finishDownload!: () => void;
+            loadModelingSummary().mockReturnValue(new Promise<void>((resolve) => (finishDownload = resolve)));
+            fixture.detectChanges();
+            addRenderedModelingSummary(false);
+
+            const printing = component.printPDF();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(printStub).not.toHaveBeenCalled();
+
+            finishDownload();
+            await printing;
+
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('prints only after the modeling summary is rendered and its submission has loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            loadModelingSummary().mockResolvedValue(undefined);
+            fixture.detectChanges();
+
+            const printing = component.printPDF();
+            await new Promise<void>((resolve) => setTimeout(resolve, 120));
+            expect(printStub).not.toHaveBeenCalled(); // the code is loaded, but the summary is not rendered yet
+
+            const submission = addRenderedModelingSummary(true);
+            await new Promise<void>((resolve) => setTimeout(resolve, 120));
+            expect(printStub).not.toHaveBeenCalled(); // rendered, but the submission is still loading
+
+            submission.setAttribute('aria-busy', 'false');
+            await printing;
+
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('prints what is there after the wait limit when the code never finishes downloading', async () => {
+            vi.useFakeTimers();
+            try {
+                const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+                loadModelingSummary().mockReturnValue(new Promise<void>(() => {}));
+                fixture.detectChanges();
+
+                const printing = component.printPDF();
+                await vi.advanceTimersByTimeAsync(14_000);
+                expect(printStub).not.toHaveBeenCalled();
+
+                await vi.advanceTimersByTimeAsync(2_000);
+                await printing;
+
+                expect(printStub).toHaveBeenCalledOnce();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('prints what is there after the wait limit when a submission never finishes loading', async () => {
+            vi.useFakeTimers();
+            try {
+                const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+                loadModelingSummary().mockResolvedValue(undefined);
+                fixture.detectChanges();
+                addRenderedModelingSummary(true);
+
+                const printing = component.printPDF();
+                await vi.advanceTimersByTimeAsync(14_000);
+                expect(printStub).not.toHaveBeenCalled();
+
+                await vi.advanceTimersByTimeAsync(2_000);
+                await printing;
+
+                expect(printStub).toHaveBeenCalledOnce();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('does not print when the summary was left while the modeling content loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            let finishDownload!: () => void;
+            loadModelingSummary().mockReturnValue(new Promise<void>((resolve) => (finishDownload = resolve)));
+            fixture.detectChanges();
+            addRenderedModelingSummary(false);
+
+            const printing = component.printPDF();
+            fixture.destroy();
+            finishDownload();
+            await printing;
+
+            expect(printStub).not.toHaveBeenCalled();
+        });
+
+        it('still prints when the modeling summary cannot be loaded', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            loadModelingSummary().mockRejectedValue(new Error('offline'));
+            fixture.detectChanges();
+
+            await component.printPDF();
+
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('does not wait for the summary of a modeling exercise that shows its example solution instead', async () => {
+            // The template replaces the modeling summary with the example solution, so no `jhi-modeling-exam-summary` will ever appear for it.
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            const loadSpy = loadModelingSummary().mockResolvedValue(undefined);
+            fixture.detectChanges();
+            component.exerciseInfos.set({
+                ...component.exerciseInfos(),
+                3: { ...component.exerciseInfos()[3], displayExampleSolution: true } as ResultSummaryExerciseInfo,
+            });
+
+            await component.printPDF();
+
+            expect(loadSpy).not.toHaveBeenCalled();
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('does not wait for a download when the exam has no modeling exercise', async () => {
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            const loadSpy = loadModelingSummary().mockReturnValue(new Promise<void>(() => {}));
+            fixture.componentRef.setInput('studentExam', { ...studentExam, exercises: exercises.filter((exercise) => exercise.type !== ExerciseType.MODELING) });
+            fixture.detectChanges();
+
+            await component.printPDF();
+
+            expect(loadSpy).not.toHaveBeenCalled();
+            expect(printStub).toHaveBeenCalledOnce();
+        });
     });
 
     it('should use supplied management grade info without a second request', () => {
@@ -1207,7 +1377,7 @@ describe('ExamResultSummaryComponent', () => {
         { testRun: false, instructorView: false, purpose: 'owner' },
         { testRun: true, instructorView: false, purpose: 'staff-preview' },
         { testRun: false, instructorView: true, purpose: 'staff-preview' },
-    ])('derives reusable editor purpose from explicit context $purpose, test run $testRun, management $instructorView', ({ testRun, instructorView, purpose }) => {
+    ])('derives reusable editor purpose from explicit context $purpose, test run $testRun, management $instructorView', async ({ testRun, instructorView, purpose }) => {
         const fileSubmission = { id: 5, submitted: true } as FileUploadSubmission;
         const fileParticipation = { id: 5, student: user, submissions: [fileSubmission] } as StudentParticipation;
         const fileExercise = { id: 5, type: ExerciseType.FILE_UPLOAD, studentParticipations: [fileParticipation], exerciseGroup } as FileUploadExercise;
@@ -1221,6 +1391,10 @@ describe('ExamResultSummaryComponent', () => {
             3: { participation: modelingParticipation, submission: modelingSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
             5: { participation: fileParticipation, submission: fileSubmission, isCollapsed: false } as ResultSummaryExerciseInfo,
         });
+        fixture.changeDetectorRef.detectChanges();
+        for (const deferBlock of await fixture.getDeferBlocks()) {
+            await deferBlock.render(DeferBlockState.Complete);
+        }
         fixture.changeDetectorRef.detectChanges();
         for (const editorType of [TextExamSummaryComponent, ModelingExamSummaryComponent, FileUploadExamSummaryComponent]) {
             const editor = fixture.debugElement.query(By.directive(editorType)).componentInstance;

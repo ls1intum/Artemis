@@ -104,12 +104,20 @@
                                                     }
                                                     @case (MODELING) {
                                                         @if (exercise.studentParticipations[0].submissions) {
-                                                            <jhi-modeling-submission-exam
-                                                                [exercise]="exercise"
-                                                                [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
-                                                                [isSubmissionSynced]="exercise.studentParticipations[0].submissions[0].isSynced"
-                                                                (saveCurrentExercise)="triggerSave(false)"
-                                                            />
+                                                            @defer (on immediate) {
+                                                                <jhi-modeling-submission-exam
+                                                                    [exercise]="exercise"
+                                                                    [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
+                                                                    [isSubmissionSynced]="exercise.studentParticipations[0].submissions[0].isSynced"
+                                                                    (saveCurrentExercise)="triggerSave(false)"
+                                                                />
+                                                            } @loading (after 200ms; minimum 300ms) {
+                                                                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+                                                            } @error {
+                                                                <tumaet-ui-message severity="error" data-testid="modeling-editor-load-failed">{{
+                                                                    'artemisApp.modelingEditor.loadFailed' | artemisTranslate
+                                                                }}</tumaet-ui-message>
+                                                            }
                                                         }
                                                     }
                                                     @case (PROGRAMMING) {

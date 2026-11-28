@@ -508,6 +508,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * The modeling editor is a large chunk that the exam page loads on demand (the modeling exercise is rendered in a deferred
+     * block). A student must not depend on the network at the moment they open a modeling exercise, so the chunk is requested
+     * as soon as the exam starts, while the connection is known to work. The deferred block then resolves from the module cache.
+     */
+    private prefetchModelingEditor(studentExam: StudentExam) {
+        if (studentExam.exercises?.some((exercise) => exercise.type === ExerciseType.MODELING)) {
+            this.loadModelingSubmission().catch(() => undefined);
+        }
+    }
+
+    /** Starts the download of the deferred modeling submission. A method of its own, so that a test can observe the request. */
+    protected loadModelingSubmission(): Promise<unknown> {
+        return import('app/exam/overview/exercises/modeling/modeling-exam-submission.component');
+    }
+
+    /**
      * exam start text confirmed and name entered, start button clicked and exam active
      *
      * @param studentExam            the student exam to start
@@ -536,6 +552,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else {
                 this.initIndividualEndDates(this.exam().startDate!);
             }
+            this.prefetchModelingEditor(studentExam);
             // initializes array which manages submission component and exam overview initialization
             this.pageComponentVisited.set(new Array(studentExam.exercises!.length).fill(false));
             this.prepareSidebarData();
@@ -1455,12 +1472,26 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
         const index = this.studentExam().exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const exercise = this.studentExam().exercises![index];
         const wasExerciseOpened = this.pageComponentVisited()[index];
-        if (wasExerciseOpened) {
+        if (wasExerciseOpened && this.hasSubmissionComponent(exercise)) {
             this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
         } else {
-            const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
+    }
+
+    /**
+     * Whether the submission component of an opened exercise exists, which is when its update highlighter listens for live updates.
+     * The modeling submission is rendered in a deferred block, so for a moment after the exercise was opened (while the diagram editor
+     * downloads) it is marked as opened but nobody listens: an update sent through the {@link ExamExerciseUpdateService} then reaches no
+     * one, is acknowledged and is lost. The exercise object is updated directly in that case, as for an exercise that was not opened, and
+     * the component shows the new problem statement when it appears.
+     */
+    private hasSubmissionComponent(exercise: Exercise): boolean {
+        if (exercise.type !== ExerciseType.MODELING) {
+            return true;
+        }
+        return this.currentPageComponents().some((component) => component.getExerciseId() === exercise.id);
     }
 }

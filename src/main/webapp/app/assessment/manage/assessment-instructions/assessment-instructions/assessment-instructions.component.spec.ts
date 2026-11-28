@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -57,6 +57,8 @@ describe('AssessmentInstructionsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }],
+            // The sample solution diagram sits in a deferred block (it brings the diagram editor), which a test renders explicitly.
+            deferBlockBehavior: DeferBlockBehavior.Manual,
         })
             .overrideComponent(AssessmentInstructionsComponent, {
                 remove: {
@@ -105,6 +107,28 @@ describe('AssessmentInstructionsComponent', () => {
         expect(comp.sampleSolutionModel()).toBeDefined();
         expect(comp.sampleSolutionDiagramType()).toBeDefined();
         expect(comp.sampleSolutionExplanation()).toBeDefined();
+    });
+
+    it('renders the editor of the sample solution diagram only when its deferred block is loaded', async () => {
+        const modelingExercise = {
+            id: 1,
+            exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
+            diagramType: UMLDiagramType.ClassDiagram,
+            type: ExerciseType.MODELING,
+        } as ModelingExercise;
+        vi.spyOn(markdownService, 'safeHtmlForMarkdown').mockReturnValue('sample text');
+        fixture.componentRef.setInput('exercise', modelingExercise);
+        fixture.detectChanges();
+
+        // Until the block is loaded, the page does not need the editor: an exercise that never reaches this block never downloads it.
+        expect(fixture.nativeElement.querySelector('jhi-modeling-editor')).toBeNull();
+
+        for (const deferBlock of await fixture.getDeferBlocks()) {
+            await deferBlock.render(DeferBlockState.Complete);
+        }
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-modeling-editor')).not.toBeNull();
     });
 
     it('should initialize exercise input for text exercise', () => {

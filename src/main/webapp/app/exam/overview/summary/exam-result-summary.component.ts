@@ -2,7 +2,7 @@ import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, 
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -73,6 +73,9 @@ type StateBeforeResetting = {
     isBonusGradingKeyCollapsed: boolean;
 };
 
+/** How long the PDF export waits for the modeling summaries to render and load their submission before it prints what is there. */
+const MODELING_SUMMARY_WAIT_LIMIT_MS = 15_000;
+
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
@@ -104,6 +107,7 @@ type StateBeforeResetting = {
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {
+    private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private route = inject(ActivatedRoute);
     private destroyRef = inject(DestroyRef);
     private serverDateService = inject(ArtemisServerDateService);
@@ -140,7 +144,10 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly plagiarismCaseInfos = signal<{ [exerciseId: number]: PlagiarismCaseInfo }>({});
     readonly exampleSolutionPublished = signal(false);
 
+    private destroyed = false;
+
     constructor() {
+        this.destroyRef.onDestroy(() => (this.destroyed = true));
         effect(() => {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
@@ -362,12 +369,65 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isPrinting.set(true);
         this.expandProblemStatement.set(true);
 
+        await this.waitForDeferredSummaries();
+        if (this.destroyed) {
+            // The student left the summary while the modeling content loaded: print() would print the page they went to.
+            return;
+        }
         await this.themeService.print();
 
         this.isPrinting.set(false);
         this.expandProblemStatement.set(false);
 
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
+    }
+
+    /**
+     * The modeling summaries are rendered in deferred blocks, because they bring the diagram editor, and each of them then loads its
+     * submission. On a page that has just loaded, both may still be going on when the student exports the PDF, and the print dialog
+     * would capture the page without the diagram and its feedback. So the export first waits for the code (the import resolves when the
+     * chunk of the summary and the editor it imports have loaded), then until every modeling summary is rendered and none of them is
+     * busy ({@link ModelingSubmissionComponent} sets aria-busy until its submission is loaded). The delay of {@link ThemeService.print}
+     * covers the drawing of the diagram. The wait is bounded, and a chunk or a request that fails does not stop the export.
+     */
+    private async waitForDeferredSummaries(): Promise<void> {
+        // An exercise that shows its example solution has no modeling summary: the template replaces it with the example solution
+        const exerciseInfos = this.exerciseInfos();
+        const expectedSummaries =
+            this.studentExam().exercises?.filter((exercise) => exercise.type === ExerciseType.MODELING && !exerciseInfos[exercise.id!]?.displayExampleSolution).length ?? 0;
+        if (expectedSummaries === 0) {
+            return;
+        }
+        // One limit for the code and for the rendering, so that a download that never finishes cannot block the export either
+        const deadline = Date.now() + MODELING_SUMMARY_WAIT_LIMIT_MS;
+        let limitTimer: ReturnType<typeof setTimeout> | undefined;
+        const limit = new Promise<'timeout'>((resolve) => {
+            limitTimer = setTimeout(() => resolve('timeout'), MODELING_SUMMARY_WAIT_LIMIT_MS);
+        });
+        try {
+            const outcome = await Promise.race([this.loadModelingSummary().then(() => 'loaded' as const), limit]);
+            if (outcome === 'timeout') {
+                return; // print what is there
+            }
+        } catch {
+            return; // print what is there
+        } finally {
+            clearTimeout(limitTimer);
+        }
+        const root: HTMLElement = this.elementRef.nativeElement;
+        while (Date.now() < deadline) {
+            const renderedSummaries = root.querySelectorAll('jhi-modeling-exam-summary').length;
+            const busySubmissions = root.querySelectorAll('jhi-modeling-submission[aria-busy="true"]').length;
+            if (renderedSummaries >= expectedSummaries && busySubmissions === 0) {
+                return;
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        }
+    }
+
+    /** Loads the code of the modeling summary. A method of its own, so that a test can hold the download back. */
+    protected loadModelingSummary(): Promise<unknown> {
+        return import('app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component');
     }
 
     scrollToOverviewOrTop() {

@@ -11,7 +11,6 @@ import { Observable, Subscription } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
-import { ApollonEditor } from '@tumaet/apollon';
 
 @Component({
     selector: 'jhi-team-submission-sync',
@@ -21,6 +20,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private teamSubmissionWebsocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
+    private destroyed = false;
     private websocketSubscription?: Subscription;
     private connectionStateSubscription?: Subscription;
 
@@ -56,8 +56,14 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.destroyed = true;
         this.websocketSubscription?.unsubscribe();
         this.connectionStateSubscription?.unsubscribe();
+    }
+
+    /** Loads Apollon. A method of its own, so that a test can hold the download back. */
+    protected loadApollon() {
+        return import('@tumaet/apollon');
     }
 
     /**
@@ -103,7 +109,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
         });
     }
 
-    // Re-runs the Yjs handshake on every (re)connect. Apollon broadcasts only incremental updates,
+    // Re-runs the Yjs handshake of a modeling exercise on every (re)connect. Apollon broadcasts only incremental updates,
     // so a peer who missed any edits during a disconnect window would otherwise stay out of sync.
     private setupReconnectSync() {
         this.connectionStateSubscription = this.teamSubmissionWebsocketService.connectionState
@@ -112,15 +118,27 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 filter((state: ConnectionState) => state.connected),
             )
             .subscribe({
-                next: () => {
-                    const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
-                    this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
+                next: async () => {
+                    try {
+                        if (this.exerciseType() === ExerciseType.MODELING) {
+                            // Only the modeling team sync has a patch endpoint on the server (ParticipationTeamWebsocketService), and the Yjs
+                            // handshake is built by Apollon. The package is loaded here and not at the top of the file: this component is part
+                            // of the text editor route, and a text exercise has nothing to re-announce, so it never downloads the editor.
+                            const { ApollonEditor } = await this.loadApollon();
+                            if (this.destroyed) {
+                                // The student left the exercise while the editor downloaded: unsubscribing does not cancel this callback.
+                                return;
+                            }
+                            const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
+                            this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
 
-                    if (this.exerciseType() === ExerciseType.MODELING) {
-                        const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
-                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
+                            const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
+                            this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
+                        }
+                        this.reconnected.emit();
+                    } catch (error: unknown) {
+                        this.onError(error);
                     }
-                    this.reconnected.emit();
                 },
                 error: (error: unknown) => this.onError(error),
             });

@@ -14,6 +14,10 @@ export class BaseEntityWithTempId implements BaseEntity {
     }
 }
 
+// Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200].
+// Kept here and not next to the diagram generator, so that the question editor does not import the Apollon editor to read it.
+export const MAX_SIZE_UNIT = 200;
+
 export class DropLocation extends BaseEntityWithTempId implements CanBecomeInvalid {
     public posX?: number;
     public posY?: number;

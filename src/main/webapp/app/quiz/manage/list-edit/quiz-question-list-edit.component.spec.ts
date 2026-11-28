@@ -5,6 +5,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { CommonModule } from '@angular/common';
@@ -71,6 +72,66 @@ describe('QuizQuestionListEditComponent', () => {
                 data: { courseId: component.courseId() },
             }),
         );
+    });
+
+    describe('loading of the Apollon import dialog', () => {
+        // The dialog hosts the diagram editor and is loaded when it is opened. Until it has loaded, the button is still active.
+        function holdBackImportDialog() {
+            let finishDownload!: (dialog: unknown) => void;
+            const download = new Promise<unknown>((resolve) => (finishDownload = resolve));
+            const loadSpy = vi.spyOn(component as unknown as { loadImportDialog: () => Promise<unknown> }, 'loadImportDialog').mockReturnValue(download);
+            return { loadSpy, finishDownload };
+        }
+
+        it('opens one dialog when the button is clicked twice while the dialog loads', async () => {
+            const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue(undefined as never);
+            const { loadSpy, finishDownload } = holdBackImportDialog();
+
+            const first = component.importApollonDragAndDropQuestion();
+            const second = component.importApollonDragAndDropQuestion();
+            finishDownload(class {});
+            await Promise.all([first, second]);
+
+            expect(loadSpy).toHaveBeenCalledOnce();
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+
+        it('can be used again after the dialog was opened', async () => {
+            const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue(undefined as never);
+            vi.spyOn(component as unknown as { loadImportDialog: () => Promise<unknown> }, 'loadImportDialog').mockResolvedValue(class {});
+
+            await component.importApollonDragAndDropQuestion();
+            await component.importApollonDragAndDropQuestion();
+
+            expect(openSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('does not open the dialog when the quiz editor was destroyed while it loaded', async () => {
+            const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue(undefined as never);
+            const { finishDownload } = holdBackImportDialog();
+
+            const importing = component.importApollonDragAndDropQuestion();
+            fixture.destroy();
+            finishDownload(class {});
+            await importing;
+
+            expect(openSpy).not.toHaveBeenCalled();
+        });
+
+        it('shows an error and can be used again when the dialog cannot be loaded', async () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const openSpy = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue(undefined as never);
+            const loadSpy = vi.spyOn(component as unknown as { loadImportDialog: () => Promise<unknown> }, 'loadImportDialog').mockRejectedValueOnce(new Error('offline'));
+
+            await component.importApollonDragAndDropQuestion();
+
+            expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.modelingEditor.loadFailed');
+            expect(openSpy).not.toHaveBeenCalled();
+
+            loadSpy.mockResolvedValue(class {});
+            await component.importApollonDragAndDropQuestion();
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {

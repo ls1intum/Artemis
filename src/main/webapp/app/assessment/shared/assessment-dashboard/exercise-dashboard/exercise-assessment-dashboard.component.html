@@ -222,7 +222,9 @@
                 @if (exercise().type === ExerciseType.MODELING && exampleSolutionModel()) {
                     <jhi-info-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolution' | artemisTranslate">
                         <div>
-                            <jhi-modeling-editor [umlModel]="exampleSolutionModel()" [diagramType]="modelingExercise().diagramType" [readOnly]="true" />
+                            @defer (on idle) {
+                                <jhi-modeling-editor [umlModel]="exampleSolutionModel()" [diagramType]="modelingExercise().diagramType" [readOnly]="true" />
+                            }
                         </div>
                     </jhi-info-panel>
                 }

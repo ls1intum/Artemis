@@ -2,6 +2,7 @@
     "artemisApp": {
         "modelingEditor": {
             "title": "Modellierungseditor",
+            "loadFailed": "Der Diagrammeditor konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "saveSuccessful": "Dein Diagramm wurde erfolgreich gespeichert!",
             "allSaved": "Alle Änderungen gespeichert",

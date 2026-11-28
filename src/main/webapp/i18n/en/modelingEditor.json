@@ -2,6 +2,7 @@
     "artemisApp": {
         "modelingEditor": {
             "title": "Modeling Editor",
+            "loadFailed": "The diagram editor could not be loaded. Check your connection and reload the page.",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "saveSuccessful": "Your diagram was saved successfully!",
             "allSaved": "All changes saved",

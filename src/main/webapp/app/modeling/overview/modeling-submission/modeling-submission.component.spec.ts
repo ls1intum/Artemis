@@ -39,7 +39,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, filter, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -620,6 +620,80 @@ describe('ModelingSubmissionComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
+    describe('loading state for a page that waits for the content', () => {
+        // The exam summary waits for aria-busy to turn false before it prints, so the attribute has to follow the loading of the submission.
+        it('is busy until the submission has loaded', () => {
+            createModelingSubmissionComponent();
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            const participation = new StudentParticipation();
+            participation.exercise = modelingExercise;
+            participation.id = 1;
+            const submission = new ModelingSubmission();
+            submission.id = 20;
+            submission.submitted = true;
+            submission.participation = participation;
+            const response = new BehaviorSubject<ModelingSubmission | undefined>(undefined);
+            vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(response.pipe(filter((value): value is ModelingSubmission => !!value)));
+
+            fixture.detectChanges();
+            expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('true');
+
+            response.next(submission);
+            fixture.detectChanges();
+
+            expect(comp.isLoading()).toBe(false);
+            expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('false');
+        });
+
+        it('is busy again when the route changes and the component loads the next submission', () => {
+            const params = new BehaviorSubject<Params>({ courseId: 5, exerciseId: 22, participationId: 1 });
+            createModelingSubmissionComponent({ params });
+            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            const participation = new StudentParticipation();
+            participation.exercise = modelingExercise;
+            participation.id = 1;
+            const firstSubmission = new ModelingSubmission();
+            firstSubmission.id = 20;
+            firstSubmission.submitted = true;
+            firstSubmission.participation = participation;
+            const nextResponse = new BehaviorSubject<ModelingSubmission | undefined>(undefined);
+            vi.spyOn(service, 'getLatestSubmissionForModelingEditor')
+                .mockReturnValueOnce(of(firstSubmission))
+                .mockReturnValue(nextResponse.pipe(filter((value): value is ModelingSubmission => !!value)));
+
+            fixture.detectChanges();
+            expect(comp.isLoading()).toBe(false);
+
+            // Another participation is opened in the same component, and its submission is still on its way
+            params.next({ courseId: 5, exerciseId: 22, participationId: 2 });
+            fixture.detectChanges();
+            expect(comp.isLoading()).toBe(true);
+            expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('true');
+
+            nextResponse.next(firstSubmission);
+            fixture.detectChanges();
+            expect(comp.isLoading()).toBe(false);
+        });
+
+        it('is no longer busy when the submission cannot be loaded', () => {
+            createModelingSubmissionComponent();
+            vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 500 })));
+
+            fixture.detectChanges();
+
+            expect(comp.isLoading()).toBe(false);
+            expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('false');
+        });
+
+        it('is no longer busy when the request fails inside the stream', () => {
+            createModelingSubmissionComponent({ params: throwError(() => new Error('route failed')) });
+
+            fixture.detectChanges();
+
+            expect(comp.isLoading()).toBe(false);
+        });
+    });
+
     it('should set correct properties on modeling exercise update when saving', async () => {
         createModelingSubmissionComponent();
 
@@ -1128,6 +1202,9 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.participation()).toEqual(participation);
         expect(comp.umlModel()).toBeTruthy();
         expect(comp.hasElements()).toBe(true);
+        // nothing is loaded for handed-in values, so a page that waits for the content (the PDF export of the exam summary) does not wait
+        expect(comp.isLoading()).toBe(false);
+        expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('false');
 
         expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
     });

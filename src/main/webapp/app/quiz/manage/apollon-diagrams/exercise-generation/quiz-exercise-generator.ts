@@ -4,7 +4,7 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
-import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { DropLocation, MAX_SIZE_UNIT } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/foundation/util/utils';
 import { getQuizRelevantElementIds, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 
@@ -76,9 +76,6 @@ function getModelElements(model: UMLModel): DiagramElement[] {
     const nestedNodeElements = model.nodes.flatMap(getNestedNodeElements);
     return [...model.nodes, ...nestedNodeElements, ...model.edges];
 }
-
-// Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
-export const MAX_SIZE_UNIT = 200;
 
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
