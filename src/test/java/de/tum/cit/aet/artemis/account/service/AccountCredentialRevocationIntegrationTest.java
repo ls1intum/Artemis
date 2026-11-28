@@ -281,8 +281,8 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         passkeyCredentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
 
         vcsAccessTokenExpiryDate = ZonedDateTime.now().plusMonths(6).withNano(0);
-        // Seeded through the service: the personal token lives in user_vcs_access_token, not on the user row.
-        userVcsAccessTokenService.store(user.getId(), "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
+        // Seeded through the fixture, because the product cannot create one any more: the personal token lives in user_vcs_access_token, not on the user row.
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
 
         UserSshPublicKey sshKey = new UserSshPublicKey();
         sshKey.setUserId(user.getId());

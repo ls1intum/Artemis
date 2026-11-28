@@ -8,7 +8,7 @@ import org.springframework.mock.env.MockEnvironment;
 /** The filter must agree with {@link ArtemisConfigHelper#isHyperionEnabled}: a Hyperion flag inherited by a standalone build agent must not load Spring AI. */
 class SpringAIAutoConfigurationFilterTest {
 
-    private static final String[] CANDIDATES = { "org.springframework.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration",
+    private static final String[] CANDIDATES = { "org.springframework.ai.model.session.autoconfigure.SessionServiceAutoConfiguration",
             "org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration" };
 
     @Test

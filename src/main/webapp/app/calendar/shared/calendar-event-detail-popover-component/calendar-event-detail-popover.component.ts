@@ -1,6 +1,7 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
 import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

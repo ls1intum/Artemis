@@ -49,10 +49,8 @@
         "katex": "0.19.1",
         "lodash-es": "catalog:",
         "markdown-it": "15.0.3",
-        "micromark": "4.0.3",
         "monaco-editor": "0.57.0",
         "papaparse": "5.7.1",
-        "parse5": "8.1.1",
         "rxjs": "catalog:",
         "tslib": "catalog:",
         "turndown": "7.2.5",
@@ -91,13 +89,12 @@
         "eslint": "catalog:",
         "eslint-plugin-prettier": "5.5.7",
         "eslint-plugin-storybook": "catalog:",
-        "folder-hash": "4.1.4",
         "husky": "9.1.7",
         "jsdom": "catalog:",
         "knip": "6.44.1",
-        "lighthouse": "13.6.0",
         "lint-staged": "17.6.0",
         "ng-mocks": "14.18.6",
+        "parse5": "8.1.1",
         "postcss": "catalog:",
         "postcss-html": "2.0.0",
         "prettier": "3.10.1",
@@ -122,6 +119,7 @@
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",
+        "check:duplicate-dependencies": "node supporting_scripts/client/check_duplicate_dependencies.mjs",
         "check:vite-override": "node supporting_scripts/check-vite-override.mjs",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "compile": "pnpm run prebuild && tsc --project config/client/tsconfig.app.json",
@@ -192,6 +190,9 @@
         "stylelint": "stylelint \"src/main/webapp/**/*.css\" && pnpm run tum-aet-ui:stylelint"
     },
     "stylelint": {
-        "extends": "./config/stylelint/stylelint.config.js"
+        "extends": "./config/stylelint/stylelint.config.js",
+        "ignoreFiles": [
+            "src/main/webapp/vendor-styles/**"
+        ]
     }
 }

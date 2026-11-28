@@ -66,6 +66,21 @@ class DeimosBatchParticipationRepositoryIntegrationTest extends AbstractProgramm
         assertThat(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(course.getId(), RANGE_FROM, RANGE_TO)).isOne();
     }
 
+    @Test
+    void queriesDeduplicateParticipationsWithSeveralSubmissionsInRange() {
+        // A second in-range submission for the same participation must not make it appear twice. The queries select
+        // DISTINCT participation ids, and collectParticipationIds relies on that when it appends page results.
+        createSubmissionInRange(studentParticipation, SUBMISSION_DATE.plusDays(1));
+
+        var exerciseIds = deimosBatchParticipationRepository.findParticipationIdsForExerciseInRange(exercise.getId(), RANGE_FROM, RANGE_TO, Pageable.ofSize(20));
+        assertThat(exerciseIds.getContent()).containsExactly(studentParticipation.getId());
+        assertThat(deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(exercise.getId(), RANGE_FROM, RANGE_TO)).isOne();
+
+        var courseIds = deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(course.getId(), RANGE_FROM, RANGE_TO, Pageable.ofSize(20));
+        assertThat(courseIds.getContent()).containsExactly(studentParticipation.getId());
+        assertThat(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(course.getId(), RANGE_FROM, RANGE_TO)).isOne();
+    }
+
     private void createSubmissionInRange(Participation participation, ZonedDateTime submissionDate) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setSubmitted(true);

@@ -2,7 +2,8 @@ import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.
 import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiMessageComponent, TumAetUiMessageSeverity, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiMessageSeverity } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

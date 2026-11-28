@@ -4,7 +4,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';

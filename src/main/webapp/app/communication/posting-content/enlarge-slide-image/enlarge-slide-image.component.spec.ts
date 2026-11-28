@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular/dialog';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { beforeEach, describe, expect, it } from 'vitest';
 

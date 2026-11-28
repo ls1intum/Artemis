@@ -2,7 +2,9 @@ import { Component, DestroyRef, ElementRef, TemplateRef, computed, effect, injec
 import { Observable } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck, faEye, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view-query';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

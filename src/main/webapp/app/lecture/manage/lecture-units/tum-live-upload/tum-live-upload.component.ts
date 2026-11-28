@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, e
 import { HttpErrorResponse } from '@angular/common/http';
 import { TumLiveFilePickerComponent } from './tum-live-file-picker.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumLiveTransferError, TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
@@ -54,7 +56,10 @@ export class TumLiveUploadComponent {
             return 'artemisApp.tumLiveUpload.checkingTransfer';
         }
         if (this.pendingRef()) {
-            return this.acceptedRef() || this.state()?.converting ? 'artemisApp.tumLiveUpload.processing' : 'artemisApp.tumLiveUpload.pending';
+            if (this.state()?.converting) {
+                return 'artemisApp.tumLiveUpload.processing';
+            }
+            return this.acceptedRef() || this.state()?.transferAccepted ? 'artemisApp.tumLiveUpload.uploaded' : 'artemisApp.tumLiveUpload.pending';
         }
         return undefined;
     });
@@ -156,20 +161,12 @@ export class TumLiveUploadComponent {
                     },
                     error: (error: TumLiveTransferError) => {
                         if ([0, 502, 503, 504].includes(error.status)) {
-                            this.activeRef = undefined;
                             this.uncertainRef.set(target.ref);
-                            this.transferProgress.set(undefined);
-                            this.transferError.set(error);
-                            this.load(unitId);
-                        } else if (error.status === 409) {
-                            // Another request may already be sending this reference. Keep its upload pending.
-                            this.activeRef = undefined;
-                            this.transferProgress.set(undefined);
-                            this.transferError.set(error);
-                            this.load(this.lectureUnitId());
-                        } else {
-                            this.giveUp(unitId, target.ref, error);
                         }
+                        this.activeRef = undefined;
+                        this.transferProgress.set(undefined);
+                        this.transferError.set(error);
+                        this.load(this.lectureUnitId());
                     },
                 });
             },
@@ -224,13 +221,6 @@ export class TumLiveUploadComponent {
         }
     }
 
-    private giveUp(unitId: number, ref: string, error: TumLiveTransferError): void {
-        this.activeRef = undefined;
-        this.transferProgress.set(undefined);
-        this.transferError.set(error);
-        this.discard(unitId, ref);
-    }
-
     /** Discards an upload of the unit it was started for, which the component shows unless it was given another unit meanwhile. */
     private discard(unitId: number, ref: string): void {
         if (this.startedRef === ref) {
@@ -278,7 +268,7 @@ export class TumLiveUploadComponent {
         const watched = uncertain ?? this.startedRef ?? this.state()?.pendingRef;
         this.state.set(state);
         if (uncertain) {
-            if (state.attachedRef === uncertain || (state.pendingRef === uncertain && state.converting)) {
+            if (state.attachedRef === uncertain || (state.pendingRef === uncertain && (state.transferAccepted || state.converting))) {
                 this.uncertainRef.set(undefined);
                 this.markAccepted(uncertain);
             } else if (state.pendingRef !== uncertain) {
