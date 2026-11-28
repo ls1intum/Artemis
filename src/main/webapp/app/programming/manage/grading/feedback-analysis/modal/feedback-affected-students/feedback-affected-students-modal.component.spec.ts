@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -40,7 +39,6 @@ describe('AffectedStudentsModalComponent', () => {
             imports: [AffectedStudentsModalComponent],
             providers: [
                 provideHttpClient(),
-                NgbActiveModal,
                 {
                     provide: FeedbackAnalysisService,
                     useValue: {

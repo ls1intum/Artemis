@@ -5,7 +5,7 @@ import { TutorialGroupDetailSessionStatusChipComponent } from 'app/tutorialgroup
     selector: 'jhi-course-tutorial-group-detail-session-status-indicator',
     imports: [TutorialGroupDetailSessionStatusChipComponent],
     templateUrl: './tutorial-group-detail-session-status-indicator.component.html',
-    styleUrl: './tutorial-group-detail-session-status-indicator.component.scss',
+    styleUrl: './tutorial-group-detail-session-status-indicator.component.css',
 })
 export class TutorialGroupDetailSessionStatusIndicatorComponent {
     isCancelled = input.required<boolean>();

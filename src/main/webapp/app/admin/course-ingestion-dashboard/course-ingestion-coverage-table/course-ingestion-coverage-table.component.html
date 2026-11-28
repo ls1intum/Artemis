@@ -15,7 +15,7 @@
         emptyTitle="artemisApp.courseIngestionDashboard.matrix.empty"
         style="--table-layout-offset: 20rem"
     >
-        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2!">
             <input
                 #searchBox
                 tumAetUiInput
@@ -45,7 +45,7 @@
                 (ngModelChange)="onActiveChange($event)"
                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByActive' | artemisTranslate"
             />
-            <div class="flex items-center gap-2 ms-auto">
+            <div class="flex items-center gap-2! ms-auto!">
                 @if (lastUpdated(); as updated) {
                     <span class="hidden text-sm text-muted-color lg:inline">
                         <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.lastUpdatedLabel"></span>: {{ updated | artemisDate }}
@@ -69,13 +69,13 @@
                     <th scope="col" colspan="2" class="static!"></th>
                     <th
                         scope="col"
-                        class="static! text-center {{ groupDivider }}"
+                        class="static! text-center! {{ groupDivider }}"
                         [attr.colspan]="metadataTypes.length"
                         jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.metadata"
                     ></th>
                     <th
                         scope="col"
-                        class="static! text-center {{ groupDivider }}"
+                        class="static! text-center! {{ groupDivider }}"
                         [attr.colspan]="contentTypes.length"
                         jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group.content"
                     ></th>
@@ -89,7 +89,7 @@
                         <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.release"></span>
                     </th>
                     @for (type of allTypes; track type; let i = $index) {
-                        <th scope="col" class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
+                        <th scope="col" class="text-center! text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
                     }
                     <th scope="col" [tumAetUiSortableColumn]="'worstFirst'">
                         <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.status"></span>
@@ -105,7 +105,7 @@
                         <td>
                             <button
                                 type="button"
-                                class="max-w-xs truncate font-medium bg-transparent border-0 p-0 text-start text-inherit cursor-pointer"
+                                class="max-w-xs truncate font-medium bg-transparent! border-0! p-0! text-left! text-inherit cursor-pointer"
                                 [title]="row.courseTitle"
                                 [attr.aria-label]="('artemisApp.courseIngestionDashboard.matrix.openBrowser' | artemisTranslate) + ': ' + (row.courseTitle || row.courseId)"
                                 data-testid="coverage-row-open"
@@ -120,7 +120,7 @@
                                 <div class="text-xs text-muted-color">{{ row.semester }}</div>
                             }
                         </td>
-                        <td class="whitespace-nowrap text-sm text-muted-color">
+                        <td class="whitespace-nowrap text-sm">
                             @if (row.releaseDate) {
                                 {{ row.releaseDate | artemisDate: 'long-date' }}
                             } @else {
@@ -154,5 +154,5 @@
         />
     </tumaet-ui-table-layout>
 
-    <p class="text-xs text-muted-color mt-2 mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.legend"></p>
+    <p class="text-xs text-muted-color mt-2! mb-0!" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.legend"></p>
 </tumaet-ui-panel>

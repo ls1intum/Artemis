@@ -226,7 +226,7 @@ public class AdminCourseResource {
      * <li>All conversations, posts, and messages</li>
      * <li>All competencies and student progress</li>
      * <li>All Iris chat sessions and LLM usage traces</li>
-     * <li>Default user groups created by Artemis</li>
+     * <li>All course role memberships</li>
      * </ul>
      * <p>
      * The operation is logged as an audit event for compliance purposes.
@@ -317,7 +317,7 @@ public class AdminCourseResource {
      * <li>All competency progress records</li>
      * <li>All learner profiles</li>
      * <li>All Iris chat sessions and LLM usage traces</li>
-     * <li>Student enrollments (removed from student group)</li>
+     * <li>Student enrollments (the student role in the course is removed)</li>
      * </ul>
      * <p>
      * The operation is logged as an audit event for compliance purposes.

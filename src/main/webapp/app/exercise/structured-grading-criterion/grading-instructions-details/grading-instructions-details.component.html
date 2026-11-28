@@ -2,7 +2,7 @@
 @let generationUnavailableReason = generationDisabledReason();
 <tumaet-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
 <div>
-    <div class="mb-1 flex w-full flex-wrap items-start justify-between gap-4!" data-testid="assessment-criteria-header">
+    <div class="mb-1 flex w-full flex-wrap items-start justify-between gap-4" data-testid="assessment-criteria-header">
         <tumaet-ui-select-button
             id="edit-mode"
             size="small"
@@ -50,17 +50,17 @@
         }
     </div>
     @if (showEditMode()) {
-        <div class="h-auto rounded-[0.625rem] border border-[var(--border-color)] p-6!">
+        <div class="h-auto rounded-[0.625rem] border border-(--border-color) p-6">
             <!--- Edit Mode --->
-            <div class="flex flex-col gap-6!">
+            <div class="flex flex-col gap-6">
                 @for (criterion of currentExercise.gradingCriteria; track criterion; let criterionIndex = $index) {
                     <div
-                        class="@container relative overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
+                        class="@container relative overflow-hidden rounded-xl border border-(--border-color) bg-[var(--surface-ground)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:bg-[var(--primary)] before:content-['']"
                     >
-                        <div class="flex items-end justify-between gap-4! border-b border-[var(--border-color)] px-6 py-4! ps-[1.625rem]">
+                        <div class="flex items-end justify-between gap-4 border-b border-[var(--border-color)] px-6 py-4 ps-[1.625rem]">
                             <div class="flex min-w-0 flex-1 flex-col">
                                 <label
-                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                     jhiTranslate="artemisApp.exercise.assessmentCriterion"
                                     [attr.for]="'criterionTitle-' + criterionIndex"
                                 ></label>
@@ -92,16 +92,16 @@
                                 <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                             </tumaet-ui-button>
                         </div>
-                        <div class="flex flex-col gap-4! px-6 pt-4! pb-12! ps-[1.625rem]">
-                            <div class="grid grid-cols-1 gap-6! @[58rem]:grid-cols-2">
+                        <div class="flex flex-col gap-4 px-6 pt-4 pb-12 ps-[1.625rem]">
+                            <div class="grid grid-cols-1 gap-6 @[58rem]:grid-cols-2">
                                 @for (instruction of criterion.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                                     <div
-                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-[var(--border-color)] bg-[color-mix(in_srgb,var(--primary)_4%,var(--module-bg))] px-[1.125rem] py-6!"
+                                        class="@container [overflow-wrap:anywhere] rounded-lg border border-(--border-color) bg-[color-mix(in_srgb,var(--primary)_4%,var(--module-bg))] px-[1.125rem] py-6"
                                     >
-                                        <div class="grid grid-cols-1 items-end gap-4! @[22rem]:grid-cols-[6.25rem_minmax(0,1fr)_6.25rem_2.5rem]">
+                                        <div class="grid grid-cols-1 items-end gap-4 @[22rem]:grid-cols-[6.25rem_minmax(0,1fr)_6.25rem_2.5rem]">
                                             <div class="flex min-w-0 flex-col [&_input]:w-full">
                                                 <label
-                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                                     [attr.for]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
                                                 >
                                                     <span jhiTranslate="artemisApp.exercise.credits"></span>
@@ -121,7 +121,7 @@
                                             </div>
                                             <div class="flex min-w-0 flex-col [&_input]:w-full">
                                                 <label
-                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                                     [attr.for]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
                                                 >
                                                     <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
@@ -141,7 +141,7 @@
                                             </div>
                                             <div class="flex min-w-0 flex-col [&_input]:w-full">
                                                 <label
-                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                                     [attr.for]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
                                                 >
                                                     <span jhiTranslate="artemisApp.exercise.limit"></span>
@@ -165,7 +165,7 @@
                                             <button
                                                 type="button"
                                                 data-testid="delete-instruction-button"
-                                                class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center justify-self-end self-end border-0 bg-transparent p-0 text-state-danger disabled:cursor-not-allowed disabled:opacity-40"
+                                                class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center justify-self-end self-end border-0 bg-transparent p-0! text-state-danger disabled:cursor-not-allowed disabled:opacity-40"
                                                 [id]="'delete-instruction-row-' + criterionIndex + '-' + instructionIndex"
                                                 [disabled]="!editable()"
                                                 [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
@@ -175,11 +175,11 @@
                                                 <fa-icon class="text-lg" [icon]="faTrash" />
                                             </button>
                                         </div>
-                                        <div class="my-4! h-px bg-[var(--border-color)]"></div>
-                                        <div class="grid grid-cols-1 gap-x-0 gap-y-6! @[26rem]:grid-cols-2">
+                                        <div class="my-4 h-px bg-[var(--border-color)]"></div>
+                                        <div class="grid grid-cols-1 gap-x-0 gap-y-6 @[26rem]:grid-cols-2">
                                             <div class="flex min-w-0 flex-col @[26rem]:pr-4">
                                                 <label
-                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                                     [attr.for]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                 >
                                                     <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
@@ -201,7 +201,7 @@
                                             </div>
                                             <div class="flex min-w-0 flex-col @[26rem]:border-l @[26rem]:border-[var(--border-color)] @[26rem]:pl-4">
                                                 <label
-                                                    class="mb-1.5 flex items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
+                                                    class="mb-1.5 items-center gap-1 text-xs font-medium tracking-wider text-muted-color uppercase"
                                                     [attr.for]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                 >
                                                     <span jhiTranslate="artemisApp.exercise.feedback"></span>

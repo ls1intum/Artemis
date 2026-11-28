@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type CourseExamArchiveDialogMode = 'Exam' | 'Course';
@@ -13,8 +14,8 @@ export interface CourseExamArchiveDialogData {
 }
 
 abstract class CourseExamArchiveDialogBase {
-    protected readonly dialogRef = inject(DynamicDialogRef);
-    protected readonly dialogConfig = inject(DynamicDialogConfig);
+    protected readonly dialogRef = inject<TumAetUiDialogRef<CourseExamArchiveDialogResult>>(TumAetUiDialogRef);
+    protected readonly dialogConfig = inject<TumAetUiDialogConfig<CourseExamArchiveDialogData>>(TumAetUiDialogConfig);
 
     readonly data = this.dialogConfig.data as CourseExamArchiveDialogData;
 
@@ -23,22 +24,12 @@ abstract class CourseExamArchiveDialogBase {
     }
 }
 
+/** The dialog header (title and close button) is rendered by the dialog shell, so the content starts with the body. */
 @Component({
     selector: 'jhi-course-exam-archive-warning-dialog',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiButtonDirective],
     template: `
-        <div class="modal-header">
-            <h4 class="modal-title">
-                @if (data.archiveMode === 'Course') {
-                    <span [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.title'">Confirm Archive Course Operation</span>
-                }
-                @if (data.archiveMode === 'Exam') {
-                    <span [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.title'">Confirm Archive Exam Operation</span>
-                }
-            </h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
-        </div>
-        <div class="modal-body">
+        <div>
             @if (data.archiveMode === 'Course') {
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: data.courseTitle || '' }">
                     Are you sure you want to archive??
@@ -62,11 +53,12 @@ abstract class CourseExamArchiveDialogBase {
                 You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
             </p>
         </div>
-        <div class="modal-footer">
+        <div class="mt-4! flex justify-end gap-2">
             <button
+                tumAetUiButton
                 type="button"
+                severity="warn"
                 data-testid="archive-confirm-button"
-                class="btn btn-warning"
                 (click)="close('archive-confirm')"
                 [jhiTranslate]="data.archiveMode === 'Course' ? 'artemisApp.courseExamArchive.archiveCourse' : 'artemisApp.courseExamArchive.archiveExam'"
             >
@@ -79,23 +71,18 @@ export class CourseExamArchiveWarningDialogComponent extends CourseExamArchiveDi
 
 @Component({
     selector: 'jhi-course-exam-archive-overwrite-dialog',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiButtonDirective],
     template: `
-        <div class="modal-header">
-            <h4 class="modal-title">
-                <span [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.title'">Warning: an archive already exists!</span>
-            </h4>
-        </div>
-        <div class="modal-body">
+        <div>
             <p [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.message'">
                 Warning! The course has already been archived. If you continue, the archive will be overwritten! Are you sure you want to continue?
             </p>
         </div>
-        <div class="modal-footer">
-            <button type="button" data-testid="archive-overwrite-confirm-button" class="btn btn-warning" (click)="close('archive')" [jhiTranslate]="'global.generic.yes'">
+        <div class="mt-4! flex justify-end gap-2">
+            <button tumAetUiButton type="button" severity="warn" data-testid="archive-overwrite-confirm-button" (click)="close('archive')" [jhiTranslate]="'global.generic.yes'">
                 Yes
             </button>
-            <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="close()">No</button>
+            <button tumAetUiButton type="button" severity="success" data-testid="archive-overwrite-cancel-button" [jhiTranslate]="'global.generic.no'" (click)="close()">No</button>
         </div>
     `,
 })
@@ -103,30 +90,20 @@ export class CourseExamArchiveOverwriteDialogComponent extends CourseExamArchive
 
 @Component({
     selector: 'jhi-course-exam-archive-completed-with-warnings-dialog',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiButtonDirective],
     template: `
-        <div class="modal-header">
-            <h4 class="modal-title">
-                @if (data.archiveMode === 'Course') {
-                    <span [jhiTranslate]="'artemisApp.courseExamArchive.archiveCourseSuccess'">The course has been archived!</span>
-                }
-                @if (data.archiveMode === 'Exam') {
-                    <span [jhiTranslate]="'artemisApp.courseExamArchive.archiveExamSuccess'">The exam has been archived!</span>
-                }
-            </h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
-        </div>
-        <div class="modal-body">
+        <div>
             <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
-            <br />
-            <ul style="height: 200px; overflow: auto">
+            <ul class="h-[200px] overflow-auto" data-testid="archive-warnings-list">
                 @for (item of data.warnings ?? []; track item) {
                     <li>{{ item }}</li>
                 }
             </ul>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="close()">Close</button>
+        <div class="mt-4! flex justify-end gap-2">
+            <button tumAetUiButton type="button" severity="secondary" data-testid="archive-warnings-close-button" jhiTranslate="entity.action.close" (click)="close()">
+                Close
+            </button>
         </div>
     `,
 })

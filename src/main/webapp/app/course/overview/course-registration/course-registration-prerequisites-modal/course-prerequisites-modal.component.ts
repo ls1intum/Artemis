@@ -3,15 +3,15 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',
     templateUrl: './course-prerequisites-modal.component.html',
-    imports: [TranslateDirective, CompetencyCardComponent, DialogModule, ArtemisTranslatePipe],
+    imports: [CompetencyCardComponent, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
 })
 export class CoursePrerequisitesModalComponent {
     private alertService = inject(AlertService);

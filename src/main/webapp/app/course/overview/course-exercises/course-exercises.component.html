@@ -1,7 +1,8 @@
-<div class="d-flex horizontal-scroll">
+<div class="horizontal-scroll flex">
     @if (course()) {
         @if (!isShownViaLti()) {
-            <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
+            <!-- A collapsed list is only faded and narrowed, so it is inert: its links and buttons must leave the tab order. -->
+            <div #listWrapper [class]="{ 'sidebar-collapsed': isCollapsed() }" [attr.inert]="isCollapsed() ? '' : null">
                 @if (sidebarData(); as data) {
                     <jhi-sidebar
                         [itemSelected]="exerciseSelected()"
@@ -32,6 +33,7 @@
 
         @if (exerciseSelected()) {
             <div
+                #contentArea
                 [class]="{ 'content-sidebar-width': !isCollapsed() }"
                 class="content-width scrollable-content no-header-bar-height"
                 [style]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
@@ -39,7 +41,7 @@
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+            <div class="bg-(--module-bg) flex w-screen flex-col rounded-sm p-4">
                 @if (isCollapsed()) {
                     <div>
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -48,7 +50,7 @@
                 @if (course()?.exercises?.length === 0) {
                     <tumaet-ui-empty-state class="my-auto" [icon]="faCode" [title]="'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate" />
                 } @else {
-                    <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
+                    <div class="my-auto w-full flex-none text-center" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
                 }
             </div>
         }

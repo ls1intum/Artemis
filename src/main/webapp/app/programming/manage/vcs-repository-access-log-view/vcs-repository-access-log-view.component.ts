@@ -1,4 +1,4 @@
-import { Component, computed, inject, viewChild } from '@angular/core';
+import { Component, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { of } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
@@ -12,6 +12,8 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 
 interface VcsAccessLogRow {
     id?: number;
@@ -26,7 +28,7 @@ interface VcsAccessLogRow {
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
-    imports: [TranslateDirective, CourseTitleBarTitleDirective, TableViewComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, CourseTitleBarTitleDirective, TableViewComponent, ArtemisDatePipe, ArtemisTranslatePipe, TumAetUiToggleSwitchComponent],
     host: { class: 'flex h-full min-h-0 min-w-0 flex-col' },
 })
 export class VcsRepositoryAccessLogViewComponent {
@@ -36,6 +38,7 @@ export class VcsRepositoryAccessLogViewComponent {
 
     private readonly timestampTemplate = viewChild<CellTemplateRef<VcsAccessLogRow>>('timestampTemplate');
     private readonly commitHashTemplate = viewChild<CellTemplateRef<VcsAccessLogRow>>('commitHashTemplate');
+    protected readonly buildAgentFilterTemplate = viewChild<TemplateRef<unknown>>('buildAgentFilter');
     private readonly params = toSignal(this.route.params, { requireSync: true });
     private readonly exerciseId = computed(() => Number(this.params().exerciseId));
     private readonly repositoryType = computed(() => String(this.params().repositoryType) as RepositoryType);
@@ -72,17 +75,22 @@ export class VcsRepositoryAccessLogViewComponent {
     );
 
     protected readonly loading = computed(() => this.logState().loading);
+
+    /** Build agents clone every repository for every build, so their entries are hidden until asked for: the log is mostly read to see who accessed a repository. */
+    protected readonly includeBuildAgents = signal(false);
     protected readonly rows = computed<VcsAccessLogRow[]>(() =>
-        this.logState().entries.map((entry) => ({
-            id: entry.id,
-            userId: entry.userId,
-            author: [entry.name, entry.email].filter(Boolean).join(', '),
-            repositoryActionType: entry.repositoryActionType,
-            authenticationMechanism: entry.authenticationMechanism,
-            commitHash: entry.commitHash,
-            // Search dates in the viewer's timezone, matching the displayed timestamp.
-            timestamp: dayjs(entry.timestamp).local().format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
-        })),
+        this.logState()
+            .entries.filter((entry) => this.includeBuildAgents() || !entry.buildAgent)
+            .map((entry) => ({
+                id: entry.id,
+                userId: entry.userId,
+                author: [entry.name, entry.email].filter(Boolean).join(', '),
+                repositoryActionType: entry.repositoryActionType,
+                authenticationMechanism: entry.authenticationMechanism,
+                commitHash: entry.commitHash,
+                // Search dates in the viewer's timezone, matching the displayed timestamp.
+                timestamp: dayjs(entry.timestamp).local().format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
+            })),
     );
 
     protected readonly tableOptions: TableViewOptions = {

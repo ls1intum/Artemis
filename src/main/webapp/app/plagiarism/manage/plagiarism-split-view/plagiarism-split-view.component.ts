@@ -12,7 +12,9 @@ import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/Plagiarism
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiSplitterComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 
@@ -21,7 +23,7 @@ const MIN_PANE_SIZE = 10;
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
-    styleUrls: ['./plagiarism-split-view.component.scss'],
+    styleUrls: ['./plagiarism-split-view.component.css'],
     templateUrl: './plagiarism-split-view.component.html',
     imports: [TumAetUiSplitterComponent, TextSubmissionViewerComponent, FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
-import { ComplaintResponseDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import type { ComplaintResponse as ComplaintResponseDTO } from 'app/openapi/model/complaint-response';
 
 /**
  * DTO representing a complaint returned by the server.

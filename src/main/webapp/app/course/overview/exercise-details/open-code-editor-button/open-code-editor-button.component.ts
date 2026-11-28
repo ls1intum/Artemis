@@ -5,7 +5,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { RouterLink } from '@angular/router';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
@@ -14,7 +16,17 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 @Component({
     selector: 'jhi-open-code-editor-button',
     templateUrl: './open-code-editor-button.component.html',
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, RouterLink, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        RouterLink,
+        FormsModule,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiToggleSwitchComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class OpenCodeEditorButtonComponent {
     private participationService = inject(ParticipationService);

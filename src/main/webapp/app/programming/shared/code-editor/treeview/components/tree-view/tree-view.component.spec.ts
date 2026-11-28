@@ -21,7 +21,7 @@ class TestHostComponent {
 describe('TreeViewComponent', () => {
     it('should render the built-in default item template when itemTemplate is omitted', () => {
         const fixture = createGenericTestComponent('<treeview [items]="items()" />', TestHostComponent) as ComponentFixture<TestHostComponent>;
-        const label = fixture.debugElement.query(By.css('.form-check-label'));
+        const label = fixture.debugElement.query(By.css('.row-item label'));
         expect(label.nativeElement.textContent.trim()).toBe('Root item');
     });
     it('should label each checkbox directly and expose a named expand button', () => {

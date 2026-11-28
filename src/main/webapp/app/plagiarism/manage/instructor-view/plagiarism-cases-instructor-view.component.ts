@@ -19,13 +19,13 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
-    styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,

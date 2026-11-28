@@ -6,7 +6,10 @@ export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
 }
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

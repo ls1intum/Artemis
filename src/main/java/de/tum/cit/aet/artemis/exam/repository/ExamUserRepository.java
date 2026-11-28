@@ -19,11 +19,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 
 @Conditional(ExamEnabled.class)
@@ -42,7 +43,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             SELECT COUNT(eu.id)
             FROM ExamUser eu
             WHERE eu.exam.course.id IN :courseIds
-                AND eu.exam.testExam = FALSE
+                AND eu.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND LOWER(eu.exam.title) NOT LIKE 'test%'
                 AND LOWER(eu.exam.title) NOT LIKE 'mock%'
                 AND eu.user.deleted = FALSE
@@ -137,6 +138,21 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
 
     /**
+     * Finds the course of the exam an exam user is registered for, without loading the exam user or the exam.
+     *
+     * @param examUserId the id of the exam user
+     * @return the course of the exam, or empty if the exam user does not exist
+     */
+    @Query("""
+            SELECT c
+            FROM ExamUser eu
+                JOIN eu.exam e
+                JOIN e.course c
+            WHERE eu.id = :examUserId
+            """)
+    Optional<Course> findCourseByExamUserId(@Param("examUserId") long examUserId);
+
+    /**
      * Returns the IDs of users who are already registered as exam users for the given exam, filtered to the provided user IDs.
      * Used to mark users as already registered in the user-registration modal.
      *
@@ -153,7 +169,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Set<Long> findRegisteredUserIdsByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     /**
-     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link ExamStudentSearchDTO}.
+     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link PagedSearchDTO}.
      * Sorting is applied via {@code query.orderBy} inside the specification rather than through {@link Pageable#getSort()}
      * because the working-time sort requires a correlated subquery that {@link Sort} cannot express.
      *
@@ -163,7 +179,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
      */
     // Reviewed false positive (Sonar S7186): the page index, page size and sort are part of the search DTO, and the Pageable is built inside because the sort needs a
     // specification.
-    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) { // NOSONAR
+    default Page<Long> findExamUserIdsForExam(long examId, PagedSearchDTO search) { // NOSONAR
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.searchTerm()))
                 .and(ExamUserSpecs.filteredBy(search.filterProp())).and(ExamUserSpecs.ordered(search.sortedColumn(), sortOrder));

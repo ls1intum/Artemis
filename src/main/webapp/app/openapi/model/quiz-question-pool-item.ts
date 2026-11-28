@@ -37,6 +37,8 @@ export interface QuizQuestionPoolItem {
     reviewState: QuizQuestionPoolItemReviewStateEnum;
     /** Whether the filter\'s verdicts ask for a review, present once the question is judged */
     flagged?: boolean;
+    /** Whether the lecture unit\'s material changed after the question was generated */
+    materialChanged?: boolean;
     /** The generated question, present once generated */
     question?: GeneratedQuizQuestion;
     /** The filter\'s decision, present once judged */

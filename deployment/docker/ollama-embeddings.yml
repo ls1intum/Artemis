@@ -4,10 +4,10 @@
 #   docker compose -f ollama-embeddings.yml up -d
 # The ollama-pull service downloads the model once into the volume and then exits.
 # Artemis configuration: see documentation/docs/developer/weaviate-setup.mdx
-#   vectorizer-module: text2vec-openai
-#   open-ai-base-url: http://localhost:11434
-#   open-ai-embedding-model: qwen3-embedding:0.6b
-#   gpu-api-key: ollama
+#   artemis.llm.endpoints.ollama.base-url: http://localhost:11434/v1
+#   artemis.llm.presets.embedding: { endpoint: ollama, model: qwen3-embedding:0.6b, api: embeddings }
+#   artemis.weaviate.vectorizer-module: text2vec-openai
+#   artemis.weaviate.embedding-llm-preset: embedding
 
 services:
   ollama:

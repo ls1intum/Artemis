@@ -1,3 +1,5 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, computed, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
@@ -11,9 +13,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
-    imports: [HelpIconComponent, TranslateDirective, FormsModule, ArtemisTranslatePipe],
+    imports: [HelpIconComponent, TranslateDirective, FormsModule, ArtemisTranslatePipe, TumAetUiInputDirective, TumAetUiMessageComponent],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../programming-exercise-form.css'],
 })
 export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     programmingExercise = input.required<ProgrammingExercise>();

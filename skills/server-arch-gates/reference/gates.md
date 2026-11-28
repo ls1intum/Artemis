@@ -139,6 +139,31 @@ provider. Add cases for an admitted and a rejected user to
 
 Full guidance: `documentation/docs/developer/guidelines/websocket.mdx`.
 
+## Language models
+
+**Rule.** Every call to a language model, for chat or for embeddings, uses a preset of the catalog
+under `artemis.llm` and a client from `LlmClientService` in `core.service.llm`. A module adds only
+keys that name presets (`llm-preset`, `llm-presets`), registers them as `LlmPresetAssignments`, and
+never reads an endpoint's URL or key. There are no exceptions; a kind of call the core does not offer
+yet is added to `LlmClientService`.
+
+**Enforced by.**
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/LlmClientArchitectureTest.java`. It fails
+when a production class outside `core.service.llm` and `core.config.llm` depends on `com.openai.client..`,
+`com.openai.services..`, `org.springframework.ai.openai.setup..` or a Spring AI OpenAI model class, or reads `LlmProperties.Endpoint`
+or the methods that return endpoints. Request options, response, usage and exception types of the SDKs
+stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model
+with a plain HTTP client; that is forbidden too, and reviews have to catch it.
+
+**Why it matters.** The core applies the preset's options, the timeouts, the custom headers,
+Microsoft Foundry authentication and observations; chat calls also get the preset's retries, and every
+chat response is tagged with its preset for cost tracking. `embed` makes no SDK retries, whatever the
+endpoint configures, so the caller decides whether and when to retry. The startup validation checks
+every assignment. A module with its own client skips all of that, and every deployment has to
+configure the same provider a second time.
+
+Full guidance: section "Connect a feature to a language model" in `documentation/docs/developer/ai-pipelines.mdx`.
+
 ## Caching
 
 **Rule.** No `@Cache` (Hibernate second-level) annotations on entities or associations.
@@ -295,3 +320,31 @@ applied to the auto-configured `JsonMapper`, the `XmlMapper` and the shared stat
 pins the Jackson 3 defaults that would otherwise change the JSON on the wire, each with a TODO naming what
 has to happen before it can go. `JacksonSerializationContractTest` records the payloads those pins protect:
 remove a pin, run it, and the failing fixture is the payload that would change.
+
+## Runtime classpath
+
+**Rule:** `./gradlew verifyRuntimeClasspathHygiene -x webapp` (`gradle/dependency-hygiene.gradle`), run by the
+Server Code Style job and by `check`.
+
+It reads the resolved `runtimeClasspath`, i.e. what the WAR ships, and fails when
+
+- an artifact of `forbiddenRuntimeModules` is on it (Lombok, the Jersey client, the Kubernetes client's Vert.x
+  transports, `sshd-osgi`, the old `com.sun.xml.bind` JAXB jars, `jakarta.servlet-api`), or
+- the same class is contained in more than one jar and exactly that set of jars is not in
+  `allowedDuplicateClassJars`.
+
+**Why the rule exists rather than the compiler:** two jars with different coordinates but the same classes are
+invisible to Gradle's conflict resolution and to `verifyDependencyFamilies`. The JVM loads whichever copy comes
+first, so bumping only one of them is a `LinkageError` or a silent behaviour change. The 10.8 review found
+`sshd-osgi` next to `sshd-core` (every SSH class twice), two JAXB implementations, and the Jersey client stack of an
+unused GitLab client that nothing had failed on.
+
+**When it fails:** do not add to the allowlist first. Run `./gradlew dependencies --configuration runtimeClasspath`
+or `dependencyInsight --dependency <artifact> --configuration runtimeClasspath` to see who brings the jar, and
+exclude it at that dependency in `build.gradle` with a comment saying why. Add an allowlist entry only when both
+jars are wanted (the existing `commons-logging` and `jcl-over-slf4j` pair), with the reason. Entries whose jars
+stop overlapping fail the task, so the list cannot rot.
+
+**H2 is not on the production classpath.** `build.gradle` adds `com.h2database:h2` as `runtimeOnly` for every
+build except `-Pprod`, which is the WAR and the Docker image. Development (`bootRun`), the tests, the OpenAPI
+generation and the bean instantiation job start without `-Pprod` and keep it.

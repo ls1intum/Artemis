@@ -1,10 +1,10 @@
-<form [formGroup]="form" class="border border-state-warning p-4!" data-testid="plagiarism-control-settings">
+<form [formGroup]="form" class="border border-(--border-color) p-4" data-testid="plagiarism-control-settings">
     <button
         type="button"
         tumAetUiButton
         severity="secondary"
         data-testid="plagiarism-control-toggle"
-        class="me-1 max-w-full whitespace-normal!"
+        class="me-1 max-w-full whitespace-normal"
         (click)="isCPCCollapsed = !isCPCCollapsed"
         jhiTranslate="{{ isCPCCollapsed ? 'artemisApp.plagiarism.showContinuousPlagiarismControl' : 'artemisApp.plagiarism.hideContinuousPlagiarismControl' }}"
     ></button>
@@ -17,7 +17,7 @@
             <tumaet-ui-checkbox inputId="continuous_plagiarism_control_enabled" formControlName="continuousPlagiarismControlEnabled" />
             <label
                 for="continuous_plagiarism_control_enabled"
-                class="plagiarism-option-label mb-0! cursor-pointer"
+                class="plagiarism-option-label mb-0 cursor-pointer"
                 jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled"
             ></label>
         </div>
@@ -26,7 +26,7 @@
             <tumaet-ui-checkbox inputId="continuous_plagiarism_control_post_due_date_checks_enabled" formControlName="continuousPlagiarismControlPostDueDateChecksEnabled" />
             <label
                 for="continuous_plagiarism_control_post_due_date_checks_enabled"
-                class="plagiarism-option-label mb-0! cursor-pointer"
+                class="plagiarism-option-label mb-0 cursor-pointer"
                 jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled"
             ></label>
         </div>

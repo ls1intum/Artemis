@@ -13,7 +13,7 @@
             } @else if (!isLearningPathNavigationLoading()) {
                 <div class="flex h-full w-full items-center justify-center">
                     <div class="max-w-[500px] text-center">
-                        <h3 class="mb-4!" jhiTranslate="artemisApp.learningPath.completion.title"></h3>
+                        <h3 class="mb-4" jhiTranslate="artemisApp.learningPath.completion.title"></h3>
                         <div jhiTranslate="artemisApp.learningPath.completion.description"></div>
                     </div>
                 </div>
@@ -22,13 +22,13 @@
     } @else {
         <div class="flex h-full w-full items-center justify-center">
             <div class="max-w-[500px] text-center">
-                <h3 class="mb-4!" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
+                <h3 class="mb-4" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
                 <div jhiTranslate="artemisApp.learningPath.generation.description"></div>
                 <button
                     tumAetUiButton
                     (click)="startLearningPath()"
                     type="button"
-                    class="mt-6!"
+                    class="mt-6"
                     id="start-learning-path-button"
                     jhiTranslate="artemisApp.learningPath.generation.generateButton"
                 ></button>

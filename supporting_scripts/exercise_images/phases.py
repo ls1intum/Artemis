@@ -22,6 +22,44 @@ class Phase:
     name: str
     script: str
     force_run: bool
+    result_paths: tuple[str, ...] = ()
+
+
+def _scalar(text: str) -> str:
+    """A plain or quoted YAML scalar without the comment behind it (``'a/*.xml' # JUnit``). A ``#`` inside quotes belongs to the value."""
+    text = text.strip()
+    if text[:1] not in ("'", '"'):
+        return re.sub(r"\s+#.*$", "", text).strip()
+    quote = text[0]
+    value = []
+    index = 1
+    while index < len(text):
+        character = text[index]
+        if quote == "'" and character == "'" and text[index + 1 : index + 2] == "'":
+            value.append("'")
+            index += 2
+        elif quote == '"' and character == "\\" and index + 1 < len(text):
+            value.append(text[index + 1])
+            index += 2
+        elif character == quote:
+            rest = text[index + 1 :].strip()
+            if rest and not rest.startswith("#"):
+                raise ValueError(f"Unexpected text after the quoted value {text}")
+            return "".join(value)
+        else:
+            value.append(character)
+            index += 1
+    raise ValueError(f"The quoted value {text} is not closed")
+
+
+def _flow_list(value: str) -> list[str]:
+    """The items of an inline list (``['a', "b"]``) with an optional comment behind it."""
+    end = value.rfind("]")
+    rest = value[end + 1 :].strip()
+    if end < 0 or (rest and not rest.startswith("#")):
+        raise ValueError(f"Unsupported list {value}")
+    items = re.findall(r"""\s*('(?:[^']|'')*'|"(?:[^"\\]|\\.)*"|[^,'"]+)\s*(?:,|$)""", value[1:end])
+    return [_scalar(item) for item in items if item.strip()]
 
 
 def _unquote(value: str) -> str:
@@ -37,12 +75,13 @@ def parse_phases(text: str) -> list[Phase]:
     name: str | None = None
     script = ""
     force_run = False
+    result_paths: list[str] = []
     lines = text.splitlines()
     index = 0
 
     def finish() -> None:
         if name is not None:
-            phases.append(Phase(name, script, force_run))
+            phases.append(Phase(name, script, force_run, tuple(result_paths)))
 
     while index < len(lines):
         line = lines[index]
@@ -50,7 +89,7 @@ def parse_phases(text: str) -> list[Phase]:
         item = _ITEM_START.match(line)
         if item:
             finish()
-            name, script, force_run = item.group("name"), "", False
+            name, script, force_run, result_paths = item.group("name"), "", False, []
             continue
         key = _KEY.match(line)
         if not key or name is None:
@@ -58,6 +97,17 @@ def parse_phases(text: str) -> list[Phase]:
         key_name, value = key.group("key"), (key.group("value") or "").strip()
         if key_name == "forceRun":
             force_run = value == "true"
+        elif key_name == "resultPaths":
+            if value.startswith("["):
+                result_paths.extend(_flow_list(value))
+            elif value and not value.startswith("#"):
+                raise ValueError(f"The result paths of the phase {name} are written as {value}, only a list is supported")
+            # A comment or a blank line between the entries does not end the list
+            # (YAML allows a tab as well as a space behind the dash)
+            while index < len(lines) and (re.match(r"^\s+-[ \t]", lines[index]) or not lines[index].strip() or lines[index].lstrip().startswith("#")):
+                if lines[index].strip() and not lines[index].lstrip().startswith("#"):
+                    result_paths.append(_scalar(re.sub(r"^-[ \t]+", "", lines[index].strip())))
+                index += 1
         elif key_name == "script":
             if value.startswith(_BLOCK_SCALAR_START):
                 if value not in _SUPPORTED_BLOCK_SCALARS:

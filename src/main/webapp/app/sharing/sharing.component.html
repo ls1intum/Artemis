@@ -27,7 +27,7 @@
                                                 <input
                                                     id="{{ exercise.project.project_id }}"
                                                     [attr.aria-label]="'Select exercise: ' + exercise.metadata.title"
-                                                    [(ngModel)]="sharingInfo.selectedExercise"
+                                                    [(ngModel)]="sharingInfo.exercisePosition"
                                                     (change)="onExerciseSelected(exercisePos)"
                                                     [value]="exercisePos"
                                                     name="selectedExercise"
@@ -48,11 +48,6 @@
                         <div>
                             <span class="message" jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
                         </div>
-                        @if (!isInstructorOrEditor()) {
-                            <div class="p-2">
-                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructorOrEditor"></strong>
-                            </div>
-                        }
                     </div>
                 </td>
                 <td>
@@ -92,7 +87,7 @@
                                             <td>
                                                 <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a><br />
                                                 @if (course.shortName) {
-                                                    <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
+                                                    <span> <span class="font-bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
                                                 }
                                             </td>
                                         </tr>
@@ -117,7 +112,7 @@
                         (click)="navigateToImportFromSharing()"
                     >
                         <fa-icon [icon]="faPlus" />
-                        <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.sharing.import"></span>
+                        <span class="hidden-sm-down" jhiTranslate="artemisApp.sharing.import"></span>
                     </button>
                 </td>
             </tr>

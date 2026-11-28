@@ -1,15 +1,9 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogService,
-    TumAetUiInputDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';

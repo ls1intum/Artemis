@@ -1,8 +1,8 @@
 @if (course()) {
     <div class="exam-management-layout">
         <!-- Dynamic Exam Header -->
-        <div class="exam-management-header module-bg px-2 rounded-md">
-            <div class="flex flex-1 flex-wrap justify-between gap-2 items-center w-full min-w-0 title-bar-actions-wrapper">
+        <div class="exam-management-header bg-(--module-bg) px-2 rounded-md">
+            <div class="flex flex-1 flex-wrap justify-between gap-2 items-center w-full min-w-0 title-bar-actions-wrapper title-bar-controls">
                 <!-- Left side: Sidebar button, Exam title, Chevron, and Subpage title -->
                 <div class="flex items-center gap-2 min-w-0 exam-management-title-wrapper">
                     <!-- Sidebar collapse button to reopen it -->
@@ -11,18 +11,18 @@
                     }
                     <!-- Current exam title -->
                     @if (currentExam()) {
-                        <h5 class="flex items-center gap-2 mb-0! min-w-0">
+                        <h5 class="flex items-center gap-2 mb-0 min-w-0">
                             @if (course().isAtLeastInstructor) {
                                 <a
                                     class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md min-w-0"
                                     [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]"
                                 >
-                                    <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" class="shrink-0" />
+                                    <jhi-exam-mode-badge [examMode]="currentExam()!.examMode ?? ExamMode.REAL" class="shrink-0" />
                                     <span class="exam-title-text">{{ currentExam()!.title }}</span>
                                 </a>
                             } @else {
                                 <span class="inline-flex items-center gap-2 min-w-0">
-                                    <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" class="shrink-0" />
+                                    <jhi-exam-mode-badge [examMode]="currentExam()!.examMode ?? ExamMode.REAL" class="shrink-0" />
                                     <span class="exam-title-text">{{ currentExam()!.title }}</span>
                                 </span>
                             }
@@ -52,7 +52,7 @@
         </div>
         <!-- child route content -->
         <!-- cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
-        <div class="exam-management-content module-bg rounded-md scrollable-content p-4!" cdkScrollable>
+        <div class="exam-management-content bg-(--module-bg) rounded-md scrollable-content p-4" cdkScrollable>
             <!-- page content -->
             <router-outlet />
         </div>

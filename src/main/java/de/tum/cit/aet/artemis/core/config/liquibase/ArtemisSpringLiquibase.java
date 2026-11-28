@@ -14,6 +14,7 @@ import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.Scope;
 import liquibase.changelog.ChangeLogHistoryServiceFactory;
 import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
@@ -135,7 +136,7 @@ public class ArtemisSpringLiquibase extends SpringLiquibase {
      */
     private void discardPartialHistory(Database database, Exception failure) {
         try {
-            ChangeLogHistoryServiceFactory.getInstance().getChangeLogService(database).destroy();
+            Scope.getCurrentScope().getSingleton(ChangeLogHistoryServiceFactory.class).getChangeLogService(database).destroy();
             log.error("Recording the folded changelog history failed; discarded what had been recorded so that the next start retries it");
         }
         catch (Exception cleanupFailure) {

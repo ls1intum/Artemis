@@ -3,7 +3,8 @@ import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faClock, faExclamationCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -15,7 +16,7 @@ import { buildJobWaitingTime } from './build-job-waiting-time.util';
 @Component({
     selector: 'tr[jhi-build-job-row]',
     templateUrl: './build-job-row.component.html',
-    styleUrls: ['./build-jobs-table.scss'],
+    styleUrls: ['./build-jobs-table.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [RouterLink, SlicePipe, FaIconComponent, TumAetUiButtonComponent, TumAetUiTooltipDirective, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,

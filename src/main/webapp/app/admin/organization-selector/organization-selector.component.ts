@@ -1,7 +1,8 @@
 import { OrganizationListDirective } from 'app/admin/organization-management/organization-list.directive';
 import { ChangeDetectionStrategy, Component, computed, input, output, viewChild } from '@angular/core';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent } from '@tumaet/ui-angular/table';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

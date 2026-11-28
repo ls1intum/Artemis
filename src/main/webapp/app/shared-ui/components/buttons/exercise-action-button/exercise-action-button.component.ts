@@ -2,7 +2,7 @@ import { Component, computed, input, model } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonSeverity, tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { TumAetUiButtonSeverity, tumAetUiButtonClasses } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'button[jhi-exercise-action-button]',

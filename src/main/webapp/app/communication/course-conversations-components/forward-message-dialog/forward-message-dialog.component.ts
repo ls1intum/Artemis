@@ -14,7 +14,9 @@ import {
     viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
@@ -22,7 +24,6 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Subscription, catchError, map, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { FormsModule } from '@angular/forms';
@@ -33,9 +34,17 @@ import { LinkPreviewService } from 'app/communication/link-preview/services/link
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { faHashtag, faPeopleGroup, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
+
+/** The data the opener passes to the dialog. */
+interface ForwardMessageDialogData {
+    users?: UserPublicInfoDTO[];
+    channels?: (ChannelDTO | GroupChatDTO)[];
+    postToForward?: Post;
+    courseId?: number;
+}
 
 interface CombinedOption {
     id: number;
@@ -49,13 +58,23 @@ let nextDestinationListboxId = 0;
 @Component({
     selector: 'jhi-forward-message-dialog',
     templateUrl: './forward-message-dialog.component.html',
-    styleUrls: ['./forward-message-dialog.component.scss'],
-    imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MessageEditorComponent, FormsModule, TranslateDirective, FaIconComponent],
+    styleUrls: ['./forward-message-dialog.component.css'],
+    imports: [
+        ArtemisTranslatePipe,
+        ProfilePictureComponent,
+        PostingContentComponent,
+        MessageEditorComponent,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiChipComponent,
+    ],
     providers: [CommunicationService, LinkPreviewService, LinkifyService, CourseConversationsService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    protected dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    protected dialogRef = inject(TumAetUiDialogRef);
+    private dialogConfig = inject(TumAetUiDialogConfig<ForwardMessageDialogData>);
     private courseManagementService = inject(CourseManagementService);
     private renderer = inject(Renderer2);
     private destroyRef = inject(DestroyRef);
@@ -94,6 +113,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     protected readonly faPeopleGroup = faPeopleGroup;
     protected readonly faHashtag = faHashtag;
+    protected readonly faXmark = faXmark;
 
     constructor() {
         afterRenderEffect(() => {
@@ -104,7 +124,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit(): void {
-        // Populate signals from DynamicDialogConfig data if available
+        // Populate signals from the dialog config data if available
         if (this.dialogConfig?.data) {
             if (this.dialogConfig.data.users !== undefined) {
                 this.users.set(this.dialogConfig.data.users);
@@ -317,6 +337,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             return;
         }
         // Safari may confirm an IME candidate after compositionend with keyCode 229 and isComposing=false.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of an IME confirmation in Safari
         if (event.isComposing || event.keyCode === 229) {
             event.stopPropagation();
             return;

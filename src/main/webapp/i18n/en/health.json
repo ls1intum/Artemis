@@ -48,7 +48,8 @@
         "status": {
             "UNKNOWN": "UNKNOWN",
             "UP": "UP",
-            "DOWN": "DOWN"
+            "DOWN": "DOWN",
+            "DEGRADED": "DEGRADED"
         }
     }
 }

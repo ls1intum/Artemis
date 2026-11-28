@@ -1,6 +1,6 @@
 <tumaet-ui-dialog [(visible)]="visible" [closable]="true" [dismissableMask]="true" size="large" [header]="'artemisApp.atlasOrchestrator.resultDialog.title' | artemisTranslate">
     @if (summaryMessage()) {
-        <p class="summary-box mb-4!" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
+        <p class="summary-box mb-4" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
     }
     <tumaet-ui-table-layout [empty]="!hasActions()" emptyTitle="artemisApp.atlasOrchestrator.resultDialog.empty">
         <table tumAetUiTable size="small" data-testid="orchestration-actions">

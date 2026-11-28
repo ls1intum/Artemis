@@ -23,19 +23,20 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Component } from '@angular/core';
-import { of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/account/user/user.model';
 
@@ -102,7 +103,7 @@ describe('CoursesComponent', () => {
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
-        const teamAssignmentUpdates = of<TeamAssignmentPayload>();
+        const teamAssignmentUpdates: Observable<TeamAssignmentPayload> = EMPTY;
         teamAssignmentSubscribeSpy = vi.spyOn(teamAssignmentUpdates, 'subscribe');
         TestBed.configureTestingModule({
             imports: [
@@ -261,7 +262,7 @@ describe('CoursesComponent', () => {
             visibleDate: visibleDate1.subtract(10, 'minutes'),
             course: courseEmpty,
             workingTime: 3600,
-            testExam: true,
+            examMode: ExamMode.TEST,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
         const courseForDashboard1 = { course: course1 } as CourseForDashboardDTO;

@@ -1,30 +1,19 @@
 /**
- * Forbid hand-writing a PrimeNG component ROOT class (e.g. `class="p-button"`, `class="p-inputtext"`) onto an
- * element in a template.
+ * Forbid a PrimeNG component ROOT class (e.g. `class="p-button"`, `class="p-inputtext"`) on an element in a template.
  *
- * WHY: PrimeNG (v20+) injects each component's CSS into <head> LAZILY — only when the first real instance of that
- * component renders (via its `ngOnInit`/`BaseComponent`), once per SPA session. A bare element that merely carries
- * the root class (`<button class="p-button">`, `<div class="p-inputtext">`) never runs that lifecycle, so its
- * styling is non-deterministic: it appears unstyled/grey/oversized until — and only if — some real component of the
- * same type happens to render first, and it can stretch neighbouring elements. Render the REAL component instead
- * (`<button pButton>`, `<input pInputText>`, `<p-tag>`, …), which self-injects its CSS deterministically. For a
- * custom element that should merely LOOK like a PrimeNG surface, use Tailwind utilities + PrimeNG tokens
- * (`border rounded-md px-3 py-2` with `border-color`/`background` tokens), not the component class.
+ * WHY: PrimeNG is removed from the client, so these classes style nothing. An element that carries one renders
+ * unstyled. The rule keeps such markup from coming back, for example through a merged branch or copied markup. Use
+ * the TUM AET UI component or directive instead (`<button tumAetUiButton>`, `<input tumAetUiInput>`,
+ * `<tumaet-ui-tag>`, ...), or Tailwind utilities with semantic tokens for a custom element.
  *
- * SCOPE: only the BARE root class is flagged (exact match). Modifier classes on a REAL component — e.g.
- * `class="p-button-secondary p-button-sm"` on a `<button pButton>` — are NOT flagged: the directive adds the root
- * class and self-injects the CSS, so the modifiers are harmless (prefer the `severity`/`size` inputs, but that is a
- * separate concern). Matched in static `class="..."`, `[class.<root>]`, and the bound source of `[class]`/`[ngClass]`.
+ * SCOPE: only the BARE root class is flagged (exact match), not modifier classes such as `p-button-secondary`.
+ * Matched in static `class="..."`, `[class.<root>]`, and the bound source of `[class]`/`[ngClass]`.
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
  */
 import { isClassListAttribute } from './class-list.mjs';
 
-// NOTE: this list is hand-curated and must be re-curated on every PrimeNG major upgrade (new/renamed/removed root
-// classes). Drift only ever UNDER-enforces (a missed root goes unflagged) — it never breaks the build — so a stale
-// list fails open, not closed. No CI cross-check is wired; keep this in the upgrade checklist.
-// PrimeNG component ROOT classes that the component itself applies and whose CSS is lazily injected. Hand-writing
-// any of these fakes a component. Curated to visually-fakeable, styled components; deliberately excludes shared
-// helper classes (p-component, p-disabled, p-error, p-fluid, p-highlight, p-ripple, p-link, …) which are not roots.
+// Root classes of the PrimeNG components that Artemis used. The list is hand-curated and deliberately excludes shared
+// helper classes (p-component, p-disabled, p-error, p-fluid, p-highlight, p-ripple, p-link, …), which are not roots.
 const PRIMENG_ROOTS = [
     'p-button',
     'p-inputtext',
@@ -73,18 +62,17 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description:
-                'Forbid hand-writing PrimeNG component root classes onto elements; render the real PrimeNG component (its CSS is injected lazily, so a bare class renders non-deterministically).',
+            description: 'Forbid root classes of the removed PrimeNG library on elements; use the TUM AET UI component or Tailwind utilities instead.',
         },
         messages: {
             handPaintedRoot:
-                "Hand-written PrimeNG root class '{{cls}}' is not allowed — PrimeNG injects component CSS lazily, so a bare element carrying this class renders non-deterministically. Render the real component instead (e.g. <button pButton>, <input pInputText>, <p-tag>), or style a custom element with Tailwind utilities + PrimeNG tokens. See client-development.mdx (### Styling).",
+                "PrimeNG root class '{{cls}}' has no effect, PrimeNG is removed from the client. Use the TUM AET UI component instead (e.g. <button tumAetUiButton>, <input tumAetUiInput>, <tumaet-ui-tag>), or style a custom element with Tailwind utilities and semantic tokens. See client-development.mdx (### Styling).",
         },
         schema: [],
     },
     create(context) {
-        // `class` plus PrimeNG class inputs (`styleClass`, component-specific `*StyleClass`): a root class
-        // hand-painted via styleClass (`<p-message styleClass="p-button">`) hits the same lazy-CSS footgun.
+        // `class` plus class inputs (`styleClass`, component-specific `*StyleClass`), which render their value onto
+        // an element as well.
         return {
             // Static class="..." / styleClass="...".
             TextAttribute(node) {

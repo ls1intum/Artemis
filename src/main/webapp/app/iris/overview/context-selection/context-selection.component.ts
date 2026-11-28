@@ -13,7 +13,10 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { TumAetUiChipComponent, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiSearchFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { forkJoin } from 'rxjs';
 
@@ -85,6 +88,8 @@ export class ContextSelectionComponent {
     private readonly lecturesSignal = signal<LectureForOverview[]>([]);
     private readonly exercisesSignal = signal<ExerciseTitle[]>([]);
     private optionsLoadedForCourseId?: number;
+    /** True while the options are being loaded, so the open picker says so instead of claiming that nothing matches. */
+    protected readonly optionsLoading = signal(false);
 
     readonly lectures = this.lecturesSignal.asReadonly();
     readonly exercises = this.exercisesSignal.asReadonly();
@@ -162,6 +167,7 @@ export class ContextSelectionComponent {
             return;
         }
         this.optionsLoadedForCourseId = courseId;
+        this.optionsLoading.set(true);
         forkJoin({
             lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
             exercises: this.exerciseService.getTitlesForAccessibleCourse(courseId),
@@ -171,10 +177,12 @@ export class ContextSelectionComponent {
                 next: ({ lectures, exercises }) => {
                     this.lecturesSignal.set(lectures);
                     this.exercisesSignal.set(exercises);
+                    this.optionsLoading.set(false);
                 },
                 error: () => {
                     this.lecturesSignal.set([]);
                     this.exercisesSignal.set([]);
+                    this.optionsLoading.set(false);
                     if (this.optionsLoadedForCourseId === courseId) {
                         this.optionsLoadedForCourseId = undefined;
                     }

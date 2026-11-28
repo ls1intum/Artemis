@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -27,6 +28,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -37,10 +40,15 @@ import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitRelevanceDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
 
 /**
@@ -48,6 +56,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
+@FeatureToggle(Feature.SmartQuizzes)
 @FeatureUsage(UserFeature.HYPERION_QUIZ_GENERATION)
 @RestController
 @RequestMapping("api/hyperion/")
@@ -240,6 +249,71 @@ public class HyperionQuizQuestionPoolResource {
         log.debug("REST request to review quiz question pool item [{}] of course [{}]", questionId, courseId);
         courseRepository.findByIdElseThrow(courseId);
         return ResponseEntity.ok(poolService.updateReviewState(courseId, questionId, review.reviewState()));
+    }
+
+    /**
+     * GET /courses/{courseId}/quiz-question-pool/lecture-units : List the lecture units the pool generates from, per competency, with their
+     * counts and whether an instructor excluded them.
+     *
+     * @param courseId the id of the course
+     * @return the units
+     */
+    @EnforceAtLeastEditorInCourse
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("courses/{courseId}/quiz-question-pool/lecture-units")
+    public ResponseEntity<List<QuizQuestionPoolLectureUnitDTO>> getQuizQuestionPoolLectureUnits(@PathVariable long courseId) {
+        log.debug("REST request to get the lecture units of the Hyperion quiz question pool of course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.getLectureUnits(courseId));
+    }
+
+    /**
+     * PUT /courses/{courseId}/quiz-question-pool/lecture-units/{lectureUnitId}/relevance : Exclude a lecture unit from generation, or include it again.
+     *
+     * @param courseId      the id of the course
+     * @param lectureUnitId the id of the lecture unit
+     * @param relevance     whether the unit is excluded
+     * @return the stored decision; 409 when a unit is to be excluded while a build of the course is running
+     */
+    @EnforceAtLeastInstructorInCourse
+    @PutMapping("courses/{courseId}/quiz-question-pool/lecture-units/{lectureUnitId}/relevance")
+    public ResponseEntity<QuizQuestionPoolLectureUnitRelevanceDTO> updateQuizQuestionPoolLectureUnitRelevance(@PathVariable long courseId, @PathVariable long lectureUnitId,
+            @Valid @RequestBody QuizQuestionPoolLectureUnitRelevanceDTO relevance) {
+        log.debug("REST request to set the relevance of lecture unit [{}] for the quiz question pool of course [{}]", lectureUnitId, courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        poolService.updateLectureUnitRelevance(courseId, lectureUnitId, relevance.excluded());
+        return ResponseEntity.ok(relevance);
+    }
+
+    /**
+     * GET /courses/{courseId}/quiz-question-pool/selection-candidates : Count the questions a draw may take, per competency, lecture
+     * unit, question type and difficulty.
+     *
+     * @param courseId the id of the course
+     * @return one count per cell that holds questions a draw may take
+     */
+    @EnforceAtLeastEditorInCourse
+    @GetMapping("courses/{courseId}/quiz-question-pool/selection-candidates")
+    public ResponseEntity<List<QuizQuestionPoolSelectionCandidateDTO>> getQuizQuestionPoolSelectionCandidates(@PathVariable long courseId) {
+        log.debug("REST request to count the questions a draw may take from the Hyperion quiz question pool of course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.getSelectionCandidates(courseId));
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-question-pool/select : Draw questions from the pool for a new quiz and record the draw.
+     *
+     * @param courseId the id of the course
+     * @param request  the competencies, lecture units, count, question types and difficulties to draw
+     * @return the drawn questions, fewer than requested when the pool holds fewer eligible ones, and the competencies that yielded nothing
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-question-pool/select")
+    public ResponseEntity<QuizQuestionPoolSelectionDTO> selectQuizQuestionPoolQuestions(@PathVariable long courseId,
+            @Valid @RequestBody QuizQuestionPoolSelectionRequestDTO request) {
+        log.debug("REST request to draw {} questions from the Hyperion quiz question pool of course [{}]", request.count(), courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.selectQuestions(courseId, request));
     }
 
     private void requireCompetencies(long courseId) {

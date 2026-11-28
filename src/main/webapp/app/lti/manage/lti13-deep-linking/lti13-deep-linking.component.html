@@ -1,14 +1,14 @@
 <div [hidden]="!isLinking()" *jhiHasAnyAuthority="IS_AT_LEAST_INSTRUCTOR">
-    <div class="flex shrink-0 items-center justify-between border-b border-border p-4!">
-        <div class="flex flex-1 flex-row pt-4! pb-1">
-            <h4 class="mb-0 leading-normal" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
+    <div class="flex shrink-0 items-center justify-between border-b border-border p-4">
+        <div class="flex flex-1 flex-row pt-4 pb-1">
+            <h4 class="mb-0" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course()?.title }">
                 Select content from course {{ course()?.title }}
             </h4>
             <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip" />
         </div>
     </div>
-    <div class="flex-auto p-4!">
-        <div class="flex flex-col gap-4!">
+    <div class="flex-auto p-4">
+        <div class="flex flex-col gap-4">
             <!-- exercise popover -->
             <div>
                 <button tumAetUiButton severity="secondary" type="button" data-testid="lti-exercises-toggle" [tumAetUiPopoverTrigger]="exercisesPopover">
@@ -113,7 +113,7 @@
         </div>
     </div>
 
-    <div class="lti-competency-selector flex items-center gap-2 px-4! pb-4!">
+    <div class="lti-competency-selector flex items-center gap-2 px-4 pb-4">
         <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
         <tumaet-ui-checkbox
@@ -123,7 +123,7 @@
         />
     </div>
 
-    <div class="lti-learning-path-selector flex items-center gap-2 px-4! pb-4!">
+    <div class="lti-learning-path-selector flex items-center gap-2 px-4 pb-4">
         <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
         <tumaet-ui-checkbox
@@ -133,13 +133,13 @@
         />
     </div>
 
-    <div class="lti-iris-selector flex items-center gap-2 px-4! pb-4!">
+    <div class="lti-iris-selector flex items-center gap-2 px-4 pb-4">
         <h4 class="mb-0" jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
         <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
         <tumaet-ui-checkbox [ariaLabel]="'artemisApp.lti.contentSelectionTable.iris.header' | artemisTranslate" [checked]="isIrisSelected()" (changed)="enableIris()" />
     </div>
 
-    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-3!">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-3">
         <div>
             @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected() || isLearningPathSelected() || isIrisSelected()) {
                 <button type="submit" tumAetUiButton severity="success" (click)="sendDeepLinkRequest()">

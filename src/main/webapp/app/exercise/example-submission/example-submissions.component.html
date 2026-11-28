@@ -1,6 +1,6 @@
 <div>
     @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-        <h4 class="mb-4!">
+        <h4 class="mb-4">
             <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmissions"></span>
         </h4>
         <tumaet-ui-table-layout
@@ -46,14 +46,14 @@
                             @if (exercise().type === exerciseType.TEXT) {
                                 <fa-icon
                                     [icon]="faQuestionCircle"
-                                    class="text-text-secondary ps-1"
+                                    class="text-muted-color ps-1"
                                     [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                 />
                             }
                             @if (exercise().type === exerciseType.MODELING) {
                                 <fa-icon
                                     [icon]="faQuestionCircle"
-                                    class="text-text-secondary ps-1"
+                                    class="text-muted-color ps-1"
                                     [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                                 />
                             }
@@ -105,7 +105,7 @@
                                 }
                             </td>
                             @if (exercise().course!.isAtLeastEditor) {
-                                <td class="sticky end-0 z-10 text-end">
+                                <td class="sticky end-0 z-10 text-right">
                                     <button
                                         type="button"
                                         tumAetUiButton
