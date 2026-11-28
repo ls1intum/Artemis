@@ -30,7 +30,8 @@ class LocalVCPushFilterTest {
     void authorizedReceivePackHoldsMutationLeaseForCompleteFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
         LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, mock(LocalVCAccessLogRecorderService.class), pushProcessingService,
+                mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -51,7 +52,8 @@ class LocalVCPushFilterTest {
     void authorizedReceivePackReleasesMutationLeaseWhenFilterChainThrows() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
         LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, mock(LocalVCAccessLogRecorderService.class), pushProcessingService,
+                mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -73,7 +75,9 @@ class LocalVCPushFilterTest {
     void busyExerciseReturnsRetryableConflictWithoutEnteringReceivePack() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
         LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
+        LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
+        GitOperationAudit audit = new GitOperationAudit();
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = receivePackRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         GitRepositoryAccessDTO exercise = exercise();
@@ -81,6 +85,7 @@ class LocalVCPushFilterTest {
         FilterChain filterChain = mock(FilterChain.class);
         request.setAttribute(ServletUtils.ATTRIBUTE_REPOSITORY, repository);
         request.setAttribute(LocalVCServletService.AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
+        when(accessLogRecorder.auditOf(request)).thenReturn(audit);
         when(pushProcessingService.claimProgrammingExerciseMutation(repository, exercise.exerciseId()))
                 .thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "exerciseGenerationRunning"));
 
@@ -89,14 +94,20 @@ class LocalVCPushFilterTest {
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(response.getErrorMessage()).contains("retry");
         verify(filterChain, never()).doFilter(request, response);
+        // the push was attempted and refused, so it is written as a failed push and not left as the advertisement of a push with nothing new
+        assertThat(audit.isPushReceived()).isTrue();
+        verify(accessLogRecorder).recordPushHTTPS(request);
     }
 
     @Test
     void getRequestSkipsTheMutationGuardAndPassesThroughTheFilterChain() throws Exception {
         LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
         LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
-        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, pushProcessingService, org.mockito.Mockito.mock(LocalVCUsageTrackingService.class));
+        LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
+        GitOperationAudit audit = new GitOperationAudit();
+        LocalVCPushFilter filter = new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, mock(LocalVCUsageTrackingService.class));
         MockHttpServletRequest request = new MockHttpServletRequest(HttpMethod.GET.name(), "/git/TEST/test-exercise.git/info/refs");
+        when(accessLogRecorder.auditOf(request)).thenReturn(audit);
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
 
@@ -104,6 +115,9 @@ class LocalVCPushFilterTest {
 
         verify(filterChain).doFilter(request, response);
         verify(pushProcessingService, never()).claimProgrammingExerciseMutation(any(), anyLong());
+        // The advertisement is all there is of a push that has nothing new, so it is handed over to be written
+        assertThat(audit.isAccessed()).isTrue();
+        verify(accessLogRecorder).recordPushHTTPS(request);
     }
 
     private static MockHttpServletRequest receivePackRequest() {

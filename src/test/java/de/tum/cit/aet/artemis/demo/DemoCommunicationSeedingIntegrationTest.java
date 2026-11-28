@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService
 import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -76,7 +76,7 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
     private OneToOneChatRepository oneToOneChatRepository;
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private CourseAvailableTabsService courseAvailableTabsService;

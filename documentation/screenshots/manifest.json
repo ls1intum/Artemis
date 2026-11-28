@@ -1512,10 +1512,10 @@
                     "click": "[data-testid=\"switch-edit-mode-button\"]"
                 },
                 {
-                    "select": {
-                        "selector": "#field_programmingLanguage",
-                        "label": "Java"
-                    }
+                    "click": "#field_programmingLanguage"
+                },
+                {
+                    "click": "role=option[name=/^Java$/]"
                 },
                 {
                     "waitFor": "#field_projectType"

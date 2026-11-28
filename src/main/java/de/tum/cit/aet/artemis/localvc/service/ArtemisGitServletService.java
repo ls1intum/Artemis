@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.io.IOException;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +13,9 @@ import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
+import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +32,8 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 @Lazy
 @Service
 public class ArtemisGitServletService extends GitServlet {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisGitServletService.class);
 
     private final transient LocalVCServletService localVCServletService;
 
@@ -106,34 +113,45 @@ public class ArtemisGitServletService extends GitServlet {
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
         this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService, accessLogRecorder, usageTrackingService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, pushProcessingService, usageTrackingService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, accessLogRecorder, pushProcessingService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
-            ReceivePack receivePack = new ReceivePack(repository);
-            // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
-            if (isAuthorizedPostRequest(request)) {
-                final User user;
-                try {
-                    user = localVCServletService.getUserByAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
-                }
-                catch (LocalVCAuthException e) {
-                    throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
-                }
-                // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-                receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
-                        () -> localVCServletService.getAuthenticationMechanism(request)));
+            // we only need the hooks and the separate place for the objects of a push for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
+            if (!isAuthorizedPostRequest(request)) {
+                return LocalVCReceivePackLimits.apply(new ReceivePack(repository));
             }
+            final User user;
+            try {
+                user = localVCServletService.getUserByAuthHeader(request.getHeader(HttpHeaders.AUTHORIZATION));
+            }
+            catch (LocalVCAuthException e) {
+                throw new ServiceNotAuthorizedException("Could not resolve the authenticated LocalVC push user", e);
+            }
+            // The hook prevents illegal actions on push (delete branch, rename branch, force push), and examines the content of the push.
+            GitOperationAudit audit = accessLogRecorder.auditOf(request);
+            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit, () -> localVCServletService.getAuthenticationMechanism(request));
+            final ReceivePack receivePack;
+            try {
+                // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
+                receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
+            }
+            catch (IOException e) {
+                log.warn("Could not prepare the receipt of a push to {}", repository.getDirectory(), e);
+                throw new ServiceNotEnabledException("Could not prepare the push");
+            }
+            receivePack.setPreReceiveHook(prePushHook);
+            // Add a hook that triggers the creation of a new submission after the push went through successfully.
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, user,
+                    () -> localVCServletService.getAuthenticationMechanism(request), audit::onPushAccepted));
             return receivePack;
         });
 
         this.setUploadPackFactory((request, repository) -> {
-            UploadPack uploadPack = new UploadPack(repository);
+            UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
             // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
             if (isAuthorizedPostRequest(request)) {
-                // Add the custom pre-upload hook, to distinguish between clone and pull operations
-                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder, request));
+                // Add the custom pre-upload hook, which tells the audit whether data is sent and whether the client is cloning or pulling
+                uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(accessLogRecorder.auditOf(request)));
             }
             return uploadPack;
         });

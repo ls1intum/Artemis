@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { test } from '../../support/fixtures';
 import { generateUUID, readResponseJson } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
+import { ExamMode } from '../../support/constants';
 import { admin, instructor } from '../../support/users';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
@@ -118,7 +119,7 @@ test.describe('Exam form validation', { tag: '@fast' }, () => {
         const response = await examCreation.submit();
         expect(response.status()).toBe(201);
         createdExam = await readResponseJson<Exam>(response);
-        expect(createdExam.testExam).toBe(true);
+        expect(createdExam.examMode).toBe(ExamMode.TEST);
         expect(createdExam.workingTime).toBe(45 * 60);
         expect(createdExam.numberOfCorrectionRoundsInExam, 'a test exam has no correction rounds').toBe(0);
     });

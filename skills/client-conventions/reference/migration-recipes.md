@@ -173,7 +173,7 @@ such as `top.px`, and it is compared by reference. Remove `NgStyle` from the com
 ## Colours
 
 ```html
-<!-- wrong: primitive, Bootstrap class, superseded arbitrary form -->
+<!-- wrong: primitive, removed Bootstrap class, superseded arbitrary form -->
 <span class="text-red-500">…</span>
 <span class="text-danger">…</span>
 <span class="text-(--danger)">…</span>
@@ -183,6 +183,24 @@ such as `top.px`, and it is compared by reference. Remove `NgStyle` from the com
 ```
 
 For a component, prefer the TUM AET UI variant over a utility class on plain markup.
+
+## A Tailwind utility that has no effect
+
+Tailwind utilities live in a CSS layer, so unlayered CSS wins over them. The element defaults of
+`base.css` are in an earlier layer and lose to a utility; the cases below still turn a
+correct-looking utility into a no-op. Lint and unit tests
+do not catch them; open the screen and read the computed style.
+
+| Case                                              | Symptom                                 | Fix     |
+| ------------------------------------------------- | --------------------------------------- | ------- |
+| Rule in the stylesheet of the component, e.g. `p { … }` | `mt-6` on the paragraph changes nothing | `mt-6!` |
+
+The styles of TUM AET UI are in the layer `tumaet-ui`, below the utilities: a utility on a TUM AET UI
+component (`text-state-danger` on a menu item, `p-0` on a button) applies without the modifier.
+
+A hover-only control also needs a way to appear without a pointer. `group-hover:` only applies
+where `(hover: hover)` matches, so add `[@media(hover:none)]:opacity-100!` or the control stays
+invisible on a touch device.
 
 ## Verifying a migration
 

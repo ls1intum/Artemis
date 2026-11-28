@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -27,7 +27,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
@@ -48,8 +48,8 @@ examples.forEach((activeConversation) => {
                     MockDirective(TranslateDirective),
                 ],
                 providers: [
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                    { provide: DynamicDialogConfig, useValue: { data: {} } },
+                    { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                    { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                     MockProvider(ConversationService),
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -57,7 +57,7 @@ examples.forEach((activeConversation) => {
                     SessionStorageService,
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
-                    { provide: DialogService, useClass: MockDialogService },
+                    { provide: TumAetUiDialogService, useClass: MockDialogService },
                 ],
             });
 
@@ -84,8 +84,48 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        it('should show the tab selected by the opener', () => {
+            const selectedTab = fixture.nativeElement.querySelector('[role="tab"][aria-selected="true"]') as HTMLElement;
+            expect(selectedTab.className).toContain('info-tab');
+            expect(fixture.nativeElement.querySelector('jhi-conversation-info')).toBeTruthy();
+        });
+
+        it('should switch the content when another tab is clicked', async () => {
+            if (!component.isOneToOneChat()) {
+                (fixture.nativeElement.querySelector('.members-tab') as HTMLElement).click();
+                await fixture.whenStable();
+                fixture.detectChanges();
+
+                expect(component.selectedTab()).toBe(ConversationDetailTabs.MEMBERS);
+                expect(fixture.nativeElement.querySelector('jhi-conversation-members')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('jhi-conversation-info')).toBeFalsy();
+            }
+        });
+
+        it('should keep the selected tab when the tab list reports a value that is no tab', () => {
+            component.onTabChange('unknown');
+            expect(component.selectedTab()).toBe(ConversationDetailTabs.INFO);
+            component.onTabChange(undefined);
+            expect(component.selectedTab()).toBe(ConversationDetailTabs.INFO);
+        });
+
+        it('should dismiss the dialog from the close button as long as nothing was changed', () => {
+            const dialogRef = TestBed.inject(TumAetUiDialogRef);
+            const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
+            (fixture.nativeElement.querySelector('[data-testid="conversation-detail-close-button"]') as HTMLElement).click();
+            expect(dismissSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should close the dialog with a result from the close button once changes were performed', () => {
+            const dialogRef = TestBed.inject(TumAetUiDialogRef);
+            const closeSpy = vi.spyOn(dialogRef, 'close');
+            component.changesWerePerformed.set(true);
+            (fixture.nativeElement.querySelector('[data-testid="conversation-detail-close-button"]') as HTMLElement).click();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
+        });
+
         it('should react correctly to events from members tab', () => {
-            component.selectedTab = ConversationDetailTabs.MEMBERS;
+            component.selectedTab.set(ConversationDetailTabs.MEMBERS);
             fixture.changeDetectorRef.detectChanges();
 
             const membersComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-members'));
@@ -100,7 +140,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should react correctly to events from info tab', () => {
-            component.selectedTab = ConversationDetailTabs.INFO;
+            component.selectedTab.set(ConversationDetailTabs.INFO);
             fixture.changeDetectorRef.detectChanges();
 
             const infoComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-info'));
@@ -116,7 +156,7 @@ examples.forEach((activeConversation) => {
 
         it('should react correctly to events from settings tab', () => {
             if (!component.isOneToOneChat()) {
-                component.selectedTab = ConversationDetailTabs.SETTINGS;
+                component.selectedTab.set(ConversationDetailTabs.SETTINGS);
                 fixture.changeDetectorRef.detectChanges();
 
                 const settingsComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-settings'));
@@ -125,7 +165,7 @@ examples.forEach((activeConversation) => {
                 const settingsComponent = settingsComponentDebug.componentInstance;
                 expect(settingsComponent).toBeTruthy();
 
-                const dialogRef = TestBed.inject(DynamicDialogRef);
+                const dialogRef = TestBed.inject(TumAetUiDialogRef);
                 const closeSpy = vi.spyOn(dialogRef, 'close');
 
                 settingsComponent.channelArchivalChange.emit();
@@ -142,7 +182,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should mark changes and close the dialog on privacy/archival/channelDeleted/leave events', () => {
-            const dialogRef = TestBed.inject(DynamicDialogRef);
+            const dialogRef = TestBed.inject(TumAetUiDialogRef);
             const closeSpy = vi.spyOn(dialogRef, 'close');
 
             expect(component.changesWerePerformed()).toBe(false);
@@ -183,7 +223,7 @@ examples.forEach((activeConversation) => {
         it('should invoke the username click callback from dialog data without replacing the component method', () => {
             const testUserId = 42;
             const callback = vi.fn();
-            component.dialogConfig!.data.onUserNameClicked = callback;
+            component.dialogConfig!.data!.onUserNameClicked = callback;
             const emitSpy = vi.spyOn(component.userNameClicked, 'emit');
 
             component.onUserNameClicked(testUserId);

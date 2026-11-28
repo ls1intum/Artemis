@@ -10,7 +10,7 @@ import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSigna
 @Component({
     selector: 'jhi-user-settings-container',
     templateUrl: './user-settings-container.component.html',
-    styleUrl: './user-settings-container.component.scss',
+    styleUrl: './user-settings-container.component.css',
     imports: [RouterOutlet, UserSettingsSidebarComponent, UserSettingsTitleBarComponent],
 })
 export class UserSettingsContainerComponent implements OnInit {

@@ -1,3 +1,5 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular/skeleton';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -9,18 +11,16 @@ import { ExerciseVersionHistoryTimelineComponent } from 'app/exercise/version-hi
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MessageModule } from 'primeng/message';
-import { SkeletonModule } from 'primeng/skeleton';
 import { Subscription, finalize } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-version-history',
     templateUrl: './programming-exercise-version-history.component.html',
-    styleUrls: ['./programming-exercise-version-history.component.scss'],
+    styleUrls: ['./programming-exercise-version-history.component.css'],
     imports: [
         TranslateDirective,
-        MessageModule,
-        SkeletonModule,
+        TumAetUiMessageComponent,
+        TumAetUiSkeletonComponent,
         ExerciseVersionHistoryLayoutComponent,
         ExerciseVersionHistoryTimelineComponent,
         ExerciseVersionSharedSnapshotMetadataComponent,

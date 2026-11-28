@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
@@ -47,6 +49,7 @@ public class CourseRequestResource {
      */
     @PostMapping("course-requests")
     @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.COURSE_REQUEST, perUser = true)
     public ResponseEntity<CourseRequestDTO> createCourseRequest(@Valid @RequestBody CourseRequestCreateDTO courseRequest) throws URISyntaxException {
         log.debug("REST request to create course request for course {}", courseRequest.shortName());
         CourseRequestDTO result = courseRequestService.createCourseRequest(courseRequest);

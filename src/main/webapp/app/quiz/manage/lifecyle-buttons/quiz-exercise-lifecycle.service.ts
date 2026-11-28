@@ -6,9 +6,12 @@ import { QuizExerciseDates } from 'app/openapi/model/quiz-exercise-dates';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
-/** Whether the quiz can be started now: a synchronized quiz that has not started yet. */
+/**
+ * Whether the quiz can be started now: a synchronized quiz whose batch has not started, whether students can already see it (waiting room open) or not.
+ * The status says exactly that. The server's `quizStarted` flag is not usable here, it only means "visible to students".
+ */
 export function canStartQuiz(quiz: QuizExercise): boolean {
-    return (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted;
+    return (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor;
 }
 
 /** Whether the quiz can be ended now: an individual or batched quiz that has not ended yet. */

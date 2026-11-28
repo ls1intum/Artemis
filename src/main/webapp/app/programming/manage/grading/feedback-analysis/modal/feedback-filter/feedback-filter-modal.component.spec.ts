@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackFilterModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -14,7 +13,6 @@ describe('FeedbackFilterModalComponent', () => {
     let fixture: ComponentFixture<FeedbackFilterModalComponent>;
     let component: FeedbackFilterModalComponent;
     let localStorageService: LocalStorageService;
-    let activeModal: NgbActiveModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -22,7 +20,6 @@ describe('FeedbackFilterModalComponent', () => {
             providers: [
                 { provide: LocalStorageService, useValue: { store: vi.fn(), remove: vi.fn(), retrieve: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                NgbActiveModal,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -31,9 +28,8 @@ describe('FeedbackFilterModalComponent', () => {
         fixture = TestBed.createComponent(FeedbackFilterModalComponent);
         component = fixture.componentInstance;
         localStorageService = TestBed.inject(LocalStorageService);
-        activeModal = TestBed.inject(NgbActiveModal);
-        component.minCount.set(0);
-        component.maxCount.set(10);
+        fixture.componentRef.setInput('minCount', 0);
+        fixture.componentRef.setInput('maxCount', 10);
         fixture.detectChanges();
     });
 
@@ -56,7 +52,8 @@ describe('FeedbackFilterModalComponent', () => {
     it('should call localStorage store when applying filters', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
         const emitSpy = vi.spyOn(component.filterApplied, 'emit');
-        const closeSpy = vi.spyOn(activeModal, 'close');
+        const closeSpy = vi.fn();
+        component.closed.subscribe(closeSpy);
 
         component.filters.occurrence = [component.minCount(), component.maxCount()];
         component.filters.errorCategories = ['Student Error', 'Ares Error'];
@@ -73,7 +70,8 @@ describe('FeedbackFilterModalComponent', () => {
     it('should clear filters and reset them correctly', () => {
         const removeSpy = vi.spyOn(localStorageService, 'remove');
         const emitSpy = vi.spyOn(component.filterApplied, 'emit');
-        const closeSpy = vi.spyOn(activeModal, 'close');
+        const closeSpy = vi.fn();
+        component.closed.subscribe(closeSpy);
 
         component.clearFilter();
 
@@ -93,39 +91,46 @@ describe('FeedbackFilterModalComponent', () => {
     });
 
     it('should update filters when checkboxes change for tasks', () => {
-        const event = { target: { checked: true, value: 'test-task' } } as unknown as Event;
-        component.onCheckboxChange(event, 'tasks');
+        component.onFilterToggle(true, 'tasks', 'test-task');
         expect(component.filters.tasks).toEqual(['test-task']);
     });
 
     it('should update filters when checkboxes change for errorCategories', () => {
-        const event = { target: { checked: true, value: 'Student Error' } } as unknown as Event;
-        component.onCheckboxChange(event, 'errorCategories');
+        component.onFilterToggle(true, 'errorCategories', 'Student Error');
         expect(component.filters.errorCategories).toEqual(['Student Error']);
     });
 
-    it('should update filters when checkboxes change for occurrence', () => {
-        const event = { target: { checked: true, value: '1' } } as unknown as Event;
-        component.onCheckboxChange(event, 'occurrence');
-        expect(component.filters.occurrence).toEqual([0, 1, 1]);
+    it('should start from the provided filters and toggle them through the rendered checkboxes', () => {
+        fixture = TestBed.createComponent(FeedbackFilterModalComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('taskArray', ['Task 1', 'Task 2']);
+        fixture.componentRef.setInput('maxCount', 10);
+        fixture.componentRef.setInput('initialFilters', { tasks: ['Task 2'], testCases: [], occurrence: [0, 10], errorCategories: [] });
+        fixture.detectChanges();
+
+        const checkboxes = Array.from(document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')).slice(-2);
+        expect(checkboxes.map((checkbox) => checkbox.checked)).toEqual([false, true]);
+
+        checkboxes[0].click();
+        fixture.detectChanges();
+        expect(component.filters.tasks).toEqual(['Task 2', 'Task 1']);
     });
 
     it('should remove the value from filters when checkbox is unchecked for tasks', () => {
         component.filters.tasks = ['test-task', 'task-2'];
-        const event = { target: { checked: false, value: 'test-task' } } as unknown as Event;
-        component.onCheckboxChange(event, 'tasks');
+        component.onFilterToggle(false, 'tasks', 'test-task');
         expect(component.filters.tasks).toEqual(['task-2']);
     });
 
     it('should remove the value from filters when checkbox is unchecked for errorCategories', () => {
         component.filters.errorCategories = ['Student Error', 'Ares Error'];
-        const event = { target: { checked: false, value: 'Student Error' } } as unknown as Event;
-        component.onCheckboxChange(event, 'errorCategories');
+        component.onFilterToggle(false, 'errorCategories', 'Student Error');
         expect(component.filters.errorCategories).toEqual(['Ares Error']);
     });
 
     it('should dismiss modal when closeModal is called', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+        const dismissSpy = vi.fn();
+        component.closed.subscribe(dismissSpy);
         component.closeModal();
         expect(dismissSpy).toHaveBeenCalledOnce();
     });

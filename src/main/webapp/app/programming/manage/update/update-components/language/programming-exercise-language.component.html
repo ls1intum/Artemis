@@ -5,33 +5,32 @@
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage"></p>
     @if (isEditFieldDisplayedRecord().programmingLanguage) {
-        <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
-            <select
+        <div class="mb-4">
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
+            <tumaet-ui-select
                 #select="ngModel"
                 required
-                class="form-select"
+                class="w-full"
+                [options]="languageOptions()"
+                optionLabel="label"
+                optionValue="value"
                 [ngModel]="programmingExerciseCreationConfig().selectedProgrammingLanguage"
                 (ngModelChange)="select.model = programmingExerciseCreationConfig().onProgrammingLanguageChange($event)"
                 name="programmingLanguage"
-                id="field_programmingLanguage"
+                inputId="field_programmingLanguage"
                 [disabled]="
                     programmingExerciseCreationConfig().isImportFromExistingExercise ||
                     !!programmingExercise().id ||
                     programmingExerciseCreationConfig().isImportFromFile ||
-                    programmingExerciseCreationConfig().isImportFromSharing
+                    programmingExerciseCreationConfig().isExternalImport
                 "
-            >
-                @for (supportedLanguage of programmingExerciseCreationConfig().supportedLanguages; track supportedLanguage) {
-                    <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>
-                }
-            </select>
+            />
         </div>
     }
     @if (programmingExercise().programmingLanguage && programmingExerciseCreationConfig().projectTypes?.length && programmingExerciseCreationConfig().modePickerOptions) {
-        <div class="form-group mt-2">
+        <div class="mb-4 mt-2">
             @if (isEditFieldDisplayedRecord().projectType) {
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"> </label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"> </label>
                 <jhi-mode-picker
                     required
                     [options]="programmingExerciseCreationConfig().modePickerOptions ?? []"
@@ -40,7 +39,7 @@
                     [disabled]="
                         programmingExerciseCreationConfig().isImportFromExistingExercise ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().id
                     "
                     name="projectType"
@@ -51,23 +50,19 @@
                 isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig().isImportFromFile &&
-                !programmingExerciseCreationConfig().isImportFromSharing &&
+                !programmingExerciseCreationConfig().isExternalImport &&
                 !programmingExercise().id &&
                 programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA &&
                 programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX
             ) {
-                <div class="form-check mt-2">
-                    <input
-                        [attr.aria-label]="'artemisApp.programmingExercise.withDependencies' | artemisTranslate"
-                        class="form-check-input"
-                        type="checkbox"
+                <div class="flex items-center gap-2 mt-2">
+                    <tumaet-ui-checkbox
                         name="withDependencies"
-                        id="field_with_dependencies"
+                        inputId="field_with_dependencies"
                         [(ngModel)]="programmingExerciseCreationConfig().withDependencies"
                         (ngModelChange)="programmingExerciseCreationConfig().onWithDependenciesChanged($event)"
-                        checked
                     />
-                    <span jhiTranslate="artemisApp.programmingExercise.withDependencies"></span>
+                    <label class="mb-0" for="field_with_dependencies" jhiTranslate="artemisApp.programmingExercise.withDependencies"></label>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
@@ -77,7 +72,7 @@
         @if (programmingExercise().programmingLanguage === ProgrammingLanguage.EMPTY) {
             <div>
                 <p>
-                    <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning" />
+                    <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-state-warning" />
                     <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" [translateValues]="{ documentationLink: DOCUMENTATION_LINK }"></span>
                 </p>
                 <ol>
@@ -100,17 +95,20 @@
             </div>
         }
         @if (programmingExercise().programmingLanguage && programmingExerciseCreationConfig().packageNameRequired && programmingExercise().projectType !== ProjectType.XCODE) {
-            <div class="form-group">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label
+            <div class="mb-4">
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label
                 ><span class="text-state-danger" aria-hidden="true">*</span>
                 <input
                     required
                     type="text"
                     [pattern]="programmingExerciseCreationConfig().packageNamePattern"
                     [maxlength]="MAX_PACKAGE_NAME_LENGTH"
-                    class="form-control"
+                    tumAetUiInput
+                    class="w-full"
                     name="packageName"
                     id="field_packageName"
+                    tumAetUiInputId="field_packageName"
+                    [tumAetUiInputInvalid]="!!packageName.invalid && !!(packageName.dirty || packageName.touched)"
                     [(ngModel)]="programmingExercise().packageName"
                     [readonly]="programmingExercise().id"
                     #packageName="ngModel"
@@ -120,35 +118,38 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <div class="alert alert-danger">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             @if (programmingExercise().projectType === ProjectType.MAVEN_BLACKBOX) {
                                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage + '_BLACKBOX'"></div>
                             }
                             @if (programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX) {
                                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage"></div>
                             }
-                        </div>
+                        </tumaet-ui-message>
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <div class="alert alert-danger">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
-                    </div>
+                    </tumaet-ui-message>
                 }
             </div>
         }
         @if (programmingExercise().programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise().projectType === ProjectType.XCODE) {
-            <div class="form-group">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
+            <div class="mb-4">
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
                 <input
                     [attr.aria-label]="'artemisApp.programmingExercise.appName' | artemisTranslate"
                     required
                     type="text"
                     [pattern]="APP_NAME_PATTERN_FOR_SWIFT"
                     [maxlength]="MAX_PACKAGE_NAME_LENGTH"
-                    class="form-control"
+                    tumAetUiInput
+                    class="w-full"
                     name="packageName"
                     id="field_appName"
+                    tumAetUiInputId="field_appName"
+                    [tumAetUiInputInvalid]="!!packageName.invalid && !!(packageName.dirty || packageName.touched)"
                     [(ngModel)]="programmingExercise().packageName"
                     [readonly]="programmingExercise().id"
                     #packageName="ngModel"
@@ -158,15 +159,15 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <div class="alert alert-danger">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage"></div>
-                        </div>
+                        </tumaet-ui-message>
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <div class="alert alert-danger">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
-                    </div>
+                    </tumaet-ui-message>
                 }
             </div>
         }
@@ -174,30 +175,24 @@
 
     <!-- Theia Image Selection -->
     @if (allowOnlineIde() && programmingExercise().programmingLanguage) {
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
+        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
         <jhi-programming-exercise-theia [programmingExercise]="programmingExercise()" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig()" />
     }
 
     <!-- Static code analysis checkbox -->
     @if (isEditFieldDisplayedRecord().enableStaticCodeAnalysis && programmingExercise().programmingLanguage && programmingExerciseCreationConfig().staticCodeAnalysisAllowed) {
         <div>
-            <div class="form-check custom-control custom-checkbox">
-                <input
-                    type="checkbox"
-                    class="form-check-input custom-control-input"
-                    id="field_staticCodeAnalysisEnabled"
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
+                    inputId="field_staticCodeAnalysisEnabled"
                     name="staticCodeAnalysisEnabled"
                     [disabled]="
                         !!programmingExercise().buildConfig?.sequentialTestRuns || (!programmingExerciseCreationConfig().isImportFromExistingExercise && !!programmingExercise().id)
                     "
                     [(ngModel)]="programmingExercise().staticCodeAnalysisEnabled"
-                    (change)="programmingExerciseCreationConfig().onStaticCodeAnalysisChanged()"
+                    (changed)="programmingExerciseCreationConfig().onStaticCodeAnalysisChanged()"
                 />
-                <label
-                    class="form-check-label custom-control-label"
-                    for="field_staticCodeAnalysisEnabled"
-                    jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title"
-                >
+                <label class="mb-0" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
                     Enable Static Code Analysis</label
                 >
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description" />
@@ -209,42 +204,33 @@
     The test repository of an imported exercise already has its final structure, so the imported value is locked on every import path.-->
     @if (isEditFieldDisplayedRecord().sequentialTestRuns && programmingExerciseCreationConfig().sequentialTestRunsAllowed) {
         <div>
-            <div class="form-check custom-control custom-checkbox">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
+            <div class="flex items-center gap-2 mb-1">
+                <tumaet-ui-checkbox
                     name="sequentialTestRuns"
-                    id="field_sequentialTestRuns"
+                    inputId="field_sequentialTestRuns"
                     [disabled]="
                         !!programmingExercise().id ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().staticCodeAnalysisEnabled
                     "
                     [(ngModel)]="programmingExercise().buildConfig!.sequentialTestRuns"
-                    checked
                 />
-                <label class="form-check-label custom-control-label" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">
-                    >Sequential Test Runs</label
-                >
+                <label class="mb-0" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title"> Sequential Test Runs</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description" />
             </div>
         </div>
     }
     @if (!programmingExercise().id && programmingExercise().programmingLanguage && programmingExerciseCreationConfig().checkoutSolutionRepositoryAllowed) {
-        <div class="form-check">
-            <label class="form-check-label" for="field_checkoutSolutionRepository">
-                <input
-                    #checkoutSolutionRepository="ngModel"
-                    class="form-check-input"
-                    type="checkbox"
-                    name="checkoutSolutionRepository"
-                    id="field_checkoutSolutionRepository"
-                    [(ngModel)]="programmingExercise().buildConfig!.checkoutSolutionRepository"
-                />
-                <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></span>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
-            </label>
+        <div class="flex items-center gap-2 mb-1">
+            <tumaet-ui-checkbox
+                #checkoutSolutionRepository="ngModel"
+                name="checkoutSolutionRepository"
+                inputId="field_checkoutSolutionRepository"
+                [(ngModel)]="programmingExercise().buildConfig!.checkoutSolutionRepository"
+            />
+            <label class="mb-0" for="field_checkoutSolutionRepository" jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
         </div>
     }
 </section>

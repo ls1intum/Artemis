@@ -1,4 +1,5 @@
-import { TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
@@ -13,13 +14,14 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import dayjs from 'dayjs/esm';
 

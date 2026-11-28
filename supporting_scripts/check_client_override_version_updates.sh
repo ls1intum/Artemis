@@ -47,6 +47,8 @@ for k, v in overrides.items():
 
 check_dep() {
     local file=$1 raw_name=$2 cur=$3
+    # A '-' value removes the dependency instead of pinning a version, so there is nothing to compare.
+    [[ "$cur" == "-" ]] && return
     # Strip 'parent>' prefix, then optionally strip a version-range qualifier
     # (e.g. 'dompurify@<3.4.3' -> 'dompurify'). Naively doing `${name%@*}` would
     # also eat the leading scope marker on packages like '@angular/cdk', leaving

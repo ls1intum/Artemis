@@ -3,7 +3,7 @@
 }
 @if (summaryLoadFailed()) {
     <!-- Persistent error state instead of the summary. Substituting the exam cached on this device would show a result-less exam as the current summary (#13317). -->
-    <div class="flex flex-col gap-2 p-6!">
+    <div class="flex flex-col gap-2 p-6">
         @if (isSidebarCollapsed()) {
             <div>
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -35,7 +35,7 @@
     @if (studentExam()) {
         <!-- exam() participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed()) {
-            <div class="exam-background-wrapper body-bg" [class.exam-background-wrapper--test-run]="!!testRunId()">
+            <div class="exam-background-wrapper bg-(--body-bg)" [class.exam-background-wrapper--test-run]="!!testRunId()">
                 <jhi-exam-bar
                     [exam]="exam()"
                     [studentExam]="studentExam()"
@@ -56,7 +56,7 @@
                         (onPageChanged)="onPageChange($event)"
                     />
                     <!-- exercises -->
-                    <div class="exam-content module-bg rounded-lg" data-testid="exam-content">
+                    <div class="exam-content bg-(--module-bg) rounded-lg" data-testid="exam-content">
                         <!--
                             The scroll container is a flex item of the card, so its height comes from the card, not from the viewport.
                             Its column is exactly as tall as the container, or taller when the exercise is (see `.exam-content__column`), so
@@ -66,7 +66,7 @@
                             stretched again — and the scrollbar flickered in and out on every change-detection pass (#13916).
                             cdkScrollable registers the container with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187).
                         -->
-                        <div class="content-exam-height hide-scrollbar-unless-scrolling p-3!" data-testid="exam-content-scroller" cdkScrollable>
+                        <div class="content-exam-height hide-scrollbar-unless-scrolling p-3" data-testid="exam-content-scroller" cdkScrollable>
                             <div class="exam-content__column" data-testid="exam-content-column">
                                 <div [hidden]="activePageIndex !== -1">
                                     <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
@@ -125,20 +125,20 @@
                                         }
                                     }
                                 }
-                                @if ((generateParticipationStatus | async) === 'generating') {
+                                @let generateParticipationStatus = participationGenerationStatus();
+                                @if (generateParticipationStatus === 'generating') {
                                     <div class="flex items-center justify-center">
-                                        <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
-                                        <tumaet-ui-progress-spinner class="ml-2" [ariaLabel]="'loading' | artemisTranslate" />
+                                        <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
+                                        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
                                     </div>
-                                }
-                                @if ((generateParticipationStatus | async) === 'failed') {
+                                } @else if (generateParticipationStatus === 'failed') {
                                     <div class="flex items-center justify-center">
-                                        <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
+                                        <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                                         <button
                                             type="button"
                                             tumAetUiButton
                                             size="small"
-                                            class="ml-2!"
+                                            class="ml-2"
                                             data-testid="retry-exercise-participation"
                                             (click)="retryParticipationForExercise()"
                                             jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
@@ -150,16 +150,7 @@
 
                         <!-- connection status bar, as tall as the foot of the sidebar next to it -->
                         <div class="exam-status-bar" [class.disconnected]="!connected()" data-testid="exam-status-bar">
-                            <p
-                                class="mb-0!"
-                                [jhiTranslate]="
-                                    !connected()
-                                        ? 'artemisApp.examParticipation.disconnected'
-                                        : isProgrammingExercise()
-                                          ? 'artemisApp.examParticipation.ideConnected'
-                                          : 'artemisApp.examParticipation.connected'
-                                "
-                            ></p>
+                            <p class="mb-0" [jhiTranslate]="connectionStatusTranslationKey()"></p>
                             <jhi-connection-status [isExamMode]="true" class="connection-status-exam-participation" />
                         </div>
                     </div>
@@ -168,7 +159,7 @@
         }
         @if (!studentExam().submitted && ((isOver() && examStartConfirmed()) || isGracePeriodOver())) {
             @if (!studentFailedToSubmit) {
-                <div class="exam-background-wrapper body-bg" [class.exam-background-wrapper--test-run]="!!testRunId()">
+                <div class="exam-background-wrapper bg-(--body-bg)" [class.exam-background-wrapper--test-run]="!!testRunId()">
                     <jhi-exam-bar
                         [endDate]="individualStudentEndDateWithGracePeriod()"
                         [exerciseIndex]="exerciseIndex()"
@@ -182,7 +173,7 @@
                     />
 
                     <!-- Only the top padding: the cover brings the 12px inset on the sides (and below) itself, so it lines up with the bar above. -->
-                    <div class="module-bg end-view content-exam-height rounded-lg pt-3!" data-testid="exam-end-view">
+                    <div class="bg-(--module-bg) end-view content-exam-height rounded-lg pt-3" data-testid="exam-end-view">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam()"
@@ -198,14 +189,14 @@
                 </div>
             } @else {
                 <!-- Display submission not in time view -->
-                <div class="flex flex-col p-6!">
+                <div class="flex flex-col p-6">
                     @if (isSidebarCollapsed()) {
                         <div>
                             <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
                         </div>
                     }
                     <div class="my-auto w-full text-center">
-                        <h3 class="mt-2! text-lg! font-semibold!">{{ exam().title }}</h3>
+                        <h3 class="mt-2 text-lg font-semibold">{{ exam().title }}</h3>
                         <div class="mb-2 font-bold text-state-danger">
                             <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
                         </div>
@@ -219,10 +210,10 @@
                 the wrapper fills the screen below the navbar and draws the dividers around the card, everywhere else (a test run, or a test exam
                 whose layout was already reset) the card fills the card of the shell it is shown in.
             -->
-            <div class="exam-background-wrapper body-bg" [class.exam-background-wrapper--test-run]="!!testRunId() || !examLayoutActive()">
-                <div class="submissionSuccessfulHint module-bg rounded-lg p-3!">
+            <div class="exam-background-wrapper bg-(--body-bg)" [class.exam-background-wrapper--test-run]="!!testRunId() || !examLayoutActive()">
+                <div class="submissionSuccessfulHint bg-(--module-bg) rounded-lg p-3">
                     <fa-icon [icon]="faCheckCircle" class="check" />
-                    <h2 class="mt-3! mb-2! text-lg! font-semibold!" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
+                    <h2 class="mt-3 mb-2 text-lg font-semibold" jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                     <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
                     <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
                     @if (isExamSummaryVisible()) {
@@ -239,7 +230,7 @@
                     } @else {
                         <p
                             data-testid="examSummaryUnavailableHint"
-                            class="mb-0!"
+                            class="mb-0"
                             jhiTranslate="artemisApp.examParticipation.submissionSuccessful.summaryAvailableFrom"
                             [translateValues]="{ date: exam().examSummaryPublicationDate | artemisDate }"
                         ></p>
@@ -249,13 +240,18 @@
         }
         @if (showExamSummary()) {
             <div data-testid="exam-summary-scroll" [class]="!testRunId() ? 'exam-summary-scroll rounded-lg' : ''">
-                <jhi-exam-participation-summary [studentExam]="studentExam()" [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                <jhi-exam-participation-summary
+                    [studentExam]="studentExam()"
+                    [isSidebarCollapsed]="isSidebarCollapsed()"
+                    (toggleSidebar)="toggleSidebar()"
+                    (refreshSummary)="loadAndDisplaySummary()"
+                />
             </div>
         }
     }
 }
 @if (!loadingExam() && !exam() && !summaryLoadFailed()) {
-    <div class="flex flex-col gap-2 p-6!">
+    <div class="flex flex-col gap-2 p-6">
         @if (isSidebarCollapsed()) {
             <div>
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
@@ -264,7 +260,7 @@
         @if (isAtLeastTutor() && !testRunId()) {
             <tumaet-ui-message severity="warn" class="w-full">
                 <div class="flex flex-col items-start gap-2">
-                    <h6 class="mb-0!" jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+                    <h6 class="mb-0" jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
                     @if (isAtLeastInstructor()) {
                         <a tumAetUiButton [routerLink]="['/course-management', courseId(), 'exams', examId()]">
                             <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
@@ -278,7 +274,7 @@
             </tumaet-ui-message>
         } @else {
             <tumaet-ui-message severity="error" class="w-full">
-                <h6 class="mb-0!" [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+                <h6 class="mb-0" [jhiTranslate]="noStudentExamMessageKey()"></h6>
             </tumaet-ui-message>
         }
     </div>

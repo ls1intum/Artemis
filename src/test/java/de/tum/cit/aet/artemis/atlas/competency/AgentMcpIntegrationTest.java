@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
+import static de.tum.cit.aet.artemis.account.util.PersonalAccessTokenTestUtil.replacingHeader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -65,31 +66,137 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    void theHandshakeAnswersWithTheProtocolVersionAndTheServer() throws Exception {
+    void discoveryNamesTheVersionTheToolsAndTheServer() throws Exception {
         SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
 
-        JsonNode answer = rpc(token, "initialize", Map.of("protocolVersion", "2025-06-18"));
+        JsonNode answer = rpc(token, "server/discover", Map.of());
 
-        assertThat(answer.at("/result/protocolVersion").asString()).isEqualTo("2025-06-18");
-        assertThat(answer.at("/result/serverInfo/name").asString()).isEqualTo("artemis");
+        assertThat(answer.at("/result/resultType").asString()).isEqualTo("complete");
+        assertThat(answer.at("/result/supportedVersions")).hasSize(1);
+        assertThat(answer.at("/result/supportedVersions/0").asString()).isEqualTo(PersonalAccessTokenTestUtil.MCP_PROTOCOL_VERSION);
+        assertThat(answer.at("/result/_meta/io.modelcontextprotocol~1serverInfo/name").asString()).isEqualTo("artemis");
         assertThat(answer.at("/result/capabilities/tools").isObject()).isTrue();
         assertThat(answer.at("/result/instructions").asString()).contains("release date in the future").contains("at once");
+        assertThat(answer.at("/result/cacheScope").asString()).isEqualTo("public");
+        assertThat(answer.at("/result/ttlMs").asLong()).isPositive();
     }
 
     @Test
-    void anUnknownProtocolVersionGetsTheLatestOne() throws Exception {
+    void theHandshakeOfEarlierRevisionsIsAnsweredWithTheSupportedVersion() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
+        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "initialize", "params", Map.of("protocolVersion", "2025-11-25")));
+
+        String body = request.performMvcRequest(post(MCP).contentType(MediaType.APPLICATION_JSON).content(message).header(HttpHeaders.AUTHORIZATION, token.bearer()))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        JsonNode answer = JsonObjectMapper.get().readTree(body);
+        assertThat(answer.at("/error/code").asInt()).isEqualTo(-32022);
+        assertThat(answer.at("/error/data/supported/0").asString()).isEqualTo(PersonalAccessTokenTestUtil.MCP_PROTOCOL_VERSION);
+        assertThat(answer.at("/error/data/requested").asString()).isEqualTo("2025-11-25");
+    }
+
+    @Test
+    void aVersionOfAnEarlierRevisionIsRejectedWithTheSupportedOnes() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
+        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/list", "params",
+                Map.of("_meta", Map.of("io.modelcontextprotocol/protocolVersion", "2025-11-25", "io.modelcontextprotocol/clientCapabilities", Map.of()))));
+        var builder = PersonalAccessTokenTestUtil.replacingHeader(PersonalAccessTokenTestUtil.mcpRequest("tools/list", Map.of()), "MCP-Protocol-Version", "2025-11-25");
+
+        String body = request.performMvcRequest(builder.content(message).header(HttpHeaders.AUTHORIZATION, token.bearer())).andExpect(status().isBadRequest()).andReturn()
+                .getResponse().getContentAsString();
+
+        JsonNode answer = JsonObjectMapper.get().readTree(body);
+        assertThat(answer.at("/error/code").asInt()).isEqualTo(-32022);
+        assertThat(answer.at("/error/data/requested").asString()).isEqualTo("2025-11-25");
+    }
+
+    @Test
+    void aRequestWithoutTheVersionAndCapabilitiesOfTheClientIsRejected() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
+        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/list", "params", Map.of()));
+
+        String body = request
+                .performMvcRequest(post(MCP).contentType(MediaType.APPLICATION_JSON).content(message).header(HttpHeaders.AUTHORIZATION, token.bearer())
+                        .header("MCP-Protocol-Version", PersonalAccessTokenTestUtil.MCP_PROTOCOL_VERSION).header("Mcp-Method", "tools/list"))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        assertThat(JsonObjectMapper.get().readTree(body).at("/error/code").asInt()).isEqualTo(-32602);
+    }
+
+    @Test
+    void headersThatDifferFromTheMessageAreRejected() throws Exception {
         SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
 
-        assertThat(rpc(token, "initialize", Map.of("protocolVersion", "1999-01-01")).at("/result/protocolVersion").asString()).isEqualTo("2025-11-25");
+        for (var builder : List.of(replacingHeader(PersonalAccessTokenTestUtil.mcpRequest("tools/list", Map.of()), "Mcp-Method", "tools/call"),
+                replacingHeader(PersonalAccessTokenTestUtil.mcpRequest("tools/list", Map.of()), "MCP-Protocol-Version", "2025-11-25"),
+                replacingHeader(PersonalAccessTokenTestUtil.mcpRequest("tools/call", Map.of("name", "list_my_courses")), "Mcp-Name", "get_competency"))) {
+            String body = request.performMvcRequest(builder.header(HttpHeaders.AUTHORIZATION, token.bearer())).andExpect(status().isBadRequest()).andReturn().getResponse()
+                    .getContentAsString();
+            assertThat(JsonObjectMapper.get().readTree(body).at("/error/code").asInt()).isEqualTo(-32020);
+        }
+    }
+
+    @Test
+    void aToolCallWithoutTheNameHeaderIsRejected() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COURSES_READ);
+        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/call", "params", Map.of("name", "list_my_courses", "_meta",
+                Map.of("io.modelcontextprotocol/protocolVersion", PersonalAccessTokenTestUtil.MCP_PROTOCOL_VERSION, "io.modelcontextprotocol/clientCapabilities", Map.of()))));
+
+        String body = request
+                .performMvcRequest(post(MCP).contentType(MediaType.APPLICATION_JSON).content(message).header(HttpHeaders.AUTHORIZATION, token.bearer())
+                        .header("MCP-Protocol-Version", PersonalAccessTokenTestUtil.MCP_PROTOCOL_VERSION).header("Mcp-Method", "tools/call"))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+
+        assertThat(JsonObjectMapper.get().readTree(body).at("/error/code").asInt()).isEqualTo(-32020);
+    }
+
+    @Test
+    void aBase64EncodedToolNameInTheHeaderIsDecodedBeforeItIsCompared() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COURSES_READ);
+        String encoded = "=?base64?" + java.util.Base64.getEncoder().encodeToString("list_my_courses".getBytes(java.nio.charset.StandardCharsets.UTF_8)) + "?=";
+        var builder = replacingHeader(PersonalAccessTokenTestUtil.mcpRequest("tools/call", Map.of("name", "list_my_courses", "arguments", Map.of())), "Mcp-Name", encoded);
+
+        String body = request.performMvcRequest(builder.header(HttpHeaders.AUTHORIZATION, token.bearer())).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+
+        assertThat(JsonObjectMapper.get().readTree(body).at("/result/isError").asBoolean(true)).isFalse();
+    }
+
+    @Test
+    void everyResultNamesTheServerInItsMeta() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COURSES_READ);
+
+        assertThat(rpc(token, "tools/list", Map.of()).at("/result/_meta/io.modelcontextprotocol~1serverInfo/name").asString()).isEqualTo("artemis");
+        assertThat(callTool(token, "list_my_courses", Map.of()).at("/result/_meta/io.modelcontextprotocol~1serverInfo/name").asString()).isEqualTo("artemis");
     }
 
     @Test
     void aNotificationIsAcceptedWithoutAnAnswer() throws Exception {
         SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
-        var notification = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "method", "notifications/initialized"));
+        var notification = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "method", "notifications/cancelled"));
 
         request.performMvcRequest(post(MCP).contentType(MediaType.APPLICATION_JSON).content(notification).header(HttpHeaders.AUTHORIZATION, token.bearer()))
                 .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void theListOfToolsIsCachedOnlyPerToken() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
+
+        JsonNode answer = rpc(token, "tools/list", Map.of());
+
+        assertThat(answer.at("/result/resultType").asString()).isEqualTo("complete");
+        assertThat(answer.at("/result/cacheScope").asString()).isEqualTo("private");
+        assertThat(answer.at("/result/tools/0/annotations/openWorldHint").asBoolean(true)).isFalse();
+    }
+
+    @Test
+    void aRequestOfAnotherSiteIsForbidden() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
+
+        request.performMvcRequest(
+                PersonalAccessTokenTestUtil.mcpRequest("tools/list", Map.of()).header(HttpHeaders.ORIGIN, "https://evil.example").header(HttpHeaders.AUTHORIZATION, token.bearer()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -209,7 +316,10 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
     void anUnknownMethodIsAnError() throws Exception {
         SavedToken token = tokenOf("editor1", AgentScope.COMPETENCIES_READ);
 
-        assertThat(rpc(token, "resources/list", Map.of()).at("/error/code").asInt()).isEqualTo(-32601);
+        String body = request.performMvcRequest(PersonalAccessTokenTestUtil.mcpRequest("resources/list", Map.of()).header(HttpHeaders.AUTHORIZATION, token.bearer()))
+                .andExpect(status().isNotFound()).andReturn().getResponse().getContentAsString();
+
+        assertThat(JsonObjectMapper.get().readTree(body).at("/error/code").asInt()).isEqualTo(-32601);
     }
 
     @Test
@@ -233,9 +343,8 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     private JsonNode rpc(SavedToken token, String method, Map<String, Object> params) throws Exception {
-        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", method, "params", params));
-        String body = request.performMvcRequest(post(MCP).contentType(MediaType.APPLICATION_JSON).content(message).header(HttpHeaders.AUTHORIZATION, token.bearer()))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String body = request.performMvcRequest(PersonalAccessTokenTestUtil.mcpRequest(method, params).header(HttpHeaders.AUTHORIZATION, token.bearer())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
         return JsonObjectMapper.get().readTree(body);
     }
 

@@ -27,7 +27,8 @@ export class ArtemisMarkdownService {
             return '';
         }
         const convertedString = htmlForMarkdown(markdownText, extensions, allowedHtmlTags, allowedHtmlAttributes, lineBreaks);
-        return this.sanitizer.bypassSecurityTrustHtml(convertedString);
+        // Reviewed false positive (Sonar S6268): htmlForMarkdown sanitizes the rendered HTML with DOMPurify, so only sanitized markup is trusted here.
+        return this.sanitizer.bypassSecurityTrustHtml(convertedString); // NOSONAR // nosemgrep
     }
 
     /**
@@ -58,6 +59,7 @@ export class ArtemisMarkdownService {
         }
         // the first paragraph before and the first paragraph after a reference need the class `inline-paragraph` in order have no unintended linebreaks
         convertedString = convertedString.slice(0, paragraphPosition) + convertedString.slice(paragraphPosition).replace('<p>', '<p class="inline-paragraph">');
-        return this.sanitizer.bypassSecurityTrustHtml(convertedString);
+        // Reviewed false positive (Sonar S6268): htmlForMarkdown sanitizes the rendered HTML with DOMPurify, so only sanitized markup is trusted here.
+        return this.sanitizer.bypassSecurityTrustHtml(convertedString); // NOSONAR // nosemgrep
     }
 }

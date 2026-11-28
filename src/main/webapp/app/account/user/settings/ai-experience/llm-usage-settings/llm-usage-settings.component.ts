@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-llm-usage-settings',

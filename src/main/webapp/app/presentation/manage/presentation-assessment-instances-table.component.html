@@ -3,7 +3,7 @@
         <tr>
             <th tumAetUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
-            <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
             <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
             <th></th>
@@ -25,18 +25,13 @@
                 </td>
                 <td>
                     @if (row.assessed) {
-                        <tumaet-ui-tag
-                            severity="info"
-                            size="sm"
-                            [value]="row.instance.resultPoints + ' / ' + presentationAssessment().maxPoints"
-                            data-testid="instance-result-points"
-                        />
+                        <jhi-presentation-result-tag [instance]="row.instance" [presentationAssessment]="presentationAssessment()" />
                     } @else {
                         -
                     }
                 </td>
                 <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
-                <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
+                <td>{{ row.instance.remark || '-' }}</td>
                 <td>
                     <jhi-presentation-instance-actions [canDelete]="canDelete()" (editRequested)="editInstance.emit(row)" (deleteRequested)="deleteInstance.emit(row)" />
                 </td>

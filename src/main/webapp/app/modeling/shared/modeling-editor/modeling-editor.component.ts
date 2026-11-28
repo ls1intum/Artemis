@@ -50,7 +50,7 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
-    styleUrls: ['./modeling-editor.component.scss'],
+    styleUrls: ['./modeling-editor.component.css'],
     encapsulation: ViewEncapsulation.None,
     host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [
@@ -360,7 +360,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         try {
             const diagram = await ApollonEditor.exportModelAsSvg(ModelingEditorComponent.modelWithoutAssessments(model));
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
-                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg));
+                // Reviewed false positive (Sonar S6268): Apollon renders the diagram with React, which escapes every label, and serializes the resulting DOM.
+                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg)); // NOSONAR // nosemgrep
             }
         } catch (error) {
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {

@@ -19,10 +19,12 @@ package de.tum.cit.aet.artemis.core.config;
  * a released app version that has not been updated. The REST guideline is explicit that a path the mobile apps and the VS Code extension consume is never removed outright, and
  * every one of these was handed to all of them.</li>
  * </ul>
- * Retiring one is therefore a later release's change, not this one's: this release is the one that stops emitting them, and the clients have to stop asking for them first.
+ * Retiring one of the latter is therefore a later release's change, not this one's: this release is the one that stops emitting them, and the clients have to stop asking for
+ * them first.
  * <p>
- * The constants are {@link Deprecated @Deprecated(forRemoval = true)} on purpose, so that every use site carries a compile-time warning and the eventual cleanup is a mechanical
- * "remove every reference, then delete the constant" job.
+ * The constants of the second kind are {@link Deprecated @Deprecated(forRemoval = true)} on purpose, so that every use site carries a compile-time warning and the eventual
+ * cleanup is a mechanical "remove every reference, then delete the constant" job. The four permanent ones are not deprecated: nothing is going to remove them, and a warning that
+ * can never be acted on only hides the ones that can.
  * <p>
  * Not listed here because it is not a legacy alias: {@code files/templates/{language}} is the form
  * {@code FileService#getTemplateFile} requests whenever the project type is undefined, and it is the client that builds it rather than receives it. It stays for as long as that
@@ -69,18 +71,7 @@ public final class CoreLegacyFileRestPaths {
      * <p>
      * Permanent: this is the spelling a post written before this release carries, because the editor stored everything after {@code attachments/} of the link it was serving.
      */
-    @Deprecated(forRemoval = true, since = "10.0")
     public static final String LECTURE_ATTACHMENT = "files/attachments/lecture/{lectureId}/{attachmentName}";
-
-    /**
-     * The merged PDF of every attachment of a lecture, under the old singular spelling. Successor: {@code files/attachments/lectures/{lectureId}/merge-pdf}.
-     * <p>
-     * The only path here that was never emitted: a client builds it. The web client already builds the canonical one, and artemis-android does not request a merged PDF at all,
-     * so this is held open by artemis-ios alone, at {@code LectureAttachmentSheet}. Once the iOS change migrating it has shipped, this constant can go without waiting for the
-     * others here, which are pinned by values already stored or already embedded in post markdown.
-     */
-    @Deprecated(forRemoval = true, since = "10.0")
-    public static final String LECTURE_ATTACHMENTS_MERGED = "files/attachments/lecture/{lectureId}/merge-pdf";
 
     /**
      * Was emitted as {@code attachments/attachment-unit/{attachmentVideoUnitId}/{filename}}. Successor:
@@ -88,7 +79,6 @@ public final class CoreLegacyFileRestPaths {
      * <p>
      * Permanent, for the same reason as {@link #LECTURE_ATTACHMENT}.
      */
-    @Deprecated(forRemoval = true, since = "10.0")
     public static final String ATTACHMENT_VIDEO_UNIT_FILE = "files/attachments/attachment-unit/{attachmentVideoUnitId}/*";
 
     /**
@@ -96,7 +86,6 @@ public final class CoreLegacyFileRestPaths {
      * <p>
      * Permanent: a slide reference written before the editor moved to {@code (#slideId)} carries {@code attachment-unit/{id}/slide/{n}} in the post.
      */
-    @Deprecated(forRemoval = true, since = "10.0")
     public static final String ATTACHMENT_VIDEO_UNIT_SLIDE = "files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}";
 
     /**
@@ -105,7 +94,6 @@ public final class CoreLegacyFileRestPaths {
      * <p>
      * Permanent: a lecture unit reference in a post carries the student version link, so this is the spelling those posts hold.
      */
-    @Deprecated(forRemoval = true, since = "10.0")
     public static final String ATTACHMENT_VIDEO_UNIT_STUDENT_VERSION = "files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*";
 
     private CoreLegacyFileRestPaths() {
