@@ -30,7 +30,7 @@ overrides:
   brace-expansion: '5.0.13'
   # Must stay >= 4.28.7, which fixed CVE-2026-73088 and CVE-2026-73089. Reached through @babel/core's
   # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
-  browserslist: '4.29.5'
+  browserslist: '4.29.6'
   # Reached through cssnano's postcss-colormin and postcss-minify-gradients, whose ranges allow
   # this. Must stay >= 2.9.4, which fixed GHSA-2wm5-q62r-hmrv (quadratic time rejecting oversized
   # malformed colour strings). Build-time CSS minification only, never served.
