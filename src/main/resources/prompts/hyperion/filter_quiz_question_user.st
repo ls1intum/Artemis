@@ -3,6 +3,7 @@
 
 ## Question Under Review
 Question type: {{questionType}}
+Required number of correct options: {{correctOptionCount}} of {{optionCount}}, set by the course's settings rather than chosen by the question's author
 Title: {{questionTitle}}
 
 {{questionText}}

@@ -97,8 +97,9 @@ public class HyperionQuizQuestionFilterService {
         var outputConverter = HyperionStructuredOutputs.converterFor(FilterOutput.class);
         String systemPrompt = templateService.render(PROMPT_FILTER_QUIZ_QUESTION_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_FILTER_QUIZ_QUESTION_USER,
-                Map.ofEntries(Map.entry("groundingBlock", groundingBlock), Map.entry("questionType", question.type().getValue()), Map.entry("questionTitle", question.title()),
-                        Map.entry("questionText", question.questionText()), Map.entry("options", renderOptions(question.options())),
+                Map.ofEntries(Map.entry("groundingBlock", groundingBlock), Map.entry("questionType", question.type().getValue()),
+                        Map.entry("correctOptionCount", correctOptionCount(question)), Map.entry("optionCount", question.options().size()),
+                        Map.entry("questionTitle", question.title()), Map.entry("questionText", question.questionText()), Map.entry("options", renderOptions(question.options())),
                         Map.entry("explanation", question.explanation() == null ? "" : question.explanation()), Map.entry("format", outputConverter.getFormat())));
 
         ChatResponse chatResponse;
@@ -190,6 +191,14 @@ public class HyperionQuizQuestionFilterService {
 
     private static double clamp(double value) {
         return Math.max(0, Math.min(1, value));
+    }
+
+    /**
+     * The number of options the question was required to mark correct. The structural checks discard every generated question whose
+     * marked options differ from the number its item requires, so for a question that reaches the filter the marked number is the required one.
+     */
+    private static int correctOptionCount(GeneratedQuizQuestionDTO question) {
+        return (int) question.options().stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
     }
 
     private static String renderOptions(List<GeneratedQuizAnswerOptionDTO> options) {
