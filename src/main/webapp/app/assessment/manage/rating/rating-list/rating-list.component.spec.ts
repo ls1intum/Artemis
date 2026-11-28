@@ -13,7 +13,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { By } from '@angular/platform-browser';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
@@ -67,7 +67,6 @@ describe('RatingListComponent', () => {
     const mockPageableResult: PageableResult<RatingListItem> = {
         content: mockRatings,
         totalElements: 3,
-        totalPages: 1,
     };
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;

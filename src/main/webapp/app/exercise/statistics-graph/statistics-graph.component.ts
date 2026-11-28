@@ -10,7 +10,7 @@ import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
 
 @Component({
     selector: 'jhi-statistics-graph',

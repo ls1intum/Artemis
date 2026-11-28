@@ -17,7 +17,7 @@ export type FileWithHasMatch = {
 @Component({
     selector: 'jhi-split-pane-header',
     templateUrl: './split-pane-header.component.html',
-    styleUrls: ['./split-pane-header.component.scss'],
+    styleUrls: ['./split-pane-header.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SplitPaneHeaderComponent implements OnInit, OnDestroy {

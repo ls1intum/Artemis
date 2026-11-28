@@ -1,0 +1,130 @@
+/* Print styles: the defaults for every page, and the pages that print as a document. */
+
+/* Print styles */
+@media print {
+    *,
+    *::before,
+    *::after {
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+
+    abbr[title]::after {
+        content: ' (' attr(title) ')';
+    }
+
+    pre {
+        white-space: pre-wrap !important;
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #adb5bd;
+        break-inside: avoid;
+    }
+
+    tr,
+    img {
+        break-inside: avoid;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        break-after: avoid;
+    }
+
+    @page {
+        size: a3;
+    }
+
+    body {
+        min-width: 992px !important;
+    }
+
+    .table {
+        border-collapse: collapse !important;
+    }
+
+    .table td,
+    .table th {
+        background-color: #fff !important;
+    }
+}
+
+/* Custom fixes for printing */
+@media print {
+    /* Without this property only the first page is printed and the scroll bar is visible in the pdf */
+    * {
+        overflow: visible !important;
+    }
+
+    /* Hide buttons */
+    button {
+        display: none !important;
+    }
+
+    /* Add columns to description list to avoid long pages */
+    dl {
+        columns: 2;
+    }
+
+    /* Hide footer */
+    .footer,
+    .edit-quiz-footer {
+        display: none;
+    }
+
+    /* Hide popovers and notifications */
+    .connection-warning,
+    .alert-wrap {
+        display: none;
+    }
+}
+
+/* Print the standalone grading key at full width in normal document flow. */
+@media print {
+    body:has(jhi-grade-key-overview) {
+        min-width: 0 !important;
+    }
+
+    body:has(jhi-grade-key-overview) .sticky-top-navbar,
+    body:has(jhi-grade-key-overview) jhi-course-title-bar,
+    body:has(jhi-grade-key-overview) .layout-container > .sidebar,
+    body:has(jhi-grade-key-overview) jhi-page-ribbon,
+    body:has(jhi-grade-key-overview) jhi-footer {
+        display: none !important;
+    }
+
+    body:has(jhi-grade-key-overview) .page-wrapper,
+    body:has(jhi-grade-key-overview) .sidebar-wrapper,
+    body:has(jhi-grade-key-overview) .layout-container,
+    body:has(jhi-grade-key-overview) .layout-content,
+    body:has(jhi-grade-key-overview) .course-body-container,
+    body:has(jhi-grade-key-overview) .page-content-card {
+        display: block !important;
+        position: static !important;
+        width: auto !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body:has(jhi-grade-key-overview) .grading-key-overview {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}

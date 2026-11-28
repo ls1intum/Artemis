@@ -43,14 +43,15 @@
             "replace": "Replace video",
             "uploading": "Uploading to TUM.Live…",
             "cancel": "Cancel upload",
+            "uploaded": "Upload complete. Artemis will add the video once TUM.Live finishes processing it. You can close this page.",
             "processing": "TUM.Live is processing the video. You can close this page. Artemis attaches the video once it is ready.",
             "discard": "Discard upload",
             "attached": "The video is ready and attached to this unit.",
             "transferFailed": "The upload failed: {{ reason }}. Try again.",
             "unreachable": "The upload connection was interrupted. Try again.",
             "lastError": "The last upload was not attached: {{ reason }}",
-            "deleteRecording": "Also delete the video in TUM.Live",
-            "deleteRecordings": "Also delete the videos uploaded to TUM.Live for this lecture",
+            "deleteRecording": "Also delete the video in TUM.Live (in the background)",
+            "deleteRecordings": "Also delete the videos uploaded to TUM.Live for this lecture (in the background)",
             "chooseMp4": "Choose MP4 file",
             "removeFile": "Remove file",
             "invalidMp4": "Choose a non-empty MP4 video.",
@@ -84,7 +85,7 @@
             "recordingHint": "Artemis creates a lecture unit for this recording.",
             "replacePendingLinkTitle": "Discard the pending recording?",
             "replacePendingLinkConfirm": "Save and discard recording",
-            "pending": "An upload is pending for this unit. If no transfer is running, you can discard it and try again."
+            "pending": "Artemis is waiting for TUM.Live to confirm the upload."
         }
     }
 }

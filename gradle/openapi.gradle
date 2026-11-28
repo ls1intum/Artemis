@@ -60,6 +60,14 @@
                 "-Dspringdoc.paths-to-exclude=/api/athena/internal/**,/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.hyperion.exercise-generation.enabled=true",
+                // Hyperion beans resolve their presets during startup, but springdoc does not call the model.
+                "-Dartemis.llm.endpoints.docs.base-url=http://127.0.0.1:1/v1",
+                "-Dartemis.llm.endpoints.docs.max-retries=0",
+                "-Dartemis.llm.presets.docs.endpoint=docs",
+                "-Dartemis.llm.presets.docs.model=unused",
+                "-Dartemis.llm.presets.docs.api=chat-completions",
+                "-Dartemis.hyperion.llm-presets.default=docs",
+                "-Dartemis.hyperion.agent.llm-preset=docs",
                 // Controller introspection only; no generation job is admitted by this documentation process.
                 "-Dartemis.aiworker.enabled=true",
                 "-Dartemis.aiworker.ids=openapi-docs",

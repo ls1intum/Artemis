@@ -1,4 +1,5 @@
-import { TumAetUiProgressSpinnerComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';

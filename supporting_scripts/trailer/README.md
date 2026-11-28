@@ -100,7 +100,8 @@ programming exercise UI that a trailer shows, update the trailers in the same PR
 with `--preview`, because a new screenshot usually has a different layout or size: fix the `cam` crops and the
 `spots` coordinates so the highlights still sit on the right element, and update captions that no longer
 describe the application. Then render both cuts with the default output paths, commit the two videos and
-describe the changes in the PR description. `AGENTS.md` states the same rule for agents.
+describe the changes in the PR description. `AGENTS.md` states the same rule for agents; the
+[trailers skill](../../skills/trailers/SKILL.md) has the procedure.
 
 The list of programming languages mirrors `ProgrammingLanguage.ENABLED_LANGUAGES` on the server, the languages
 an instructor can select; update `LANGS` when that set changes.

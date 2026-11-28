@@ -9,7 +9,7 @@ import { IrisRunInfo } from 'app/iris/overview/services/iris-chat.service';
 @Component({
     selector: 'jhi-chat-status-bar',
     templateUrl: './chat-status-bar.component.html',
-    styleUrl: './chat-status-bar.component.scss',
+    styleUrl: './chat-status-bar.component.css',
     imports: [FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

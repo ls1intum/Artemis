@@ -1,4 +1,8 @@
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 

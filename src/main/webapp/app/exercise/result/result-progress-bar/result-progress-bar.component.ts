@@ -1,4 +1,5 @@
-import { TumAetUiProgressBarComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnDestroy, effect, input, signal } from '@angular/core';
 

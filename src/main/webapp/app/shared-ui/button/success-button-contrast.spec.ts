@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { Logger, compileString } from 'sass';
+import { readThemeTokens } from 'test/helpers/theme-tokens';
 
 /**
  * A solid success button (for example "Example submissions") must show a white label that stays readable, and this must not recolour anything else.
@@ -8,23 +8,14 @@ import { Logger, compileString } from 'sass';
  * The solid button of the UI kit reads `--tumaet-ui-button-success-background` and `--tumaet-ui-button-success-contrast`. The app sets both in `tailwind.css`
  * for the light theme. The success status colour (`--tumaet-ui-state-success*`) is shared with messages, tags and badges, for example the accepted complaint
  * badge that combines the green fill with the contrast colour, so it must keep its own readable pair. The values are not re-typed here: the blocks are read
- * from the stylesheet and `--success` comes from the compiled default theme.
+ * from the stylesheet and `--success` comes from the tokens of the light theme.
  */
 const TAILWIND_CSS = 'src/main/webapp/tailwind.css';
-const THEME_DIRECTORY = 'src/main/webapp/content/scss/themes';
 
 /** WCAG 2.x AA contrast for normal-sized text. */
 const AA_TEXT = 4.5;
 
 type Rgb = [number, number, number];
-
-function compileThemeTokens(): Map<string, string> {
-    const { css } = compileString(`@use '${THEME_DIRECTORY}/generate-css-vars';\nhtml { @include generate-css-vars.generate('default-variables'); }`, {
-        loadPaths: [process.cwd()],
-        logger: Logger.silent,
-    });
-    return new Map([...css.matchAll(/--([\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]));
-}
 
 function parseHex(value: string): Rgb {
     const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value.trim());
@@ -91,7 +82,7 @@ function darkThemeDeclarations(): Map<string, string> {
 describe('Success button contrast', () => {
     const light = lightThemeDeclarations();
     const dark = darkThemeDeclarations();
-    const tokens = compileThemeTokens();
+    const tokens = readThemeTokens('light');
     const buttonBackground = resolve(light.get('--tumaet-ui-button-success-background')!, tokens);
     const buttonLabel = resolve(light.get('--tumaet-ui-button-success-contrast')!, tokens);
 

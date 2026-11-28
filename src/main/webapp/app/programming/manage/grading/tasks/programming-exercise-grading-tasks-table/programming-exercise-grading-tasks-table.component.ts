@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -26,7 +28,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 @Component({
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
-    styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
+    styleUrls: ['./programming-exercise-grading-tasks-table.css'],
     imports: [
         TumAetUiButtonDirective,
         TranslateDirective,

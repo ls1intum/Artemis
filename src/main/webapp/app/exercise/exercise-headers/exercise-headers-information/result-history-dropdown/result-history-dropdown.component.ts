@@ -1,4 +1,8 @@
-import { TumAetUiButtonComponent, TumAetUiDialogService, TumAetUiPopoverComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -59,7 +63,7 @@ export function latestSubmissionRoute(exercise: Exercise, participation: Student
 @Component({
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
-    styleUrls: ['./result-history-dropdown.component.scss'],
+    styleUrls: ['./result-history-dropdown.component.css'],
     imports: [
         TumAetUiTagComponent,
         TumAetUiButtonComponent,

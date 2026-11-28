@@ -5,7 +5,8 @@ import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/s
 import { faCodeCompare, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GitDiffReportModalComponent, GitDiffReportModalData } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 
-import { TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

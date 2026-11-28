@@ -63,7 +63,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
@@ -74,7 +76,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 @Component({
     selector: 'jhi-exam-participation',
     templateUrl: './exam-participation.component.html',
-    styleUrls: ['./exam-participation.scss'],
+    styleUrls: ['./exam-participation.css'],
     imports: [
         CdkScrollable,
         TestRunRibbonComponent,

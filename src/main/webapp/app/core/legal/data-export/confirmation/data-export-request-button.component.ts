@@ -1,4 +1,4 @@
-import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular/button';
 import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';

@@ -11,7 +11,7 @@ import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-tab
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

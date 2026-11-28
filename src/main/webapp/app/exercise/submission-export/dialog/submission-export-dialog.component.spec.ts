@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 import { Subject, of, throwError } from 'rxjs';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import dayjs from 'dayjs/esm';
 
 describe('Submission Export Dialog Component', () => {

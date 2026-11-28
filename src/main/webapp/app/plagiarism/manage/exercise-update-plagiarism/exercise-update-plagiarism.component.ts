@@ -3,7 +3,10 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validatio
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription, map, tap } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { deepClone } from 'app/foundation/util/deep-clone.util';

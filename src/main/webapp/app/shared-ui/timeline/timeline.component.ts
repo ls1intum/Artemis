@@ -1,7 +1,8 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDatePickerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -44,7 +45,7 @@ type InternalTimelineItem = TimelineItem & {
     selector: 'jhi-timeline',
     imports: [FaIconComponent, TumAetUiDatePickerComponent, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './timeline.component.html',
-    styleUrl: './timeline.component.scss',
+    styleUrl: './timeline.component.css',
 })
 export class TimelineComponent {
     private translateService = inject(TranslateService);

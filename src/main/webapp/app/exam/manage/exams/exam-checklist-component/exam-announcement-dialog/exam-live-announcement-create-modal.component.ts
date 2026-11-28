@@ -1,7 +1,8 @@
 import { Component, DestroyRef, OnInit, computed, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';

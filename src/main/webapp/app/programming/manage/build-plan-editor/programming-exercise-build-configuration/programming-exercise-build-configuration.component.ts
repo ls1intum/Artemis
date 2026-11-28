@@ -1,7 +1,10 @@
 import { Component, OnInit, WritableSignal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -36,7 +39,7 @@ const NOT_LOADED = Symbol('docker flags not loaded');
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
-    styleUrls: ['../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,
