@@ -28,7 +28,7 @@ image:
   repository: ghcr.io/ls1intum/artemis
   # Image tag. Defaults to .Chart.appVersion when empty.
   # For local validation this is built from deployment/docker/artemis/Dockerfile.
-  tag: ""
+  tag: "@sha256:bcfcf99269888c94f4b2fb47c45624739311f2835492506a50503453f35c49d7"
   pullPolicy: IfNotPresent
   # Optional immutable image id used only to trigger a rollout when a mutable
   # local tag is rebuilt. The Docker Desktop workflow supplies this value.
@@ -277,7 +277,7 @@ postgresql:
   deploy: true
   image:
     repository: postgres
-    tag: "18.7-alpine"
+    tag: "18.7-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71"
     pullPolicy: IfNotPresent
   auth:
     database: "Artemis"
@@ -311,7 +311,7 @@ postgresql:
 registry:
   image:
     repository: jhipster/jhipster-registry
-    tag: "v7.5.0"
+    tag: "v7.5.0@sha256:7184525acd4d7bd6c32b6b8c5007a05db963065621faa4577bcfd12dc18f49a1"
     pullPolicy: IfNotPresent
   # Admin password for the registry (also embedded in the Eureka service URL).
   password: ""  # REQUIRED
@@ -334,7 +334,7 @@ broker:
   deploy: true
   image:
     repository: apache/artemis
-    tag: "2.57.0-alpine"
+    tag: "2.57.0-alpine@sha256:fb886e019eea08d40e90dab904259a4d226745f6c407af2d7c406e92d809e1c1"
     pullPolicy: IfNotPresent
   auth:
     username: "guest"
