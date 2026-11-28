@@ -3,16 +3,12 @@ package de.tum.cit.aet.artemis.fileupload.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -102,24 +98,8 @@ public record UpdateFileUploadExerciseDTO(@Schema(requiredMode = Schema.Required
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        List<GradingCriterionDTO> gradingCriterionDTOs;
-        Set<CompetencyLinkDTO> competencyLinkDTOs;
-
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
-
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
-        }
-        else {
-            gradingCriterionDTOs = null;
-        }
-        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
-        }
-        else {
-            competencyLinkDTOs = null;
-        }
+        List<GradingCriterionDTO> gradingCriterionDTOs = GradingCriterionDTO.ofAllIfInitialized(exercise.getGradingCriteria());
+        Set<CompetencyLinkDTO> competencyLinkDTOs = CompetencyLinkDTO.ofAllIfInitialized(exercise.getCompetencyLinks());
         return new UpdateFileUploadExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),

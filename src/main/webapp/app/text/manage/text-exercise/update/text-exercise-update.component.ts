@@ -1,4 +1,5 @@
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -60,7 +61,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrl: './text-exercise-update.component.scss',
+    styleUrl: '../../../../exercise/shared/exercise-update-grading-layout.css',
     imports: [
         FormsModule,
         TranslateDirective,
@@ -84,6 +85,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
         PointsInputComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit {

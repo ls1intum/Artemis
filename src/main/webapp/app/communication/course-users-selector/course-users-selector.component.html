@@ -1,35 +1,27 @@
-<div (focusout)="onTouched()">
-    <div class="form-group">
+<div class="flex flex-col gap-4" (focusout)="onTouched()">
+    <div class="flex flex-col gap-1">
         @if (label()) {
-            <label [for]="id + '-search-input'">{{ label() }}</label>
+            <label class="text-sm font-medium" [for]="id + '-search-input'">{{ label() }}</label>
         }
-        <input
-            #searchInput
-            [disabled]="disabled()"
-            (selectItem)="onSelectItem($event)"
-            [id]="id + '-search-input'"
+        <tumaet-ui-autocomplete
+            class="block w-full"
             name="search-filter"
-            type="text"
-            class="form-control"
+            [inputId]="id + '-search-input'"
+            [ariaLabel]="label() ? undefined : ('artemisApp.userSelector.placeholderText' | artemisTranslate)"
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
-            [ngbTypeahead]="search"
-            [inputFormatter]="usersFormatter"
-            [resultTemplate]="resultTemplate"
-            [editable]="false"
-            [focusFirst]="false"
-            [container]="'body'"
+            [suggestions]="suggestions()"
+            [emptyMessage]="isSearching() ? ('artemisApp.userSelector.searchingText' | artemisTranslate) : undefined"
+            [optionTemplate]="resultTemplate"
+            [minLength]="searchStudents() ? 3 : 0"
+            [completeOnFocus]="!searchStudents()"
+            [debounceMs]="200"
+            [disabled]="disabled()"
             (input)="onInputChange($event)"
-            placement="bottom-start"
-            #instance="ngbTypeahead"
-            autocomplete="nope"
-            role="searchbox"
-            aria-autocomplete="list"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-form-type="other"
+            (searchRequested)="requestSearch($event.query)"
+            (optionSelected)="onSelectItem($event)"
         />
-        <ng-template #resultTemplate let-user="result">
-            <div class="d-flex align-items-center" data-testid="user-search-result">
+        <ng-template #resultTemplate let-user>
+            <div class="flex items-center gap-2" data-testid="user-search-result">
                 <jhi-profile-picture
                     [imageSizeInRem]="'1.1'"
                     [fontSizeInRem]="'0.5'"
@@ -40,61 +32,63 @@
                     [authorName]="user.name"
                     [imageUrl]="addPublicFilePrefix(user.imageUrl)"
                     [isEditable]="false"
-                    class="me-2"
                 />
                 <span>{{ getUserLabel(user) }}</span>
             </div>
         </ng-template>
         @if (isSearching()) {
-            <small class="form-text text-body-secondary" jhiTranslate="artemisApp.userSelector.searchingText"></small>
-            <br />
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.searchingText">Searching for users...</small>
         }
         @if (searchFailed()) {
-            <small jhiTranslate="artemisApp.userSelector.searchFailedText"></small>
-            <br />
+            <small class="leading-[calc(1/0.75)] text-state-danger" jhiTranslate="artemisApp.userSelector.searchFailedText">Search failed</small>
         }
         @if (searchStudents()) {
-            <small class="form-text text-body-secondary" jhiTranslate="artemisApp.userSelector.helpText"></small>
+            <small class="leading-[calc(1/0.75)] text-muted-color" jhiTranslate="artemisApp.userSelector.helpText"
+                >Type at least 3 characters to search for users by name or login</small
+            >
         }
     </div>
-    <div class="text-end">
+    <div class="flex flex-wrap items-center justify-end gap-4">
         @if (rolesToAllowSearchingIn().includes('students')) {
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents()" (change)="searchStudents.set(!searchStudents()); onFilterChange()" />
-                <label class="form-check-label" for="students" jhiTranslate="artemisApp.course.students"></label>
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="students" [checked]="searchStudents()" (changed)="searchStudents.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="students" jhiTranslate="artemisApp.course.students">Students</label>
             </div>
         }
         @if (rolesToAllowSearchingIn().includes('tutors')) {
-            <div class="form-check form-check-inline">
-                <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors()" (change)="searchTutors.set(!searchTutors()); onFilterChange()" />
-                <label class="form-check-label" for="tutors" jhiTranslate="artemisApp.course.tutors"></label>
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="tutors" [checked]="searchTutors()" (changed)="searchTutors.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="tutors" jhiTranslate="artemisApp.course.tutors">Tutors</label>
             </div>
         }
         @if (rolesToAllowSearchingIn().includes('instructors')) {
-            <div class="form-check form-check-inline">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="instructors"
-                    [checked]="searchInstructors()"
-                    (change)="searchInstructors.set(!searchInstructors()); onFilterChange()"
-                />
-                <label class="form-check-label" for="instructors" jhiTranslate="artemisApp.course.instructors"></label>
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="instructors" [checked]="searchInstructors()" (changed)="searchInstructors.set($event.checked); onFilterChange()" />
+                <label class="cursor-pointer" for="instructors" jhiTranslate="artemisApp.course.instructors">Instructors</label>
             </div>
         }
     </div>
-    @if (showUserList()) {
-        <ul class="list-group">
+    @if (showUserList() && selectedUsers().length > 0) {
+        <tumaet-ui-list [ariaLabel]="label()">
             @for (user of selectedUsers(); track trackIdentity(i, user); let i = $index) {
-                <li class="selected-user list-group-item d-flex justify-content-between align-items-center">
-                    <span class="d-inline-block">{{ getUserLabel(user) }}</span>
+                <li tumAetUiListItem inline class="selected-user">
+                    <span>{{ getUserLabel(user) }}</span>
                     @if (!disabled()) {
-                        <button class="delete-user btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">
+                        <button
+                            tumAetUiButton
+                            class="delete-user"
+                            type="button"
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            [attr.aria-label]="('entity.action.remove' | artemisTranslate) + ' ' + getUserLabel(user)"
+                            (click)="onDelete(i)"
+                        >
                             <fa-icon [icon]="faX" />
                         </button>
                     }
                 </li>
             }
-        </ul>
+        </tumaet-ui-list>
     }
 </div>

@@ -56,7 +56,7 @@
                 <hr />
             }
             @if (isLoading()) {
-                <div class="flex justify-center p-4!">
+                <div class="flex justify-center p-4">
                     <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.videoPlayer.loading' | artemisTranslate" />
                 </div>
             } @else if (playlistUrl() && !playerFailed()) {
@@ -101,13 +101,13 @@
                 <hr />
             }
             @if (pdfLoadError()) {
-                <tumaet-ui-message severity="error" class="m-4!">
+                <tumaet-ui-message severity="error" class="m-4">
                     <span class="text-state-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
                 </tumaet-ui-message>
             } @else if (pdfUrl()) {
                 <div class="pdf-viewer-spacing">
                     @if (showPdfSpinner()) {
-                        <div class="flex justify-center p-4! pdf-loading-spinner">
+                        <div class="flex justify-center p-4 pdf-loading-spinner">
                             <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate" />
                         </div>
                     }

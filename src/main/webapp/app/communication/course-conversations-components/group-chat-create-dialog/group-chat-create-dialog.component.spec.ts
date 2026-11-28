@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,8 +28,8 @@ describe('GroupChatCreateDialogComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -53,7 +53,7 @@ describe('GroupChatCreateDialogComponent', () => {
     });
 
     it('should close the dialog with the selected users', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         const selectedUsers = [{ id: 1 }, { id: 2 }];
         component.selectedUsersControl!.setValue(selectedUsers);
@@ -65,10 +65,10 @@ describe('GroupChatCreateDialogComponent', () => {
     });
 
     it('should dismiss modal if cancel is selected', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const destroySpy = vi.spyOn(dialogRef, 'destroy');
-        const dismissButton = fixture.debugElement.nativeElement.querySelector('.dismiss');
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
+        const dismissButton = fixture.debugElement.nativeElement.querySelector('[data-testid="dialog-close-button"]');
         dismissButton.click();
-        expect(destroySpy).toHaveBeenCalledOnce();
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 });

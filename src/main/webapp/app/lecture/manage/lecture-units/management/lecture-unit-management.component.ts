@@ -4,19 +4,21 @@ import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { concatMap, finalize, map } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { concatMap, finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, Subscription, from } from 'rxjs';
 import {
-    LectureUnitCombinedStatus,
     LectureUnitProcessingStatus,
     LectureUnitService,
     ProcessingPhase,
     toProcessingStatus,
+    toTranscriptionStatus,
 } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import type { LectureUnitCombinedStatus } from 'app/openapi/model/lecture-unit-combined-status';
 import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -30,6 +32,7 @@ import {
     faEye,
     faEyeSlash,
     faFile,
+    faFileCircleQuestion,
     faFileLines,
     faFilePdf,
     faFileVideo,
@@ -45,9 +48,12 @@ import {
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -59,7 +65,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
 @Component({
     selector: 'jhi-lecture-unit-management',
     templateUrl: './lecture-unit-management.component.html',
-    styleUrls: ['./lecture-unit-management.component.scss'],
+    styleUrls: ['./lecture-unit-management.component.css'],
     imports: [
         TranslateDirective,
         IngestionStatusBadgeComponent,
@@ -85,7 +91,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
     protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly tumLiveUploadService = inject(TumLiveUploadService);
     private readonly websocketService = inject(WebsocketService);
 
     protected readonly faTrash = faTrash;
@@ -180,7 +188,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.lectureService
             .findWithDetails(this.resolvedLectureId!)
             .pipe(
-                map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
                     if (sequence === this.loadSequence) {
                         this.isLoading.set(false);
@@ -193,6 +200,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         return; // superseded by a newer load
                     }
                     this.lecture.set(lecture);
+                    this.loadTumLiveUploads(lecture?.course?.id);
                     if (lecture?.lectureUnits) {
                         this.lectureUnits.set(lecture.lectureUnits);
                         const viewAvailable: Record<number, boolean> = {};
@@ -222,12 +230,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.lectureUnitService
-            .updateOrder(this.resolvedLectureId, this.lectureUnits())
-            .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
-            .subscribe({
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        // Send an ordered list of ids of the lecture units
+        // This also overcomes circular structure issues with participations and categories in exercise units
+        const lectureUnitIds = this.lectureUnits().map((lectureUnit) => lectureUnit.id!);
+        this.lectureUnitApi.updateLectureUnitsOrder(this.resolvedLectureId, lectureUnitIds).subscribe({
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {
@@ -296,8 +304,52 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.resolvedLectureId!).subscribe({
+    /** The units with a video Artemis uploaded to TUM.Live, also one that still converts; deleting one asks whether to delete the video there too. */
+    readonly tumLiveUploadedUnitIds = signal<Set<number>>(new Set());
+
+    /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
+    private tumLiveUploadsSequence = 0;
+
+    /** Set while reading the uploaded units failed: deleting a file or video unit then asks about TUM.Live, since it may have a video there. */
+    readonly tumLiveUploadsUnknown = signal(false);
+
+    /**
+     * Whether deleting the unit asks whether to delete its video in TUM.Live too.
+     * @param lectureUnit the unit
+     */
+    asksAboutTumLiveVideo(lectureUnit: LectureUnit): boolean {
+        return this.tumLiveUploadedUnitIds().has(lectureUnit.id!) || (this.tumLiveUploadsUnknown() && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
+    }
+
+    /** Reads again which units have a video uploaded to TUM.Live, for example after a file was sent there. */
+    refreshTumLiveUploads() {
+        this.loadTumLiveUploads(this.lecture()?.course?.id);
+    }
+
+    private loadTumLiveUploads(courseId: number | undefined) {
+        if (courseId === undefined) {
+            return;
+        }
+        const sequence = ++this.tumLiveUploadsSequence;
+        this.tumLiveUploadService.getUploadedUnits(courseId).subscribe({
+            next: (units) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId)));
+                    this.tumLiveUploadsUnknown.set(false);
+                }
+            },
+            // Say so and ask about every file or video unit: an empty set would delete units without asking about their videos in TUM.Live.
+            error: (errorResponse: HttpErrorResponse) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadsUnknown.set(true);
+                    onError(this.alertService, errorResponse);
+                }
+            },
+        });
+    }
+
+    deleteLectureUnit(lectureUnitId: number, checks: { [key: string]: boolean } = {}) {
+        this.lectureUnitApi.deleteLectureUnit(lectureUnitId, this.resolvedLectureId!, !!checks.deleteTumLiveRecordings).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -375,7 +427,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getTypeIcon(lectureUnit: LectureUnit): IconDefinition {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
-                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo }[this.getAttachmentVideoKind(lectureUnit)];
+                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo, empty: faFileCircleQuestion }[this.getAttachmentVideoKind(lectureUnit)];
             case LectureUnitType.EXERCISE:
                 return faCheck;
             case LectureUnitType.ONLINE:
@@ -402,7 +454,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' {
+    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' | 'empty' {
         const hasFile = !!unit.attachment?.link;
         if (hasFile && unit.videoSource) {
             return 'fileAndVideo';
@@ -410,7 +462,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (hasFile) {
             return unit.attachment!.link!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'file';
         }
-        return unit.videoSource ? 'video' : 'file';
+        // A unit can be saved without both, so its video can be uploaded to TUM.Live afterwards.
+        return unit.videoSource ? 'video' : 'empty';
     }
 
     getAttachmentVersion(lectureUnit: LectureUnit) {
@@ -432,7 +485,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.lectureUnitService.getUnitStatuses(this.resolvedLectureId).subscribe({
+        this.lectureUnitApi.getUnitStatuses(this.resolvedLectureId).subscribe({
             next: (statuses: LectureUnitCombinedStatus[]) => {
                 if (sequence !== this.loadSequence) {
                     return; // superseded by a newer load, whose snapshot is the fresher one
@@ -441,9 +494,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 const transcriptionMap: Record<number, TranscriptionStatus> = {};
 
                 for (const status of statuses) {
-                    processingMap[status.lectureUnitId] = toProcessingStatus(status);
-                    if (status.transcriptionStatus) {
-                        transcriptionMap[status.lectureUnitId] = status.transcriptionStatus;
+                    const processing = toProcessingStatus(status);
+                    if (processing) {
+                        processingMap[processing.lectureUnitId] = processing;
+                        const transcription = toTranscriptionStatus(status);
+                        if (transcription) {
+                            transcriptionMap[processing.lectureUnitId] = transcription;
+                        }
                     }
                 }
 
@@ -500,20 +557,28 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private subscribeToProcessingStateUpdates(lectureId: number): void {
         const topic = `/topic/lectures/${lectureId}/unit-processing-state`;
         this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
-            this.processingStatus.update((current) => {
-                const updated = deepClone(current);
-                updated[status.lectureUnitId] = toProcessingStatus(status);
-                return updated;
-            });
-            this.transcriptionStatus.update((current) => {
-                const updated = deepClone(current);
-                if (status.transcriptionStatus) {
-                    updated[status.lectureUnitId] = status.transcriptionStatus;
-                } else {
-                    delete updated[status.lectureUnitId];
-                }
-                return updated;
-            });
+            this.applyStatus(status);
+        });
+    }
+
+    /**
+     * Stores the status of one unit. A missing transcription status clears the old entry, e.g. when the transcription was deleted during a retry.
+     */
+    private applyStatus(status: LectureUnitCombinedStatus): void {
+        const processing = toProcessingStatus(status);
+        if (!processing) {
+            return;
+        }
+        this.processingStatus.update((current) => cloneWith(current, { [processing.lectureUnitId]: processing }));
+        const transcription = toTranscriptionStatus(status);
+        this.transcriptionStatus.update((current) => {
+            const updated = deepClone(current);
+            if (transcription) {
+                updated[processing.lectureUnitId] = transcription;
+            } else {
+                delete updated[processing.lectureUnitId];
+            }
+            return updated;
         });
     }
 
@@ -566,6 +631,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
             return false;
         }
+        // A unit without a file and a video, such as one waiting for its TUM.Live upload, has nothing to process
+        if (!lectureUnit.attachment && !lectureUnit.videoSource) {
+            return false;
+        }
         // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
         return this.isCourseActive();
     }
@@ -580,25 +649,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
 
         this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: true }));
-        this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
+        this.lectureUnitApi.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
             next: (status) => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
-                // Update status from the returned value
-                this.processingStatus.update((current) =>
-                    cloneWith(current, {
-                        [status.lectureUnitId]: toProcessingStatus(status),
-                    }),
-                );
-                // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)
-                this.transcriptionStatus.update((current) => {
-                    const updated = deepClone(current);
-                    if (status.transcriptionStatus) {
-                        updated[status.lectureUnitId] = status.transcriptionStatus;
-                    } else {
-                        delete updated[status.lectureUnitId];
-                    }
-                    return updated;
-                });
+                this.applyStatus(status);
                 this.isRetryingProcessing.update((current) => cloneWith(current, { [lectureUnit.id!]: false }));
             },
             error: (errorResponse: HttpErrorResponse) => {
@@ -622,10 +676,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         let lastCreatedUnit: AttachmentVideoUnit | undefined;
 
         from(files)
-            .pipe(
-                concatMap((file) => this.createAttachmentUnitFromFile(file)),
-                map((response) => response.body as AttachmentVideoUnit),
-            )
+            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
             .subscribe({
                 next: (unit) => {
                     lastCreatedUnit = unit;

@@ -95,6 +95,45 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(response.get(1).lectureUnit().id()).isEqualTo(2L);
     }
 
+    /**
+     * A Pyris that does not answer is an outage of another service, so the request is answered as unavailable instead of failing with an unhandled error.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisDoesNotAnswer_shouldBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesUnreachable();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    /**
+     * A Pyris that stops sending the body of its answer is as unavailable as one that does not answer at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisStopsSendingTheBody_shouldBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesBodyTimesOut();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    /**
+     * An answer that cannot be read is a defect of the contract with Pyris, not an outage, so it is not reported as an unavailable service.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_whenPyrisAnswerCannotBeRead_shouldNotBeServiceUnavailable() throws Exception {
+        enrollStudent1(courseUtilService.createCourse());
+        irisRequestMockProvider.mockSearchLecturesUnreadableAnswer();
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnEmptyList() throws Exception {
@@ -507,6 +546,14 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     // ==================== /api/iris/search-answer (async, webhook-based) ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenPyrisDoesNotAnswer_shouldBeServiceUnavailable() throws Exception {
+        irisRequestMockProvider.mockGlobalSearchIrisAnswerUnreachable();
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

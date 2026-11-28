@@ -10,14 +10,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -81,14 +79,17 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     readonly form = new FormGroup<SystemNotificationForm>(
         {
             id: new FormControl<number | undefined>(undefined),
-            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(50)]),
-            text: new FormControl<string | undefined>(undefined),
+            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(255)]),
+            text: new FormControl<string | undefined>(undefined, [Validators.maxLength(2000)]),
             type: new FormControl<SystemNotificationType | undefined>(undefined, [Validators.required]),
             notificationDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
             expireDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
         },
         { validators: this.validateDates.bind(this) },
     );
+
+    protected readonly titleControl = this.form.controls.title;
+    protected readonly textControl = this.form.controls.text;
 
     /** Icons */
     protected readonly faSave = faSave;

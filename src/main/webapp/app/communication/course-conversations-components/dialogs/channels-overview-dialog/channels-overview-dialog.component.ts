@@ -1,6 +1,9 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -22,8 +25,15 @@ export type ChannelAction = {
 @Component({
     selector: 'jhi-channels-overview-dialog',
     templateUrl: './channels-overview-dialog.component.html',
-    styleUrls: ['./channels-overview-dialog.component.scss'],
-    imports: [LoadingIndicatorContainerComponent, ChannelItemComponent, ArtemisTranslatePipe],
+    imports: [
+        LoadingIndicatorContainerComponent,
+        ChannelItemComponent,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+    ],
 })
 export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);
@@ -49,7 +59,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     override isInitialized = false;
 
-    faChevronRight = faChevronRight;
+    protected readonly faXmark = faXmark;
 
     override initialize() {
         super.initialize(['course']);

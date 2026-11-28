@@ -46,6 +46,12 @@ public class ExerciseWebsocketTopics implements WebsocketTopicProvider {
             WebsocketTopicAccess.atLeastEditorInExercise("exerciseId"));
 
     /**
+     * Progress of deleting an exercise in the background, for the instructors of its course.
+     */
+    public static final WebsocketTopic DELETION_PROGRESS = WebsocketTopic.of("/topic/exercises/{exerciseId}/deletion-progress",
+            WebsocketTopicAccess.atLeastInstructorInExercise("exerciseId"));
+
+    /**
      * Changes to the user's team assignments.
      */
     public static final WebsocketUserTopic TEAM_ASSIGNMENTS = WebsocketUserTopic.of("/topic/team-assignments");

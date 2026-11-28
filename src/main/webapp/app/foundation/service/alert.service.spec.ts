@@ -195,6 +195,35 @@ describe('Alert Service Test', () => {
         );
     });
 
+    it('should report an unknown translation key', () => {
+        vi.mocked(captureException).mockClear();
+
+        service.addAlert({ type: AlertType.INFO, translationKey: 'hello.jhipster' });
+
+        expect(captureException).toHaveBeenCalledOnce();
+    });
+
+    it('should not report a text with whitespace as an unknown translation key, but show it', () => {
+        vi.mocked(captureException).mockClear();
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: 'Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found' });
+
+        expect(alert.message).toBe('Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('should show a message that is not a string without translating it', () => {
+        vi.mocked(captureException).mockClear();
+        const translateService = TestBed.inject(TranslateService);
+        const instant = vi.spyOn(translateService, 'instant');
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: { detail: 'unexpected' } as unknown as string });
+
+        expect(alert.message).toBe('[object Object]');
+        expect(instant).not.toHaveBeenCalled();
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should display an alert on status 0', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
@@ -225,6 +254,68 @@ describe('Alert Service Test', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
         expect(service.get()).toHaveLength(0);
+    });
+
+    it('should tell the user how long to wait on status 429 with a Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '12' }) }) });
+
+        expect(addAlert).toHaveBeenCalledWith(expect.objectContaining({ translationKey: 'error.http.429Wait', translationParams: { seconds: 12 } }));
+        expect(service.get()).toHaveLength(1);
+    });
+
+    it('should show a general message on status 429 without a usable Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': 'soon' }) }) });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429 }) });
+
+        expect(addAlert).toHaveBeenCalledTimes(2);
+        expect(addAlert).toHaveBeenNthCalledWith(1, expect.objectContaining({ translationKey: 'error.http.429' }));
+        expect(addAlert).toHaveBeenNthCalledWith(2, expect.objectContaining({ translationKey: 'error.http.429' }));
+    });
+
+    describe('showsHttpErrorAlert', () => {
+        const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
+
+        // Each case is also sent through the real listener, so the decision cannot drift away from what the alert handling really does.
+        it.each([
+            { description: 'the server is not reachable', error: rejection(0), alerted: true },
+            {
+                description: 'a bad request has an error header with a known translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'Error Message' }),
+                alerted: true,
+            },
+            {
+                description: 'a bad request has an error header without a translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'error.unknown.key' }),
+                alerted: false,
+            },
+            { description: 'a bad request has field errors', error: rejection(400, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }), alerted: true },
+            { description: 'a bad request has an empty list of field errors', error: rejection(400, { fieldErrors: [], title: 'Bad Request' }), alerted: false },
+            { description: 'a bad request has only a title', error: rejection(400, { title: 'Bad Request', message: 'Bad Request' }), alerted: true },
+            { description: 'a bad request has a title whose key is skipped', error: rejection(400, { title: 'Bad Request', errorKey: 'courseShortNameExists' }), alerted: false },
+            { description: 'a bad request has nothing to show', error: rejection(400, {}), alerted: false },
+            { description: 'access is denied', error: rejection(403), alerted: true },
+            { description: 'access is denied with a key whose alert is skipped', error: rejection(403, { errorKey: 'cannotRegisterStaff' }), alerted: false },
+            { description: 'the resource was not found', error: rejection(404, { title: 'Not Found' }), alerted: false },
+            { description: 'a server error has a title', error: rejection(500, { title: 'Error Message', message: 'Error Message' }), alerted: true },
+            { description: 'a server error has an error header but no title', error: rejection(500, undefined, { 'x-artemisapp-error': 'Error Message' }), alerted: false },
+            {
+                description: 'a gateway error has field errors but no title',
+                error: rejection(502, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }),
+                alerted: false,
+            },
+            { description: 'a gateway error is the plain page of a proxy', error: rejection(502, '<html>Bad Gateway</html>'), alerted: false },
+            { description: 'the server asked for no alert', error: rejection(500, { skipAlert: true, title: 'Error Message' }), alerted: false },
+        ])('is $alerted when $description', ({ error, alerted }) => {
+            expect(service.showsHttpErrorAlert(error)).toBe(alerted);
+
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: error });
+
+            expect(service.get().length > 0).toBe(alerted);
+        });
     });
 
     it.each([
@@ -407,6 +498,30 @@ describe('Alert Service Test', () => {
 
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe(expected);
+    });
+
+    it.each([
+        { language: 'en', errors: englishErrors },
+        { language: 'de', errors: germanErrors },
+    ])('should translate branch-pattern errors in $language', ({ language, errors }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(errors.error.branchRegexNotSupported);
+        expect(renderedMessage.textContent).not.toBe('English server fallback');
     });
 
     it('should display an alert on status 400 for error headers', () => {

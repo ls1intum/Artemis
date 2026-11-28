@@ -1,13 +1,13 @@
 <span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
-<div class="fw-bold">
+<div class="font-bold">
     @if (lineChangesLoading()) {
         <fa-icon [icon]="faSpinner" animation="spin" />
     } @else {
         <jhi-git-diff-line-stat
             [addedLineCount]="addedLineCount()"
             [removedLineCount]="removedLineCount()"
-            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-            placement="right"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate"
+            tumAetUiTooltipPlacement="right"
         />
     }
 </div>

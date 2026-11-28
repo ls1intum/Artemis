@@ -1,13 +1,10 @@
-import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogConfig,
-    TumAetUiDialogRef,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { mapValues } from 'lodash-es';
 import {
     ActionType,
@@ -18,9 +15,10 @@ import {
     EntitySummaryItem,
     triggerDeleteDialogDelete,
 } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { hasLargeSummaryCount } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faExclamationTriangle, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -34,7 +32,7 @@ let nextSummaryId = 0;
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
-    styleUrls: ['./delete-dialog.component.scss'],
+    styleUrls: ['./delete-dialog.component.css'],
     imports: [
         FormsModule,
         TranslateDirective,
@@ -61,6 +59,7 @@ export class DeleteDialogComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faCheck = faCheck;
     protected readonly faUndo = faUndo;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     readonly actionTypes = ActionType;
     protected readonly ButtonType = ButtonType;
@@ -73,6 +72,10 @@ export class DeleteDialogComponent implements OnInit {
     entitySummary = signal<EntitySummary | undefined>({});
     categorizedEntitySummary = signal<EntitySummaryCategory[] | undefined>(undefined);
     isLoadingSummary = signal(false);
+    // The summary lists two items per row (label and value each), but a table in which no category has a second item per row only needs one pair of columns
+    readonly summaryColumnCount = computed(() => (this.categorizedEntitySummary()?.some((category) => this.getItemPairs(category.items).some((pair) => pair.length > 1)) ? 4 : 2));
+    // warn when the summary lists a lot of data, so nobody deletes an entity with much student work by accident
+    readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedEntitySummary()));
 
     // Regular properties for ngModel two-way binding
     confirmEntityName = '';

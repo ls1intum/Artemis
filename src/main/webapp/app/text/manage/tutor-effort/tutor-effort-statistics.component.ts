@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { TutorEffort } from 'app/openapi/model/tutor-effort';
+import { TutorEffortApi } from 'app/openapi/api/tutor-effort-api';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,9 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -24,13 +26,13 @@ interface TutorEffortRange {
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
-    styleUrls: ['./tutor-effort-statistics.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    styleUrls: ['./tutor-effort-statistics.component.css'],
+    imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumAetUiBarChartComponent, TumAetUiTableDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private textExerciseService = inject(TextExerciseService);
+    private tutorEffortApi = inject(TutorEffortApi);
     private textAssessmentService = inject(TextAssessmentService);
     private translateService = inject(TranslateService);
 
@@ -103,8 +105,8 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     }
 
     loadTutorEfforts() {
-        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe((tutorEffortResponse: TutorEffort[]) => {
-            this.handleTutorEffortResponse(tutorEffortResponse);
+        this.tutorEffortApi.calculateTutorEfforts(this.currentCourseId, this.currentExerciseId).subscribe((tutorEfforts) => {
+            this.handleTutorEffortResponse(tutorEfforts);
         });
         this.loadNumberOfTutorsInvolved();
     }
@@ -119,9 +121,9 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         if (!tutorEffortData) {
             return;
         }
-        const numberOfSubmissions = tutorEffortData.reduce((n, { numberOfSubmissionsAssessed }) => n + numberOfSubmissionsAssessed, 0);
+        const numberOfSubmissions = tutorEffortData.reduce((n, { numberOfSubmissionsAssessed }) => n + (numberOfSubmissionsAssessed ?? 0), 0);
         this.numberOfSubmissions.set(numberOfSubmissions);
-        const totalTime = tutorEffortData.reduce((n, { totalTimeSpentMinutes }) => n + totalTimeSpentMinutes, 0);
+        const totalTime = tutorEffortData.reduce((n, { totalTimeSpentMinutes }) => n + (totalTimeSpentMinutes ?? 0), 0);
         const totalTimeSpent = Math.round(totalTime * 10) / 10;
         this.totalTimeSpent.set(totalTimeSpent);
         const avgTemp = totalTimeSpent === 0 ? 0 : numberOfSubmissions / totalTimeSpent;
@@ -150,7 +152,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     distributeEffortToSets() {
         this.effortDistribution = new Array<number>(this.chartLabels.length).fill(0);
         this.tutorEfforts().forEach((effort) => {
-            const BUCKET_INDEX = this.determineIndex(effort.totalTimeSpentMinutes);
+            const BUCKET_INDEX = this.determineIndex(effort.totalTimeSpentMinutes ?? 0);
             this.effortDistribution[BUCKET_INDEX]++;
         });
     }
@@ -199,7 +201,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         if (tutorEfforts.length === 0) {
             return 0;
         }
-        const timeSpent = tutorEfforts.map((effort) => effort.totalTimeSpentMinutes);
+        const timeSpent = tutorEfforts.map((effort) => effort.totalTimeSpentMinutes ?? 0);
         return median(timeSpent);
     }
 
@@ -239,13 +241,14 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private computeMedianAmountOfAssessedSubmissions(range: TutorEffortRange): number {
         let filterFunction;
         if (range.maximumTimeSpent) {
-            filterFunction = (effort: TutorEffort) => effort.totalTimeSpentMinutes >= range.minimumTimeSpent && effort.totalTimeSpentMinutes < range.maximumTimeSpent!;
+            filterFunction = (effort: TutorEffort) =>
+                (effort.totalTimeSpentMinutes ?? 0) >= range.minimumTimeSpent && (effort.totalTimeSpentMinutes ?? 0) < range.maximumTimeSpent!;
         } else {
-            filterFunction = (effort: TutorEffort) => effort.totalTimeSpentMinutes >= range.minimumTimeSpent;
+            filterFunction = (effort: TutorEffort) => (effort.totalTimeSpentMinutes ?? 0) >= range.minimumTimeSpent;
         }
         const filteredEfforts = this.tutorEfforts().filter(filterFunction);
 
-        return round(median(filteredEfforts.map((effort) => effort.numberOfSubmissionsAssessed)), 2);
+        return round(median(filteredEfforts.map((effort) => effort.numberOfSubmissionsAssessed ?? 0)), 2);
     }
 
     /**

@@ -62,7 +62,7 @@ public class FeatureToggleService {
      * at startup, writes for it are ignored, and it is never reported as enabled, whatever an older node stored for it.
      * Remove the constant itself together with the next {@code DistributedDataSchema} version bump.
      */
-    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.Memiris);
+    private static final Set<Feature> RETIRED_FEATURES = EnumSet.of(Feature.AtlasML, Feature.Memiris);
 
     private DistributedMap<Feature, Boolean> features;
 
@@ -113,17 +113,13 @@ public class FeatureToggleService {
     private void initFeatures() {
         // The map is shared across all nodes by the distributed data provider.
         features = distributedDataProvider.getMap("features");
+        features.putIfAbsent(Feature.SmartQuizzes, false);
 
-        // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos, and the retired ones) are
-        // enabled once
-        // the
-        // system starts up
+        // Features without a specific default start enabled.
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
-                    && feature != Feature.AtlasML && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch
-                    && feature != Feature.AutonomousTutor && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile
-                    && feature != Feature.GlobalSearchReconcileOrphan) {
+                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }
@@ -138,10 +134,6 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.TutorSuggestions)) {
             features.put(Feature.TutorSuggestions, false);
-        }
-
-        if (!features.containsKey(Feature.AtlasML)) {
-            features.put(Feature.AtlasML, false);
         }
 
         RETIRED_FEATURES.forEach(features::remove);

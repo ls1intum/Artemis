@@ -82,7 +82,7 @@ export class FileService {
      * @param version attachment version used to invalidate cached downloads after a replacement
      */
     downloadFileByAttachmentName(downloadUrl: string, downloadName: string, version?: number) {
-        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, true, version);
+        const normalizedDownloadUrl = this.createAttachmentFileUrl(downloadUrl, downloadName, version);
         const newWindow = window.open('about:blank');
         newWindow!.location.href = normalizedDownloadUrl;
         return newWindow;
@@ -92,17 +92,16 @@ export class FileService {
      * Creates the URL to download a attachment file
      *
      * @param downloadUrl url that is stored in the attachment model
-     * @param downloadName the name given to the attachment
-     * @param encodeName whether or not to encode the downloadName
+     * @param downloadName the name given to the attachment. It becomes the last path segment, which only suggests a file name for the routes of an attachment video unit,
+     *                     and characters that cannot be part of a single path segment are replaced, see {@link toSingleSafeSegment}
      * @param version attachment version used to invalidate cached downloads after a replacement
      */
-    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean, version?: number) {
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, version?: number) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const extension = downloadUrlComponents.pop()!.split('.').pop();
         const restOfUrl = downloadUrlComponents.join('/');
-        const encodedDownloadName = encodeName ? encodeURIComponent(downloadName + '.' + extension) : downloadName + '.' + extension;
-        const attachmentUrl = restOfUrl + '/' + encodedDownloadName;
+        const attachmentUrl = restOfUrl + '/' + encodeURIComponent(toSingleSafeSegment(downloadName) + '.' + extension);
         return this.addAttachmentVersionToUrl(attachmentUrl, version);
     }
 
@@ -181,4 +180,16 @@ export class FileService {
         const lastSlashIndex = link.lastIndexOf('/');
         return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
     }
+}
+
+/**
+ * Makes an attachment name usable as the single last segment of a download URL.
+ *
+ * A slash or backslash would end the segment, and the server rejects the encoded forms %2F and %5C as well as %25 and %3B (percent sign and semicolon) with a 400 response before the
+ * request reaches the file endpoint. The segment only suggests the file name of a download, so these characters are replaced rather than rejected. The routes of an attachment
+ * video unit find the file by the id in the URL and ignore this segment. The legacy routes of a lecture attachment, files/attachments/lecture(s)/{lectureId}/{name}, look the
+ * attachment up by the name in the segment, so a name with a replaced character finds nothing there. It could not be requested at all before, so that is not a regression.
+ */
+function toSingleSafeSegment(name: string): string {
+    return name.replace(/[/\\%;]/g, '_');
 }

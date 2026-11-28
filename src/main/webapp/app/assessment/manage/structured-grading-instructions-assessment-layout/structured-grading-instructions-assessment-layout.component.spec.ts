@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -12,11 +12,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -54,6 +54,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         comp.ngOnInit();
         expect(comp.allowDrop()).toBe(false);
         expect(comp.disableDrag()).toBe(false);
+    });
+
+    it('should hand over the title of the criterion with a dragged instruction', () => {
+        const instruction = { id: 5, credits: 1, feedback: 'Correct association' } as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [{ title: 'Associations', structuredGradingInstructions: [instruction] }]);
+        fixture.detectChanges();
+        const dataTransfer = { setData: vi.fn() };
+
+        comp.drag({ dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent, instruction);
+
+        expect(dataTransfer.setData).toHaveBeenCalledOnce();
+        expect(JSON.parse(dataTransfer.setData.mock.calls[0][1])).toEqual({ id: 5, credits: 1, feedback: 'Correct association', criterionTitle: 'Associations' });
     });
 
     it('should set display elements', () => {

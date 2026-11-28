@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
@@ -67,6 +68,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "postweaviateint";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -300,7 +304,8 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostExistsInWeaviate(weaviateService, post.getId());
 
             long postId = post.getId();
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
             assertPostNotInWeaviate(weaviateService, postId);
         }

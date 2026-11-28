@@ -39,7 +39,7 @@
                             />
                             <div class="flex min-w-0 grow basis-40 flex-col gap-1.5">
                                 <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                                    <h4 class="m-0 min-w-0 text-base font-semibold break-words sm:truncate" data-testid="lecture-unit-name" [title]="unitName">{{ unitName }}</h4>
+                                    <h4 class="m-0 min-w-0 break-words sm:truncate" data-testid="lecture-unit-name" [title]="unitName">{{ unitName }}</h4>
                                     @if (isEditing) {
                                         <tumaet-ui-tag severity="info" data-testid="lecture-unit-editing-tag"
                                             ><fa-icon [icon]="faPencilAlt" class="me-1" /><span jhiTranslate="artemisApp.lectureUnit.management.editing"></span
@@ -220,7 +220,8 @@
                                         [entityTitle]="unitName"
                                         [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                                         [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                                        (delete)="deleteLectureUnit(lectureUnit.id!)"
+                                        [additionalChecks]="asksAboutTumLiveVideo(lectureUnit) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}"
+                                        (delete)="deleteLectureUnit(lectureUnit.id!, $event)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />

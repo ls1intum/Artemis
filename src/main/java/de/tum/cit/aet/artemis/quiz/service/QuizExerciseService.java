@@ -718,6 +718,18 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Schedules the start of a quiz exercise again after {@link #cancelScheduledQuiz(Long)} cancelled it for a deletion that then did not delete the quiz exercise. Nothing
+     * happens if the quiz exercise is gone, because the deletion got far enough to remove it.
+     *
+     * @param quizExerciseId the id of the quiz exercise that was not deleted
+     */
+    public void rescheduleQuizAfterFailedDeletion(Long quizExerciseId) {
+        if (quizExerciseRepository.existsById(quizExerciseId)) {
+            instanceMessageSendService.sendQuizExerciseStartSchedule(quizExerciseId);
+        }
+    }
+
+    /**
      * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required.
      * Does not save the quiz — callers that want to persist the change are expected to either write the scalar fields
      * explicitly (e.g. via {@link de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository#updateDueDate} and

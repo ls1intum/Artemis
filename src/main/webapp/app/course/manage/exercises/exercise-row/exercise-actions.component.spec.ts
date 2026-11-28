@@ -21,7 +21,6 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -31,10 +30,17 @@ import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, P
 import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import { QuizExerciseLifecycleService } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
+    variant = input<'solid' | 'outlined'>('solid');
+    batchesOnly = input(false);
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
 }
@@ -67,6 +73,7 @@ describe('ExerciseActionsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseActionsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseService),
@@ -75,6 +82,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
                 MockProvider(QuizExerciseService),
+                MockProvider(QuizExerciseLifecycleService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
@@ -98,7 +106,7 @@ describe('ExerciseActionsComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
-        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of({} as EntitySummary));
+        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of([]));
 
         fixture.componentRef.setInput('exercise', textExercise());
         fixture.componentRef.setInput('courseId', 1);
@@ -367,13 +375,16 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasQuizButtons()).toBe(false);
         });
 
-        it('is true when the quiz is invisible and editor can make it visible', () => {
+        const actionIds = () => component.mainActions().map((action) => action.id);
+
+        it('offers making an invisible quiz visible as a row action, not as reserved content', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.INVISIBLE, isAtLeastEditor: true, visibleToStudents: false } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            expect(actionIds()).toContain('set-visible');
         });
 
-        it('is true when a synchronized quiz can be started', () => {
+        it('offers starting a synchronized quiz as the first row action', () => {
             const quiz = {
                 id: 2,
                 type: ExerciseType.QUIZ,
@@ -383,7 +394,8 @@ describe('ExerciseActionsComponent', () => {
                 quizStarted: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            expect(actionIds()[0]).toBe('start-quiz');
         });
 
         it('is true for a batched quiz that can show batches', () => {
@@ -392,7 +404,7 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasQuizButtons()).toBe(true);
         });
 
-        it('is true when an unsynchronized quiz can be ended by an instructor', () => {
+        it('offers ending an unsynchronized quiz as a row action with an end-now confirmation', () => {
             const quiz = {
                 id: 2,
                 type: ExerciseType.QUIZ,
@@ -402,7 +414,58 @@ describe('ExerciseActionsComponent', () => {
                 quizEnded: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            const end = component.mainActions().find((action) => action.id === 'end-quiz');
+            expect(end?.kind).toBe('delete');
+            expect(end?.delete?.actionType).toBe(ActionType.EndNow);
+        });
+
+        it('starts the quiz through the lifecycle service and relays the updated quiz', () => {
+            const quiz = {
+                id: 2,
+                type: ExerciseType.QUIZ,
+                status: QuizStatus.VISIBLE,
+                quizMode: QuizMode.SYNCHRONIZED,
+                isAtLeastEditor: true,
+                quizStarted: false,
+            } as QuizExercise;
+            const started = { ...quiz, status: QuizStatus.ACTIVE } as QuizExercise;
+            const startQuiz = vi.spyOn(TestBed.inject(QuizExerciseLifecycleService), 'startQuiz').mockReturnValue(of(started));
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
+            const emitted: Exercise[] = [];
+            component.exerciseUpdated.subscribe((exercise) => emitted.push(exercise));
+            fixture.componentRef.setInput('exercise', quiz);
+
+            component.mainActions().find((action) => action.id === 'start-quiz')!.onClick!();
+
+            expect(startQuiz).toHaveBeenCalledExactlyOnceWith(quiz);
+            expect(emitted).toEqual([started]);
+            expect(started.quizStarted).toBe(true);
+        });
+
+        it('disables the quiz lifecycle actions while one of their requests runs', () => {
+            const quiz = {
+                id: 2,
+                type: ExerciseType.QUIZ,
+                status: QuizStatus.INVISIBLE,
+                quizMode: QuizMode.SYNCHRONIZED,
+                isAtLeastEditor: true,
+                visibleToStudents: false,
+                quizStarted: false,
+            } as QuizExercise;
+            const response = new Subject<QuizExercise>();
+            vi.spyOn(TestBed.inject(QuizExerciseLifecycleService), 'setVisible').mockReturnValue(response);
+            vi.spyOn(component.exerciseUpdated, 'emit');
+            fixture.componentRef.setInput('exercise', quiz);
+            const disabledOf = (id: string) => component.mainActions().find((action) => action.id === id)?.disabled;
+
+            component.mainActions().find((action) => action.id === 'set-visible')!.onClick!();
+            expect(disabledOf('start-quiz')).toBe(true);
+            expect(disabledOf('set-visible')).toBe(true);
+
+            response.next({ ...quiz, visibleToStudents: true } as QuizExercise);
+            response.complete();
+            expect(disabledOf('start-quiz')).toBeUndefined();
         });
 
         it('is false when none of the button conditions apply', () => {
@@ -513,6 +576,61 @@ describe('ExerciseActionsComponent', () => {
             expect(deleteSpy).toHaveBeenCalledWith(3);
             expect(broadcastSpy).toHaveBeenCalledWith({ name: eventName, content: 'Deleted an exercise' });
             expect(deleted).toEqual([exercise]);
+        });
+
+        it('hands the exercise to the background deletion with the target of that exercise', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT, title: 'Sorting' }));
+
+            component['onDelete']({});
+
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            expect(deletionService.delete).toHaveBeenCalledWith(
+                { entityType: EntityDeletionType.EXERCISE, entityId: 3, title: 'Sorting', successAlertKey: 'artemisApp.textExercise.deleted' },
+                expect.anything(),
+            );
+        });
+
+        it('keeps the exercise in the list when the background deletion failed', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+
+            component['onDelete']({});
+
+            expect(broadcastSpy).not.toHaveBeenCalled();
+            expect(deleted).toEqual([]);
+        });
+
+        it('asks the list to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            let reloads = 0;
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+            component.exerciseDeletionOutcomeUnknown.subscribe(() => reloads++);
+
+            component['onDelete']({});
+
+            // The exercise may still exist, so it is not removed as if the deletion was confirmed; the list is read from the server again.
+            expect(deleted).toEqual([]);
+            expect(reloads).toBe(1);
+        });
+
+        it('reports a refused deletion, e.g. one that is already running, to the confirmation dialog', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+            const errors: string[] = [];
+            component.dialogError$.subscribe((message) => errors.push(message));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+
+            component['onDelete']({});
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0]).not.toBe('');
         });
 
         it('deletes a programming exercise with the repo/build-plan flags', () => {

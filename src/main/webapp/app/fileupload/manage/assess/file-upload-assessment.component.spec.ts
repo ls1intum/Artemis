@@ -29,7 +29,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { AccountService } from 'app/core/auth/account.service';
@@ -46,6 +46,8 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('FileUploadAssessmentComponent', () => {
     let component: FileUploadAssessmentComponent;
@@ -693,6 +695,28 @@ describe('FileUploadAssessmentComponent', () => {
 
             expect(saveSpy).toHaveBeenCalledWith(expect.any(Array), component.submission()!.id, 'Test note');
         });
+
+        it('should refuse to save points outside the bounds and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 100.5, detailText: 'too many points' })]);
+            const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points', () => {
+            vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSaveAssessment();
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
     });
 
     describe('onSubmitAssessment', () => {
@@ -745,6 +769,29 @@ describe('FileUploadAssessmentComponent', () => {
             component.onSubmitAssessment();
 
             expect(component.result()).toBe(savedResult);
+        });
+
+        it('should refuse to submit points outside the bounds and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: -100.5, detailText: 'too many points' })]);
+            const saveSpy = vi.spyOn(fileUploadAssessmentService, 'saveAssessment');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSubmitAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the submitted points', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
+            vi.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onSubmitAssessment();
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
         });
     });
 
@@ -949,6 +996,41 @@ describe('FileUploadAssessmentComponent', () => {
             component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
 
             expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.updateAfterComplaintFailed');
+        });
+
+        it('should refuse to update points outside the bounds after a complaint and name the bounds', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 100.5, detailText: 'too many points' })]);
+            let onErrorCalled = false;
+            const assessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => {},
+                onError: () => (onErrorCalled = true),
+            };
+            const updateSpy = vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(onErrorCalled).toBe(true);
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points after a complaint', () => {
+            component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
+            vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            const assessmentAfterComplaint = {
+                complaintResponse: new ComplaintResponse(),
+                onSuccess: () => {},
+                onError: () => {},
+            };
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
         });
     });
 

@@ -24,7 +24,8 @@ import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FileService } from 'app/foundation/service/file.service';
 import { faCloudArrowUp, faFile, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { finalize } from 'rxjs/operators';

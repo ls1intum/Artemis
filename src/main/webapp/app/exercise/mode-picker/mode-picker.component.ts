@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
 
 import { Component, input, output } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

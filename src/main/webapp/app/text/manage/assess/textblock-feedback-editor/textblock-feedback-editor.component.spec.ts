@@ -5,8 +5,7 @@ import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblo
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
@@ -22,6 +21,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { MenuHarness } from '@angular/aria/menu/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 
 /**
  * Test suite for TextBlockFeedbackEditorComponent.
@@ -50,7 +51,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
@@ -252,6 +253,61 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.componentRef.setInput('criteria', [criterion]);
         fixture.detectChanges();
 
-        expect(compiled.querySelector('.unified-feedback-detail-row [ngbDropdown]')).toBeTruthy();
+        expect(compiled.querySelector('.unified-feedback-detail-row [data-testid="feedback-instruction-menu"]')).toBeTruthy();
+    });
+
+    it('should name each criterion group of the instruction menu, so equal instructions of different criteria stay distinguishable', async () => {
+        const instruction = (id: number) => ({ id, credits: 1, instructionDescription: 'Correct' }) as GradingInstruction;
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [instruction(2)] } as GradingCriterion,
+            { id: 3, structuredGradingInstructions: [instruction(4)] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(2);
+        const groups = Array.from(document.querySelectorAll('tumaet-ui-menu [data-testid="feedback-instruction-group"]'));
+        expect(groups.map((group) => [group.getAttribute('role'), group.getAttribute('aria-label')])).toEqual([
+            ['group', 'Correctness'],
+            ['group', 'artemisApp.textAssessment.feedbackEditor.noTitle'],
+        ]);
+        expect(groups.map((group) => group.querySelectorAll('[tumAetUiMenuItem]').length)).toEqual([1, 1]);
+    });
+
+    it('should not wrap the instructions of a single criterion in a named group', async () => {
+        fixture.componentRef.setInput('criteria', [
+            { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion,
+        ]);
+        fixture.detectChanges();
+
+        (compiled.querySelector('[data-testid="feedback-instruction-menu"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+
+        expect(await menu.getItems()).toHaveLength(1);
+        expect(document.querySelectorAll('tumaet-ui-menu [role="group"]')).toHaveLength(0);
+    });
+
+    it('should update the assessment when a grading instruction is chosen from the menu', () => {
+        const instruction = { id: 2, credits: 1 } as GradingInstruction;
+        const changeSpy = vi.spyOn(component.feedbackChange, 'emit');
+
+        component.updateAssessmentWithDropdown(instruction);
+
+        expect(changeSpy).toHaveBeenCalledOnce();
+        expect(component.feedback().gradingInstruction).toEqual(instruction);
+        expect(component.feedback().credits).toBe(1);
+        expect(component.feedback().correctionStatus).toBeUndefined();
+    });
+
+    it('should colour a grading instruction by its credits', () => {
+        expect(component.getInstrColour({ credits: 1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
+        expect(component.getInstrColour({ credits: 0 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
+        expect(component.getInstrColour({ credits: -1 } as GradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        // an instruction without a usable credit value keeps the default colour
+        expect(component.getInstrColour({ credits: undefined } as unknown as GradingInstruction)).toBeUndefined();
     });
 });

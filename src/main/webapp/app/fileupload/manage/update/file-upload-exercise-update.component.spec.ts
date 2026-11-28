@@ -71,15 +71,15 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import dayjs from 'dayjs/esm';
 
 import 'app/foundation/util/array.extension';
 
 import { FormsModule } from '@angular/forms';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -267,8 +267,8 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         FormsModule,
                         PointsInputComponent,
                         MockDirective(TranslateDirective),
-                        FaIconComponent,
-                        NgbTooltip,
+                        TumAetUiInputDirective,
+                        TumAetUiMessageComponent,
                         ArtemisTranslatePipe,
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
@@ -365,7 +365,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
 
             expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
-            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-4!');
 
             (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
 

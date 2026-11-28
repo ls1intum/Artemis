@@ -3,12 +3,11 @@ package de.tum.cit.aet.artemis.athena.service;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -31,12 +30,12 @@ class AthenaConnector<RequestType, ResponseType> {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaConnector.class);
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final Class<ResponseType> genericResponseType;
 
-    AthenaConnector(RestTemplate restTemplate, Class<ResponseType> genericResponseType) {
-        this.restTemplate = restTemplate;
+    AthenaConnector(RestClient restClient, Class<ResponseType> genericResponseType) {
+        this.restClient = restClient;
         this.genericResponseType = genericResponseType;
     }
 
@@ -52,17 +51,12 @@ class AthenaConnector<RequestType, ResponseType> {
         long start = System.nanoTime();
         log.debug("Calling Athena.");
 
-        var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        final HttpEntity<RequestType> httpRequestEntity = new HttpEntity<>(requestObject, headers);
-
         ResponseEntity<ResponseType> response;
         try {
-            response = restTemplate.postForEntity(url, httpRequestEntity, genericResponseType);
+            response = restClient.post().uri(url).contentType(MediaType.APPLICATION_JSON).body(requestObject).retrieve().toEntity(genericResponseType);
         }
-        catch (ResourceAccessException e) {
-            log.error("Athena did not respond successfully in time", e);
+        catch (ResourceAccessException | RestClientResponseException e) {
+            log.error("Athena did not respond successfully", e);
             throw new NetworkingException("An Error occurred while calling Athena. Check Remote Logs for debugging information.", e);
         }
 

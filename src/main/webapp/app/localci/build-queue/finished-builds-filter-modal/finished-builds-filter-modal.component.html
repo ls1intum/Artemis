@@ -13,7 +13,7 @@
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildStatus.title"></span>
                 </h5>
             </div>
-            <div class="finished-build-jobs-filter-background-accent px-3 py-2">
+            <div class="finished-build-jobs-filter-background-accent px-4 py-2">
                 <ul class="grid grid-cols-2 gap-2 whitespace-nowrap list-none my-0 p-0 sm:grid-cols-4">
                     @for (status of this.buildStatusFilterValues; track status) {
                         <li class="flex items-center gap-2">
@@ -50,7 +50,7 @@
                         <span jhiTranslate="artemisApp.buildQueue.filter.buildAgentAddress"></span>
                     </h5>
                 </div>
-                <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
+                <div class="finished-build-jobs-filter-background-accent px-4 my-0 py-2">
                     <tumaet-ui-autocomplete
                         [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         class="w-full"
@@ -69,12 +69,12 @@
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.title"></span>
                 </h5>
             </div>
-            <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
+            <div class="finished-build-jobs-filter-background-accent px-4 my-0 py-2">
                 <div class="flex items-center gap-2">
                     <span id="finished-builds-filter-from-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.from"></span>
                     <tumaet-ui-date-picker
                         id="field_startDate"
-                        class="min-w-0 flex-1"
+                        class="flex-1"
                         inputId="finished-builds-filter-from"
                         [shouldDisplayTimeZoneWarning]="false"
                         [ariaLabelledBy]="'finished-builds-filter-from-label'"
@@ -88,7 +88,7 @@
                     <span id="finished-builds-filter-to-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.to"></span>
                     <tumaet-ui-date-picker
                         id="field_endDate"
-                        class="min-w-0 flex-1"
+                        class="flex-1"
                         inputId="finished-builds-filter-to"
                         [shouldDisplayTimeZoneWarning]="false"
                         [ariaLabelledBy]="'finished-builds-filter-to-label'"
@@ -108,7 +108,7 @@
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.title"></span>
                 </h5>
             </div>
-            <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
+            <div class="finished-build-jobs-filter-background-accent px-4 my-0 py-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
                     <input

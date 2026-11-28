@@ -1,38 +1,28 @@
 <div class="w-full">
-    <div class="flex flex-wrap gap-y-2 overflow-x-auto">
-        <div [hidden]="ratings().length !== 0">
-            <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
-        </div>
-        <table class="w-full text-left" [hidden]="ratings().length === 0" tumAetUiTable>
+    <tumaet-ui-table-layout [empty]="ratings().length === 0" emptyTitle="artemisApp.ratingList.noRatingToShow">
+        <table size="small" striped tumAetUiTable [sortField]="ratingsSortingPredicate" [sortOrder]="ratingsReverseOrder ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
-                <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
-                    <th jhiSortBy="id">
-                        <a class="th-link">#</a>
-                        <fa-icon [icon]="faSort" />
+                <tr>
+                    <th tumAetUiSortableColumn="id">
+                        <span>#</span>
                     </th>
-                    <th jhiSortBy="exerciseTitle">
-                        <a class="th-link">{{ 'artemisApp.ratingList.exercise' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="exerciseTitle">
+                        <span>{{ 'artemisApp.ratingList.exercise' | translate }}</span>
                     </th>
-                    <th jhiSortBy="exerciseType">
-                        <a class="th-link">{{ 'artemisApp.ratingList.exerciseType' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="exerciseType">
+                        <span>{{ 'artemisApp.ratingList.exerciseType' | translate }}</span>
                     </th>
-                    <th jhiSortBy="assessorLogin">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="assessorLogin">
+                        <span>{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | translate }}</span>
                     </th>
-                    <th jhiSortBy="assessorName">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="assessorName">
+                        <span>{{ 'artemisApp.complaint.listOfComplaints.assessorName' | translate }}</span>
                     </th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link">{{ 'artemisApp.ratingList.assessmentType' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="assessmentType">
+                        <span>{{ 'artemisApp.ratingList.assessmentType' | translate }}</span>
                     </th>
-                    <th jhiSortBy="rating">
-                        <a class="th-link">{{ 'artemisApp.ratingList.rating' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
+                    <th tumAetUiSortableColumn="rating">
+                        <span>{{ 'artemisApp.ratingList.rating' | translate }}</span>
                     </th>
                     <th class="text-center">{{ 'artemisApp.ratingList.actions' | translate }}</th>
                 </tr>
@@ -74,10 +64,13 @@
                 }
             </tbody>
         </table>
-        @if (totalElements() > pageSize) {
-            <div class="flex justify-center mt-4!">
-                <tumaet-ui-paginator [page]="page() - 1" [pageSize]="pageSize" [totalRecords]="totalElements()" [showRowsPerPage]="false" (pageChange)="onPageChange($event)" />
-            </div>
-        }
-    </div>
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="page() - 1"
+            [pageSize]="pageSize"
+            [totalRecords]="totalElements()"
+            [showRowsPerPage]="false"
+            (pageChange)="onPageChange($event)"
+        />
+    </tumaet-ui-table-layout>
 </div>

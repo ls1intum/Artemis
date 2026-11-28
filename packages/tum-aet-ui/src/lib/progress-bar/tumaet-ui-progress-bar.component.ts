@@ -6,7 +6,7 @@ export type TumAetUiProgressBarSize = 'small' | 'default';
 @Component({
     selector: 'tumaet-ui-progress-bar',
     templateUrl: './tumaet-ui-progress-bar.component.html',
-    styleUrl: './tumaet-ui-progress-bar.component.scss',
+    styleUrl: './tumaet-ui-progress-bar.component.css',
     host: {
         class: 'tumaet-ui-progress-bar tumaet:bg-border',
         role: 'progressbar',

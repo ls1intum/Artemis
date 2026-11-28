@@ -139,11 +139,13 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
      */
     private static void applyPermissions(Path path, int unixMode) {
         Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ,
-                PosixFilePermission.OTHERS_READ);
+                // Reviewed false positive (Sonar S2612): the mode git recorded is delivered to the student, see the Javadoc above.
+                PosixFilePermission.OTHERS_READ); // NOSONAR
         if ((unixMode & 0100) != 0) {
             permissions.add(PosixFilePermission.OWNER_EXECUTE);
             permissions.add(PosixFilePermission.GROUP_EXECUTE);
-            permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+            // Reviewed false positive (Sonar S2612): the executable bit git recorded is delivered to the student, see the Javadoc above.
+            permissions.add(PosixFilePermission.OTHERS_EXECUTE); // NOSONAR
         }
         setPermissionsQuietly(path, permissions);
     }

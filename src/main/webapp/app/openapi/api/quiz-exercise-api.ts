@@ -51,7 +51,7 @@ export class QuizExerciseApi {
      * @param action
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'end-now' | 'set-visible', options?: import('./request-options').RequestOptions): Observable<QuizExerciseDates> {
+    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'set-visible', options?: import('./request-options').RequestOptions): Observable<QuizExerciseDates> {
         const actionPath = encodeURIComponent(String(action));
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/${actionPath}`;
         return this.http.put<QuizExerciseDates>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });

@@ -3,6 +3,7 @@ import { dayjsToString, generateUUID, readResponseJson, trimDate } from '../../s
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin } from '../../support/users';
 
@@ -77,7 +78,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
         test('Deletes an existing exam', async ({ page, examDetails, examManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
             const response = await examDetails.deleteExam(exam.title!);
-            expect(response.status()).toBe(200);
+            expect(response.status()).toBe(202);
 
             // The user is taken back to the exam list, which no longer offers the exam ...
             await page.waitForURL(`**/course-management/${course.id}/exams`);
@@ -144,7 +145,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             expect(response.status()).toBe(200);
             const editedExam = await readResponseJson(response);
 
-            expect(editedExam.testExam).toBeFalsy();
+            expect(editedExam.examMode).toBe(ExamMode.REAL);
             expect(trimDate(editedExam.visibleDate)).toBe(trimDate(dayjsToString(editedExamData.visibleDate)));
             expect(trimDate(editedExam.startDate)).toBe(trimDate(dayjsToString(editedExamData.startDate)));
             expect(trimDate(editedExam.endDate)).toBe(trimDate(dayjsToString(editedExamData.endDate)));

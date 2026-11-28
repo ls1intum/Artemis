@@ -7,16 +7,11 @@ import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    CellTemplateRef,
-    ColumnDef,
-    TumAetUiButtonDirective,
-    TumAetUiEmptyStateComponent,
-    TumAetUiSearchFieldComponent,
-    TumAetUiTableComponent,
-    TumAetUiTableQueryEvent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
@@ -186,8 +181,6 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            // "Registrations / Capacity" is far wider than the "0 / 15" beneath it, so it wraps rather than setting the floor.
-            wrapHeader: true,
             templateRef: this.registrationsColumn(),
         },
         // Last to appear and the one most often empty, so it waits for the width that fits every other column comfortably.

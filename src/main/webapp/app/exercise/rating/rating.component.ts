@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
-import { RatingService } from 'app/assessment/shared/services/rating.service';
+import { RatingApi } from 'app/openapi/api/rating-api';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -10,11 +10,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-rating',
     templateUrl: './rating.component.html',
-    styleUrls: ['./rating.component.scss'],
+    styleUrls: ['./rating.component.css'],
     imports: [TranslateDirective, StarRatingComponent],
 })
 export class RatingComponent {
-    private ratingService = inject(RatingService);
+    private ratingApi = inject(RatingApi);
     private accountService = inject(AccountService);
 
     public readonly rating = signal<number>(undefined!);
@@ -56,7 +56,7 @@ export class RatingComponent {
         if (!(this.isOwnerOfParticipation() ?? this.accountService.isOwnerOfParticipation(participation))) {
             return;
         }
-        this.ratingService.getRating(result.id).subscribe((rating) => {
+        this.ratingApi.getRatingForResult(result.id).subscribe((rating) => {
             this.rating.set(rating ?? 0);
         });
     }
@@ -73,9 +73,9 @@ export class RatingComponent {
         this.disableRating.set(true);
         let observable: Observable<number>;
         if (oldRating) {
-            observable = this.ratingService.updateRating(this.rating(), result.id!);
+            observable = this.ratingApi.updateRatingForResult(result.id!, this.rating());
         } else {
-            observable = this.ratingService.createRating(this.rating(), result.id!);
+            observable = this.ratingApi.createRatingForResult(result.id!, this.rating());
         }
 
         observable.subscribe((rating) => this.rating.set(rating)).add(() => this.disableRating.set(false));

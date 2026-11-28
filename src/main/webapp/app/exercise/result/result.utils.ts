@@ -2,7 +2,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -13,9 +13,11 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
+import type { ResultWithPointsPerGradingCriterion } from 'app/openapi/model/result-with-points-per-grading-criterion';
+import type { Feedback as FeedbackResponse } from 'app/openapi/model/feedback';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -144,6 +146,106 @@ export function isAIResultAndIsBeingProcessed(result: Result | undefined): boole
  */
 export function isAthenaAIResult(result: Result): boolean {
     return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+}
+
+/**
+ * Tracks which Athena feedback results have already triggered a success/failure notification, so a later,
+ * unrelated participation update that still carries the same (already-notified) result does not show it again.
+ *
+ * A failed non-graded request for modeling/text is broadcast without ever being saved (see
+ * TextExerciseFeedbackService/ModelingExerciseFeedbackService: "does not save empty result"), so it never gets an
+ * id. ParticipationWebsocketService keeps such an unsaved placeholder cached indefinitely until a persisted Athena
+ * result for the same submission replaces it (see getNewestResult/isUnfinishedAthenaPlaceholder), so it can
+ * resurface as the current result on a later, unrelated event. Such failures are therefore deduplicated by
+ * submission id instead of result id, and that dedup is cleared once a fresh (pending) request for the same
+ * submission is observed, so a genuine retry's own failure is still shown.
+ */
+export class AthenaResultNotificationTracker {
+    private readonly notifiedResultIds = new Set<number>();
+    private readonly notifiedFailureSubmissionIds = new Set<number>();
+
+    /**
+     * Marks the completed Athena results a view already shows when it loads as notified, so a later re-emission of
+     * the same participation does not announce them again. A participation taken from the websocket cache can still
+     * carry an unsaved failure, which is recorded under its submission id. Pending results stay eligible for their
+     * completion notification.
+     *
+     * @param submissions the submissions the view loaded
+     */
+    markAsNotified(submissions: Submission[] | undefined) {
+        for (const submission of submissions ?? []) {
+            for (const result of submission.results ?? []) {
+                if (result.successful === undefined || !isAthenaAIResult(result)) {
+                    continue;
+                }
+                if (result.id !== undefined) {
+                    this.notifiedResultIds.add(result.id);
+                } else if (submission.id !== undefined) {
+                    this.notifiedFailureSubmissionIds.add(submission.id);
+                }
+            }
+        }
+    }
+
+    /**
+     * Evaluates the newest Athena result of each submission, so a submission's pending request and its outcome are
+     * observed even when another submission holds a newer result or an unsaved failure of its own.
+     *
+     * @param submissions the submissions of the changed participation
+     * @return the results a success/failure notification should be shown for
+     */
+    resultsToNotify(submissions: Submission[] | undefined): Result[] {
+        const results: Result[] = [];
+        for (const submission of submissions ?? []) {
+            // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+            // Only among Athena results: a build that finishes while feedback is pending has a higher id than the Athena
+            // result, which keeps its id from the pending request, and would otherwise hide its completion.
+            const result = getNewestResult(submission.results?.filter(isAthenaAIResult));
+            // The result's own submission back-reference is not reliably populated on every path, so pass the submission id.
+            if (this.shouldNotify(result, submission.id)) {
+                results.push(result!);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Call once per incoming result.
+     *
+     * @param result the result to evaluate
+     * @param submissionId id of the submission the result belongs to. Callers should pass this explicitly rather
+     * than relying on `result.submission?.id`, which is not reliably populated on every code path that reaches
+     * this method (e.g. before a defensive re-attachment step such as `sortResults()` has run). Falls back to
+     * `result.submission?.id` when omitted.
+     * @return whether a success/failure notification should be shown for this result
+     */
+    shouldNotify(result: Result | undefined, submissionId?: number): boolean {
+        if (!result || !isAthenaAIResult(result)) {
+            return false;
+        }
+        const resolvedSubmissionId = submissionId ?? result.submission?.id;
+        if (result.successful === undefined) {
+            // Pending broadcast for a fresh request: allow the next failure for this submission to be shown again.
+            if (resolvedSubmissionId !== undefined) {
+                this.notifiedFailureSubmissionIds.delete(resolvedSubmissionId);
+            }
+            return false;
+        }
+        if (result.id !== undefined) {
+            if (this.notifiedResultIds.has(result.id)) {
+                return false;
+            }
+            this.notifiedResultIds.add(result.id);
+            return true;
+        }
+        if (resolvedSubmissionId !== undefined) {
+            if (this.notifiedFailureSubmissionIds.has(resolvedSubmissionId)) {
+                return false;
+            }
+            this.notifiedFailureSubmissionIds.add(resolvedSubmissionId);
+        }
+        return true;
+    }
 }
 
 const getAthenaFeedbackTemplateStatus = (result: Result | undefined): ResultTemplateStatus | undefined => {
@@ -461,16 +563,21 @@ export const isManualResult = (result?: Result) => {
 export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
-        if (!result.result.feedbacks) {
+        const feedbacks = result.result?.feedbacks;
+        if (!feedbacks) {
             return;
         }
-        result.result.feedbacks.forEach((feedback) => {
-            if (Feedback.isTestCaseFeedback(feedback)) {
-                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (result.result.feedbacks!.indexOf(feedback) + 1));
+        feedbacks.forEach((feedback) => {
+            if (isTestCaseFeedback(feedback)) {
+                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (feedbacks.indexOf(feedback) + 1));
             }
         });
     });
     return Array.from(testCasesNames);
+}
+
+function isTestCaseFeedback(feedback: FeedbackResponse): boolean {
+    return feedback.type === 'AUTOMATIC' && !!feedback.testCase;
 }
 
 /**
@@ -484,7 +591,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
     const testCaseResults: TestCaseResult[] = [];
 
     testCaseNames.forEach((testName) => {
-        const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
+        const feedback = getFeedbackByTestCase(testName, result.result?.feedbacks);
 
         let resultText;
         if (feedback?.positive) {
@@ -504,7 +611,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
  * @param feedbacks the list of result feedbacks to search in
  * @param testCase the name of the test case to search for
  */
-export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
+export function getFeedbackByTestCase<T extends FeedbackResponse>(testCase: string, feedbacks?: T[]): T | null {
     if (!feedbacks) {
         return null;
     }

@@ -84,6 +84,65 @@ describe('IrisSettingsUpdateComponent', () => {
         expect(component).toBeDefined();
     });
 
+    describe('Additional Guidelines textarea height', () => {
+        let contentHeight: number;
+        let pendingFrames: FrameRequestCallback[];
+
+        const textarea = (): HTMLTextAreaElement | null => fixture.nativeElement.querySelector('#customInstructions');
+
+        /** Renders, then runs the animation frames that the rendering requested, as the browser does after a change. */
+        async function settle(): Promise<void> {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            pendingFrames.splice(0).forEach((frame) => frame(0));
+        }
+
+        beforeEach(async () => {
+            contentHeight = 120;
+            // jsdom does no layout, so the height of the content is provided, and the animation frames are run by settle()
+            vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => contentHeight);
+            pendingFrames = [];
+            vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => pendingFrames.push(callback));
+            routeParamsSubject.next({ courseId: '1' });
+            fixture.detectChanges();
+            await settle();
+        });
+
+        it('fits the textarea to its content while the General tab is shown', () => {
+            expect(textarea()).not.toBeNull();
+            expect(textarea()!.style.height).toBe('120px');
+        });
+
+        it('keeps the height when a setting changes on the Admin tab, and fits it again when General is shown', async () => {
+            const generalTextarea = textarea()!;
+            component['setActiveTab']('admin');
+            await settle();
+
+            // the hidden textarea measures as 0, and changing the pipeline variant touches the settings the effect reads
+            contentHeight = 0;
+            component.updateVariant('advanced');
+            await settle();
+            expect(generalTextarea.style.height).toBe('120px');
+
+            contentHeight = 160;
+            component['setActiveTab']('general');
+            await settle();
+
+            expect(textarea()!.style.height).toBe('160px');
+        });
+
+        it('never writes a height of 0 for a textarea that is not rendered', async () => {
+            const generalTextarea = textarea()!;
+            contentHeight = 0;
+
+            component.updateCustomInstructions('changed from outside');
+            await settle();
+
+            expect(generalTextarea.style.height).toBe('120px');
+        });
+    });
+
     describe('ngOnInit', () => {
         it('should load settings from route params', async () => {
             routeParamsSubject.next({ courseId: '1' });
@@ -740,7 +799,7 @@ describe('IrisSettingsUpdateComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-tab-panel[value="admin"]')).toBeNull();
         });
 
         it('should render the admin tab when isAdmin() is true', async () => {
@@ -751,7 +810,7 @@ describe('IrisSettingsUpdateComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('tumaet-ui-tab-panel[value="admin"]')).not.toBeNull();
         });
     });
 

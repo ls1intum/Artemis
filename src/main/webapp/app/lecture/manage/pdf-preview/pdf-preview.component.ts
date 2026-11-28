@@ -1,4 +1,7 @@
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -6,15 +9,16 @@ import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, Subscription, exhaustMap, filter, map, take, timeout, timer } from 'rxjs';
+import { Subject, Subscription, exhaustMap, filter, take, timeout, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import type { HiddenPageInfo } from 'app/openapi/model/hidden-page-info';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import type { PdfDocumentObject } from '@embedpdf/models';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -93,7 +97,7 @@ export interface HiddenPageMap {
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
-    styleUrls: ['./pdf-preview.component.scss'],
+    styleUrls: ['./pdf-preview.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiPopoverComponent,
@@ -114,7 +118,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly route = inject(ActivatedRoute);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private readonly alertService = inject(AlertService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly pdfEngineService = inject(PdfEngineService);
@@ -202,8 +206,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.attachmentVideoUnitSub = timer(0, 1000)
                         .pipe(
                             exhaustMap(() => this.attachmentVideoUnitService.findById(data.attachmentVideoUnit.id, data.attachmentVideoUnit.lecture.id)),
-                            map((response) => response.body),
-                            filter((unit): unit is AttachmentVideoUnit => !!unit && !unit.slideMetadataPending),
+                            filter((unit) => !unit.slideMetadataPending),
                             take(1),
                             timeout({ first: 60_000 }),
                         )
@@ -537,6 +540,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
+    private toHiddenPageInfos(hiddenPages: HiddenPage[]): HiddenPageInfo[] {
+        return hiddenPages.map((page) => ({ slideId: page.slideId, date: convertDateFromClient(page.date), exerciseId: page.exerciseId }));
+    }
+
     /**
      * Updates an attachment video unit without changing the stored PDF files.
      */
@@ -551,23 +558,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            const formData = new FormData();
             const attachmentVideoUnitWithoutFile = hydrate(new AttachmentVideoUnit(), attachmentVideoUnit, {
                 attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: attachmentVideoUnit.videoSource ?? '',
             });
 
-            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
-            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment));
-            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
-
-            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture.id, attachmentVideoUnit.id, formData).subscribe({
-                next: () => resolve(),
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                    reject(error);
-                },
-            });
+            this.attachmentVideoUnitService
+                .update(attachmentVideoUnit.lecture.id, attachmentVideoUnit.id, attachmentVideoUnitWithoutFile, {
+                    attachment: attachmentVideoUnit.attachment,
+                    hiddenPages: this.toHiddenPageInfos(hiddenPages),
+                })
+                .subscribe({
+                    next: () => resolve(),
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                        reject(error);
+                    },
+                });
         });
     }
 
@@ -592,46 +601,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentToBeEdited.set(attachmentVideoUnitToUpdate.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
-            const formData = new FormData();
-            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             const attachmentVideoUnit = hydrate(new AttachmentVideoUnit(), attachmentVideoUnitToUpdate, {
                 attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: this.attachmentVideoUnit()!.videoSource ?? '',
             });
-            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
 
             const submitUpdate = (finalPageOrder?: OrderedPage[]) => {
-                if (instructorPdfFile) {
-                    formData.append('file', instructorPdfFile);
-                }
-                if (studentPdfFile) {
-                    formData.append('studentVersion', studentPdfFile);
-                }
-                if (finalPageOrder) {
-                    formData.append(
-                        'pageOrder',
-                        new Blob(
-                            [
-                                JSON.stringify(
-                                    finalPageOrder.map((page) => ({
-                                        slideId: page.slideId,
-                                        order: page.order,
-                                    })),
-                                ),
-                            ],
-                            { type: 'application/json' },
-                        ),
-                    );
-                }
-
-                this.attachmentVideoUnitService.update(lectureId, attachmentVideoUnitId, formData).subscribe({
-                    next: () => resolve(),
-                    error: (error) => {
-                        this.isSaving.set(false);
-                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                        reject(error);
-                    },
-                });
+                this.attachmentVideoUnitService
+                    .update(lectureId, attachmentVideoUnitId, attachmentVideoUnit, {
+                        attachment: this.attachmentToBeEdited(),
+                        file: instructorPdfFile,
+                        studentVersion: studentPdfFile,
+                        hiddenPages: this.toHiddenPageInfos(hiddenPages),
+                        pageOrder: finalPageOrder?.map((page) => ({ slideId: page.slideId, order: page.order })),
+                    })
+                    .subscribe({
+                        next: () => resolve(),
+                        error: (error) => {
+                            this.isSaving.set(false);
+                            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                            reject(error);
+                        },
+                    });
             };
 
             if (instructorPdfFile) {
@@ -699,7 +691,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     async deleteAttachmentFile() {
         if (this.attachmentVideoUnit()) {
-            this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
+            this.lectureUnitApi.deleteLectureUnit(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
                     this.navigateBack();
                     this.dialogErrorSource.next('');

@@ -5,7 +5,7 @@ import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';

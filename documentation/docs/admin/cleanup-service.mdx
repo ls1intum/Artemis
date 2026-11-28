@@ -72,7 +72,7 @@ The confirmation dialog then lists the affected entity types with their counts (
 
 | Operation | What it deletes | What it keeps | Default cutoff |
 | --- | --- | --- | --- |
-| Reset student data of old courses (two phases) | All student data of the course (participations, submissions, results, feedback, posts, enrollments, student/tutor/editor group memberships) | The course itself, its exercises, lectures, exams, competencies and tutorial-group configuration, and the instructors | 5 years after end (grade-relevant), 1 year (non-grade-relevant), plus a grace period |
+| Reset student data of old courses (two phases) | All student data of the course (participations, submissions, results, feedback, posts, enrollments, student, tutor and editor memberships) | The course itself, its exercises, lectures, exams, competencies and tutorial-group configuration, and the instructors | 5 years after end (grade-relevant), 1 year (non-grade-relevant), plus a grace period |
 | Delete feedback of non-latest results | Feedback, long feedback texts and text blocks of results that are **not** the latest per participation | The results themselves, and the feedback of the latest **rated** and latest **non-rated** result per participation | 8 weeks after course end |
 | Delete old submission versions | Submission versions (the editor keystroke/version history of a submission) | The submission itself and its latest stored content | 8 weeks after course end |
 | Warn + delete not-enrolled users (two phases) | Phase 1 emails users enrolled in no course and inactive that their account will be deleted after a grace period; phase 2 permanently deletes those still not-enrolled who did not log in since the warning | Enrolled users, recently active users, users who log in during the grace period, administrators, the Iris bot, and accounts that still have data a retention period protects | 6 months of inactivity + a grace period |
@@ -81,6 +81,8 @@ The confirmation dialog then lists the affected entity types with their counts (
 :::info
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
 :::
+
+None of these operations removes science data collection events, and resetting an old course keeps them. The not-enrolled-user deletion removes an account's consent decisions and renames its events, as described in [Deleting User Accounts](/admin/user-deletion). Events are deleted together with the course, or per course by the students themselves; see [Science Data Collection](/admin/science-data-collection#deleting-science-data).
 
 ### Grade-relevance and retention periods
 

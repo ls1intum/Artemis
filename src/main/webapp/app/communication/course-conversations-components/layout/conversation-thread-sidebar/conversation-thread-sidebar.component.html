@@ -1,5 +1,5 @@
 <!-- expanded post to display post and answerPosts as thread -->
-<div class="h-100">
+<div class="h-full">
     <div
         class="postings-container expanded-thread"
         #threadContainer
@@ -11,34 +11,34 @@
         @if (!isExpanded()) {
             <div class="draggable-left panel-divider-x"></div>
         }
-        <div class="card" data-testid="conversation-thread-card">
+        <div class="thread-card" data-testid="conversation-thread-card">
             <!-- header -->
-            <div class="card-header cursor-default d-flex">
-                <div class="row flex-grow-1">
-                    <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label"></h5>
-                    </div>
-                    <div class="col-auto d-flex align-items-center flex-row gap-2">
-                        <fa-icon
-                            class="pointer me-2"
-                            #expandTooltip="ngbTooltip"
-                            [icon]="isExpanded() ? faCompress : faExpand"
-                            (click)="toggleExpand()"
-                            [ngbTooltip]="
-                                isExpanded()
-                                    ? ('artemisApp.conversationsLayout.threadSideBar.collapse' | artemisTranslate)
-                                    : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
-                            "
-                        />
-                        <fa-icon class="pointer" [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate" [icon]="faXmark" (click)="closeThread()" />
-                    </div>
+            <div class="thread-card-header cursor-default">
+                <h5 class="mb-0 font-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
+                <div class="flex items-center gap-2">
+                    <fa-icon
+                        class="cursor-pointer me-2"
+                        [icon]="isExpanded() ? faCompress : faExpand"
+                        (click)="toggleExpand()"
+                        [tumAetUiTooltip]="
+                            isExpanded()
+                                ? ('artemisApp.conversationsLayout.threadSideBar.collapse' | artemisTranslate)
+                                : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
+                        "
+                    />
+                    <fa-icon
+                        class="cursor-pointer"
+                        [tumAetUiTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
+                        [icon]="faXmark"
+                        (click)="closeThread()"
+                    />
                 </div>
             </div>
             <!-- body -->
-            <div #scrollBody class="pt-0 scrollbar wrapper-scroll-y mx-1 thread-answer-post" data-testid="conversation-thread-scroll-body">
+            <div #scrollBody class="scrollbar wrapper-scroll-y thread-answer-post mx-1 pt-0" data-testid="conversation-thread-scroll-body">
                 @if (post() !== undefined) {
                     <div class="my-2">
-                        <div class="card-body px-0">
+                        <div class="py-4 px-0">
                             <jhi-post
                                 [readOnlyMode]="readOnlyMode()"
                                 [posting]="post()"
@@ -52,7 +52,7 @@
                                 [hasChannelModerationRights]="hasChannelModerationRights()"
                             />
                         </div>
-                        <div class="message-input mx-3 pt-2">
+                        <div class="message-input mx-4 pt-2">
                             @if (!readOnlyMode()) {
                                 <jhi-message-reply-inline-input
                                     [activeConversation]="conversation()"

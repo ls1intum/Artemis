@@ -26,13 +26,14 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;
 
 @Component({
     template: `
-        <jhi-markdown-editor-monaco>
+        <jhi-markdown-editor-monaco [showVisualButton]="true">
             <div id="previewMonaco"><span class="preview-probe"></span></div>
         </jhi-markdown-editor-monaco>
     `,
@@ -184,6 +185,54 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
         expect(focusSpy).not.toHaveBeenCalled();
+    });
+
+    describe('toolbar popovers', () => {
+        const firstPopover = () => {
+            const popovers = fixture.debugElement.queryAll(By.directive(TumAetUiPopoverComponent));
+            expect(popovers.length).toBeGreaterThan(0);
+            return popovers[0].componentInstance as TumAetUiPopoverComponent;
+        };
+
+        it('should apply the chosen item and give the focus back to the editor once the popover is gone', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+            popover.open(document.body);
+
+            comp['runFromPopover'](popover, run);
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(popover.isOpen()).toBe(false);
+            // jsdom has no animation API, so the popover is gone at once and hands focus to its button first.
+            expect(focusSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not take the focus when the popover is dismissed without a choice', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            popover.open(document.body);
+
+            popover.close();
+
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
+
+        it('should only apply the item when its popover is not open', () => {
+            fixture.detectChanges();
+            const popover = firstPopover();
+            const focusSpy = vi.spyOn(comp.monacoEditor()!, 'focus');
+            const run = vi.fn();
+
+            comp['runFromPopover'](popover, run);
+            popover.open(document.body);
+            popover.close();
+
+            expect(run).toHaveBeenCalledOnce();
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should emit when leaving the visual tab', () => {
@@ -1046,10 +1095,11 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     describe('layout', () => {
         it('should re-layout the editor when an observed element is resized', () => {
-            let resizeCallback: ResizeObserverCallback | undefined;
+            // The tab list of the kit observes its own size, so every observer reports to the same list.
+            const resizeCallbacks: ResizeObserverCallback[] = [];
             globalThis.ResizeObserver = class {
                 constructor(callback: ResizeObserverCallback) {
-                    resizeCallback = callback;
+                    resizeCallbacks.push(callback);
                 }
                 observe() {}
                 unobserve() {}
@@ -1058,7 +1108,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             fixture.detectChanges();
             const adjustSpy = vi.spyOn(comp, 'adjustEditorDimensions');
 
-            resizeCallback!([], comp.resizeObserver!);
+            resizeCallbacks.forEach((callback) => callback([], comp.resizeObserver!));
 
             expect(adjustSpy).toHaveBeenCalledOnce();
         });

@@ -45,7 +45,7 @@ public interface CourseDefaultConfigurationsRepository {
         if (courseConfiguration != null) {
             updateCourseConfiguration(courseId, courseConfiguration.isGradeRelevant(), courseConfiguration.isDataRetentionHold(),
                     courseConfiguration.isPresentationAssessmentsEnabled(), courseConfiguration.isAutoOrchestratorEnabled(), courseConfiguration.getDebounceWindowSecondsOverride(),
-                    courseConfiguration.getMaxDailyOrchestrationOverride());
+                    courseConfiguration.getMaxDailyOrchestrationOverride(), courseConfiguration.getStudentWelcomeContext());
         }
     }
 
@@ -76,6 +76,7 @@ public interface CourseDefaultConfigurationsRepository {
      * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
      * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
      * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
+     * @param studentWelcomeContext          optional learning guidance for the student Home
      */
     @Modifying
     @Transactional // ok because of the update
@@ -83,13 +84,14 @@ public interface CourseDefaultConfigurationsRepository {
             UPDATE CourseConfiguration config
             SET config.gradeRelevant = :gradeRelevant, config.dataRetentionHold = :dataRetentionHold, config.autoOrchestratorEnabled = :autoOrchestratorEnabled,
                 config.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
-                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
+                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride,
+                config.studentWelcomeContext = :studentWelcomeContext
             WHERE config.course.id = :courseId
             """)
     void updateCourseConfiguration(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant, @Param("dataRetentionHold") boolean dataRetentionHold,
             @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
             @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
-            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
+            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride, @Param("studentWelcomeContext") @Nullable String studentWelcomeContext);
 
     /**
      * Creates the Athena settings of a newly stored course with every feature switched off.
@@ -255,7 +257,7 @@ public interface CourseDefaultConfigurationsRepository {
     @Transactional // ok because of the insert
     @Query(value = """
             INSERT INTO hyperion_course_settings (course_id, settings)
-            VALUES (:courseId, '{"poolGenerationEnabled":false,"questionsPerLectureUnit":12}')
+            VALUES (:courseId, '{"poolGenerationEnabled":false,"singleChoiceQuestionsPerLectureUnit":12,"multipleChoiceEnabled":false,"multipleChoiceQuestionsPerLectureUnit":12,"multipleChoiceMinCorrectOptions":1,"multipleChoiceMaxCorrectOptions":4,"easyPercent":20,"mediumPercent":50,"hardPercent":30}')
             """, nativeQuery = true)
     void initializeHyperionCourseSettings(@Param("courseId") long courseId);
 }

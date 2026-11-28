@@ -1,18 +1,19 @@
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-edit-working-time',
     templateUrl: './exam-edit-working-time.component.html',
-    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamEditWorkingTimeDialogComponent],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamEditWorkingTimeDialogComponent, ArtemisTranslatePipe],
 })
 export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     alertService = inject(AlertService);

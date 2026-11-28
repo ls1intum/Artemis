@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type SplitSizes = [number, number];
@@ -49,7 +49,7 @@ const MIN_PANEL_PERCENT = 5;
     standalone: true,
     imports: [CommonModule, TumAetUiSplitterComponent, ArtemisTranslatePipe],
     templateUrl: './lecture-unit-fullscreen-layout.component.html',
-    styleUrl: './lecture-unit-fullscreen-layout.component.scss',
+    styleUrl: './lecture-unit-fullscreen-layout.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
@@ -242,7 +242,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     private getNavbarHeight(): number {
-        const navbar = document.querySelector('nav.navbar.jh-navbar');
+        const navbar = document.querySelector('nav.jh-navbar');
         return navbar instanceof HTMLElement ? navbar.getBoundingClientRect().height : 0;
     }
 
@@ -305,8 +305,19 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         }
     }
 
+    /**
+     * The navbar stays reachable, and so does the CDK overlay container: dialogs, menus and tooltips of the fullscreen
+     * sidebar (such as About Iris and the session switcher) render there, and once an earlier overlay has created the
+     * container it already exists when fullscreen opens, so marking it inert would leave them unclickable and hidden
+     * from assistive technology. Whatever could open them from the page behind is already inert.
+     */
     private shouldSkipBackgroundInert(element: HTMLElement): boolean {
-        return element.classList.contains('sticky-top-navbar') || element.matches('jhi-navbar') || !!element.querySelector('jhi-navbar');
+        return (
+            element.classList.contains('sticky-top-navbar') ||
+            element.classList.contains('cdk-overlay-container') ||
+            element.matches('jhi-navbar') ||
+            !!element.querySelector('jhi-navbar')
+        );
     }
 
     private setBackgroundInert(inert: boolean): void {

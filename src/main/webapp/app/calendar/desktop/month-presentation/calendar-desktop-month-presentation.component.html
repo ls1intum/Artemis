@@ -36,7 +36,7 @@
                                 <section class="flex w-80 max-w-[calc(100vw-3rem)] flex-col gap-2" data-testid="calendar-day-agenda">
                                     <div class="flex items-start justify-between gap-2">
                                         <h3
-                                            class="m-0! text-base font-semibold"
+                                            class="m-0"
                                             jhiTranslate="artemisApp.calendar.dayEvents"
                                             [translateValues]="{ date: day.date | artemisDate: 'long-date', count: day.eventsAndMetadata.length }"
                                         ></h3>
@@ -53,7 +53,7 @@
                                             <fa-icon [icon]="faXmark" />
                                         </button>
                                     </div>
-                                    <ul class="m-0! flex max-h-80 list-none flex-col gap-1 overflow-y-auto overscroll-contain p-0!">
+                                    <ul class="m-0 flex max-h-80 list-none flex-col gap-1 overflow-y-auto overscroll-contain p-0">
                                         @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
                                             @let event = eventAndMetadata.event;
                                             <li>
@@ -62,7 +62,7 @@
                                                     tumAetUiButton
                                                     variant="text"
                                                     severity="secondary"
-                                                    class="w-full justify-start! gap-3! text-left!"
+                                                    class="w-full justify-start gap-3 text-left"
                                                     data-testid="calendar-day-agenda-event"
                                                     (click)="eventDetailPopover.open($event, event)"
                                                 >

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
@@ -12,7 +14,6 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import {
     communicationPostExerciseUser1,
     communicationPostLectureUser1,
@@ -20,7 +21,6 @@ import {
     communicationUser1,
 } from 'test/helpers/sample/communication-sample-data';
 import { UserRole } from 'app/communication/communication.util';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
@@ -45,13 +45,11 @@ describe('PostingHeaderComponent', () => {
             imports: [
                 MockModule(FormsModule),
                 MockModule(ReactiveFormsModule),
-                NgbTooltip,
                 PostingHeaderComponent,
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 PostingMarkdownEditorComponent,
-                PostingButtonComponent,
                 ConfirmIconComponent,
                 ProfilePictureComponent,
             ],
@@ -76,7 +74,7 @@ describe('PostingHeaderComponent', () => {
         vi.spyOn(TestBed.inject(CommunicationService), 'currentUserIsAuthorOfPosting').mockReturnValue(isAuthor);
         fixture.componentRef.setInput('posting', { ...communicationPostLectureUser1, authorRole });
         fixture.detectChanges();
-        const author = fixture.nativeElement.querySelector('#header-author-date .fw-semibold') as HTMLElement;
+        const author = fixture.nativeElement.querySelector('#header-author-date .font-semibold') as HTMLElement;
         const activate = vi.spyOn(component.onUserNameClicked, 'emit');
         expect(author.getAttribute('role')).toBe(active ? 'button' : null);
         expect(author.tabIndex).toBe(active ? 0 : -1);
@@ -112,6 +110,23 @@ describe('PostingHeaderComponent', () => {
         component.ngOnInit();
 
         expect(getElement(debugElement, '#today-flag')).toBeNull();
+    });
+
+    it('should offer the time as tooltip of the date only when the post was not created today', () => {
+        const dateTooltip = () => debugElement.query(By.css('span.post-header-date.fs-small')).injector.get(TumAetUiTooltipDirective);
+
+        fixture.componentRef.setInput('posting', communicationPostLectureUser1);
+        fixture.detectChanges();
+        expect(dateTooltip().content()).toBe('');
+
+        const pastDatePost = {
+            ...communicationPostLectureUser1,
+            creationDate: dayjs().subtract(1, 'day').toDate(),
+        } as unknown as Post;
+        fixture.componentRef.setInput('posting', pastDatePost);
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(dateTooltip().content()).not.toBe('');
     });
 
     it('should display resolved icon on resolved post header', () => {

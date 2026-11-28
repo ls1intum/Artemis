@@ -1,6 +1,6 @@
 @if (course()) {
     <div *titleBarTitle>
-        <div class="d-flex align-items-center">
+        <div class="flex items-center">
             <h5 class="mb-0">
                 <span><span jhiTranslate="artemisApp.exerciseManagement.title"></span> ({{ exerciseCount() }})</span>
             </h5>
@@ -54,16 +54,20 @@
     @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
         <ng-template titleBarToolbar>
             <div class="selection-bar" animate.enter="selection-entering" animate.leave="selection-leaving">
-                <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted-color small" jhiTranslate="artemisApp.exerciseManagement.selection.count" [translateValues]="{ count: selectedCount() }"></span>
+                <div class="flex items-center flex-wrap gap-4 mt-2 pt-2 border-x-0 border-b-0 border-t border-solid border-border">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="text-muted-color text-[0.875em]"
+                            jhiTranslate="artemisApp.exerciseManagement.selection.count"
+                            [translateValues]="{ count: selectedCount() }"
+                        ></span>
                         <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="clearSelection()">
                             <span jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"></span>
                         </button>
                     </div>
                     @if (allSelectedAreProgramming() || course()?.isAtLeastInstructor) {
-                        <div class="vr"></div>
-                        <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="inline-block w-px min-h-[1em] self-stretch bg-current opacity-25"></div>
+                        <div class="flex items-center flex-wrap gap-2">
                             @if (allSelectedAreProgramming()) {
                                 @if (selectionHasGroupMember()) {
                                     <!-- Editing a group member's timeline here would desync it, so only this action is disabled. -->
@@ -97,6 +101,8 @@
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                                    entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                    [fetchCategorizedEntitySummary]="fetchSelectedExercisesDeletionSummary()"
                                     [translateValues]="{
                                         courseTitle: course()?.title,
                                         courseType: course()?.testCourse
@@ -127,7 +133,7 @@
 
     @if (loaded() && cards().length === 0) {
         <tumaet-ui-empty-state
-            class="mt-5"
+            class="mt-12"
             [icon]="search() ? faMagnifyingGlass : faCode"
             [title]="
                 search()
@@ -159,19 +165,19 @@
         </tumaet-ui-empty-state>
     }
     @if (loadingBuildResults()) {
-        <span class="text-text-secondary text-sm" role="status" data-testid="programming-build-results-loading" jhiTranslate="loading"></span>
+        <span class="text-muted-color text-sm" role="status" data-testid="programming-build-results-loading" jhiTranslate="loading"></span>
     }
-    <div class="d-flex flex-column gap-3">
+    <div class="flex flex-col gap-4">
         @for (card of cards(); track card.id) {
             <div class="exercise-card-host">
                 <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="card.title">
-                    <div tumAetUiPanelHeader class="d-flex align-items-center gap-2 w-100">
+                    <div tumAetUiPanelHeader class="flex items-center gap-2 w-full">
                         @if (isGroup() && card.group) {
                             <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
                         } @else if (card.icon) {
                             <fa-icon [icon]="card.icon" [fixedWidth]="true" />
                         }
-                        <span class="fw-semibold">{{ card.title }} ({{ card.exercises.length }})</span>
+                        <span class="font-semibold">{{ card.title }} ({{ card.exercises.length }})</span>
                     </div>
 
                     @if (courseId() !== undefined) {
@@ -191,6 +197,7 @@
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
                             (exerciseDeleted)="onExerciseDeleted($event)"
+                            (exerciseDeletionOutcomeUnknown)="reloadCourseExercises()"
                             (selectionToggle)="toggleSelection($event)"
                             (selectionAllChange)="onTableSelectionAllChange(card, $event)"
                         />
@@ -198,46 +205,46 @@
 
                     <!-- Group footer: shared group meta info on the left, group-level actions on the right -->
                     @if (isGroup() && card.group) {
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
-                            <div class="d-flex flex-wrap gap-3 small text-muted">
+                        <div class="flex items-center justify-between flex-wrap gap-4 mt-4">
+                            <div class="flex flex-wrap gap-4 text-[0.875em] text-muted-color">
                                 <span>
-                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
+                                    <span class="font-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
                                     @if (card.group.releaseDate) {
                                         {{ card.group.releaseDate | artemisDate }}
                                     } @else {
-                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
+                                        <span class="italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.start"></span>:</span>
+                                    <span class="font-semibold"><span jhiTranslate="artemisApp.exercise.start"></span>:</span>
                                     @if (card.group.startDate) {
                                         {{ card.group.startDate | artemisDate }}
                                     } @else {
-                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
+                                        <span class="italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.due"></span>:</span>
+                                    <span class="font-semibold"><span jhiTranslate="artemisApp.exercise.due"></span>:</span>
                                     @if (card.group.dueDate) {
                                         {{ card.group.dueDate | artemisDate }}
                                     } @else {
-                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
+                                        <span class="italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>:</span>
+                                    <span class="font-semibold"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>:</span>
                                     @if (card.group.assessmentDueDate) {
                                         {{ card.group.assessmentDueDate | artemisDate }}
                                     } @else {
-                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
+                                        <span class="italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
-                                <span class="d-flex align-items-center gap-1">
-                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.maxPoints"></span>
+                                <span class="flex items-center gap-1">
+                                    <span class="font-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.maxPoints"></span>
                                     @if (card.group.maxPoints !== undefined) {
                                         {{ card.group.maxPoints }}p
                                     } @else {
-                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
+                                        <span class="italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                     <fa-icon
                                         [icon]="faCircleInfo"
@@ -246,7 +253,7 @@
                                     />
                                 </span>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="flex items-center gap-2">
                                 <tumaet-ui-button severity="warn" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
@@ -282,5 +289,5 @@
         <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
     }
     <jhi-consistency-check [(visible)]="showConsistencyCheck" [exercisesToCheck]="consistencyExercises()" />
-    <jhi-programming-exercise-edit-selected [(visible)]="showEditSelected" [selectedProgrammingExercises]="editSelectedData()" (saved)="onEditSelectedSaved()" />
+    <jhi-programming-exercise-edit-selected [(visible)]="showEditSelected" [selectedProgrammingExercises]="editSelectedData()" (saved)="reloadCourseExercises()" />
 }

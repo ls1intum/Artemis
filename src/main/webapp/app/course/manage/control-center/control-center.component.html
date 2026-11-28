@@ -11,6 +11,8 @@
             <div class="ai-body">
                 <jhi-iris-enabled [course]="course()" />
             </div>
+            <!-- Inside the panel, not beside it: an empty element between the panels is still a flex item of the row and would double their gap. -->
+            <jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" [hideTryButton]="true" />
         </div>
     }
     @if (athenaEnabled()) {

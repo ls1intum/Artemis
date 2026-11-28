@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -91,13 +93,14 @@ public class QuizExerciseBatchResource {
      *
      * @param quizExerciseId the id of the quizExercise to which the batch to join belongs
      * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
-     * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
+     * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined, or with status 429 (Too Many Requests) if the user tries to join too often
      */
     @FeatureUsage(UserFeature.QUIZ_LIVE)
     @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.QUIZ_BATCH_JOIN, perUser = true)
     public ResponseEntity<QuizBatchDTO> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
-        log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
+        log.info("REST request to join quiz batch : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithAuthorities();
         if (quizExercise.isExamExercise()) {
