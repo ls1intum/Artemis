@@ -4,7 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
-last_reviewed: 2026-11-26
+last_reviewed: 2026-11-27
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -328,7 +328,8 @@ pnpm run tum-aet-ui:test:consumer minimum
 pnpm run tum-aet-ui:test:consumer latest
 ```
 
-`pack:check` writes the validated tarball and its integrity metadata to `build/tum-aet-ui-package`.
+`pack:check` writes the validated tarball and its integrity metadata to `build/tum-aet-ui-package`. publint and
+AreTheTypesWrong are not dependencies: `pack.mjs` fetches them with `pnpm dlx` at the versions it declares.
 Consumer failures retain the npm manifest, resolved lockfile, and browser diagnostics under
 `build/test-results/tum-aet-ui-consumer`; CI uploads these as artifacts.
 
