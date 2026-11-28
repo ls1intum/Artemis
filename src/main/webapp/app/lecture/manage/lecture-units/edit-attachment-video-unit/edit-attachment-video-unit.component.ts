@@ -11,7 +11,8 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { Observable, combineLatest, of, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RecordingLeaveComponent, confirmRecordingLeave, confirmReplacingRecording, recordingNavigation } from '../tum-live-upload/tum-live-creation';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';

@@ -12,7 +12,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { ATHENA_FEEDBACK_STYLE_EXAMPLES } from 'app/course/manage/athena-settings-update/athena-feedback-style-examples';
 
 describe('AthenaSettingsUpdateComponent', () => {

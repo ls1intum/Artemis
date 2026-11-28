@@ -6,22 +6,17 @@ import { Subscription, map } from 'rxjs';
 import { faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCardComponent,
-    TumAetUiIconFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiLineChartComponent,
-    TumAetUiLineChartConfig,
-    TumAetUiMessageComponent,
-    TumAetUiSelectButtonComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabsComponent,
-    TumAetUiTagComponent,
-    TumAetUiToggleSwitchComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

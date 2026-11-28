@@ -10,7 +10,8 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';

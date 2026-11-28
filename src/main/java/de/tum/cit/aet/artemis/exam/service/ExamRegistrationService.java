@@ -114,7 +114,7 @@ public class ExamRegistrationService {
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      * <p>
      * Users who hold a staff role (instructor, editor, tutor, or admin) in the course are rejected and reported back
-     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users are NOT added to the course student group,
+     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users do NOT get the student role in the course,
      * so a failed registration leaves no side effect on the user's course membership.
      *
      * @param courseId     the id of the course

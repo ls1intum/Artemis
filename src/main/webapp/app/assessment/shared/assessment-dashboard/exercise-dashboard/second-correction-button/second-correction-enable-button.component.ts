@@ -1,4 +1,4 @@
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';

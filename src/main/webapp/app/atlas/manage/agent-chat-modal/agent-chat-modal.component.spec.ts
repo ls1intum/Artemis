@@ -16,7 +16,7 @@ import { ElementRef, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 describe('AgentChatModalComponent', () => {
     let fixture: ComponentFixture<AgentChatModalComponent>;

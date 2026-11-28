@@ -272,7 +272,7 @@ export class CourseManagementAPIRequests {
     }
 
     /**
-     * Adds the specified user to the tutor group in the course.
+     * Gives the specified user the tutor role in the course.
      *
      * @param course - The course to which the tutor will be added.
      * @param user - The user (tutor) to be added to the course.
@@ -282,7 +282,7 @@ export class CourseManagementAPIRequests {
     }
 
     /**
-     * Adds the specified user to the instructor group in the course.
+     * Gives the specified user the instructor role in the course.
      *
      * @param course - The course to which the instructor will be added.
      * @param user - The user (instructor) to be added to the course.

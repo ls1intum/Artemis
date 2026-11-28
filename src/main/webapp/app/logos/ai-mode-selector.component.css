@@ -37,6 +37,12 @@
     box-sizing: border-box;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .option-card {
+        transition: none;
+    }
+}
+
 .option-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px var(--ai-modal-shadow-hover);
