@@ -43,8 +43,6 @@ public class CourseFactory {
 
     /**
      * Generates a course with the passed id, start and end date, and exercises.
-     * Group name columns are populated with course-derived defaults (columns remain for
-     * legacy compatibility; will be dropped in a later migration phase).
      * Messaging is disabled; communication-only mode is active.
      *
      * @param id        The id of the course.
@@ -155,7 +153,7 @@ public class CourseFactory {
      * Generates an online course configuration.
      *
      * @param course      The course for which an online configuration is to be generated.
-     * @param userPrefix  The prefix of user groups in the course.
+     * @param userPrefix  The login prefix of the users of the course.
      * @param originalUrl The original url of the configuration.
      * @return the newly generated online course configuration.
      */
@@ -170,7 +168,7 @@ public class CourseFactory {
      * Updates the online course configuration.
      *
      * @param onlineCourseConfiguration The online course configuration to be updated..
-     * @param userPrefix                The prefix of user groups in the course.
+     * @param userPrefix                The login prefix of the users of the course.
      * @param originalUrl               The original url of the configuration.
      * @param registrationId            The registration id of the configuration.
      */

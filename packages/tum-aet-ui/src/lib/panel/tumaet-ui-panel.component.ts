@@ -8,7 +8,7 @@ let nextPanelId = 0;
 @Component({
     selector: 'tumaet-ui-panel',
     templateUrl: './tumaet-ui-panel.component.html',
-    styleUrl: './tumaet-ui-panel.component.scss',
+    styleUrl: './tumaet-ui-panel.component.css',
     imports: [FaIconComponent],
     host: {
         class: 'tumaet-ui-panel tumaet:border tumaet:border-border tumaet:rounded-md tumaet:bg-content-background tumaet:text-text',

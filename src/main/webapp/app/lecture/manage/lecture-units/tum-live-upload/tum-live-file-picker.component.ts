@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, input, model, viewChild } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DecimalPipe } from '@angular/common';
 

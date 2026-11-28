@@ -88,16 +88,37 @@
                         jhiTranslate="artemisApp.courseOverview.statistics.redesign.typeTotalsExplanation"
                     ></p>
                 }
-                @if (gradingScaleExists()) {
+                @let attainablePresentationPoints = reachablePresentationPoints();
+                @if (gradingScaleExists() || course.presentationScore || attainablePresentationPoints) {
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-(--tumaet-ui-border-color) pt-4">
-                        <span class="font-medium"
-                            >{{ (isBonus() ? 'artemisApp.courseOverview.statistics.bonus' : 'artemisApp.courseOverview.statistics.grade') | artemisTranslate }}:
-                            {{ gradeDTO()?.gradeName }}</span
-                        ><a tumAetUiButton size="small" variant="outlined" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO()?.gradeName }"
-                            ><fa-icon [icon]="faClipboard" /><span
-                                [jhiTranslate]="isBonus() ? 'artemisApp.exam.examSummary.gradeKeyButtonBonus' : 'artemisApp.exam.examSummary.gradeKeyButton'"
-                            ></span
-                        ></a>
+                        <div class="flex flex-col gap-1">
+                            @if (gradingScaleExists()) {
+                                <span class="font-medium"
+                                    >{{ (isBonus() ? 'artemisApp.courseOverview.statistics.bonus' : 'artemisApp.courseOverview.statistics.grade') | artemisTranslate }}:
+                                    {{ gradeDTO()?.gradeName }}</span
+                                >
+                            }
+                            @if (course.presentationScore) {
+                                <span
+                                    class="text-sm"
+                                    jhiTranslate="artemisApp.courseOverview.statistics.currentPresentationScore"
+                                    [translateValues]="{ current: displayedScores().presentationScore, required: course.presentationScore }"
+                                ></span>
+                            } @else if (attainablePresentationPoints) {
+                                <span
+                                    class="text-sm tabular-nums"
+                                    jhiTranslate="artemisApp.courseOverview.statistics.gradedPresentationPoints"
+                                    [translateValues]="{ earned: displayedScores().presentationScore, attainable: attainablePresentationPoints }"
+                                ></span>
+                            }
+                        </div>
+                        @if (gradingScaleExists()) {
+                            <a tumAetUiButton size="small" variant="outlined" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO()?.gradeName }"
+                                ><fa-icon [icon]="faClipboard" /><span
+                                    [jhiTranslate]="isBonus() ? 'artemisApp.exam.examSummary.gradeKeyButtonBonus' : 'artemisApp.exam.examSummary.gradeKeyButton'"
+                                ></span
+                            ></a>
+                        }
                     </div>
                 }
             </section>
@@ -246,21 +267,22 @@
         <jhi-course-statistics-results [courseId]="activeCourseId()" [exercises]="resultExercises()" [course]="course" />
         <details class="mt-6 border-t border-(--tumaet-ui-border-color) pt-4">
             <summary class="text-sm font-medium" jhiTranslate="artemisApp.courseOverview.statistics.redesign.pointDetails"></summary>
-            <div class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <div class="mt-4 grid gap-3 text-sm md:grid-cols-3">
                 @if (courseHasExerciseVariants()) {
-                    <p
-                        id="total-course-score"
-                        class="m-0"
-                        jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints"
-                        [translateValues]="{ number: displayedScores().totalEarnedPoints }"
-                    ></p>
-                    <p
-                        id="credited-course-score"
-                        class="m-0"
-                        jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints"
-                        [translateValues]="{ number: displayedScores().creditedPoints }"
-                    ></p>
-                    <p class="m-0 text-muted-color sm:col-span-2" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
+                    <div class="flex flex-col gap-1">
+                        <p
+                            id="total-course-score"
+                            class="m-0"
+                            jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints"
+                            [translateValues]="{ number: displayedScores().totalEarnedPoints }"
+                        ></p>
+                        <p
+                            id="credited-course-score"
+                            class="m-0"
+                            jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints"
+                            [translateValues]="{ number: displayedScores().creditedPoints }"
+                        ></p>
+                    </div>
                 } @else {
                     <p
                         id="absolute-course-score"
@@ -281,17 +303,8 @@
                     jhiTranslate="artemisApp.courseOverview.statistics.totalPoints"
                     [translateValues]="{ number: displayedScores().maximumPoints, relative: displayedScores().overallPercentage }"
                 ></p>
-                @if (course.presentationScore) {
-                    <p class="m-0" jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationScore" [translateValues]="{ number: overallPresentationScore() }"></p>
-                    <p class="m-0" jhiTranslate="artemisApp.courseOverview.statistics.presentationScoreBonus" [translateValues]="{ number: course.presentationScore }"></p>
-                }
-                @if (reachablePresentationPoints()) {
-                    <p class="m-0" jhiTranslate="artemisApp.courseOverview.statistics.totalPresentationPoints" [translateValues]="{ number: overallPresentationScore() }"></p>
-                    <p
-                        class="m-0"
-                        jhiTranslate="artemisApp.courseOverview.statistics.achievablePresentationPoints"
-                        [translateValues]="{ number: reachablePresentationPoints() }"
-                    ></p>
+                @if (courseHasExerciseVariants()) {
+                    <p class="col-span-full m-0 text-muted-color" jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPointsHelp"></p>
                 }
             </div>
             <div class="mt-4 overflow-x-auto">

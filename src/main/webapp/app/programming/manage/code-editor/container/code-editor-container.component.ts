@@ -46,7 +46,7 @@ export enum CollapsableCodeEditorElement {
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
-    styleUrls: ['./code-editor-container.component.scss'],
+    styleUrls: ['./code-editor-container.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CodeEditorGridComponent,

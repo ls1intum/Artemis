@@ -26,7 +26,7 @@ kind_of() {
         src/main/webapp/app/openapi/*) echo client-generated ;;
         src/main/webapp/*.route.ts | src/main/webapp/*.routes.ts | src/main/webapp/*-routes.ts) echo client-route ;;
         src/main/webapp/*.html) echo client-template ;;
-        src/main/webapp/*.scss | src/main/webapp/*.css) echo client-style ;;
+        src/main/webapp/*.css) echo client-style ;;
         src/main/webapp/*.component.ts) echo client-component ;;
         src/main/webapp/*.service.ts | src/main/webapp/*api*.ts) echo client-service ;;
         src/main/webapp/*) echo client-other ;;

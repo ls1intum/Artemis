@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +20,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationRepositoryUriDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -79,9 +80,13 @@ class AutomaticProgrammingExerciseCleanupServiceTest {
         return exercise;
     }
 
+    private static ParticipationRepositoryUriDTO participationWithUri(long participationId, String repositoryUri) {
+        return new ParticipationRepositoryUriDTO(participationId, repositoryUri);
+    }
+
     private void withoutAnyStudentParticipations() {
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), any())).thenReturn(Page.empty());
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), any())).thenReturn(Page.empty());
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), any())).thenReturn(List.of());
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), anyLong(), any())).thenReturn(List.of());
     }
 
     private void withoutAnyExercises() {
@@ -110,7 +115,7 @@ class AutomaticProgrammingExerciseCleanupServiceTest {
         cleanupService.cleanup();
 
         verify(programmingExerciseStudentParticipationRepository, never()).findAllWithBuildPlanIdWithResults();
-        verify(programmingExerciseStudentParticipationRepository).findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), any());
+        verify(programmingExerciseStudentParticipationRepository).findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), any());
     }
 
     @Test
@@ -146,10 +151,10 @@ class AutomaticProgrammingExerciseCleanupServiceTest {
 
     @Test
     void cleanupGitWorkingCopies_removesTheCheckoutOfEveryStudentParticipationItFinds() {
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of("http://localhost:8080/git/ABC/abc-student1.git", "http://localhost:8080/git/ABC/abc-student2.git")));
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of("http://localhost:8080/git/ABC/abc-examstudent.git")));
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), any())).thenReturn(
+                List.of(participationWithUri(1, "http://localhost:8080/git/ABC/abc-student1.git"), participationWithUri(2, "http://localhost:8080/git/ABC/abc-student2.git")));
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), anyLong(), any()))
+                .thenReturn(List.of(participationWithUri(3, "http://localhost:8080/git/ABC/abc-examstudent.git")));
         withoutAnyExercises();
 
         cleanupService.cleanupGitWorkingCopiesOnArtemisServer();
@@ -161,26 +166,42 @@ class AutomaticProgrammingExerciseCleanupServiceTest {
     }
 
     @Test
-    void cleanupGitWorkingCopies_readsEveryPageOfParticipations() {
-        // A term produces far more participations than fit in one page, and stopping after the first would leave most of them on disk.
-        Pageable firstPage = PageRequest.of(0, 2);
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), any())).thenReturn(
-                new PageImpl<>(List.of("http://localhost:8080/git/ABC/abc-student1.git", "http://localhost:8080/git/ABC/abc-student2.git"), firstPage, 3),
-                new PageImpl<>(List.of("http://localhost:8080/git/ABC/abc-student3.git"), firstPage.next(), 3));
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), any())).thenReturn(Page.empty());
+    void cleanupGitWorkingCopies_readsEveryBatchOfParticipations_continuingAfterTheLastIdOfTheBatchBefore() {
+        // A term produces far more participations than fit in one batch, and stopping after the first would leave most of them on disk.
+        List<ParticipationRepositoryUriDTO> fullBatch = IntStream.rangeClosed(1, 500)
+                .mapToObj(id -> participationWithUri(id * 10L, "http://localhost:8080/git/ABC/abc-student" + id + ".git")).toList();
+        List<ParticipationRepositoryUriDTO> lastBatch = List.of(participationWithUri(5001, "http://localhost:8080/git/ABC/abc-student501.git"));
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), any())).thenReturn(fullBatch, lastBatch);
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), anyLong(), any())).thenReturn(List.of());
         withoutAnyExercises();
 
         cleanupService.cleanupGitWorkingCopiesOnArtemisServer();
 
-        verify(gitService, org.mockito.Mockito.times(3)).deleteLocalRepository(any(LocalVCRepositoryUri.class));
+        verify(gitService, times(501)).deleteLocalRepository(any(LocalVCRepositoryUri.class));
+        // the first batch starts at the beginning, the second right after the greatest id of the first, and a batch that is not full ends the loop
+        ArgumentCaptor<Long> afterId = ArgumentCaptor.forClass(Long.class);
+        verify(programmingExerciseStudentParticipationRepository, times(2)).findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), afterId.capture(), any());
+        assertThat(afterId.getAllValues()).containsExactly(0L, 5000L);
+    }
+
+    @Test
+    void cleanupGitWorkingCopies_asksForABatchOfTheConfiguredSize() {
+        withoutAnyStudentParticipations();
+        withoutAnyExercises();
+
+        cleanupService.cleanupGitWorkingCopiesOnArtemisServer();
+
+        ArgumentCaptor<Pageable> limit = ArgumentCaptor.forClass(Pageable.class);
+        verify(programmingExerciseStudentParticipationRepository).findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), limit.capture());
+        assertThat(limit.getValue().getPageSize()).isEqualTo(500);
     }
 
     @Test
     void cleanupGitWorkingCopies_forAParticipationWithAnUnusableUri_carriesOnWithTheRest() {
         // One malformed repository URI in the database must not stop the whole night's cleanup.
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of("not a repository uri", "http://localhost:8080/git/ABC/abc-student2.git")));
-        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), any())).thenReturn(Page.empty());
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(any(), any(), anyLong(), any()))
+                .thenReturn(List.of(participationWithUri(1, "not a repository uri"), participationWithUri(2, "http://localhost:8080/git/ABC/abc-student2.git")));
+        when(programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(any(), any(), anyLong(), any())).thenReturn(List.of());
         withoutAnyExercises();
 
         cleanupService.cleanupGitWorkingCopiesOnArtemisServer();

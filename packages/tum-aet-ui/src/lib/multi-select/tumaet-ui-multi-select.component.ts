@@ -59,7 +59,7 @@ let nextMultiSelectId = 0;
 @Component({
     selector: 'tumaet-ui-multi-select',
     templateUrl: './tumaet-ui-multi-select.component.html',
-    styleUrl: './tumaet-ui-multi-select.component.scss',
+    styleUrl: './tumaet-ui-multi-select.component.css',
     imports: [FaIconComponent, NgTemplateOutlet, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-multi-select',

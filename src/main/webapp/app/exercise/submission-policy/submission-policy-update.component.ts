@@ -1,5 +1,6 @@
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
-import { TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
@@ -94,7 +95,7 @@ import { KeyValuePipe } from '@angular/common';
             </form>
         }
     `,
-    styleUrls: ['../../programming/shared/programming-exercise-form.scss'],
+    styleUrls: ['../../programming/shared/programming-exercise-form.css'],
     imports: [
         PointsInputComponent,
         TumAetUiSelectComponent,

@@ -47,7 +47,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 export type InteractableEvent = {
     // Click event object; contains target information (used to blur the clicked header)
@@ -64,7 +64,7 @@ export interface FileTreeItem extends TreeItem<string> {
 @Component({
     selector: 'jhi-code-editor-file-browser',
     templateUrl: './code-editor-file-browser.component.html',
-    styleUrls: ['./code-editor-file-browser.scss'],
+    styleUrls: ['./code-editor-file-browser.css'],
     imports: [
         FaIconComponent,
         CodeEditorFileBrowserDeleteComponent,
