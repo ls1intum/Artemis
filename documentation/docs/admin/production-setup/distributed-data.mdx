@@ -8,10 +8,26 @@ last_reviewed: 2026-11-28
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-Artemis uses the `Local` provider by default. Use it when the core and any build agent run in the same JVM.
-Queues, caches and other runtime state in that JVM are lost when the process stops.
+Choose the provider by counting Artemis JVMs. A Jenkins controller, a Jenkins executor and a database server do
+not count as Artemis JVMs. With a single Artemis JVM, the application defaults to `Local` and keeps queues, caches
+and other transient state in memory until the process stops. Choose Redis or Valkey if that state must survive
+restarts. If you are upgrading from an earlier release, use the [10.9 migration steps](/admin/upgrade-guide#select-the-distributed-data-provider).
 
 ## Configure the provider
+
+For a single core with Jenkins or with a build agent in the same JVM, the explicit application setting is:
+
+```yaml
+artemis:
+    distributed-data:
+        provider: Local
+```
+
+The Helm chart defaults to `artemis.distributedDataProvider: Redis` and deploys persistent Valkey. To select
+`Local` in Helm, set `artemis.replicaCount: 1`, `buildAgents.enabled: false` and
+`artemis.distributedDataProvider: Local`. This disables the chart-managed build agents. The chart does not add
+the `buildagent` profile to its core automatically. Installations that depend on the chart’s LocalCI runners should
+keep Redis and the build agents enabled. Switch to Redis before adding a separate process.
 
 For several core nodes, a dedicated build agent or a separate AI worker, configure **every Artemis process** to use
 the `Redis` provider and the same Redis or Valkey endpoint. Separate processes need a shared store even on one host.
@@ -68,13 +84,13 @@ startup, so a store that has never been migrated goes from `0` through `1` to th
 </Callout>
 
 1. Schedule a maintenance window in which no Artemis or build-agent node uses the distributed store.
-2. Stop every Artemis core node and every build-agent node connected to that store.
+2. Stop every Artemis core, dedicated build agent and AI worker connected to that store.
 3. Prevent process supervisors or orchestration platforms from restarting an old node automatically.
 4. Create and retain a consistent Redis or Valkey backup according to the product's backup procedure.
 5. Verify that no old Artemis process remains connected.
 6. Start one core node with the new Artemis release and wait until it is ready.
 7. Verify the migration as described below.
-8. Start the remaining core and build-agent nodes with exactly the same Artemis release.
+8. Start the remaining cores, dedicated build agents and AI workers with exactly the same Artemis release.
 
 Starting several new nodes together is safe because they coordinate migration with a distributed lock. Starting one
 node first makes failures and migration progress easier to diagnose.

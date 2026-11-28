@@ -280,6 +280,10 @@ upstream artemis {
 
 ## Deploying a New Version
 
+For a cluster upgrading to 10.9, configure the shared Redis or Valkey endpoint on every core, build agent and AI
+worker before starting any of them. Follow the [10.9 provider migration](/admin/upgrade-guide#select-the-distributed-data-provider)
+to drain work and verify membership. Leaving the provider unset makes each core start its own in-process store.
+
 Artemis is **not** deployed as a rolling update. A new version is deployed by stopping the cluster
 and bringing it back up in a defined order, so that no instance ever serves traffic against a schema
 it was not built for:

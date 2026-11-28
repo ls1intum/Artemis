@@ -71,8 +71,10 @@ and no Jenkins user to maintain.
   or let the core nodes build too.
 - Pull the Docker images for your languages on the build agents so that the first builds do not wait for downloads. Builds fail when a
   build agent cannot reach the registry.
-- Choose the distributed data provider. A single node can use the local provider. Several nodes need
-  [Redis or Valkey](/admin/production-setup/distributed-data).
+- If the core and build agent share one Artemis JVM, you can keep `Local`. Before starting the first dedicated
+  Artemis build agent, configure the core and agent to use the same [Redis or Valkey store](/admin/production-setup/distributed-data).
+  A single core with external Jenkins can complete the [10.9 provider migration](/admin/upgrade-guide#select-the-distributed-data-provider)
+  separately from the later switch to LocalCI.
 
 ### 2. Rehearse on staging
 

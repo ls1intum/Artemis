@@ -10,6 +10,9 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 This page documents the required upgrade path for Artemis, what the database migration does on startup, and how to verify that it worked.
 
+**Upgrading to 10.9?** Choose the distributed data provider for your deployment before starting the new version.
+See [10.9 provider migration](#select-the-distributed-data-provider).
+
 ## How the Schema Is Applied
 
 Artemis keeps its schema in Liquibase changelogs, organised into four directories that every startup reads in order:
@@ -193,29 +196,51 @@ The steps below are for a migration failing on an existing database. A **fresh i
 
 Restore the backup taken in step 4 of the upgrade procedure if the cause cannot be resolved. Reverting to the previous release on its own is not enough: the schema does not revert with it, and the older release may not be able to read the migrated schema.
 
-## Select the distributed data provider
-
-Before upgrading, count every Artemis JVM, including dedicated build agents and AI workers. For a single JVM,
-remove the old provider setting to use the default `Local`, or explicitly select `Local`. Its in-memory queues and
-runtime state are cleared when the process stops.
-
-For multiple JVMs, provision a persistent Redis or Valkey store and configure `artemis.distributed-data.provider: Redis`
-and the same endpoint on **all** processes before starting the new release. Installations already using Redis or Valkey
-can keep their store and follow its [backup and schema upgrade procedure](/admin/production-setup/distributed-data#prepare-an-upgrade).
-
-When switching from an in-memory store, schedule a maintenance window. Stop accepting new jobs, let queued and running
-builds finish, and confirm that both the result queue and the deferred-result queue are empty. Drain AI worker operations
-if applicable. Record runtime feature toggles you want to restore. If you customized the expiry of per-node file or PlantUML caches,
-copy that lifetime in seconds to `artemis.cache.time-to-live-seconds`. Stop all old nodes together. The new provider starts
-with empty runtime state. If nodes used a central configuration service, copy the settings they still need into their
-Spring configuration files or environment first. Remove obsolete discovery settings and services, start one core,
-then start the remaining nodes.
-Restore the recorded feature toggles. Check that each agent appears under **Administration → Build System**,
-run a test build, and verify its result before reopening admission. See [provider configuration](/admin/production-setup/distributed-data#configure-the-provider).
-
 ## Version-Specific Migration Steps
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
+
+### 10.9: Replace Hazelcast before starting the new version {/* #select-the-distributed-data-provider */}
+
+Artemis 10.9 removes Hazelcast. Startup fails if the effective provider is `Hazelcast`. With no provider setting,
+10.9 uses `Local`. **Check the number of Artemis processes before upgrading**: two cores that both default to
+`Local` have independent queues, node lists and feature toggles, even when they share a database.
+
+| Your deployment before the upgrade | What to configure for 10.9 |
+| --- | --- |
+| One Artemis core with external Jenkins | Use `Local`. Jenkins controllers and executors run outside Artemis. You can keep Jenkins for this upgrade. |
+| One Artemis JVM running both core and LocalCI build agent | Use `Local` if transient state can be lost on restart. Redis remains an option for persistence. |
+| Multiple cores, a dedicated Artemis build agent, or a separate AI worker | Set `artemis.distributed-data.provider: Redis` on **every** Artemis JVM, with the same Redis or Valkey endpoint. Count separate processes on the same host. |
+| Already using Redis or Valkey | Keep the existing endpoint, credentials and persistence. Follow the [store backup and schema upgrade steps](/admin/production-setup/distributed-data#prepare-an-upgrade). |
+
+**Update configuration before shutdown.** Set `artemis.distributed-data.provider` in the production configuration
+or `ARTEMIS_DISTRIBUTEDDATA_PROVIDER` in the service environment. If you used the older
+`artemis.continuous-integration.data-store` setting (`ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE`), carry over
+`Redis` or `Local` as appropriate. Replace `Hazelcast` with the provider selected above. The new key takes
+precedence. Remove the old key once you have configured the replacement. Check service units, Compose environment files and chart overrides as well as YAML files.
+If you customized `artemis.cache.hazelcast.time-to-live-seconds`, copy its value to `artemis.cache.time-to-live-seconds`.
+Copy application settings previously supplied by a central configuration service into each role's Spring configuration
+or secret store. Remove obsolete bootstrap and discovery settings after those values are in place.
+See [provider configuration](/admin/production-setup/distributed-data#configure-the-provider) for the Redis connection
+settings and the Helm chart default.
+
+**When switching stores, schedule one maintenance window.** The new provider starts with empty runtime state.
+Course data and saved results remain in the Artemis database. Queued builds, undelivered results and runtime
+feature-toggle overrides do not transfer between providers.
+
+1. Back up the database, repositories and configuration as described in the upgrade procedure. Record runtime feature
+   overrides. Stop new submissions and build triggers. Keep LocalCI agents processing until queued and running builds
+   are finished and both result queues, including deferred results, are empty. If using Jenkins, let jobs finish and
+   their results reach Artemis. Let outstanding AI worker operations finish.
+2. Stop all old Artemis processes. Start one upgraded core and wait for `/management/health/readiness` to report
+   `UP`. Then start the remaining cores, build agents and AI workers on the same version.
+3. In **Administration → Websocket**, verify the expected core count. For LocalCI, check the build agents in the
+   build administration. Restore the feature overrides and submit a test programming exercise through your usual CI
+   system. Verify that the result and feedback appear before reopening submissions.
+
+If you need to roll back, stop the new processes first. Restore the pre-upgrade configuration and any backups required
+by the [database recovery instructions](#if-a-migration-fails) and the [Redis rollback procedure](/admin/production-setup/distributed-data#rollback).
+Work created in the new provider has no automatic transfer back to the old provider.
 
 ### 10.9: Personal VCS Access Tokens Are Deprecated
 

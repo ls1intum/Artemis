@@ -3,7 +3,7 @@ id: roadmap
 title: Roadmap
 sidebar_label: Roadmap
 description: Where the Artemis roadmap lives, how to read it, and how to propose something for it.
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -58,6 +58,12 @@ delivery dates, or an LTS release during this horizon. The
 The weekly roadmap review checks both the individual items and this one-year direction. Before the
 horizon expires, maintainers extend it or publish its successor so that contributors can always see
 at least a year's intended direction and scope.
+
+### Distributed data in Artemis 10.9
+
+The 10.9 release removes Hazelcast. Single-process deployments can use Local, and deployments with multiple
+Artemis processes use Redis or Valkey. Operators can make this change while still using Jenkins.
+See the [10.9 provider migration](/admin/upgrade-guide#select-the-distributed-data-provider).
 
 ### Planned removals in Artemis 11
 
