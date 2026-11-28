@@ -225,7 +225,7 @@ overrides:
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
   'vitest>vite': '7.3.7'
   '@vitest/mocker>vite': '7.3.7'
-  '@analogjs/vite-plugin-angular>vite': '7.3.7'
+  '@analogjs/vite-plugin-angular>vite': '7.3.8'
   word-wrap: '1.2.5'
   ws: '8.23.0'
   yargs-parser: '22.0.0'
