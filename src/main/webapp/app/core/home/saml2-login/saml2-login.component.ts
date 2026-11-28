@@ -4,7 +4,7 @@ import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-saml2-login',

@@ -1,4 +1,6 @@
 import { CourseHomeWelcomeContextFormComponent } from './course-home-welcome-context-form.component';
+import { InitialCommitAuthor, InitialCommitAuthorMode } from 'app/course/shared/entities/course-configuration.model';
+import { CourseInitialCommitAuthorFormComponent, InitialCommitAuthorFormGroup, createInitialCommitAuthorFormGroup } from './course-initial-commit-author-form.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,20 +22,17 @@ import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } 
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiChipComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faBan, faCircleExclamation, faPen, faPlus, faQuestionCircle, faSave, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -79,6 +78,8 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
     { control: 'title', labelKey: 'artemisApp.course.title', targetId: 'field_title' },
     { control: 'shortName', labelKey: 'artemisApp.course.shortName', targetId: 'field_shortName' },
     { control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' },
+    { control: 'initialCommitAuthor.name', labelKey: 'artemisApp.course.initialCommitAuthor.name.label', targetId: 'initialCommitAuthorName' },
+    { control: 'initialCommitAuthor.email', labelKey: 'artemisApp.course.initialCommitAuthor.email.label', targetId: 'initialCommitAuthorEmail' },
     { control: 'semester', labelKey: 'artemisApp.course.semester', targetId: 'semester' },
     { control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' },
     { control: 'endDate', labelKey: 'artemisApp.course.endDate', targetId: 'field_endDate_input' },
@@ -111,7 +112,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styleUrls: ['./course-update.component.scss'],
+    styleUrls: ['./course-update.component.css'],
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -141,6 +142,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
         CourseHomeWelcomeContextFormComponent,
+        CourseInitialCommitAuthorFormComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -190,6 +192,9 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     protected readonly studentWelcomeContext = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] });
+
+    /** Who authors the first commit of new programming exercises. Only a stored course has it: a new one starts with the exercise creator, the default. */
+    protected readonly initialCommitAuthorGroup = signal<InitialCommitAuthorFormGroup | undefined>(undefined);
 
     courseForm!: FormGroup; // built in ngOnInit()
     // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
@@ -367,6 +372,7 @@ export class CourseUpdateComponent implements OnInit {
         this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.studentWelcomeContext.setValue(this.course.courseConfiguration?.studentWelcomeContext ?? '');
+        this.initialCommitAuthorGroup.set(this.course.id ? createInitialCommitAuthorFormGroup(this.course.courseConfiguration?.initialCommitAuthor) : undefined);
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -446,6 +452,10 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+        const initialCommitAuthorGroup = this.initialCommitAuthorGroup();
+        if (initialCommitAuthorGroup) {
+            this.courseForm.addControl('initialCommitAuthor', initialCommitAuthorGroup);
+        }
         this.courseForm.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.formRevision.update((revision) => revision + 1));
         // The form was replaced, so anything derived from the previous one is stale.
         this.formRevision.update((revision) => revision + 1);
@@ -625,6 +635,12 @@ export class CourseUpdateComponent implements OnInit {
         return issues;
     }
 
+    /** The identity belongs to the custom mode only; the other modes send none, so the server stores none of a person's data. */
+    private toInitialCommitAuthor(value: { mode: InitialCommitAuthorMode; name: string; email: string }): InitialCommitAuthor {
+        const custom = value.mode === InitialCommitAuthorMode.CUSTOM;
+        return { mode: value.mode, name: custom ? value.name.trim() : undefined, email: custom ? value.email.trim() : undefined };
+    }
+
     /**
      * Save the changes on a course
      * This function is called by pressing save after creating or editing a course
@@ -652,6 +668,7 @@ export class CourseUpdateComponent implements OnInit {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
             studentWelcomeContext: rawValue.studentWelcomeContext,
+            initialCommitAuthor: this.initialCommitAuthorGroup() ? this.toInitialCommitAuthor(rawValue.initialCommitAuthor) : undefined,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
             autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
             debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,

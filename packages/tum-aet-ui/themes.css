@@ -3,6 +3,7 @@
     color-scheme: light;
 
     --tumaet-ui-panel-enter-duration: 160ms;
+    --tumaet-ui-progress-bar-transition-duration: 1s;
     --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-splitter-divider-size: 6px;
     --tumaet-ui-accordion-header-padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
@@ -65,6 +66,8 @@
     --tumaet-ui-state-info-contrast: #16191d;
     --tumaet-ui-state-info-foreground: #0c5460;
     --tumaet-ui-table-striped-background: #f9fafb;
+    --tumaet-ui-table-header-background: #e9eef5;
+    --tumaet-ui-table-header-hover-background: #dde5ef;
     --tumaet-ui-tooltip-background: #334155;
     --tumaet-ui-tooltip-color: #fff;
 
@@ -135,6 +138,8 @@
     --tumaet-ui-state-info-contrast: #062a30;
     --tumaet-ui-state-info-foreground: #36cee6;
     --tumaet-ui-table-striped-background: #1d2024;
+    --tumaet-ui-table-header-background: #2d333b;
+    --tumaet-ui-table-header-hover-background: #383f48;
     --tumaet-ui-tooltip-background: #343a42;
     --tumaet-ui-tooltip-color: #fff;
 

@@ -44,18 +44,13 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiCheckboxComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationRequest,
-    TumAetUiConfirmationService,
-    TumAetUiMessageComponent,
-    TumAetUiSelectButtonComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { LectureEditFooterComponent } from 'app/lecture/manage/lecture-update/lecture-edit-footer/lecture-edit-footer.component';
 import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
@@ -86,7 +81,7 @@ interface PdfUploadConfirmationText {
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
-    styleUrls: ['./lecture-update.component.scss'],
+    styleUrls: ['./lecture-update.component.css'],
     // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
     host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [

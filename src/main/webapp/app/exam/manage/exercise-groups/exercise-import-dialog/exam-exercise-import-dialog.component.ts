@@ -1,5 +1,6 @@
 import { Component, computed, effect, input, model, output, signal, untracked } from '@angular/core';
-import { TumAetUiDialogComponent, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';

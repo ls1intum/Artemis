@@ -4,7 +4,9 @@
         "paths": {
             "app/*": ["../../src/main/webapp/app/*"],
             "src/*": ["../../src/*"],
-            "@tumaet/ui-angular": ["../../packages/tum-aet-ui/src/public-api.ts"]
+            "@tumaet/ui-angular": ["../../packages/tum-aet-ui/src/public-api.ts"],
+            "@tumaet/ui-angular/set-inputs": ["../../packages/tum-aet-ui/src/lib/internal"],
+            "@tumaet/ui-angular/*": ["../../packages/tum-aet-ui/src/lib/*"]
         }
     }
 }

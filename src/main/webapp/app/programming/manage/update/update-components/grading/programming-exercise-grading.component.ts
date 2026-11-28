@@ -17,7 +17,10 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
@@ -26,7 +29,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [
         TranslateDirective,
         IncludedInOverallScorePickerComponent,

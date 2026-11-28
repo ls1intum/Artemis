@@ -9,7 +9,10 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -39,7 +42,6 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-build-agent-details',
     templateUrl: './build-agent-details.component.html',
-    styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiTableLayoutComponent,

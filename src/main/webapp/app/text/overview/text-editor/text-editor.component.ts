@@ -1,4 +1,4 @@
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,8 +24,14 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import {
+    getAllResultsOfAllSubmissions,
+    getFirstResultWithComplaint,
+    getLatestSubmissionResult,
+    getNewestResult,
+    setLatestSubmissionResult,
+} from 'app/exercise/shared/entities/submission/submission.model';
+import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -51,7 +57,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./text-editor.component.scss'],
+    styleUrls: ['./text-editor.component.css'],
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -128,10 +134,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly onTextEditorTab = onTextEditorTab;
 
     participationUpdateListener?: Subscription;
+    private examSummaryReload?: Subscription;
+    private failedExamSummaryReloadResultId?: number;
+    private examSummaryReloadResultId?: number;
+    private loadedExamSummaryResultId?: number;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
     resultId: number | undefined;
+
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
 
     ngOnInit() {
         if (this.inputValuesArePresent()) {
@@ -204,32 +216,53 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     return;
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
-                const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
-                // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-                const lastResult = getNewestResult(results);
-                const previousResult = oldResults.find((result) => lastResult?.id !== undefined && result.id === lastResult.id);
-                const isNewAthenaResult =
-                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    lastResult.successful !== undefined &&
-                    (!previousResult || previousResult.successful === undefined);
-                if (isNewAthenaResult) {
-                    if (lastResult?.successful === false) {
+                const athenaResults = this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions);
+                for (const athenaResult of athenaResults) {
+                    if (athenaResult.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
-                        if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            this.textService.get(this.participation().id!, lastResult?.id, this.viewingPurpose()).subscribe({
-                                next: (data) => this.updateParticipation(data, this.submissionId, lastResult?.id),
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
-                            return;
-                        }
                     }
                 }
-                this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
+                // The tracker has already counted these results as notified, so a reload that failed is retried from its own record.
+                const newestResultId = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id;
+                // A reload only returns the requested result, so an older one completing later must not replace the newer feedback.
+                const isNewerThanReloaded = newestResultId !== undefined && newestResultId > (this.examSummaryReloadResultId ?? -1);
+                const resultIdToReload = isNewerThanReloaded ? newestResultId : this.failedExamSummaryReloadResultId;
+                // The reloaded participation holds the text blocks that the websocket copy lacks, so an update without a newer result keeps it.
+                const newestUpdateResultId = getNewestResult(getAllResultsOfAllSubmissions(changedParticipation.submissions))?.id;
+                const isOlderThanLoaded = this.isExamSummary() && newestUpdateResultId !== undefined && newestUpdateResultId <= (this.loadedExamSummaryResultId ?? -1);
+                if (!isOlderThanLoaded) {
+                    this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
+                }
+                if (resultIdToReload !== undefined && this.isExamSummary() && this.participation()?.id !== undefined) {
+                    this.reloadForExamSummary(resultIdToReload);
+                }
             });
+    }
+
+    /**
+     * Loads the participation with the given result again for the exam summary. Only the latest reload may write its
+     * answer back, so an earlier one is cancelled rather than left to replace it. Starting it also supersedes a failed
+     * reload, so a later update does not retry the older result and cancel this one.
+     *
+     * @param resultId the id of the result to load the participation with
+     */
+    private reloadForExamSummary(resultId: number): void {
+        this.examSummaryReload?.unsubscribe();
+        this.failedExamSummaryReloadResultId = undefined;
+        this.examSummaryReloadResultId = resultId;
+        this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
+            next: (data) => {
+                this.loadedExamSummaryResultId = resultId;
+                this.updateParticipation(data, this.submissionId, resultId);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.failedExamSummaryReloadResultId = resultId;
+                onError(this.alertService, error);
+            },
+        });
     }
 
     private inputValuesArePresent(): boolean {
@@ -260,6 +293,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         if (this.participation() && this.textExercise()) {
+            this.athenaResultNotificationTracker.markAsNotified(this.participation().submissions);
             this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
         }
     }
@@ -276,6 +310,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         } else {
             return;
         }
+        // Results that arrive with the participation are already shown, so re-emitting them must not notify.
+        this.athenaResultNotificationTracker.markAsNotified(participation.submissions);
         this.textExercise.set(this.participation().exercise as TextExercise);
         this.examMode.set(!!this.textExercise().exerciseGroup);
         this.textExercise().studentParticipations = [this.participation()];
@@ -380,6 +416,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.participationUpdateListener?.unsubscribe();
+        this.examSummaryReload?.unsubscribe();
         if (this.participation()) {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation().id!, this.textExercise());
         }

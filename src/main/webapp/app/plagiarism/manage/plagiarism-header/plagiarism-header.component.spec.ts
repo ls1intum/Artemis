@@ -13,7 +13,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;

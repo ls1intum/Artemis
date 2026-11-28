@@ -2,7 +2,9 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
@@ -43,7 +45,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    styleUrls: ['./example-text-submission.component.scss'],
+    styleUrls: ['./example-text-submission.component.css'],
     imports: [
         TranslateDirective,
         HelpIconComponent,

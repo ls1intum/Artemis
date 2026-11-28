@@ -1,0 +1,36 @@
+.assessment-note {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.assessment-note__header h3,
+.assessment-note__header p {
+    margin: 0;
+}
+
+.assessment-note__header h3 {
+    color: var(--tumaet-ui-text-color);
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.assessment-note__header p {
+    margin-top: 0.2rem;
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.assessment-note__textarea {
+    width: 100%;
+    min-width: 0;
+
+    /* The height is set to fit the text (see autogrowTextarea); beyond the maximum the note scrolls. */
+    min-height: 5.5rem;
+    max-height: 30rem;
+    overflow-y: auto;
+    resize: vertical;
+}

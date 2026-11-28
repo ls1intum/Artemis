@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCloudUploadAlt, faFilePdf } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,7 +14,7 @@ let nextDropZoneId = 0;
     selector: 'jhi-pdf-drop-zone',
     imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './pdf-drop-zone.component.html',
-    styleUrl: './pdf-drop-zone.component.scss',
+    styleUrl: './pdf-drop-zone.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfDropZoneComponent {

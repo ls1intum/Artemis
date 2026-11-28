@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { vi } from 'vitest';
 
 describe('GitDiffReportModalComponent', () => {

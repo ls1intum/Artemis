@@ -32,7 +32,7 @@ const LABELABLE_ELEMENTS = 'button, input, meter, output, progress, select, text
 @Component({
     selector: 'tumaet-ui-form-field',
     templateUrl: './tumaet-ui-form-field.component.html',
-    styleUrl: './tumaet-ui-form-field.component.scss',
+    styleUrl: './tumaet-ui-form-field.component.css',
     host: {
         class: 'tumaet-ui-form-field',
         '(click)': 'onClick($event)',

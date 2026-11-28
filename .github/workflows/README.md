@@ -277,7 +277,7 @@ relative to the merge base with the actual PR target; missing history falls back
   unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
   its conservative CSV interface for other callers.
 - **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
-  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  and styles to their TypeScript owners, including stylesheet imports, then uses Vitest's transitive dependency
   graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
   source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
   changed source has no related specs: every changed source or resource owner must have a graph
@@ -350,6 +350,26 @@ if the dedicated workflow is removed without a replacement.
   which the Ubuntu runners provide. Run it locally with
   `python3 supporting_scripts/check_action_pinning.py`; its unit test is
   `supporting_scripts/test_check_action_pinning.py`.
+
+## Gradle build cache
+
+`gradle.properties` sets `org.gradle.caching=true`. Gradle then stores task outputs, compiled classes above all,
+in the local build cache, and `setup-gradle` saves that cache with the rest of the Gradle home. As with the
+dependency cache, only `develop` runs write it; pull request and merge queue runs restore the entry of the same job
+and only read it.
+
+A pull request that changes no test source and no public signature in `src/main/java` gets `compileTestJava` from the
+cache, provided its job's `develop` run saved an entry for the same inputs: Gradle keys test compilation on the test
+sources and on the ABI of the main classes, not on their method bodies. `compileJava` itself recompiles whenever any main source
+changes, since the server is a single Gradle project. Jobs on the same run do not share the cache with each other; they
+start in parallel and each one reads what its own `develop` run saved.
+
+Two exceptions keep the cache from changing what CI checks:
+
+- `Test` tasks never use the cache (`gradle/test.gradle`). Their results depend on Docker, Testcontainers and images
+  that Gradle does not track, and CI reads each run's console log for failed tests and server starts.
+- `ci-codeql.yml` builds with `--no-build-cache`. CodeQL extracts Java by tracing javac, so classes taken from the cache
+  would be missing from its database.
 
 ## Reusable workflows — `ci-*.yml`
 

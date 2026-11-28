@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -314,6 +316,47 @@ class BuildJobContainerLifecycleTest {
         verify(copy, times(4)).exec();
         verify(logs).appendBuildLogEntry("job",
                 "Failed to retrieve build results after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
+    }
+
+    /**
+     * A build that times out is cancelled by interrupting its thread while its container is stopped. The archive can then no longer be read, which is no reason to
+     * retry, and not an infrastructure problem that the student is told to rerun the build for.
+     */
+    @Test
+    void archiveRetrievalOfCancelledBuildIsNotRetriedAndNotReportedAsInfrastructureIssue() {
+        CopyArchiveFromContainerCmd copy = mock(CopyArchiveFromContainerCmd.class);
+        when(docker.copyArchiveFromContainerCmd("build", "/results")).thenReturn(copy);
+        doThrow(new IllegalStateException("Connection reset")).when(copy).exec();
+        Thread.currentThread().interrupt();
+        try {
+            assertThatThrownBy(() -> service.getArchiveFromContainer("build", "/results", "job")).isInstanceOf(CancellationException.class);
+        }
+        finally {
+            Thread.interrupted();
+        }
+        verify(copy, never()).exec();
+        verify(logs, never()).appendBuildLogEntry(eq("job"), any(String.class));
+    }
+
+    /**
+     * The cancellation can also arrive while an attempt is running or while the pause before the next one is waited out.
+     */
+    @Test
+    void archiveRetrievalCancelledWhileAnAttemptFailsStopsAfterThatAttempt() {
+        CopyArchiveFromContainerCmd copy = mock(CopyArchiveFromContainerCmd.class);
+        when(docker.copyArchiveFromContainerCmd("build", "/results")).thenReturn(copy);
+        doAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Connection reset");
+        }).when(copy).exec();
+        try {
+            assertThatThrownBy(() -> service.getArchiveFromContainer("build", "/results", "job")).isInstanceOf(CancellationException.class);
+        }
+        finally {
+            Thread.interrupted();
+        }
+        verify(copy, times(1)).exec();
+        verify(logs, never()).appendBuildLogEntry(eq("job"), any(String.class));
     }
 
     @Test

@@ -1,0 +1,148 @@
+.system-notification {
+    width: 100%;
+    padding: 5px 20px 5px 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    animation: 0.25s ease init-max-height;
+    animation-fill-mode: both;
+    transform-origin: top;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .system-notification {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
+.system-notification.info {
+    color: var(--artemis-alert-info-color);
+    background: var(--artemis-alert-info-background);
+}
+
+.system-notification.info .ng-fa-icon {
+    color: var(--artemis-alert-info-border);
+}
+
+.system-notification.warning {
+    color: var(--artemis-alert-warning-color);
+    background: var(--artemis-alert-warning-background);
+}
+
+.system-notification.warning .ng-fa-icon {
+    color: var(--artemis-alert-warning-border);
+}
+
+.system-notification .notification-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.system-notification .left-slide-in {
+    animation: 0.5s cubic-bezier(0.16, 1, 0.3, 1) left-slide-in;
+    animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* No animation at all: with a short duration the icon and the message would still wait for their delay and then pop in. */
+    .system-notification .left-slide-in {
+        animation: none;
+    }
+}
+
+.system-notification .notification-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    animation-delay: 0.2s;
+}
+
+.system-notification .notification-message {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    animation-delay: 0.28s;
+}
+
+.system-notification .notification-title {
+    font-weight: bold;
+}
+
+@media (max-width: 767.98px) {
+    .system-notification {
+        padding-inline: 10px;
+        font-size: 0.875rem;
+    }
+
+    .system-notification .notification-text {
+        gap: 6px;
+    }
+
+    .system-notification .notification-icon {
+        font-size: 1rem;
+    }
+}
+
+.system-notification .notification-close {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+@keyframes left-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes init-max-height {
+    0% {
+        opacity: 0;
+        transform: scaleY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+}
+
+.notification-preview {
+    width: min(22rem, 100vw - 3rem);
+    max-height: min(24rem, 60dvh);
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.notification-details {
+    width: min(32rem, 100vw - 3rem);
+    max-height: min(36rem, 100dvh - 6rem);
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}

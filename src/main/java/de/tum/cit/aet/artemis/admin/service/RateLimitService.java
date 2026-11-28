@@ -20,6 +20,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.ServiceCredentialBudget;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import inet.ipaddr.IPAddress;
@@ -32,7 +33,7 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 @Profile(PROFILE_CORE)
 @Service
 @Lazy
-public class RateLimitService {
+public class RateLimitService implements ServiceCredentialBudget {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
@@ -201,6 +202,7 @@ public class RateLimitService {
      *
      * @throws RateLimitExceededException if the address has used up its budget of failed checks
      */
+    @Override
     public void requireServiceCredentialBudget() {
         enforcePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
     }
@@ -208,6 +210,7 @@ public class RateLimitService {
     /**
      * Gives back the token reserved by {@link #requireServiceCredentialBudget()}, because the secret was right.
      */
+    @Override
     public void refundServiceCredentialBudget() {
         refundPerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
     }
