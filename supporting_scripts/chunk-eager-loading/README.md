@@ -81,24 +81,20 @@ workflow artifact (`chunk-eager-report`). The `chunk-eager-quality` job (PR runs
    size limit to speak of, so a huge pull request does not produce an unreadable page in the run.
    The raw reports stay where they always were, as the `chunk-eager-report` artifact of each run.
 
-No build runs twice: the PR side reuses `build-war`'s own build, and the baseline side is whatever
-that same job already computed when it ran on that `develop` commit — nothing is rebuilt just for
-the comparison. A PR's own report is kept for 14 days, a `develop` report for 90 (the artifact is
+`build-war` builds the client twice: first with `--optimization=false` only for the metafile of the report, then
+the client that ships. The comparison itself builds nothing, because the baseline is whatever that same job already
+computed when it ran on that `develop` commit. A PR's own report is kept for 14 days, a `develop` report for 90 (the artifact is
 the baseline for every PR forked from that commit). Chunk identities (`moduleKey`) are stored as
 SHA-1 hashes of the chunk's input paths, and each chunk is stored once however many routes load it,
 which keeps the report around 1 MB. The report carries a `formatVersion`; the diff refuses a
 report in another layout instead of misreading it.
 
-**Bootstrap note**: until this PR itself merges to `develop` and `develop` rebuilds once, there is
-no `chunk-eager-report` artifact on any `develop` run yet. The `chunk-eager-quality` job handles
-this gracefully — it skips the comparison (no PR comment) rather than failing. The mechanism
-activates starting with the first PR opened after this one merges.
-
 ## Usage (manual / local)
 
 ```bash
-# 1. Build with the stats flag
-NG_BUILD_OPTIMIZE_CHUNKS=1 npx ng build --configuration production --stats-json
+# 1. Build with the stats flag, the same way as CI builds for the report
+pnpm run prebuild
+pnpm exec ng build --configuration production --optimization=false --stats-json
 
 # 2. Generate a report for this build
 node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs \
@@ -139,7 +135,7 @@ the bug class this guards against (see `discover_route_entries.mjs`'s own header
   published one (it never ran on `develop`, failed, or the artifact expired after 90 days), the
   comparison is skipped for that run — it does not fall back to another `develop` report, which
   would reintroduce the drift described above.
-- **Sizes are those of an unoptimized build.** `build-war` builds with `--optimization=false`, so
+- **Sizes are those of an unoptimized build.** The report is built with `--optimization=false`, so
   the byte figures are not minified and are larger than what a user downloads. They are only
   meaningful relative to another report from the same build.
 - **Fork PRs may not get a posted comment.** The default `GITHUB_TOKEN` for `pull_request` events
