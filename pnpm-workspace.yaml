@@ -227,7 +227,7 @@ overrides:
   '@vitest/mocker>vite': '7.3.7'
   '@analogjs/vite-plugin-angular>vite': '7.3.7'
   word-wrap: '1.2.5'
-  ws: '8.23.0'
+  ws: '8.23.1'
   yargs-parser: '22.0.0'
 
 # See the @embedpdf/engines overrides above.

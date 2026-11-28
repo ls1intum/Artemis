@@ -363,7 +363,7 @@ overrides:
   '@vitest/mocker>vite': 7.3.7
   '@analogjs/vite-plugin-angular>vite': 7.3.7
   word-wrap: 1.2.5
-  ws: 8.23.0
+  ws: 8.23.1
   yargs-parser: 22.0.0
 
 packageExtensionsChecksum: sha256-FxzDauMFgXGpVPl6LQS0nn7COtdoFcvao6oTXCtGOGc=
@@ -5490,8 +5490,8 @@ packages:
     resolution: {integrity: sha512-dYwyZredl67GyLLIHJnRM3h2PcOmN5SkcgC7eM5DPDEOEl6dLFqVrMg3F1Ea32usj4VSVZtd2H4MtKTNOf6nPg==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
-  ws@8.23.0:
-    resolution: {integrity: sha512-wCkmX8QMOrKjgO8HW2WyDbTSGeqkocxgDzS9iR79rEAexty6/2qzilx3Ag8Tqf9ykop3irLKle0MtVn5qjVnoQ==}
+  ws@8.23.1:
+    resolution: {integrity: sha512-1rzWDSN0NOi3tpwgHsQExjWRoKUGtjCkJ2gZRaaRtzhYLboMytOI9pj9PU7yCgY37auqdd4OyLofZDbkeuZmPA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -7718,7 +7718,7 @@ snapshots:
       sirv: 3.0.2
       tinyrainbow: 3.2.0
       vitest: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/browser-playwright@5.1.0)(@vitest/coverage-istanbul@5.1.0)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@30.0.1)(vite@7.3.7(@types/node@26.6.6)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(lightningcss@1.33.0)(sass-embedded@1.108.2)(sass@1.108.2)(yaml@2.9.1))
-      ws: 8.23.0
+      ws: 8.23.1
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -7737,7 +7737,7 @@ snapshots:
       sirv: 3.0.2
       tinyrainbow: 3.2.0
       vitest: 5.1.0(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/browser-playwright@5.1.0)(@vitest/coverage-istanbul@5.1.0)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(jsdom@30.0.1)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1(supports-color@10.2.2))(sass-embedded@1.108.2)(sass@1.108.2)(yaml@2.9.1))
-      ws: 8.23.0
+      ws: 8.23.1
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -9577,7 +9577,7 @@ snapshots:
       recast: 0.23.21
       semver: 7.8.6
       use-sync-external-store: 1.7.0(react@19.3.1)
-      ws: 8.23.0
+      ws: 8.23.1
     optionalDependencies:
       '@types/react': 19.3.0
       prettier: 3.10.1
@@ -9970,7 +9970,7 @@ snapshots:
     dependencies:
       signal-exit: 4.1.0
 
-  ws@8.23.0: {}
+  ws@8.23.1: {}
 
   wsl-utils@0.1.0:
     dependencies:
