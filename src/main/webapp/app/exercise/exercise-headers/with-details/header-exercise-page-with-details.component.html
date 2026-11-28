@@ -11,7 +11,11 @@
                         <ng-content select="[pagetitle]" />
                     </div>
                     @if (isTestRun()) {
-                        <span class="self-center text-sm font-normal text-muted-color" data-testid="exercise-header-test-run" jhiTranslate="artemisApp.exam.testRun.testRun"></span>
+                        <span
+                            class="self-center text-sm font-normal text-muted-color"
+                            data-testid="exercise-header-test-run"
+                            jhiTranslate="artemisApp.examManagement.testRun.testRun"
+                        ></span>
                     }
                 </div>
             </div>
