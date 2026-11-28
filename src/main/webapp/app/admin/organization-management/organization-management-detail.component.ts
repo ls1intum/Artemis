@@ -12,7 +12,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -80,6 +81,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     readonly userColumns = computed<ColumnDef<User>[]>(() => [
         { field: 'id', headerKey: 'global.field.id', sort: true, width: '80px', templateRef: this.userIdTemplate() },
         { field: 'login', headerKey: 'artemisApp.userManagement.login', sort: true, width: '200px' },
+        { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.userManagement.registrationNumber', sort: true, width: '200px' },
         { field: 'name', headerKey: 'artemisApp.userManagement.name', sort: true, width: '250px' },
         { field: 'email', headerKey: 'artemisApp.userManagement.email', sort: true },
     ]);

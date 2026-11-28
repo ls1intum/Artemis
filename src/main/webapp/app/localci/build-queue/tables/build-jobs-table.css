@@ -15,16 +15,16 @@
 .finish-jobs-column-tiny {
     width: 48px;
     min-width: 48px;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 /* Standard columns with consistent padding */
 .build-jobs-column,
 .finish-jobs-column {
     white-space: nowrap;
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
 }
 
 /* Status column with specific width constraints */

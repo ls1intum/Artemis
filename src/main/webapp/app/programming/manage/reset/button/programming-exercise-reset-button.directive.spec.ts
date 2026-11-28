@@ -1,7 +1,7 @@
 import { inputBinding } from '@angular/core';
 import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseResetDialogComponent } from '../dialog/programming-exercise-reset-dialog.component';

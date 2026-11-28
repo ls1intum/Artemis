@@ -180,7 +180,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_withGradingScale() throws IOException {
-        // Create course with exercises and submissions (without complaints, using empty suffix to match user groups)
+        // Create course with exercises and submissions (without complaints)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Add grading scale to the course
@@ -242,7 +242,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportAllStudentData_createsAllExpectedFiles() throws IOException {
-        // Create course with various data (without complaints, using empty suffix to match user groups)
+        // Create course with various data (without complaints)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
@@ -263,7 +263,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyPerExerciseColumns() throws IOException {
-        // Create course with specific number of exercises (using empty suffix to match user groups)
+        // Create course with specific number of exercises
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();

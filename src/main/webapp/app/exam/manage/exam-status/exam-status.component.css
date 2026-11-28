@@ -27,7 +27,7 @@
 }
 
 .exam-status-wrapper li {
-    display: list-item !important;
+    display: list-item;
 }
 
 .exam-status-wrapper .running {

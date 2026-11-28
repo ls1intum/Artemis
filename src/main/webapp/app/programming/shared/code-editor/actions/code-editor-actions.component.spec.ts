@@ -16,7 +16,7 @@ import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock
 import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

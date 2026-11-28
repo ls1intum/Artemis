@@ -1,50 +1,64 @@
 <div>
-    <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
-    <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
-         different, much smaller table instead of filtering one large one. -->
-    <tumaet-ui-tabs class="mb-6" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
-        <tumaet-ui-tab-list>
-            @for (tab of logTypeTabs; track tab.value) {
-                <tumaet-ui-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
-                    <span [jhiTranslate]="tab.labelKey"></span>
-                </tumaet-ui-tab>
-            }
-        </tumaet-ui-tab-list>
-    </tumaet-ui-tabs>
-    <h4 class="mb-4" jhiTranslate="audits.filter.title"></h4>
-    <div class="mb-6 flex flex-wrap items-start gap-6" data-testid="audits-date-filter">
-        <div class="flex flex-col gap-2">
-            <label for="audits-from-date" jhiTranslate="audits.filter.from"></label>
-            <tumaet-ui-date-picker
-                #fromPicker
-                inputId="audits-from-date"
-                data-testid="audits-from-date"
-                [hideLabelName]="true"
-                [hideValidationMessage]="true"
-                [shouldDisplayTimeZoneWarning]="false"
-                [dateOnly]="true"
-                [value]="fromDateValue()"
-                (valueChange)="onFromDateChange($event)"
-                (inputValidityChange)="onFromTextValidityChange($event, fromPicker.value())"
-            />
-        </div>
-        <div class="flex flex-col gap-2">
-            <label for="audits-to-date" jhiTranslate="audits.filter.to"></label>
-            <tumaet-ui-date-picker
-                #toPicker
-                inputId="audits-to-date"
-                data-testid="audits-to-date"
-                [hideLabelName]="true"
-                [hideValidationMessage]="true"
-                [shouldDisplayTimeZoneWarning]="false"
-                [dateOnly]="true"
-                [value]="toDateValue()"
-                (valueChange)="onToDateChange($event)"
-                (inputValidityChange)="onToTextValidityChange($event, toPicker.value())"
-            />
-        </div>
+    <!-- The heading and the tabs share the admin title bar. One tab per audit log: each log is a separate table with its own
+         retention period, so switching tabs queries a different, much smaller table instead of filtering one large one. -->
+    <div *adminTitleBarTitle class="flex min-w-0 items-center gap-4">
+        <h5 id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
+        <tumaet-ui-tabs [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+            <tumaet-ui-tab-list>
+                @for (tab of logTypeTabs; track tab.value) {
+                    <tumaet-ui-tab class="px-3 py-0.5 text-sm" [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                        <span [jhiTranslate]="tab.labelKey"></span>
+                    </tumaet-ui-tab>
+                }
+            </tumaet-ui-tab-list>
+        </tumaet-ui-tabs>
     </div>
     <tumaet-ui-table-layout data-testid="audits-table-container" [empty]="audits().length === 0" emptyTitle="audits.notFound">
+        <!-- Search and date range in the 40px toolbar of the table. The toolbar never wraps and scrolls sideways on a narrow screen. -->
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <tumaet-ui-search-field
+                class="max-w-sm min-w-40 flex-1"
+                size="small"
+                placeholder="audits.search.placeholder"
+                ariaLabel="audits.search.ariaLabel"
+                data-testid="audits-search"
+                [value]="searchInput()"
+                (valueChange)="onSearchInput($event)"
+            />
+            <div class="flex shrink-0 items-center gap-1" role="group" data-testid="audits-date-filter" [attr.aria-label]="'audits.filter.title' | artemisTranslate">
+                <tumaet-ui-date-picker
+                    #fromPicker
+                    size="small"
+                    class="w-40"
+                    inputId="audits-from-date"
+                    data-testid="audits-from-date"
+                    [ariaLabel]="'audits.filter.from' | artemisTranslate"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [dateOnly]="true"
+                    [value]="fromDateValue()"
+                    (valueChange)="onFromDateChange($event)"
+                    (inputValidityChange)="onFromTextValidityChange($event, fromPicker.value())"
+                />
+                <span class="text-muted-color" aria-hidden="true">–</span>
+                <tumaet-ui-date-picker
+                    #toPicker
+                    size="small"
+                    class="w-40"
+                    inputId="audits-to-date"
+                    data-testid="audits-to-date"
+                    [ariaLabel]="'audits.filter.to' | artemisTranslate"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [dateOnly]="true"
+                    [value]="toDateValue()"
+                    (valueChange)="onToDateChange($event)"
+                    (inputValidityChange)="onToTextValidityChange($event, toPicker.value())"
+                />
+            </div>
+        </div>
         <table
             tumAetUiTable
             size="small"

@@ -1,7 +1,7 @@
 import { Service, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Service()

@@ -6,7 +6,7 @@ import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statisti
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 
 interface SpanOption {
     label: string;

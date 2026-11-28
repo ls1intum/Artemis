@@ -27,7 +27,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 
@@ -216,6 +216,45 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getTriggerFailedButton()).not.toBeNull();
         expect(getTriggerFailedButton().disabled).toBe(true);
         expect(getBuildState()).not.toBeNull();
+    });
+
+    describe('label of the trigger options button', () => {
+        const triggerButtonLabel = () => debugElement.query(By.css('[data-testid="participation-trigger-dropdown"] span')).nativeElement as HTMLElement;
+
+        async function loadBuildSummary(): Promise<void> {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+            fixture.detectChanges();
+            getExerciseSubmissionStateSubject.next({
+                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 4 },
+            } as ExerciseSubmissionState);
+            await vi.advanceTimersByTimeAsync(500);
+            fixture.detectChanges();
+        }
+
+        it('is always shown while the component does not toggle', async () => {
+            await loadBuildSummary();
+
+            expect(triggerButtonLabel().className).toBe('');
+            expect(triggerButtonLabel().textContent).toContain('artemisApp.participation.triggerOptions');
+        });
+
+        it('is hidden below the breakpoint, so that the title bar stays on one line on a narrow screen', async () => {
+            fixture.componentRef.setInput('shouldToggle', true);
+            fixture.componentRef.setInput('toggleBreakpoint', 'md');
+            await loadBuildSummary();
+
+            expect(triggerButtonLabel().className).toBe('hidden md:inline');
+
+            fixture.componentRef.setInput('toggleBreakpoint', 'xl');
+            fixture.detectChanges();
+
+            expect(triggerButtonLabel().className).toBe('hidden xl:inline');
+            // the button keeps its accessible name for the icon only view
+            expect(debugElement.query(By.css('[data-testid="participation-trigger-dropdown"]')).nativeElement.getAttribute('aria-label')).toBe(
+                'artemisApp.participation.triggerOptions',
+            );
+        });
     });
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', async () => {

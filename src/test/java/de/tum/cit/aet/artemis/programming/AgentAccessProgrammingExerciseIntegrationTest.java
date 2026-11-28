@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,6 +118,59 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
         SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
 
         perform(get("/api/programming/programming-exercises/" + exercise.getId() + "/test-cases"), token).andExpect(status().isOk());
+    }
+
+    @Test
+    void theRepositoriesOfADraftExerciseAreLocatedAndWritable() throws Exception {
+        releaseAt(ZonedDateTime.now().plusDays(7));
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_REPOSITORIES);
+
+        String body = perform(get("/api/programming/programming-exercises/" + exercise.getId() + "/repositories"), token).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+
+        JsonNode repositories = JsonObjectMapper.get().readTree(body);
+        assertThat(repositories.at("/username").asString()).isEqualTo(TEST_PREFIX + "editor1");
+        assertThat(repositories.at("/writable").asBoolean()).isTrue();
+        assertThat(repositories.at("/branch").asString()).isNotBlank();
+        Set<String> types = new HashSet<>();
+        repositories.at("/repositories").forEach(repository -> {
+            types.add(repository.path("type").asString());
+            assertThat(repository.path("cloneUrl").asString()).contains("/git/").doesNotContain("@");
+        });
+        assertThat(types).contains("template", "solution", "tests");
+    }
+
+    @Test
+    void thePushOfAPublishedExerciseIsAnnouncedAsNotAllowed() throws Exception {
+        releaseAt(ZonedDateTime.now().minusDays(1));
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_REPOSITORIES);
+
+        String body = perform(get("/api/programming/programming-exercises/" + exercise.getId() + "/repositories"), token).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+
+        JsonNode repositories = JsonObjectMapper.get().readTree(body);
+        assertThat(repositories.at("/writable").asBoolean(true)).isFalse();
+        assertThat(repositories.at("/readOnlyReason").asString()).contains("visible to students");
+    }
+
+    @Test
+    void theRepositoriesCannotBeLocatedWithoutTheRepositoryScope() throws Exception {
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT);
+
+        perform(get("/api/programming/programming-exercises/" + exercise.getId() + "/repositories"), token).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void theRepositoryToolIsOnlyListedForTheRepositoryScope() throws Exception {
+        releaseAt(ZonedDateTime.now().plusDays(7));
+        SavedToken token = tokenOf("editor1", AgentScope.PROGRAMMING_REPOSITORIES);
+
+        JsonNode result = callTool(token, "get_programming_repositories", Map.of("exerciseId", exercise.getId()));
+
+        assertThat(result.at("/result/isError").asBoolean(true)).isFalse();
+        assertThat(result.at("/result/content/0/text").asString()).contains("\"writable\":true").contains("cloneUrl");
+        assertThat(callTool(tokenOf("editor1", AgentScope.PROGRAMMING_DRAFT), "get_programming_repositories", Map.of("exerciseId", exercise.getId())).at("/error/code").asInt())
+                .isEqualTo(-32602);
     }
 
     @Test
@@ -263,9 +317,8 @@ class AgentAccessProgrammingExerciseIntegrationTest extends AbstractProgrammingI
     }
 
     private JsonNode callTool(SavedToken token, String name, Map<String, Object> arguments) throws Exception {
-        var message = JsonObjectMapper.get().writeValueAsString(Map.of("jsonrpc", "2.0", "id", 1, "method", "tools/call", "params", Map.of("name", name, "arguments", arguments)));
-        String body = perform(post("/api/core/agent/mcp").contentType(MediaType.APPLICATION_JSON).content(message), token).andExpect(status().isOk()).andReturn().getResponse()
-                .getContentAsString();
+        String body = perform(PersonalAccessTokenTestUtil.mcpRequest("tools/call", Map.of("name", name, "arguments", arguments)), token).andExpect(status().isOk()).andReturn()
+                .getResponse().getContentAsString();
         return JsonObjectMapper.get().readTree(body);
     }
 

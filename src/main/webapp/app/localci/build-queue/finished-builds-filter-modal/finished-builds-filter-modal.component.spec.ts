@@ -8,7 +8,7 @@ import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-in
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 
 describe('FinishedBuildsFilterModalComponent', () => {
     let component: FinishedBuildsFilterModalComponent;

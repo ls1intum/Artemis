@@ -1,7 +1,7 @@
 import { Signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiTranslationKey, TumAetUiTranslationParams, TumAetUiTranslator, provideTumAetUiTranslator } from '@tumaet/ui-angular';
+import { TumAetUiTranslationKey, TumAetUiTranslationParams, TumAetUiTranslator, provideTumAetUiTranslator } from '@tumaet/ui-angular/i18n';
 import { map, merge } from 'rxjs';
 
 const ARTEMIS_TRANSLATION_KEYS = {

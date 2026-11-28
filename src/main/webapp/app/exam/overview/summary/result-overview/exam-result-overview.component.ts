@@ -14,7 +14,7 @@ import { captureException } from 'app/core/error-reporting/capture-exception';
 import { isExamResultPublished, isRealExam } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
