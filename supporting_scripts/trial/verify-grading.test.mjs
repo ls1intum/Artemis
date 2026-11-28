@@ -59,6 +59,7 @@ test('the operator command imports the shipped ZIP and uses the solution in its 
     const exercise = { id: 2, solutionParticipation: { id: 3 } };
     const participationPath = '/api/programming/programming-exercise-participations/4';
     let committed = false;
+    let solutionFailed = false;
     const server = createServer(async (request, response) => {
         // Return handler assertions to the child process so a malformed request fails immediately.
         try {
@@ -84,7 +85,10 @@ test('the operator command imports the shipped ZIP and uses the solution in its 
                         break;
                     }
                     case 'GET /api/programming/programming-exercises/2/test-cases':
-                        data = [{ id: 1 }];
+                        data = solutionFailed ? [] : [{ id: 1 }];
+                        break;
+                    case 'GET /api/programming/programming-exercise-participations/3/latest-result-with-feedbacks?withSubmission=true':
+                        data = { ...grade, id: 51, testCaseCount: 0, score: 0, submission: { buildFailed: true } };
                         break;
                     case 'POST /api/exercise/exercises/2/participations':
                         data = { id: 4 };
@@ -121,6 +125,9 @@ test('the operator command imports the shipped ZIP and uses the solution in its 
     await once(server, 'listening');
     t.after(() => server.close());
     const script = fileURLToPath(new URL('./verify-grading.mjs', import.meta.url));
-    const { stdout } = await promisify(execFile)(process.execPath, [script], { env: { ...process.env, ARTEMIS_TRIAL_PORT: String(server.address().port) }, timeout: 15_000 });
+    const invoke = () => promisify(execFile)(process.execPath, [script], { env: { ...process.env, ARTEMIS_TRIAL_PORT: String(server.address().port) }, timeout: 15_000 });
+    const { stdout } = await invoke();
     assert.match(stdout, new RegExp(`PASS exercise=2 participation=4 commit=${commit} result=42 score=100% tests=3/3`));
+    solutionFailed = true;
+    await assert.rejects(invoke(), (error) => error.code === 1 && /solution build result 51/i.test(error.stderr));
 });

@@ -58,22 +58,23 @@ their own infrastructure.
 
 ## Try it
 
-A complete Artemis with **working programming exercises**, from the repository root. No configuration,
-published images for `amd64` and `arm64`:
+From the repository root, start Artemis with **working programming exercises**. Docker Compose
+pulls published images for `amd64` and `arm64`.
 
 ```shell
-# Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
-# Docker socket, and Compose resolves it when it creates the container, so set it first.
-export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
+# Select the native exercise build images for the Docker engine.
+export ARTEMIS_TRIAL_ARCH=$(docker version --format '{{.Server.Arch}}')
+# Native Linux only: give the build agent access to the host's Docker socket.
+export ARTEMIS_DOCKER_GROUP_ID=$(stat -c %g /var/run/docker.sock)
 docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml pull
 docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open [http://localhost:8080](http://localhost:8080) and sign in as `artemis_admin` / `artemis_admin`.
 This includes the integrated code lifecycle, so Artemis hosts the git repositories and a build agent
-runs the tests. Docker Desktop on macOS and Windows needs no docker group, so the `export` line is
-harmless there and can be skipped. See [Try Artemis](https://docs.artemis.tum.de/about/try) for what it
-leaves out and how to get a hosted trial instead. The TUM instance is at https://artemis.tum.de.
+runs the tests. On Docker Desktop, skip the `ARTEMIS_DOCKER_GROUP_ID` line. In PowerShell, set
+`$env:ARTEMIS_TRIAL_ARCH = docker version --format '{{.Server.Arch}}'` before running Compose.
+See [Try Artemis](https://docs.artemis.tum.de/about/try) to run an end-to-end grading check or request a hosted trial. The TUM instance is at https://artemis.tum.de.
 
 ## Key capabilities
 

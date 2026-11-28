@@ -7,7 +7,7 @@ import { HttpClient } from '../course-scripts/setup-course/lib/http-client.mjs';
 const archive = new URL('../../src/test/resources/test-data/import-from-file/valid-import-c.zip', import.meta.url);
 const exercises = '/api/programming/programming-exercises';
 const exerciseTitle = 'Trial automatic grading';
-const buildHelp = 'Inspect Server Administration → Build Agents and the build queue. Check Docker socket access and that the agent can pull the FACT image.';
+const buildHelp = 'Inspect Server Administration → Build Agents and the build queue. Check the Git clone URL, Docker socket access and access to the FACT image registry.';
 
 export function trialOrigin(port) {
     if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
@@ -83,7 +83,8 @@ async function run() {
             body,
             headers,
             contentType: body instanceof FormData ? 'multipart' : undefined,
-            signal: AbortSignal.timeout(60_000),
+            // On first sign-in, Spring may still be initializing beans after readiness reports UP.
+            signal: AbortSignal.timeout(method === 'POST' ? 180_000 : 60_000),
         });
         return response.data;
     };
@@ -155,20 +156,27 @@ async function run() {
 
     const exerciseId = exercise.id;
     console.log(`Exercise ${exerciseId} (${exerciseTitle})`);
+    const resultFor = (id) => request('GET', `/api/programming/programming-exercise-participations/${id}/latest-result-with-feedbacks?withSubmission=true`);
     await stage('Wait for the imported solution to produce test cases', buildHelp, () =>
-        waitFor(async () => (await request('GET', `${exercises}/${exerciseId}/test-cases`)).length),
+        waitFor(async () => {
+            const cases = await request('GET', `${exercises}/${exerciseId}/test-cases`);
+            if (cases.length) return true;
+            const result = await resultFor(exercise.solutionParticipation.id);
+            if (result?.completionDate && (result.submission?.buildFailed || result.testCaseCount === 0)) {
+                throw new Error(`Solution build result ${result.id} produced no test cases. Open the solution build log for exercise ${exerciseId}.`);
+            }
+        }),
     );
     participation ??= await stage('Open the student participation', 'Check that the exercise is released and LocalVC is available.', () =>
         request('POST', `/api/exercise/exercises/${exerciseId}/participations`),
     );
     const participationPath = `/api/programming/programming-exercise-participations/${participation.id}`;
-    const latestResult = () => request('GET', `${participationPath}/latest-result-with-feedbacks?withSubmission=true`);
     const repository = (id) => `/api/programming/participations/${id}/repository`;
     const commit = await stage(`Commit the solution to participation ${participation.id}`, 'Inspect the solution and student repositories in the online editor.', async () => {
         const source = await request('GET', `${repository(exercise.solutionParticipation.id)}/file?file=exercise.c`, undefined, { Accept: 'application/octet-stream' });
         const before = await request('GET', `${participationPath}/commit-history`);
         if (existingId) {
-            const restoredHash = verifyRestoredGrade(before, await latestResult());
+            const restoredHash = verifyRestoredGrade(before, await resultFor(participation.id));
             console.log(`Verified restored grade for commit ${restoredHash}`);
         }
         const files = [{ fileName: 'exercise.c', fileContent: `${source}\n/* Grading trial ${randomUUID()} */\n` }];
@@ -176,7 +184,7 @@ async function run() {
         if (saved['exercise.c']) throw new Error(saved['exercise.c']);
         return newCommit(before, await request('GET', `${participationPath}/commit-history`));
     });
-    const grade = await stage(`Wait for the grade of commit ${commit}`, buildHelp, () => waitFor(async () => checkGrade(await latestResult(), commit)));
+    const grade = await stage(`Wait for the grade of commit ${commit}`, buildHelp, () => waitFor(async () => checkGrade(await resultFor(participation.id), commit)));
     console.log(
         `PASS exercise=${exerciseId} participation=${participation.id} commit=${commit} result=${grade.id} score=${grade.score}% tests=${grade.passedTestCaseCount}/${grade.testCaseCount}`,
     );
