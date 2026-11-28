@@ -10,8 +10,8 @@
 //   * Stanford CoreNLP (through JPlag Text) brought com.sun.xml.bind:jaxb-impl and jaxb-core, which are the same classes as
 //     org.glassfish.jaxb:jaxb-runtime and jaxb-core that Hibernate brings.
 //   * The runtime classpath carried a complete Jersey client stack (jersey-client, HK2, javassist, mimepull) for the GitLab
-//     client of gitlab4j-api. GitLab support was removed in #10382, and the Sharing Platform API only uses gitlab4j-api's model
-//     classes. It also carried Lombok (declared as a runtime dependency by the Weaviate client) and two HTTP transports for
+//     client of gitlab4j-api. GitLab support was removed in #10382, and the Sharing Platform connector uses Artemis records.
+//     The classpath also carried Lombok (declared as a runtime dependency by the Weaviate client) and two HTTP transports for
 //     the Kubernetes client, because an exclude named kubernetes-httpclient-vertx while the module had been renamed to
 //     kubernetes-httpclient-vertx-5. None of these failed anything; each was found by reading the SBOM.
 //
@@ -32,7 +32,8 @@
  */
 def forbiddenRuntimeModules = [
     'org.projectlombok:lombok'                     : 'Lombok is a compile-time tool and Artemis does not use it. The Weaviate client declares it as a runtime dependency; exclude it there.',
-    'org.glassfish.jersey.core:jersey-client'      : 'The Jersey client (with HK2, javassist, the Jackson 2 and multipart media modules) only served the GitLab client that gitlab4j-api carries. GitLab support was removed in #10382; exclude it where the Sharing Platform API brings it.',
+    'org.gitlab4j:gitlab4j-api'                    : 'The Sharing Platform connector uses Artemis records, and Artemis has no GitLab client.',
+    'org.glassfish.jersey.core:jersey-client'      : 'The Jersey client stack only served the GitLab client, which Artemis no longer uses.',
     'org.glassfish.jersey.inject:jersey-hk2'       : 'See jersey-client: the Jersey client stack is not used.',
     'io.fabric8:kubernetes-httpclient-vertx'       : 'The Kubernetes client uses the OkHttp transport (kubernetes-httpclient-okhttp). A second transport makes the client ambiguous and pulls in Vert.x.',
     'io.fabric8:kubernetes-httpclient-vertx-5'     : 'The Kubernetes client uses the OkHttp transport (kubernetes-httpclient-okhttp). A second transport makes the client ambiguous and pulls in Vert.x.',

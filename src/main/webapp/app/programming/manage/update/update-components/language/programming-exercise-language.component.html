@@ -22,7 +22,7 @@
                     programmingExerciseCreationConfig().isImportFromExistingExercise ||
                     !!programmingExercise().id ||
                     programmingExerciseCreationConfig().isImportFromFile ||
-                    programmingExerciseCreationConfig().isImportFromSharing
+                    programmingExerciseCreationConfig().isExternalImport
                 "
             />
         </div>
@@ -39,7 +39,7 @@
                     [disabled]="
                         programmingExerciseCreationConfig().isImportFromExistingExercise ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().id
                     "
                     name="projectType"
@@ -50,7 +50,7 @@
                 isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig().isImportFromFile &&
-                !programmingExerciseCreationConfig().isImportFromSharing &&
+                !programmingExerciseCreationConfig().isExternalImport &&
                 !programmingExercise().id &&
                 programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA &&
                 programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX
@@ -211,7 +211,7 @@
                     [disabled]="
                         !!programmingExercise().id ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().staticCodeAnalysisEnabled
                     "
                     [(ngModel)]="programmingExercise().buildConfig!.sequentialTestRuns"

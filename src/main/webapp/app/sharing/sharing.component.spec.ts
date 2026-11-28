@@ -12,21 +12,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/course/shared/entities/course.model';
+import { of, throwError } from 'rxjs';
+import { LOAD_SHARING_COURSES, SharingCourse } from './sharing-course';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
-/** Drains all pending micro- and macrotasks so chained promises (e.g. checkLogin) resolve under fake timers. */
+/** Flushes the navigation promise chain under fake timers. */
 const flushPromises = () => vi.advanceTimersByTimeAsync(0);
 
 describe('SharingComponent', () => {
     let fixture: ComponentFixture<SharingComponent>;
     let httpMock: HttpTestingController;
-    let accountService: AccountService;
+    const loadCourses = vi.fn();
     let alertService: AlertService;
     let router: { navigate: ReturnType<typeof vi.fn> };
 
@@ -47,7 +45,7 @@ describe('SharingComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: AccountService, useClass: MockAccountService },
+                { provide: LOAD_SHARING_COURSES, useValue: loadCourses },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: routerMock },
@@ -62,7 +60,7 @@ describe('SharingComponent', () => {
         fixture = TestBed.createComponent(SharingComponent);
 
         httpMock = TestBed.inject(HttpTestingController);
-        accountService = TestBed.inject(AccountService);
+        loadCourses.mockReturnValue(of(courses));
         alertService = TestBed.inject(AlertService);
         router = TestBed.inject(Router) as unknown as { navigate: ReturnType<typeof vi.fn> };
     });
@@ -75,14 +73,13 @@ describe('SharingComponent', () => {
 
     const testBasket: ShoppingBasket = { exerciseInfo: [], userInfo: { email: 'test@banana.com' }, tokenValidUntil: new Date(Date.now() + 60 * 60 * 1000) };
 
-    const courses: Course[] = [
+    const courses: SharingCourse[] = [
         { id: 1, title: 'testCourse 1' },
         { id: 2, title: 'testCourse 2' },
     ];
 
     it('loads baskets and courses, selects one, and navigates to import page', async () => {
         // given
-        vi.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         vi.spyOn(alertService, 'error');
         fixture.detectChanges();
         await flushPromises();
@@ -96,9 +93,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
-
-        courseReq.flush(courses);
+        expect(loadCourses).toHaveBeenCalled();
 
         // then
         expect(fixture.componentInstance.getBasketTokenExpiryDate()).toStrictEqual(testBasket.tokenValidUntil);
@@ -118,7 +113,7 @@ describe('SharingComponent', () => {
         fixture.componentInstance.onExerciseSelected(1);
 
         // THEN
-        expect(fixture.componentInstance.sharingInfo.selectedExercise).toBe(1);
+        expect(fixture.componentInstance.sharingInfo.exercisePosition).toBe(1);
 
         // WHEN finally navigate to exercise import  page
         fixture.componentInstance.navigateToImportFromSharing();
@@ -153,9 +148,16 @@ describe('SharingComponent', () => {
         expect(alertService.error).toHaveBeenCalled();
     });
 
+    it('keeps an incomplete basket out of the import editor', () => {
+        vi.spyOn(alertService, 'error');
+        fixture.componentInstance.navigateToImportFromSharing();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.sharing.error.missingParameters');
+    });
+
     it('sorts the course table by the column and direction of the clicked header', () => {
         const component = fixture.componentInstance;
-        const unsorted: Course[] = [
+        const unsorted: SharingCourse[] = [
             { id: 2, title: 'Beta' },
             { id: 3, title: 'Gamma' },
             { id: 1, title: 'Alpha' },
@@ -187,7 +189,6 @@ describe('SharingComponent', () => {
     });
 
     it('failed init basket error', async () => {
-        vi.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set
         const tokenExpiryDate = fixture.componentInstance.getBasketTokenExpiryDate();
         expect(tokenExpiryDate.getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
@@ -202,9 +203,7 @@ describe('SharingComponent', () => {
             url: basketUrl,
         });
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
-
-        courseReq.flush(courses);
+        expect(loadCourses).toHaveBeenCalled();
 
         req.flush(
             { message: 'Basket not found' }, // error body
@@ -218,11 +217,12 @@ describe('SharingComponent', () => {
     });
 
     it('failed init course load error', async () => {
-        vi.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set
         expect(fixture.componentInstance.getBasketTokenExpiryDate().getTime()).toBeGreaterThanOrEqual(Date.now() - 1000);
         expect(fixture.componentInstance.getBasketTokenExpiryDate().getTime()).toBeLessThanOrEqual(Date.now() + 1000);
 
+        loadCourses.mockReturnValue(throwError(() => new Error('Failed to load courses')));
+        const errorSpy = vi.spyOn(alertService, 'error');
         fixture.detectChanges();
         await flushPromises();
         const basketUrl = `api/programming/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
@@ -232,12 +232,6 @@ describe('SharingComponent', () => {
         });
 
         req.flush(testBasket);
-
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
-
-        const errorSpy = vi.spyOn(alertService, 'error');
-
-        courseReq.flush({ message: 'Not Found' }, { status: 500, statusText: 'Some error' });
 
         expect(errorSpy).toHaveBeenCalledOnce();
     });
