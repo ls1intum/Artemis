@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
-    styleUrls: ['./git-diff-file-panel-title.component.scss'],
+    styleUrls: ['./git-diff-file-panel-title.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, TumAetUiTagComponent],
 })

@@ -22,20 +22,17 @@ import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } 
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiChipComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faBan, faCircleExclamation, faPen, faPlus, faQuestionCircle, faSave, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -115,7 +112,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styleUrls: ['./course-update.component.scss'],
+    styleUrls: ['./course-update.component.css'],
     imports: [
         FormsModule,
         ReactiveFormsModule,

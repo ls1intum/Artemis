@@ -19,7 +19,7 @@ import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posti
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { CommunicationService } from 'app/communication/service/communication.service';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../communication.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -49,7 +49,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
-    styleUrls: ['./post.component.scss', './../communication.component.scss'],
+    styleUrls: ['./post.component.css', './../communication.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         SavedPostingBannerComponent,

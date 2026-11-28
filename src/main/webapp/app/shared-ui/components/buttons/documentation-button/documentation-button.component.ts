@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 // The routes here are used to build the link to the documentation.
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
@@ -36,7 +36,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
 
 @Component({
     selector: 'jhi-documentation-button',
-    styleUrls: ['./documentation-button.component.scss'],
+    styleUrls: ['./documentation-button.component.css'],
     template: `
         @let tooltip = getTooltipForType();
         <a

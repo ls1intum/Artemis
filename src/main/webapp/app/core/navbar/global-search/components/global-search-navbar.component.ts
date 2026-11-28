@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-global-search-navbar',
     standalone: true,
     templateUrl: './global-search-navbar.component.html',
-    styleUrls: ['./global-search-navbar.component.scss'],
+    styleUrls: ['./global-search-navbar.component.css'],
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class GlobalSearchNavbarComponent {

@@ -14,7 +14,7 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { SubmissionResultStatusComponent } from '../../submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from '../../exercise-details/student-actions/exercise-details-student-actions.component';
 import { NgClass } from '@angular/common';
@@ -28,7 +28,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
-    styleUrls: ['./course-exercise-row.scss'],
+    styleUrls: ['./course-exercise-row.css'],
     imports: [
         RouterLink,
         FaIconComponent,

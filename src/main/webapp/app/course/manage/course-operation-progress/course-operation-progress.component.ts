@@ -5,7 +5,10 @@ import dayjs from 'dayjs/esm';
 import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity } from '@tumaet/ui-angular/progress-bar';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 // Minimum interval between UI updates to prevent flickering (in milliseconds)
@@ -16,7 +19,7 @@ const UPDATE_BUFFER_MS = 150;
     standalone: true,
     imports: [CommonModule, FaIconComponent, TumAetUiDialogComponent, TumAetUiProgressBarComponent, TumAetUiMessageComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-operation-progress.component.html',
-    styleUrls: ['./course-operation-progress.component.scss'],
+    styleUrls: ['./course-operation-progress.component.css'],
 })
 export class CourseOperationProgressComponent {
     private translateService = inject(TranslateService);

@@ -15,7 +15,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { TumAetUiDatePickerComponent, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const createBlobHttpResponse = () => {

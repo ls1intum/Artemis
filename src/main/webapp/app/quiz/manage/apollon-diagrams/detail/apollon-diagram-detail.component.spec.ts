@@ -19,7 +19,7 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 function setupCanvasAndImageMocks() {
     const createMockCanvas = () => {

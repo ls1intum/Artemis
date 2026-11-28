@@ -8,20 +8,17 @@ import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableCellsLarge, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiDialogComponent,
-    TumAetUiIconFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPaginatorComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -114,7 +111,7 @@ function positiveRouteId(value: string | null): number | undefined {
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
-    styleUrl: './presentation-assessment-management.component.scss',
+    styleUrl: './presentation-assessment-management.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,

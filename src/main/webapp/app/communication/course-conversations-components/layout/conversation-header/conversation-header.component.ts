@@ -2,7 +2,9 @@ import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, un
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiButtonGroupComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -35,7 +37,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
-    styleUrls: ['./conversation-header.component.scss'],
+    styleUrls: ['./conversation-header.component.css'],
     imports: [
         FaIconComponent,
         ChannelIconComponent,

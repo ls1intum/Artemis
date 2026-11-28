@@ -3,7 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TumAetUiAutoCompleteComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { MockComponent } from 'ng-mocks';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';

@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type SplitSizes = [number, number];
@@ -49,7 +49,7 @@ const MIN_PANEL_PERCENT = 5;
     standalone: true,
     imports: [CommonModule, TumAetUiSplitterComponent, ArtemisTranslatePipe],
     templateUrl: './lecture-unit-fullscreen-layout.component.html',
-    styleUrl: './lecture-unit-fullscreen-layout.component.scss',
+    styleUrl: './lecture-unit-fullscreen-layout.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class LectureUnitFullscreenLayoutComponent implements OnDestroy {

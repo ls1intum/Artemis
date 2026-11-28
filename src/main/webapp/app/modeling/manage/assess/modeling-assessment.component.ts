@@ -27,8 +27,14 @@ import {
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import {
+    GradingInstructionSelectionService,
+    GradingInstructionWithCriterionTitle,
+    withoutCriterionTitle,
+} from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
+import { MAX_FEEDBACK_TEXT_LENGTH } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { getModelElementType, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
@@ -52,19 +58,12 @@ import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
-export interface DropInfo {
-    instruction: GradingInstruction;
-    tooltipMessage: string;
-    removeMessage: string;
-    feedbackHint: string;
-}
-
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
-    styleUrls: ['./modeling-assessment.component.scss'],
+    styleUrls: ['./modeling-assessment.component.css'],
     host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [ModelingExplanationEditorComponent, ApollonRailDisclosureComponent],
 })
@@ -75,6 +74,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly gradingInstructionSelectionService = inject(GradingInstructionSelectionService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -546,30 +546,38 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         for (const assessment of assessments) {
-            const dropInfo = assessment.dropInfo as GradingInstruction | undefined;
-            const instruction = dropInfo?.id ? dropInfo : undefined;
+            const instruction = this.gradingInstructionOf(assessment);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
+            if (feedback && this.isUpdatingFromServer) {
+                // Apollon reports its model after each assessment a server update writes, while later ones still hold
+                // their previous content. That echo is no assessor edit, so it must not change the server's feedback.
+                continue;
+            }
             if (feedback) {
                 const scoreChanged = feedback.credits !== assessment.score;
-                if (scoreChanged && feedback.gradingInstruction) {
-                    feedback.gradingInstruction = undefined;
-                }
+                // Linking a grading instruction to the element or removing it is an edit like any other.
+                const instructionChanged = feedback.gradingInstruction?.id !== instruction?.id;
                 feedback.credits = assessment.score;
                 if (Feedback.isFeedbackSuggestion(feedback)) {
-                    // Apollon merges the suggestion's title and description into one field; keep the
-                    // suggestion title in `text` (rewriting its prefix to adapted on the first edit) and
-                    // route the assessor's edits into detailText only.
+                    // A suggestion keeps its title in `text` behind the suggestion marker and its description in
+                    // `detailText`. The first edit of the title, description, points or grading instruction marks it as adapted.
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+                    const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
+                    // Clearing the title shows Apollon's default title; the suggestion keeps its own.
+                    const editedTitle = this.ownTitleOf(assessment);
+                    const titleChanged = editedTitle !== undefined && editedTitle !== originalTitle;
                     if (alreadyAdapted) {
                         if (assessment.feedback !== undefined) {
                             feedback.detailText = assessment.feedback;
                         }
+                        if (titleChanged) {
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + editedTitle;
+                        }
                     } else {
                         const lastShown = this.shownInApollon.get(assessment.modelElementId);
                         const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
-                        if (textChanged || scoreChanged) {
-                            const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
+                        if (textChanged || titleChanged || scoreChanged || instructionChanged) {
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + (titleChanged ? editedTitle : originalTitle);
                             if (textChanged && assessment.feedback !== undefined) {
                                 feedback.detailText = assessment.feedback;
                                 this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
@@ -578,22 +586,18 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
-                    feedback.text = assessment.feedback;
+                    this.applyTitleAndDescription(feedback, assessment, instruction);
                 }
-                if (instruction?.id) {
-                    feedback.gradingInstruction = instruction;
-                }
-                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
-                    feedback.gradingInstruction = undefined;
-                }
+                feedback.gradingInstruction = instruction;
             } else {
                 feedback = Feedback.forModeling(
                     assessment.score,
-                    assessment.feedback,
+                    undefined,
                     assessment.modelElementId,
                     this.referenceTypeFor(assessment),
-                    assessment.dropInfo as DropInfo,
+                    instruction ? { instruction } : undefined,
                 );
+                this.applyTitleAndDescription(feedback, assessment, instruction);
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -609,6 +613,62 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
+    }
+
+    /**
+     * Stores an Apollon assessment box in a manual feedback the way Artemis keeps titled feedback for every exercise type:
+     * `text` holds the title and `detailText` the description. A box with only a title keeps an empty `detailText`, so the
+     * boxes show it as a title again while the assessment is open; the server omits an empty `detailText`, so after a reload
+     * the title shows as the comment. An untitled description is kept in `text`, unless it is longer than `text` can hold.
+     * Apollon copies the feedback of a linked grading instruction into an empty description; as long as it stays unchanged,
+     * it is the instruction's feedback, which the feedback shows through its instruction, and not a comment of the assessor.
+     */
+    private applyTitleAndDescription(feedback: Feedback, assessment: Assessment, instruction: GradingInstruction | undefined): void {
+        const title = this.ownTitleOf(assessment);
+        const isInstructionFeedback = !!instruction?.feedback && assessment.feedback === instruction.feedback;
+        const description = assessment.feedback?.length && !isInstructionFeedback ? assessment.feedback : undefined;
+        if (title !== undefined) {
+            feedback.text = title;
+            feedback.detailText = description ?? '';
+        } else if (description !== undefined && description.length > MAX_FEEDBACK_TEXT_LENGTH) {
+            feedback.text = undefined;
+            feedback.detailText = description;
+        } else {
+            feedback.text = description;
+            feedback.detailText = undefined;
+        }
+    }
+
+    /** The title the assessor gave an assessment box, or undefined while it shows Apollon's default title. */
+    private ownTitleOf(assessment: Assessment): string | undefined {
+        const title = assessment.title?.trim();
+        return title ? title : undefined;
+    }
+
+    /**
+     * The title and description an Apollon assessment box shows for a feedback: the inverse of
+     * {@link applyTitleAndDescription}, and of the suggestion handling in {@link generateFeedbackFromAssessment}. Without a
+     * comment of the assessor, the box shows the feedback of the linked grading instruction, as Apollon does when linking it.
+     */
+    private apollonContentOf(feedback: Feedback): { title?: string; description: string } {
+        if (Feedback.isFeedbackSuggestion(feedback)) {
+            const title = this.stripSuggestionPrefix(feedback.text ?? '');
+            return { title: title || undefined, description: feedback.detailText ?? '' };
+        }
+        // A defined detail text, even an empty one, means that `text` holds the title.
+        const titled = feedback.detailText != undefined;
+        const title = titled ? feedback.text || undefined : undefined;
+        const comment = (titled ? feedback.detailText : feedback.text) ?? '';
+        return { title, description: comment || feedback.gradingInstruction?.feedback || '' };
+    }
+
+    /**
+     * The grading instruction Apollon links to the element, without the criterion title it carries for display (see
+     * {@link calculateDropInfo}), so the title is never stored with the feedback.
+     */
+    private gradingInstructionOf(assessment: Assessment): GradingInstruction | undefined {
+        const dropInfo = assessment.dropInfo as GradingInstructionWithCriterionTitle | undefined;
+        return dropInfo?.id ? withoutCriterionTitle(dropInfo) : undefined;
     }
 
     /** Apollon's assessment type is a generic node/edge/member kind, not the UML model type stored in a feedback reference. */
@@ -667,13 +727,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         try {
             const assessments = feedbacks.map((feedback): Assessment => {
-                const feedbackContent = Feedback.isFeedbackSuggestion(feedback) ? (feedback.detailText ?? '') : (feedback.text ?? '');
-                this.shownInApollon.set(feedback.referenceId!, feedbackContent);
+                const { title, description } = this.apollonContentOf(feedback);
+                this.shownInApollon.set(feedback.referenceId!, description);
                 return {
                     modelElementId: feedback.referenceId!,
                     elementType: feedback.referenceType!,
                     score: feedback.credits ?? 0,
-                    feedback: feedbackContent,
+                    title,
+                    feedback: description,
+                    feedbackSuggestion: this.feedbackSuggestionOf(feedback),
                     label: this.calculateLabel(feedback),
                     labelColor: this.calculateLabelColor(feedback),
                     correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
@@ -754,6 +816,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         };
     }
 
+    /** Marks an AI feedback suggestion, and whether the assessor has adapted it, so Apollon can badge the box. */
+    private feedbackSuggestionOf(feedback: Feedback): Assessment['feedbackSuggestion'] {
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
+            return undefined;
+        }
+        return feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER) ? 'adapted' : 'suggested';
+    }
+
     private stripSuggestionPrefix(text: string): string {
         for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (text.startsWith(prefix)) {
@@ -763,11 +833,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return text;
     }
 
-    private calculateDropInfo(feedback: Feedback) {
-        if (feedback.gradingInstruction) {
-            return feedback.gradingInstruction;
-        }
-
-        return undefined;
+    /** The linked grading instruction with the title of its criterion, which Apollon's assessment box shows on the link. */
+    private calculateDropInfo(feedback: Feedback): GradingInstructionWithCriterionTitle | undefined {
+        return feedback.gradingInstruction ? this.gradingInstructionSelectionService.withCriterionTitle(feedback.gradingInstruction) : undefined;
     }
 }

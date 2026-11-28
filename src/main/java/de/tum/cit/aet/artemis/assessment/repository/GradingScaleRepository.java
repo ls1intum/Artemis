@@ -188,7 +188,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
             Pageable pageable);
 
     /**
-     * Same as the linked method except instructor group check is skipped for ADMINs to allow them access to all eligible
+     * Same as the linked method except instructor role check is skipped for ADMINs to allow them access to all eligible
      * grading scales.
      *
      * @param partialTitle course or exam title search term

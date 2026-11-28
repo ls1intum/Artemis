@@ -46,6 +46,35 @@ class HyperionQuizQuestionChecksTest {
     }
 
     @Test
+    void defectOf_rejectsAnExplanationOrTitleLongerThanAQuizStores() {
+        GeneratedQuizQuestionDTO longExplanation = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, "e".repeat(2_001));
+        GeneratedQuizQuestionDTO longTitle = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "t".repeat(250), "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, null);
+        GeneratedQuizQuestionDTO fitting = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "t".repeat(249), "Which method is idempotent?",
+                options("PUT", "POST", "PATCH", "GET"), null, "e".repeat(2_000));
+
+        assertThat(defectOf(longExplanation)).contains(Defect.TEXT_TOO_LONG);
+        assertThat(defectOf(longTitle)).contains(Defect.TEXT_TOO_LONG);
+        assertThat(defectOf(fitting)).isEmpty();
+    }
+
+    @Test
+    void defectOf_rejectsAnOptionExplanationLongerThanAnAnswerOptionStores() {
+        GeneratedQuizQuestionDTO longOptionExplanation = withOptionExplanation("e".repeat(501));
+        GeneratedQuizQuestionDTO fitting = withOptionExplanation("e".repeat(500));
+
+        assertThat(defectOf(longOptionExplanation)).contains(Defect.TEXT_TOO_LONG);
+        assertThat(defectOf(fitting)).isEmpty();
+    }
+
+    @Test
+    void defectOf_rejectsUndelimitedMathInAnOptionExplanation() {
+        assertThat(defectOf(withOptionExplanation("Holds since \\frac{1}{2} \\leq 1."))).contains(Defect.UNDELIMITED_MATH);
+        assertThat(defectOf(withOptionExplanation("Holds since $\\frac{1}{2} \\leq 1$."))).isEmpty();
+    }
+
+    @Test
     void defectOf_rejectsAReferenceToMaterialTheQuestionDoesNotContain() {
         assertThat(defectOf(question("Which variable leaves the basis in the following tableau?", "x1", "x2", "x3", "x4"))).contains(Defect.DANGLING_REFERENCE);
     }
@@ -221,5 +250,11 @@ class HyperionQuizQuestionChecksTest {
 
     private static GeneratedQuizAnswerOptionDTO option(String text, boolean correct) {
         return new GeneratedQuizAnswerOptionDTO(text, correct, null, null);
+    }
+
+    private static GeneratedQuizQuestionDTO withOptionExplanation(String explanation) {
+        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, explanation), option("POST", false), option("PATCH", false),
+                option("GET", false));
+        return new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method is idempotent?", options, null, null);
     }
 }

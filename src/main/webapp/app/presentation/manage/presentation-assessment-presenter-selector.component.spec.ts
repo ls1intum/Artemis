@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -10,7 +10,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];

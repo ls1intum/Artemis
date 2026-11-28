@@ -6,7 +6,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';

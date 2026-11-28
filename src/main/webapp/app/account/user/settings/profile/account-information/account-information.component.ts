@@ -12,15 +12,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDialogComponent,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-    TumAetUiMessageComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +31,7 @@ const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
-    styleUrls: ['../../user-settings.scss'],
+    styleUrls: ['../../user-settings.css'],
     providers: [TumAetUiConfirmationService],
     imports: [
         TranslateDirective,

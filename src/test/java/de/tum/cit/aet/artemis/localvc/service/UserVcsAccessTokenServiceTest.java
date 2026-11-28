@@ -46,18 +46,16 @@ class UserVcsAccessTokenServiceTest extends AbstractSpringIntegrationIndependent
     void anAccountWithoutARowHasNoToken() {
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
-        assertThat(userVcsAccessTokenService.hasUsableToken(user.getId())).isFalse();
         assertThat(userVcsAccessTokenService.findUsableToken(user.getId())).isEmpty();
     }
 
     @Test
-    void aStoredTokenIsFoundAndUsable() {
+    void aTokenThatExistsIsFoundAndUsable() {
         ZonedDateTime expiry = ZonedDateTime.now().plusDays(30);
-        userVcsAccessTokenService.store(user.getId(), "token-value", expiry);
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "token-value", expiry);
 
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo("token-value");
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
-        assertThat(userVcsAccessTokenService.hasUsableToken(user.getId())).isTrue();
         assertThat(userVcsAccessTokenService.findUsableToken(user.getId())).isPresent();
     }
 
@@ -67,20 +65,10 @@ class UserVcsAccessTokenServiceTest extends AbstractSpringIntegrationIndependent
      */
     @Test
     void anExpiredTokenIsNotUsableButIsStillFound() {
-        userVcsAccessTokenService.store(user.getId(), "token-value", ZonedDateTime.now().minusDays(1));
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "token-value", ZonedDateTime.now().minusDays(1));
 
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("still readable, e.g. for the account page").isEqualTo("token-value");
-        assertThat(userVcsAccessTokenService.hasUsableToken(user.getId())).isFalse();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("an expired token is still found, so that its owner can revoke it").isEqualTo("token-value");
         assertThat(userVcsAccessTokenService.findUsableToken(user.getId())).isEmpty();
-    }
-
-    @Test
-    void storingTwiceReplacesTheTokenRatherThanAddingARow() {
-        userVcsAccessTokenService.store(user.getId(), "first", ZonedDateTime.now().plusDays(1));
-        userVcsAccessTokenService.store(user.getId(), "second", ZonedDateTime.now().plusDays(2));
-
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo("second");
-        assertThat(userVcsAccessTokenRepository.findAll()).filteredOn(token -> token.getUserId() == user.getId()).hasSize(1);
     }
 
     /**
@@ -89,7 +77,7 @@ class UserVcsAccessTokenServiceTest extends AbstractSpringIntegrationIndependent
      */
     @Test
     void revokingRemovesTheRow() {
-        userVcsAccessTokenService.store(user.getId(), "token-value", ZonedDateTime.now().plusDays(1));
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "token-value", ZonedDateTime.now().plusDays(1));
 
         userVcsAccessTokenService.revoke(user.getId());
 
@@ -107,8 +95,8 @@ class UserVcsAccessTokenServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void theExpiryWindowLookupFindsOnlyTokensInsideIt() {
         User other = userUtilService.createAndSaveUser(TEST_PREFIX + "student2");
-        userVcsAccessTokenService.store(user.getId(), "inside", ZonedDateTime.now().plusDays(3));
-        userVcsAccessTokenService.store(other.getId(), "outside", ZonedDateTime.now().plusDays(90));
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "inside", ZonedDateTime.now().plusDays(3));
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(other, "outside", ZonedDateTime.now().plusDays(90));
 
         var found = userVcsAccessTokenService.findUserIdsWithTokenExpiringBetween(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7));
 
