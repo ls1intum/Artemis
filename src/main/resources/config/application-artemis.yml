@@ -355,6 +355,10 @@ artemis:
       max-pool-size: 4
       queue-capacity: 25
 
+  # Metis asks students comprehension questions about their own solution after the due date of a programming exercise
+  metis:
+    enabled: true
+
   weaviate:
     enabled: false
 

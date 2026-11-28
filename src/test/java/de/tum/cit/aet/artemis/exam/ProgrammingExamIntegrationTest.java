@@ -203,6 +203,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         ProgrammingExercise importedProgrammingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) importedExercise);
 
         assertThat(importedProgrammingExercise.getId()).isNotEqualTo(sourceExercise.getId());
+        // This context runs with the Metis module switched off, and the import still gives the exercise its Metis configuration.
+        exerciseUtilService.assertHasPermanentConfigurations(importedProgrammingExercise.getId());
         assertThat(importedProgrammingExercise.getTitle()).isEqualTo(sourceExercise.getTitle());
         assertThat(importedProgrammingExercise.getShortName()).isEqualTo(sourceExercise.getShortName());
         assertThat(importedProgrammingExercise.getProgrammingLanguage()).isEqualTo(sourceExercise.getProgrammingLanguage());
