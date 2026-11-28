@@ -25,4 +25,14 @@ public interface BuildJobInterface {
      * @return list of successful tests.
      */
     List<? extends TestCaseBase> successfulTests();
+
+    /**
+     * Gets the skipped tests of the build job (e.g. a disabled test or a failed assumption). Defaults to an empty list
+     * for build jobs that do not report skipped tests, including those deserialized from an older build agent.
+     *
+     * @return list of skipped tests.
+     */
+    default List<? extends TestCaseBase> skippedTests() {
+        return List.of();
+    }
 }

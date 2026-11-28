@@ -99,6 +99,37 @@ class TestResultXmlParserTest {
     }
 
     @Test
+    void capturesSkippedTestsWithTheirReason() throws IOException {
+        String report = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="suite">
+                    <testcase name="passes"/>
+                    <testcase name="disabled"><skipped message="Disabled until bug #42 is fixed"/></testcase>
+                    <testcase name="assumptionFailed"><skipped>Assumption not met</skipped></testcase>
+                    <testcase name="noReason"><skipped/></testcase>
+                </testsuite>
+                """;
+        List<LocalCITestJobDTO> skippedTests = new ArrayList<>();
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests, skippedTests);
+
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactly("passes");
+        assertThat(skippedTests).extracting(LocalCITestJobDTO::name).containsExactly("disabled", "assumptionFailed", "noReason");
+        assertThat(skippedTests).extracting(LocalCITestJobDTO::testMessages).containsExactly(List.of("Disabled until bug #42 is fixed"), List.of("Assumption not met"), List.of());
+    }
+
+    @Test
+    void ignoresSkippedTestsWhenNoSkippedSinkIsGiven() throws IOException {
+        String report = "<testsuite name=\"suite\"><testcase name=\"passes\"/><testcase name=\"disabled\"><skipped message=\"nope\"/></testcase></testsuite>";
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name).containsExactly("passes");
+    }
+
+    @Test
     void keepsTheClassOfTestsAndOfClassLevelFailuresIncludingNestedClasses() throws IOException {
         // Gradle and Surefire report an error in @BeforeAll as one failed test with a made-up name, whose classname is the failing class.
         String report = """

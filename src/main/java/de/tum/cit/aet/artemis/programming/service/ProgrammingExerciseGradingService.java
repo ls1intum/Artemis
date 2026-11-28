@@ -83,7 +83,7 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 @Service
 public class ProgrammingExerciseGradingService {
 
-    private static final String NOT_EXECUTED_MESSAGE = "Test was not executed.";
+    private static final String NOT_EXECUTED_MESSAGE = "The build did not report a result for this test, so it counts as neither passed nor failed.";
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 

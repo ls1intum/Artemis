@@ -88,6 +88,25 @@ public final class JUnitXmlParser {
      */
     public static void processTestResultFile(String testResultFileString, int maxFeedbackLength, Consumer<TestCaseResult> failedTests, Consumer<TestCaseResult> successfulTests)
             throws IOException {
+        // Callers that do not distinguish skipped tests ignore them, as before.
+        processTestResultFile(testResultFileString, maxFeedbackLength, failedTests, successfulTests, skippedTest -> {
+        });
+    }
+
+    /**
+     * Variant of {@link #processTestResultFile(String, int, Consumer, Consumer)} that additionally reports skipped tests
+     * (JUnit {@code <skipped>} elements, e.g. a disabled test or a failed assumption) with their skip reason as the only
+     * message. Skipped tests are reported separately so they can be told apart from tests that produced no result at all.
+     *
+     * @param testResultFileString The content of the test result file as a String.
+     * @param maxFeedbackLength    maximum number of characters retained per failure or skip message
+     * @param failedTests          receives failed tests in report order
+     * @param successfulTests      receives successful tests in report order
+     * @param skippedTests         receives skipped tests in report order
+     * @throws IOException If an I/O error occurs while reading the test result file.
+     */
+    public static void processTestResultFile(String testResultFileString, int maxFeedbackLength, Consumer<TestCaseResult> failedTests, Consumer<TestCaseResult> successfulTests,
+            Consumer<TestCaseResult> skippedTests) throws IOException {
         testResultFileString = INVALID_XML_CHARACTER.matcher(testResultFileString).replaceAll("");
 
         // The root element can be <testsuites> or <testsuite>
@@ -95,17 +114,17 @@ public final class JUnitXmlParser {
             TestSuites testSuites = mapper.readValue(testResultFileString, TestSuites.class);
             if (testSuites.testSuites().size() == 1) {
                 TestSuite suite = testSuites.testSuites().getFirst();
-                processTestSuiteWithNamePrefix(suite, maxFeedbackLength, failedTests, successfulTests, "");
+                processTestSuiteWithNamePrefix(suite, maxFeedbackLength, failedTests, successfulTests, skippedTests, "");
             }
             else {
                 for (TestSuite suite : testSuites.testSuites()) {
-                    processInnerTestSuite(suite, maxFeedbackLength, failedTests, successfulTests, "");
+                    processInnerTestSuite(suite, maxFeedbackLength, failedTests, successfulTests, skippedTests, "");
                 }
             }
         }
         else {
             TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
-            processTestSuiteWithNamePrefix(testSuite, maxFeedbackLength, failedTests, successfulTests, "");
+            processTestSuiteWithNamePrefix(testSuite, maxFeedbackLength, failedTests, successfulTests, skippedTests, "");
         }
     }
 
@@ -116,10 +135,11 @@ public final class JUnitXmlParser {
      * @param maxFeedbackLength maximum number of characters retained per failure message
      * @param failedTests       receives failed tests
      * @param successfulTests   receives successful tests
+     * @param skippedTests      receives skipped tests
      * @param outerNamePrefix   The name prefix for the test suite, derived from its parent suites.
      */
     private static void processInnerTestSuite(TestSuite testSuite, int maxFeedbackLength, Consumer<TestCaseResult> failedTests, Consumer<TestCaseResult> successfulTests,
-            String outerNamePrefix) {
+            Consumer<TestCaseResult> skippedTests, String outerNamePrefix) {
         // namePrefix recursively accumulates all parent testsuite names separated with dots
         String namePrefix;
         if (testSuite.name() != null) {
@@ -129,7 +149,7 @@ public final class JUnitXmlParser {
             namePrefix = outerNamePrefix;
         }
 
-        processTestSuiteWithNamePrefix(testSuite, maxFeedbackLength, failedTests, successfulTests, namePrefix);
+        processTestSuiteWithNamePrefix(testSuite, maxFeedbackLength, failedTests, successfulTests, skippedTests, namePrefix);
     }
 
     /**
@@ -140,12 +160,17 @@ public final class JUnitXmlParser {
      * @param maxFeedbackLength maximum number of characters retained per failure message
      * @param failedTests       receives failed tests
      * @param successfulTests   receives successful tests
+     * @param skippedTests      receives skipped tests
      * @param namePrefix        The name prefix for the test cases within the suite.
      */
     private static void processTestSuiteWithNamePrefix(TestSuite testSuite, int maxFeedbackLength, Consumer<TestCaseResult> failedTests, Consumer<TestCaseResult> successfulTests,
-            String namePrefix) {
+            Consumer<TestCaseResult> skippedTests, String namePrefix) {
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.isSkipped()) {
+                // Report the skip reason (if any) as the only message, so downstream can say why the test did not run.
+                final String skipReason = StringUtils.truncate(testCase.skipped().extractMessage(), maxFeedbackLength);
+                final List<String> skipMessages = StringUtils.isBlank(skipReason) ? List.of() : List.of(skipReason);
+                skippedTests.accept(new TestCaseResult(namePrefix + testCase.name(), skipMessages, testCase.classname()));
                 continue;
             }
             Failure failure = testCase.extractFailure();
@@ -160,7 +185,7 @@ public final class JUnitXmlParser {
         }
 
         for (TestSuite suite : testSuite.testSuites()) {
-            processInnerTestSuite(suite, maxFeedbackLength, failedTests, successfulTests, namePrefix);
+            processInnerTestSuite(suite, maxFeedbackLength, failedTests, successfulTests, skippedTests, namePrefix);
         }
     }
 
@@ -186,7 +211,7 @@ public final class JUnitXmlParser {
     @JsonIgnoreProperties(ignoreUnknown = true)
     record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(isAttribute = true, localName = "classname") String classname,
             @JacksonXmlProperty(localName = "failure") Failure failure, @JacksonXmlProperty(localName = "error") Failure error,
-            @JacksonXmlProperty(localName = "skipped") Skip skipped) {
+            @JacksonXmlProperty(localName = "skipped") Failure skipped) {
 
         private boolean isSkipped() {
             return skipped != null;
@@ -194,11 +219,6 @@ public final class JUnitXmlParser {
 
         private Failure extractFailure() {
             return failure != null ? failure : error;
-        }
-
-        // Intentionally empty record to represent the skipped tag (<skipped/>)
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        record Skip() {
         }
     }
 
