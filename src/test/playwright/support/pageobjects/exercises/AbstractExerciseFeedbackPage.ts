@@ -9,7 +9,7 @@ export abstract class AbstractExerciseFeedback {
     protected readonly page: Page;
 
     readonly RESULT_SELECTOR = '#result';
-    // Text and file upload render `jhi-general-feedback`; modeling and programming still render `#additional-feedback`.
+    // Text, file upload and modeling render `jhi-general-feedback`; programming still renders `#additional-feedback`.
     readonly ADDITIONAL_FEEDBACK_SELECTOR = '[data-testid="general-feedback"], #additional-feedback';
 
     constructor(page: Page) {

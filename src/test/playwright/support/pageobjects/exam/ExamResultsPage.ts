@@ -36,9 +36,8 @@ export class ExamResultsPage {
     }
 
     /**
-     * Text and file upload render `jhi-general-feedback`, programming still renders `jhi-unified-feedback` behind
-     * `#additional-feedback`, and modeling the feedback list of its own assessment view there. All are matched so the
-     * same assertion serves every exercise type on the exam results page.
+     * Text, file upload and modeling render `jhi-general-feedback`, programming still renders `jhi-unified-feedback`
+     * behind `#additional-feedback`. Both are matched so the same assertion serves every exercise type on the exam results page.
      */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
