@@ -591,7 +591,8 @@ jobs:
           node-version: '${{ env.node }}'
       - name: Start the published image with the trial Compose configuration
         run: |
-          export ARTEMIS_DOCKER_GROUP_ID="$(stat -c %g /var/run/docker.sock)"
+          ARTEMIS_DOCKER_GROUP_ID="$(stat -c %g /var/run/docker.sock)"
+          export ARTEMIS_DOCKER_GROUP_ID
           docker compose --env-file .env pull
           docker compose --env-file .env up --no-build --detach --wait --wait-timeout 600
       - name: Import, submit and verify a grade
