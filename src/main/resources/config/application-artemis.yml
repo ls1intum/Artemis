@@ -7,8 +7,8 @@ artemis:
     ai:
       enabled: false
       # Home calls the LLM preset assigned here (see artemis.llm), independently of Iris and Atlas.
-      # location: LOCAL # LOCAL or CLOUD: where the preset's endpoint runs; LOCAL_AI consent never permits CLOUD.
-      # llm-preset: <preset>
+      # local-llm-preset: <preset> # Approved local inference for students who chose Local AI.
+      # cloud-llm-preset: <preset> # External inference for students who chose Cloud AI.
       # Fixed limits: 3 seconds, at most 160 output tokens, 4 workers, no queued work or retries.
   tum-live:
     integration-enabled: false

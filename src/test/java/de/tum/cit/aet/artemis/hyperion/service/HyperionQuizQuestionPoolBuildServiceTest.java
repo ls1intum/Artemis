@@ -11,16 +11,19 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
@@ -373,6 +376,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         assertThat(HyperionQuizQuestionPoolBuildService.StopReason.DEADLINE.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_AT_DEADLINE);
         assertThat(HyperionQuizQuestionPoolBuildService.StopReason.CANCELLED.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_BY_CANCEL);
         assertThat(HyperionQuizQuestionPoolBuildService.StopReason.LEASE_LOST.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_LEASE_LOST);
+        assertThat(HyperionQuizQuestionPoolBuildService.StopReason.GENERATION_UNAVAILABLE.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_GENERATION_UNAVAILABLE);
     }
 
     @Test
@@ -442,6 +446,138 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         verify(itemRepository, never()).deleteAllByCourseIdAndState(anyLong(), any());
         verify(itemRepository).findAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING, PageRequest.of(0, 1));
+    }
+
+    @Test
+    void build_stopsAfterRepeatedBatchesFailedInsteadOfTryingEveryItem() {
+        // A pool of many items, served as the repository does: a failed batch goes back to the pool and is claimed again first, until its attempts are used up.
+        List<QuizQuestionPoolItem> items = stubPendingItemsOfOneCell(10, 1);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new IllegalStateException("Network is unreachable"));
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        // The generator does not answer, so the build stops when the third different batch fails, instead of using up the attempts of every item and logging a stack trace each
+        // time.
+        // The first two batches used up their attempts, the third has tried once and, like all later items, is still pending.
+        int usedUpBatches = HyperionQuizQuestionPoolBuildService.MAX_CONSECUTIVE_FAILED_BATCHES - 1;
+        verify(chatModel, times(usedUpBatches * HyperionQuizQuestionPoolBuildService.MAX_ATTEMPTS + 1)).call(any(Prompt.class));
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.GENERATION_UNAVAILABLE);
+        assertThat(items.subList(0, usedUpBatches)).allSatisfy(item -> assertThat(item.getState()).isEqualTo(QuizQuestionPoolItemState.FAILED_GENERATION));
+        assertThat(items.subList(usedUpBatches, items.size())).allSatisfy(item -> assertThat(item.getState()).isEqualTo(QuizQuestionPoolItemState.PENDING));
+    }
+
+    @Test
+    void build_goesOnWhenOnlyOneBatchIsRejectedEveryTime() {
+        // The generator rejects the prompt of this batch every time, for example because of its content. That uses up the attempts of the batch, not the build.
+        List<QuizQuestionPoolItem> items = stubPendingItemsOfOneCell(1, 1);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new IllegalStateException("400: the prompt is rejected"));
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        verify(chatModel, times(HyperionQuizQuestionPoolBuildService.MAX_ATTEMPTS)).call(any(Prompt.class));
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.COMPLETED);
+        assertThat(items.getFirst().getState()).isEqualTo(QuizQuestionPoolItemState.FAILED_GENERATION);
+    }
+
+    @Test
+    void build_countsTheRetriesOfOneBatchOnceWhenItsExhaustedItemsLeaveTheBatch() {
+        // Three items of one cell are claimed together, with two attempts, one attempt and no attempt used up. Every failed call adds an attempt to each of them, so they leave the
+        // batch one by one and each retry starts with another item, although it is still the same batch.
+        List<QuizQuestionPoolItem> items = stubPendingItemsOfOneCell(3, 3);
+        items.get(0).setGenerationAttempts(2);
+        items.get(1).setGenerationAttempts(1);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new IllegalStateException("400: the prompt is rejected"));
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        verify(chatModel, times(3)).call(any(Prompt.class));
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.COMPLETED);
+        assertThat(items).allSatisfy(item -> assertThat(item.getState()).isEqualTo(QuizQuestionPoolItemState.FAILED_GENERATION));
+    }
+
+    @Test
+    void build_recordsACancellationThatWasRequestedDuringTheCallThatReachedTheLimit() {
+        List<QuizQuestionPoolItem> items = stubPendingItemsOfOneCell(10, 1);
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+        when(itemRepository.deleteAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING)).thenReturn(8);
+        // The first call of the third batch is the one that reaches the limit: the cancellation is accepted while it runs.
+        int limitReachingCall = (HyperionQuizQuestionPoolBuildService.MAX_CONSECUTIVE_FAILED_BATCHES - 1) * HyperionQuizQuestionPoolBuildService.MAX_ATTEMPTS + 1;
+        AtomicInteger calls = new AtomicInteger();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == limitReachingCall) {
+                assertThat(service.requestCancel(5L)).isTrue();
+            }
+            throw new IllegalStateException("Network is unreachable");
+        });
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        // The instructor asked for the cancellation, so the pending items are dropped as for any cancelled build, instead of the build ending as unavailable and keeping them.
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.CANCELLED);
+        verify(itemRepository).deleteAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING);
+        assertThat(items).hasSize(10);
+    }
+
+    @Test
+    void build_doesNotDropTheItemsOfTheBuildThatTookTheCourseWhenItsLeaseWasLostDuringTheCallThatReachedTheLimit() {
+        stubPendingItemsOfOneCell(10, 1);
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        String leaseToken = service.tryStart(5L);
+        int limitReachingCall = (HyperionQuizQuestionPoolBuildService.MAX_CONSECUTIVE_FAILED_BATCHES - 1) * HyperionQuizQuestionPoolBuildService.MAX_ATTEMPTS + 1;
+        AtomicInteger calls = new AtomicInteger();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == limitReachingCall) {
+                // The call takes longer than the lease: another build took over the course, and a cancellation was accepted for this build in the meantime.
+                assertThat(service.requestCancel(5L)).isTrue();
+                leases.put(5L, "other-node/replacement|" + System.currentTimeMillis());
+            }
+            throw new IllegalStateException("Network is unreachable");
+        });
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, 7L, leaseToken);
+
+        // The pending items of the course now belong to the other build, so this build must not drop them.
+        assertThat(outcome.stopReason()).isEqualTo(HyperionQuizQuestionPoolBuildService.StopReason.LEASE_LOST);
+        verify(itemRepository, never()).deleteAllByCourseIdAndState(anyLong(), any());
+    }
+
+    /**
+     * Stubs a course whose pool holds the given number of pending items of one cell, handed out oldest first as long as they are pending, up to the batch size per generation call.
+     */
+    private List<QuizQuestionPoolItem> stubPendingItemsOfOneCell(int count, int batchSize) {
+        Course course = new Course();
+        course.setId(5L);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        Competency competency = new Competency();
+        competency.setId(9L);
+        competency.setTitle("Recursion");
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        unit.setName("Base cases");
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(materialService.extractText(unit)).thenReturn("Every recursion ends at a base case.");
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        List<QuizQuestionPoolItem> items = new ArrayList<>();
+        for (int id = 1; id <= count; id++) {
+            items.add(pendingItem(id, course));
+        }
+        // The next pending item, as the repository returns it: the batch that failed before is claimed again first.
+        when(itemRepository.findAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING, PageRequest.of(0, 1)))
+                .thenAnswer(invocation -> items.stream().filter(item -> item.getState() == QuizQuestionPoolItemState.PENDING).limit(1).toList());
+        when(itemRepository.findAllInCellWithState(5L, 9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM,
+                QuizQuestionPoolItemState.PENDING, PageRequest.of(0, 8)))
+                .thenAnswer(invocation -> items.stream().filter(item -> item.getState() == QuizQuestionPoolItemState.PENDING).limit(batchSize).toList());
+        when(itemRepository.claim(anyLong(), any(), any(), any(), anyLong())).thenReturn(1);
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        return items;
     }
 
     @Test
