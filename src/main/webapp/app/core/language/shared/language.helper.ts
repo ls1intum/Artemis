@@ -68,6 +68,9 @@ export class JhiLanguageHelper {
             this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.getCurrentLang() ?? 'en');
             this.updateTitle();
         });
+        // A page can start from a part of the translation catalog (the landing and the sign-in page do) and receive the rest later: a
+        // title that was translated from the part is translated again when the catalog changes.
+        this.translateService.onTranslationChange.subscribe(() => this.updateTitle());
     }
 
     /**

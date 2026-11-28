@@ -85,6 +85,10 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Remove unreachable code, even when its only user is its own test. Required checks run on every
   PR: `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`.
   [dead code](documentation/docs/developer/guidelines/dead-code.mdx)
+- Write new scripts for builds, CI and repository tooling in TypeScript or JavaScript (`.mjs`, run by Node) with a test
+  beside them, not in Python; a workflow step calls a few commands directly and otherwise calls a script. Port an existing
+  Python script when you change it substantially.
+  [builds and dependencies](documentation/docs/developer/builds-and-dependencies.mdx#scripts)
 - Use **client** and **server**, not "frontend" or "backend". <!-- terminology-check: allow -->
   Use **provider** for a swappable distributed-data implementation and **adapter** for its glue.
   This also applies to commit messages and PR text. [terminology](documentation/docs/developer/guidelines/terminology.mdx)

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { UNDER_ATTENDED_PERCENTAGE, WELL_UTILIZED_PERCENTAGE, tutorialGroupUtilization } from 'app/tutorialgroup/shared/util/tutorial-group-utilization';

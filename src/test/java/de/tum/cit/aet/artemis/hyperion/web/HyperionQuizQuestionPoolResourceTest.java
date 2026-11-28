@@ -55,6 +55,8 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
@@ -67,6 +69,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
@@ -740,6 +745,133 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldDrawApprovedQuestionsForEditorAndRotateThroughThePool() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem first = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        QuizQuestionPoolItem second = saveApprovedItem(QuizQuestionGenerationType.MULTIPLE_CHOICE, 1);
+        QuizQuestionPoolItem third = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 2);
+        savePendingItem(courseId);
+        QuizQuestionPoolSelectionRequestDTO requestBody = new QuizQuestionPoolSelectionRequestDTO(List.of(firstCompetency.getId()), null, 2, null, null);
+
+        QuizQuestionPoolSelectionDTO firstDraw = request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select", requestBody,
+                QuizQuestionPoolSelectionDTO.class, HttpStatus.OK);
+
+        assertThat(firstDraw.requested()).isEqualTo(2);
+        assertThat(firstDraw.questions()).extracting(QuizQuestionPoolItemDTO::id).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(firstDraw.questions()).allSatisfy(question -> {
+            assertThat(question.question()).isNotNull();
+            assertThat(question.competencyTitle()).isNotBlank();
+            assertThat(question.lectureUnitName()).isNotBlank();
+        });
+        assertThat(itemRepository.findByIdElseThrow(first.getId()).getSelectionCount()).isEqualTo(1);
+        assertThat(itemRepository.findByIdElseThrow(third.getId()).getSelectionCount()).isZero();
+
+        QuizQuestionPoolSelectionDTO secondDraw = request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select", requestBody,
+                QuizQuestionPoolSelectionDTO.class, HttpStatus.OK);
+
+        assertThat(secondDraw.questions()).extracting(QuizQuestionPoolItemDTO::id).contains(third.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldCountTheQuestionsADrawMayTakePerCell() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 2);
+        saveApprovedItem(QuizQuestionGenerationType.MULTIPLE_CHOICE, 3);
+        QuizQuestionPoolItem changed = saveApprovedItem(QuizQuestionGenerationType.MULTIPLE_CHOICE, 4);
+        changed.setMaterialChanged(true);
+        itemRepository.save(changed);
+        savePendingItem(courseId);
+
+        List<QuizQuestionPoolSelectionCandidateDTO> candidates = request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/selection-candidates", HttpStatus.OK,
+                QuizQuestionPoolSelectionCandidateDTO.class);
+
+        assertThat(candidates).containsExactlyInAnyOrder(
+                new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM,
+                        2),
+                new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM,
+                        1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnForbiddenForTutorOnSelectionCandidates() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/selection-candidates", HttpStatus.FORBIDDEN, QuizQuestionPoolSelectionCandidateDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldDrawUnreviewedQuestionsOnlyWhenTheFilterAcceptedThemWithoutAFlag() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem approved = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        QuizQuestionPoolItem unreviewed = saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 2, QuizQuestionReviewState.PENDING, true, false);
+        QuizQuestionPoolItem approvedDespiteRejection = saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 3, QuizQuestionReviewState.APPROVED, false, false);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 4, QuizQuestionReviewState.PENDING, true, true);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 5, QuizQuestionReviewState.PENDING, false, false);
+        saveJudgedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 6, QuizQuestionReviewState.EXCLUDED, true, false);
+
+        List<QuizQuestionPoolSelectionCandidateDTO> candidates = request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/selection-candidates", HttpStatus.OK,
+                QuizQuestionPoolSelectionCandidateDTO.class);
+        QuizQuestionPoolSelectionDTO draw = request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select",
+                new QuizQuestionPoolSelectionRequestDTO(List.of(firstCompetency.getId()), null, 10, null, null), QuizQuestionPoolSelectionDTO.class, HttpStatus.OK);
+
+        assertThat(candidates).containsExactly(new QuizQuestionPoolSelectionCandidateDTO(firstCompetency.getId(), firstTextUnit.getId(), QuizQuestionGenerationType.SINGLE_CHOICE,
+                QuizQuestionDifficulty.MEDIUM, 3));
+        assertThat(draw.questions()).extracting(QuizQuestionPoolItemDTO::id).containsExactlyInAnyOrder(approved.getId(), unreviewed.getId(), approvedDespiteRejection.getId());
+    }
+
+    @Test
+    void shouldKeepAnExclusionMadeWhileADrawIsRecorded() {
+        QuizQuestionPoolItem item = saveApprovedItem(QuizQuestionGenerationType.SINGLE_CHOICE, 1);
+        QuizQuestionPoolItem drawn = itemRepository.findByIdElseThrow(item.getId());
+        itemRepository.updateReviewState(item.getId(), QuizQuestionReviewState.EXCLUDED, ZonedDateTime.now());
+
+        itemRepository.recordSelection(List.of(drawn.getId()), ZonedDateTime.now());
+
+        QuizQuestionPoolItem stored = itemRepository.findByIdElseThrow(item.getId());
+        assertThat(stored.getReviewState()).isEqualTo(QuizQuestionReviewState.EXCLUDED);
+        assertThat(stored.getSelectionCount()).isEqualTo(1);
+        assertThat(stored.getLastSelectedAt()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldNameCompetenciesWithoutEligibleQuestionsOnDraw() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        savePendingItem(courseId);
+
+        QuizQuestionPoolSelectionDTO draw = request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select",
+                new QuizQuestionPoolSelectionRequestDTO(List.of(firstCompetency.getId()), null, 5, null, null), QuizQuestionPoolSelectionDTO.class, HttpStatus.OK);
+
+        assertThat(draw.questions()).isNullOrEmpty();
+        assertThat(draw.competencyIdsWithoutQuestions()).containsExactly(firstCompetency.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldRejectADrawWithoutCompetenciesOrCount() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select", new QuizQuestionPoolSelectionRequestDTO(List.of(), null, 5, null, null),
+                QuizQuestionPoolSelectionDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select",
+                new QuizQuestionPoolSelectionRequestDTO(List.of(firstCompetency.getId()), null, 0, null, null), QuizQuestionPoolSelectionDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnForbiddenForTutorOnDraw() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/select",
+                new QuizQuestionPoolSelectionRequestDTO(List.of(firstCompetency.getId()), null, 5, null, null), QuizQuestionPoolSelectionDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldNotReviewAQuestionOfAnotherCourse() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -851,6 +983,23 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
         item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
         item.setItemIndex(itemIndex);
+        return itemRepository.save(item);
+    }
+
+    private QuizQuestionPoolItem saveApprovedItem(QuizQuestionGenerationType type, int index) {
+        return saveJudgedItem(type, index, QuizQuestionReviewState.APPROVED, true, false);
+    }
+
+    private QuizQuestionPoolItem saveJudgedItem(QuizQuestionGenerationType type, int index, QuizQuestionReviewState reviewState, boolean accepted, boolean flagged) {
+        QuizQuestionPoolItem item = savePendingItem(courseId);
+        item.setQuestionType(type);
+        item.setItemIndex(index);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        item.setReviewState(reviewState);
+        item.setAccepted(accepted);
+        item.setFlagged(flagged);
+        item.setQuestion(new GeneratedQuizQuestionDTO(type, "Question " + index, "What about " + index + "?",
+                List.of(new GeneratedQuizAnswerOptionDTO("A", true, null, null), new GeneratedQuizAnswerOptionDTO("B", false, null, null)), null, "Because."));
         return itemRepository.save(item);
     }
 

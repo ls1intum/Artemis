@@ -54,7 +54,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';

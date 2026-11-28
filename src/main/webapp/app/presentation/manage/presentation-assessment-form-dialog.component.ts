@@ -6,15 +6,11 @@ import { Observable, startWith } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiRadioButtonComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

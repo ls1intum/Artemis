@@ -275,10 +275,9 @@ public class PublicAccountResource {
 
     private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
-        // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
         userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
-        accountService.addPersonalVcsAccessTokenIfSessionIsCurrent(userDTO, user);
+        accountService.addPersonalVcsAccessTokenExpiryDate(userDTO, user);
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);

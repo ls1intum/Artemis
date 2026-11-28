@@ -19,15 +19,13 @@ import {
     viewChildren,
 } from '@angular/core';
 import { get } from 'lodash-es';
-import {
-    TumAetUiCheckboxComponent,
-    TumAetUiInputDirective,
-    TumAetUiPaginatorComponent,
-    TumAetUiRadioButtonComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faCircleQuestion, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

@@ -8,7 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

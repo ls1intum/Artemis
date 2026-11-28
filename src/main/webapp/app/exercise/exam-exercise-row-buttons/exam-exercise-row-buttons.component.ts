@@ -35,7 +35,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';

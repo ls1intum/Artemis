@@ -19,7 +19,7 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public revokeCredentials?: boolean;
-    public vcsAccessToken?: string;
+    /** Set exactly when the user still has a (deprecated) personal VCS access token; the secret itself is never sent to the client. */
     public vcsAccessTokenExpiryDate?: string;
     public selectedLLMUsage?: LLMSelectionDecision;
     public selectedLLMUsageTimestamp?: dayjs.Dayjs;
@@ -56,7 +56,6 @@ export class User extends Account {
         lastModifiedDate?: Date,
         password?: string,
         imageUrl?: string,
-        vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
         selectedLLMUsage?: LLMSelectionDecision,
         LLMSelectionDecisionDate?: dayjs.Dayjs,
@@ -71,7 +70,6 @@ export class User extends Account {
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
         this.password = password;
-        this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.selectedLLMUsage = selectedLLMUsage;
         this.selectedLLMUsageTimestamp = LLMSelectionDecisionDate;

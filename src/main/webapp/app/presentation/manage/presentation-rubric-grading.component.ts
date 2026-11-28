@@ -5,7 +5,9 @@ import { startWith, switchMap } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

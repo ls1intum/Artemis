@@ -4,7 +4,10 @@ import { DecimalPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPanelComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import {
     faArrowDown,
     faArrowUp,

@@ -5,7 +5,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { provideHttpClient } from '@angular/common/http';

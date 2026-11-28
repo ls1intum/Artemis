@@ -28,7 +28,8 @@ import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO;
 
 /**
  * The TUM.Live uploads of attachment video units. Every change locks the unit row first, which serializes it against the other changes of the same unit on
- * every node. A TUM.Live lecture leaves a unit only by moving to the cleanup queue in the same transaction.
+ * every node. Updates scoped to the exact pending reference can also update its status directly. A TUM.Live lecture leaves a unit only by moving to the
+ * cleanup queue in the same transaction.
  */
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -66,6 +67,17 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     @Modifying
     @Query("UPDATE TumLiveUnitUpload upload SET upload.pendingCheckedAt = :now WHERE upload.id = :id AND upload.pendingRef = :ref")
     void markPendingChecked(@Param("id") long id, @Param("ref") String ref, @Param("now") ZonedDateTime now);
+
+    /**
+     * Records TUM.Live's acceptance before returning to the caller. A late acknowledgement cannot change a replacement upload.
+     *
+     * @param lectureUnitId the attachment video unit
+     * @param ref           the pending reference whose transfer was accepted
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE TumLiveUnitUpload upload SET upload.pendingTransferAccepted = TRUE WHERE upload.lectureUnitId = :lectureUnitId AND upload.pendingRef = :ref")
+    void markTransferAccepted(@Param("lectureUnitId") long lectureUnitId, @Param("ref") String ref);
 
     /**
      * The units of a course with a video uploaded to TUM.Live, attached or still pending: a pending one may be attached before the unit is deleted, so its delete
@@ -284,8 +296,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
                 insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), upload.getPendingStreamId(), now);
             }
             if (deleteRecording && upload.getCurrentRef() != null) {
-                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(),
-                        now.plus(TumLiveRecordingCleanup.SHOWN_LECTURE_DELAY));
+                // Imports lock the source until the copy is saved. After deletion, cleanup can already see any copy that took the link.
+                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(), now);
             }
             delete(upload);
         });
