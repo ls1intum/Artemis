@@ -94,7 +94,7 @@
         "ng-mocks": "14.18.6",
         "parse5": "8.1.1",
         "postcss": "catalog:",
-        "postcss-html": "2.0.0",
+        "postcss-html": "2.0.1",
         "prettier": "3.10.1",
         "semver": "catalog:",
         "stylelint": "catalog:",
