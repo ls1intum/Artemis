@@ -78,6 +78,13 @@ export interface IParticipationWebsocketService {
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
 
     /**
+     * Removes participations from the local cache and stops tracking their websocket subscriptions, for example the participations of a team that the student left.
+     *
+     * @param participationIds IDs of the participations to remove, unknown ones are ignored
+     */
+    removeCachedParticipations: (participationIds: number[]) => void;
+
+    /**
      * Notifies all result subscribers with the given result and updates the cached participation.
      *
      * @param result The new result
@@ -194,6 +201,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             tap(this.notifyParticipationSubscribers),
         );
     };
+
+    /**
+     * Removes participations from the local cache and stops tracking their websocket subscriptions, for example the participations of a team that the student left.
+     * A page that opens later seeds itself from this cache, so a participation that stayed in it would come back although the server no longer returns it.
+     *
+     * @param participationIds IDs of the participations to remove, unknown ones are ignored
+     */
+    public removeCachedParticipations(participationIds: number[]): void {
+        participationIds.forEach((participationId) => {
+            const exerciseId = this.cachedParticipations.get(participationId)?.exercise?.id;
+            this.cachedParticipations.delete(participationId);
+            this.removeParticipation(participationId, exerciseId);
+        });
+    }
 
     /**
      * Removes all locally cached participations and resets all related state.
@@ -352,6 +373,17 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *                   only needed if personal == false
      */
     private openResultWebsocketSubscriptionIfNotExisting(participationId: number, personal: boolean, exerciseId?: number) {
+        if (!personal && exerciseId === undefined) {
+            // The topic of an exercise needs the exercise. Subscribing to `/topic/exercise/undefined/newResults` is rejected by the server for every user.
+            return;
+        }
+        // Every participation is registered, also when the connection already exists: the connection is shared, and it is only closed once no registered participation needs it.
+        this.participationSubscriptionTypes.set(participationId, personal);
+        if (!this.subscribedExercises.has(exerciseId!)) {
+            this.subscribedExercises.set(exerciseId!, new Set<number>());
+        }
+        this.subscribedExercises.get(exerciseId!)!.add(participationId);
+
         if ((personal && !this.openPersonalWebsocketSubscription) || (!personal && !this.openResultWebsocketSubscriptions.has(exerciseId!))) {
             let participationResultTopic: string;
             if (personal) {
@@ -359,13 +391,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             } else {
                 participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
             }
-            this.participationSubscriptionTypes.set(participationId, personal);
-            if (!this.subscribedExercises.has(exerciseId!)) {
-                this.subscribedExercises.set(exerciseId!, new Set<number>());
-            }
-            const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
-            subscribedParticipations!.add(participationId);
-
             const subscription = this.websocketService.subscribe<Result>(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
             if (personal) {
                 this.openPersonalWebsocketSubscription = subscription;
