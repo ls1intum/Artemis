@@ -4,14 +4,16 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -35,7 +37,6 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ExportedExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile(PROFILE_CORE)
@@ -51,6 +53,11 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 public class ProgrammingExerciseImportFromFileService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
+
+    private static final Pattern EXERCISE_DETAILS_ENTRY = Pattern.compile(Pattern.quote(ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX),
+            Pattern.CASE_INSENSITIVE);
+
+    private final JsonMapper objectMapper;
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
@@ -78,7 +85,8 @@ public class ProgrammingExerciseImportFromFileService {
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService,
             FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService,
-            Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService) {
+            Optional<LegacyBuildPlanConverterService> legacyBuildPlanConverterService, JsonMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
@@ -93,6 +101,26 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
+     * Reads the first root-level exercise details entry from an archive for the import form.
+     *
+     * @param archive the programming exercise archive
+     * @return the exercise settings without the source instance's id
+     * @throws IOException if the archive cannot be read or the entry is missing
+     */
+    public ImportProgrammingExerciseRequestDTO readExerciseDetails(MultipartFile archive) throws IOException {
+        try (var zip = new ZipInputStream(archive.getInputStream())) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (EXERCISE_DETAILS_ENTRY.matcher(entry.getName()).lookingAt()) {
+                    String json = new String(zip.readAllBytes(), StandardCharsets.UTF_8);
+                    return objectMapper.readValue(json, ImportProgrammingExerciseRequestDTO.class).withoutId();
+                }
+            }
+        }
+        throw new IOException("Could not retrieve exercise details from imported exercise");
+    }
+
+    /**
      * Imports a programming exercise from an uploaded zip file that has previously been downloaded from an Artemis instance.
      * It first extracts the contents of the zip file, then creates a programming exercise (same process as creating a new one),
      * then deletes the template content initially pushed to the repositories and copies over the extracted content
@@ -102,11 +130,10 @@ public class ProgrammingExerciseImportFromFileService {
      * @param course                      the course to which the exercise should be added
      * @param user                        the user initiating the import
      * @param buildConfig                 the build configuration read out of the archive, which is stored as a row of its own
-     * @param isImportFromSharing         flag whether file import (false) of sharing import
      * @return the imported programming exercise
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig, MultipartFile zipFile,
-            Course course, User user, boolean isImportFromSharing) throws IOException, GitAPIException {
+            Course course, User user) throws IOException, GitAPIException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -115,17 +142,6 @@ public class ProgrammingExerciseImportFromFileService {
         try {
             importExerciseDir = tempFileUtilService.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = tempFileUtilService.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
-
-            if (isImportFromSharing) {
-                // Exercises from Sharing are currently exported in a slightly different zip structure containing an additional root dir
-                try (Stream<Path> walk = Files.walk(importExerciseDir)) {
-                    List<Path> directories = walk.filter(Files::isDirectory).toList();
-                    if (directories.isEmpty()) {
-                        throw new BadRequestAlertException("No directories found for Sharing import", "programmingExercise", "noSharingDirFound");
-                    }
-                    importExerciseDir = directories.getFirst();
-                }
-            }
 
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
@@ -190,22 +206,6 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Overloaded method setting the isImportFromSharing flag to false as default
-     *
-     * @param programmingExerciseForImport the programming exercise that should be imported
-     * @param buildConfig                  the build configuration read out of the archive
-     * @param zipFile                      the zip file that contains the exercise
-     * @param course                       the course to which the exercise should be added
-     * @param user                         the user initiating the import
-     * @return the imported programming exercise
-     * @throws IOException if there is an error reading the file
-     */
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, ProgrammingExerciseBuildConfig buildConfig,
-            MultipartFile zipFile, Course course, User user) throws IOException, GitAPIException, URISyntaxException {
-        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, buildConfig, zipFile, course, user, false);
-    }
-
-    /**
      * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement.
      * Only regular files with a file type that can be uploaded to the markdown folder are copied, all other files are skipped.
      *
@@ -250,7 +250,6 @@ public class ProgrammingExerciseImportFromFileService {
      */
     private ExportedExerciseDetailsDTO getExerciseDetailsFromFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        JsonMapper objectMapper = JsonObjectMapper.get();
 
         try {
             return objectMapper.readValue(exerciseJsonPath.toFile(), ExportedExerciseDetailsDTO.class);

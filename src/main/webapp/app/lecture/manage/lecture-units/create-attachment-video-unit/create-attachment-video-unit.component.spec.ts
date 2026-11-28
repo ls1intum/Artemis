@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { Location } from '@angular/common';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { RecordingNavigation } from '../tum-live-upload/tum-live-creation';
 import { TumLiveSaveRecoveryComponent } from '../tum-live-upload/tum-live-save-recovery.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';

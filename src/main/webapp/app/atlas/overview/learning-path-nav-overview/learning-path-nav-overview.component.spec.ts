@@ -15,7 +15,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { MockProvider } from 'ng-mocks';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 describe('LearningPathNavOverviewComponent', () => {
     let component: LearningPathNavOverviewComponent;

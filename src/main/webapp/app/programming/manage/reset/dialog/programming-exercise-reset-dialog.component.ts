@@ -1,5 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';

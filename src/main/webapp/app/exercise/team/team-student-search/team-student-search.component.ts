@@ -9,7 +9,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

@@ -1,4 +1,5 @@
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';

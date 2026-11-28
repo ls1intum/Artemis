@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
-import { TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

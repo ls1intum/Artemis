@@ -129,7 +129,7 @@ public class ArtemisGitServletService extends GitServlet {
             }
             // The hook prevents illegal actions on push (delete branch, rename branch, force push), and examines the content of the push.
             GitOperationAudit audit = accessLogRecorder.auditOf(request);
-            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit);
+            LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit, () -> localVCServletService.getAuthenticationMechanism(request));
             final ReceivePack receivePack;
             try {
                 // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
