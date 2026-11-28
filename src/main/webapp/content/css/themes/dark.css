@@ -95,7 +95,6 @@
     --artemis-pre-color: white;
     --artemis-pre-background: var(--neutral-dark-l-10);
     --artemis-pre-border: var(--neutral-dark-l-20);
-    --unreferenced-feedback-background: rgba(255, 255, 255, 0.05);
     --markdown-preview-blockquote: #8b949e; /* #6a737d (the light theme value) is only 3.7:1 on the slate surface */
 
     /* Markdown Editor */

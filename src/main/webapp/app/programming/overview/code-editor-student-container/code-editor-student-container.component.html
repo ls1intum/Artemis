@@ -1,5 +1,5 @@
 <!-- As a page of its own, the editor is framed like the other editors of the course management, which sit on a module surface with a gutter. -->
-<div [id]="'exercise-' + exercise()?.id" [class]="fullPage() ? 'bg-(--module-bg) p-4! pt-1!' : ''">
+<div class="h-full" [id]="'exercise-' + exercise()?.id" [class]="fullPage() ? 'bg-(--module-bg) p-4! pt-1!' : ''">
     @if (loadingParticipation() || participationCouldNotBeFetched()) {
         <nav class="rounded-[0.15rem] border border-(--border-color) bg-(--card-bg)">
             <div class="p-4">
@@ -22,13 +22,16 @@
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [editable]="!repositoryIsLocked()"
+            [editable]="!repositoryIsLocked() && viewedResultId() === undefined"
+            [commitId]="viewedCommitHash()"
             [participation]="participation()"
             [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment()"
             [readOnlyManualFeedback]="true"
             [course]="course()"
             [showNavbar]="!lightweight()"
+            [generalFeedbackCount]="unreferencedFeedback.length"
+            [fillHeight]="true"
         >
             <div editorTitle>
                 <span>{{ exercise()?.title }}</span>
@@ -96,16 +99,8 @@
                 [personalParticipation]="!fullPage()"
                 class="instructions-wrapper__content editor-panel-body p-0!"
             />
+            <!-- Shown as a tab beside the build output -->
+            <jhi-general-feedback editorBottomFeedback [feedbacks]="unreferencedFeedback" [course]="course()" [showTitle]="false" />
         </jhi-code-editor-container>
     }
-    <div class="-me-2 flex flex-wrap">
-        @if (unreferencedFeedback.length > 0) {
-            <jhi-additional-feedback
-                class="bg-(--unreferenced-feedback-background) relative mt-4 mb-4 w-full rounded-[0.15rem] p-4 min-[1200px]:w-2/3"
-                [feedback]="unreferencedFeedback"
-                [additional]="true"
-                [course]="course()"
-            />
-        }
-    </div>
 </div>

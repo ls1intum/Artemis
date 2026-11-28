@@ -95,6 +95,20 @@ describe('CodeEditorContainerComponent', () => {
         expect(component.isProblemStatementVisible()).toBe(true);
     });
 
+    it('should open the general feedback tab of the build output panel first and switch only to its known tabs', () => {
+        expect(component.bottomPanelTab()).toBe('feedback');
+
+        component.selectBottomPanelTab('buildOutput');
+        expect(component.bottomPanelTab()).toBe('buildOutput');
+
+        component.selectBottomPanelTab('notes');
+        component.selectBottomPanelTab(undefined);
+        expect(component.bottomPanelTab()).toBe('buildOutput');
+
+        component.selectBottomPanelTab('feedback');
+        expect(component.bottomPanelTab()).toBe('feedback');
+    });
+
     it('updates a cached cleanliness guard after loading, edits, saves and refreshes', () => {
         const clean = computed(() => component.canDeactivate() && component.hasCleanRepositoryState());
         expect(clean()).toBe(false);
