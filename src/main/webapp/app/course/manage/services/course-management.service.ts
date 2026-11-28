@@ -3,7 +3,7 @@ import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, throwError } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { PageableResult, SearchTermPageableSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
@@ -21,7 +21,6 @@ import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
-import { CourseAccessStateDTO } from 'app/course/shared/entities/course-access-state-dto';
 import { CourseForOverviewDTO, courseFromOverviewDTO } from 'app/course/shared/entities/course-for-overview-dto';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -33,14 +32,12 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
-import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 import {
-    CourseForEnrollmentDTO,
     CourseForQuizSelectionDTO,
     CourseManagementDTO,
     CourseManagementOverviewDTO,
-    CourseMemberDTO,
     CourseWithIdDTO,
     CourseWithOrganizationsDTO,
     courseFromEnrollmentDTO,
@@ -49,6 +46,7 @@ import {
     courseFromOrganizationsDTO,
     courseFromQuizSelectionDTO,
     courseMemberFromDTO,
+    courseStudentFromDTO,
     courseWithIdFromDTO,
 } from 'app/course/shared/entities/course-management-response.dto';
 import {
@@ -60,6 +58,8 @@ import {
     courseFromWithExercisesDTO,
 } from 'app/course/shared/entities/course-content-response.dto';
 import { LockedCourseSubmissionDTO, lockedCourseSubmissionFromDTO } from 'app/course/shared/entities/locked-course-submission.dto';
+import { CourseAccessApi } from 'app/openapi/api/course-access-api';
+import type { CourseMember } from 'app/openapi/model/course-member';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -95,6 +95,7 @@ export class GradeScoreDTO {
 @Service()
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
+    private courseAccessApi = inject(CourseAccessApi);
     private courseStorageService = inject(CourseStorageService);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
@@ -311,7 +312,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId the course to check
      */
     hasAccessToCourse(courseId: number): Observable<boolean> {
-        return this.http.get<CourseAccessStateDTO>(`${this.resourceUrl}/${courseId}/access-state`).pipe(map((state) => state.hasAccess));
+        return this.courseAccessApi.getCourseAccessState(courseId).pipe(map((state) => state.hasAccess));
     }
 
     /**
@@ -479,7 +480,7 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses that can be registered to
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
-        return this.http.get<CourseForEnrollmentDTO[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' }).pipe(
+        return this.courseAccessApi.getCoursesForEnrollment().pipe(
             map((res) => this.mapCourseDTOArrayResponse(res, courseFromEnrollmentDTO)),
             map((res) => this.applyCourseArrayResponseSideEffects(res)),
         );
@@ -489,7 +490,7 @@ export class CourseManagementService implements OnDestroy {
      * finds a single course that can be registered to (with limited information)
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<CourseForEnrollmentDTO>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' }).pipe(
+        return this.courseAccessApi.getCourseForEnrollment(courseId).pipe(
             map((res) => this.mapCourseDTOResponse(res, courseFromEnrollmentDTO)),
             map((res) => this.applyCourseResponseSideEffects(res)),
         );
@@ -501,7 +502,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course
      */
     registerForCourse(courseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' });
+        return this.courseAccessApi.enrollInCourse(courseId);
     }
 
     /**
@@ -510,7 +511,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course
      */
     unenrollFromCourse(courseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' });
+        return this.courseAccessApi.unenrollFromCourse(courseId);
     }
 
     /**
@@ -564,7 +565,26 @@ export class CourseManagementService implements OnDestroy {
      * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
      */
     getAllUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug): Observable<HttpResponse<User[]>> {
-        return this.http.get<CourseMemberDTO[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, { observe: 'response' }).pipe(map((res) => this.mapUserDTOArrayResponse(res)));
+        let response: Observable<HttpResponse<CourseMember[]>>;
+        switch (courseRoleSlug) {
+            case CourseRoleSlug.STUDENTS:
+                response = this.courseAccessApi.getStudentsInCourse(courseId);
+                break;
+            case CourseRoleSlug.TUTORS:
+                response = this.courseAccessApi.getTutorsInCourse(courseId);
+                break;
+            case CourseRoleSlug.EDITORS:
+                response = this.courseAccessApi.getEditorsInCourse(courseId);
+                break;
+            case CourseRoleSlug.INSTRUCTORS:
+                response = this.courseAccessApi.getInstructorsInCourse(courseId);
+                break;
+            default: {
+                const unsupportedRole: never = courseRoleSlug;
+                return throwError(() => new Error(`Unknown course role: ${String(unsupportedRole)}`));
+            }
+        }
+        return response.pipe(map((res) => this.mapUserDTOArrayResponse(res)));
     }
 
     /**
@@ -574,9 +594,8 @@ export class CourseManagementService implements OnDestroy {
      * @param search         pagination, search term, and sort info
      */
     getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<CourseRoleMember>> {
-        return this.http
-            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params: createRequestOption(search), observe: 'response' })
-            .pipe(map(toPageableResult));
+        const { page, pageSize, sortingOrder, sortedColumn, searchTerm } = search;
+        return this.courseAccessApi.getPagedUsersInCourseRole(courseId, courseRoleSlug, page, pageSize, sortingOrder, sortedColumn, searchTerm).pipe(map(toPageableResult));
     }
 
     /**
@@ -589,12 +608,7 @@ export class CourseManagementService implements OnDestroy {
      * @param size           number of results per page
      */
     searchUsersForCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, searchTerm: string, page: number, size: number): Observable<UserSearchResult> {
-        return this.http
-            .get<UserForRegistration[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/users/search`, {
-                params: { searchTerm, page, size },
-                observe: 'response',
-            })
-            .pipe(map(toPageableResult));
+        return this.courseAccessApi.searchUsersForCourseRole(courseId, courseRoleSlug, searchTerm, page, size).pipe(map(toPageableResult));
     }
 
     /**
@@ -603,24 +617,16 @@ export class CourseManagementService implements OnDestroy {
      * @param name      the term to search users
      */
     searchOtherUsersInCourse(courseId: number, name: string): Observable<HttpResponse<User[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('nameOfUser', name);
-        return this.http
-            .get<CourseMemberDTO[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' })
-            .pipe(map((res) => this.mapUserDTOArrayResponse(res)));
+        return this.courseAccessApi.searchOtherUsersInCourse(courseId, name).pipe(map((res) => this.mapUserDTOArrayResponse(res)));
     }
 
     searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('loginOrName', loginOrName);
-        httpParams = httpParams.append('roles', roles.join(','));
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
+        // Keep an explicitly empty roles parameter when the caller supplies no roles.
+        return this.courseAccessApi.searchUsersInCourse(courseId, loginOrName, roles.length ? roles : ['']);
     }
 
     searchMembersForUserMentions(courseId: number, loginOrName: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('loginOrName', loginOrName);
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/members/search`, { observe: 'response', params: httpParams });
+        return this.courseAccessApi.searchMembersOfCourse(courseId, loginOrName);
     }
 
     /**
@@ -630,12 +636,7 @@ export class CourseManagementService implements OnDestroy {
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.
      */
     searchStudents(courseId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
-        // create loginOrName HTTP Param
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('loginOrName', loginOrName);
-        httpParams = httpParams.append('page', page);
-        httpParams = httpParams.append('size', size);
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
+        return this.courseAccessApi.searchStudentsInCourse(courseId, loginOrName, page, size).pipe(map((res) => res.clone({ body: res.body?.map(courseStudentFromDTO) ?? null })));
     }
     /**
      * Downloads the course archive of the specified courseId. Returns an error
@@ -678,7 +679,9 @@ export class CourseManagementService implements OnDestroy {
      * @return studentDtos of users that were not found in the system
      */
     addUsersToCourseRole(courseId: number, studentDtos: StudentDTO[], courseRoleSlug: string): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, studentDtos, { observe: 'response' });
+        return this.courseAccessApi
+            .addUsersToCourseRole(courseId, courseRoleSlug, studentDtos)
+            .pipe(map((res) => res.clone({ body: res.body?.map((student) => hydrate(new StudentDTO(), student)) ?? null })));
     }
 
     /**
@@ -688,7 +691,20 @@ export class CourseManagementService implements OnDestroy {
      * @param login - login of the user to be removed
      */
     removeUserFromCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, { observe: 'response' });
+        switch (courseRoleSlug) {
+            case CourseRoleSlug.STUDENTS:
+                return this.courseAccessApi.removeStudentFromCourse(courseId, login);
+            case CourseRoleSlug.TUTORS:
+                return this.courseAccessApi.removeTutorFromCourse(courseId, login);
+            case CourseRoleSlug.EDITORS:
+                return this.courseAccessApi.removeEditorFromCourse(courseId, login);
+            case CourseRoleSlug.INSTRUCTORS:
+                return this.courseAccessApi.removeInstructorFromCourse(courseId, login);
+            default: {
+                const unsupportedRole: never = courseRoleSlug;
+                return throwError(() => new Error(`Unknown course role: ${String(unsupportedRole)}`));
+            }
+        }
     }
 
     /**
@@ -723,7 +739,7 @@ export class CourseManagementService implements OnDestroy {
         return response.clone({ body: response.body?.map(mapper) ?? null });
     }
 
-    private mapUserDTOArrayResponse(response: HttpResponse<CourseMemberDTO[]>): HttpResponse<User[]> {
+    private mapUserDTOArrayResponse(response: HttpResponse<CourseMember[]>): HttpResponse<User[]> {
         return response.clone({ body: response.body?.map(courseMemberFromDTO) ?? null });
     }
 

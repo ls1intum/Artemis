@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
@@ -104,6 +105,14 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void getPagedUsersInCourseRole_setsTotalCountHeader() throws Exception {
         MvcResult result = request.performMvcRequest(get(pagedUrl()).params(pagedParams("0", "3"))).andExpect(status().isOk()).andReturn();
         assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS));
+        assertThat(result.getResponse().getHeader(HttpHeaders.LINK)).contains("page=1", "size=3", "rel=\"next\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getPagedUsersInCourseRole_requiresPageAndPageSize() throws Exception {
+        request.performMvcRequest(get(pagedUrl()).param("pageSize", "5")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get(pagedUrl()).param("page", "0")).andExpect(status().isBadRequest());
     }
 
     @ParameterizedTest
@@ -212,6 +221,12 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
+        var params = searchParams(TEST_PREFIX + "student");
+        var defaultPage = request.performMvcRequest(get(searchUrl()).params(params)).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(defaultPage.getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS));
+        assertThat(defaultPage.getHeader(HttpHeaders.LINK)).contains("page=0", "size=10");
+        var explicitPage = request.performMvcRequest(get(searchUrl()).params(params).param("page", "0").param("size", "10")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(explicitPage.getContentAsString()).isEqualTo(defaultPage.getContentAsString());
         List<UserForRegistrationDTO> result = search(TEST_PREFIX + "student");
         assertThat(result).hasSize(NUMBER_OF_STUDENTS);
         assertThat(result).allMatch(user -> user.login().startsWith(TEST_PREFIX + "student"));

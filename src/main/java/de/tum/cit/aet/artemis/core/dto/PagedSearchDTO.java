@@ -7,6 +7,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Pagination, search term, sort info and an optional filter for paged list endpoints.
  * <p>
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param filterProp   an optional endpoint-specific filter value, e.g. {@code "Submitted"}; ignored by endpoints without filters
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PagedSearchDTO(@Min(0) @Max(100_000) int page, @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm,
+public record PagedSearchDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) @Min(0) @Max(100_000) int page,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm,
         @Nullable String filterProp) {
 }

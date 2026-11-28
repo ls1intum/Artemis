@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -45,9 +44,9 @@ describe('TutorialRegistrationsImportModalComponent', () => {
     let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
     let tutorialGroupRegisteredStudentsServiceMock: TutorialGroupRegisteredStudentsServiceMock;
 
-    const firstParsedStudent: StudentDTO = { login: 'ada', registrationNumber: 'R001', firstName: '', lastName: '', email: '' };
-    const secondParsedStudent: StudentDTO = { login: 'alan', registrationNumber: 'R002', firstName: '', lastName: '', email: '' };
-    const thirdParsedStudent: StudentDTO = { login: '', registrationNumber: 'R003', firstName: '', lastName: '', email: '' };
+    const firstParsedStudent = { login: 'ada', registrationNumber: 'R001', firstName: '', lastName: '', email: '' };
+    const secondParsedStudent = { login: 'alan', registrationNumber: 'R002', firstName: '', lastName: '', email: '' };
+    const thirdParsedStudent = { login: '', registrationNumber: 'R003', firstName: '', lastName: '', email: '' };
     const firstStudent: TutorialGroupRegisterStudentRequest = { login: 'ada', registrationNumber: 'R001' };
     const secondStudent: TutorialGroupRegisterStudentRequest = { login: 'alan', registrationNumber: 'R002' };
     const thirdStudent: TutorialGroupRegisterStudentRequest = { login: '', registrationNumber: 'R003' };

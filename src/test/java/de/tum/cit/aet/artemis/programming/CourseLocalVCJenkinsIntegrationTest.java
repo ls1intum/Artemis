@@ -654,6 +654,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_bindsRepeatedAndEmptyRoles() throws Exception {
+        courseTestService.searchUsersInCourse_bindsRepeatedAndEmptyRoles();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         courseTestService.searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
     }
@@ -741,6 +747,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         courseTestService.testRemoveStudentOrTutorOrInstructorFromCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddAndRemoveMemberWithEncodedLogin() throws Exception {
+        courseTestService.testAddAndRemoveMemberWithEncodedLogin();
     }
 
     @Test
