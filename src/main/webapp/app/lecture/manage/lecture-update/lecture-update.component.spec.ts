@@ -772,6 +772,40 @@ describe('LectureUpdateComponent', () => {
         expect(saveSpy).not.toHaveBeenCalled();
     });
 
+    it('should allow the description at the limit and block it one character over', async () => {
+        await configureValidLectureUpdateForm();
+        const editor: MarkdownEditorMonacoComponent = lectureUpdateComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
+        const saveButton = lectureUpdateComponentFixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+
+        editor.markdownChange.emit('a'.repeat(50_000));
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.saveBlockedReason()).toBeUndefined();
+        expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+        expect(lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="lecture-description-length-error"]'))).toBeNull();
+
+        editor.markdownChange.emit('a'.repeat(50_001));
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.saveBlockedReason()).toBe('artemisApp.lecture.editFooter.descriptionTooLong');
+        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+        expect(editor.ariaInvalid()).toBe(true);
+        expect(lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="lecture-description-length-error"]'))).not.toBeNull();
+        expect(lectureUpdateComponent.formStatusSections()[0].valid).toBe(false);
+    });
+
+    it('should flush and reject a buffered description over the limit before sending it', async () => {
+        await configureValidLectureUpdateForm();
+        const editor: MarkdownEditorMonacoComponent = lectureUpdateComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
+        vi.spyOn(editor, 'flushPendingTextChange').mockImplementation(() => editor.markdownChange.emit('a'.repeat(50_001)));
+        const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(new Subject<Lecture>());
+
+        lectureUpdateComponent.save();
+
+        expect(updateSpy).not.toHaveBeenCalled();
+        expect(lectureUpdateComponent.saveBlockedReason()).toBe('artemisApp.lecture.editFooter.descriptionTooLong');
+    });
+
     describe('isChangeMadeToTitleSection', () => {
         it('should detect changes made to the title section', async () => {
             await configureActiveRouteMockAndCompileComponents();
