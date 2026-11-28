@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * A user who is not a member of a course is refused by every endpoint that requires a role in that course.
  * <p>
  * The test sends one request to each reading endpoint whose only path variable is the course id and that is guarded by a course role annotation, as a signed-in
- * user without any group of the course. The role annotation is evaluated before the method runs, so the answer must be 403 whatever the course contains. A
+ * user without any role in the course. The role annotation is evaluated before the method runs, so the answer must be 403 whatever the course contains. A
  * different answer is a gap: either the annotation does not do what it says, or the endpoint is reachable without the role it declares.
  * <p>
  * Endpoints that need a parameter or a body are answered with a bad request before the annotation is evaluated, and are not covered here. The integration tests of

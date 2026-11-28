@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
@@ -63,7 +65,7 @@ interface MetadataField {
 @Component({
     selector: 'jhi-programming-exercise-version-programming-metadata',
     templateUrl: './programming-exercise-version-programming-metadata.component.html',
-    styleUrls: ['./programming-exercise-version-programming-metadata.component.scss'],
+    styleUrls: ['./programming-exercise-version-programming-metadata.component.css'],
     imports: [TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

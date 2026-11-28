@@ -1,4 +1,6 @@
-import { TumAetUiDialogService, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -56,7 +58,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrl: '../../../exercise/shared/exercise-update-grading-layout.scss',
+    styleUrl: '../../../exercise/shared/exercise-update-grading-layout.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,

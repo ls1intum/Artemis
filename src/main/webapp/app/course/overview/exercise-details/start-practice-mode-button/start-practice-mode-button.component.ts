@@ -13,14 +13,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 let nextTeamHintId = 0;
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
-    styleUrls: ['./start-practice-mode-button.component.scss'],
+    styleUrls: ['./start-practice-mode-button.component.css'],
     imports: [
         ExerciseActionButtonComponent,
         FeatureToggleDirective,

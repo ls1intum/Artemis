@@ -12,7 +12,7 @@ export type FormSectionStatus = {
 @Component({
     selector: 'jhi-form-status-bar',
     templateUrl: './form-status-bar.component.html',
-    styleUrl: './form-status-bar.component.scss',
+    styleUrl: './form-status-bar.component.css',
     imports: [ChecklistCheckComponent, ArtemisTranslatePipe],
     host: {
         '(window:resize)': 'onResizeAddDistanceFromStatusBarToNavbar()',

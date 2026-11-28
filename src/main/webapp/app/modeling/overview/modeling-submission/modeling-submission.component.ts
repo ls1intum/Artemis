@@ -58,7 +58,7 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
-    styleUrls: ['./modeling-submission.component.scss'],
+    styleUrls: ['./modeling-submission.component.css'],
     imports: [
         ResizeableContainerComponent,
         ModelingEditorComponent,
@@ -115,6 +115,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             points: formatted,
         });
         return credits > 0 ? `+${label}` : label;
+    }
+
+    /**
+     * The title of a feedback's assessment box, shown above its comment. A feedback with a comment in `detailText` holds the
+     * title in `text`; the list then leaves `text` out of the comment it builds with {@link buildFeedbackTextForReview}.
+     */
+    protected feedbackTitle(feedback: Feedback): string | undefined {
+        if (!Feedback.hasDetailText(feedback)) {
+            return undefined;
+        }
+        return Feedback.stripSuggestionPrefix(feedback.text ?? '') || undefined;
     }
 
     protected feedbackElementName(feedback: Feedback): string | undefined {

@@ -25,7 +25,7 @@ const defaultSettings = new CropperSettings();
     selector: 'image-cropper',
     imports: [ArtemisTranslatePipe],
     templateUrl: './image-cropper.component.html',
-    styleUrls: ['./image-cropper.component.scss'],
+    styleUrls: ['./image-cropper.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[style.text-align]': 'alignImage()',

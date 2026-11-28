@@ -8,7 +8,11 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faFileArrowUp, faScissors, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiConfirmationService, TumAetUiFormFieldComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -86,7 +90,7 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
-    styleUrl: './lecture-units.component.scss',
+    styleUrl: './lecture-units.component.css',
     // Enter is handled on the host: the form of the item that is edited in place is no control itself, so it takes no key handlers.
     host: { '(keydown.enter)': 'onEditorEnter($event)' },
     imports: [

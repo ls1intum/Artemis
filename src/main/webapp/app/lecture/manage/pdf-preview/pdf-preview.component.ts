@@ -1,4 +1,7 @@
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -94,7 +97,7 @@ export interface HiddenPageMap {
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
-    styleUrls: ['./pdf-preview.component.scss'],
+    styleUrls: ['./pdf-preview.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiPopoverComponent,

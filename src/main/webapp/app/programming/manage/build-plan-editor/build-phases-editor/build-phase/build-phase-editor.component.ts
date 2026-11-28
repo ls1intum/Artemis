@@ -11,14 +11,12 @@ import {
     hasExpectedTestsBeforeDueDate,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';

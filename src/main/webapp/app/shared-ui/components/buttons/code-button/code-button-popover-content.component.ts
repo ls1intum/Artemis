@@ -3,14 +3,10 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCaretDown, faCheck, faCodeBranch, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryAuthenticationMethod } from './code-button.component';

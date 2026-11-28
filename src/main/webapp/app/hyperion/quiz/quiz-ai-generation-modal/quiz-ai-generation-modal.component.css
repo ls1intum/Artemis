@@ -1,0 +1,94 @@
+/* Entrance animations of the preview. Layout and colours are Tailwind utilities in the template. */
+@keyframes quiz-ai-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes quiz-ai-list-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes quiz-ai-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.preview-empty {
+    animation: quiz-ai-fade-in 0.2s ease-out both;
+}
+
+.question-list {
+    animation: quiz-ai-list-enter 0.25s ease-out both;
+}
+
+.question-list > * {
+    animation: quiz-ai-card-enter 0.3s ease-out both;
+}
+
+.question-list > *:nth-child(1) {
+    animation-delay: 0.07s;
+}
+
+.question-list > *:nth-child(2) {
+    animation-delay: 0.14s;
+}
+
+.question-list > *:nth-child(3) {
+    animation-delay: 0.21s;
+}
+
+.question-list > *:nth-child(4) {
+    animation-delay: 0.28s;
+}
+
+.question-list > *:nth-child(5) {
+    animation-delay: 0.35s;
+}
+
+.question-list > *:nth-child(6) {
+    animation-delay: 0.42s;
+}
+
+.question-list > *:nth-child(7) {
+    animation-delay: 0.49s;
+}
+
+.question-list > *:nth-child(8) {
+    animation-delay: 0.56s;
+}
+
+.question-list > *:nth-child(9) {
+    animation-delay: 0.63s;
+}
+
+.question-list > *:nth-child(10) {
+    animation-delay: 0.7s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preview-empty,
+    .question-list,
+    .question-list > * {
+        animation: none;
+    }
+}

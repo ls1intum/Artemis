@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiInputNumberComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

@@ -426,12 +426,17 @@ public class BuildJobManagementService {
                     throw new CompletionException(msg, ex);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), ex);
-                    if (ex instanceof TimeoutException) {
+                    boolean timedOut = ex instanceof TimeoutException;
+                    if (timedOut) {
                         // Cancel the underlying future to interrupt the build job that's still running.
                         // Without this, the build job continues running in the background and may create
                         // a "zombie" container after the timeout has already been reported.
+                        // This happens before the container is stopped, so that the build job already counts as cancelled when its next operation fails on the stopped
+                        // container, and does not report that as an infrastructure problem.
                         future.cancel(true);
+                    }
+                    finishBuildJobExceptionally(buildJobItem.id(), ex);
+                    if (timedOut) {
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
                     throw new CompletionException(ex);
