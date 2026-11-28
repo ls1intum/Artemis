@@ -2,7 +2,7 @@
 id: dead-code
 title: Dead Code
 sidebar_label: Dead Code
-last_reviewed: 2026-11-18
+last_reviewed: 2026-11-27
 ---
 
 Artemis deletes code that nothing can reach. Two checks enforce this on every pull request, one for
@@ -138,7 +138,9 @@ understood, it can become a gate with a recorded baseline.
 
 ## The client check
 
-`knip`, configured in `knip.json`, reports TypeScript files that nothing imports. Run it with:
+`knip`, configured in `knip.json`, reports TypeScript files that nothing imports. It is not a dependency of the
+project: `supporting_scripts/client/knip.mjs` fetches it with `pnpm dlx` at the version it declares, so the first run
+downloads it. Run it with:
 
 ```bash
 pnpm run dead-code:client          # the CI gate: unused files only
