@@ -1,5 +1,6 @@
 import { Component, input, linkedSignal, output } from '@angular/core';
-import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -15,7 +16,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
 @Component({
     selector: 'jhi-presentation-assessment-instances-table',
     templateUrl: './presentation-assessment-instances-table.component.html',
-    styleUrl: './presentation-assessment-table.scss',
+    styleUrl: './presentation-assessment-table.css',
     host: { class: 'block' },
     imports: [
         TumAetUiTableDirective,

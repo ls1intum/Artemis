@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -71,6 +74,8 @@ public class HyperionQuizQuestionPoolService {
 
     private final HyperionQuizQuestionPoolTaskService taskService;
 
+    private final HyperionQuizQuestionPoolSelectionService selectionService;
+
     private final QuizQuestionPoolItemRepository itemRepository;
 
     private final HyperionCourseSettingsService settingsService;
@@ -92,9 +97,11 @@ public class HyperionQuizQuestionPoolService {
     public HyperionQuizQuestionPoolService(HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolTaskService taskService,
             QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi,
             Optional<LectureUnitApi> lectureUnitApi, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
-            HyperionQuizQuestionPoolMaterialService materialService, CourseRepository courseRepository, HyperionQuizQuestionPoolModelService modelService) {
+            HyperionQuizQuestionPoolMaterialService materialService, CourseRepository courseRepository, HyperionQuizQuestionPoolModelService modelService,
+            HyperionQuizQuestionPoolSelectionService selectionService) {
         this.buildService = buildService;
         this.taskService = taskService;
+        this.selectionService = selectionService;
         this.itemRepository = itemRepository;
         this.settingsService = settingsService;
         this.courseCompetencyApi = courseCompetencyApi;
@@ -333,6 +340,33 @@ public class HyperionQuizQuestionPoolService {
                 itemRepository.storeFlag(item.getId(), flag);
             }
         }
+    }
+
+    /**
+     * Draws approved questions from the pool for a new quiz and records the draw.
+     *
+     * @param courseId the course
+     * @param request  the competencies, lecture units, count, question types and difficulties to draw
+     * @return the drawn questions with their competency and lecture unit names, and the competencies that yielded nothing
+     */
+    public QuizQuestionPoolSelectionDTO selectQuestions(long courseId, QuizQuestionPoolSelectionRequestDTO request) {
+        HyperionQuizQuestionPoolSelectionService.Selection selection = selectionService.select(courseId, request);
+        Map<Long, String> titles = courseCompetencyApi.map(api -> api.findAllForCourse(courseId)).orElse(Set.of()).stream()
+                .collect(Collectors.toMap(CourseCompetency::getId, CourseCompetency::getTitle, (first, second) -> first));
+        Map<Long, String> unitNames = unitNamesOf(selection.items());
+        List<QuizQuestionPoolItemDTO> questions = selection.items().stream().map(item -> toDTO(item, titles.get(item.getCompetencyId()), unitNames.get(item.getLectureUnitId())))
+                .toList();
+        return new QuizQuestionPoolSelectionDTO(questions, request.count(), selection.competencyIdsWithoutQuestions());
+    }
+
+    /**
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty.
+     *
+     * @param courseId the course
+     * @return one count per cell that holds such questions
+     */
+    public List<QuizQuestionPoolSelectionCandidateDTO> getSelectionCandidates(long courseId) {
+        return selectionService.candidates(courseId);
     }
 
     private Map<Long, String> unitNamesOf(List<QuizQuestionPoolItem> items) {

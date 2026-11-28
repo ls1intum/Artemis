@@ -1,0 +1,61 @@
+.instructor-view {
+    max-width: 750px;
+    min-width: 650px;
+}
+
+.tutor-view {
+    max-width: 450px;
+    min-width: 350px;
+}
+
+.exam-status-wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-left: 130px;
+    margin-right: 170px;
+}
+
+.exam-status-wrapper .planned,
+.exam-status-wrapper .finished,
+.exam-status-wrapper .check {
+    color: var(--success);
+}
+
+.exam-status-wrapper .unset,
+.exam-status-wrapper .cross {
+    color: var(--danger);
+}
+
+.exam-status-wrapper li {
+    display: list-item;
+}
+
+.exam-status-wrapper .running {
+    color: var(--warning);
+}
+
+.exam-status-wrapper .connector {
+    width: 100%;
+    min-width: 50px;
+    border-top: 2px solid;
+    margin-top: 1.5em;
+}
+
+.exam-status-wrapper .status-step {
+    width: 25px;
+    overflow-x: visible;
+    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.exam-status-wrapper .status-step .status-step-content {
+    min-width: fit-content;
+    white-space: nowrap;
+}
+
+.exam-status-wrapper .header-icon {
+    z-index: 2;
+    font-size: 2em;
+}

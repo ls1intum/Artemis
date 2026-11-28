@@ -1,0 +1,80 @@
+/*
+ * Layout and spacing are Tailwind utilities in the template. What stays here are the margins and sizes of headings,
+ * paragraphs and lists, and the link colors.
+ */
+.about {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+}
+
+.about h1,
+.about h2,
+.about h3,
+.about p,
+.about dl,
+.about dd {
+    margin: 0;
+}
+
+.about h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.about h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.about h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.about dt {
+    font-weight: 400;
+}
+
+.about__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.about__card {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+}
+
+.about__tile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--body-bg);
+    color: var(--body-color);
+    text-decoration: none;
+    transition: background-color 0.15s;
+}
+
+.about__tile:hover {
+    background: var(--border-color);
+    color: var(--body-color);
+    text-decoration: none;
+}
+
+.about__tile:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.about__avatar {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+}

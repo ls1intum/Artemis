@@ -2,14 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, mode
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFilePdf, faFolderOpen, faFolderPlus } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiRadioButtonComponent,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -41,7 +39,7 @@ export interface PdfUploadTarget {
         TumAetUiSelectComponent,
     ],
     templateUrl: './pdf-upload-target-dialog.component.html',
-    styleUrl: './pdf-upload-target-dialog.component.scss',
+    styleUrl: './pdf-upload-target-dialog.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfUploadTargetDialogComponent {

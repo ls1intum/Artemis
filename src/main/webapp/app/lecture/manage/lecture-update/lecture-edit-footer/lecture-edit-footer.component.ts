@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -14,7 +15,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-lecture-edit-footer',
     templateUrl: './lecture-edit-footer.component.html',
-    styleUrl: './lecture-edit-footer.component.scss',
+    styleUrl: './lecture-edit-footer.component.css',
     imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {

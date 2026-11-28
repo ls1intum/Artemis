@@ -22,7 +22,8 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -128,13 +129,13 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
-// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.scss); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.css); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
 const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
 
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.css', './course-conversations.component.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [CommunicationService, LinkifyService, LinkPreviewService],
     imports: [

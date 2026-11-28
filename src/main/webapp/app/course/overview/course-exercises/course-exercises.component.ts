@@ -25,7 +25,7 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -77,7 +77,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.css'],
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumAetUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {

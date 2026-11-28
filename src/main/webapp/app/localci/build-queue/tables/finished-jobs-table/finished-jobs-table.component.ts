@@ -9,18 +9,14 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',
-    styleUrl: './finished-jobs-table.component.scss',
+    styleUrls: ['../build-jobs-table.css', './finished-jobs-table.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,

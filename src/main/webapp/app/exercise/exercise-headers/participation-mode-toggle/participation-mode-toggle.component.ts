@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { Component, computed, input, model } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -18,7 +19,7 @@ interface ParticipationModeOption {
 @Component({
     selector: 'jhi-participation-mode-toggle',
     templateUrl: './participation-mode-toggle.component.html',
-    styleUrls: ['./participation-mode-toggle.component.scss'],
+    styleUrls: ['./participation-mode-toggle.component.css'],
     imports: [TumAetUiButtonDirective, TumAetUiTagComponent, FaIconComponent, TranslateDirective],
 })
 export class ParticipationModeToggleComponent {

@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.aiworker.config;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.net.URI;
 
 import org.junit.jupiter.api.Test;
 
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.SSLConfig;
 
 class DockerConfigurationTest {
 
@@ -21,11 +26,13 @@ class DockerConfigurationTest {
         assertThatCode(() -> DockerConfiguration.requireSecureTransport(config)).doesNotThrowAnyException();
     }
 
+    // docker-java deprecates SSLConfig without a replacement: DockerClientConfig.getSSLConfig() still returns it, and DockerConfiguration reads it from there
+    @SuppressWarnings("deprecation")
     @Test
     void remoteDockerWithTlsRemainsSupported() {
-        var config = org.mockito.Mockito.mock(DefaultDockerClientConfig.class);
-        org.mockito.Mockito.when(config.getDockerHost()).thenReturn(java.net.URI.create("tcp://docker.example:2376"));
-        org.mockito.Mockito.when(config.getSSLConfig()).thenReturn(org.mockito.Mockito.mock(com.github.dockerjava.core.SSLConfig.class));
+        var config = mock(DefaultDockerClientConfig.class);
+        when(config.getDockerHost()).thenReturn(URI.create("tcp://docker.example:2376"));
+        when(config.getSSLConfig()).thenReturn(mock(SSLConfig.class));
         assertThatCode(() -> DockerConfiguration.requireSecureTransport(config)).doesNotThrowAnyException();
     }
 }
