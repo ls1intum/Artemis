@@ -816,6 +816,17 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
+     * Checks whether the result belongs to a build that has not finished yet. A multi-container build creates its automatic result when its first
+     * container finishes and sets the completion date once the last one has, so until then the result holds only part of the feedback and no score.
+     *
+     * @return true if the result is an automatic result without a completion date
+     */
+    @JsonIgnore
+    public boolean isBuildInProgress() {
+        return AssessmentType.AUTOMATIC == assessmentType && completionDate == null;
+    }
+
+    /**
      * Checks whether the result is a manual result. A manual result can be from type MANUAL or SEMI_AUTOMATIC
      *
      * @return true if the result is a manual result

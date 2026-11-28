@@ -1,0 +1,244 @@
+<div class="border rounded p-4 mb-4" data-testid="build-container-editor">
+    <div class="flex items-end gap-4 mb-2">
+        @if (showsSettings()) {
+            <div class="grow">
+                <label [for]="'field_container_name_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.containerName' | artemisTranslate }}</label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.containerNameHelp" />
+                <!-- tumAetUiInput keeps only a static id, so tumAetUiInputId hands it the bound one; the plain id shows the label association in the template -->
+                <input
+                    type="text"
+                    tumAetUiInput
+                    class="w-full"
+                    id="field_container_name_{{ containerIndex() }}"
+                    [tumAetUiInputId]="'field_container_name_' + containerIndex()"
+                    data-testid="container-name-input"
+                    [tumAetUiInputInvalid]="!!nameValidationMessageKey()"
+                    [ngModel]="container().name"
+                    (ngModelChange)="setName($event)"
+                    [name]="'containerName_' + containerIndex()"
+                />
+            </div>
+        }
+        <div class="grow">
+            <label [for]="'field_container_image_' + containerIndex()">{{ 'artemisApp.programmingExercise.dockerImage' | artemisTranslate }}</label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
+            <input
+                type="text"
+                tumAetUiInput
+                class="w-full"
+                id="field_container_image_{{ containerIndex() }}"
+                [tumAetUiInputId]="'field_container_image_' + containerIndex()"
+                data-testid="container-image-input"
+                [ngModel]="container().dockerImage ?? ''"
+                [placeholder]="dockerImagePlaceholder()"
+                (ngModelChange)="setDockerImage($event)"
+                [name]="'containerImage_' + containerIndex()"
+            />
+        </div>
+        @if (showsSettings()) {
+            <div>
+                <label [for]="'field_container_timeout_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.timeout' | artemisTranslate }}</label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.timeoutHelp" />
+                <!-- no [min]/[max]: the field would clamp an out-of-range value on blur, which the message below explains instead -->
+                <tumaet-ui-input-number
+                    [inputId]="'field_container_timeout_' + containerIndex()"
+                    data-testid="container-timeout-input"
+                    [ngModel]="container().timeoutSeconds ?? null"
+                    [placeholder]="timeoutPlaceholder()?.toString() ?? ''"
+                    [useGrouping]="false"
+                    [invalid]="!isTimeoutValid()"
+                    (ngModelChange)="setTimeoutSeconds($event)"
+                    [name]="'containerTimeout_' + containerIndex()"
+                />
+            </div>
+        }
+        @if (canRemove()) {
+            <tumaet-ui-button
+                severity="danger"
+                variant="outlined"
+                [icon]="faTrash"
+                data-testid="remove-container-button"
+                (clicked)="remove.emit()"
+                [tumAetUiTooltip]="'artemisApp.programmingExercise.buildContainersEditor.removeContainer' | artemisTranslate"
+            />
+        }
+    </div>
+    <!-- the messages sit outside the row above: its fields are aligned at the bottom, so a message inside a field's column would push that field up -->
+    @if (nameValidationMessageKey(); as messageKey) {
+        <div class="text-state-danger mb-2" [jhiTranslate]="messageKey"></div>
+    }
+    @if (showsSettings() && !isTimeoutValid()) {
+        <div
+            class="text-state-danger mb-2"
+            data-testid="container-timeout-invalid"
+            jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeoutInvalid"
+            [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
+        ></div>
+    }
+
+    @if (showsSettings()) {
+        <div class="mb-2">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox
+                    [inputId]="'field_container_scoped_' + containerIndex()"
+                    data-testid="container-scoping-checkbox"
+                    [ngModel]="scopesRepositories()"
+                    (ngModelChange)="toggleRepositoryScoping($event)"
+                    [name]="'containerScoped_' + containerIndex()"
+                />
+                <label [for]="'field_container_scoped_' + containerIndex()">{{
+                    'artemisApp.programmingExercise.buildContainersEditor.scopeRepositories' | artemisTranslate
+                }}</label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.scopeRepositoriesHelp" />
+            </div>
+            @if (scopesRepositories()) {
+                <div class="flex flex-wrap gap-4 mt-1">
+                    @for (repositoryType of repositoryTypes; track repositoryType) {
+                        <div class="flex items-center gap-2">
+                            <tumaet-ui-checkbox
+                                [inputId]="'field_container_repo_' + containerIndex() + '_' + repositoryType"
+                                [ngModel]="isRepositorySelected(repositoryType)"
+                                (ngModelChange)="toggleRepository(repositoryType, $event)"
+                                [name]="'containerRepo_' + containerIndex() + '_' + repositoryType"
+                            />
+                            <label [for]="'field_container_repo_' + containerIndex() + '_' + repositoryType">
+                                {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repositoryType | artemisTranslate }}
+                            </label>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="mb-2">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox
+                    [inputId]="'field_container_docker_flags_' + containerIndex()"
+                    data-testid="container-docker-flags-checkbox"
+                    [ngModel]="overridesDockerFlags()"
+                    (ngModelChange)="toggleDockerFlags($event)"
+                    [name]="'containerDockerFlags_' + containerIndex()"
+                />
+                <label [for]="'field_container_docker_flags_' + containerIndex()">{{
+                    'artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlags' | artemisTranslate
+                }}</label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlagsHelp" />
+            </div>
+            @if (overridesDockerFlags()) {
+                <div class="flex flex-wrap items-start gap-4 mt-1">
+                    @if (customNetworks()) {
+                        <div>
+                            <label [for]="'field_container_network_' + containerIndex()">{{
+                                'artemisApp.programmingExercise.buildContainersEditor.network' | artemisTranslate
+                            }}</label>
+                            <tumaet-ui-select
+                                class="block min-w-48"
+                                [inputId]="'field_container_network_' + containerIndex()"
+                                data-testid="container-network-select"
+                                [options]="networkOptions()"
+                                optionLabel="label"
+                                optionValue="value"
+                                [ngModel]="container().dockerFlags?.network ?? ''"
+                                (ngModelChange)="setNetwork($event)"
+                                [name]="'containerNetwork_' + containerIndex()"
+                            />
+                        </div>
+                    }
+                    <div>
+                        <label [for]="'field_container_cpu_count_' + containerIndex()">{{
+                            'artemisApp.programmingExercise.buildContainersEditor.cpuCount' | artemisTranslate
+                        }}</label>
+                        <tumaet-ui-input-number
+                            [inputId]="'field_container_cpu_count_' + containerIndex()"
+                            [ngModel]="container().dockerFlags?.cpuCount ?? null"
+                            [placeholder]="exerciseDockerFlags().cpuCount?.toString() ?? ''"
+                            [useGrouping]="false"
+                            [invalid]="!isCpuCountValid()"
+                            (ngModelChange)="setCpuCount($event)"
+                            [name]="'containerCpuCount_' + containerIndex()"
+                        />
+                        @if (!isCpuCountValid()) {
+                            <div class="text-state-danger text-sm" jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.invalid"></div>
+                        }
+                    </div>
+                    <div>
+                        <label [for]="'field_container_memory_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.memory' | artemisTranslate }}</label>
+                        <tumaet-ui-input-number
+                            [inputId]="'field_container_memory_' + containerIndex()"
+                            [ngModel]="container().dockerFlags?.memory ?? null"
+                            [placeholder]="exerciseDockerFlags().memory?.toString() ?? ''"
+                            [useGrouping]="false"
+                            [invalid]="!isMemoryValid()"
+                            (ngModelChange)="setMemory($event)"
+                            [name]="'containerMemory_' + containerIndex()"
+                        />
+                        @if (!isMemoryValid()) {
+                            <div class="text-state-danger text-sm" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.invalid"></div>
+                        }
+                    </div>
+                    <div>
+                        <label [for]="'field_container_memory_swap_' + containerIndex()">{{
+                            'artemisApp.programmingExercise.buildContainersEditor.memorySwap' | artemisTranslate
+                        }}</label>
+                        <tumaet-ui-input-number
+                            [inputId]="'field_container_memory_swap_' + containerIndex()"
+                            [ngModel]="container().dockerFlags?.memorySwap ?? null"
+                            [placeholder]="exerciseDockerFlags().memorySwap?.toString() ?? ''"
+                            [useGrouping]="false"
+                            [invalid]="!isMemorySwapValid()"
+                            (ngModelChange)="setMemorySwap($event)"
+                            [name]="'containerMemorySwap_' + containerIndex()"
+                        />
+                        @if (!isMemorySwapValid()) {
+                            <div class="text-state-danger text-sm" jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.invalid"></div>
+                        }
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.envVars"></span>
+                    @for (row of envVarRows(); track $index) {
+                        <div class="flex items-center gap-2 mt-1" data-testid="container-env-var-row">
+                            <input
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                [ngModel]="row[0]"
+                                (ngModelChange)="setEnvVarKey($index, $event)"
+                                [name]="'containerEnvKey_' + containerIndex() + '_' + $index"
+                                [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarKey' | artemisTranslate"
+                            />
+                            <input
+                                type="text"
+                                tumAetUiInput
+                                class="w-full"
+                                [ngModel]="row[1]"
+                                (ngModelChange)="setEnvVarValue($index, $event)"
+                                [name]="'containerEnvValue_' + containerIndex() + '_' + $index"
+                                [placeholder]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
+                                [attr.aria-label]="'artemisApp.programmingExercise.buildContainersEditor.envVarValue' | artemisTranslate"
+                            />
+                            <tumaet-ui-button
+                                severity="danger"
+                                variant="outlined"
+                                [icon]="faTrash"
+                                data-testid="remove-container-env-var-button"
+                                (clicked)="removeEnvVar($index)"
+                                [tumAetUiTooltip]="'artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar' | artemisTranslate"
+                            />
+                        </div>
+                    }
+                    <div class="mt-1">
+                        <tumaet-ui-button variant="outlined" [icon]="faPlus" data-testid="add-container-env-var-button" (clicked)="addEnvVar()">
+                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
+                        </tumaet-ui-button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <span class="inline-block" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></span>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
+    <jhi-build-phases-editor [phases]="container().phases" (phasesChange)="setPhases($event)" [isExamMode]="isExamMode()" [idPrefix]="'container-' + containerIndex() + '-'" />
+</div>

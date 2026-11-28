@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -212,13 +213,27 @@ class BuildJobExecutionServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = RepositoryType.class, names = { "TESTS", "AUXILIARY" })
-    void pushesToSharedRepositoriesDoNotCheckOutAssignmentCommit(RepositoryType trigger) throws Exception {
+    void pushesToSharedRepositoriesCheckOutTheRecordedAssignmentCommit(RepositoryType trigger) throws Exception {
+        // the containers of a multi-container build of such a push must not run assignment revisions pushed in between
         when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(new TarArchiveInputStream(new ByteArrayInputStream(archive(Map.of()))), 0, completedAt, () -> {
         }));
         var result = service.runBuildJob(buildJob(trigger, true, null, new String[0]));
         assertThat(result.assignmentRepoCommitHash()).isEqualTo("assignment-commit");
-        verify(git, never()).checkoutRepositoryAtCommit(any(), any());
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-student")), eq("assignment-commit"));
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-tests")), eq("test-commit"));
         verify(git).clearCloneTokenForCurrentThread();
+    }
+
+    @Test
+    void testsAreCheckedOutAtTheRecordedCommitRatherThanTheCurrentHead() throws Exception {
+        when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(null, 0, completedAt, () -> {
+        }));
+
+        var result = service.runBuildJob(buildJob(RepositoryType.USER, true, null, new String[0]));
+
+        assertThat(result.testsRepoCommitHash()).isEqualTo("test-commit");
+        verify(git).checkoutRepositoryAtCommit(argThat(repository -> isCloneOf(repository, "course-tests")), eq("test-commit"));
+        verify(git, never()).getLastCommitHash(any());
     }
 
     @Test
@@ -337,6 +352,10 @@ class BuildJobExecutionServiceTest {
         return repository;
     }
 
+    private static boolean isCloneOf(Repository repository, String slug) {
+        return repository != null && repository.getLocalPath().getFileName().toString().contains(slug);
+    }
+
     private String uri(String slug) {
         return "https://vc.invalid/git/COURSE/" + slug + ".git";
     }
@@ -354,7 +373,7 @@ class BuildJobExecutionServiceTest {
         var timing = new JobTimingInfo(completedAt.minusMinutes(1), null, null, null, 60);
         var config = new BuildConfig("echo test", "ubuntu:24.04", "commit", explicitCommits ? "assignment-commit" : null, explicitCommits ? "test-commit" : null, "main",
                 ProgrammingLanguage.JAVA, null, false, false, List.of("results/*.xml"), 60, "assignment", "tests", "solution", new DockerRunConfig(List.of(), null, 0, 0, 0));
-        return new BuildJobQueueItem(id, id, new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, "job-clone-token");
+        return new BuildJobQueueItem(id, id, new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, null, "job-clone-token");
     }
 
     private byte[] archive(Map<String, String> entries) throws IOException {

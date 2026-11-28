@@ -1316,13 +1316,14 @@ public class ParticipationService {
 
         Boolean lastResultIsManual = null;
         if (latestSubmission != null && !latestSubmission.getResults().isEmpty()) {
-            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max(Comparator.comparingLong(DomainObject::getId)).orElse(null);
+            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null && r.getCompletionDate() != null)
+                    .max(Comparator.comparingLong(DomainObject::getId)).orElse(null);
             if (latestResult != null && latestResult.getAssessmentType() != null) {
                 lastResultIsManual = latestResult.getAssessmentType() != AssessmentType.AUTOMATIC && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA;
             }
         }
 
-        // Newest non-Athena result of the latest submission, which the score columns describe
+        // Newest completed non-Athena result of the latest submission, which the score columns describe
         Result latestResult = submissionId != null ? resultBySubmissionId.get(submissionId) : null;
         ZonedDateTime completionDate = latestResult != null ? latestResult.getCompletionDate() : null;
         Long durationInSeconds = null;

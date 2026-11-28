@@ -54,7 +54,7 @@ class BuildJobCloneTokenServiceTest {
         var jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 60);
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent-1", "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, jobTimingInfo, buildConfig, null,
-                cloneToken);
+                null, cloneToken);
     }
 
     private static String uri(String slug) {
@@ -135,7 +135,7 @@ class BuildJobCloneTokenServiceTest {
         var timing = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 60);
         var config = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         BuildJobQueueItem job = new BuildJobQueueItem("job-2", "name", new BuildAgentDTO("agent-1", "address", "display"), BuildJobCloneTokenServiceFixture.PARTICIPATION_ID, 2L,
-                99L, 0, 1, null, otherExerciseInfo, timing, config, null, "bjct-x");
+                99L, 0, 1, null, otherExerciseInfo, timing, config, null, null, "bjct-x");
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(any())).thenReturn(exerciseWithId(3L));
 
         assertThat(service.getRepositoryIdentities(job)).isEmpty();

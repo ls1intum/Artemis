@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
@@ -211,11 +210,14 @@ public class BuildJobExecutionService {
         BuildResult buildResult;
 
         try {
-            boolean useSpecificAssignmentCommit = buildJob.buildConfig().assignmentCommitHash() != null && buildJob.repositoryInfo().triggeredByPushTo() != RepositoryType.TESTS
-                    && buildJob.repositoryInfo().triggeredByPushTo() != RepositoryType.AUXILIARY;
-            assignmentRepositoryPath = cloneRepository(assignmentRepositoryUri, useSpecificAssignmentCommit ? assignmentCommitHash : null, useSpecificAssignmentCommit,
-                    buildJob.id());
-            testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, null, false, buildJob.id()) : null;
+            // The assignment and the tests are checked out at the commits the build was triggered with, which are the ones the
+            // result reports: the containers of a multi-container build are graded together and must not run revisions a branch
+            // moved to in between. The trigger records the assignment repository's own head for every kind of push, a push to
+            // the tests or an auxiliary repository included.
+            String configuredAssignmentCommitHash = buildJob.buildConfig().assignmentCommitHash();
+            assignmentRepositoryPath = cloneRepository(assignmentRepositoryUri, configuredAssignmentCommitHash, configuredAssignmentCommitHash != null, buildJob.id());
+            String configuredTestCommitHash = buildJob.buildConfig().testCommitHash();
+            testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, configuredTestCommitHash, configuredTestCommitHash != null, buildJob.id()) : null;
 
             if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
                 solutionRepositoryUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri());
@@ -492,8 +494,8 @@ public class BuildJobExecutionService {
      * <p>
      * <b>Commit Hash Usage:</b>
      * The {@code commitHash} parameter is ONLY used when {@code checkout=true} to checkout a specific
-     * commit after cloning. For repositories that should use the default branch (test, solution, auxiliary),
-     * pass {@code null} for commitHash and {@code false} for checkout.
+     * commit after cloning. For repositories that should use the default branch (solution, auxiliary, and an assignment or
+     * test repository without a recorded commit), pass {@code null} for commitHash and {@code false} for checkout.
      *
      * @param repositoryUri the URI of the repository to clone
      * @param commitHash    the commit hash to checkout after cloning (only used if checkout=true);
@@ -527,7 +529,7 @@ public class BuildJobExecutionService {
 
         try {
             // Only checkout a specific commit if explicitly requested (checkout=true) and a commit hash is provided.
-            // For test/solution/auxiliary repos, checkout=false so they use the default branch.
+            // For solution/auxiliary repos, checkout=false so they use the default branch.
             if (checkout && commitHash != null) {
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }

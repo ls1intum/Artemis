@@ -286,6 +286,43 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(returnedResult.feedbacks()).anySatisfy(feedback -> assertThat(feedback.detailText()).isEqualTo("the tests were wrong"));
     }
 
+    /**
+     * A rebuild of the submission adds an automatic result that stays the latest one while its build is running. The answer to
+     * the complaint still updates the result the complaint is about.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void updateAssessmentAfterComplaint_whileARebuildOfTheSubmissionIsRunning() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student3");
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(true);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        request.post("/api/assessment/complaints", new ComplaintRequestDTO(automaticResult.getId(), "The tests are wrong", ComplaintType.COMPLAINT, Optional.empty()),
+                HttpStatus.CREATED);
+        // the rebuild's result: automatic and without a completion date until every container of the build has finished
+        Result runningRebuild = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission, false, false, 0D);
+        assertThat(runningRebuild.getId()).as("the running rebuild is the latest result").isGreaterThan(automaticResult.getId());
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        Complaint complaint = complaintRepo.findByResultId(automaticResult.getId()).orElseThrow();
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("the tests were wrong"));
+
+        Result answer = request.putWithResponseBody("/api/programming/programming-submissions/" + submission.getId() + "/assessment-after-complaint",
+                assessmentUpdateDTO(feedbacks, complaintResponse), Result.class, HttpStatus.OK);
+
+        assertThat(answer.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("the tests were wrong"));
+        assertThat(resultRepository.findById(runningRebuild.getId())).as("the running rebuild is left as it is").isPresent()
+                .hasValueSatisfying(result -> assertThat(result.getCompletionDate()).isNull());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_feedbackMarkedAsServerScored_creditsOutOfBounds() throws Exception {

@@ -123,6 +123,31 @@ class CourseOverviewExerciseVisibilityTest {
     }
 
     @Test
+    void keepsTheAssessmentWhileARebuildOfItsSubmissionIsRunning() {
+        // the build's result has no completion date until its last container has finished
+        prepare(exercise(ExerciseType.PROGRAMMING, PAST, PAST),
+                List.of(row(10L, PAST, true, null, 21L, true, PAST, AssessmentType.SEMI_AUTOMATIC), row(10L, PAST, true, null, 22L, true, null, AssessmentType.AUTOMATIC)));
+
+        var response = service.getCourseExercisesForOverview(course, student);
+
+        var submission = response.exercises().iterator().next().studentParticipations().iterator().next().submissions().iterator().next();
+        assertThat(submission.results()).singleElement().satisfies(result -> assertThat(result.id()).isEqualTo(21L));
+    }
+
+    @Test
+    void showsASubmissionWhoseOnlyResultIsStillBuildingWithoutAResult() {
+        prepare(exercise(ExerciseType.PROGRAMMING, null, null), List.of(row(10L, PAST, true, null, 22L, true, null, AssessmentType.AUTOMATIC)));
+
+        var response = service.getCourseExercisesForOverview(course, student);
+
+        var participation = response.exercises().iterator().next().studentParticipations().iterator().next();
+        assertThat(participation.submissions()).singleElement().satisfies(submission -> {
+            assertThat(submission.id()).isEqualTo(10L);
+            assertThat(submission.results()).isEmpty();
+        });
+    }
+
+    @Test
     void fallsBackToLatestAutomaticAssessmentUntilManualResultsAreReleased() {
         prepare(exercise(ExerciseType.PROGRAMMING, PAST, FUTURE), List.of(row(10L, PAST, true, null, 21L, true, PAST, AssessmentType.MANUAL),
                 row(10L, PAST, true, null, 19L, true, PAST, AssessmentType.AUTOMATIC), row(10L, PAST, true, null, 20L, true, PAST, AssessmentType.AUTOMATIC_ATHENA)));

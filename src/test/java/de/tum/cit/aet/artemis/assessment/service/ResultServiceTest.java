@@ -124,6 +124,16 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
+    void findLatestResultsWithAssessmentNoteSkipsUnfinishedResults() {
+        var submission = programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow();
+        var assessment = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusDays(1), submission);
+        // a multi-container build creates its result before the last container finishes, without a completion date
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+
+        assertThat(resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(Set.of(submission.getId()))).containsExactly(assessment);
+    }
+
+    @Test
     void shouldRejectNullManualResult() {
         assertThatIllegalArgumentException().isThrownBy(() -> resultService.createNewManualResult(null, true));
     }

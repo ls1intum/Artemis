@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.assessment.dto.BonusResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FinishedResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
@@ -172,6 +173,8 @@ public class ExamService {
 
     private final ResultRepository resultRepository;
 
+    private final FinishedResultRepository finishedResultRepository;
+
     private final SubmissionRepository submissionRepository;
 
     private final TutorLeaderboardService tutorLeaderboardService;
@@ -212,12 +215,12 @@ public class ExamService {
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
-            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, FinishedResultRepository finishedResultRepository,
+            SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, AuthorizationCheckService authorizationCheckService, BonusService bonusService,
+            ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository,
+            CourseScoreCalculationService courseScoreCalculationService, QuizResultService quizResultService, ExerciseRepository exerciseRepository,
+            QuizQuestionRepository quizQuestionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
         this.examRepository = examRepository;
@@ -230,6 +233,7 @@ public class ExamService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.resultRepository = resultRepository;
+        this.finishedResultRepository = finishedResultRepository;
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
@@ -468,7 +472,7 @@ public class ExamService {
 
         Set<Long> participationIds = participations.stream().map(DomainObject::getId).collect(Collectors.toSet());
 
-        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
+        return finishedResultRepository.findLatestResultsByParticipationIds(participationIds).stream()
                 .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
                 .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, _) -> r1));
     }

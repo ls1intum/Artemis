@@ -7,7 +7,7 @@
             <div class="flex gap-1! ms-auto!">
                 <button
                     type="button"
-                    [id]="'move-up-button-' + index()"
+                    [id]="idPrefix() + 'move-up-button-' + index()"
                     tumAetUiButton
                     [tumAetUiTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
                     tumAetUiTooltipPlacement="bottom"
@@ -23,7 +23,7 @@
 
                 <button
                     type="button"
-                    [id]="'move-down-button-' + index()"
+                    [id]="idPrefix() + 'move-down-button-' + index()"
                     tumAetUiButton
                     [tumAetUiTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
                     tumAetUiTooltipPlacement="bottom"
@@ -39,7 +39,7 @@
 
                 <button
                     type="button"
-                    [id]="'delete-phase-button-' + index()"
+                    [id]="idPrefix() + 'delete-phase-button-' + index()"
                     class="ms-2!"
                     tumAetUiButton
                     [tumAetUiTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.delete' | artemisTranslate"
@@ -60,10 +60,11 @@
     <div class="flex items-start gap-2! mb-2!">
         @if (!readonly()) {
             <div class="flex flex-col gap-1!">
-                <label [for]="'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
+                <label [for]="idPrefix() + 'phase-name-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.phaseName' | artemisTranslate }}</label>
                 <input
-                    [id]="'phase-name-input-' + index()"
-                    [tumAetUiInputId]="'phase-name-input-' + index()"
+                    [id]="idPrefix() + 'phase-name-input-' + index()"
+                    [tumAetUiInputId]="idPrefix() + 'phase-name-input-' + index()"
+                    data-testid="phase-name-input"
                     tumAetUiInput
                     tumAetUiInputSize="small"
                     [ngModel]="phase().name"
@@ -81,10 +82,10 @@
         @if (!readonly() || phase().condition !== 'ALWAYS') {
             <div class="flex flex-col gap-1!">
                 <div class="flex gap-1!">
-                    <label [for]="'phase-condition-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
+                    <label [for]="idPrefix() + 'phase-condition-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.condition' | artemisTranslate }}</label>
                 </div>
                 <tumaet-ui-select
-                    [inputId]="'phase-condition-input-' + index()"
+                    [inputId]="idPrefix() + 'phase-condition-input-' + index()"
                     size="small"
                     [options]="conditionOptions()"
                     optionLabel="label"
@@ -114,9 +115,14 @@
 
     @if (!readonly() || phase().forceRun) {
         <div class="flex gap-2! mb-2! items-center">
-            <tumaet-ui-checkbox [inputId]="'phase-force-run-input-' + index()" [ngModel]="phase().forceRun" (ngModelChange)="updateForceRun($event)" [disabled]="readonly()" />
+            <tumaet-ui-checkbox
+                [inputId]="idPrefix() + 'phase-force-run-input-' + index()"
+                [ngModel]="phase().forceRun"
+                (ngModelChange)="updateForceRun($event)"
+                [disabled]="readonly()"
+            />
             <div class="flex gap-1!">
-                <label [for]="'phase-force-run-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.forceRun"></label>
+                <label [for]="idPrefix() + 'phase-force-run-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.forceRun' | artemisTranslate }}</label>
                 <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.forceRunHelp" />
             </div>
         </div>
@@ -138,13 +144,15 @@
     @if (!readonly() || !!phase().resultPaths?.length) {
         <div class="flex gap-2! items-center">
             <tumaet-ui-checkbox
-                [inputId]="'phase-tests-expected-input-' + index()"
+                [inputId]="idPrefix() + 'phase-tests-expected-input-' + index()"
                 [ngModel]="!!phase().resultPaths?.length"
                 (ngModelChange)="updateTestsExpected($event)"
                 [disabled]="readonly()"
             />
             <div class="flex gap-1!">
-                <label [for]="'phase-tests-expected-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.testsExpected"></label>
+                <label [for]="idPrefix() + 'phase-tests-expected-input-' + index()">{{
+                    'artemisApp.programmingExercise.buildPhasesEditor.testsExpected' | artemisTranslate
+                }}</label>
                 <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
             </div>
         </div>
@@ -189,7 +197,7 @@
             <div>
                 <button
                     type="button"
-                    [id]="'add-result-path-button-' + index()"
+                    [id]="idPrefix() + 'add-result-path-button-' + index()"
                     tumAetUiButton
                     variant="text"
                     size="small"

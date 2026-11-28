@@ -136,8 +136,8 @@ public class ParticipationAuthorizationCheckService {
 
     /**
      * Determines the ids of the results the owning student may already see for the given participation. For an exam exercise no result is shown until the student may see it. For a
-     * course exercise a manual assessment only becomes visible once it is completed and the assessment due date has passed, while automatic results are always visible. This
-     * mirrors
+     * course exercise a manual assessment only becomes visible once it is completed and the assessment due date has passed, while automatic results are visible once their build
+     * has finished. This mirrors
      * the gate the dedicated retrieval queries apply and is owner-based, like them. The participation is only read here, never mutated, because its submissions' result collection
      * uses orphan removal.
      *
@@ -156,9 +156,9 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * A result is visible to the owning student when it is automatic (including Athena automatic feedback, which text and modeling exercises show before the assessment due date),
-     * or
-     * when it is a completed manual assessment whose exercise has released its manual results (no assessment due date, or one that has already passed).
+     * A result is visible to the owning student when it is automatic and its build has finished (see {@link Result#isBuildInProgress()}), when it is Athena automatic feedback,
+     * which text and modeling exercises show before the assessment due date,
+     * or when it is a completed manual assessment whose exercise has released its manual results (no assessment due date, or one that has already passed).
      *
      * @param result                the result to check, may be null
      * @param manualResultsReleased whether the exercise's manual results are already released
@@ -170,7 +170,7 @@ public class ParticipationAuthorizationCheckService {
         }
         AssessmentType assessmentType = result.getAssessmentType();
         boolean automatic = assessmentType == AssessmentType.AUTOMATIC || assessmentType == AssessmentType.AUTOMATIC_ATHENA;
-        return automatic || (result.getCompletionDate() != null && manualResultsReleased);
+        return (automatic && !result.isBuildInProgress()) || (result.getCompletionDate() != null && manualResultsReleased);
     }
 
     /**
