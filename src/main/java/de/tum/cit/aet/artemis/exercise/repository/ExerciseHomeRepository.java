@@ -15,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.base.InteractiveQueryTimeout;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /** Scalar counts and bounded candidates for Home; no content or participation graphs are hydrated. */
@@ -168,6 +169,7 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
         ZonedDateTime getQuizFeedbackDate();
     }
 
+    @InteractiveQueryTimeout
     @Query("SELECT MIN(CASE WHEN e.releaseDate > :asOf THEN e.releaseDate END) AS releaseDate, "
             + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND e.startDate > :asOf THEN e.startDate END) AS startDate, "
             + "MIN(CASE WHEN (e.releaseDate IS NULL OR e.releaseDate <= :asOf) AND " + DUE + " > :asOf THEN " + DUE + " END) AS dueDate, "
@@ -181,41 +183,50 @@ public interface ExerciseHomeRepository extends ArtemisJpaRepository<Exercise, L
             + ACCESSIBLE)
     Changes findChanges(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("dueSoon") ZonedDateTime dueSoon);
 
+    @InteractiveQueryTimeout
     @Query("SELECT MIN(b.startTime) " + FROM + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND b.startTime > :asOf AND " + RELEVANT_BATCH)
     @Nullable
     ZonedDateTime findNextQuizBatchStart(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf);
 
+    @InteractiveQueryTimeout
     @Query("SELECT CAST(MIN(FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS + ", b.startTime)) AS ZonedDateTime) " + FROM
             + " JOIN QuizBatch b ON b.quizExercise=q " + VISIBLE + " AND FUNCTION('timestampadd', SECOND, q.duration + " + QUIZ_GRACE_PERIOD_IN_SECONDS
             + ", b.startTime) > :asOf AND " + RELEVANT_BATCH)
     @Nullable
     ZonedDateTime findNextQuizBatchEnd(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf);
 
+    @InteractiveQueryTimeout
     @Query("SELECT COUNT(DISTINCT COALESCE(g.id, -e.id)) AS released, COUNT(DISTINCT CASE WHEN " + SUBMITTED + " THEN COALESCE(g.id, -e.id) END) AS submitted, "
             + "COUNT(DISTINCT CASE WHEN " + DUE + " > :asOf AND " + DUE + " <= :dueSoon THEN COALESCE(g.id, -e.id) END) AS due, " + "COUNT(DISTINCT CASE WHEN " + DUE
             + " > :asOf AND " + DUE + " <= :dueSoon AND " + SUBMITTED + " THEN COALESCE(g.id, -e.id) END) AS dueSubmitted " + FROM + VISIBLE)
     Counts countForHome(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("dueSoon") ZonedDateTime dueSoon);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + PUBLICATION + " AS activityAt " + FROM + VISIBLE + OPEN + " AND NOT " + SUBMITTED + " AND " + DUE + " <= :dueSoon ORDER BY " + DUE + ", e.id")
     List<Item> findDeadline(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("dueSoon") ZonedDateTime dueSoon,
             Pageable pageable);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + ACTIVITY + " AS activityAt " + FROM + VISIBLE + OPEN + " AND NOT " + SUBMITTED + " AND " + ACTIVITY + " IS NOT NULL ORDER BY " + ACTIVITY + " DESC, e.id")
     List<Item> findInProgress(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, Pageable pageable);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + FEEDBACK + " AS activityAt " + FROM + VISIBLE + " AND " + FEEDBACK + " > :since ORDER BY " + FEEDBACK + " DESC, e.id")
     List<Item> findFeedback(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("since") ZonedDateTime since,
             Pageable pageable);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + PUBLICATION + " AS activityAt " + FROM + VISIBLE + " AND " + PUBLICATION + " > :since AND " + PUBLICATION + " <= :asOf ORDER BY " + PUBLICATION + " DESC, e.id")
     List<Item> findUpdates(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("since") ZonedDateTime since,
             Pageable pageable);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + PUBLICATION + " AS activityAt " + FROM + VISIBLE + OPEN + " AND NOT " + SUBMITTED + " AND " + PUBLICATION + " > :since AND " + PUBLICATION
             + " <= :asOf ORDER BY " + PUBLICATION + " DESC, e.id")
     List<Item> findNewAction(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, @Param("since") ZonedDateTime since,
             Pageable pageable);
 
+    @InteractiveQueryTimeout
     @Query(SELECT + PUBLICATION + " AS activityAt " + FROM + VISIBLE + OPEN + " AND NOT " + SUBMITTED + " ORDER BY " + DUE + " NULLS LAST, e.id")
     List<Item> findAvailableAction(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") ZonedDateTime asOf, Pageable pageable);
 }

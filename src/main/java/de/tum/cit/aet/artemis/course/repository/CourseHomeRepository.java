@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.base.InteractiveQueryTimeout;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
@@ -48,6 +49,7 @@ public interface CourseHomeRepository extends ArtemisJpaRepository<Course, Long>
         boolean getLearningPathsEnabled();
     }
 
+    @InteractiveQueryTimeout
     @Query("""
             SELECT c.id AS id, c.title AS title, SUBSTRING(c.description, 1, 4000) AS description,
                 c.language AS language, c.startDate AS startDate, c.endDate AS endDate,
@@ -72,6 +74,7 @@ public interface CourseHomeRepository extends ArtemisJpaRepository<Course, Long>
         int getRank();
     }
 
+    @InteractiveQueryTimeout
     @Query("""
             SELECT u.id AS id, u.firstName AS firstName, u.lastName AS lastName, u.imageUrl AS imageUrl, u.login AS login,
             MIN(CASE r.role WHEN de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR THEN 0
