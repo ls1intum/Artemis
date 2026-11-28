@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { SidebarComponent } from './sidebar.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { ExerciseFilterOptions } from 'app/foundation/types/exercise-filter';

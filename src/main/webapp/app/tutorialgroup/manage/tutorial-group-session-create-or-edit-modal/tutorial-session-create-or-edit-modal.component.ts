@@ -2,16 +2,13 @@ import { Component, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputGroupAddonComponent,
-    TumAetUiInputGroupComponent,
-    TumAetUiInputNumberComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
 import dayjs from 'dayjs/esm';

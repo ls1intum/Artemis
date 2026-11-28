@@ -1,4 +1,5 @@
-import { TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Component, computed, input } from '@angular/core';

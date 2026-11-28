@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 

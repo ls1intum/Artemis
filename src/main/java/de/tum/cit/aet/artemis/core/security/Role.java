@@ -34,7 +34,7 @@ public enum Role {
     /**
      * creates a role from a string
      *
-     * @param courseGroup the group of the course
+     * @param courseGroup the role segment of a course path: students, tutors, editors or instructors
      * @return the corresponding role
      */
     public static Role fromString(String courseGroup) {

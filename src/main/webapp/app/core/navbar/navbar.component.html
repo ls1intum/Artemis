@@ -1,7 +1,10 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isIconMenuCompact(), 'in-menu': iconsMovedToMenu() }">
         @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
-            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+            <!-- Deferred: the tray pulls in the markdown renderer, highlight.js, KaTeX and the exercise wizard, none of which a visitor of the sign-in page needs. -->
+            @defer {
+                <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+            }
         }
         @if (perspectiveSwitchLinks(); as perspectiveSwitchLinks) {
             <div id="perspective-switch" class="perspective-switch">
@@ -23,7 +26,9 @@
             </div>
         }
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
-            <jhi-global-search-navbar />
+            @defer {
+                <jhi-global-search-navbar />
+            }
         }
         @if (!currAccount() && languages && languages.length > 1) {
             <div class="cursor-pointer">
@@ -47,7 +52,9 @@
         @if (currentCourse(); as course) {
             @if (course.id && !isExamActive() && !isExamStarted()) {
                 <div class="flex items-center">
-                    <jhi-course-notification-overview [courseId]="course.id" />
+                    @defer {
+                        <jhi-course-notification-overview [courseId]="course.id" />
+                    }
                 </div>
             }
         }

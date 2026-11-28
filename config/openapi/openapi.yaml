@@ -1932,6 +1932,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/VariantJobStart'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/select:
+    post:
+      tags: [hyperion-quiz-question-pool]
+      operationId: selectQuizQuestionPoolQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionPoolSelectionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolSelection'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/build:
     post:
       tags: [hyperion-quiz-question-pool]
@@ -3697,6 +3717,23 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/selection-candidates:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolSelectionCandidates
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/QuizQuestionPoolSelectionCandidate'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/questions:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -5946,6 +5983,36 @@ components:
         ownerNodeId: {type: string}
         startedAt: {type: string, format: date-time}
         ownerLeftCluster: {type: boolean}
+    QuizQuestionPoolSelectionRequest:
+      type: object
+      description: A request to draw questions from the quiz question pool for a new
+        quiz
+      properties:
+        competencyIds:
+          type: array
+          description: Ids of the competencies the quiz covers
+          items: {type: integer, format: int64}
+          minItems: 1
+        lectureUnitIds:
+          type: array
+          description: Ids of the lecture units to draw from; every linked unit when
+            absent
+          items: {type: integer, format: int64}
+        count: {type: integer, format: int32, description: Number of questions to
+            draw, maximum: 100, minimum: 1}
+        questionTypes:
+          type: array
+          description: Question types to draw; every type when absent
+          items:
+            type: string
+            enum: [single-choice, multiple-choice, true-false]
+        difficulties:
+          type: array
+          description: Difficulties to draw; every difficulty when absent
+          items:
+            type: string
+            enum: [EASY, MEDIUM, HARD]
+      required: [competencyIds, count]
     CreateOrUpdateTutorialGroupSessionRequest:
       type: object
       properties:
@@ -8026,6 +8093,24 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    QuizQuestionPoolSelectionCandidate:
+      type: object
+      description: How many questions a draw may take from one cell of the quiz question
+        pool
+      properties:
+        competencyId: {type: integer, format: int64, description: Id of the competency}
+        lectureUnitId: {type: integer, format: int64, description: Id of the lecture
+            unit}
+        questionType:
+          type: string
+          description: Question type
+          enum: [single-choice, multiple-choice, true-false]
+        difficulty:
+          type: string
+          description: Difficulty
+          enum: [EASY, MEDIUM, HARD]
+        count: {type: integer, format: int64, description: Questions a draw may take}
+      required: [difficulty, questionType]
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -8893,6 +8978,7 @@ components:
         connected: {type: boolean}
         pendingRef: {type: string}
         pendingSince: {type: string, format: date-time}
+        transferAccepted: {type: boolean}
         converting: {type: boolean}
         progress: {type: integer, format: int32}
         attachedRef: {type: string}
@@ -8930,6 +9016,21 @@ components:
           enum: [GENERATE, ADAPT]
         exerciseTitle: {type: string}
         courseId: {type: integer, format: int64}
+    QuizQuestionPoolSelection:
+      type: object
+      description: The questions one draw took from the quiz question pool
+      properties:
+        questions:
+          type: array
+          description: The drawn questions in draw order
+          items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+        requested: {type: integer, format: int32, description: How many questions
+            the draw asked for}
+        competencyIdsWithoutQuestions:
+          type: array
+          description: Requested competencies for which the pool holds no eligible
+            question
+          items: {type: integer, format: int64}
     EntityIdRef:
       type: object
       properties:

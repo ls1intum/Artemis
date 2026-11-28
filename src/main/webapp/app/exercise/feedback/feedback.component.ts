@@ -1,13 +1,9 @@
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiBarChartComponent,
-    TumAetUiBarChartConfig,
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiDialogRef,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, DestroyRef, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';

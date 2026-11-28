@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { TestCaseStats } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { round } from 'app/foundation/util/utils';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',

@@ -83,7 +83,8 @@
                     "emptyDescription": "Fill in the configuration on the left and click Generate to preview AI-generated quiz questions.",
                     "correct": "CORRECT",
                     "oneResultGenerated": "1 result generated",
-                    "multipleResultsGenerated": "{{ count }} results generated"
+                    "multipleResultsGenerated": "{{ count }} results generated",
+                    "explanation": "Explanation"
                 }
             },
             "detail": {
