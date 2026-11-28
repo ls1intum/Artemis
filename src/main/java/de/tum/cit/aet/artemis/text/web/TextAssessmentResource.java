@@ -452,10 +452,8 @@ public class TextAssessmentResource extends AssessmentResource {
                         .build();
             }
 
-            textSubmission = textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission.getId(), correctionRound);
-            // reconnect with participation
-            textSubmission.setParticipation(participation);
-            // set it since it has changed
+            // If another tutor creates a result after this snapshot, the repository rejects the insert under the submission lock.
+            textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
             result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
 

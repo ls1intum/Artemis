@@ -125,6 +125,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
@@ -220,6 +221,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Autowired
     private StudentExamService studentExamService;
+
+    @Autowired
+    private SubmissionService submissionService;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -1750,6 +1754,42 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 }
             }
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAutomaticExamFeedbackPreservesResultCreatedAfterSubmissionWasLoaded() throws Exception {
+        var studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        var participation = studentParticipationRepository
+                .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises()).stream()
+                .filter(candidate -> candidate.getExercise() instanceof TextExercise).findFirst().orElseThrow();
+        var submission = participation.findLatestSubmission().orElseThrow();
+        assertThat(submission.getResults()).isEmpty();
+        assertThat(submission.isSubmitted()).isFalse();
+
+        // The tutor commits after the exam assessment loaded the submission.
+        var tutorResult = new Result();
+        tutorResult.setSubmission(submission);
+        tutorResult.setExerciseId(participation.getExercise().getId());
+        tutorResult.setCorrectionRound(0);
+        tutorResult.setAssessmentType(AssessmentType.MANUAL);
+        long tutorResultId = resultRepository.save(tutorResult).getId();
+
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        submissionService.addResultWithFeedbackByCorrectionRound(participation, instructor, 0D, "Empty submission", 0);
+        var submissionAfterOccupiedRound = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(submissionAfterOccupiedRound.isSubmitted()).isTrue();
+        assertThat(submissionAfterOccupiedRound.getResults()).extracting(Result::getId).containsExactly(tutorResultId);
+
+        submissionService.addResultWithFeedbackByCorrectionRound(participation, instructor, 0D, "Empty submission", 1);
+
+        var storedSubmission = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(storedSubmission.isSubmitted()).isTrue();
+        assertThat(storedSubmission.getResults()).hasSize(2);
+        assertThat(storedSubmission.getResultForCorrectionRound(0).getId()).isEqualTo(tutorResultId);
+        var automaticResult = resultRepository.findByIdWithEagerFeedbacks(storedSubmission.getResultForCorrectionRound(1).getId()).orElseThrow();
+        assertThat(automaticResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(automaticResult.getFeedbacks()).extracting(Feedback::getDetailText).containsExactly("Empty submission");
     }
 
     @Test

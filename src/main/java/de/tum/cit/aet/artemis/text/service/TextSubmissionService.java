@@ -17,9 +17,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ManualResultCreationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -59,9 +58,9 @@ public class TextSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
             ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
+            Optional<AthenaApi> athenaApi, ManualResultCreationRepository manualResultCreationRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, manualResultCreationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -195,8 +194,18 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission lockTextSubmissionToBeAssessed(long textSubmissionId, int correctionRound) {
         // Resuming an assessment must retain its private note as well as its feedback. Assessment preparation loads the text blocks separately.
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(textSubmissionId);
-        lockSubmission(textSubmission, correctionRound);
+        lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
         return textSubmission;
+    }
+
+    /**
+     * Locks a submission already loaded with its results and assessors, using the same snapshot as the caller's existing-result checks.
+     *
+     * @param textSubmission  the submission to lock
+     * @param correctionRound the round to lock
+     */
+    public void lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
+        lockSubmission(textSubmission, correctionRound);
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
