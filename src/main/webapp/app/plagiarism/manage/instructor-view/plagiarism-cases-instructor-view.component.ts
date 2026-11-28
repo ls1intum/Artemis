@@ -18,13 +18,13 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
-    styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,
@@ -37,6 +37,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         TumAetUiButtonDirective,
+        TumAetUiCardComponent,
     ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
@@ -50,7 +51,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     readonly groupedPlagiarismCases = signal<GroupedPlagiarismCases>({});
     readonly exercisesWithPlagiarismCases = signal<PlagiarismCaseExercise[]>([]);
 
-    exerciseWithPlagCasesElements = viewChildren<ElementRef>('plagExerciseElement');
+    exerciseWithPlagCasesElements = viewChildren('plagExerciseElement', { read: ElementRef });
 
     // method called as html template variable, angular only recognises reference variables in html if they are a property
     // of the corresponding component class

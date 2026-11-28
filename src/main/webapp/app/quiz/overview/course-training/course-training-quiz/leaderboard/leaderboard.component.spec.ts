@@ -59,6 +59,17 @@ describe('Leaderboard', () => {
         fixture.detectChanges();
     });
 
+    describe('empty state', () => {
+        it('should show the empty state only when the leaderboard has no entries', () => {
+            expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+            fixture.componentRef.setInput('leaderboard', []);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+        });
+    });
+
     describe('isUserInLeaderboard', () => {
         it('should return true when current user is in leaderboard', () => {
             expect(component.isUserInLeaderboard()).toBe(true);

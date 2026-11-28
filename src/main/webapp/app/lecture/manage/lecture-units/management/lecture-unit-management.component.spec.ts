@@ -9,19 +9,21 @@ import { Component, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { LectureUnitCombinedStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import type { LectureUnitCombinedStatus } from 'app/openapi/model/lecture-unit-combined-status';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { faCheck, faFile, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFile, faFileCircleQuestion, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -32,6 +34,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { TumLiveUploadService, TumLiveUploadedUnit } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
@@ -76,6 +79,7 @@ describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
+    let lectureUnitApi: LectureUnitApi;
     let alertService: AlertService;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
@@ -106,9 +110,11 @@ describe('LectureUnitManagementComponent', () => {
             ],
             providers: [
                 MockProvider(LectureUnitService),
+                MockProvider(LectureUnitApi),
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 MockProvider(AttachmentVideoUnitService),
+                MockProvider(TumLiveUploadService, { getUploadedUnits: () => of([{ lectureId: 1, lectureUnitId: 3 }]) }),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -125,11 +131,12 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
         lectureUnitService = TestBed.inject(LectureUnitService);
+        lectureUnitApi = TestBed.inject(LectureUnitApi);
         alertService = TestBed.inject(AlertService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findWithDetails');
-        deleteLectureUnitSpy = vi.spyOn(lectureUnitService, 'delete');
-        updateOrderSpy = vi.spyOn(lectureUnitService, 'updateOrder');
+        deleteLectureUnitSpy = vi.spyOn(lectureUnitApi, 'deleteLectureUnit');
+        updateOrderSpy = vi.spyOn(lectureUnitApi, 'updateLectureUnitsOrder');
         textUnit = new TextUnit();
         textUnit.id = 0;
         exerciseUnit = new ExerciseUnit();
@@ -142,20 +149,19 @@ describe('LectureUnitManagementComponent', () => {
         lecture.id = 1;
         lecture.course = course;
         lecture.lectureUnits = [textUnit, exerciseUnit, attachmentVideoUnit];
-        const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
-        updateOrderSpy.mockReturnValue(returnValue);
-        deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+        findLectureWithDetailsSpy.mockReturnValue(of(lecture));
+        updateOrderSpy.mockReturnValue(of([]));
+        deleteLectureUnitSpy.mockReturnValue(of(undefined));
         // Mock the bulk status endpoint
         const combinedStatuses: LectureUnitCombinedStatus[] = [
             {
                 lectureUnitId: attachmentVideoUnit.id!,
-                processingPhase: ProcessingPhase.DONE,
+                processingPhase: 'DONE',
                 retryCount: 0,
-                transcriptionStatus: TranscriptionStatus.COMPLETED,
+                transcriptionStatus: 'COMPLETED',
             },
         ];
-        vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
+        vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
         lectureUnitManagementComponentFixture.detectChanges();
     });
 
@@ -184,6 +190,40 @@ describe('LectureUnitManagementComponent', () => {
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
 
+    it('asks about the TUM.Live video only for units that show an uploaded one, and passes the answer on', () => {
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([3]));
+
+        lectureUnitManagementComponent.deleteLectureUnit(3, { deleteTumLiveRecordings: true });
+        lectureUnitManagementComponent.deleteLectureUnit(1);
+
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(3, expect.any(Number), true);
+        expect(deleteLectureUnitSpy).toHaveBeenCalledWith(1, expect.any(Number), false);
+    });
+
+    it('reads the uploaded TUM.Live videos again on request, ignores an older answer, and keeps them when reading fails', () => {
+        const tumLiveUploadService = TestBed.inject(TumLiveUploadService);
+        const older = new Subject<TumLiveUploadedUnit[]>();
+        const newer = new Subject<TumLiveUploadedUnit[]>();
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValueOnce(older).mockReturnValueOnce(newer);
+
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        newer.next([{ lectureId: 1, lectureUnitId: 4 }]);
+        older.next([]);
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Since it is not known which units have a video in TUM.Live now, deleting any file or video unit asks about it.
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 9, type: LectureUnitType.ATTACHMENT_VIDEO } as LectureUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 10, type: LectureUnitType.TEXT } as LectureUnit)).toBe(false);
+    });
+
     it('should show loadData on delete', () => {
         const loadDataSpy = vi.spyOn(lectureUnitManagementComponent, 'loadData');
         lectureUnitManagementComponent.deleteLectureUnit(1);
@@ -201,7 +241,7 @@ describe('LectureUnitManagementComponent', () => {
 
     it('should handle lecture with no lectureUnits and set isStatusLoading to false', () => {
         const lectureWithNoUnits = { ...lecture, lectureUnits: undefined };
-        findLectureWithDetailsSpy.mockReturnValue(of(new HttpResponse({ body: lectureWithNoUnits, status: 200 })));
+        findLectureWithDetailsSpy.mockReturnValue(of(lectureWithNoUnits));
         lectureUnitManagementComponent.isStatusLoading.set(true);
 
         lectureUnitManagementComponent.loadData();
@@ -301,12 +341,12 @@ describe('LectureUnitManagementComponent', () => {
             const combinedStatuses: LectureUnitCombinedStatus[] = [
                 {
                     lectureUnitId: attachmentVideoUnit.id!,
-                    processingPhase: ProcessingPhase.DONE,
+                    processingPhase: 'DONE',
                     retryCount: 0,
-                    transcriptionStatus: TranscriptionStatus.COMPLETED,
+                    transcriptionStatus: 'COMPLETED',
                 },
             ];
-            const statusSpy = vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
+            const statusSpy = vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
 
             lectureUnitManagementComponent.loadData();
 
@@ -331,12 +371,12 @@ describe('LectureUnitManagementComponent', () => {
             const combinedStatuses: LectureUnitCombinedStatus[] = [
                 {
                     lectureUnitId: attachmentVideoUnit.id!,
-                    processingPhase: ProcessingPhase.DONE,
+                    processingPhase: 'DONE',
                     retryCount: 0,
-                    transcriptionStatus: TranscriptionStatus.COMPLETED,
+                    transcriptionStatus: 'COMPLETED',
                 },
             ];
-            const statusSpy = vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
+            const statusSpy = vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
 
             lectureUnitManagementComponent.loadData();
 
@@ -347,7 +387,7 @@ describe('LectureUnitManagementComponent', () => {
         it('keeps a live processing update that races ahead of the initial bulk load', () => {
             // Drive the initial bulk load through a Subject so it stays pending while a WebSocket update lands.
             const statuses$ = new Subject<LectureUnitCombinedStatus[]>();
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(statuses$.asObservable());
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(statuses$.asObservable());
             const fixture = TestBed.createComponent(LectureUnitManagementComponent);
             const component = fixture.componentInstance;
             fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses subscribes, still pending
@@ -361,7 +401,7 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             // The initial bulk response now resolves with a stale IDLE snapshot.
-            statuses$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+            statuses$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: 'IDLE', retryCount: 0 }]);
 
             // The initial-load merge preserves the fresher live phase.
             expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.INGESTING);
@@ -372,7 +412,7 @@ describe('LectureUnitManagementComponent', () => {
             // init, so this happens whenever a user acts twice in quick succession.
             const first$ = new Subject<LectureUnitCombinedStatus[]>();
             const second$ = new Subject<LectureUnitCombinedStatus[]>();
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValueOnce(first$.asObservable()).mockReturnValueOnce(second$.asObservable());
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValueOnce(first$.asObservable()).mockReturnValueOnce(second$.asObservable());
 
             const fixture = TestBed.createComponent(LectureUnitManagementComponent);
             const component = fixture.componentInstance;
@@ -380,12 +420,12 @@ describe('LectureUnitManagementComponent', () => {
             component.loadData(); // load #2 -> supersedes #1
 
             // The newer request answers first with the current truth.
-            second$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]);
+            second$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: 'DONE', retryCount: 0 }]);
             expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
 
             // The older request answers second, describing the lecture as it was before. Arrival order must not
             // decide the winner: its stale snapshot has to be dropped rather than replacing the fresher map.
-            first$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+            first$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: 'IDLE', retryCount: 0 }]);
             expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
@@ -399,7 +439,7 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: 'DONE', retryCount: 0 }]));
 
             lectureUnitManagementComponent.loadData();
 
@@ -409,7 +449,7 @@ describe('LectureUnitManagementComponent', () => {
         it('replaces authoritatively on a refresh even if the initial bulk load failed', () => {
             // The very first bulk load errors; the initial-load window must still close so a later
             // refresh replaces rather than merges forever.
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             const fixture = TestBed.createComponent(LectureUnitManagementComponent);
             const component = fixture.componentInstance;
             fixture.detectChanges(); // ngOnInit -> loadData -> loadAllStatuses errors
@@ -423,7 +463,7 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             // A later refresh returns the authoritative DONE and must win.
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]));
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(of([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: 'DONE', retryCount: 0 }]));
             component.loadData();
 
             expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
@@ -486,7 +526,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should handle error when bulk status endpoint fails', () => {
-            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(lectureUnitApi, 'getUnitStatuses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             lectureUnitManagementComponent.isStatusLoading.set(true);
             lectureUnitManagementComponent.loadData();
@@ -496,6 +536,10 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('isAwaitingProcessing', () => {
+        beforeEach(() => {
+            attachmentVideoUnit.videoSource = 'https://tum.live/w/algo/1';
+        });
+
         it('should return true when status is IDLE and course is active', () => {
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 },
@@ -514,6 +558,16 @@ describe('LectureUnitManagementComponent', () => {
             currentLecture.course!.endDate = undefined;
             lectureUnitManagementComponent.lecture.set(currentLecture);
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(true);
+        });
+
+        it('should return false for a unit without a file and a video', () => {
+            attachmentVideoUnit.videoSource = undefined;
+            lectureUnitManagementComponent.processingStatus.set({});
+            const currentLecture = lectureUnitManagementComponent.lecture()!;
+            currentLecture.course!.startDate = undefined;
+            currentLecture.course!.endDate = undefined;
+            lectureUnitManagementComponent.lecture.set(currentLecture);
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBe(false);
         });
 
         it('should return false when processing is in progress', () => {
@@ -562,14 +616,14 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('retryProcessing', () => {
-        it('should call retryProcessing on lectureUnitService and show success message', () => {
+        it('should call retryProcessing on lectureUnitApi and show success message', () => {
             const returnedStatus: LectureUnitCombinedStatus = {
                 lectureUnitId: attachmentVideoUnit.id!,
-                processingPhase: ProcessingPhase.TRANSCRIBING,
+                processingPhase: 'TRANSCRIBING',
                 retryCount: 1,
-                transcriptionStatus: TranscriptionStatus.PENDING,
+                transcriptionStatus: 'PENDING',
             };
-            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(returnedStatus));
+            const retryProcessingSpy = vi.spyOn(lectureUnitApi, 'retryProcessing').mockReturnValue(of(returnedStatus));
             const alertSpy = vi.spyOn(alertService, 'success');
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
@@ -586,7 +640,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not call retryProcessing if lectureId is missing', () => {
-            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
+            const retryProcessingSpy = vi.spyOn(lectureUnitApi, 'retryProcessing');
             // Set resolvedLectureId to undefined via private property access
             (lectureUnitManagementComponent as any).resolvedLectureId = undefined;
 
@@ -596,7 +650,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not call retryProcessing if lectureUnit.id is missing', () => {
-            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing');
+            const retryProcessingSpy = vi.spyOn(lectureUnitApi, 'retryProcessing');
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
             lectureUnitManagementComponent.ngOnInit();
             const unitWithoutId = new AttachmentVideoUnit();
@@ -608,7 +662,7 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should handle error when retryProcessing fails', () => {
             const error = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
-            vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(throwError(() => error));
+            vi.spyOn(lectureUnitApi, 'retryProcessing').mockReturnValue(throwError(() => error));
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
             lectureUnitManagementComponent.ngOnInit();
@@ -626,11 +680,11 @@ describe('LectureUnitManagementComponent', () => {
             // Mock retry returning null transcriptionStatus (transcription was deleted during retry)
             const returnedStatus: LectureUnitCombinedStatus = {
                 lectureUnitId: attachmentVideoUnit.id!,
-                processingPhase: ProcessingPhase.TRANSCRIBING,
+                processingPhase: 'TRANSCRIBING',
                 retryCount: 0,
                 transcriptionStatus: undefined,
             };
-            vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(returnedStatus));
+            vi.spyOn(lectureUnitApi, 'retryProcessing').mockReturnValue(of(returnedStatus));
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
             lectureUnitManagementComponent.ngOnInit();
@@ -650,7 +704,7 @@ describe('LectureUnitManagementComponent', () => {
             createdUnit.id = 42;
             createdUnit.name = 'Test File';
 
-            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
             const successSpy = vi.spyOn(alertService, 'success');
 
             lectureUnitManagementComponent.lecture.set(lecture);
@@ -670,7 +724,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             lectureUnitManagementComponent.lecture.set(lecture);
             // resolvedLectureId is already set from route in ngOnInit
@@ -698,7 +752,7 @@ describe('LectureUnitManagementComponent', () => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount;
-                return of(new HttpResponse({ body: unit, status: 201 }));
+                return of(unit);
             });
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -764,7 +818,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             // Lecture without course
             const lectureWithoutCourse = new Lecture();
@@ -782,7 +836,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             lectureUnitManagementComponent.lecture.set(lecture);
             // resolvedLectureId is already set from route in ngOnInit
@@ -805,7 +859,7 @@ describe('LectureUnitManagementComponent', () => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount * 10; // 10, 20, 30
-                return of(new HttpResponse({ body: unit, status: 201 }));
+                return of(unit);
             });
 
             lectureUnitManagementComponent.lecture.set(lecture);
@@ -837,6 +891,7 @@ describe('LectureUnitManagementComponent', () => {
             ['another file', withAttachment('attachments/sheet.zip'), 'file', faFile],
             ['a video', withAttachment(undefined, 'https://live.rbg.tum.de/w/1'), 'video', faFileVideo],
             ['a file and a video', withAttachment('attachments/slides.pdf', 'https://live.rbg.tum.de/w/1'), 'fileAndVideo', faFileVideo],
+            ['neither a file nor a video yet', withAttachment(undefined), 'empty', faFileCircleQuestion],
         ])('should name a file unit with %s by what it holds', (_, unit, kind, icon) => {
             expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
             expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);
@@ -951,7 +1006,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should keep the list and the form of the edited unit while the lecture loads again', () => {
-            const reload = new Subject<HttpResponse<Lecture>>();
+            const reload = new Subject<Lecture>();
             findLectureWithDetailsSpy.mockReturnValue(reload);
             const editor = queryAll('lecture-unit-editor')[0].nativeElement;
 
@@ -963,7 +1018,7 @@ describe('LectureUnitManagementComponent', () => {
             reloadedLecture.id = 1;
             reloadedLecture.course = course;
             reloadedLecture.lectureUnits = [exerciseUnit, textUnit, attachmentVideoUnit].map((unit) => deepClone(unit));
-            reload.next(new HttpResponse({ body: reloadedLecture, status: 200 }));
+            reload.next(reloadedLecture);
             reload.complete();
             hostFixture.detectChanges();
 

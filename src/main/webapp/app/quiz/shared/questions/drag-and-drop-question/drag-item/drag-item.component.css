@@ -1,0 +1,53 @@
+.drag-item {
+    background: transparent;
+    border: none;
+    position: relative;
+    max-width: 360px;
+    margin: 5px 4px;
+}
+
+.drag-item img {
+    max-width: 160px;
+    max-height: 160px;
+}
+
+.drag-item.no-click * {
+    cursor: default !important;
+    user-select: none;
+}
+
+.drag-item .drag-item-picture {
+    cursor: move;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+.drag-item .drag-item-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    width: 100%;
+    white-space: pre-wrap;
+}
+
+.drag-item .drag-item-text div {
+    display: flex;
+    overflow: hidden;
+}
+
+.drag-item .drag-item-text span {
+    border: 1px solid var(--tumaet-ui-border-color);
+    background: var(--tumaet-ui-content-background);
+    color: var(--tumaet-ui-text-color);
+    padding: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cdk-drag-preview img {
+    max-height: 158px;
+    max-width: 160px;
+}

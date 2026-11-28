@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,8 +13,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     template: `
         <input
             [attr.aria-label]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
+            [placeholder]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
             tumAetUiInput
-            type="text"
+            tumAetUiInputSize="small"
+            class="max-w-56 min-w-24 flex-1"
+            type="search"
             name="searchTerm"
             id="field_searchTerm"
             [(ngModel)]="searchTerm"

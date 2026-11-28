@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
@@ -14,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-grade-key-overview',
     templateUrl: './grading-key-overview.component.html',
-    styleUrls: ['./grading-key-overview.scss'],
+    styleUrls: ['./grading-key-overview.css'],
     imports: [TranslateDirective, GradingKeyTableComponent, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class GradingKeyOverviewComponent implements OnInit {

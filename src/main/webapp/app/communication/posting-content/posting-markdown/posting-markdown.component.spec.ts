@@ -3,9 +3,8 @@ import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { PostingContentPart, ReferenceType } from 'app/communication/communication.util';
-import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { PostingMarkdownComponent, postingReferencePlaceholder } from 'app/communication/posting-content/posting-markdown/posting-markdown.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileService } from 'app/foundation/service/file.service';
@@ -43,10 +42,9 @@ describe('PostingMarkdownComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
             ],
-        })
-            .overrideComponent(PostingContentPartComponent, { set: { providers: [{ provide: DialogService, useValue: { open: vi.fn() } }] } })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(PostingMarkdownComponent);
     });
 

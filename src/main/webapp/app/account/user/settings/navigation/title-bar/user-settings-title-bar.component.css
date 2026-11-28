@@ -1,0 +1,11 @@
+#user-settings-title-bar {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: var(--title-bar-height);
+    padding-block: var(--title-bar-padding-block);
+    flex-wrap: nowrap;
+    container: title-bar / inline-size;
+}

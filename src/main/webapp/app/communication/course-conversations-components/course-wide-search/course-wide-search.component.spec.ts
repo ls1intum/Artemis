@@ -12,7 +12,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { BehaviorSubject } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -87,12 +86,7 @@ describe('CourseWideSearchComponent', () => {
                 MockDirective(TranslateDirective),
                 InfiniteScrollStubDirective,
             ],
-            providers: [
-                MockProvider(CourseConversationsService),
-                MockProvider(CommunicationService),
-                MockProvider(DialogService),
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(CourseConversationsService), MockProvider(CommunicationService), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         TestBed.overrideComponent(CourseWideSearchComponent, {
@@ -125,6 +119,13 @@ describe('CourseWideSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         component.isFetchingPosts.set(false);
     });
+
+    /** Toggles a filter checkbox the way a user does: the native input changes and reports it. */
+    function toggleCheckbox(name: string, checked: boolean) {
+        const checkbox = getElement(fixture.debugElement, `input[name=${name}]`) as HTMLInputElement;
+        checkbox.checked = checked;
+        checkbox.dispatchEvent(new Event('change'));
+    }
 
     afterEach(() => {
         vi.useRealTimers();
@@ -541,13 +542,7 @@ describe('CourseWideSearchComponent', () => {
 
     it('Should update filter setting when filterToCourseWide checkbox is checked', () => {
         fixture.changeDetectorRef.detectChanges();
-        component.formGroup.patchValue({
-            filterToCourseWide: true,
-            filterToUnresolved: false,
-            filterToAnsweredOrReacted: false,
-        });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToCourseWide]');
-        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        toggleCheckbox('filterToCourseWide', true);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBe(true);
@@ -569,6 +564,7 @@ describe('CourseWideSearchComponent', () => {
         const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
         expect(filterResolvedCheckbox.disabled).toBe(true);
         expect(filterResolvedCheckbox.value).toBe(false);
+        expect((getElement(fixture.debugElement, 'input[name=filterToCourseWide]') as HTMLInputElement).disabled).toBe(true);
     });
 
     it('should re-enable the filterToCourseWide if no conversation is selected', () => {
@@ -585,17 +581,12 @@ describe('CourseWideSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(filterResolvedCheckbox.disabled).toBe(false);
+        expect((getElement(fixture.debugElement, 'input[name=filterToCourseWide]') as HTMLInputElement).disabled).toBe(false);
     });
 
     it('Should update filter setting when filterToUnresolved checkbox is checked', () => {
         fixture.changeDetectorRef.detectChanges();
-        component.formGroup.patchValue({
-            filterToCourseWide: false,
-            filterToUnresolved: true,
-            filterToAnsweredOrReacted: false,
-        });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        toggleCheckbox('filterToUnresolved', true);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBe(false);
@@ -605,12 +596,7 @@ describe('CourseWideSearchComponent', () => {
 
     it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', () => {
         fixture.changeDetectorRef.detectChanges();
-        component.formGroup.patchValue({
-            filterToUnresolved: false,
-            filterToAnsweredOrReacted: true,
-        });
-        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
-        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        toggleCheckbox('filterToAnsweredOrReacted', true);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBe(false);
@@ -619,14 +605,8 @@ describe('CourseWideSearchComponent', () => {
 
     it('Should update filter setting when all filter checkboxes are checked', () => {
         fixture.changeDetectorRef.detectChanges();
-        component.formGroup.patchValue({
-            filterToUnresolved: true,
-            filterToAnsweredOrReacted: true,
-        });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
-        filterResolvedCheckbox.dispatchEvent(new Event('change'));
-        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
+        toggleCheckbox('filterToUnresolved', true);
+        toggleCheckbox('filterToAnsweredOrReacted', true);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBe(true);

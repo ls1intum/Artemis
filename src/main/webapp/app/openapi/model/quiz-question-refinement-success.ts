@@ -8,11 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GeneratedQuizQuestion } from './generated-quiz-question';
 
 /**
  * Successful refinement result containing the refined question and an explanation of the changes
  */
 export interface QuizQuestionRefinementSuccess {
+    /** The refined quiz question */
+    question: GeneratedQuizQuestion;
     /** Brief explanation of what was changed during refinement */
     reasoning: string;
     type: QuizQuestionRefinementSuccessTypeEnum;

@@ -1,6 +1,6 @@
 @let audience = targetAudience();
-<div class="feature-overview mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8" data-testid="feature-overview">
-    <header class="flex flex-col items-center gap-3 text-center">
+<div class="feature-overview mx-auto flex max-w-5xl flex-col gap-10 px-6 py-8" data-testid="feature-overview">
+    <header class="flex flex-col items-center gap-4 text-center">
         <span class="feature-overview__eyebrow text-sm text-muted-color" jhiTranslate="featureOverview.title"></span>
         <h1 [jhiTranslate]="'featureOverview.' + audience + '.pageTitle'"></h1>
         <nav class="flex flex-wrap justify-center gap-2" [attr.aria-label]="'featureOverview.audience.label' | artemisTranslate">
@@ -27,14 +27,14 @@
         </nav>
     </header>
 
-    <section class="flex flex-col gap-4">
+    <section class="flex flex-col gap-6">
         <h2 jhiTranslate="featureOverview.overview"></h2>
-        <ul class="feature-overview__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul class="feature-overview__list grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @for (feature of features(); track feature.key) {
                 <li>
                     <button
                         type="button"
-                        class="feature-overview__card flex h-full w-full flex-col gap-2 text-start"
+                        class="feature-overview__card flex h-full w-full flex-col gap-2 text-left"
                         (click)="scrollToFeature(feature.key)"
                         [attr.data-testid]="'feature-card-' + feature.key"
                     >
@@ -49,10 +49,10 @@
         </ul>
     </section>
 
-    <section class="flex flex-col gap-4">
+    <section class="flex flex-col gap-6">
         <h2 jhiTranslate="featureOverview.featureDetails"></h2>
         @for (feature of features(); track feature.key) {
-            <article class="feature-overview__detail flex flex-col gap-3" [id]="'feature-' + feature.key" [attr.data-testid]="'feature-detail-' + feature.key">
+            <article class="feature-overview__detail flex flex-col gap-4" [id]="'feature-' + feature.key" [attr.data-testid]="'feature-detail-' + feature.key">
                 <h3 class="flex items-center gap-2">
                     <fa-icon class="text-primary" [icon]="feature.icon" [fixedWidth]="true" />
                     <span>{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate }}</span>

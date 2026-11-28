@@ -47,7 +47,6 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -58,20 +57,22 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
-    styleUrls: ['./quiz-participation.component.scss'],
+    styleUrls: ['./quiz-participation.component.css'],
     imports: [
         NgClass,
         NgTemplateOutlet,
         TranslateDirective,
         ButtonComponent,
-        NgbTooltip,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
         ShortAnswerQuestionComponent,
@@ -81,6 +82,9 @@ import { QuizParticipationBase } from './quiz-participation.base';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
@@ -1124,7 +1128,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                 }
             },
             error: (error: HttpErrorResponse) => {
-                const errorMessage = 'Joining the quiz was not possible: ' + error.headers?.get('X-artemisApp-message') || error.message;
+                const errorMessage = 'Joining the quiz was not possible: ' + (error.headers?.get('X-artemisApp-message') || error.message);
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: errorMessage,
@@ -1206,7 +1210,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         if (this.mode() === 'live' && this.quizExercise() && !this.showingResult()) {
             if (submittedForUi) {
                 status = LiveQuizParticipationStatus.SUBMITTED;
-            } else if (this.quizExercise().quizEnded) {
+            } else if (this.quizExercise().quizEnded || (!this.waitingForQuizStart() && this.remainingTimeSeconds() < 0)) {
+                // The time is up. Without an answer this ends the participation as well, even before the server reports the end.
                 status = LiveQuizParticipationStatus.MISSED;
             } else if (!this.waitingForQuizStart()) {
                 status = LiveQuizParticipationStatus.PARTICIPATING;
@@ -1247,7 +1252,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this._liveHeaderInfo.set(info);
     }
 
-    /** Maps the remaining seconds to a bootstrap text color (warning / critical thresholds); undefined for the default color. */
+    /** Maps the remaining seconds to the severity of the header countdown (warning / critical thresholds); undefined for the default severity. */
     private remainingTimeColor(): string | undefined {
         const duration = this.quizExercise().duration ?? 0;
         if (this.remainingTimeSeconds() < 60 || this.remainingTimeSeconds() < duration / 4) {

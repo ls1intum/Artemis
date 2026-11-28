@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -22,7 +22,7 @@ const TRANSCRIPT_SCROLL_DEFER_MS = 10_000;
     standalone: true,
     imports: [TumAetUiButtonDirective, CommonModule, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './video-player.component.html',
-    styleUrls: ['./video-player.component.scss'],
+    styleUrls: ['./video-player.component.css'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Reference to the <video> element in the template */

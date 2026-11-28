@@ -13,7 +13,7 @@ import * as downloadUtil from 'app/foundation/util/download.util';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
@@ -152,7 +152,7 @@ describe('ExerciseAddModalComponent', () => {
             expect(card?.textContent).toContain('artemisApp.exerciseManagement.type.PROGRAMMING');
             expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.description');
             expect(card?.tagName).toBe('BUTTON');
-            expect(card?.querySelector('.card-icon-wrapper')).not.toBeNull();
+            expect(card?.querySelector('.option-icon-wrapper')).not.toBeNull();
             expect(card?.querySelector('h6')).not.toBeNull();
             expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
         });

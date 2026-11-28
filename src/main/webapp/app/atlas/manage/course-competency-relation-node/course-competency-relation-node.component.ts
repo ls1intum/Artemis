@@ -1,16 +1,15 @@
 import { AfterViewInit, Component, ElementRef, computed, inject, input, output } from '@angular/core';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyGraphNode, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
-    imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-competency-relation-node.component.html',
-    styleUrl: './course-competency-relation-node.component.scss',
+    styleUrl: './course-competency-relation-node.component.css',
 })
 export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
     private readonly element = inject(ElementRef);

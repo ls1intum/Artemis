@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -11,9 +13,9 @@ import {
     HyperionBudgetLevel,
     HyperionSpendView,
     budgetLevel,
-    formatEuro,
     formatPercent,
     formatTokenCount,
+    formatUsd,
     spendHero,
 } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
 
@@ -105,7 +107,7 @@ const BUDGET_LEVEL_KEY: Record<HyperionBudgetLevel, string> = {
 @Component({
     selector: 'jhi-hyperion-run-usage',
     templateUrl: './hyperion-run-usage.component.html',
-    styleUrl: './hyperion-run-usage.component.scss',
+    styleUrl: './hyperion-run-usage.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiTagComponent],
 })
@@ -149,7 +151,7 @@ export class HyperionRunUsageComponent {
         if (hero.kind === 'money') {
             return {
                 kind: 'money',
-                value: formatEuro(hero.eur, locale),
+                value: formatUsd(hero.usd, locale),
                 lowerBound: hero.lowerBound,
                 captionKey:
                     spend.cost.kind === 'lowerBound'

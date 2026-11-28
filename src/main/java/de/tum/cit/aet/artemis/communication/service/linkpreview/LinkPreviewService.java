@@ -40,9 +40,10 @@ public class LinkPreviewService {
         Content imageContent = openGraph.getContentOf("image");
         Content urlContent = openGraph.getContentOf("url");
 
+        // The DTO carries the requested url, not og:url: clients match the preview against the link in the message, and og:url may point elsewhere (e.g. a canonical page)
         // Return a LinkPreviewDTO object containing the meta information if all of the required meta elements are present
         if (titleContent != null && descriptionContent != null && imageContent != null && urlContent != null) {
-            return new LinkPreviewDTO(titleContent.value(), descriptionContent.value(), imageContent.value(), urlContent.value());
+            return new LinkPreviewDTO(titleContent.value(), descriptionContent.value(), imageContent.value(), url);
         }
         return new LinkPreviewDTO(null, null, null, null);
     }

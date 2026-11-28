@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRend
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyperion/problem-statement/problem-statement.utils';
@@ -14,9 +14,8 @@ import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyperion/problem-statement/
 @Component({
     selector: 'jhi-inline-refinement-button',
     standalone: true,
-    imports: [FormsModule, FaIconComponent, ArtemisTranslatePipe, ButtonDirective],
+    imports: [FormsModule, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective],
     templateUrl: './inline-refinement-button.component.html',
-    styleUrls: ['./inline-refinement-button.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InlineRefinementButtonComponent {

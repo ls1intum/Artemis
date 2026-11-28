@@ -1,15 +1,13 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ScienceEventType } from 'app/foundation/science/science.model';
-import { ScienceService } from 'app/foundation/science/science.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 
 export interface CompetencyGraphModalData {
     learningPathId: number;
@@ -19,21 +17,16 @@ export interface CompetencyGraphModalData {
 @Component({
     selector: 'jhi-competency-graph-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, CompetencyGraphComponent, TranslateDirective],
+    imports: [CompetencyGraphComponent, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
     templateUrl: './competency-graph-modal.component.html',
-    styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
-    private readonly scienceService = inject(ScienceService);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<CompetencyGraphModalData>>(TumAetUiDialogConfig);
 
-    protected readonly closeIcon = faXmark;
-
-    readonly name = signal<string | undefined>((this.dialogConfig.data as CompetencyGraphModalData).name);
-    readonly learningPathId = signal<number>((this.dialogConfig.data as CompetencyGraphModalData).learningPathId);
+    readonly name = signal<string | undefined>(this.dialogConfig.data?.name);
+    readonly learningPathId = signal<number>(this.dialogConfig.data!.learningPathId);
 
     readonly isLoading = signal<boolean>(false);
     readonly competencyGraph = signal<CompetencyGraphDTO | undefined>(undefined);
@@ -41,9 +34,6 @@ export class CompetencyGraphModalComponent {
     constructor() {
         effect(() => {
             const learningPathId = this.learningPathId();
-
-            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
-
             untracked(() => void this.loadCompetencyGraph(learningPathId));
         });
     }
@@ -60,22 +50,18 @@ export class CompetencyGraphModalComponent {
         }
     }
 
-    closeModal(): void {
-        this.dialogRef.close();
-    }
-
-    static openCompetencyGraphModal(dialogService: DialogService, learningPathId: number, name: string | undefined): void {
+    static openCompetencyGraphModal(dialogService: TumAetUiDialogService, learningPathId: number, name: string | undefined): void {
+        const data: CompetencyGraphModalData & { headerKey: string; headerParams?: { name: string } } =
+            name === undefined
+                ? { learningPathId, name, headerKey: 'artemisApp.learningPath.competencyGraphModal.title' }
+                : { learningPathId, name, headerKey: 'artemisApp.learningPath.competencyGraphModal.titleWithName', headerParams: { name } };
         dialogService.open(CompetencyGraphModalComponent, {
-            style: { width: '90vw', maxWidth: '90rem' },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
-            showHeader: false,
-            styleClass: 'competency-graph-modal',
-            data: { learningPathId, name },
+            data,
+            templates: { header: DialogTranslateHeaderComponent },
         });
     }
 }

@@ -25,19 +25,14 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiIconFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-    TumAetUiTagSeverity,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -53,6 +48,7 @@ type SbomSource = 'all' | 'server' | 'client';
     templateUrl: './admin-sbom.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FormsModule,
         FaIconComponent,

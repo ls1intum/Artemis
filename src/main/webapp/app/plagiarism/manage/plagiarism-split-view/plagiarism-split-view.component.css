@@ -1,0 +1,42 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.plagiarism-split-view {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    height: 100%;
+    overflow: hidden;
+}
+
+.plagiarism-splitter {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.plagiarism-split-pane {
+    /* The splitter host resets the font size to the kit base (1rem); the submissions keep the application base size. */
+    font-size: 0.9rem;
+    padding-top: 30px;
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+}
+
+/* The lock-files control sits visually between the two panes, on top of the gutter. Its `left` is set in the template. */
+.split-pane-header-color {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    background-color: var(--body-bg);
+}

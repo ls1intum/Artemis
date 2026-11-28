@@ -5,7 +5,7 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/m
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TaskCountWarningComponent } from './task-count-warning/task-count-warning.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
     templateUrl: './programming-exercise-instruction-analysis.component.html',
-    imports: [FaIconComponent, NgbTooltip, TranslateDirective, TaskCountWarningComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiTooltipDirective, TranslateDirective, TaskCountWarningComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnDestroy {
     private analysisService = inject(ProgrammingExerciseInstructionAnalysisService);

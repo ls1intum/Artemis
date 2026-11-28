@@ -30,16 +30,15 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TabsModule } from 'primeng/tabs';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { SliderModule } from 'primeng/slider';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { ButtonDirective } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -54,7 +53,7 @@ interface SaveSettingsOptions {
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    styleUrl: './iris-settings-update.component.scss',
+    styleUrl: './iris-settings-update.component.css',
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -62,16 +61,19 @@ interface SaveSettingsOptions {
         FaIconComponent,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        TabsModule,
-        ToggleSwitchModule,
-        SliderModule,
-        TextareaModule,
-        SelectModule,
-        InputNumberModule,
-        ButtonDirective,
-        MessageModule,
-        TagModule,
-        ProgressSpinnerModule,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiInputNumberComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTagComponent,
+        TumAetUiProgressSpinnerComponent,
         IrisLogoComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,10 +103,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
 
-    // Available variants for the admin pipeline-variant select.
-    // A mutable copy of the readonly IRIS_PIPELINE_VARIANTS constant, since
-    // PrimeNG's p-select `options` input expects a mutable array.
-    protected readonly pipelineVariantOptions: IrisPipelineVariant[] = [...IRIS_PIPELINE_VARIANTS];
+    // Available variants for the admin pipeline-variant select
+    protected readonly pipelineVariantOptions = IRIS_PIPELINE_VARIANTS;
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -189,7 +189,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly activeTab = signal<string>('general');
 
     /**
-     * Updates the active tab from the PrimeNG tabs valueChange event, which emits
+     * Updates the active tab from the tabs valueChange event, which emits
      * `string | number | undefined`. All tab values in this component are strings.
      */
     protected setActiveTab(value: string | number | undefined): void {
@@ -224,42 +224,43 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly handlePopping = signal(false);
 
     /**
-     * The Additional Guidelines textarea. PrimeNG's `[autoResize]` sizes the
-     * textarea from its `scrollHeight`, which is `0` while the General tab is
-     * hidden (the inactive tab panel is `display: none`). Returning to the tab
-     * does not re-trigger that calculation, so the textarea stays collapsed
-     * until the next `input` event. We hold a reference to recompute the
-     * height ourselves whenever the General tab becomes visible again.
+     * The Additional Guidelines textarea, which grows with its content (up to its `max-h-56`, then it scrolls). The height
+     * comes from `scrollHeight`, which is `0` while the textarea is not rendered. The view query keeps the reference
+     * while the General tab is inactive, so the height is measured only while that tab is active: when it becomes
+     * active again, when the textarea appears (Iris is enabled), when the text changes from outside (reset to default,
+     * loading) and on every input event.
      */
     private readonly customInstructionsTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('customInstructionsTextarea');
 
     constructor() {
         this.isAdmin.set(this.accountService.isAdmin());
 
-        // When the General tab becomes active again, re-run PrimeNG's autoResize
-        // height calculation, which would otherwise have been computed as 0 while
-        // the tab panel was hidden.
         effect(() => {
-            if (this.activeTab() === 'general') {
-                this.resizeCustomInstructionsTextarea();
+            // Reading the settings re-runs the effect when the text is replaced from outside, and reading the active tab when the
+            // textarea is shown again. A change on another tab, such as the pipeline variant on the Admin tab, must not measure it.
+            const settings = this.settings();
+            const generalTabActive = this.activeTab() === 'general';
+            if (settings && generalTabActive && this.customInstructionsTextarea()) {
+                this.fitCustomInstructionsToContent();
             }
         });
     }
 
     /**
-     * Recompute the Additional Guidelines textarea height to fit its content,
-     * mirroring PrimeNG's `autoResize` logic. Deferred to the next animation
-     * frame so the tab panel is visible (and thus has a valid `scrollHeight`)
-     * by the time the height is measured.
+     * Sets the Additional Guidelines textarea to the height of its content. Deferred to the next animation frame so
+     * the textarea is laid out (and thus has a valid `scrollHeight`) by the time the height is measured.
      */
-    private resizeCustomInstructionsTextarea(): void {
+    protected fitCustomInstructionsToContent(): void {
         requestAnimationFrame(() => {
             const textarea = this.customInstructionsTextarea()?.nativeElement;
             if (!textarea) {
                 return;
             }
+            const previousHeight = textarea.style.height;
             textarea.style.height = 'auto';
-            textarea.style.height = `${textarea.scrollHeight}px`;
+            const contentHeight = textarea.scrollHeight;
+            // A height of 0 means that the textarea is not rendered (its panel is not attached), so the previous height stays.
+            textarea.style.height = contentHeight > 0 ? `${contentHeight}px` : previousHeight;
         });
     }
 

@@ -82,7 +82,7 @@ class PyrisIngestionWithoutVideoIntegrationTest extends AbstractSpringIntegratio
         AttachmentVideoUnit unit = withPdf ? lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 0, true)
                 : lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
         unit.setVideoSource(TUM_LIVE_VIDEO);
-        unit = attachmentVideoUnitTestRepository.save(unit);
+        unit = attachmentVideoUnitTestRepository.saveWithVideoSource(unit);
         processingStateRepository.save(new LectureUnitProcessingState(unit));
         return unit;
     }

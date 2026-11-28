@@ -1,0 +1,127 @@
+.plagiarism-inspector {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 2 * 1rem - 57px - 31px - 41px);
+
+    /* The card body of the page shell has a default padding that this view cancels */
+    margin: -1rem;
+}
+
+.plagiarism-inspector .plagiarism-header {
+    background-color: var(--artemis-dark);
+    color: white;
+    flex-shrink: 0;
+}
+
+.plagiarism-inspector .plagiarism-header-top {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem;
+}
+
+.plagiarism-inspector .plagiarism-header-top-left {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.plagiarism-inspector .plagiarism-header-top-right {
+    display: flex;
+}
+
+.plagiarism-inspector .plagiarism-header-top-right .check-plagiarism {
+    margin-right: 1rem;
+}
+
+.plagiarism-inspector .plagiarism-header .plagiarism-page-title {
+    align-items: center;
+    display: flex;
+    margin: 0 1rem 0 0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.plagiarism-inspector .plagiarism-header .plagiarism-page-title:hover {
+    background-color: color-mix(in srgb, white 10%, transparent);
+}
+
+.plagiarism-inspector .plagiarism-header .plagiarism-page-title .plagiarism-options-toggle {
+    font-size: 1.1rem;
+    margin-right: 1rem;
+}
+
+.plagiarism-inspector .plagiarism-header .plagiarism-page-title.active .plagiarism-options-toggle {
+    transform: rotate(90deg);
+}
+
+.plagiarism-inspector .plagiarism-header-options {
+    align-items: center;
+    background-color: var(--plagiarism-inspector-darker-artemis-dark);
+    display: flex;
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+    white-space: nowrap;
+}
+
+.plagiarism-inspector .plagiarism-header-options > :not(:last-child) {
+    margin-right: 1.5rem;
+}
+
+.plagiarism-inspector .plagiarism-header-options .plagiarism-option {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+}
+
+.plagiarism-inspector .plagiarism-header-options .plagiarism-option-label {
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+}
+
+.plagiarism-inspector .plagiarism-header-options .plagiarism-option-help {
+    margin-right: 1rem;
+}
+
+.plagiarism-inspector .plagiarism-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding-left: 240px;
+    position: relative;
+    overflow: hidden;
+}
+
+.plagiarism-inspector .plagiarism-warning {
+    align-items: center;
+    display: flex;
+    color: white;
+    padding-top: 1px;
+}
+
+.plagiarism-inspector .plagiarism-warning #plagiarismCaution {
+    margin-right: 0.5rem;
+}
+
+.plagiarism-inspector .plagiarism-checkbox {
+    align-items: center;
+    display: flex;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.plagiarism-inspector .plagiarism-checkbox tumaet-ui-checkbox {
+    margin-right: 0.5rem;
+}
+
+.plagiarism-inspector .plagiarism-empty {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.plagiarism-inspector .plagiarism-empty-label {
+    opacity: 0.5;
+}

@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
-import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
+import type { GetResult } from '@fingerprintjs/fingerprintjs';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /**
@@ -71,11 +71,18 @@ export class BrowserFingerprintService {
      * screen resolution, installed fonts, plugins, and other attributes.
      */
     private generateBrowserFingerprint(): void {
-        void FingerprintJS.load().then((fingerprintAgent: { get: () => Promise<GetResult> }) => {
-            void fingerprintAgent.get().then((result) => {
+        // The library is imported when it is needed, not with the main bundle: the fingerprint is only sent along with requests
+        // that come later, so the application does not have to wait for the library to start.
+        void import('@fingerprintjs/fingerprintjs')
+            .then(({ default: FingerprintJS }) => FingerprintJS.load())
+            .then((fingerprintAgent: { get: () => Promise<GetResult> }) => fingerprintAgent.get())
+            .then((result) => {
                 this.browserFingerprint.next(result.visitorId);
+            })
+            .catch(() => {
+                // The library is a separate file, which can fail to load (a stale tab after a deployment, a content blocker, a bad connection).
+                // The fingerprint then stays unset: requests go without it, as they do before the library has loaded.
             });
-        });
     }
 
     /**

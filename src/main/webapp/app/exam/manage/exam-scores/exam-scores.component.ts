@@ -21,7 +21,8 @@ import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
+import { ParticipantScoreApi } from 'app/openapi/api/participant-score-api';
+import { Score } from 'app/openapi/model/score';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -65,14 +66,11 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scor
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import {
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -91,7 +89,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss'],
+    styleUrls: ['./exam-scores.component.css'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,
@@ -109,6 +107,7 @@ export enum MedianType {
         CommonModule,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamScoresComponent implements OnInit {
@@ -117,7 +116,7 @@ export class ExamScoresComponent implements OnInit {
     private sortService = inject(SortService);
     private alertService = inject(AlertService);
     private localeConversionService = inject(LocaleConversionService);
-    private participantScoresService = inject(ParticipantScoresService);
+    private participantScoreApi = inject(ParticipantScoreApi);
     private gradingService = inject(GradingService);
     private courseManagementService = inject(CourseManagementService);
     private readonly translateService = inject(TranslateService);
@@ -152,7 +151,7 @@ export class ExamScoresComponent implements OnInit {
     readonly BonusStrategy = BonusStrategy;
 
     // exam score dtos
-    studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+    studentIdToExamScoreDTOs: Map<number, Score> = new Map<number, Score>();
 
     readonly predicate = signal('id');
     readonly ascending = signal(false);
@@ -185,7 +184,7 @@ export class ExamScoresComponent implements OnInit {
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
-            const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']).pipe(catchError(() => of(new HttpResponse<ScoresDTO[]>())));
+            const findExamScoresObservable = this.participantScoreApi.getScoresOfExam(params['examId']).pipe(catchError(() => of(undefined)));
 
             // find grading scale if one exists and handle case when it doesn't
             const gradingScaleObservable = this.gradingService
@@ -258,7 +257,7 @@ export class ExamScoresComponent implements OnInit {
                         this.determineAndHighlightChartMedian(medianType);
                     }
                     this.isLoading.set(false);
-                    this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
+                    this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse);
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
@@ -901,7 +900,7 @@ export class ExamScoresComponent implements OnInit {
      * In the future we might switch to the server side method, so we use this method to detect discrepancies.
      * @param examScoreDTOs the exam scores sent from the server (new calculation method)
      */
-    private compareNewExamScoresCalculationWithOldCalculation(examScoreDTOs: ScoresDTO[]) {
+    private compareNewExamScoresCalculationWithOldCalculation(examScoreDTOs: Score[] | undefined) {
         if (!this.studentResults() || !examScoreDTOs) {
             return;
         }

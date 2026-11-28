@@ -55,16 +55,31 @@ class DockerGradleBuildTest {
 
     private final SandboxBuildCommands commands = new SandboxBuildCommands(resources);
 
-    private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
+    private final GenerationWorkspace workspace = new GenerationWorkspace(resources);
 
     private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
     private static final ContractWitness HIGH_SCORE_WITNESS = new ContractWitness("R1", "testScoreAboveOneHundred", """
-            @org.junit.jupiter.api.Test
+            /*
+             import fixture.NotARealImport;
+             */
+            import java.util.HashSet;
+            import java.util.Set;
+
+            @Test
             void testScoreAboveOneHundred() throws java.io.IOException {
                 int score = Integer.parseInt(java.nio.file.Files.readString(java.nio.file.Path.of("fixtures/witness-scores.txt")).strip());
-                org.junit.jupiter.api.Assertions.assertThrows(SecurityException.class, UnregisteredFixtureReader::readFixture);
-                org.junit.jupiter.api.Assertions.assertEquals(1, ScoreCalculator.countPassing(new int[] {score}), "R1: every score at least 50 passes");
+                String importExample = ""\"
+                        import fixture.NotARealImport;
+                        ""\";
+                assertEquals(1L, importExample.lines().count());
+                assertTrue(importExample.contains("NotARealImport"));
+                Set<Integer> observed = new HashSet<>();
+                observed.add(score);
+                assertEquals(Set.of(150), observed);
+                assertNotNull(getClazz("de.tum.cit.aet.reference.ScoreCalculator"));
+                assertThrows(SecurityException.class, UnregisteredFixtureReader::readFixture);
+                assertEquals(1, ScoreCalculator.countPassing(new int[] {score}), "R1: every score at least 50 passes");
             }
             """, "incorrectly rejects passing scores above 100");
 
@@ -77,7 +92,7 @@ class DockerGradleBuildTest {
         docker = new DockerConfiguration().dockerClient();
         var settings = new WorkerSettings("gradle-test-" + UUID.randomUUID(), System.getenv("HYPERION_GRADLE_TEST_IMAGE"), "runc", 2L * 1024 * 1024 * 1024, 200_000, 256,
                 Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofMinutes(2), 1, "hyperion-generation", "java-gradle");
-        sandbox = new DockerSandboxService(docker, new WorkerSandboxConfiguration().sandboxPolicy(settings));
+        sandbox = new DockerSandboxService(docker, new WorkerSandboxConfiguration().sandboxPolicy(settings, docker));
     }
 
     @AfterEach
@@ -116,10 +131,39 @@ class DockerGradleBuildTest {
         String prefix = "preserve this prefix\n".repeat(8_000);
         String path = "solution/nested/large.md";
         assertThat(tools.writeFile(path, prefix + "replace this suffix")).startsWith("Wrote ");
+        assertThat(tools.writeFile(path, prefix + "replace this suffix")).startsWith("No change:");
+        assertThat(tools.editFile(path, "replace this suffix", "replace this suffix")).startsWith("No change:");
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(1);
         assertThat(tools.editFile(path, "replace this suffix", "updated suffix")).startsWith("Replaced 1");
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(2);
         try (var archive = sandbox.copyOut(session, "/workspace/" + path)) {
             assertThat(WorkspaceArchive.readTar(archive, "")).containsExactlyEntriesOf(Map.of("large.md", prefix + "updated suffix"));
         }
+    }
+
+    @Test
+    void theCompilerContextGivenToReviewersExecutesWithTheRealAresHarness() throws IOException {
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);
+        String context = ContractWitnessProbe.compilationContext();
+        String source = "package de.tum.cit.aet.reference;\n" + context.substring(0, context.lastIndexOf('}')) + """
+                    @Test
+                    @StrictTimeout(1)
+                    void checksTheAdvertisedApi() {
+                        assertNotNull(getClazz("de.tum.cit.aet.reference.ScoreCalculator"));
+                        assertEquals(1, ScoreCalculator.countPassing(new int[] {150}));
+                    }
+                }
+                """;
+        String path = "test/de/tum/cit/aet/reference/" + ContractWitnessProbe.PROBE_CLASS_NAME + ".java";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(ContractWitnessProbe.workspaceOverlay(seed.testsSeedSnapshot(), path, source), Map.of()));
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of(SandboxBuildCommands.VERIFY_SCRIPT_NAME, commands.verifyScriptContent(exercise)), Map.of()));
+
+        BuildSummary result = build(session, "solution");
+
+        assertThat(result.exitCode()).as(result.buildDiagnostic()).isZero();
+        assertThat(result.testNames()).contains("checksTheAdvertisedApi");
     }
 
     @Test
@@ -230,7 +274,7 @@ class DockerGradleBuildTest {
     @Test
     void specificationDerivedEnumGraderAcceptsImplicitGenericSuperclassButRejectsErasedMember() throws IOException {
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -244,7 +288,10 @@ class DockerGradleBuildTest {
                 public enum RoastProfile { LIGHT; public java.util.List<String> labels(); }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        // As the orchestrator does: the seeded policy is the baseline the server writes its test-class list into.
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:RoastProfile]");
         String path = "solution/src/de/tum/cit/aet/reference/RoastProfile.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -271,6 +318,54 @@ class DockerGradleBuildTest {
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
+    /** Student-owned JUnit classes compile in the assignment source set, and Ares enforces their approved annotations. */
+    @Test
+    void specificationDerivedMethodGraderAcceptsTheApprovedAnnotationsAndRejectsTheirAbsence() throws IOException {
+        String session = sandbox.createSession();
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | ScoreChecks | Checks students write | student-creates |
+                ## Public API
+                ```java
+                public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
+                    @org.junit.jupiter.api.Test public void checkNullInput();
+                    @Override public String toString();
+                }
+                ```
+                """);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(seeded.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
+        String path = "solution/src/de/tum/cit/aet/reference/ScoreChecks.java";
+        // @Native has source retention, so reflection never sees it and the oracle must not expect it.
+        String annotated = """
+                package de.tum.cit.aet.reference;
+                public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
+                    @org.junit.jupiter.api.Test public void checkNullInput() { org.junit.jupiter.api.Assertions.assertTrue(true); }
+                    @Override public String toString() { return "checks"; }
+                }
+                """;
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated), Map.of()));
+        seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@org.junit.jupiter.api.Test ", "")), Map.of()));
+        var unannotated = build(session, "solution");
+        assertThat(unannotated.exitCode()).isNotZero();
+        assertThat(unannotated.testFailedNames()).contains("testMethods[ScoreChecks]");
+    }
+
     // Both build tools must report the seeded dynamic check by its display name; surefire names flat dynamic tests genericApi()[n].
     @ParameterizedTest
     @EnumSource(GenerationBuildTool.class)
@@ -278,7 +373,7 @@ class DockerGradleBuildTest {
         boolean maven = buildTool == GenerationBuildTool.MAVEN;
         var input = maven ? new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), buildTool) : exercise;
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(input)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -296,7 +391,9 @@ class DockerGradleBuildTest {
                 }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, input);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, input);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -446,6 +543,153 @@ class DockerGradleBuildTest {
         });
     }
 
+    /**
+     * Learner-test probes executed once under the real Ares harness. The grader only counts the learner test's calls: removing the body is detected, suppressing its assertion is
+     * not, and the survivor stays an open obligation once the starter already contains the learner work and it can no longer be re-executed.
+     */
+    @Test
+    void learnerTestProbesRunUnderTheRealHarness() throws IOException {
+        var verifier = new DifferentialVerifier(commands);
+        String learner = """
+                package de.tum.cit.aet.reference;
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.BeforeEach
+                    public void setUp() { /* supplied empty setup */ }
+
+                    @org.junit.jupiter.api.Test
+                    public void verifiesSum() {
+                        Toolbox.observations++;
+                        org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));
+                    }
+                }
+                """;
+        String support = """
+                package de.tum.cit.aet.reference;
+                public class Toolbox {
+                    public static int observations;
+                    public static int sum(int a, int b) { return a + b; }
+                }
+                """;
+        String instructor = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy("SecurityPolicy.yaml")
+                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test @StrictTimeout(5) void testLearnerAssertions() {
+                        Toolbox.observations = 0;
+                        assertDoesNotThrow(() -> new LearnerCheck().verifiesSum());
+                        assertEquals(1, Toolbox.observations);
+                    }
+                }
+                """;
+        List<WorkspaceFile> files = new ArrayList<>(
+                snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
+        String path = "src/de/tum/cit/aet/reference/LearnerCheck.java";
+        files.add(new WorkspaceFile("solution/" + path, learner.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + path, learner
+                .replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();").getBytes(StandardCharsets.UTF_8),
+                false));
+        for (String lane : List.of("template", "solution")) {
+            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Toolbox.java", support.getBytes(StandardCharsets.UTF_8), false));
+        }
+        files.add(new WorkspaceFile("test-plan.json",
+                "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}".getBytes(StandardCharsets.UTF_8), false));
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+        var specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | LearnerCheck | Tests the learner writes | stubbed |
+                ## Public API
+                ```java
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.Test public void verifiesSum();
+                }
+                ```
+                """);
+        var seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, seed.testsSeedSnapshot());
+        var structural = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(sandbox.exec(session, Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
+                .as("source-destructive verification is available only through server-managed tools").isTrue();
+
+        var outcomes = assessmentOutcomes(verifier, session, structural);
+
+        assertThat(learnerProbe(outcomes, SemanticMutant.Evidence.EMPTY_STUDENT_TESTS)).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(learnerProbe(outcomes, SemanticMutant.Evidence.NON_FAILING_STUDENT_TESTS)).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+
+        var before = JavaSourceSnapshot.capture(sandbox, session);
+        sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
+        try {
+            assertThat(assessmentOutcomes(verifier, session, structural)).anySatisfy(unresolved -> {
+                assertThat(unresolved.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                assertThat(unresolved.diagnostic()).contains("previously confirmed", "Preserve the assigned learner work");
+            });
+        }
+        finally {
+            before.restore(sandbox, session);
+        }
+    }
+
+    private static SemanticMutantOutcome.Disposition learnerProbe(List<SemanticMutantOutcome> outcomes, SemanticMutant.Evidence evidence) {
+        var matching = outcomes.stream().filter(outcome -> outcome.mutant().evidence() == evidence && outcome.mutant().ruleId().endsWith("#verifiesSum")).toList();
+        assertThat(matching).as("%s probe of verifiesSum in %s", evidence, outcomes).hasSize(1);
+        return matching.getFirst().disposition();
+    }
+
+    /** The output-only probe compiles and runs the reference main inside the sandbox image, whose tools, paths and limits exist only there. */
+    @Test
+    void transcriptCaptureRunsTheReferenceMainInsideTheSandbox() throws IOException {
+        String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
+        String reference = """
+                package de.tum.cit.aet.reference;
+                public class ScoreCalculator {
+                    public static void main(String[] args) {
+                        System.out.println("Bücher: " + Math.addExact(1, 1));
+                    }
+                }
+                """;
+        List<WorkspaceFile> files = new ArrayList<>();
+        snapshot().files().stream().filter(file -> file.path().startsWith("tests/")).forEach(files::add);
+        files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+
+        var capture = sandbox.exec(session, OutputOnlyMainProbe.CAPTURE_TIMEOUT, "sh", "-c",
+                OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(sourcePath, "ScoreCalculator", "de.tum.cit.aet.reference.ScoreCalculator")));
+
+        assertThat(capture.timedOut()).isFalse();
+        assertThat(OutputOnlyMainProbe.transcript(capture)).as(OutputOnlyMainProbe.skipReason(capture)).hasValue("Bücher: 2\n");
+    }
+
+    private List<SemanticMutantOutcome> assessmentOutcomes(DifferentialVerifier verifier, String session, SeededStructuralTests structural) {
+        var sources = JavaSourceSnapshot.capture(sandbox, session);
+        String plan = GenerationWorkspace.readRootArtifact(sandbox, session, "test-plan.json");
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        try {
+            outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, session, exercise, sources.testsFiles(), sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    Set.of(), () -> sources.restore(sandbox, session), _ -> {
+                    }));
+            outcomes.addAll(verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    () -> sources.restore(sandbox, session), _ -> {
+                    }));
+        }
+        finally {
+            sources.restore(sandbox, session);
+        }
+        return outcomes;
+    }
+
     @Test
     void pristineSolutionPassesAndTemplateFailsWithFreshParsedReports() throws IOException {
         String session = sandbox.createSession();
@@ -556,7 +800,7 @@ class DockerGradleBuildTest {
         List<String> phases = new ArrayList<>();
         try (var input = resources.getResource(Path.of("templates/phases/java/plain_gradle.yaml")).getInputStream()) {
             for (var phase : YAMLMapper.builder().build().readTree(input)) {
-                phases.add(phase.required("script").asText());
+                phases.add(phase.required("script").asString());
             }
         }
         var result = sandbox.exec(session, Duration.ofMinutes(3), "sh", "-c",

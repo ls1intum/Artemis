@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -46,6 +47,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "managementresource";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
@@ -138,7 +142,8 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise2.getId());
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
@@ -175,6 +180,31 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventsOfOnePrincipal() throws Exception {
+        // the search bar of the admin UI sends the typed login as principal
+        var ofStudent1 = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student1", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(ofStudent1).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "student1");
+
+        // together with the date range: student2 only has an event from five days ago
+        String from = LocalDate.now().minusDays(7).toString();
+        String to = LocalDate.now().toString();
+        var student2InRange = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student2&fromDate=" + from + "&toDate=" + to, HttpStatus.OK,
+                PersistentAuditEvent.class);
+        assertThat(student2InRange).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "student2");
+        String yesterday = LocalDate.now().minusDays(1).toString();
+        var student2Recently = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student2&fromDate=" + yesterday + "&toDate=" + to, HttpStatus.OK,
+                PersistentAuditEvent.class);
+        assertThat(student2Recently).isEmpty();
+
+        // a principal of another log finds nothing in this one, and an unknown principal finds nothing at all
+        assertThat(request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "securityprincipal", HttpStatus.OK, PersistentAuditEvent.class)).isEmpty();
+        assertThat(request.getList("/api/admin/audits?logType=GENERAL&principal=nobody", HttpStatus.OK, PersistentAuditEvent.class)).isEmpty();
+        assertThat(request.getList("/api/admin/audits?logType=SECURITY&principal=" + TEST_PREFIX + "securityprincipal", HttpStatus.OK, PersistentAuditEvent.class))
+                .extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "securityprincipal");
     }
 
     @Test

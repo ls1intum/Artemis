@@ -1,9 +1,10 @@
 import { vi } from 'vitest';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -15,7 +16,6 @@ import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
@@ -55,7 +55,6 @@ describe('CourseCompetenciesDetails', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -191,11 +190,11 @@ describe('CourseCompetenciesDetails', () => {
     it.each([
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
-    ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
+    ])('should resolve the date badge severity to $expectedBadge', ({ competency, expectedBadge }) => {
         component.competency.set(competency);
         fixture.changeDetectorRef.detectChanges();
-        const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
-        expect(badge.classList).toContain('bg-' + expectedBadge);
+        const badge = fixture.debugElement.query(By.css('#date-badge')).componentInstance as TumAetUiTagComponent;
+        expect(badge.severity()).toBe(expectedBadge);
     });
 
     it('should update progress after lecture unit completion', () => {

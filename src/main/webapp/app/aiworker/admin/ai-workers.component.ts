@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { WorkerStatus } from 'app/openapi/model/worker-status';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -10,7 +14,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-ai-workers',
     templateUrl: './ai-workers.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DatePipe, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiTableLayoutComponent,
+        DatePipe,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AiWorkersComponent {
     readonly workers = input<WorkerStatus[]>([]);

@@ -85,6 +85,44 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(setCourseSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 1, title: exercise.courseTitle }));
     });
 
+    it('should render the verdict forms as tabs and keep the typed warning when switching tabs', async () => {
+        component.courseId.set(1);
+        component.plagiarismCaseId = 1;
+        component.plagiarismCase.set({ id: 1, exercise });
+        component.posts.set([]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const element = fixture.nativeElement as HTMLElement;
+        const tabs = Array.from(element.querySelectorAll<HTMLElement>('[role="tab"]'));
+        expect(tabs.map((tab) => tab.getAttribute('data-testid'))).toEqual([
+            'plagiarism-verdict-tab-plagiarism',
+            'plagiarism-verdict-tab-point-deduction',
+            'plagiarism-verdict-tab-warning',
+        ]);
+        expect(component.activeTab).toBe(1);
+
+        tabs[2].click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.activeTab).toBe(3);
+        const textarea = element.querySelector('textarea') as HTMLTextAreaElement;
+        textarea.value = 'Please cite your sources';
+        textarea.dispatchEvent(new Event('input'));
+
+        tabs[0].click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.activeTab).toBe(1);
+        expect(component.verdictMessage()).toBe('Please cite your sources');
+        // the panels stay in the document, so a typed message survives a change of tab
+        expect(element.querySelector('textarea')).not.toBeNull();
+    });
+
     it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
         component.courseId.set(1);
         component.plagiarismCaseId = 1;

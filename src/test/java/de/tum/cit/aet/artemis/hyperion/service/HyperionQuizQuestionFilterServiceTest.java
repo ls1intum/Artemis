@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +34,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionFailureMode;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
@@ -61,7 +63,7 @@ class HyperionQuizQuestionFilterServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        service = new HyperionQuizQuestionFilterService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), llmTokenUsageService, "");
+        service = new HyperionQuizQuestionFilterService(configuredModels(ChatClient.create(chatModel), "judge-x"), new HyperionPromptTemplateService(), llmTokenUsageService);
         course = new Course();
         course.setId(42L);
         course.setTitle("Software Engineering");
@@ -200,11 +202,14 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     @Test
-    void evaluate_throwsWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionFilterService(null, new HyperionPromptTemplateService(), llmTokenUsageService, "");
+    void evaluate_throwsWithoutAConfiguredModel() {
+        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
+        when(models.judgeChatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
+        var serviceWithoutModel = new HyperionQuizQuestionFilterService(models, new HyperionPromptTemplateService(), llmTokenUsageService);
 
-        assertThatThrownBy(() -> serviceWithNullClient.evaluate(course, 7L, question(), GROUNDING_BLOCK)).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("AI chat client is not configured");
+        assertThatThrownBy(() -> serviceWithoutModel.evaluate(course, 7L, question(), GROUNDING_BLOCK)).isInstanceOf(ServiceUnavailableAlertException.class)
+                .hasMessageContaining("no LLM presets assigned");
+        verify(chatModel, never()).call(any(Prompt.class));
     }
 
     @Test
@@ -218,21 +223,21 @@ class HyperionQuizQuestionFilterServiceTest {
         String userMessage = prompt.getValue().getInstructions().stream().filter(message -> message instanceof UserMessage).map(message -> message.getText()).findFirst()
                 .orElseThrow();
         assertThat(userMessage).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Which method is idempotent?").contains("- [correct] PUT")
-                .contains("- [wrong] POST").contains("Stated explanation: PUT is idempotent.");
-        assertThat(prompt.getValue().getOptions().getModel()).isNull();
+                .contains("  Explanation: Repeating PUT leaves the same state.").contains("- [wrong] POST\n- [wrong] PATCH")
+                .contains("Explanation of the question: PUT is idempotent.");
     }
 
     @Test
-    void evaluate_bindsTheConfiguredJudgeModelOntoTheRequest() {
-        var serviceWithModel = new HyperionQuizQuestionFilterService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), llmTokenUsageService, " judge-x ");
-        respondWith(verdict(Map.of()));
+    void judgeModelIsTheModelOfTheJudgePreset() {
+        assertThat(service.getJudgeModel()).isEqualTo("judge-x");
+    }
 
-        serviceWithModel.evaluate(course, 7L, question(), GROUNDING_BLOCK);
-
-        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(chatModel).call(prompt.capture());
-        assertThat(prompt.getValue().getOptions().getModel()).isEqualTo("judge-x");
-        assertThat(serviceWithModel.getJudgeModel()).isEqualTo("judge-x");
+    private static HyperionQuizQuestionPoolModelService configuredModels(ChatClient chatClient, String judgeModel) {
+        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
+        lenient().when(models.isConfigured()).thenReturn(true);
+        lenient().when(models.judgeChatClient()).thenReturn(chatClient);
+        lenient().when(models.judgeModel()).thenReturn(judgeModel);
+        return models;
     }
 
     @Test
@@ -267,8 +272,9 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     private static GeneratedQuizQuestionDTO question() {
-        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null),
-                new GeneratedQuizAnswerOptionDTO("PATCH", false, null, null), new GeneratedQuizAnswerOptionDTO("GET", false, null, null));
+        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, "Repeating PUT leaves the same state."),
+                new GeneratedQuizAnswerOptionDTO("POST", false, null, null), new GeneratedQuizAnswerOptionDTO("PATCH", false, null, null),
+                new GeneratedQuizAnswerOptionDTO("GET", false, null, null));
         return new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method is idempotent?", options, null, "PUT is idempotent.");
     }
 

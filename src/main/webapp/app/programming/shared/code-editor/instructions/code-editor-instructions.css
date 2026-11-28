@@ -1,0 +1,18 @@
+/*
+ * !* ==========================================================================
+ * Instructions
+ * ========================================================================== *!
+ */
+.instructions-wrapper {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+.instructions-wrapper__content {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1 1 auto;
+    height: 100%;
+}

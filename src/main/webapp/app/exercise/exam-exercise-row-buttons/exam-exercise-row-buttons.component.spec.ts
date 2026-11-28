@@ -28,6 +28,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
     fixture.componentRef.setInput('exercise', exercise);
@@ -72,6 +75,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExamExerciseRowButtonsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
                 MockProvider(ProgrammingExerciseService),
@@ -313,6 +317,23 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.deleteExercise();
                 expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
                 expect(onDeleteExerciseEmitSpy).toHaveBeenCalledOnce();
+            });
+            it('should keep the exercise when the background deletion failed', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
+            it('should ask the table to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+                const unknownEmitSpy = vi.spyOn(component.deletionOutcomeUnknown, 'emit');
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(unknownEmitSpy).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
             it('should handle error for textexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;

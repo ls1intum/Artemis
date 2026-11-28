@@ -434,6 +434,29 @@ describe('ListOfComplaintsComponent', () => {
         expect(sortKeyOf(foreignComplaint)).toBe('Alice Tutor');
     });
 
+    it('applies the column header sort and re-sorts the complaints', () => {
+        const sortService = fixture.debugElement.injector.get(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+        const first = { id: 1 } as Complaint;
+        const second = { id: 2 } as Complaint;
+        comp.complaintsToShow.set([first, second]);
+        expect(comp.complaintsSortingPredicate).toBe('id');
+        expect(comp.complaintsReverseOrder).toBe(false);
+
+        comp['onSortChange']({ field: 'accepted', order: 1 });
+
+        expect(comp.complaintsSortingPredicate).toBe('accepted');
+        expect(comp.complaintsReverseOrder).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenCalledExactlyOnceWith([first, second], 'accepted', true);
+
+        comp['onSortChange']({ field: 'lockStatus', order: -1 });
+
+        expect(comp.complaintsSortingPredicate).toBe('lockStatus');
+        expect(comp.complaintsReverseOrder).toBe(false);
+        expect(sortByFunctionSpy).toHaveBeenCalledExactlyOnceWith([first, second], expect.any(Function), false);
+    });
+
     it('uses the more-feedback translation root when the route complaint type is MORE_FEEDBACK', () => {
         activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
         comp.ngOnInit();

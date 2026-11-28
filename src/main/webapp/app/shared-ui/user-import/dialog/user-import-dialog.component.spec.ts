@@ -1,3 +1,6 @@
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { vi } from 'vitest';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -20,7 +23,6 @@ import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
-import { DialogModule } from 'primeng/dialog';
 import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -57,7 +59,16 @@ describe('UsersImportDialogComponent', () => {
         })
             .overrideComponent(UsersImportDialogComponent, {
                 set: {
-                    imports: [FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent), FaIconComponent, DialogModule],
+                    imports: [
+                        FormsModule,
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe, (value: string) => value),
+                        MockComponent(HelpIconComponent),
+                        FaIconComponent,
+                        TumAetUiDialogComponent,
+                        TumAetUiTableDirective,
+                        TumAetUiTableLayoutComponent,
+                    ],
                 },
             })
             .compileComponents()
@@ -75,6 +86,62 @@ describe('UsersImportDialogComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('selects only the active import mode for the common preview', () => {
+        const regularUser = { registrationNumber: '123', firstName: 'First', lastName: 'Last', login: 'regular', email: 'regular@example.org', isTestUser: true };
+        const examUser = { registrationNumber: '456', firstName: 'Exam', lastName: 'User', login: 'exam', email: 'exam@example.org', room: '10.101', seat: '25F' };
+        component.usersToImport.set([regularUser]);
+        component.examUsersToImport.set([examUser]);
+        expect(component.previewUsers()).toEqual([regularUser]);
+        fixture.componentRef.setInput('examUserMode', true);
+        expect(component.previewUsers()).toEqual([examUser]);
+        component.examUsersToImport.set([]);
+        expect(component.previewUsers()).toEqual([]);
+        fixture.componentRef.setInput('examUserMode', false);
+        expect(component.previewUsers()).toEqual([regularUser]);
+    });
+
+    it.each([
+        { examMode: false, adminMode: false, columns: ['#', 'Matriculation number', 'Login', 'Email', 'First name', 'Last name'] },
+        { examMode: false, adminMode: true, columns: ['#', 'Matriculation number', 'Login', 'Email', 'First name', 'Last name', 'Test user'] },
+        { examMode: true, adminMode: false, columns: ['#', 'Matriculation number', 'Login', 'Email', 'First name', 'Last name', 'Room', 'Seat'] },
+        { examMode: true, adminMode: true, columns: ['#', 'Matriculation number', 'Login', 'Email', 'First name', 'Last name', 'Room', 'Seat'] },
+    ])('renders all preview values and mode-specific columns for exam=$examMode, admin=$adminMode', async ({ examMode, adminMode, columns }) => {
+        const regularUser = { registrationNumber: '123', firstName: 'First', lastName: 'Last', login: 'regular', email: 'regular@example.org', isTestUser: true };
+        const examUser = { registrationNumber: '456', firstName: 'Exam', lastName: 'User', login: 'exam', email: 'exam@example.org', room: '10.101', seat: '25F' };
+        fixture.componentRef.setInput('examUserMode', examMode);
+        fixture.componentRef.setInput('adminUserMode', adminMode);
+        component.usersToImport.set([regularUser]);
+        component.examUsersToImport.set([examUser]);
+        component.dialogVisible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const table = document.querySelector<HTMLTableElement>('[data-testid="user-import-preview"]')!;
+        expect(Array.from(table.querySelectorAll('th'), (cell) => cell.textContent?.trim())).toEqual(columns);
+        const cells = Array.from(table.querySelectorAll('tbody tr td'), (cell) => cell.textContent?.trim());
+        expect(cells.slice(0, 6)).toEqual(examMode ? ['1', '456', 'exam', 'exam@example.org', 'Exam', 'User'] : ['1', '123', 'regular', 'regular@example.org', 'First', 'Last']);
+        if (examMode) {
+            expect(cells.slice(6)).toEqual(['10.101', '25F']);
+        } else if (adminMode) {
+            expect(table.querySelector('tbody tr td:last-child fa-icon')).not.toBeNull();
+        }
+    });
+
+    it('retains success, missing-user and rejected-staff row feedback in the shared preview', async () => {
+        const users = ['success', 'missing', 'staff'].map((login) => ({ registrationNumber: login, firstName: 'First', lastName: 'Last', login, email: login + '@example.org' }));
+        component.usersToImport.set(users);
+        component.hasImported.set(true);
+        component.notFoundUsers = [users[1]];
+        component.rejectedStaffUsers = [users[2]];
+        component.dialogVisible.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const rows = document.querySelectorAll('[data-testid="user-import-preview"] tbody tr');
+        expect(rows).toHaveLength(3);
+        expect(rows[0].classList.contains('import-success')).toBe(true);
+        expect(rows[1].classList.contains('import-not-found')).toBe(true);
+        expect(rows[2].classList.contains('import-warning')).toBe(true);
     });
 
     it('should open and close dialog', () => {

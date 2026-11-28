@@ -23,9 +23,10 @@
                     <button
                         type="button"
                         id="complain"
+                        data-testid="complain"
                         tumAetUiButton
                         size="small"
-                        [class.not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
+                        [class.cursor-not-allowed]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
                         (click)="openComplaintForm(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode() && remainingNumberOfComplaints() === 0) || !timeOfComplaintValid()"
                         title="{{
@@ -42,7 +43,7 @@
                         id="more-feedback"
                         tumAetUiButton
                         size="small"
-                        [class.not-allowed]="!timeOfFeedbackRequestValid()"
+                        [class.cursor-not-allowed]="!timeOfFeedbackRequestValid()"
                         (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid()"
                         title="{{ !timeOfFeedbackRequestValid() ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
@@ -66,7 +67,7 @@
         <div #complaintScrollpoint data-testid="complaint-scrollpoint"></div>
         @if (complaint(); as complaint) {
             <!-- The cards share their rows (subgrid), so the texts of the request and of the response line up even if one header wraps. -->
-            <div class="complaints-student-view__cards mt-6! grid grid-cols-1 grid-rows-[auto_1fr] gap-4! min-[1200px]:grid-cols-2" data-testid="complaint-cards">
+            <div class="complaints-student-view__cards mt-6 grid grid-cols-1 grid-rows-[auto_1fr] gap-4 min-[1200px]:grid-cols-2" data-testid="complaint-cards">
                 <jhi-complaint-request [complaint]="complaint" [maxComplaintTextLimit]="course()?.maxComplaintTextLimit!" />
                 <jhi-complaint-response [complaint]="complaint" [maxComplaintResponseTextLimit]="course()?.maxComplaintResponseTextLimit!" />
             </div>
