@@ -36,13 +36,13 @@ export class ExamResultsPage {
     }
 
     /**
-     * Two feedback markups live behind `#additional-feedback`: text and programming still render
-     * `jhi-unified-feedback`, while modeling renders the feedback list of its own assessment view. Both are matched so
-     * the same assertion serves every exercise type on the exam results page.
+     * Text and file upload render `jhi-general-feedback`, programming still renders `jhi-unified-feedback` behind
+     * `#additional-feedback`, and modeling the feedback list of its own assessment view there. All are matched so the
+     * same assertion serves every exercise type on the exam results page.
      */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
-        const feedbackElement = exercise.locator(`#additional-feedback`);
+        const feedbackElement = exercise.locator('[data-testid="general-feedback"], #additional-feedback');
         await expect(feedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
         await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
     }

@@ -9,7 +9,8 @@ export abstract class AbstractExerciseFeedback {
     protected readonly page: Page;
 
     readonly RESULT_SELECTOR = '#result';
-    readonly ADDITIONAL_FEEDBACK_SELECTOR = '#additional-feedback';
+    // Text and file upload render `jhi-general-feedback`; modeling and programming still render `#additional-feedback`.
+    readonly ADDITIONAL_FEEDBACK_SELECTOR = '[data-testid="general-feedback"], #additional-feedback';
 
     constructor(page: Page) {
         this.page = page;
@@ -17,8 +18,8 @@ export abstract class AbstractExerciseFeedback {
 
     async shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         const additionalFeedbackElement = this.page.locator(this.ADDITIONAL_FEEDBACK_SELECTOR);
-        await expect(additionalFeedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
-        await expect(additionalFeedbackElement.locator('.unified-feedback-text', { hasText: feedbackText })).toBeVisible();
+        await expect(additionalFeedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
+        await expect(additionalFeedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedbackText })).toBeVisible();
     }
 
     async shouldShowScore(percentage: number) {

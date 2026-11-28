@@ -33,6 +33,7 @@ class ResizeObserverMock {
             [storageKey]="storageKey"
             [flushLeftPanel]="flushLeftPanel"
             [leftMinSizePercent]="leftMinSizePercent"
+            [leftMinWidthPx]="leftMinWidthPx"
             [collapseSnapPercent]="collapseSnapPercent"
         >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
@@ -49,6 +50,7 @@ class ResizablePanelsTestComponent {
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
     leftMinSizePercent = 0;
+    leftMinWidthPx = 0;
     collapseSnapPercent = 12;
     storageKey: string | undefined = undefined;
 }
@@ -363,6 +365,34 @@ describe('ResizablePanelsComponent', () => {
 
         // The splitter refuses a drag that would leave the left panel below the minimum; the right panel stays unbounded.
         expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes()).toEqual([36, 0]);
+    });
+
+    it('turns a minimum width in px into a share of the split width, following the split as it resizes', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.leftMinWidthPx = 320;
+        fixture.componentInstance.leftMinSizePercent = 30;
+        fixture.detectChanges();
+        const host = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).nativeElement;
+        const widthObserver = ResizeObserverMock.instances.filter((instance) => instance.observe.mock.calls.some(([target]) => target === host)).at(-1)!;
+        const minSizes = () => fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes();
+
+        widthObserver.resize(800);
+        fixture.detectChanges();
+        expect(minSizes()).toEqual([40, 0]);
+
+        // A wide split, where 320px is less than the percent minimum, keeps the percent minimum
+        widthObserver.resize(1600);
+        fixture.detectChanges();
+        expect(minSizes()).toEqual([30, 0]);
+    });
+
+    it('does not measure the split without a minimum width in px', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.detectChanges();
+        const host = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).nativeElement;
+
+        // Only the observer of the responsive breakpoint watches the host
+        expect(ResizeObserverMock.instances.filter((instance) => instance.observe.mock.calls.some(([target]) => target === host))).toHaveLength(1);
     });
 
     it('caps the left minimum so the right panel can be dragged wider than the collapse threshold', () => {
