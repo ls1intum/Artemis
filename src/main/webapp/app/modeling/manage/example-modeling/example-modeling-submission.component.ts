@@ -4,7 +4,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { UMLModel, importDiagram } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionStatus, FeedbackType } from 'app/assessment/shared/entities/feedback.model';

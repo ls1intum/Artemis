@@ -13,7 +13,8 @@ import { faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icon
 import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
-import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
+import { type CollaborationUser, UMLDiagramType, collabColorFromName } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/model';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';

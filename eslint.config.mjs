@@ -57,6 +57,18 @@ const noDirectCloneDeepImports = [
         message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
     },
 ];
+// `@tumaet/apollon` (the root entry) is the whole modeling editor: React, Base UI, xyflow and the editor code, about 1.3 MB of raw JavaScript in
+// the production bundle. A lazy route that imports a single value from the root loads all of it, even if it never shows a diagram. The model
+// helpers that do not need the editor live in the light entry `@tumaet/apollon/model` (a few KB). Types are erased at build time and stay free
+// to import from the root. Like `noNgZoneImport`, this must be repeated in every `no-restricted-imports` block of the application, because
+// the foundation/ and shared-ui/ blocks override the rule rather than extending it.
+const noApollonModelValueImports = {
+    name: '@tumaet/apollon',
+    importNames: ['importDiagram', 'readModelFromYDoc', 'writeModelToYDoc', 'hasModelInYDoc', 'clearModelFromYDoc', 'MODEL_DOC_ORIGIN'],
+    allowTypeImports: true,
+    message:
+        "Import the model helpers from '@tumaet/apollon/model': the root entry '@tumaet/apollon' is the whole modeling editor and loads about 1.3 MB of JavaScript with the importing chunk.",
+};
 // The entry points of TUM AET UI: one per component, listed in the `exports` of the package. A bundler that splits code per file loads everything that a
 // lazy route takes from the package root, so the client imports from the entry point of each component. Both rules follow the `exports`.
 const tumAetUiEntryPoints = Object.keys(JSON.parse(readFileSync(resolve(import.meta.dirname, 'packages/tum-aet-ui/package.json'), 'utf8')).exports)
@@ -332,6 +344,7 @@ export default tseslint.config(
                             message: "Please import from 'lodash-es' instead.",
                         },
                         noNgZoneImport,
+                        noApollonModelValueImports,
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: clientPackageImportPatterns,
@@ -564,6 +577,7 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        noApollonModelValueImports,
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [
@@ -597,6 +611,7 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        noApollonModelValueImports,
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [
@@ -903,6 +918,7 @@ export default tseslint.config(
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
                         noNgZoneImport,
+                        noApollonModelValueImports,
                         ...noDirectCloneDeepImports,
                     ],
                     patterns: [...clientPackageImportPatterns, legacyUiLibraryImportPattern],
