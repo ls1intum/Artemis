@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
-import { onError } from 'app/foundation/util/global.utils';
+import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import {
@@ -40,7 +40,7 @@ import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/o
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { DecimalPipe } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum DoughnutChartType {
@@ -67,7 +67,6 @@ export enum DoughnutChartType {
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
-        DecimalPipe,
         ArtemisTranslatePipe,
     ],
 })
@@ -83,6 +82,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     private router = inject(Router);
     private markdownService = inject(ArtemisMarkdownService);
     private destroyRef = inject(DestroyRef);
+
+    private readonly translateService = inject(TranslateService);
+    private readonly locale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -103,6 +105,27 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     private readonly exploreSection = viewChild<ElementRef>('exploreSection');
 
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
+    protected readonly llmCostLabel = computed(() => {
+        const stats = this.courseDTO();
+        const locale = this.locale();
+        if (!stats) {
+            return undefined;
+        }
+        const cost = stats.currentTotalLlmCostInUsd;
+        const hasUnpricedRequests = stats.unpricedLlmRequestCount > 0;
+        if (cost === 0 && hasUnpricedRequests) {
+            return this.translateService.instant('artemisApp.course.detail.llmCostNotPriced');
+        }
+
+        // Keep paid sub-cent requests distinguishable from free ones and keep a partial total a true lower bound.
+        const amount = new Intl.NumberFormat(locale, {
+            notation: cost >= 10000 ? 'compact' : 'standard',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: cost > 0 && cost < 0.01 ? 8 : 2,
+            roundingMode: hasUnpricedRequests ? 'floor' : 'halfExpand',
+        }).format(cost);
+        return (hasUnpricedRequests ? '≥ ' : '') + amount + ' USD';
+    });
     readonly course = signal<Course | undefined>(undefined);
     readonly fromOnboarding = signal(false);
 

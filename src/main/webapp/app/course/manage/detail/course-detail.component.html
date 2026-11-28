@@ -85,13 +85,7 @@
                                     data-testid="course-llm-cost"
                                     [course]="course()!"
                                     [contentType]="DoughnutChartType.CURRENT_LLM_COST"
-                                    [showText]="
-                                        llmStats
-                                            ? llmStats.currentTotalLlmCostInUsd === 0 && llmStats.unpricedLlmRequestCount > 0
-                                                ? ('artemisApp.course.detail.llmCostNotPriced' | artemisTranslate)
-                                                : (llmStats.unpricedLlmRequestCount > 0 ? '≥ ' : '') + (llmStats.currentTotalLlmCostInUsd | number: '1.2-8') + ' USD'
-                                            : undefined
-                                    "
+                                    [showText]="llmCostLabel()"
                                     [unpricedRequests]="llmStats?.unpricedLlmRequestCount ?? 0"
                                     [currentMax]="0"
                                 />
