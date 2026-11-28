@@ -34,7 +34,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ResultApi } from 'app/openapi/api/result-api';
 import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
