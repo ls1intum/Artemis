@@ -27,6 +27,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Iris tutor suggestion sessions.
@@ -67,6 +70,8 @@ public class IrisTutorSuggestionSessionResource {
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @PostMapping("posts/{postId}/sessions/current")
+    @ApiResponse(responseCode = "200", description = "Existing tutor suggestion session", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "201", description = "Tutor suggestion session created", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = IrisOpenApiHeaders.SESSION_LOCATION_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
@@ -92,6 +97,7 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("posts/{postId}/sessions")
+    @ApiResponse(responseCode = "201", description = "Tutor suggestion session created", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = IrisOpenApiHeaders.SESSION_LOCATION_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 

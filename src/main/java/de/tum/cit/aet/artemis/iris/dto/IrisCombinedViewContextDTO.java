@@ -9,6 +9,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Context information for the combined lecture view (fullscreen mode).
  * Indicates that the user is viewing a lecture unit in the combined view.
@@ -28,8 +30,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param video  the video context of the unit (current timestamp), or {@code null} if no video is playing
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCombinedViewContextDTO(@JsonProperty("type") @NonNull String type, @Valid @Nullable IrisSlidesContextDTO slides, @Valid @Nullable IrisVideoContextDTO video)
-        implements IrisMessageContextDTO {
+public record IrisCombinedViewContextDTO(@Schema(type = "string", allowableValues = {
+        "combinedView" }, requiredMode = Schema.RequiredMode.REQUIRED) @JsonProperty("type") @NonNull String type, @Valid @Nullable IrisSlidesContextDTO slides,
+        @Valid @Nullable IrisVideoContextDTO video) implements IrisMessageContextDTO{
 
     /**
      * Convenience constructor that automatically sets the type to "combinedView".

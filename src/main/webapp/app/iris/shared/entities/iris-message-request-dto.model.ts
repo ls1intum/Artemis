@@ -1,3 +1,4 @@
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
@@ -6,7 +7,7 @@ import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-con
  * atomically (CTXSWAP marker, then user message) in one round trip. `mode` is a {@link ChatServiceMode} value.
  */
 export interface IrisPendingContextDTO {
-    mode: string;
+    mode: ChatServiceMode;
     entityId: number;
 }
 

@@ -38,8 +38,10 @@ api/quiz-exercise-evaluation-resources.ts
 api/lecture-resources.ts
 api/hyperion-programming-variant-resources.ts
 api/hyperion-exercise-generation-resources.ts
+api/iris-chat-session-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
+api/iris-global-search-resources.ts
 api/lecture-transcription-resources.ts
 api/example-submission-resources.ts
 api/hyperion-code-generation-resources.ts
@@ -50,6 +52,7 @@ api/tum-live-upload-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/quiz-exercise-resources.ts
 api/calendar-resources.ts
+api/iris-tutor-suggestion-session-resources.ts
 api/lecture-unit-resources.ts
 api/complaint-resources.ts
 api/quiz-exercise-creation-update-resources.ts
@@ -75,13 +78,17 @@ api/exercise-unit-resources.ts
 api/admin-ai-worker-resources.ts
 api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts
+api/iris-message-resources.ts
 api/grading-scale-resources.ts
 api/participant-score-resources.ts
 api/global-search-resources.ts
+api/iris-settings-resources.ts
 api/hyperion-quiz-question-pool-resources.ts
+api/iris-struggle-intervention-resources.ts
 api/tutorial-group-free-period-resources.ts
 api/attachment-video-unit-resources.ts
 api/hyperion-faq-resources.ts
+api/iris-resources.ts
 api/tutor-effort-resources.ts
 api/complaint-response-resources.ts
 api/attachment-video-unit-playlist-resources.ts

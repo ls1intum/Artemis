@@ -2,9 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Subject } from 'rxjs';
+import { Subject, defer } from 'rxjs';
 import { IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS, IrisSearchAnswerService } from './iris-search-answer.service';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 const MOCK_RUN_ID = '550e8400-e29b-41d4-a716-446655440000';
@@ -22,7 +23,12 @@ describe('IrisSearchAnswerService', () => {
         vi.clearAllMocks();
         vi.spyOn(window.crypto, 'randomUUID').mockReturnValue(MOCK_RUN_ID as `${string}-${string}-${string}-${string}-${string}`);
         wsSubject = new Subject<IrisSearchStatusUpdate>();
-        mockWebsocketService.subscribe.mockReturnValue(wsSubject.asObservable());
+        mockWebsocketService.subscribe.mockReturnValue(
+            defer(() => {
+                httpTesting.expectNone('api/iris/search-answer');
+                return wsSubject;
+            }),
+        );
 
         TestBed.configureTestingModule({
             providers: [IrisSearchAnswerService, provideHttpClient(), provideHttpClientTesting(), { provide: WebsocketService, useValue: mockWebsocketService }],
@@ -41,13 +47,18 @@ describe('IrisSearchAnswerService', () => {
     });
 
     it('should POST to api/iris/search-answer with query, default limit of 5, and client-generated runId', () => {
-        service.ask('what are signals?').subscribe();
+        const subscription = service.ask('what are signals?').subscribe();
+        expect(wsSubject.observed).toBe(true);
 
         const req = httpTesting.expectOne('api/iris/search-answer');
         expect(req.request.method).toBe('POST');
+        expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        expect(JSON.parse(req.request.serializeBody()?.toString() ?? '')).toEqual({ query: 'what are signals?', limit: 5, runId: MOCK_RUN_ID });
         expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5, runId: MOCK_RUN_ID });
 
         req.flush(null, { status: 202, statusText: 'Accepted' });
+        subscription.unsubscribe();
+        expect(wsSubject.observed).toBe(false);
     });
 
     it('should accept a custom limit', () => {

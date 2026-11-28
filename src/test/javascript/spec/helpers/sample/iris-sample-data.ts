@@ -82,23 +82,26 @@ export const mockWebsocketStatusMessage = {
     activitySeq: 1,
 } as IrisChatWebsocketDTO;
 
-export const mockConversation = {
+export const mockConversation: IrisSession = {
     id: 1,
-    messages: [mockClientMessage, mockServerMessage],
+    messages: [
+        { ...mockClientMessageDTO, sentAt: mockClientMessage.sentAt?.toISOString() },
+        { ...mockServerMessageDTO, id: mockServerMessage.id, sentAt: mockServerMessage.sentAt.toISOString() },
+    ],
     mode: ChatServiceMode.COURSE,
     entityId: 1,
     userId: 1,
-    creationDate: new Date(),
-} as IrisSession;
+    creationDate: new Date().toISOString(),
+};
 
-export const mockConversationWithNoMessages = {
+export const mockConversationWithNoMessages: IrisSession = {
     id: 1,
     messages: [],
     mode: ChatServiceMode.COURSE,
     entityId: 1,
     userId: 1,
-    creationDate: new Date(),
-} as IrisSession;
+    creationDate: new Date().toISOString(),
+};
 
 export const mockServerSessionHttpResponse = {
     body: mockConversation,

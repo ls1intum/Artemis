@@ -40,14 +40,14 @@ describe('ChatHistoryItemComponent', () => {
     function getSessionMock(): IrisSessionDTO {
         return {
             id: 1,
-            creationDate: new Date('2023-10-15T14:23:00'),
+            creationDate: new Date('2023-10-15T14:23:00').toISOString(),
         } as unknown as IrisSessionDTO;
     }
 
     function getTitledSessionMock(): IrisSessionDTO {
         return {
             id: 2,
-            creationDate: new Date('2023-10-15T14:23:00'),
+            creationDate: new Date('2023-10-15T14:23:00').toISOString(),
             title: 'New chat',
         } as unknown as IrisSessionDTO;
     }
@@ -118,7 +118,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 1,
             title: 'New chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.LECTURE,
             entityId: 42,
             entityName: 'Lecture 1',
@@ -130,7 +130,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 2,
             title: 'New chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 77,
             entityName: 'Exercise 1',
@@ -142,7 +142,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 3,
             title: 'New chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.TEXT_EXERCISE,
             entityId: 55,
             entityName: 'Text Exercise 1',
@@ -154,7 +154,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 4,
             title: 'New chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -170,7 +170,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 4,
             title: 'Neuer Chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -186,7 +186,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 4,
             title: 'NEW CHAT',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -202,7 +202,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 5,
             title: 'Some regular chat title',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -218,7 +218,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 10,
             title: 'Some chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -235,7 +235,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 11,
             title: 'Chat to delete',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -253,7 +253,7 @@ describe('ChatHistoryItemComponent', () => {
     const menuSession: IrisSessionDTO = {
         id: 12,
         title: 'Chat with menu',
-        creationDate: new Date(),
+        creationDate: new Date().toISOString(),
         mode: ChatServiceMode.COURSE,
         entityId: 1,
         entityName: 'Course 1',
@@ -330,7 +330,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 3,
             title: 'Course chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.COURSE,
             entityId: 123,
             entityName: 'Course 1',
@@ -372,7 +372,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 21,
             title: 'Exercise chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
@@ -393,7 +393,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 22,
             title: 'Exercise chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
@@ -414,7 +414,7 @@ describe('ChatHistoryItemComponent', () => {
         const session: IrisSessionDTO = {
             id: 30,
             title: 'Locale test chat',
-            creationDate: new Date(),
+            creationDate: new Date().toISOString(),
             mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 50,
             entityName: 'Exercise 1',

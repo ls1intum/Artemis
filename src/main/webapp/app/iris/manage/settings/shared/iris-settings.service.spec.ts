@@ -26,6 +26,7 @@ describe('Iris Settings Service', () => {
         enabled: false,
         customInstructions: 'Updated instructions',
         variant: 'advanced',
+        supportLevel: 'high',
         rateLimit: { requests: 200, timeframeHours: 48 },
     };
 
@@ -52,7 +53,7 @@ describe('Iris Settings Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/1/iris-settings' });
+            const req = httpMock.expectOne({ method: 'GET', url: '/api/iris/courses/1/iris-settings' });
             req.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
 
             expect(result).toEqual(mockCourseSettings);
@@ -157,8 +158,9 @@ describe('Iris Settings Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (responseBody = resp.body));
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/iris/courses/1/iris-settings' });
+            const req = httpMock.expectOne({ method: 'PUT', url: '/api/iris/courses/1/iris-settings' });
             expect(req.request.body).toEqual(mockUpdateSettings);
+            expect(req.request.body).toMatchObject({ variant: 'advanced', supportLevel: 'high' });
             req.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
 
             expect(responseBody).toEqual(mockCourseSettings);
@@ -190,12 +192,12 @@ describe('Iris Settings Service', () => {
         it('should invalidate cache for specific course', async () => {
             // Populate cache for course 1
             service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
-            const req1 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/1/iris-settings' });
+            const req1 = httpMock.expectOne({ method: 'GET', url: '/api/iris/courses/1/iris-settings' });
             req1.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
 
             // Populate cache for course 2
             service.getCourseSettingsWithRateLimit(2).pipe(take(1)).subscribe();
-            const req2 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/2/iris-settings' });
+            const req2 = httpMock.expectOne({ method: 'GET', url: '/api/iris/courses/2/iris-settings' });
             req2.flush({ ...mockCourseSettings, courseId: 2 }, { status: 200, statusText: 'Ok' });
 
             // Invalidate cache for course 1
@@ -203,7 +205,7 @@ describe('Iris Settings Service', () => {
 
             // Course 1 should trigger new request
             service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
-            const newReq1 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/1/iris-settings' });
+            const newReq1 = httpMock.expectOne({ method: 'GET', url: '/api/iris/courses/1/iris-settings' });
             newReq1.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
 
             // Course 2 should use cache (no new request)

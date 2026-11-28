@@ -25,6 +25,9 @@ export interface IrisMessageResponseDTO {
     sentAt?: string;
     helpful?: boolean;
     sender: string;
+    origin?: 'PROACTIVE_STRUGGLE';
+    proactiveOutcome?: 'DISMISSED' | 'RECOVERED' | 'ABANDONED' | 'INTERRUPTED';
+    proactiveEpisodeId?: string;
     content: IrisMessageContentResponseDTO[];
     activities?: IrisActivityItem[];
     messageDifferentiator?: number;

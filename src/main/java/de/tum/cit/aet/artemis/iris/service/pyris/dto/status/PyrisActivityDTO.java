@@ -4,6 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Snapshot item describing one activity performed during a Pyris chat run.
  *
@@ -16,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param durationMillis optional duration in milliseconds once the activity is terminal
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisActivityDTO(String id, PyrisActivityKind kind, String name, PyrisActivityState state, @Nullable String detail, @Nullable String result,
-        @Nullable Long durationMillis) {
+public record PyrisActivityDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PyrisActivityKind kind,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PyrisActivityState state, @Nullable String detail,
+        @Nullable String result, @Nullable Long durationMillis) {
 }
