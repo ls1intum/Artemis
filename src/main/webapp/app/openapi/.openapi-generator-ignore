@@ -42,6 +42,7 @@ api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
 api/lecture-transcription-resources.ts
 api/example-submission-resources.ts
+api/metis-exercise-config-resources.ts
 api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
@@ -49,6 +50,7 @@ api/athena-resources.ts
 api/tum-live-upload-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/quiz-exercise-resources.ts
+api/metis-question-review-resources.ts
 api/calendar-resources.ts
 api/lecture-unit-resources.ts
 api/complaint-resources.ts
@@ -63,8 +65,10 @@ api/tutorial-group-session-resources.ts
 api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
+api/metis-dashboard-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/long-feedback-text-resources.ts
+api/metis-student-check-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/online-unit-resources.ts
 api/quiz-assessment-resources.ts

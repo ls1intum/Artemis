@@ -561,6 +561,10 @@
                         "name": "AI feedback on request",
                         "description": "Students requesting formative AI feedback on their work."
                     },
+                    "METIS_COMPREHENSION_CHECK": {
+                        "name": "Comprehension check",
+                        "description": "Students answering AI-generated questions about their own programming solution."
+                    },
                     "HYPERION_PROBLEM_STATEMENT": {
                         "name": "AI problem statement generation",
                         "description": "Generating, refining and rewriting a problem statement."
@@ -624,6 +628,10 @@
                     "AI_COMPETENCY_GENERATION": {
                         "name": "AI competency generation",
                         "description": "Generating competencies and suggesting their relations."
+                    },
+                    "METIS_CHECK_MANAGEMENT": {
+                        "name": "Comprehension check management",
+                        "description": "Configuring comprehension checks, reviewing generated questions and reading the results dashboard."
                     },
                     "PLAGIARISM_CHECKS": {
                         "name": "Plagiarism checks",

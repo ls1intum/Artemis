@@ -32,6 +32,9 @@
     <!-- Mail services report template failures safely; Thymeleaf's duplicate includes the original recipient-bearing cause. -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.MailTemplateErrorLogFilter" />
 
+    <!-- Spring AI quotes the whole prompt in its warning about an answer without choices: for Metis the code and the answers of a student. -->
+    <turboFilter class="de.tum.cit.aet.artemis.core.config.SpringAiPromptLogFilter" />
+
     <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
     <!--
     <include resource="org/springframework/boot/logging/logback/file-appender.xml" />

@@ -625,4 +625,16 @@ html,
     --apollon-chrome-radius-lg: 0.5rem;
     --apollon-chrome-edge: 10px;
     --apollon-chrome-gap: 12px;
+
+    /* Metis comprehension rating scale */
+    --rating-scale-lowest: #9f1d1a;
+    --rating-scale-low: #f0908f;
+    --rating-scale-neutral: #e1e0d9;
+    --rating-scale-high: #86b6ef;
+    --rating-scale-highest: #184f95;
+    --rating-scale-lowest-contrast: #fff;
+    --rating-scale-low-contrast: #212529;
+    --rating-scale-neutral-contrast: #212529;
+    --rating-scale-high-contrast: #212529;
+    --rating-scale-highest-contrast: #fff;
 }

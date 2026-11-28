@@ -269,8 +269,9 @@ never touches the Metis row again: a server that does not use Metis pays a read 
 and nothing on an update. The migration that created the table gave every existing programming exercise its row. Two kinds
 of programming exercise have none: one whose creation failed between storing it and inserting the row, and one that a node
 still running the previous version stored during a rolling deployment, after another node had run the migration. Both are
-left to the Metis module, which reads a missing row as the defaults and inserts it before it first writes the settings.
-Switching Metis on or off later only changes the row's `enabled` flag.
+left to the Metis module, which reads a missing row as the defaults; a request that saves the exercise's Metis settings, or
+at least one tutorial-group window, inserts it first, through `MetisExerciseConfigRepository.ensureExistsFor` and the
+module's own JPQL insert. Switching Metis on or off later only changes the row's `enabled` flag.
 
 #### Turning an existing association lazy
 

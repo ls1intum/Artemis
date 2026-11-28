@@ -235,6 +235,7 @@
 @source './app/localvc';
 @source './app/logos';
 @source './app/lti';
+@source './app/metis';
 @source './app/modeling';
 @source './app/notification';
 @source './app/plagiarism';

@@ -50,6 +50,9 @@ export enum ProgrammingExerciseInputField {
     ASSESSMENT_INSTRUCTIONS = 'assessmentInstructions',
     PRESENTATION_SCORE = 'presentationScore',
     PLAGIARISM_CONTROL = 'plagiarismControl',
+
+    // Comprehension check section (Metis)
+    METIS_CHECK = 'metisCheck',
 }
 
 export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, boolean> = {
@@ -98,4 +101,6 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     assessmentInstructions: true,
     presentationScore: false,
     plagiarismControl: false,
+    // Comprehension check section (Metis)
+    metisCheck: false,
 };

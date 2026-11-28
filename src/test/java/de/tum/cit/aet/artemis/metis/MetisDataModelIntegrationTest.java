@@ -814,6 +814,10 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
         check.setPromptVersion("v1.2.0");
         check.setFailureReason("none, recorded for the round trip");
         check.setGeneratedAt(BASE.plusMinutes(1));
+        // With milliseconds, which the column keeps, as it keeps those of the due date it is copied from
+        check.setGenerationDueDate(BASE.minusMinutes(1).plusNanos(123_000_000));
+        // Claims are random numbers over the whole range of a long, negative ones included
+        check.setGenerationClaim(Long.MIN_VALUE + 1);
         check.setStartedAt(BASE.plusMinutes(2));
         check.setCompletedAt(BASE.plusMinutes(3));
         return check;

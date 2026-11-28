@@ -19,7 +19,7 @@ import type { ProgrammingExerciseImport } from 'app/programming/api/programming-
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
@@ -48,7 +48,14 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import {
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_METIS,
+    MODULE_FEATURE_PLAGIARISM,
+    MODULE_FEATURE_THEIA,
+    PROFILE_LOCALCI,
+} from 'app/app.constants';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -73,6 +80,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { MetisExerciseSettingsComponent } from 'app/metis/manage/exercise-settings/metis-exercise-settings.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -117,6 +125,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseGradingComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
+        MetisExerciseSettingsComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
     ],
@@ -163,6 +172,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     buildTimeWindowComponent = viewChild(ProgrammingExerciseBuildTimeWindowComponent);
+    exerciseMetisComponent = viewChild(MetisExerciseSettingsComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
@@ -331,6 +341,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
+    readonly metisEnabled = signal(false);
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -366,6 +377,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.calculateFormStatusSections();
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
+        effect(() => this.updateFormSectionOnIsValidMetisChange());
     }
 
     /**
@@ -678,6 +690,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+        this.metisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_METIS));
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -730,7 +743,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     calculateFormStatusSections() {
-        const updatedFormStatusSections = [
+        const updatedFormStatusSections: FormSectionStatus[] = [
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
                 valid: this.exerciseInfoComponent()?.formValid ?? false,
@@ -765,7 +778,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             updatedFormStatusSections.splice(MODE_SECTION_INDEX, MODE_SECTION_INDEX);
         }
 
+        if (this.isMetisSectionDisplayed()) {
+            // The section reports its own validity; before it is rendered there is nothing that could be invalid.
+            updatedFormStatusSections.push({
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle',
+                valid: this.exerciseMetisComponent()?.isFormValid() ?? true,
+                empty: !this.exerciseMetisComponent()?.isCheckEnabled(),
+            });
+        }
+
         this.formStatusSections.set(updatedFormStatusSections);
+    }
+
+    /**
+     * Whether the Metis comprehension check section is part of the form: only in the detailed mode of a course exercise
+     * and only when the Metis module is active on this instance. The template shows the section under the same condition.
+     * The section writes the configuration of the exercise it edits, so it needs an exercise with an id of its own: it is
+     * shown when editing, not when creating or importing (an import would otherwise write the source exercise's
+     * configuration). Team exercises never get a check, so the server refuses to enable it for them.
+     */
+    isMetisSectionDisplayed(): boolean {
+        return this.isEditFieldDisplayedRecord().metisCheck && !this.isExamMode() && this.metisEnabled() && this.isEdit && this.programmingExercise.mode !== ExerciseMode.TEAM;
     }
 
     /**
@@ -1296,6 +1329,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
         this.validateBuildTimeWindow(validationErrorReasons);
+        this.validateMetisSettings(validationErrorReasons);
         // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
 
@@ -1387,6 +1421,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         });
                     }
                 }
+            });
+        }
+    }
+
+    /**
+     * The Metis section validates itself (window order, time limits); the footer only needs to know that it is the
+     * section that blocks saving.
+     */
+    private validateMetisSettings(validationErrorReasons: ValidationReason[]): void {
+        if (this.exerciseMetisComponent()?.isFormValid() === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.metis.settings.invalid',
+                translateValues: {},
             });
         }
     }
@@ -1759,6 +1806,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private updateFormSectionOnIsValidPlagiarismChange() {
         this.exercisePlagiarismComponent()?.isFormValid(); // registers signal and triggers effect
+        this.calculateFormStatusSections();
+    }
+
+    private updateFormSectionOnIsValidMetisChange() {
+        this.exerciseMetisComponent()?.isFormValid(); // registers signal and triggers effect
+        this.exerciseMetisComponent()?.isCheckEnabled();
         this.calculateFormStatusSections();
     }
 
