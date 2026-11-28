@@ -18,6 +18,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.SANDBOX_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.WEAVIATE_ENABLED_PROPERTY_NAME;
@@ -124,6 +125,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isDeimosEnabled(Environment environment) {
         return getPropertyOrExitArtemis(DEIMOS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the sandbox module is enabled. It changes the tests repositories that core nodes host, so it never runs on other nodes.
+     *
+     * @param environment the Spring environment
+     * @return true if the sandbox module is enabled, false otherwise
+     */
+    public boolean isSandboxEnabled(Environment environment) {
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(SANDBOX_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -314,6 +325,9 @@ public class ArtemisConfigHelper {
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);
+        }
+        if (isSandboxEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SANDBOX);
         }
         if (isIrisEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);

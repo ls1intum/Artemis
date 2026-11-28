@@ -184,6 +184,13 @@ artemis:
             max-participations-per-run: 5000
             max-window-days: 31
 
+    # The sandbox lets instructors switch the Ares security policy of a Java exercise on and off in the advanced mode of the exercise settings
+    sandbox:
+        enabled: true
+        # Ares versions instructors can pin, comma-separated, in addition to the version the Java templates use, which is always selectable.
+        # Versions older than 2.2.1 are ignored, and the versions are shown newest first. Only list published versions, otherwise the builds fail.
+        # supported-versions: 2.2.1
+
     weaviate:
         enabled: false
 
