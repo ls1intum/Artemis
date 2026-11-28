@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.course.service.home;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
@@ -8,12 +9,16 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 
 import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -25,11 +30,7 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
 
     static final int MAX_OUTPUT_TOKENS = 160;
 
-    private final ChatClient chatClient;
-
-    private final boolean usesLegacyMaxTokens;
-
-    private final int outputTokens;
+    private final Map<String, Model> models;
 
     private final MeterRegistry meters;
 
@@ -37,30 +38,32 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
             Thread.ofPlatform().daemon(true).name("course-home-ai-", 0).factory());
 
     public SpringAiCourseHomeClient(CourseHomeAiProperties properties, LlmClientService llmClientService, MeterRegistry meters) {
-        this(model(properties, llmClientService), llmClientService.preset(properties.llmPreset()), meters);
+        this(configuredModels(properties, llmClientService), meters);
     }
 
-    SpringAiCourseHomeClient(ChatModel model, LlmProperties.Preset preset, MeterRegistry meters) {
-        this.chatClient = ChatClient.create(model);
-        // Servers such as Ollama read only max_tokens; a preset that sets that field gets the budget in the same field, and a lower preset limit stays in force.
-        this.usesLegacyMaxTokens = preset.maxTokens() != null;
-        this.outputTokens = preset.outputTokenLimit() == null ? MAX_OUTPUT_TOKENS : Math.min(MAX_OUTPUT_TOKENS, preset.outputTokenLimit());
+    SpringAiCourseHomeClient(Map<String, Model> models, MeterRegistry meters) {
+        this.models = Map.copyOf(models);
         this.meters = meters;
     }
 
-    private static ChatModel model(CourseHomeAiProperties properties, LlmClientService llmClientService) {
+    private static Map<String, Model> configuredModels(CourseHomeAiProperties properties, LlmClientService llmClientService) {
         if (!properties.isConfigured()) {
             throw new IllegalArgumentException("Home AI provider configuration is incomplete");
         }
-        // isolated: no observations, so a LOCAL preset's prompts and completions cannot leave through tracing
-        return llmClientService.isolatedChatModel(properties.llmPreset(), TIMEOUT, 0);
+        // Isolated clients omit prompt and completion tracing, including for local inference.
+        return Stream.of(AiSelectionDecision.LOCAL_AI, AiSelectionDecision.CLOUD_AI).map(properties::presetFor).flatMap(Optional::stream).distinct().collect(
+                Collectors.toUnmodifiableMap(Function.identity(), preset -> new Model(llmClientService.isolatedChatModel(preset, TIMEOUT, 0), llmClientService.preset(preset))));
     }
 
     @Override
-    public CompletableFuture<Optional<String>> generate(Input input) {
+    public CompletableFuture<Optional<String>> generate(String preset, Input input) {
+        Model model = models.get(preset);
+        if (model == null) {
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
         try {
             return CompletableFuture.supplyAsync(() -> {
-                var response = chatClient.prompt().system(input.systemPrompt()).user(input.userPrompt()).options(outputOptions()).call().chatResponse();
+                var response = model.chatClient().prompt().system(input.systemPrompt()).user(input.userPrompt()).options(model.outputOptions()).call().chatResponse();
                 return response == null || response.getResult() == null || response.getResult().getOutput() == null ? Optional.<String>empty()
                         : Optional.ofNullable(response.getResult().getOutput().getText());
             }, workers).orTimeout(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS).exceptionally(error -> {
@@ -74,16 +77,25 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
         }
     }
 
-    /** A fresh builder per call: the chat client consumes a mutable options builder. */
-    private LlmChatOptions.Builder outputOptions() {
-        LlmChatOptions.Builder options = LlmChatOptions.builder();
-        if (usesLegacyMaxTokens) {
-            options.maxTokens(outputTokens);
+    record Model(ChatClient chatClient, boolean usesLegacyMaxTokens, int outputTokens) {
+
+        Model(ChatModel model, LlmProperties.Preset preset) {
+            // Use the token field expected by the preset and preserve any lower configured limit.
+            this(ChatClient.create(model), preset.maxTokens() != null,
+                    preset.outputTokenLimit() == null ? MAX_OUTPUT_TOKENS : Math.min(MAX_OUTPUT_TOKENS, preset.outputTokenLimit()));
         }
-        else {
-            options.maxCompletionTokens(outputTokens);
+
+        /** A fresh builder per call: the chat client consumes a mutable options builder. */
+        LlmChatOptions.Builder outputOptions() {
+            LlmChatOptions.Builder options = LlmChatOptions.builder();
+            if (usesLegacyMaxTokens) {
+                options.maxTokens(outputTokens);
+            }
+            else {
+                options.maxCompletionTokens(outputTokens);
+            }
+            return options;
         }
-        return options;
     }
 
     private void record(String outcome) {

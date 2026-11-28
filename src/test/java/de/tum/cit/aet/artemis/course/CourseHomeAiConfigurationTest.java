@@ -80,19 +80,26 @@ class CourseHomeAiConfigurationTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "LOCAL,LOCAL_AI,true", "LOCAL,CLOUD_AI,true", "CLOUD,LOCAL_AI,false", "CLOUD,CLOUD_AI,true", "LOCAL,NO_AI,false", "CLOUD,NO_AI,false" })
+    @CsvSource({ "LOCAL,LOCAL_AI,true", "LOCAL,CLOUD_AI,false", "CLOUD,LOCAL_AI,false", "CLOUD,CLOUD_AI,true", "LOCAL,NO_AI,false", "CLOUD,NO_AI,false" })
     void consentAndProviderLocationAreAuthoritative(String location, AiSelectionDecision decision, boolean expected) {
         var preferences = mock(UserAiPreferenceService.class);
         when(preferences.findDecision(7)).thenReturn(decision);
-        var props = new CourseHomeAiProperties(true, location, "welcome");
+        var props = new CourseHomeAiProperties(true, location, "welcome", null, null);
         var policy = new CourseHomeAiPolicyService(props, preferences, Optional.of(mock(CourseHomeAiClient.class)));
         assertThat(policy.canGenerate(7)).isEqualTo(expected);
     }
 
     @Test
+    void registersBothPresetAssignments() {
+        runner.withPropertyValues("artemis.course-home.ai.enabled=true", "artemis.course-home.ai.local-llm-preset=welcome", "artemis.course-home.ai.cloud-llm-preset=cloud")
+                .run(context -> assertThat(context.getBean(LlmPresetAssignments.class).llmPresetAssignments())
+                        .extracting(de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignment::preset).containsExactly("welcome", "cloud"));
+    }
+
+    @Test
     void undecidedAndMissingProvidersNeverGenerate() {
         var preferences = mock(UserAiPreferenceService.class);
-        var props = new CourseHomeAiProperties(true, "LOCAL", "welcome");
+        var props = new CourseHomeAiProperties(true, "LOCAL", "welcome", null, null);
         assertThat(new CourseHomeAiPolicyService(props, preferences, Optional.empty()).canGenerate(7)).isFalse();
         verifyNoInteractions(preferences);
         assertThat(new CourseHomeAiPolicyService(props, preferences, Optional.of(mock(CourseHomeAiClient.class))).canGenerate(7)).isFalse();
@@ -114,15 +121,15 @@ class CourseHomeAiConfigurationTest {
             assertThat(c.getBean(LlmPresetAssignments.class).llmPresetAssignments()).singleElement().satisfies(assignment -> assertThat(assignment.preset()).isEqualTo("welcome"));
             assertThat(c).hasSingleBean(CourseHomeAiClient.class);
         });
-        assertThat(new CourseHomeAiProperties(true, "LOCAL", " welcome ").llmPreset()).isEqualTo("welcome");
-        assertThat(new CourseHomeAiProperties(true, "LOCAL", "  ").isConfigured()).isFalse();
+        assertThat(new CourseHomeAiProperties(true, "LOCAL", " welcome ", null, null).llmPreset()).isEqualTo("welcome");
+        assertThat(new CourseHomeAiProperties(true, "LOCAL", "  ", null, null).isConfigured()).isFalse();
     }
 
     @Test
     void preferenceDatabaseFailureFallsBackWithoutTreatingItAsConsent() {
         var preferences = mock(UserAiPreferenceService.class);
         when(preferences.findDecision(7)).thenThrow(new DataAccessResourceFailureException("unavailable"));
-        var props = new CourseHomeAiProperties(true, "LOCAL", "welcome");
+        var props = new CourseHomeAiProperties(true, "LOCAL", "welcome", null, null);
         var policy = new CourseHomeAiPolicyService(props, preferences, Optional.of(mock(CourseHomeAiClient.class)));
         assertThat(policy.canGenerate(7)).isFalse();
     }
