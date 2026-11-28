@@ -4023,6 +4023,45 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/atlas/standardized-competencies/{competencyId}:
+    get:
+      tags: [standardized-competency]
+      operationId: getStandardizedCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StandardizedCompetencyResult'}
+  /api/atlas/standardized-competencies/sources:
+    get:
+      tags: [standardized-competency]
+      operationId: getSources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Source'}
+  /api/atlas/standardized-competencies/for-tree-view:
+    get:
+      tags: [standardized-competency]
+      operationId: getAllForTreeView
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/KnowledgeAreaResult'}
   /api/athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
     get:
       tags: [athena]
@@ -7020,6 +7059,21 @@ components:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    KnowledgeAreaResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortTitle: {type: string}
+        description: {type: string}
+        parentId: {type: integer, format: int64}
+        children:
+          type: array
+          items: {$ref: '#/components/schemas/KnowledgeAreaResult'}
+        competencies:
+          type: array
+          items: {$ref: '#/components/schemas/StandardizedCompetencyResult'}
+      required: [id]
     UserName:
       type: object
       properties:
@@ -9092,9 +9146,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     Grade:
       type: object
       properties:
@@ -9370,6 +9424,14 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    Source:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        author: {type: string}
+        uri: {type: string}
+      required: [id]
     SearchResultPageDTOGradingScale:
       type: object
       properties:
@@ -9571,6 +9633,19 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    StandardizedCompetencyResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        version: {type: string}
+        knowledgeAreaId: {type: integer, format: int64}
+        sourceId: {type: integer, format: int64}
+      required: [id]
     BonusRequest:
       type: object
       properties:

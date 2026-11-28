@@ -1,22 +1,19 @@
-import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { KnowledgeAreaDTO, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { Observable } from 'rxjs';
+import { StandardizedCompetencyApi } from 'app/openapi/api/standardized-competency-api';
+import { KnowledgeAreaResult } from 'app/openapi/model/knowledge-area-result';
+import { Source } from 'app/openapi/model/source';
 
+/** Observable catalog reads; importer resources belong to their component's lifetime. */
 @Service()
 export class StandardizedCompetencyService {
-    private httpClient = inject(HttpClient);
+    private readonly api = inject(StandardizedCompetencyApi);
 
-    private resourceURL = 'api/atlas/standardized-competencies';
-
-    getStandardizedCompetency(competencyId: number) {
-        return this.httpClient.get<StandardizedCompetencyDTO>(`${this.resourceURL}/${competencyId}`, { observe: 'response' });
+    getAllForTreeView(): Observable<KnowledgeAreaResult[]> {
+        return this.api.getAllForTreeView();
     }
 
-    getAllForTreeView() {
-        return this.httpClient.get<KnowledgeAreaDTO[]>(`${this.resourceURL}/for-tree-view`, { observe: 'response' });
-    }
-
-    getSources() {
-        return this.httpClient.get<Source[]>(`${this.resourceURL}/sources`, { observe: 'response' });
+    getSources(): Observable<Source[]> {
+        return this.api.getSources();
     }
 }
