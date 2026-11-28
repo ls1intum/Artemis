@@ -18,8 +18,8 @@ export interface ExerciseGenerationUsage {
     outputTokens: number;
     cachedInputTokens: number;
     cachedInputTokensComplete: boolean;
-    estimatedCostEur: number;
-    estimatedCostEurComplete: boolean;
+    costUsd: number;
+    costUsdComplete: boolean;
     models: Array<string>;
     providerRequestIds: Array<string>;
     providerRequestIdsComplete: boolean;

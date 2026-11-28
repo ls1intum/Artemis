@@ -13,7 +13,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import type { LectureTranscription } from 'app/openapi/model/lecture-transcription';
 import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
@@ -73,7 +73,7 @@ describe('AttachmentVideoUnitComponent', () => {
     let mockLectureTranscriptionService: any;
 
     function expectPlaylistRequest(unitId: number, response: string | null) {
-        const req = httpMock.expectOne((request) => request.url === `api/lecture/lecture-units/${unitId}/playlist`);
+        const req = httpMock.expectOne((request) => request.url === `/api/lecture/lecture-units/${unitId}/playlist`);
         expect(req.request.method).toBe('GET');
         req.flush(response);
     }
@@ -81,7 +81,6 @@ describe('AttachmentVideoUnitComponent', () => {
     beforeEach(async () => {
         mockLectureTranscriptionService = {
             getTranscription: vi.fn(() => of(undefined)),
-            getTranscriptionStatus: vi.fn(() => of(undefined)),
         };
 
         await TestBed.configureTestingModule({
@@ -369,7 +368,7 @@ describe('AttachmentVideoUnitComponent', () => {
         const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
         component.lectureUnit().videoSource = src;
 
-        const mockTranscriptDTO: LectureTranscriptionDTO = {
+        const mockTranscriptDTO: LectureTranscription = {
             lectureUnitId: 1,
             language: 'en',
             segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 3 }],
@@ -406,7 +405,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.toggleCollapse(false);
         expect(component.isLoading()).toBe(true);
 
-        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
+        const req = httpMock.expectOne((request) => request.url === '/api/lecture/lecture-units/1/playlist');
         req.flush('Not found', { status: 404, statusText: 'Not Found' });
         await fixture.whenStable();
 
@@ -435,7 +434,7 @@ describe('AttachmentVideoUnitComponent', () => {
         const m3u8Url = 'https://live.rbg.tum.de/some/path/playlist.m3u8';
         component.lectureUnit().videoSource = m3u8Url;
 
-        const mockTranscriptDTO: LectureTranscriptionDTO = {
+        const mockTranscriptDTO: LectureTranscription = {
             lectureUnitId: 1,
             language: 'en',
             segments: [{ startTime: 0, endTime: 5, text: 'Direct HLS transcript', slideNumber: 1 }],
@@ -451,7 +450,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request (even .m3u8 URLs go through the API)
-        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
+        const req = httpMock.expectOne((request) => request.url === '/api/lecture/lecture-units/1/playlist');
         expect(req.request.method).toBe('GET');
         req.flush(m3u8Url);
 
@@ -491,7 +490,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
+        const req = httpMock.expectOne((request) => request.url === '/api/lecture/lecture-units/1/playlist');
         req.flush(null);
 
         await fixture.whenStable();
@@ -535,8 +534,8 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     it('ignores a stale transcript response after rapidly closing and reopening', () => {
-        const staleTranscript = new Subject<LectureTranscriptionDTO | undefined>();
-        const currentTranscript = new Subject<LectureTranscriptionDTO | undefined>();
+        const staleTranscript = new Subject<LectureTranscription | undefined>();
+        const currentTranscript = new Subject<LectureTranscription | undefined>();
         component.lectureUnit().videoSource = 'https://www.youtube.com/watch?v=video';
         component.lectureUnit().youtubeVideoId = 'video';
         vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValueOnce(staleTranscript).mockReturnValueOnce(currentTranscript);
@@ -615,7 +614,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('renders TUM Live player when playlistUrl present (regression guard)', async () => {
             const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
-            const mockTranscriptDTO: LectureTranscriptionDTO = {
+            const mockTranscriptDTO: LectureTranscription = {
                 lectureUnitId: 2,
                 language: 'en',
                 segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 1 }],
@@ -848,7 +847,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component.toggleCollapse(false);
 
             // Mock video playlist request
-            const videoReq = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
+            const videoReq = httpMock.expectOne((request) => request.url === '/api/lecture/lecture-units/1/playlist');
             videoReq.flush(playlist);
 
             await fixture.whenStable();

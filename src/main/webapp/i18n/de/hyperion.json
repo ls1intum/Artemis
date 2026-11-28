@@ -32,7 +32,16 @@
                     "cancelRequested": "Der Lauf endet nach dem aktuellen Schritt.",
                     "cancelNotRunning": "Es läuft kein Lauf.",
                     "cancelFailed": "Der Lauf konnte nicht abgebrochen werden.",
-                    "modelMissing": "Smart Quizzes benötigt ein selbst betriebenes Sprachmodell, das auf diesem Server nicht korrekt konfiguriert ist. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen generiert werden."
+                    "lastBuild": "Letzter Lauf:",
+                    "trigger": {
+                        "MANUAL": "manuell gestartet,",
+                        "SCHEDULED": "vom nächtlichen Zeitplan gestartet,"
+                    },
+                    "lastBuildFinished": "beendet {{ time }}.",
+                    "lastBuildRunning": "läuft seit {{ time }}.",
+                    "lastBuildCounts": "{{ enqueued }} hinzugefügt, {{ generated }} generiert, {{ accepted }} angenommen, {{ rejected }} abgelehnt, {{ failed }} fehlgeschlagen.",
+                    "lastBuildFailure": "Vorzeitig beendet: {{ failure }}",
+                    "modelMissing": "Für Smart Quizzes sind auf diesem Server keine Sprachmodelle zugewiesen. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen erzeugt werden."
                 },
                 "settings": {
                     "title": "Einstellungen",
@@ -52,6 +61,8 @@
                     "easyPercent": "Leicht (%)",
                     "mediumPercent": "Mittel (%)",
                     "hardPercent": "Schwer (%)",
+                    "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
+                    "poolGenerationHelp": "Jede Nacht generiert Hyperion Fragen für Vorlesungseinheiten, die neu sind oder deren Material sich seit dem letzten Lauf geändert hat.",
                     "save": "Einstellungen speichern",
                     "saved": "Einstellungen gespeichert.",
                     "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
@@ -62,6 +73,8 @@
                     "summaryMultipleOnFixed": "{{ count }} Multiple-Choice-Fragen pro Vorlesungseinheit mit {{ min }} richtigen Optionen",
                     "summaryMultipleOff": "keine Multiple-Choice-Fragen",
                     "summaryMix": "Schwierigkeit {{ easy }} / {{ medium }} / {{ hard }} %",
+                    "summaryOvernightOn": "nächtliche Läufe an",
+                    "summaryOvernightOff": "nächtliche Läufe aus",
                     "countHint": "Zwischen {{ min }} und {{ max }}.",
                     "summaryRunningBuild": "Aktueller Lauf:",
                     "summaryNextBuild": "Nächster Lauf:",
@@ -74,16 +87,43 @@
                     "competency": "Kompetenz",
                     "allCompetencies": "Alle Kompetenzen"
                 },
+                "createQuiz": {
+                    "button": "Quiz aus dem Pool erstellen",
+                    "title": "Quiz aus dem Pool erstellen",
+                    "intro": "Zieht Fragen, verteilt über die gewählten Kompetenzen, Vorlesungseinheiten, Fragetypen und Schwierigkeiten, und öffnet sie in einem neuen Quiz. Sie nimmt jede nicht ausgeschlossene Frage; zur Prüfung markierte oder vom Filter abgelehnte Fragen nimmt sie erst, wenn sie übernommen wurden. Am seltensten gezogene Fragen kommen zuerst, sodass wiederholte Quizze durch den Pool rotieren.",
+                    "competencies": "Kompetenzen",
+                    "competenciesPlaceholder": "Kompetenzen wählen",
+                    "lectureUnits": "Vorlesungseinheiten",
+                    "lectureUnitsPlaceholder": "Alle Vorlesungseinheiten der gewählten Kompetenzen",
+                    "count": "Anzahl Fragen",
+                    "questionTypes": "Fragetypen",
+                    "questionTypesPlaceholder": "Alle Typen",
+                    "difficulties": "Schwierigkeiten",
+                    "difficultiesPlaceholder": "Alle Schwierigkeiten",
+                    "available": "{{ count }} Fragen passen zur Auswahl.",
+                    "submit": "Im Quiz-Editor öffnen",
+                    "cancel": "Abbrechen",
+                    "none": "Keine Fragen passen zur Auswahl. Übernimm markierte oder abgelehnte Fragen oder erweitere die Auswahl.",
+                    "fewer": "Nur {{ selected }} der {{ requested }} angeforderten Fragen waren verfügbar. Der Quiz-Editor wurde mit diesen geöffnet.",
+                    "failed": "Die Fragen konnten nicht gezogen werden.",
+                    "types": {
+                        "single-choice": "Single Choice",
+                        "multiple-choice": "Multiple Choice",
+                        "true-false": "Richtig oder falsch"
+                    }
+                },
                 "list": {
                     "needsReview": "Prüfung empfohlen ({{ count }})",
-                    "needsReviewHint": "Diese Fragen haben den Filter bestanden, wurden aber in mindestens einem Kriterium markiert. Prüfe sie, bevor du sie übernimmst.",
+                    "needsReviewHint": "Diese Fragen haben den Filter bestanden, wurden aber in mindestens einem Kriterium markiert. Sie kommen erst in Quizze, wenn du sie übernimmst.",
                     "accepted": "Vom Filter akzeptiert ({{ count }})",
                     "rejected": "Vom Filter abgelehnt ({{ count }})",
-                    "rejectedHint": "Diese Fragen sind am Filter gescheitert. Du kannst eine Frage trotzdem übernehmen, wenn du dem Urteil nicht zustimmst.",
+                    "rejectedHint": "Diese Fragen sind am Filter gescheitert. Sie kommen nur in Quizze, wenn du eine übernimmst, weil du dem Urteil nicht zustimmst.",
                     "inProgress": "{{ count }} Fragen werden noch generiert oder geprüft.",
                     "failed": "{{ count }} Fragen konnten nicht generiert oder geprüft werden.",
                     "empty": "Noch keine Fragen in dieser Gruppe.",
                     "lectureUnit": "Vorlesungseinheit:",
+                    "showExplanations": "Erklärungen anzeigen",
+                    "hideExplanations": "Erklärungen ausblenden",
                     "showRationale": "Filterurteil anzeigen",
                     "hideRationale": "Filterurteil ausblenden",
                     "score": "Filterwert: {{ score }} / 100",
@@ -119,7 +159,9 @@
                     "needsReviewToggle": "Markierte Fragen ein- oder ausblenden",
                     "deleteCompetency": "Fragen dieser Kompetenz löschen",
                     "deleteCourseChanged": "Es wurde nichts gelöscht, weil inzwischen ein anderer Kurs angezeigt wird. Öffne den Kurs erneut und wiederhole das Löschen.",
-                    "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden."
+                    "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden.",
+                    "materialChanged": "Material geändert",
+                    "materialChangedHint": "Das Material der Vorlesungseinheit hat sich geändert, nachdem diese Frage generiert wurde. Die Frage bleibt erhalten, zählt aber nicht mehr zum Pool."
                 },
                 "errors": {
                     "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden.",
@@ -131,6 +173,27 @@
                     "typeCourseTitle": "Gib den Titel des Kurses ein, um zu bestätigen.",
                     "deleted": "{{ count }} Fragen gelöscht.",
                     "failed": "Die Fragen konnten nicht gelöscht werden."
+                },
+                "units": {
+                    "title": "Vorlesungseinheiten ({{ count }})",
+                    "toggle": "Vorlesungseinheiten ein- oder ausblenden",
+                    "hint": "Für jede Vorlesungseinheit, die mit einer Kompetenz verknüpft ist, werden Fragen generiert. Schließe eine Einheit aus, damit künftige Läufe sie überspringen; ihre nicht geprüften Fragen werden gelöscht, übernommene bleiben erhalten.",
+                    "excludedCount": "{{ count }} ausgeschlossen",
+                    "changedCount": "{{ count }} mit geändertem Material",
+                    "counts": "{{ count }} Fragen, {{ approved }} übernommen",
+                    "lastBuilt": "zuletzt generiert {{ time }}",
+                    "neverBuilt": "noch nicht generiert",
+                    "excludedTag": "Ausgeschlossen",
+                    "materialChanged": "Material geändert",
+                    "materialChangedHint": "Übernommene Fragen dieser Einheit wurden aus früherem Material generiert. Prüfe sie; der nächste Lauf generiert neue Fragen aus dem aktuellen Material.",
+                    "exclude": "Ausschließen",
+                    "include": "Einbeziehen",
+                    "excludeConfirmHeader": "Diese Vorlesungseinheit ausschließen?",
+                    "excludeConfirmMessage": "Läufe überspringen „{{ unit }}“. Ihre nicht geprüften Fragen werden jetzt gelöscht; übernommene Fragen bleiben erhalten.",
+                    "excludeBlocked": "Während ein Lauf läuft, können keine Vorlesungseinheiten ausgeschlossen werden.",
+                    "excluded": "Vorlesungseinheit ausgeschlossen.",
+                    "included": "Vorlesungseinheit einbezogen. Der nächste Lauf generiert ihre Fragen.",
+                    "relevanceFailed": "Die Änderung konnte nicht gespeichert werden."
                 }
             }
         }

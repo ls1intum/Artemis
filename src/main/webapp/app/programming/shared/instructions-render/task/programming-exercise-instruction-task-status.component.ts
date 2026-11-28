@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -15,7 +15,7 @@ import { safeUnescape } from 'app/foundation/util/security.util';
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
     templateUrl: './programming-exercise-instruction-task-status.component.html',
-    styleUrls: ['./programming-exercise-instruction-task-status.scss'],
+    styleUrls: ['./programming-exercise-instruction-task-status.css'],
     imports: [FaIconComponent, ArtemisTranslatePipe, SafeHtmlPipe],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {

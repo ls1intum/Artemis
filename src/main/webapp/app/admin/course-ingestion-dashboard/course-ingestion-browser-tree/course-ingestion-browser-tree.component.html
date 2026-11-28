@@ -1,4 +1,4 @@
-<nav class="flex flex-col gap-4 text-sm" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.navigationLabel' | artemisTranslate">
+<nav class="flex flex-col gap-6 text-sm" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.navigationLabel' | artemisTranslate">
     <!-- Metadata scoreboard -->
     <div>
         <span
@@ -11,7 +11,7 @@
                 <li>
                     <button
                         type="button"
-                        class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                        class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent! border-0 text-left cursor-pointer"
                         [class.active]="selectedKey() === row.key"
                         [attr.aria-current]="selectedKey() === row.key ? 'true' : undefined"
                         (click)="select(row.selection)"
@@ -41,7 +41,7 @@
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent! border-0 cursor-pointer"
                                 [attr.aria-expanded]="isExpanded(lecture.key)"
                                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleLecture' | artemisTranslate"
                                 (click)="toggle(lecture.key)"
@@ -51,7 +51,7 @@
                             </button>
                             <button
                                 type="button"
-                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent! border-0 text-left cursor-pointer"
                                 [class.active]="selectedKey() === lecture.key"
                                 [attr.aria-current]="selectedKey() === lecture.key ? 'true' : undefined"
                                 (click)="select(lecture.selection)"
@@ -95,13 +95,13 @@
                         </div>
 
                         @if (isExpanded(lecture.key)) {
-                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                 @for (unit of lecture.units; track unit.unitId) {
                                     <li>
                                         <div class="flex items-center gap-1">
                                             <button
                                                 type="button"
-                                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent! border-0 cursor-pointer"
                                                 [attr.aria-expanded]="isExpanded(unit.key)"
                                                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleUnit' | artemisTranslate"
                                                 (click)="toggle(unit.key)"
@@ -114,7 +114,7 @@
                                             </button>
                                             <button
                                                 type="button"
-                                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                                class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent! border-0 text-left cursor-pointer"
                                                 [class.active]="selectedKey() === unit.key"
                                                 [attr.aria-current]="selectedKey() === unit.key ? 'true' : undefined"
                                                 (click)="select(unit.selection)"
@@ -154,12 +154,12 @@
                                         </div>
 
                                         @if (isExpanded(unit.key)) {
-                                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                                 @for (content of unit.content; track content.key) {
                                                     <li>
                                                         <button
                                                             type="button"
-                                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent! border-0 text-left cursor-pointer"
                                                             [class.active]="selectedKey() === content.key"
                                                             [attr.aria-current]="selectedKey() === content.key ? 'true' : undefined"
                                                             (click)="select(content.selection)"
@@ -207,7 +207,7 @@
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
-                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
+                                class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent! border-0 cursor-pointer"
                                 [attr.aria-expanded]="isExpanded(unit.key)"
                                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleUnit' | artemisTranslate"
                                 (click)="toggle(unit.key)"
@@ -227,12 +227,12 @@
                         </div>
 
                         @if (isExpanded(unit.key)) {
-                            <ul class="list-none p-0 m-0 ms-5 flex flex-col">
+                            <ul class="list-none p-0 m-0 ms-12! flex flex-col">
                                 @for (content of unit.content; track content.key) {
                                     <li>
                                         <button
                                             type="button"
-                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
+                                            class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent! border-0 text-left cursor-pointer"
                                             [class.active]="selectedKey() === content.key"
                                             [attr.aria-current]="selectedKey() === content.key ? 'true' : undefined"
                                             (click)="select(content.selection)"

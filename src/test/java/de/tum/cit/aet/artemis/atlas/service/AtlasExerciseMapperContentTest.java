@@ -30,7 +30,6 @@ import org.springframework.ai.tool.ToolCallback;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentToolConfig;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -58,10 +57,10 @@ class AtlasExerciseMapperContentTest {
     @BeforeEach
     void setUp() {
         var templates = new AtlasPromptTemplateService();
-        var extraction = new ContentExtractionService(null, templates, mock(QuizExerciseRepository.class), "unused", "high", 1.0);
+        var extraction = new ContentExtractionService(null, templates, mock(QuizExerciseRepository.class));
         var reads = new OrchestratorReadToolsService(jsonMapper, mock(CourseCompetencyRepository.class), exerciseRepository, extraction, Optional.empty(), Optional.empty());
         var surface = new AtlasAgentToolConfig().exerciseMapperToolCallbackProvider(mock(ExerciseMappingToolsService.class), reads);
-        var delegation = new AtlasAgentDelegationService(ChatClient.create(chatModel), templates, null, new AtlasAgentProperties("test-model", 1.0));
+        var delegation = new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templates, null);
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
         var prompt = ArgumentCaptor.forClass(Prompt.class);
         when(chatModel.call(prompt.capture())).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("ready")))));

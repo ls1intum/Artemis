@@ -4,7 +4,7 @@ import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
  * markdown-it plugin that converts GitHub-style alert blockquotes (e.g. `> [!NOTE]`) into
  * `<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">…</p>…</div>`
  * blocks. The emitted markup (class names and inline octicon SVGs) is styled by the github-alerts
- * styles in `content/scss/_github-alerts.scss`. Output flows through DOMPurify in the markdown
+ * styles in `content/css/github-alerts.css`. Output flows through DOMPurify in the markdown
  * conversion util.
  *
  * This implementation is based on markdown-it-github-alerts by Anthony Fu.

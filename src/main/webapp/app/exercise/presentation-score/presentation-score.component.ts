@@ -1,4 +1,5 @@
-import { TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -19,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     template: `
         <ng-container *jhiHasAnyAuthority="IS_AT_LEAST_EDITOR">
             @if (this.showPresentationScoreCheckbox()) {
-                <div class="flex flex-col gap-1 mb-3">
+                <div class="flex flex-col gap-1 mb-4!">
                     <div class="flex items-center gap-2">
                         <tumaet-ui-checkbox
                             inputId="field_presentationScoreEnabled"
@@ -30,7 +31,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                         <label class="" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score Enabled</label>
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            class="text-text-secondary"
+                            class="text-muted-color"
                             tumAetUiTooltip="{{ 'artemisApp.exercise.presentationScoreEnabled.description' | artemisTranslate }}"
                         />
                     </div>

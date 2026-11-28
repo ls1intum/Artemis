@@ -35,9 +35,9 @@ final class GenerationLiveUsage {
 
     private final AtomicLong modelCalls = new AtomicLong();
 
-    private final DoubleAdder estimatedCostEur = new DoubleAdder();
+    private final DoubleAdder costUsd = new DoubleAdder();
 
-    private final AtomicBoolean estimatedCostComplete = new AtomicBoolean(true);
+    private final AtomicBoolean costUsdComplete = new AtomicBoolean(true);
 
     GenerationLiveUsage(long tokenBudget, double cachedInputTokenWeight) {
         this.tokenBudget = tokenBudget;
@@ -54,10 +54,10 @@ final class GenerationLiveUsage {
         outputTokens.addAndGet(request.numOutputTokens());
         cachedInputTokens.addAndGet(request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens());
         modelCalls.incrementAndGet();
-        estimatedCostEur.add(GenerationTokenUsageService.estimatedCostEur(request));
-        if (!request.costEstimateComplete()) {
+        costUsd.add(request.costUsd());
+        if (!request.costUsdComplete()) {
             // Absorbing: an unpriced model makes every later total a lower bound, and reporting it as a price would claim the run cost less than it did.
-            estimatedCostComplete.set(false);
+            costUsdComplete.set(false);
         }
     }
 
@@ -72,11 +72,11 @@ final class GenerationLiveUsage {
     }
 
     /**
-     * @return the run's spend up to this moment, with the cost omitted unless every response counted so far had a configured price
+     * @return the run's spend up to this moment, with the cost omitted unless every response counted so far had a reported or completely estimated USD price
      */
     ExerciseGenerationLiveUsageDTO snapshot() {
-        boolean costComplete = estimatedCostComplete.get();
+        boolean costComplete = costUsdComplete.get();
         return new ExerciseGenerationLiveUsageDTO(inputTokens.get(), outputTokens.get(), cachedInputTokens.get(), billableTokens.get(), tokenBudget, modelCalls.get(),
-                costComplete ? estimatedCostEur.sum() : null, costComplete);
+                costComplete ? costUsd.sum() : null, costComplete);
     }
 }

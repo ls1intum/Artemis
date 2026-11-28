@@ -13,7 +13,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 @Component({
     selector: 'jhi-exercise-info',
     templateUrl: './exercise-info.component.html',
-    styleUrls: ['./exercise-info.component.scss'],
+    styleUrls: ['./exercise-info.component.css'],
     imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExerciseInfoComponent implements OnInit {

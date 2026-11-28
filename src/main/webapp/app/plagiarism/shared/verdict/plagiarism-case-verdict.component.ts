@@ -1,14 +1,15 @@
 import { Component, input } from '@angular/core';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-case-verdict',
     templateUrl: './plagiarism-case-verdict.component.html',
-    imports: [NgbTooltip, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TumAetUiTagComponent, TumAetUiTooltipDirective, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseVerdictComponent {
     plagiarismCase = input.required<PlagiarismCase>();

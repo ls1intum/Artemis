@@ -1,6 +1,6 @@
 <!-- As high as the title bar, so the page keeps as much room for its content as it can, also on small screens. -->
 <div class="lecture-edit-footer-bar mx-auto flex w-full max-w-4xl items-center gap-2 px-3.5 sm:px-6">
-    <div class="flex min-w-0 grow items-center gap-x-4! text-sm" aria-live="polite">
+    <div class="flex min-w-0 grow items-center gap-x-4 text-sm" aria-live="polite">
         @if (isSaving()) {
             <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.saving" data-testid="lecture-edit-footer-status"></span>
         } @else if (hasChanges() || hasUnsavedContent()) {
@@ -28,7 +28,16 @@
             [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.editFooter.contentHint' : 'artemisApp.lecture.editFooter.createHint'"
         ></span>
     </div>
-    <button tumAetUiButton type="button" id="cancel-save" data-testid="lecture-edit-leave" severity="secondary" size="small" [disabled]="isSaving()" (click)="leave.emit()">
+    <button
+        tumAetUiButton
+        type="button"
+        id="cancel-save"
+        data-testid="lecture-edit-leave"
+        severity="secondary"
+        size="small"
+        [disabled]="isSaving() && !allowLeaveWhileSaving()"
+        (click)="leave.emit()"
+    >
         <span [jhiTranslate]="leaveLabel()"></span>
     </button>
     @let blockedReason = saveBlockedReason();
@@ -39,7 +48,7 @@
         id="save-entity"
         data-testid="lecture-edit-save"
         size="small"
-        class="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        class="aria-disabled:opacity-60"
         [attr.aria-disabled]="isSaveBlocked()"
         [tumAetUiTooltip]="blockedReason ? (blockedReason | artemisTranslate) : ''"
         (click)="onSave()"
@@ -50,7 +59,7 @@
         } @else {
             <!-- On a phone the status needs the room more than the button needs its icon. -->
             <fa-icon [icon]="faSave" class="hidden sm:inline" />
-            <span jhiTranslate="entity.action.save"></span>
+            <span [jhiTranslate]="saveLabel()"></span>
         }
     </button>
 </div>

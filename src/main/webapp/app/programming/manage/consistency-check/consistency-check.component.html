@@ -1,25 +1,23 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.consistencyCheck.title' | artemisTranslate" [closable]="true" [closeOnEscape]="true">
-    <div class="justify-content-center p-1">
+    <div class="p-1">
         <span jhiTranslate="artemisApp.consistencyCheck.text"></span>
         <br />
         <small jhiTranslate="artemisApp.consistencyCheck.warning"></small>
         @if (isLoading()) {
-            <div class="d-flex justify-content-center m-5">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden" jhiTranslate="loading"></span>
-                </div>
+            <div class="flex justify-center m-12">
+                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" [style.width.px]="32" [style.height.px]="32" />
             </div>
         } @else {
-            <div class="mt-3 text-center">
+            <div class="mt-4 text-center">
                 @if (inconsistencies().length) {
                     <div>
-                        <span class="h1 text-danger"><fa-icon [icon]="faTimes" /></span>
+                        <span class="text-[2.5rem] leading-tight font-medium text-state-danger"><fa-icon [icon]="faTimes" /></span>
                         <br />
                         <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound"></span>
                     </div>
                 } @else {
                     <div>
-                        <span class="h1 text-success"><fa-icon [icon]="faCheck" /></span>
+                        <span class="text-[2.5rem] leading-tight font-medium text-state-success"><fa-icon [icon]="faCheck" /></span>
                         <br />
                         <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies"></span>
                     </div>
@@ -27,7 +25,7 @@
             </div>
         }
         @if (!isLoading() && inconsistencies().length) {
-            <div class="p-1 my-5">
+            <div class="p-1 my-12">
                 <tumaet-ui-table-layout class="[--table-layout-offset:30rem] max-md:[--table-layout-offset:38rem]">
                     <table tumAetUiTable size="small" striped>
                         <thead>

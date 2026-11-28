@@ -11,7 +11,7 @@ import { QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-heade
 @Component({
     selector: 'jhi-quiz-exercise-countdown',
     templateUrl: './quiz-exercise-countdown.component.html',
-    styleUrl: './quiz-exercise-countdown.component.scss',
+    styleUrl: './quiz-exercise-countdown.component.css',
     imports: [TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

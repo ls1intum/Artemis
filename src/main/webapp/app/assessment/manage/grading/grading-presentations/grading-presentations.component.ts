@@ -1,4 +1,4 @@
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { Component, DestroyRef, effect, inject, input, output, untracked } from '@angular/core';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -59,7 +59,7 @@ export interface PresentationsConfig {
 @Component({
     selector: 'jhi-grading-presentations',
     templateUrl: './grading-presentations.component.html',
-    styleUrls: ['./grading-presentations.component.scss'],
+    styleUrls: ['./grading-presentations.component.css'],
     imports: [TranslateDirective, FormsModule, ModePickerComponent, HelpIconComponent, TumAetUiInputDirective],
 })
 export class GradingPresentationsComponent {

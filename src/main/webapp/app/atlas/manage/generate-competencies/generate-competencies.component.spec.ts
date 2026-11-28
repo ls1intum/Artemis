@@ -26,7 +26,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -36,11 +36,9 @@ describe('GenerateCompetenciesComponent', () => {
     let comp: GenerateCompetenciesComponent;
     type GenerationUpdate = { runState: IrisRunState; result?: CompetencyRecommendation[] };
     let mockWebSocketSubject: Subject<GenerationUpdate>;
-    let dialogClose: Subject<{ confirmed: boolean } | undefined>;
 
     beforeEach(() => {
         mockWebSocketSubject = new Subject<GenerationUpdate>();
-        dialogClose = new Subject<{ confirmed: boolean } | undefined>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -70,7 +68,6 @@ describe('GenerateCompetenciesComponent', () => {
                 AlertService,
                 ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
             ],
         })
             .compileComponents()
@@ -120,8 +117,8 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should open modal to remove competency recommendations', () => {
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
@@ -155,8 +152,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should not submit for unviewed recommendations', async () => {
         fixture.detectChanges();
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         const saveSpy = vi.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
@@ -169,16 +166,21 @@ describe('GenerateCompetenciesComponent', () => {
         await fixture.whenStable();
         expect(openSpy).toHaveBeenCalledOnce();
         expect(saveSpy).not.toHaveBeenCalled();
+
+        // saving only happens once the confirmation is accepted
+        saveSpy.mockImplementation(() => undefined);
+        openSpy.mock.calls[0][0].accept?.();
+        expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should submit', async () => {
         fixture.detectChanges();
         const router = TestBed.inject(Router);
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const competencyService = TestBed.inject(CompetencyService);
 
         const navigateSpy = vi.spyOn(router, 'navigate');
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [],
             status: 200,
@@ -395,10 +397,12 @@ describe('GenerateCompetenciesComponent', () => {
     it('removes a recommendation only after the delete dialog is confirmed', () => {
         comp.competencies.push(createCompetencyFormGroup('First', 'Description', CompetencyTaxonomy.ANALYZE, true));
         comp.competencies.push(createCompetencyFormGroup('Second', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        const confirmSpy = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
         comp.onDelete(0);
-        dialogClose.next({ confirmed: false });
+        const request = confirmSpy.mock.calls[0][0];
+        request.reject?.();
         expect(comp.competencies.length).toBe(2);
-        dialogClose.next({ confirmed: true });
+        request.accept();
         expect(comp.competencies.getRawValue().map((entry) => entry.competency.title)).toEqual(['Second']);
     });
 });

@@ -1,10 +1,14 @@
-import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectButton } from 'primeng/selectbutton';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -23,7 +27,19 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe, SelectButton],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        ChannelIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiSelectButtonComponent,
+    ],
 })
 export class ChannelFormComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
@@ -45,6 +61,8 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     readonly formSubmitted = output<ChannelFormData>();
     readonly channelTypeChanged = output<ChannelType>();
     readonly isAnnouncementChannelChanged = output<boolean>();
+    /** Announcement channels can only be created by instructors, as only they can moderate them. */
+    readonly canCreateAnnouncementChannel = input<boolean>(true);
     isCourseWideChannelChanged = output<boolean>();
 
     form!: FormGroup; // set in initializeForm() from ngOnInit()

@@ -1,4 +1,6 @@
 import { Component, input, output } from '@angular/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,8 +11,7 @@ import { ChannelAction, ChannelActionType } from 'app/communication/course-conve
 @Component({
     selector: 'jhi-channel-item',
     templateUrl: './channel-item.component.html',
-    styleUrls: ['./channel-item.component.scss'],
-    imports: [ChannelIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [ChannelIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent],
 })
 export class ChannelItemComponent {
     canJoinChannel = canJoinChannel;

@@ -2,7 +2,7 @@
 @if (sidebarItem(); as item) {
     <div class="mx-1">
         @if (sidebarType() === 'exam') {
-            <div class="d-flex justify-content-between align-items-baseline">
+            <div class="flex justify-between items-baseline">
                 <span data-testid="sidebar-card-title" class="me-2 mb-2" [title]="item.title">
                     @if (item.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="item.icon" />
@@ -10,17 +10,17 @@
                     {{ item.title }}
                 </span>
             </div>
-            <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <div class="me-2 text-truncate" [ngClass]="{ 'fw-bold': item.isAttempt }">
+            <div class="flex justify-between mb-1 items-baseline">
+                <div class="me-2 truncate" [ngClass]="{ 'font-bold': item.isAttempt }">
                     {{ item.subtitleLeft }}
                 </div>
             </div>
-            <div class="d-flex flex-column align-items-baseline">
+            <div class="flex flex-col items-baseline">
                 <small
-                    class="me-2 text-truncate fw-semibold small-title-color"
+                    class="me-2 truncate font-semibold small-title-color"
                     jhiTranslate="{{ item.isAttempt ? 'artemisApp.courseOverview.sidebar.submissionDate' : 'artemisApp.courseOverview.sidebar.start' }}"
                 ></small>
-                <small class="me-2 text-truncate fw-semibold">
+                <small class="me-2 truncate font-semibold">
                     @if (item.isAttempt) {
                         {{ item.submissionDate | artemisDate: 'long-date' }}
                         -
@@ -34,11 +34,11 @@
                     }
                 </small>
             </div>
-            <hr class="my-1 mx-0 sidebar-divider" />
+            <hr class="my-1! mx-0! sidebar-divider" />
             @if (item.isAttempt) {
-                <div class="d-flex flex-column align-items-baseline">
-                    <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
-                    <small class="me-2 fw-semibold">
+                <div class="flex flex-col items-baseline">
+                    <small class="me-2 truncate font-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
+                    <small class="me-2 font-semibold">
                         @if (item.usedWorkingTime) {
                             {{ item.usedWorkingTime | artemisDurationFromSeconds }}
                         } @else {
@@ -47,9 +47,9 @@
                     </small>
                 </div>
             } @else {
-                <div class="d-flex flex-column align-items-baseline">
-                    <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
-                    <small class="me-2 text-truncate fw-semibold">
+                <div class="flex flex-col items-baseline">
+                    <small class="me-2 truncate font-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
+                    <small class="me-2 truncate font-semibold">
                         @if (item.studentExam) {
                             <jhi-student-exam-working-time [studentExam]="item.studentExam" />
                         } @else if (item.workingTime) {
@@ -57,18 +57,18 @@
                         }
                     </small>
                 </div>
-                <hr class="my-1 mx-0 sidebar-divider" />
+                <hr class="my-1! mx-0! sidebar-divider" />
                 @if (item.testExam) {
-                    <div class="d-flex flex-column align-items-baseline">
-                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
-                        <small class="me-2 text-truncate fw-semibold">
+                    <div class="flex flex-col items-baseline">
+                        <small class="me-2 truncate font-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
+                        <small class="me-2 truncate font-semibold">
                             {{ item.attempts }}
                         </small>
                     </div>
                 } @else {
-                    <div class="d-flex flex-column align-items-baseline">
-                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
-                        <small class="me-2 text-truncate fw-semibold">
+                    <div class="flex flex-col items-baseline">
+                        <small class="me-2 truncate font-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
+                        <small class="me-2 truncate font-semibold">
                             @if (item.attainablePoints) {
                                 {{ item.attainablePoints }}
                             }
@@ -77,13 +77,13 @@
                 }
             }
         } @else {
-            <div class="d-flex justify-content-between align-items-baseline">
+            <div class="flex justify-between items-baseline">
                 <span
                     data-testid="sidebar-card-title"
-                    class="small text-truncate me-2"
+                    class="text-[0.875em] truncate me-2"
                     [title]="item.title"
                     [class.muted]="item.conversation?.isMuted"
-                    [ngClass]="sidebarType() === 'conversation' ? (unreadCount() > 0 && !item.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
+                    [ngClass]="sidebarType() === 'conversation' ? (unreadCount() > 0 && !item.conversation?.isMuted ? 'font-bold' : 'font-normal') : 'font-semibold'"
                 >
                     @if (otherUser(); as otherUser) {
                         <jhi-profile-picture
@@ -118,17 +118,17 @@
                     </div>
                 }
             </div>
-            <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': item.subtitleLeft }">
-                <small class="me-2 text-truncate" [ngClass]="item.subtitleLeftClass" [title]="item.subtitleLeftTooltip">
+            <div class="flex justify-between items-baseline text-[0.875em]" [ngClass]="{ 'mt-1': item.subtitleLeft }">
+                <small class="me-2 truncate" [ngClass]="item.subtitleLeftClass" [title]="item.subtitleLeftTooltip">
                     @if (item.subtitleLeftIcon) {
                         <fa-icon [icon]="item.subtitleLeftIcon" />
                     }
                     {{ item.subtitleLeft }}
                 </small>
-                <small class="text-truncate d-inline">
+                <small class="truncate inline">
                     @if (sidebarType() === 'exercise' && item.exercise) {
                         <jhi-submission-result-status
-                            class="text-truncate result"
+                            class="truncate result"
                             [exercise]="item.exercise"
                             [course]="item.course"
                             [studentParticipation]="item.studentParticipation"

@@ -12,7 +12,7 @@ import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -39,8 +39,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                 SessionStorageService,
                 LocalStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
-                { provide: DynamicDialogConfig, useValue: { data: { programmingExercise } } },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: TumAetUiDialogConfig, useValue: { data: { programmingExercise } } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

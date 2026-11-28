@@ -40,19 +40,16 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.DefaultToolMetadata;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentProperties;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 
 class AtlasToolCallBudgetTest {
-
-    private static final AtlasAgentProperties PROPERTIES = new AtlasAgentProperties("test", 0.0);
 
     @Test
     void sameToolMayRun48TimesThroughNativeAdvisor() {
         AtomicInteger calls = new AtomicInteger();
         ChatModel model = modelReturning(new AtomicInteger(), round -> round <= 48 ? toolCallResponse("getExerciseContent") : textResponse("done"));
-        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), new HashMap<>(),
-                ToolCallbackProvider.from(callback("getExerciseContent", calls, false)));
+        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", new HashMap<>(), ignored -> {
+        }, ToolCallbackProvider.from(callback("getExerciseContent", calls, false)));
         assertThat(calls).hasValue(48);
         assertThat(response.getResult().getOutput().getText()).isEqualTo("done");
     }
@@ -111,8 +108,8 @@ class AtlasToolCallBudgetTest {
     void uncooperativeModelStopsAtHardLimitAndRetainsUsage() {
         Map<String, Object> context = new HashMap<>();
         ChatModel model = modelReturning(new AtomicInteger(), round -> toolCallResponseWithUsage("getExerciseContent"));
-        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", OpenAiChatOptions.builder(), context,
-                ToolCallbackProvider.from(callback("getExerciseContent", new AtomicInteger(), false)));
+        ChatResponse response = newService(model).delegateOrchestratorRound("system", "run", context, ignored -> {
+        }, ToolCallbackProvider.from(callback("getExerciseContent", new AtomicInteger(), false)));
         assertThat(AtlasToolCallBudget.budgetForContext(context).calls()).isEqualTo(255);
         assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(256);
         assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(response, context)).isInstanceOf(AtlasToolCallBudget.LimitReachedException.class);
@@ -242,8 +239,8 @@ class AtlasToolCallBudgetTest {
                 }
             }
         };
-        ChatResponse response = newService(modelReturning(modelCalls, round -> toolCallResponse("delegateWorker"))).delegateOrchestratorRound("system", "run",
-                OpenAiChatOptions.builder(), context, ToolCallbackProvider.from(worker));
+        ChatResponse response = newService(modelReturning(modelCalls, round -> toolCallResponse("delegateWorker"))).delegateOrchestratorRound("system", "run", context, ignored -> {
+        }, ToolCallbackProvider.from(worker));
         assertThat(modelCalls).hasValue(1);
         assertThat(budget.calls()).isEqualTo(255);
         assertThatThrownBy(() -> AtlasToolCallBudget.checkResponse(response, context)).isInstanceOf(AtlasToolCallBudget.LimitReachedException.class);
@@ -325,7 +322,8 @@ class AtlasToolCallBudgetTest {
     }
 
     private static AtlasAgentDelegationService newService(ChatModel chatModel) {
-        return new AtlasAgentDelegationService(ChatClient.create(chatModel), mock(AtlasPromptTemplateService.class), null, PROPERTIES);
+        return new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), mock(AtlasPromptTemplateService.class),
+                null);
     }
 
     private static ChatModel modelReturning(AtomicInteger calls, java.util.function.IntFunction<ChatResponse> responseFactory) {

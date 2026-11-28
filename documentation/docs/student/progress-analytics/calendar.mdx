@@ -2,7 +2,7 @@
 id: calendar
 title: Calendar
 sidebar_label: Calendar
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-17
 ---
 
 import calendarTabImage from '../assets/calendar/calendar-tab.png';
@@ -13,6 +13,7 @@ import mobileDayPresentationImage from '../assets/calendar/mobile-day-presentati
 import eventDetailsImage from '../assets/calendar/event-details.png';
 import desktopSubscriptionComponent from '../assets/calendar/desktop-subscription-component.png';
 import mobileSubscriptionComponent from '../assets/calendar/mobile-subscription-component.png';
+import subscriptionNewLinkConfirmation from '../assets/calendar/subscription-new-link-confirmation.png';
 import desktopFilterComponent from '../assets/calendar/desktop-filter-component.png';
 import mobileFilterComponent from '../assets/calendar/mobile-filter-component.png';
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -67,6 +68,10 @@ By using the filter component of the calendar, users can include or exclude even
 ## Subscribing External Calendars
 Users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
 This link can then be pasted into the settings of third-party calendar applications (e.g., Apple Calendar, Google Calendar, etc.) to subscribe them to the Artemis calendar.
+
+The link contains a personal token that identifies you, so share it with nobody. The token does not expire. If you want to stop a link from working, for example because you passed it on by mistake, select **Reset link** in the same popover and confirm. Artemis then replaces your token, and every link you created before stops working. Subscribe again with the new link in your calendar applications.
+
+<Image src={subscriptionNewLinkConfirmation} alt="Subscription popover that asks for confirmation before it resets the link" size={ImageSize.medium} caption="Resetting the link asks for confirmation first" />
 
 <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
     <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>

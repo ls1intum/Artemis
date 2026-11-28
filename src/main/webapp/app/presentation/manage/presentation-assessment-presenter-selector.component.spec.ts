@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,7 +10,6 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('PresentationAssessmentPresenterSelectorComponent', () => {
@@ -28,7 +27,6 @@ describe('PresentationAssessmentPresenterSelectorComponent', () => {
             providers: [
                 { provide: CourseManagementService, useValue: { searchStudents } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: AlertService, useValue: { error: vi.fn() } },
             ],
         }).compileComponents();

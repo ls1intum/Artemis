@@ -12,7 +12,8 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item/drag-item.component';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -26,19 +27,19 @@ enum MappingResult {
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['./drag-and-drop-question.component.css', '../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        NgbPopover,
+        TumAetUiTooltipDirective,
         QuizScoringInfoStudentModalComponent,
         CdkDropListGroup,
         ImageComponent,
         CdkDropList,
         DragItemComponent,
-        NgbTooltip,
+        TumAetUiButtonComponent,
     ],
 })
 export class DragAndDropQuestionComponent {

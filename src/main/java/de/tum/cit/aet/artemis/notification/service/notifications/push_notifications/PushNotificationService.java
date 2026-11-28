@@ -23,14 +23,12 @@ import javax.crypto.spec.SecretKeySpec;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -56,12 +54,12 @@ public abstract class PushNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     protected final Executor taskExecutor;
 
-    protected PushNotificationService(RestTemplate restTemplate, Executor taskExecutor) {
-        this.restTemplate = restTemplate;
+    protected PushNotificationService(RestClient restClient, Executor taskExecutor) {
+        this.restClient = restClient;
         this.taskExecutor = taskExecutor;
     }
 
@@ -93,10 +91,7 @@ public abstract class PushNotificationService {
 
         try {
             template.execute((RetryCallback<Void, RestClientException>) context -> {
-                HttpHeaders httpHeaders = new HttpHeaders();
-                httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<String> httpEntity = new HttpEntity<>(body, httpHeaders);
-                restTemplate.postForObject(relayServerBaseUrl + getRelayPath(), httpEntity, String.class);
+                restClient.post().uri(relayServerBaseUrl + getRelayPath()).contentType(MediaType.APPLICATION_JSON).body(body).retrieve().toBodilessEntity();
 
                 return null;
             });
@@ -183,7 +178,9 @@ public abstract class PushNotificationService {
     private static Optional<String> encrypt(@NonNull String payload, SecretKey key, byte[] initializationVector) {
         try {
             // We need to get a fresh instance here for every notification to avoid a race condition between tasks
-            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+            // Reviewed accepted risk (Sonar S5542): the cipher is a wire contract with the installed mobile apps, see Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM for the
+            // reasoning and the migration path.
+            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM); // NOSONAR // codeql[java/weak-cryptographic-algorithm]
 
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 

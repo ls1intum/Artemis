@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/create-form/apollon-diagram-create-form.component';
@@ -16,12 +16,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
-    styleUrls: ['./apollon-diagram-list.component.scss'],
+    styleUrls: ['./apollon-diagram-list.component.css'],
     providers: [ApollonDiagramService],
     imports: [
         TranslateDirective,
@@ -37,7 +40,8 @@ import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutCom
 export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private sortService = inject(SortService);
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
@@ -122,19 +126,14 @@ export class ApollonDiagramListComponent {
      * Opens dialog for creating a new diagram
      */
     openCreateDiagramDialog(courseId: number) {
-        const ref = this.dialogService.open(ApollonDiagramCreateFormComponent, {
-            width: '50rem',
-            breakpoints: {
-                '850px': '95vw',
-            },
-            modal: true,
-            closable: true,
+        const ref = this.dialogService.open<ApollonDiagramCreateFormComponent, ApollonDiagram, { apollonDiagram: ApollonDiagram }>(ApollonDiagramCreateFormComponent, {
+            size: 'medium',
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
             showHeader: false,
-            contentStyle: { padding: '0' },
+            contentPadding: 'none',
+            autoFocus: 'first-tabbable',
+            ariaLabel: this.translateService.instant('artemisApp.apollonDiagram.home.createLabel'),
             // class diagram is the default value and can be changed by the user in the creation dialog
             data: { apollonDiagram: new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId) },
         });

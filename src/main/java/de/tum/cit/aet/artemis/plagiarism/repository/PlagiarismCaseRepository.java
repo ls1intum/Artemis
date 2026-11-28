@@ -359,6 +359,27 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
             """)
     boolean existsByIdAndStudentOrTeamMemberLogin(@Param("plagiarismCaseId") long plagiarismCaseId, @Param("login") String login);
 
+    /**
+     * Checks whether the user is the student, or a member of the team, of a plagiarism case that has been communicated by a post and that contains a submission of the
+     * given comparison.
+     *
+     * @param comparisonId the id of the plagiarism comparison
+     * @param login        the login of the user
+     * @return true if such a communicated case exists
+     */
+    @Query("""
+            SELECT COUNT(plagiarismCase) > 0
+            FROM PlagiarismCase plagiarismCase
+                JOIN plagiarismCase.post post
+                JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
+                LEFT JOIN plagiarismCase.student student
+                LEFT JOIN plagiarismCase.team team
+                LEFT JOIN team.students teamStudent
+            WHERE plagiarismSubmission.plagiarismComparison.id = :comparisonId
+                AND (student.login = :login OR teamStudent.login = :login)
+            """)
+    boolean existsCommunicatedCaseForComparisonAndUser(@Param("comparisonId") long comparisonId, @Param("login") String login);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO(
                 plagiarismCase.id,

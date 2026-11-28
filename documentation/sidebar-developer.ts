@@ -68,6 +68,7 @@ const sidebars: SidebarsConfig = {
         'builds-and-dependencies',
         'e2e-testing-playwright',
         'e2e-testing-iris',
+        'client-style-comparison',
         'nightly-ci',
         'code-quality-analysis',
         'spring-ai',

@@ -219,6 +219,34 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getTextSubmissionWithResult_comparisonOfOtherExercise_notAllowed() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        // a notified comparison of another exercise whose compared submission id equals the id of this text submission must not grant access
+        var otherExercise = textExerciseUtilService.createSampleTextExercise(finishedTextExercise.getCourseViaExerciseGroupOrCourseMember());
+        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        plagiarismComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(otherExercise));
+        PlagiarismSubmission submissionA = new PlagiarismSubmission();
+        submissionA.setStudentLogin(TEST_PREFIX + "student1");
+        submissionA.setSubmissionId(this.textSubmission.getId());
+        plagiarismComparison.setSubmissionA(submissionA);
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(otherExercise);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        Post post = new Post();
+        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setTitle("Title Plagiarism Case Post");
+        post.setContent("Content Plagiarism Case Post");
+        post.setVisibleForStudents(true);
+        post.setPlagiarismCase(plagiarismCase);
+        postRepository.save(post);
+        submissionA.setPlagiarismCase(plagiarismCase);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+
+        request.get("/api/text/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmissionResponseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTextSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmissionResponseDTO.class);
@@ -235,6 +263,26 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.getFirst().id()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(textSubmissions.getFirst().participation().student()).as(TEST_PREFIX + "student of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getTextSubmissionForStaff_studentHiddenForTutor() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        var submission = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-staff", HttpStatus.OK, TextSubmissionResponseDTO.class);
+
+        assertThat(submission.participation().student()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getTextSubmissionForStaff_studentVisibleForInstructor() throws Exception {
+        textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
+
+        var submission = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-staff", HttpStatus.OK, TextSubmissionResponseDTO.class);
+
+        assertThat(submission.participation().student()).isNotNull();
     }
 
     @Test

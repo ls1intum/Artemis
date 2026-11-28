@@ -24,6 +24,9 @@
                     <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
+            <ng-container detailLifecycleActions>
+                <ng-content select="[lifecycleActions]" />
+            </ng-container>
             <ng-container detailMoreActions>
                 @if (quizExercise().isAtLeastEditor) {
                     <button
@@ -39,15 +42,20 @@
                         <fa-icon [icon]="faEllipsis" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exerciseDetail.moreActions"></span>
                     </button>
                     <ng-template #moreActions
-                        ><tumaet-ui-menu
-                            ><button tumAetUiMenuItem type="button" (triggered)="exportQuizExercise(true)" data-testid="quiz-export">
-                                <fa-icon [icon]="faFileExport" /><span jhiTranslate="entity.action.export"></span></button></tumaet-ui-menu
+                        ><tumaet-ui-menu>
+                            @if (quizExercise().isAtLeastInstructor) {
+                                <button tumAetUiMenuItem type="button" [disabled]="!exportsEnabled()" (triggered)="exportQuizExercise()" data-testid="quiz-export">
+                                    <fa-icon [icon]="faFileExport" /><span jhiTranslate="entity.action.export"></span>
+                                </button>
+                            }
+                            <button tumAetUiMenuItem type="button" (triggered)="exportQuizQuestions()" data-testid="quiz-export-questions">
+                                <fa-icon [icon]="faFileExport" /><span jhiTranslate="artemisApp.quizExercise.export.exportQuestions"></span></button></tumaet-ui-menu
                     ></ng-template>
                 }
             </ng-container>
         </jhi-exercise-detail-actions>
         @if (evaluationError(); as error) {
-            <p class="mt-2! text-state-danger" role="alert">{{ error }}</p>
+            <p class="mt-2 text-state-danger" role="alert">{{ error }}</p>
         }
     }
     @if (detailPageSection() === 'administration' && quizExercise().isAtLeastInstructor) {

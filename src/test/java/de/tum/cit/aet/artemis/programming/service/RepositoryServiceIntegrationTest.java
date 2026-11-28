@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -111,6 +112,17 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
                 Set.of(smallFilePath, largeFilePath));
 
         assertThat(files).containsOnlyKeys(smallFilePath);
+    }
+
+    @Test
+    void getAllFilesContentAtCommitFailsInsteadOfReturningAPartialSnapshot() throws Exception {
+        FileUtils.writeStringToFile(localRepository.workingCopyPath().resolve("src/Small.java").toFile(), "class Small {}", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyPath().resolve("src/Large.java").toFile(), new byte[(int) RepositoryService.MAX_FILE_CONTENT_BYTES + 1]);
+        String commitHash = commitAndPushSelectedFiles();
+
+        // A comparison of two snapshots would show a file that is left out as deleted
+        assertThatIOException().isThrownBy(() -> repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation, null))
+                .withMessageContaining("Large.java");
     }
 
     @Test

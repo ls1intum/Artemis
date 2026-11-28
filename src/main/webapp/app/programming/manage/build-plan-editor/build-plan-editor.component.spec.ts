@@ -11,7 +11,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockBuildPlanService } from 'test/helpers/mocks/service/mock-build-plan.service';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -19,7 +19,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -37,7 +36,6 @@ describe('Build Plan Editor', () => {
             imports: [
                 BuildPlanEditorComponent,
                 TranslatePipeMock,
-                MockModule(NgbTooltipModule),
                 MockComponent(MonacoEditorComponent),
                 MockComponent(CodeEditorHeaderComponent),
                 MockComponent(UpdatingResultComponent),

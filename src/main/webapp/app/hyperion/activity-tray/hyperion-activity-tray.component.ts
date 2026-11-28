@@ -8,15 +8,11 @@ import { Location } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDialogComponent,
-    TumAetUiMessageComponent,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { finalize, timeout } from 'rxjs';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 import { AccountService } from 'app/core/auth/account.service';
@@ -32,7 +28,7 @@ import { HyperionActivityRow, authoringActivity, variantActivity } from './hyper
 @Component({
     selector: 'jhi-hyperion-activity-tray',
     templateUrl: './hyperion-activity-tray.component.html',
-    styleUrl: './hyperion-activity-tray.component.scss',
+    styleUrl: './hyperion-activity-tray.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [TumAetUiConfirmationService],
     imports: [

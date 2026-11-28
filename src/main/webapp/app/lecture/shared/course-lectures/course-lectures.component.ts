@@ -43,7 +43,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.css'],
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy, SidebarView {
@@ -174,10 +174,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, SidebarView {
             const lectureObservables = this.multiLaunchLectureIDs.map((lectureId) => this.lectureService.find(lectureId));
 
             this.multiLaunchLecturesSubscription?.unsubscribe();
-            this.multiLaunchLecturesSubscription = forkJoin(lectureObservables).subscribe((lectureResponses) => {
-                lectureResponses.forEach((response) => {
-                    lectures.push(response.body!);
-                });
+            this.multiLaunchLecturesSubscription = forkJoin(lectureObservables).subscribe((multiLaunchLectures) => {
+                lectures.push(...multiLaunchLectures);
                 this.processLectures(lectures);
             });
         } else {

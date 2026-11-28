@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 /**
  * Status indicator for student exams
