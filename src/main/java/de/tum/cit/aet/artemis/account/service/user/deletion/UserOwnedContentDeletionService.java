@@ -257,13 +257,12 @@ public class UserOwnedContentDeletionService {
     }
 
     /**
-     * Renames the account behind the research events it produced, which record a login rather than a foreign key.
-     * Without this the events would keep pointing at a name that could later be handed to somebody else.
+     * Deletes the account's science data before its login and consent rows are removed.
      *
-     * @param login  the login the account had
-     * @param userId the account being deleted, which makes the placeholder unique
+     * @param login  the current login under which events are recorded
+     * @param userId the account being deleted
      */
-    public void anonymiseScienceEvents(String login, long userId) {
-        learningDataCleanupRepository.renameScienceEventIdentity(login, "deleted-user-" + userId);
+    public void deleteScienceData(String login, long userId) {
+        learningDataCleanupRepository.deleteScienceData(userId, login);
     }
 }

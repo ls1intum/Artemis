@@ -98,6 +98,7 @@ class PermanentUserDeletionOrderTest {
         // Only then does the deletion start removing what the account owns.
         order.verify(userOwnedContentDeletionService).deleteDataExports(USER_ID);
         order.verify(userOwnedContentDeletionService).deleteTeams(USER_ID);
+        order.verify(userOwnedContentDeletionService).deleteScienceData(anyString(), eq(USER_ID));
         order.verify(userRepository).deleteUserRow(USER_ID);
     }
 
@@ -139,6 +140,6 @@ class PermanentUserDeletionOrderTest {
         for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
             verify(userReferenceCleanupService, atLeastOnce()).resolve(eq(policy), eq(USER_ID));
         }
-        verify(userOwnedContentDeletionService).anonymiseScienceEvents(anyString(), eq(USER_ID));
+        verify(userOwnedContentDeletionService).deleteScienceData(anyString(), eq(USER_ID));
     }
 }

@@ -123,10 +123,7 @@ public class ScienceCourseService {
      */
     public ScienceEnabledCourseDTO enableCourse(long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        ScienceEnabledCourse enabledCourse = scienceEnabledCourseRepository.findByCourseId(courseId).orElseGet(ScienceEnabledCourse::new);
-        enabledCourse.setCourse(course);
-        enabledCourse.setActive(true);
-        return ScienceEnabledCourseDTO.of(scienceEnabledCourseRepository.save(enabledCourse), course);
+        return ScienceEnabledCourseDTO.of(scienceCourseConsentRepository.enableCourse(course, scienceEnabledCourseRepository::save), course);
     }
 
     /**
@@ -157,10 +154,11 @@ public class ScienceCourseService {
         }
         Map<Long, ScienceCourseConsent> consentsByCourseId = scienceCourseConsentRepository.findAllByUserIdAndCourseIdIn(user.getId(), courseIds).stream()
                 .collect(Collectors.toMap(consent -> consent.getCourse().getId(), consent -> consent));
+        Set<Long> historicalCourseIds = scienceEventRepository.findDecisionCourseIds(user.getLogin(), ScienceEventType.CONSENT_DECISION_EVENT_TYPES);
         return enabledCourses.stream().map(enabledCourse -> {
             Course course = enabledCourse.getCourse();
             ScienceCourseConsent consent = consentsByCourseId.get(course.getId());
-            if (!mayAccessConsent(course, user, consent)) {
+            if (consent == null && !historicalCourseIds.contains(course.getId()) && !authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
                 return null;
             }
             return new ScienceCourseConsentDTO(course.getId(), course.getTitle(), course.getShortName(), consent == null ? null : consent.isActive(), enabledCourse.isActive());
@@ -176,16 +174,16 @@ public class ScienceCourseService {
     public ScienceCourseConsentDTO getConsentForCurrentUser(long courseId) {
         User user = userRepository.getUserWithAuthorities();
         ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
-        // Mirrors mayAccessConsent: an existing consent stays readable after unenrollment, so it can still be withdrawn.
-        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(courseId, user)) {
+        // Current decisions and historical markers preserve access after unenrollment.
+        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(courseId, user) && !hasHistoricalDecision(courseId, user)) {
             throw new AccessForbiddenException("Course", courseId);
         }
         boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
         return new ScienceCourseConsentDTO(courseId, null, null, consent == null ? null : consent.isActive(), scienceEnabled);
     }
 
-    private boolean mayAccessConsent(Course course, User user, ScienceCourseConsent consent) {
-        return consent != null || authorizationCheckService.isAtLeastStudentInCourse(course, user);
+    private boolean hasHistoricalDecision(long courseId, User user) {
+        return scienceEventRepository.hasDecision(user.getLogin(), courseId, ScienceEventType.CONSENT_DECISION_EVENT_TYPES);
     }
 
     private void checkMayCreateOrActivateConsent(Course course, User user, ScienceCourseConsent consent, boolean active, boolean scienceEnabled) {
@@ -198,7 +196,7 @@ public class ScienceCourseService {
     }
 
     private void checkMayDeleteScienceData(Course course, User user, ScienceCourseConsent consent) {
-        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+        if (consent == null && !authorizationCheckService.isAtLeastStudentInCourse(course, user) && !hasHistoricalDecision(course.getId(), user)) {
             throw new AccessForbiddenException("Course", course.getId());
         }
     }

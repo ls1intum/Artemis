@@ -18,14 +18,13 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A single recorded interaction, or a single recorded consent decision, for research purposes.
  * <p>
- * Kept for a course only while that course collects science data and the student has agreed to it; the consent
- * decisions themselves are stored as events of their own, so that an export can tell a collection window apart from a
- * period of no activity.
+ * Interactions are recorded for a course only while that course collects science data and the student has agreed to it; the consent
+ * decisions themselves are stored as events of their own, so that exports retain the decisions made before collection.
  */
 @Entity
 @Table(name = "science_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@AggregateRoot("Analytics event. `resource_id` is an untyped pointer with no foreign key, and `course_id` is optional because events recorded before course-level collection existed have no course to name, which is why the course cannot be its parent. Deleting the course does delete the events, including the consent markers: an event outliving its course would be unreachable from both the export and the per-course deletion. The row is keyed by login rather than by a user foreign key, so that an export keeps its shape once the account is anonymized.")
+@AggregateRoot("Analytics event. `resource_id` is an untyped pointer with no foreign key, and `course_id` is optional because events recorded before course-level collection existed have no course to name, which is why the course cannot be its parent. Deleting the course does delete the events, including the consent markers: an event outliving its course would be unreachable from both the export and the per-course deletion. Account anonymization and deletion explicitly erase events keyed by the account login.")
 public class ScienceEvent extends DomainObject {
 
     @Column(name = "identity", nullable = false)
