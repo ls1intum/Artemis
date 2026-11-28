@@ -535,25 +535,6 @@ public class SubmissionService {
     }
 
     /**
-     * used to assign and save results to submissions
-     * Make sure submission.results is loaded
-     *
-     * @param submission the parent submission of the result
-     * @param result     the result which we want to save and order
-     * @return the result with correctly persisted relationship to its submission
-     */
-    public Result saveNewResult(Submission submission, final Result result) {
-        result.setSubmission(submission);
-        if (result.getSubmission().getParticipation() == null) {
-            result.getSubmission().setParticipation(submission.getParticipation());
-        }
-        var savedResult = resultRepository.save(result);
-        submission.addResult(savedResult);
-        submissionRepository.save(submission);
-        return savedResult;
-    }
-
-    /**
      * Add a result to the last {@link Submission} of a {@link StudentParticipation} if it does not exist yet, see {@link StudentParticipation#findLatestSubmission()}, with a
      * feedback of type {@link FeedbackType#AUTOMATIC}.
      * The assessment is counted as {@link AssessmentType#SEMI_AUTOMATIC} to make sure it is not considered for manual assessment, see
@@ -564,15 +545,18 @@ public class SubmissionService {
      * @param assessor             the assessor
      * @param score                the score which should be set
      * @param feedbackText         the feedback text for the
-     * @param correctionRound      the correction round (1 or 2)
+     * @param correctionRound      the zero-based correction round
      */
     // TODO: we should move this method into the resultService
     public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
+                var submission = latestSubmission.get();
                 Result result = new Result();
-                setExerciseIdFromSubmission(latestSubmission.get(), result);
+                result.setSubmission(submission);
+                result.setCorrectionRound(correctionRound);
+                setExerciseIdFromSubmission(submission, result);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
@@ -580,19 +564,13 @@ public class SubmissionService {
                 // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result = saveNewResult(latestSubmission.get(), result);
-
                 var feedback = new Feedback();
                 feedback.setCredits(0.0);
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
-                // attaching it afterwards fails the insert instead of updating the row.
-                feedback.setResult(result);
-                feedback = feedbackRepository.save(feedback);
-                result.setFeedbacks(List.of(feedback));
-                resultRepository.save(result);
+                result.addFeedback(feedback);
+                manualResultCreationRepository.saveExamResultIfCorrectionRoundIsFree(submission.getId(), correctionRound, result).ifPresent(submission::addResult);
             }
         }
     }
@@ -607,10 +585,8 @@ public class SubmissionService {
             Submission submission = new ProgrammingSubmission();
             submission.setSubmissionDate(ZonedDateTime.now());
             submission.setType(SubmissionType.INSTRUCTOR);
-            submission = submissionRepository.save(submission);
-            studentParticipation.setSubmissions(Set.of(submission));
             submission.setParticipation(studentParticipation);
-            participationRepository.save(studentParticipation);
+            studentParticipation.setSubmissions(Set.of(submissionRepository.save(submission)));
         }
     }
 

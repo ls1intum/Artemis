@@ -9,6 +9,7 @@ import jakarta.persistence.LockModeType;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,8 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
 /**
- * Spring Data JPA repository that creates the manual result of a correction round atomically, so that two tutors who open the same submission at the same time do not both
- * create a result for the round.
+ * Spring Data JPA repository that creates correction-round results atomically for tutor assessments and automatic feedback on empty or unsubmitted exams.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -78,4 +78,30 @@ public interface ManualResultCreationRepository extends ArtemisJpaRepository<Res
         }
         return Optional.of(save(newResult));
     }
+
+    /**
+     * Saves the exam result with its feedback if the correction round is free and marks the submission as submitted for the assessment dashboard.
+     *
+     * @param submissionId    the id of the submission to assess
+     * @param correctionRound the correction round of the result
+     * @param newResult       the result with its feedback, not persisted yet
+     * @return the saved result, empty if a result already holds the correction round
+     */
+    @Transactional
+    default Optional<Result> saveExamResultIfCorrectionRoundIsFree(long submissionId, int correctionRound, Result newResult) {
+        var savedResult = saveManualResultIfCorrectionRoundIsFree(submissionId, correctionRound, newResult);
+        if (savedResult.isPresent()) {
+            markExamSubmissionSubmitted(submissionId);
+        }
+        return savedResult;
+    }
+
+    /**
+     * Marks the submission as submitted without merging a potentially stale collection of results.
+     *
+     * @param submissionId the id of the submission to mark as submitted
+     */
+    @Modifying
+    @Query("UPDATE Submission s SET s.submitted = TRUE WHERE s.id = :submissionId AND (s.submitted = FALSE OR s.submitted IS NULL)")
+    void markExamSubmissionSubmitted(@Param("submissionId") long submissionId);
 }
