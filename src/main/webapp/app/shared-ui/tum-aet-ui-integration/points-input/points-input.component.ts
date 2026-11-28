@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, forwardRef, input, numberAttribute, signal } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
-import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
 
 /** The number of fraction digits that every points input accepts; a longer fraction is cut off while typing. */
 export const POINTS_MAX_FRACTION_DIGITS = 3;
@@ -14,7 +14,7 @@ export const POINTS_MAX_FRACTION_DIGITS = 3;
 @Component({
     selector: 'jhi-points-input',
     templateUrl: './points-input.component.html',
-    styleUrl: './points-input.component.scss',
+    styleUrl: './points-input.component.css',
     imports: [FormsModule, TumAetUiInputNumberComponent],
     host: {
         '[class.jhi-points-input-fluid]': 'fluid()',

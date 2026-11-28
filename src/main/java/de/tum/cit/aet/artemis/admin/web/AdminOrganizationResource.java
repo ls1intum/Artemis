@@ -154,8 +154,8 @@ public class AdminOrganizationResource {
      * DELETE organizations/:organizationId/users/:userLogin :
      * Remove a user from an organization
      * <p>
-     * Keep in mind that removing a user from an organization does not remove it
-     * from the Access Groups of a course if already added.
+     * Keep in mind that removing a user from an organization does not remove the
+     * course roles that the user already has.
      *
      * @param userLogin      the login of the user to remove
      * @param organizationId the id of the organization from with the user should be removed

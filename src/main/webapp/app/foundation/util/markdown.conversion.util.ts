@@ -6,6 +6,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type RendererRule, type Token } from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
+import { hasImageHostRestriction, isImageSourceAllowed, isImageSourceSetAllowed, styleWithoutImages } from 'app/foundation/util/image-host-policy.util';
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -195,9 +196,9 @@ function formulaStyle(style: string): string {
 /**
  * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its glyphs with it, and even there only the
  * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
- * the address of the page does not reach the image host.
+ * the address of the page does not reach the image host. An image of a host that the server does not allow loses its address, see `setAllowedImageHosts` in image-host-policy.util.
  */
-function restrictRenderedAttributes(node: Element, keepStyle = false): void {
+export function restrictRenderedAttributes(node: Element, keepStyle = false): void {
     if (!keepStyle && node.hasAttribute?.('style')) {
         const allowedStyle = node.closest?.('[class*="katex"]') ? formulaStyle(node.getAttribute('style') ?? '') : '';
         if (allowedStyle) {
@@ -208,6 +209,110 @@ function restrictRenderedAttributes(node: Element, keepStyle = false): void {
     }
     if (node.tagName === 'IMG') {
         node.setAttribute('referrerpolicy', 'no-referrer');
+        if (!isImageSourceAllowed(node.getAttribute('src'))) {
+            // the srcset is checked on its own by restrictImageAttributes, so that an image of an allowed host stays
+            node.removeAttribute('src');
+        }
+    }
+    if (hasImageHostRestriction() && node.hasAttribute?.('style')) {
+        // also a style that the caller keeps must not load an image from a host that is not allowed
+        const safeStyle = styleWithoutImages(node.getAttribute('style') ?? '');
+        if (safeStyle) {
+            node.setAttribute('style', safeStyle);
+        } else {
+            node.removeAttribute('style');
+        }
+    }
+    restrictImageAttributes(node);
+}
+
+const SVG_URL_ATTRIBUTES = ['mask', 'filter', 'fill', 'stroke', 'clip-path', 'cursor', 'marker-start', 'marker-mid', 'marker-end'];
+
+const URL_FUNCTION_START = /url\s*\(\s*/gi;
+const QUOTED_ADDRESS = /(?:"([^"]*)"|'([^']*)')\s*\)/y;
+const UNQUOTED_ADDRESS = /([^)\s][^)]*)?\)/y;
+
+/** Matches the pattern at the position and nowhere else. */
+function matchAt(pattern: RegExp, text: string, position: number): RegExpExecArray | null {
+    pattern.lastIndex = position;
+    return pattern.exec(text);
+}
+
+/**
+ * The addresses of all `url(...)` functions in a value, each one without the white space around it. A quoted address ends at its closing quote, an unquoted one at the first
+ * closing parenthesis.
+ * @param value the value of an attribute
+ * @returns the addresses, or undefined if a `url(` has no closing parenthesis or is inside the address of an earlier one, so that its address cannot be told
+ */
+function addressesOfUrlFunctions(value: string): string[] | undefined {
+    const starts = [...value.matchAll(URL_FUNCTION_START)];
+    // A `url(` that is not closed is read to the end of the value. Deciding this first keeps the reading of the others from being repeated for every start.
+    const last = starts.at(-1);
+    if (last && value.lastIndexOf(')') < last.index) {
+        return undefined;
+    }
+    const addresses: string[] = [];
+    let readUntil = 0;
+    for (const start of starts) {
+        if (start.index < readUntil) {
+            return undefined;
+        }
+        const from = start.index + start[0].length;
+        const match = matchAt(QUOTED_ADDRESS, value, from) ?? matchAt(UNQUOTED_ADDRESS, value, from);
+        if (!match) {
+            return undefined;
+        }
+        addresses.push((match[1] ?? match[2] ?? match[3] ?? '').trim());
+        readUntil = from + match[0].length;
+    }
+    return addresses;
+}
+
+/**
+ * Whether every `url(...)` in the value of an attribute is a reference to the same document or an address that may be shown.
+ * A value with another function that loads an image (`image-set`, `src` ...) or an escape is not allowed.
+ * @param value the value of an attribute
+ */
+function areFunctionAddressesAllowed(value: string | null): boolean {
+    if (!value) {
+        return true;
+    }
+    if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
+        return false;
+    }
+    const addresses = addressesOfUrlFunctions(value);
+    return addresses !== undefined && addresses.every((address) => address.startsWith('#') || isImageSourceAllowed(address));
+}
+
+/**
+ * While the server lists the allowed image hosts, every attribute that loads an image is checked, not only the `src` of an `img`: all candidates of a `srcset`
+ * (of an `img` or a `source` in a `picture`), the `poster` of a `video`, the legacy `background` attribute and the `href` of an image inside an SVG. An attribute with an address that is not allowed is removed.
+ */
+function restrictImageAttributes(node: Element): void {
+    if (!hasImageHostRestriction()) {
+        return;
+    }
+    if (node.tagName === 'IMG' || node.tagName === 'SOURCE') {
+        removeUnlessAllowed(node, ['srcset'], isImageSourceSetAllowed);
+    }
+    if (node.tagName === 'VIDEO') {
+        removeUnlessAllowed(node, ['poster'], isImageSourceAllowed);
+    }
+    removeUnlessAllowed(node, ['background'], isImageSourceAllowed);
+    // SVG presentation attributes can name an image in `url(...)` as well, a reference to an element of the same document (`#id`) stays
+    removeUnlessAllowed(node, SVG_URL_ATTRIBUTES, areFunctionAddressesAllowed);
+    // An image inside an SVG names its address in `href`, an `feImage` filter primitive in the same way
+    if (['image', 'feimage'].includes(node.tagName?.toLowerCase())) {
+        removeUnlessAllowed(node, ['href', 'xlink:href'], isImageSourceAllowed);
+    }
+}
+
+/** Removes each of the attributes of the node whose value `isAllowed` does not accept. */
+function removeUnlessAllowed(node: Element, attributes: readonly string[], isAllowed: (value: string | null) => boolean): void {
+    for (const attribute of attributes) {
+        if (node.hasAttribute?.(attribute) && !isAllowed(node.getAttribute(attribute))) {
+            node.removeAttribute(attribute);
+        }
     }
 }
 

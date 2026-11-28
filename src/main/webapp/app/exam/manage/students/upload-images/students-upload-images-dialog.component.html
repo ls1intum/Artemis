@@ -1,10 +1,10 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.exam.examUsers.dialogTitle' | artemisTranslate" size="medium">
     <!-- The dialog projects its content only once, so the form is rebuilt on every opening to drop the file chosen before. -->
     @if (visible()) {
-        <form id="userImportDialogForm" name="importForm" role="form" novalidate class="flex flex-col gap-4">
+        <form id="userImportDialogForm" name="importForm" role="form" novalidate class="flex flex-col gap-6">
             <div class="flex flex-col gap-2">
-                <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
-                <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
+                <p class="my-0" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
+                <p class="my-0" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
             </div>
             <div class="flex items-center justify-center">
                 <img
@@ -29,7 +29,7 @@
                     id="importPDF"
                     type="file"
                     accept=".pdf"
-                    class="cursor-pointer file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-3 file:py-2 file:text-base file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
+                    class="cursor-pointer file:mr-4 file:cursor-pointer file:rounded-md file:border file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-4 file:py-2 file:text-base file:text-color hover:file:bg-(--border-color)"
                     (change)="onPDFFileSelect($event)"
                 />
             </div>

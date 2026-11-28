@@ -9,7 +9,7 @@ import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';
 import { TeamDeleteButtonComponent } from './team-update-dialog/team-delete-button.component';
 import { TeamParticipationTableComponent } from './team-participation-table/team-participation-table.component';
@@ -23,7 +23,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styleUrls: ['./team.component.scss'],
+    styleUrls: ['./team.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         RouterLink,

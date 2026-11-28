@@ -131,10 +131,10 @@ describe('ResizableDirective', () => {
         expect(fixture.componentInstance.starts).toBe(1);
         expect(fixture.componentInstance.lastResize).toEqual({ width: 240, height: 100 });
         expect(panel.style.width).toBe('240px');
-        expect(panel.classList.contains('card-resizable')).toBe(true);
+        expect(panel.classList.contains('resizable-dragging')).toBe(true);
 
         pointer(panel, 'pointerup', 60, 50);
-        expect(panel.classList.contains('card-resizable')).toBe(false);
+        expect(panel.classList.contains('resizable-dragging')).toBe(false);
         expect(fixture.componentInstance.lastEnd).toBeDefined();
     });
 
@@ -306,10 +306,10 @@ describe('ResizableDirective', () => {
         const handle = panel.querySelector('.draggable-left')!;
         pointer(handle, 'pointerdown', 100, 50);
         pointer(panel, 'pointermove', 60, 50);
-        expect(panel.classList.contains('card-resizable')).toBe(true);
+        expect(panel.classList.contains('resizable-dragging')).toBe(true);
 
         expect(() => pointer(panel, 'pointercancel', 60, 50)).not.toThrow();
-        expect(panel.classList.contains('card-resizable')).toBe(false);
+        expect(panel.classList.contains('resizable-dragging')).toBe(false);
 
         fixture.componentInstance.lastResize = undefined;
         pointer(panel, 'pointermove', 0, 50);

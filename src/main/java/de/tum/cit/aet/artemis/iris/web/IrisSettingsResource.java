@@ -21,8 +21,11 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -49,13 +52,32 @@ public class IrisSettingsResource {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Gets the Iris settings of a course. Users below instructor receive the enabled flag, the proactive switch and the rate limits, the rest of the configuration is reserved for
+     * instructors.
+     *
+     * @param courseId the course id
+     * @return the settings of the course
+     */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
-        courseRepository.findByIdElseThrow(courseId);
-        return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        IrisCourseSettingsWithRateLimitDTO settings = irisSettingsService.getCourseSettingsWithRateLimit(courseId);
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
+            // Users below instructor only receive the values their clients act on; the configuration is reserved for those who manage it.
+            return ResponseEntity.ok(withoutConfiguration(settings));
+        }
+        return ResponseEntity.ok(settings);
+    }
+
+    private static IrisCourseSettingsWithRateLimitDTO withoutConfiguration(IrisCourseSettingsWithRateLimitDTO settings) {
+        IrisCourseSettingsDTO current = settings.settings();
+        IrisCourseSettingsDTO reduced = current == null ? null
+                : new IrisCourseSettingsDTO(current.enabled(), null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, current.proactiveStruggleEnabled(), null);
+        return new IrisCourseSettingsWithRateLimitDTO(settings.courseId(), reduced, settings.effectiveRateLimit(), settings.applicationRateLimitDefaults());
     }
 
     /**

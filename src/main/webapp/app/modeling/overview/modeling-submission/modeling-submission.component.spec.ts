@@ -12,7 +12,7 @@ import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollo
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -225,6 +225,25 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission()).toEqual(submission);
         expect(comp.modelingExercise()).toEqual(modelingExercise);
         expect(comp.participation()).toEqual(participation);
+    });
+
+    it('should not treat a participation without owner information as owned by the current user', () => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        const participation = new StudentParticipation();
+        participation.exercise = modelingExercise;
+        participation.id = 1;
+        const submission = new ModelingSubmission();
+        submission.id = 20;
+        submission.submitted = true;
+        submission.participation = participation;
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const isOwnerSpy = vi.spyOn(TestBed.inject(AccountService), 'isOwnerOfParticipation');
+
+        comp.ngOnInit();
+
+        expect(isOwnerSpy).not.toHaveBeenCalled();
+        expect(comp.isOwnerOfParticipation()).toBe(false);
     });
 
     it.each([
@@ -1205,6 +1224,30 @@ describe('ModelingSubmissionComponent', () => {
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
             comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBeUndefined();
+        });
+
+        it('shows the title of an assessment box above its comment', () => {
+            createModelingSubmissionComponent();
+            const title = (feedback: Partial<Feedback>) => comp['feedbackTitle'](feedback as Feedback);
+            const instruction = { feedback: 'Use interfaces' } as GradingInstruction;
+
+            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
+            expect(title({ text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction', detailText: 'Extract an interface.' })).toBe('Missing abstraction');
+            expect(title({ text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: instruction })).toBe('Missing abstraction');
+            expect(title({ text: 'Looks right' })).toBeUndefined();
+            expect(title({ text: 'Name the role as well.', gradingInstruction: instruction })).toBeUndefined();
+            expect(title({ detailText: 'A long comment without a title' })).toBeUndefined();
+        });
+
+        it('lists a titled feedback with a grading instruction as the title above the instruction and the comment', () => {
+            createModelingSubmissionComponent();
+            const feedback = { text: 'Missing abstraction', detailText: 'Extract an interface.', gradingInstruction: { feedback: 'Use interfaces' } } as Feedback;
+
+            const title = comp['feedbackTitle'](feedback);
+
+            expect(title).toBe('Missing abstraction');
+            // The row's text, as the template builds it: without `text` once the title is shown above it.
+            expect(comp.buildFeedbackTextForReview(feedback, !title)).toBe('Use interfaces<br>Extract an interface.');
         });
     });
 

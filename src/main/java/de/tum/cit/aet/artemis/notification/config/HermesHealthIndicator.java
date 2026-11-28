@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -27,8 +27,13 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 /**
  * Service determining the health of the Hermes push notification relay.
  * <p>
+ * Hermes is an optional external system: when it fails, push notifications to mobile devices stop, but the rest of Artemis keeps working.
+ * A failing relay is therefore reported as {@code DEGRADED} (see {@link ConnectorHealth#DEGRADED}) and not as {@code DOWN}, so that the
+ * aggregate health of the instance stays HTTP 200 while the relay is in maintenance.
+ * </p>
+ * <p>
  * The verdict is based on the dedicated {@code /api/health} endpoint, which is the only signal that reflects
- * the actual state of the relay (its Firebase / APNs connectivity). Hermes is reported as {@code DOWN} when
+ * the actual state of the relay (its Firebase / APNs connectivity). Hermes is reported as degraded when
  * that endpoint is unreachable, times out, returns a non-2xx status, or reports a disconnected push provider
  * ({@code isApnsConnected} or {@code isFirebaseConnected} is {@code false}). The latter matters because such a
  * relay still answers 2xx while silently dropping every notification &mdash; e.g. after a missing or expired
@@ -57,41 +62,43 @@ public class HermesHealthIndicator implements HealthIndicator {
 
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final RestClient shortTimeoutRestClient;
 
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String hermesUrl;
 
-    public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestClient") RestClient shortTimeoutRestClient) {
+        this.shortTimeoutRestClient = shortTimeoutRestClient;
     }
 
     /**
      * Ping Hermes at {@code /api/health} and report whether the push notification relay can deliver.
      *
      * @return the connector health; {@code UP} only when {@code /api/health} responds successfully and reports
-     *         every push provider as connected
+     *         every push provider as connected, otherwise {@code DEGRADED}
      */
     @Override
     public Health health() {
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(URL_KEY, hermesUrl);
         try {
-            ResponseEntity<String> response = shortTimeoutRestTemplate.getForEntity(hermesUrl + "/api/health", String.class);
+            ResponseEntity<String> response = shortTimeoutRestClient.get().uri(hermesUrl + "/api/health").retrieve().toEntity(String.class);
             boolean up = response.getStatusCode().is2xxSuccessful();
             HermesHealthReport report = parseReport(response.getBody());
             if (report != null) {
                 addReportDetails(additionalInfo, report);
                 // A reachable relay that reports a disconnected provider returns 2xx but silently drops
-                // notifications (e.g. a missing/expired APNs certificate on the Hermes host), so treat it as DOWN.
+                // notifications (e.g. a missing/expired APNs certificate on the Hermes host), so treat it as DEGRADED.
                 up = up && isConnected(report.isApnsConnected()) && isConnected(report.isFirebaseConnected());
             }
-            return new ConnectorHealth(up, additionalInfo).asActuatorHealth();
+            return new ConnectorHealth(up, additionalInfo).asOptionalActuatorHealth();
         }
-        catch (RestClientException error) {
+        catch (RestClientException | IllegalArgumentException error) {
+            // An IllegalArgumentException means that the configured relay URL is not an absolute URL (for example blank).
+            // That is a misconfiguration of an optional system and must report DEGRADED like an unreachable relay, not fail the whole health request.
             log.warn("Hermes push notification relay health check failed for {}/api/health: {}", hermesUrl, error.getMessage());
             additionalInfo.put("error", error.getMessage());
-            return new ConnectorHealth(false, additionalInfo, error).asActuatorHealth();
+            return new ConnectorHealth(false, additionalInfo, error).asOptionalActuatorHealth();
         }
     }
 

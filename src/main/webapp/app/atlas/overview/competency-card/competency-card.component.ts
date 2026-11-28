@@ -1,12 +1,12 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import dayjs from 'dayjs/esm';
 import { Component, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyProgress, CourseCompetency, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -15,8 +15,17 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 @Component({
     selector: 'jhi-competency-card',
     templateUrl: './competency-card.component.html',
-    styleUrls: ['../../../course/overview/course-exercises/course-exercise-row/course-exercise-row.scss'],
-    imports: [RouterLink, FaIconComponent, NgbTooltip, TranslateDirective, NgClass, CompetencyRingsComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, MarkdownDirective],
+    imports: [
+        RouterLink,
+        FaIconComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        CompetencyRingsComponent,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        MarkdownDirective,
+    ],
 })
 export class CompetencyCardComponent {
     translateService = inject(TranslateService);

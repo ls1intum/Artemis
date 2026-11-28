@@ -19,7 +19,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
@@ -118,23 +117,6 @@ describe('TextExercise Service', () => {
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             expect(requestResult.status).toBe(200);
-        });
-
-        it('should calculate and return tutor efforts', () => {
-            const exerciseId = 1;
-            const courseId = 1;
-            service.calculateTutorEffort(exerciseId, courseId).subscribe((resp) => (requestResult = resp));
-            const req = httpMock.expectOne({ method: 'GET' });
-            const returnedFromService: TutorEffort[] = [
-                {
-                    courseId,
-                    exerciseId,
-                    numberOfSubmissionsAssessed: 1,
-                    totalTimeSpentMinutes: 1,
-                },
-            ];
-            req.flush(returnedFromService);
-            expect(requestResult).toEqual(returnedFromService);
         });
 
         it('should import a text exercise', () => {

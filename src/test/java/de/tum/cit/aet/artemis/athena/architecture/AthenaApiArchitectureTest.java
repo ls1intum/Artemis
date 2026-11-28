@@ -15,8 +15,8 @@ class AthenaApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        // AthenaAuthorizationInterceptor and AthenaEnabled are intentionally referenced from core (RestTemplateConfiguration)
-        // so the @Conditional/@Profile and the interceptor wiring can live alongside the other RestTemplates.
+        // AthenaAuthorizationInterceptor and AthenaEnabled are intentionally referenced from core (RestClientConfiguration)
+        // so the @Conditional/@Profile and the interceptor wiring can live alongside the other RestClients.
         return Set.of(AthenaAuthorizationInterceptor.class, AthenaEnabled.class);
     }
 }

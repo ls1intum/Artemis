@@ -1,0 +1,151 @@
+:host {
+    display: block;
+}
+
+.loading-spinner {
+    position: relative;
+    top: -2px;
+}
+
+.error-message {
+    position: relative;
+    top: -4.5px;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.intro-text {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.team-list--teams {
+    max-height: max(240px, 100vh - 740px);
+    overflow-y: auto;
+}
+
+.team-list--teams .team-list-item-container {
+    position: relative;
+    margin-bottom: 0.15rem;
+}
+
+.team-list--teams .team-list-item-index {
+    min-width: 30px;
+    text-align: right;
+    margin-left: 0.5rem;
+    margin-right: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.team-list-item--teams {
+    display: flex !important;
+    align-items: center;
+    flex-grow: 1;
+    overflow-x: hidden;
+    padding: 0.3rem 1rem;
+    border-radius: 0.15rem !important;
+    background-color: var(--tumaet-ui-content-background);
+}
+
+.team-list-item--teams.has-success {
+    color: var(--artemis-alert-success-color);
+    background-color: var(--artemis-alert-success-background);
+}
+
+.team-list-item--teams.has-warning {
+    color: var(--artemis-alert-warning-color);
+    background-color: var(--artemis-alert-warning-background);
+}
+
+.team-list-item--teams.has-error {
+    background-color: var(--artemis-alert-danger-background);
+}
+
+.team-list-item--teams.has-error .team-name {
+    color: var(--artemis-alert-danger-color);
+}
+
+.source-teams-legend-container {
+    margin-left: calc(30px + 1.5rem);
+    opacity: 0.4;
+    transition: 0.2s ease-out opacity;
+}
+
+.source-teams-legend-container:hover {
+    opacity: 1;
+    transition: 0.1s ease-in opacity;
+    transition-delay: 0.2s;
+}
+
+.source-teams-legend-box {
+    background: var(--tumaet-ui-highlight-background);
+    padding: 12px 15px 0;
+    border-radius: 0.2rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+}
+
+.source-teams-legend {
+    cursor: default;
+    font-size: 12.5px;
+}
+
+.source-teams-legend > * {
+    flex-grow: 1;
+}
+
+.source-teams-legend > *:not(:first-child) {
+    margin-left: 25px;
+}
+
+.source-teams-legend .team-list-item--teams {
+    padding: 0 0.5rem;
+    font-size: 11px;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 0.15rem;
+}
+
+.source-teams-legend .team-list-item--teams .team-name {
+    width: unset;
+}
+
+.source-teams-legend .team-list-item--teams .team-students {
+    font-size: 11px;
+}
+
+.source-teams-legend .team-list-item--teams .team-students .student-group-item {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.source-teams-legend .label-with-tooltip {
+    margin-top: 3px;
+}
+
+.source-teams-legend .label-with-tooltip > span {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.team-name {
+    width: 135px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-students {
+    flex-grow: 1;
+    overflow-x: hidden;
+    font-size: 12.5px;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
+.radio-label-with-explanation .explanation {
+    max-width: 66%;
+}

@@ -26,14 +26,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
+import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
+import de.tum.cit.aet.artemis.localvc.service.GitOperationAudit;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHookSSH;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPrePushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
+import de.tum.cit.aet.artemis.localvc.service.QuarantinedReceivePack;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Custom Git command handler that integrates Artemis-specific
@@ -138,49 +142,84 @@ public class SshGitCommand extends GitPackCommand {
             }
 
             // Locate the Git repository root
-            Path rootDir = resolveRootDirectory(command, args);
+            Path rootDir;
+            User user;
+            ProgrammingExercise exercise;
+            AccessLogSubject accessLogSubject;
+            // Written to by the hooks of this command, and turned into its access log entry when the command is over
+            GitOperationAudit audit = new GitOperationAudit();
+            LocalVCFetchPreUploadHook fetchHook = null;
+            LocalVCPostPushHook pushHook = null;
+            // Authorization writes command state to the shared session. Capture it atomically with resolution, before opening the repository or waiting for a mutation lease.
+            synchronized (getServerSession()) {
+                rootDir = resolveRootDirectory(command, args);
+                user = getServerSession().getAttribute(SshConstants.USER_KEY);
+                exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
+                accessLogSubject = getServerSession().getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
+                if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(args[0])) {
+                    fetchHook = new LocalVCFetchPreUploadHook(audit);
+                }
+                else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(args[0])) {
+                    pushHook = new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user, audit);
+                }
+            }
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
 
             // Open the Git repository
             try (Repository repository = key.open(true)) {
-                // Retrieve the authenticated user from the SSH session
-                User user = getServerSession().getAttribute(SshConstants.USER_KEY);
                 String subCommand = args[0];
 
-                // Dispatch based on subcommand: upload-pack or receive-pack
-                switch (subCommand) {
-                    case RemoteConfig.DEFAULT_UPLOAD_PACK -> {
-                        // Prepare UploadPack handler
-                        UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
+                try {
+                    // Dispatch based on subcommand: upload-pack or receive-pack
+                    switch (subCommand) {
+                        case RemoteConfig.DEFAULT_UPLOAD_PACK -> {
+                            // Prepare UploadPack handler
+                            UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
 
-                        // Extract protocol version from environment variables (if present)
-                        Environment environment = getEnvironment();
-                        Map<String, String> envVars = environment.getEnv();
-                        String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
+                            // Extract protocol version from environment variables (if present)
+                            Environment environment = getEnvironment();
+                            Map<String, String> envVars = environment.getEnv();
+                            String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
 
-                        if (GenericUtils.isNotBlank(protocol)) {
-                            uploadPack.setExtraParameters(Set.of(protocol));
+                            if (GenericUtils.isNotBlank(protocol)) {
+                                uploadPack.setExtraParameters(Set.of(protocol));
+                            }
+
+                            // Register pre-upload hook for Artemis-specific logic
+                            uploadPack.setPreUploadHook(fetchHook);
+
+                            // Begin upload-pack operation
+                            uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                         }
+                        case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
+                            try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
+                                LocalVCPrePushHook prePushHook = new LocalVCPrePushHook(localVCServletService, user, audit);
+                                // The objects of the push are stored in a place of their own, and they reach the repository only if the push is accepted.
+                                ReceivePack receivePack = LocalVCReceivePackLimits.apply(QuarantinedReceivePack.create(repository, prePushHook::examineBeforeObjects));
 
-                        // Register pre-upload hook for Artemis-specific logic
-                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession()));
+                                receivePack.setPreReceiveHook(prePushHook);
+                                receivePack.setPostReceiveHook(pushHook);
 
-                        // Begin upload-pack operation
-                        uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
-                    }
-                    case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
-                        var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-                        try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
-                            ReceivePack receivePack = LocalVCReceivePackLimits.apply(new ReceivePack(repository));
-
-                            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                            receivePack.setPostReceiveHook(
-                                    new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user));
-
-                            receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                                receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                            }
+                            catch (HttpStatusException e) {
+                                // A push that is refused, for example because the repository is being changed by something else, was attempted, so it is a failed push and not a
+                                // write that had nothing new. Nothing changes if the push was already known to the audit.
+                                audit.onPushReceived(LocalVCFetchPreUploadHook.headCommitOf(repository));
+                                throw e;
+                            }
                         }
+                        default -> throw new IllegalArgumentException("Unknown git command: " + command);
                     }
-                    default -> throw new IllegalArgumentException("Unknown git command: " + command);
+                }
+                finally {
+                    // The command is over, so everything about it is known, and it is one access whatever it moved.
+                    if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
+                        accessLogRecorder.recordFetchSSH(accessLogSubject, audit, repository);
+                    }
+                    else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
+                        accessLogRecorder.recordPushSSH(accessLogSubject, audit, repository);
+                    }
                 }
             }
 

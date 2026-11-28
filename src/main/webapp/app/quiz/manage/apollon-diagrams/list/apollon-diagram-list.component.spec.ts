@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -26,7 +26,7 @@ import { UMLDiagramType } from '@tumaet/apollon';
 describe('ApollonDiagramList Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
 
     const course: Course = { id: 123 } as Course;
@@ -43,7 +43,7 @@ describe('ApollonDiagramList Component', () => {
                 AlertService,
                 ApollonDiagramService,
                 MockProvider(SortService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -57,7 +57,7 @@ describe('ApollonDiagramList Component', () => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
-                dialogService = fixture.debugElement.injector.get(DialogService);
+                dialogService = fixture.debugElement.injector.get(TumAetUiDialogService);
             });
     });
 
@@ -97,14 +97,17 @@ describe('ApollonDiagramList Component', () => {
 
     it('openCreateDiagramDialog', () => {
         const onClose = new Subject<ApollonDiagram | undefined>();
-        const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+        const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as TumAetUiDialogRef);
         const handleOpenSpy = vi.spyOn(fixture.componentInstance, 'handleOpenDialogClick');
 
         fixture.componentInstance.openCreateDiagramDialog(course.id!);
 
         expect(openDialogSpy).toHaveBeenCalledOnce();
-        // The dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
-        expect(openDialogSpy).toHaveBeenCalledWith(ApollonDiagramCreateFormComponent, expect.objectContaining({ width: '50rem', breakpoints: { '850px': '95vw' } }));
+        // The kit dialog caps its width at the viewport, so the dialog stays within it on narrow screens.
+        expect(openDialogSpy).toHaveBeenCalledWith(
+            ApollonDiagramCreateFormComponent,
+            expect.objectContaining({ size: 'medium', contentPadding: 'none', showHeader: false, autoFocus: 'first-tabbable' }),
+        );
 
         // dismiss (undefined) must not open a diagram
         onClose.next(undefined);

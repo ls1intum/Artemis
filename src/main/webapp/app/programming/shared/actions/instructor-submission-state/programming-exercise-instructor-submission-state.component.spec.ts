@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Subject, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -15,20 +15,19 @@ import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/progr
 import { BuildRunState, ProgrammingBuildRunService, SelectedBuildRun, SelectedBuildRunStatus } from 'app/programming/shared/services/programming-build-run.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 
@@ -61,7 +60,6 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 ProgrammingExerciseInstructorSubmissionStateComponent,
                 ProgrammingExerciseTriggerAllButtonComponent,
                 ButtonComponent,
@@ -78,7 +76,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -115,14 +113,30 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    const getTriggerAllButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-all-button button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+    const openTriggerDropdown = () => {
+        const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        if (trigger && trigger.getAttribute('aria-expanded') !== 'true') {
+            trigger.click();
+            fixture.detectChanges();
+        }
     };
 
-    const getTriggerFailedButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-failed-button button'));
-        return triggerButton ? triggerButton.nativeElement : null;
+    const getTriggerAllButton = (): HTMLButtonElement => {
+        openTriggerDropdown();
+        const button = document.querySelector<HTMLButtonElement>('#trigger-all-button');
+        if (!button) {
+            throw new Error('Expected trigger-all button to be present');
+        }
+        return button;
+    };
+
+    const getTriggerFailedButton = (): HTMLButtonElement => {
+        openTriggerDropdown();
+        const button = document.querySelector<HTMLButtonElement>('#trigger-failed-button');
+        if (!button) {
+            throw new Error('Expected trigger-failed button to be present');
+        }
+        return button;
     };
 
     const getBuildState = () => {
@@ -131,8 +145,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     };
 
     it('should not show the component before the build summary is retrieved', () => {
-        expect(getTriggerAllButton()).toBeNull();
-        expect(getTriggerFailedButton()).toBeNull();
+        expect(document.querySelector('#trigger-all-button')).toBeNull();
+        expect(document.querySelector('#trigger-failed-button')).toBeNull();
         expect(getBuildState()).toBeNull();
     });
 
@@ -194,12 +208,53 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(false);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('secondary');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('0');
 
         expect(getTriggerAllButton()).not.toBeNull();
         expect(getTriggerAllButton().disabled).toBe(false);
         expect(getTriggerFailedButton()).not.toBeNull();
         expect(getTriggerFailedButton().disabled).toBe(true);
         expect(getBuildState()).not.toBeNull();
+    });
+
+    describe('label of the trigger options button', () => {
+        const triggerButtonLabel = () => debugElement.query(By.css('[data-testid="participation-trigger-dropdown"] span')).nativeElement as HTMLElement;
+
+        async function loadBuildSummary(): Promise<void> {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+            fixture.detectChanges();
+            getExerciseSubmissionStateSubject.next({
+                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 4 },
+            } as ExerciseSubmissionState);
+            await vi.advanceTimersByTimeAsync(500);
+            fixture.detectChanges();
+        }
+
+        it('is always shown while the component does not toggle', async () => {
+            await loadBuildSummary();
+
+            expect(triggerButtonLabel().className).toBe('');
+            expect(triggerButtonLabel().textContent).toContain('artemisApp.participation.triggerOptions');
+        });
+
+        it('is hidden below the breakpoint, so that the title bar stays on one line on a narrow screen', async () => {
+            fixture.componentRef.setInput('shouldToggle', true);
+            fixture.componentRef.setInput('toggleBreakpoint', 'md');
+            await loadBuildSummary();
+
+            expect(triggerButtonLabel().className).toBe('hidden md:inline');
+
+            fixture.componentRef.setInput('toggleBreakpoint', 'xl');
+            fixture.detectChanges();
+
+            expect(triggerButtonLabel().className).toBe('hidden xl:inline');
+            // the button keeps its accessible name for the icon only view
+            expect(debugElement.query(By.css('[data-testid="participation-trigger-dropdown"]')).nativeElement.getAttribute('aria-label')).toBe(
+                'artemisApp.participation.triggerOptions',
+            );
+        });
     });
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', async () => {
@@ -229,6 +284,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(true);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('danger');
+        expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('1');
+        expect(debugElement.query(By.css('#build-state-building')).nativeElement.textContent).toContain('1');
 
         expect(getResultEtaContainer()).not.toBeNull();
         expect(getTriggerAllButton()).not.toBeNull();
@@ -449,6 +507,34 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
             expect(getSelectedBuildRunCompletionsStub).toHaveBeenLastCalledWith(21);
             expect(comp.isBuildingFailedSubmissions()).toBe(false);
         });
+    });
+
+    it('opens the trigger actions together and keeps the all-build confirmation and busy state', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        fixture.detectChanges();
+        getExerciseSubmissionStateSubject.next({});
+        await vi.advanceTimersByTimeAsync(500);
+        fixture.detectChanges();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="participation-trigger-dropdown"]');
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        const allButton = getTriggerAllButton();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(getTriggerFailedButton()).not.toBeNull();
+        const openDialog = vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockImplementation(() => {
+            fixture.detectChanges();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+            return { onClose: EMPTY } as unknown as TumAetUiDialogRef<unknown>;
+        });
+        allButton.click();
+        expect(openDialog).toHaveBeenCalledOnce();
+        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).not.toHaveBeenCalled();
+        getBuildRunStateSubject.next(BuildRunState.RUNNING);
+        fixture.detectChanges();
+        trigger.click();
+        fixture.detectChanges();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(getTriggerAllButton().disabled).toBe(true);
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', async () => {

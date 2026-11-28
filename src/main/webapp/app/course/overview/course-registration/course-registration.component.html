@@ -41,10 +41,10 @@
                         <td>
                             <span>{{ course.description }}</span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-right">
                             <jhi-course-prerequisites-button [course]="course" />
                         </td>
-                        <td class="text-end">
+                        <td class="text-right">
                             <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)" />
                         </td>
                     </tr>

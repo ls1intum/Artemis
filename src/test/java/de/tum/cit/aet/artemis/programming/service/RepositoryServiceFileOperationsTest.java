@@ -6,12 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
@@ -96,6 +99,140 @@ class RepositoryServiceFileOperationsTest {
 
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "Main.java", content("the replacement")));
         assertThat(workingTree.resolve("Main.java")).content(StandardCharsets.UTF_8).isEqualTo("the original");
+    }
+
+    @Test
+    void createFile_aboveTheSizeLimitOfAFile_isRejectedAndNothingIsLeftBehind() {
+        InputStream tooLarge = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) {
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "Large.txt", tooLarge))
+                .withMessageContaining("size limit");
+        assertThat(workingTree.resolve("Large.txt")).doesNotExist();
+    }
+
+    @Test
+    void createFile_throughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "link/created.txt", content("owned")))
+                .withMessageContaining("symbolic link");
+        assertThat(outside.resolve("created.txt")).doesNotExist();
+    }
+
+    @Test
+    void createFile_onADanglingSymbolicLink_isRejected() throws Exception {
+        Path target = baseDir.resolve("not-yet-there.txt");
+        Files.createSymbolicLink(workingTree.resolve("dangling.txt"), target);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFile(repository, "dangling.txt", content("owned")))
+                .withMessageContaining("symbolic link");
+        assertThat(target).doesNotExist();
+    }
+
+    @Test
+    void createFolder_throughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "link/folder", content("")))
+                .withMessageContaining("symbolic link");
+        assertThat(outside.resolve("folder")).doesNotExist();
+    }
+
+    @Test
+    void checkNoSymbolicLink_forAnAbsolutePathThroughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, workingTree.resolve("link/new.txt"))).withMessageContaining("symbolic link");
+    }
+
+    @Test
+    void checkNoSymbolicLink_forAnAbsolutePathOutsideTheRepository_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, baseDir.resolve("outside/new.txt").toAbsolutePath()));
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_leavesNoFolderBehindSoThatARetryWorks() throws Exception {
+        InputStream tooLarge = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) {
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", tooLarge)).withMessageContaining("size limit");
+        assertThat(workingTree.resolve("src")).doesNotExist();
+
+        repositoryService.createFolder(repository, "src", content(""));
+        assertThat(workingTree.resolve("src/.keep")).isRegularFile();
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_keepsFilesThatAnotherRequestAddedMeanwhile() throws Exception {
+        InputStream addsAFileThenFails = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() throws IOException {
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) throws IOException {
+                FileUtils.writeStringToFile(workingTree.resolve("src/Main.java").toFile(), "code", StandardCharsets.UTF_8);
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", addsAFileThenFails));
+
+        assertThat(workingTree.resolve("src/Main.java")).exists();
+        assertThat(workingTree.resolve("src/.keep")).doesNotExist();
     }
 
     @Test
@@ -290,6 +427,73 @@ class RepositoryServiceFileOperationsTest {
         assertThat(workingTree.resolve("nested")).doesNotExist();
         assertThat(workingTree.resolve(".git")).isDirectory();
         assertThat(repository.resolve("HEAD")).isEqualTo(commit.getId());
+    }
+
+    @Test
+    void repositoryContentForLanguageModelsSkipsHugeFilesAndStaysWithinTheTotalLimit() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(workingTree.resolve("huge.txt").toFile(), "x".repeat((int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1), StandardCharsets.UTF_8);
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("medium" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit large files").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        var contents = limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE);
+
+        // Only the context of language models is bounded: comparisons and exports keep every file, and the committed content of a path can be read on its own.
+        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).containsKey("huge.txt");
+        // The committed content of a path is read within the limits too. A path that exists but does not fit is reported as omitted, a missing path is in neither part.
+        var committed = limited.getCommittedContentOfPaths(uri, java.util.Set.of("huge.txt", "small.txt", "missing.txt"));
+        assertThat(committed.files()).containsOnlyKeys("small.txt");
+        assertThat(committed.omitted()).containsExactly("huge.txt");
+        assertThat(contents).doesNotContainKey("huge.txt");
+        assertThat(contents.values().stream().mapToLong(String::length).sum()).isLessThanOrEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+        assertThat(contents).containsKey("small.txt").hasSizeLessThan(9);
+    }
+
+    @Test
+    void repositoryContentWithPathFilterDoesNotCountFilesThatTheFilterRejects() throws Exception {
+        // The files of another language come first in the traversal and would use up the total limit, if they were counted before they are filtered.
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("a-data" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        FileUtils.writeStringToFile(workingTree.resolve("z-Main.java").toFile(), "//".repeat(400_000), StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit data and source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"), Long.MAX_VALUE)).containsOnlyKeys("z-Main.java");
+    }
+
+    @Test
+    void repositoryContentWithAFileSizeLimitDoesNotCountFilesAboveIt() throws Exception {
+        // Files above the size that the caller keeps would use up the limit of the total size and leave out the source file, which comes last in the traversal
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("a-build" + i + ".txt").toFile(), "y".repeat(1_040_000), StandardCharsets.UTF_8);
+        }
+        // five of the files above fit the limit of the total size and leave less room than this source file needs
+        FileUtils.writeStringToFile(workingTree.resolve("z-Main.java").toFile(), "//".repeat(25_000), StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit build output and source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, 100 * 1024L)).containsOnlyKeys("z-Main.java");
     }
 
     @Test

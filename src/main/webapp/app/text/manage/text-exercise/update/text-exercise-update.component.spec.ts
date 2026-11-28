@@ -37,13 +37,12 @@ import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angula
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import dayjs from 'dayjs/esm';
 import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/update/text-exercise-update.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -268,7 +267,6 @@ describe('TextExercise Management Update Component', () => {
                         PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
-                        NgbTooltip,
                         ArtemisTranslatePipe,
                         StubExerciseTitleChannelNameComponent,
                         StubTeamConfigFormGroupComponent,
@@ -534,7 +532,7 @@ describe('TextExercise Management Update Component', () => {
             const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
 
             expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
-            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-4!');
 
             (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
 

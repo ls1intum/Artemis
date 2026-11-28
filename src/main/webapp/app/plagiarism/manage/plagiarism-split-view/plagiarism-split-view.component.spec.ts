@@ -18,6 +18,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 
 describe('Plagiarism Split View Component', () => {
     let comp: PlagiarismSplitViewComponent;
@@ -127,9 +128,12 @@ describe('Plagiarism Split View Component', () => {
         comp.handleSplitControl('left');
         fixture.detectChanges();
 
-        // collapse is applied via a CSS class (panelSizes can't hide a pane because p-splitter coerces 0 -> 50%)
+        // a collapsed pane has size 0, which the splitter only allows once the minimum of both panes is lifted
         expect(comp.collapsedSide()).toBe('right');
-        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-right')).toBe(true);
+        expect(comp.panelSizes()).toEqual([100, 0]);
+        expect(comp.minSizes()).toEqual([0, 0]);
+        // the divider sits at the edge, so the lock-files control is hidden
+        expect(fixture.nativeElement.querySelector('[data-qa="lock-files-toggle-button"]')).toBeNull();
     });
 
     it('should collapse the left pane so the right pane takes all space', () => {
@@ -137,20 +141,86 @@ describe('Plagiarism Split View Component', () => {
         fixture.detectChanges();
 
         expect(comp.collapsedSide()).toBe('left');
-        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-left')).toBe(true);
+        expect(comp.panelSizes()).toEqual([0, 100]);
+        expect(comp.minSizes()).toEqual([0, 0]);
+        expect(fixture.nativeElement.querySelector('[data-qa="lock-files-toggle-button"]')).toBeNull();
     });
 
     it('should reset the split panes and clear any collapse', () => {
-        comp.collapsedSide.set('right');
+        comp.handleSplitControl('left');
 
         comp.handleSplitControl('even');
         fixture.detectChanges();
 
         expect(comp.collapsedSide()).toBeUndefined();
         expect(comp.panelSizes()).toEqual([50, 50]);
-        const splitter = fixture.nativeElement.querySelector('.plagiarism-splitter');
-        expect(splitter?.classList.contains('collapsed-left')).toBe(false);
-        expect(splitter?.classList.contains('collapsed-right')).toBe(false);
+        expect(comp.minSizes()).toEqual([10, 10]);
+        expect(fixture.nativeElement.querySelector('[data-qa="lock-files-toggle-button"]')).not.toBeNull();
+    });
+
+    it('should hand the sizes and minimums to the splitter', () => {
+        fixture.detectChanges();
+        const splitter = fixture.debugElement.query(By.directive(TumAetUiSplitterComponent)).componentInstance as TumAetUiSplitterComponent;
+        expect(splitter.panelSizes()).toEqual([50, 50]);
+        expect(splitter.minSizes()).toEqual([10, 10]);
+
+        comp.handleSplitControl('left');
+        fixture.detectChanges();
+        expect(splitter.panelSizes()).toEqual([100, 0]);
+        expect(splitter.minSizes()).toEqual([0, 0]);
+
+        comp.handleSplitControl('right');
+        fixture.detectChanges();
+        expect(splitter.panelSizes()).toEqual([0, 100]);
+        expect(splitter.minSizes()).toEqual([0, 0]);
+
+        comp.handleSplitControl('even');
+        fixture.detectChanges();
+        expect(splitter.panelSizes()).toEqual([50, 50]);
+        expect(splitter.minSizes()).toEqual([10, 10]);
+    });
+
+    it('should keep the lock-files control on the divider while it is moved', () => {
+        fixture.detectChanges();
+        const lockControl = () => fixture.nativeElement.querySelector('.split-pane-header-color') as HTMLElement;
+        // the first pane takes its share of the width without the 6px gutter, and the gutter adds half of its width
+        expect(comp.lockButtonLeft()).toBe('calc((100% - 6px) * 0.5 + 3px)');
+        expect(lockControl().style.left).toContain('calc(');
+
+        comp.onSizesChange([30, 70]);
+        fixture.detectChanges();
+
+        expect(comp.lockButtonLeft()).toBe('calc((100% - 6px) * 0.3 + 3px)');
+        expect(lockControl().style.left).toContain('0.3');
+    });
+
+    it('should leave the collapsed state when the user moves the divider at the edge', () => {
+        comp.handleSplitControl('left');
+
+        comp.onResizeEnd([4, 96]);
+
+        // the pane gets back at least the minimum size
+        expect(comp.collapsedSide()).toBeUndefined();
+        expect(comp.panelSizes()).toEqual([10, 90]);
+        expect(comp.splitPercent()).toBe(10);
+    });
+
+    it('should not change the sizes when the user moves the divider without a collapsed pane', () => {
+        comp.onResizeEnd([40, 60]);
+
+        expect(comp.panelSizes()).toEqual([50, 50]);
+    });
+
+    it('should toggle the synchronization of the files', () => {
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('[data-qa="lock-files-toggle-button"]') as HTMLButtonElement;
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+        toggle.click();
+        fixture.detectChanges();
+
+        expect(comp.isLockFilesEnabled()).toBe(true);
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should get the first text submission', () => {

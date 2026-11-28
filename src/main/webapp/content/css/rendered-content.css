@@ -1,0 +1,351 @@
+/*
+ * Styles of content that is rendered from markdown or another stored format and inserted with `innerHTML`: problem
+ * statements, posts, FAQs, answers of Iris, search results. Such content is outside the scope of a component
+ * stylesheet, so these rules have to be global.
+ */
+
+/* GitHub-style markdown alerts and markdown callouts */
+
+/*
+ * Tables of rendered markdown (problem statements, posts, FAQs): the markdown renderer puts `class="table"` on every
+ * table it emits.
+ */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    vertical-align: top;
+    border-color: var(--markdown-table-border-color);
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.5rem;
+    color: var(--markdown-table-color);
+    background-color: transparent;
+    border-bottom-width: 1px;
+}
+
+.table > tbody {
+    vertical-align: inherit;
+}
+
+.table > thead {
+    vertical-align: bottom;
+}
+
+/*
+ * ==========================================================================
+ * Problem statement differences (html-diff-ts output), e.g. after an update during an exam
+ * ==========================================================================
+ */
+ins.diffins,
+ins.diffmod {
+    text-decoration: none;
+    background-color: var(--artemis-alert-success-background);
+    color: var(--artemis-alert-success-color);
+    border-radius: 0.2em;
+    padding: 0 0.15em;
+}
+
+del.diffdel,
+del.diffmod {
+    color: var(--artemis-alert-danger-color);
+}
+
+/*
+ * ==========================================================================
+ * Markdown preview
+ * ==========================================================================
+ */
+
+/*
+ * Class names that stored content (problem statements, posts, FAQs) may still carry from the time the global stylesheet
+ * defined them for every element. Templates do not use them any more.
+ */
+.markdown-preview .text-danger {
+    color: var(--danger);
+}
+
+.markdown-preview .text-info {
+    color: var(--info);
+}
+
+.markdown-preview .text-end {
+    text-align: right;
+}
+
+.markdown-preview .text-start {
+    text-align: left;
+}
+
+.markdown-preview .text-wrap {
+    white-space: normal;
+}
+
+.markdown-preview .bg-primary {
+    background-color: var(--primary);
+}
+
+.markdown-preview .border-primary {
+    border-color: var(--primary);
+}
+
+.markdown-preview .background-editor-color {
+    background: var(--markdown-preview-editor-background);
+}
+
+.markdown-preview .red {
+    color: var(--markdown-preview-red);
+}
+
+.markdown-preview .green {
+    color: var(--markdown-preview-green);
+}
+
+.markdown-preview .white {
+    color: var(--markdown-preview-white);
+}
+
+.markdown-preview .black {
+    color: var(--markdown-preview-black);
+}
+
+.markdown-preview .yellow {
+    color: var(--markdown-preview-yellow);
+}
+
+.markdown-preview .blue {
+    color: var(--markdown-preview-blue);
+}
+
+.markdown-preview .lila {
+    color: var(--markdown-preview-lila);
+}
+
+.markdown-preview .orange {
+    color: var(--markdown-preview-orange);
+}
+
+.markdown-preview blockquote {
+    padding: 0 1rem;
+    color: var(--markdown-preview-blockquote);
+    border-left: 0.25em solid var(--markdown-preview-blockquote-border);
+}
+
+.markdown-preview img {
+    max-width: 100%;
+}
+
+/* this class is required for rendering post references in between of post content without having linebreaks */
+.markdown-preview .inline-paragraph {
+    margin-bottom: 0 !important;
+    display: inline;
+}
+
+/* A posting renders as one document, so its last paragraph (not the one before a reference) stays inline for the "(edited)" label */
+.markdown-preview.posting-markdown > p:last-child {
+    margin-bottom: 0;
+    display: inline;
+}
+
+/*
+ * Adds extra space below ordered and unordered lists
+ * within markdown previews. The margin is applied to the end of the list,
+ * ensuring vertical separation when a list is followed by another
+ * block element (such as a paragraph) for improved readability.
+ *
+ * Example (Markdown):
+ *
+ * - First item
+ * - Second item
+ * More text after the list.
+ */
+.markdown-preview ol,
+.markdown-preview ul {
+    margin-bottom: 0.75em;
+}
+
+.markdown-preview h1 {
+    font-size: 1.125rem;
+}
+
+.markdown-preview h2 {
+    font-size: 1.05rem;
+}
+
+.markdown-preview h3 {
+    font-size: 0.975rem;
+}
+
+/* Make PlantUML outputs responsive */
+[id^='plantUml-'] {
+    display: flex;
+}
+
+[id^='plantUml-'] > * {
+    height: 100% !important;
+    max-width: 100%;
+}
+
+/* Interim messages end flush with their bubble; the paragraph is rendered markdown outside component scope. */
+jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
+    margin-bottom: 0;
+}
+
+/* Iris chat bubble markdown content (rendered via innerHTML, outside component scope) */
+.bubble-left > p,
+.bubble-left > span > p,
+.bubble-right > p,
+.bubble-right > span > p {
+    margin-bottom: 7px;
+}
+
+.bubble-left > p:last-child,
+.bubble-left > span > p:last-child,
+.bubble-right > p:last-child,
+.bubble-right > span > p:last-child {
+    margin-bottom: 0;
+}
+
+.bubble-left > ol > li > p,
+.bubble-left > ul > li > p,
+.bubble-left > span > ol > li > p,
+.bubble-left > span > ul > li > p,
+.bubble-right > ol > li > p,
+.bubble-right > ul > li > p,
+.bubble-right > span > ol > li > p,
+.bubble-right > span > ul > li > p {
+    margin-bottom: 0;
+}
+
+.bubble-left > ol > li:not(:last-child) > p,
+.bubble-left > ul > li:not(:last-child) > p,
+.bubble-left > span > ol > li:not(:last-child) > p,
+.bubble-left > span > ul > li:not(:last-child) > p,
+.bubble-right > ol > li:not(:last-child) > p,
+.bubble-right > ul > li:not(:last-child) > p,
+.bubble-right > span > ol > li:not(:last-child) > p,
+.bubble-right > span > ul > li:not(:last-child) > p {
+    margin-bottom: 7px;
+}
+
+.bubble-left > ol,
+.bubble-left > ul,
+.bubble-left > span > ol,
+.bubble-left > span > ul,
+.bubble-right > ol,
+.bubble-right > ul,
+.bubble-right > span > ol,
+.bubble-right > span > ul {
+    margin-bottom: 7px;
+}
+
+.bubble-left h1,
+.bubble-left h2,
+.bubble-left h3,
+.bubble-right h1,
+.bubble-right h2,
+.bubble-right h3 {
+    font-weight: bold;
+}
+
+.bubble-left h1,
+.bubble-right h1 {
+    font-size: 1.55rem;
+}
+
+.bubble-left h2,
+.bubble-right h2 {
+    font-size: 1.4rem;
+}
+
+.bubble-left h3,
+.bubble-right h3 {
+    font-size: 1.25rem;
+}
+
+.bubble-left pre code,
+.bubble-right pre code {
+    line-height: 1;
+}
+
+.bubble-left .table,
+.bubble-right .table {
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.bubble-left .table th,
+.bubble-left .table td,
+.bubble-right .table th,
+.bubble-right .table td {
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+}
+
+.bubble-left .table th,
+.bubble-right .table th {
+    background-color: var(--iris-table-header-background);
+}
+
+.bubble-left > span,
+.bubble-right > span {
+    display: block;
+    overflow-x: auto;
+}
+
+/* Global search result description: reset styles for markdown rendered via innerHTML (outside component scope) */
+.result-description p,
+.result-description h1,
+.result-description h2,
+.result-description h3,
+.result-description h4,
+.result-description h5,
+.result-description h6 {
+    margin: 0;
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+.result-description ul,
+.result-description ol {
+    margin: 0;
+    padding-left: 1.2em;
+}
+
+.result-description code {
+    font-size: 0.85em;
+    padding: 0.1em 0.3em;
+    background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+    border-radius: 0.2em;
+}
+
+.result-description pre {
+    margin: 0;
+}
+
+.result-description pre code {
+    padding: 0;
+    background: none;
+}
+
+.result-description img {
+    display: none;
+}
+
+/* Iris inline answer — overrides that cannot be scoped inside the component */
+.iris-inline-answer a.iris-chip,
+.iris-inline-answer a.iris-chip:hover,
+.iris-inline-answer a.iris-chip:focus-visible {
+    text-decoration: none !important;
+}
+
+/* Tighten paragraph spacing in the Iris markdown answer */
+.iris-answer-text p {
+    margin-bottom: 0.4rem;
+}
+
+.iris-answer-text p:last-child {
+    margin-bottom: 0;
+}

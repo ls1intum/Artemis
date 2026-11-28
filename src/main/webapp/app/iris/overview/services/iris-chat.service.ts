@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, catchError, finalize, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
@@ -117,6 +117,8 @@ export class IrisChatService implements OnDestroy {
 
     private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
+    private readonly savingLLMUsageConsent = signal(false);
+    readonly isSavingLLMUsageConsent = this.savingLLMUsageConsent.asReadonly();
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
     private sessionLoadingSubscription?: Subscription;
@@ -531,38 +533,46 @@ export class IrisChatService implements OnDestroy {
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
-            this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
+            this.savingLLMUsageConsent.set(true);
+            this.acceptSubscription = this.userService
+                .updateLLMSelectionDecision(accepted)
+                .pipe(finalize(() => this.savingLLMUsageConsent.set(false)))
+                .subscribe({
+                    next: () => {
+                        this.lastConfirmedDecision = undefined;
+                        this.llmOptedOutSubject.next();
+                        this.close();
+                    },
+                    error: () => {
+                        revertDecision();
+                        this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+                        this.close();
+                    },
+                });
+            return;
+        }
+        this.acceptSubscription?.unsubscribe();
+        this.savingLLMUsageConsent.set(true);
+        this.acceptSubscription = this.userService
+            .updateLLMSelectionDecision(accepted)
+            .pipe(finalize(() => this.savingLLMUsageConsent.set(false)))
+            .subscribe({
                 next: () => {
                     this.lastConfirmedDecision = undefined;
-                    this.llmOptedOutSubject.next();
-                    this.close();
+                    this.hasJustAcceptedLLMUsage = true;
+                    // Only start the session that could not be created before the user opted in (the server rejects
+                    // session creation without consent). If one is already established — the chat was reopened right
+                    // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
+                    // the websocket subscription and discard the response to a message the user already sent.
+                    if (!this.sessionId) {
+                        this.closeAndStart();
+                    }
                 },
                 error: () => {
                     revertDecision();
                     this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
-                    this.close();
                 },
             });
-            return;
-        }
-        this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
-            next: () => {
-                this.lastConfirmedDecision = undefined;
-                this.hasJustAcceptedLLMUsage = true;
-                // Only start the session that could not be created before the user opted in (the server rejects
-                // session creation without consent). If one is already established — the chat was reopened right
-                // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
-                // the websocket subscription and discard the response to a message the user already sent.
-                if (!this.sessionId) {
-                    this.closeAndStart();
-                }
-            },
-            error: () => {
-                revertDecision();
-                this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
-            },
-        });
     }
 
     private replaceMessage(message: IrisMessage): boolean {
@@ -658,8 +668,9 @@ export class IrisChatService implements OnDestroy {
                 this.websocketCommandSubscription?.unsubscribe();
                 this.websocketCommandSubscription = this.irisWebsocketService.subscribeToSessionCommands(this.sessionId).subscribe((command) => this.handleCommand(command));
             },
-            error: (error: IrisErrorMessageKey) => {
-                this.error.next(error);
+            error: () => {
+                // Every observable that loads a session fails with an Error, not with the translation key that the template needs
+                this.error.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 // Even on failure, mark the load attempt as complete so consumers gating on
                 // "messages have settled" don't wait forever (e.g. the onboarding tour would
                 // never show up if a transient session-load error left the gate closed).

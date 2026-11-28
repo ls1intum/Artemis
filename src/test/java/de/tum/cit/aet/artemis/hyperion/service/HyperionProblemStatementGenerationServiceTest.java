@@ -52,7 +52,8 @@ class HyperionProblemStatementGenerationServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository);
+        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(HyperionTestChatClients.returning(chatClient), templateService,
+                llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -160,17 +161,6 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).hasSize(50_000);
-    }
-
-    @Test
-    void generateProblemStatement_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
-        var course = new Course();
-        course.setTitle("Test Course");
-        course.setDescription("Test Description");
-
-        assertThatThrownBy(() -> serviceWithNullClient.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("AI chat client is not configured");
     }
 
     @Test

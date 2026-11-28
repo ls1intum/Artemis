@@ -3,14 +3,14 @@ import dayjs from 'dayjs/esm';
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { map } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,7 +55,7 @@ function urlValidator(control: AbstractControl) {
 })
 export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly onlineUnitService = inject(OnlineUnitService);
+    private readonly onlineUnitApi = inject(OnlineUnitApi);
 
     protected readonly faTimes = faTimes;
 
@@ -161,20 +161,17 @@ export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective
         }
 
         if (this.sourceControl?.valid) {
-            this.onlineUnitService
-                .getOnlineResource(this.sourceControl.value, this.courseId())
-                .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
-                .subscribe({
-                    next: (onlineResource) => {
-                        // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
-                        const keepCurrent = this.autosave();
-                        const updateForm = {
-                            name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
-                            description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
-                        };
-                        this.form.patchValue(updateForm);
-                    },
-                });
+            this.onlineUnitApi.getOnlineResource(this.sourceControl.value, this.courseId()).subscribe({
+                next: (onlineResource) => {
+                    // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
+                    const keepCurrent = this.autosave();
+                    const updateForm = {
+                        name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
+                        description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
+                    };
+                    this.form.patchValue(updateForm);
+                },
+            });
         }
     }
 

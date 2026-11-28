@@ -1,6 +1,6 @@
 <form>
-    <div class="flex items-center justify-between gap-3 border-b border-border p-4">
-        <h4 class="text-lg font-semibold" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
+    <div class="flex items-center justify-between gap-4 border-b border-border p-6">
+        <h4 jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmissionLabel"></h4>
         <button
             tumAetUiButton
             type="button"
@@ -14,7 +14,7 @@
         </button>
     </div>
     @if (exercise(); as exercise) {
-        <div class="p-4">
+        <div class="p-6">
             <tumaet-ui-table-layout
                 [loading]="loading()"
                 [empty]="content().resultsOnPage.length === 0 && !loading()"
@@ -54,14 +54,14 @@
                                 @if (exercise.type === ExerciseType.TEXT) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
-                                        class="text-text-secondary ps-1"
+                                        class="text-muted-color ps-1"
                                         [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                     />
                                 }
                                 @if (exercise.type === ExerciseType.MODELING) {
                                     <fa-icon
                                         [icon]="faQuestionCircle"
-                                        class="text-text-secondary ps-1"
+                                        class="text-muted-color ps-1"
                                         [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                                     />
                                 }

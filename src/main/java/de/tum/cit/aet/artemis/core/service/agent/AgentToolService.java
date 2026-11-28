@@ -230,7 +230,9 @@ public class AgentToolService {
                         (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.POST, base + "/setup", required(arguments.exercise(), "exercise")))),
                 tool("update_programming_exercise",
                         "Change a programming exercise that students cannot see and have not started. Send the whole exercise with your changes; a smaller body resets the rest. "
-                                + "get_exercise returns the course as an object, but this tool needs courseId: copy course.id into it." + EXERCISE_GUIDANCE,
+                                + "get_exercise returns the course as an object, but this tool needs courseId: copy course.id into it. "
+                                + "The submissionPolicy of the exercise is ignored here and stays as it is; the response shows the stored policy, which is changed only through the submission-policy endpoints of the exercise."
+                                + EXERCISE_GUIDANCE,
                         false, scopes,
                         schema(List.of("exercise"), property("exercise", JsonSchemaDTO.document("UpdateProgrammingExerciseDTO of the API description, with its id and courseId."))),
                         UpdateProgrammingExerciseArguments.class,
@@ -239,6 +241,13 @@ public class AgentToolService {
                         "List the test cases of a programming exercise with their ids, weights and visibility. Needed to set weights, which refer to the ids.", true, scopes,
                         schema(List.of("exerciseId"), property("exerciseId", EXERCISE_ID)), ProgrammingExerciseArguments.class,
                         (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.GET, base + "/" + id(arguments.exerciseId(), "exerciseId") + "/test-cases", null))),
+                tool("get_programming_repositories",
+                        "Locate the git repositories of a programming exercise: template, solution, tests and auxiliary. The code is changed with git, not with tools: clone over HTTPS with the "
+                                + "user name from the result and your personal access token as the password, by putting the header Authorization: Basic <base64 of user:token, without line breaks> into an environment variable and calling git "
+                                + "--config-env=http.<artemis address>/.extraHeader=<variable> clone <url> (not git -c, which shows the token in the process list; the address limits the header to Artemis), and never write the token into a clone address or a file. Push to the branch only while writable is true. "
+                                + "A push to the tests repository starts a build, which refreshes the test cases, so keep template, solution and tests consistent.",
+                        true, Set.of(AgentScope.PROGRAMMING_REPOSITORIES), schema(List.of("exerciseId"), property("exerciseId", EXERCISE_ID)), ProgrammingExerciseArguments.class,
+                        (arguments, api) -> AgentToolResult.of(api.send(HttpMethod.GET, base + "/" + id(arguments.exerciseId(), "exerciseId") + "/repositories", null))),
                 tool("set_programming_problem_statement", "Replace the problem statement (Markdown) of a programming exercise that students cannot see and have not started.",
                         false, scopes,
                         schema(List.of("exerciseId", "problemStatement"), property("exerciseId", EXERCISE_ID), property("problemStatement", JsonSchemaDTO.string("Markdown."))),

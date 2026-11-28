@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -90,6 +93,17 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
         final Feedback feedback = addLongFeedbackToResult(resultStudent1);
 
         final String longFeedbackText = request.get(getUrl(feedback.getId()), HttpStatus.OK, String.class);
+        assertThat(longFeedbackText).isEqualTo(LONG_FEEDBACK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void getLongFeedbackWithJsonAcceptHeader() throws Exception {
+        final Feedback feedback = addLongFeedbackToResult(resultStudent1);
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        final String longFeedbackText = request.get(getUrl(feedback.getId()), HttpStatus.OK, String.class, headers);
         assertThat(longFeedbackText).isEqualTo(LONG_FEEDBACK);
     }
 

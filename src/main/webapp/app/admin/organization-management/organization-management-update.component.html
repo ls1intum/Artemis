@@ -2,7 +2,7 @@
     <div class="w-full md:max-w-2xl">
         <h5 *adminTitleBarTitle id="organization-update-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.addOrEditLabel"></h5>
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6">
                 <div class="flex flex-col gap-2">
                     <label for="name" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.name"></label>
                     <input id="name" type="text" tumAetUiInput name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
@@ -86,7 +86,7 @@
                     }
                 </div>
             </div>
-            <div class="flex items-center justify-end gap-2 mt-4">
+            <div class="flex items-center justify-end gap-2 mt-6">
                 <button id="cancelButton" type="button" tumAetUiButton size="small" severity="secondary" (click)="previousState()" data-testid="cancel-btn">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel"></span>

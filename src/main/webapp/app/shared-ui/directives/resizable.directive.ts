@@ -367,7 +367,7 @@ export class ResizableDirective {
 
         const hostEl = this.host.nativeElement;
         hostEl.setPointerCapture?.(event.pointerId);
-        this.renderer.addClass(hostEl, 'card-resizable');
+        this.renderer.addClass(hostEl, 'resizable-dragging');
         this.renderer.setStyle(this.document.body, 'user-select', 'none');
 
         const move = (e: PointerEvent) => this.onPointerMove(e);
@@ -503,7 +503,7 @@ export class ResizableDirective {
         this.activeEdge = undefined;
         this.activePointerId = undefined;
         this.teardownActiveDrag();
-        this.renderer.removeClass(this.host.nativeElement, 'card-resizable');
+        this.renderer.removeClass(this.host.nativeElement, 'resizable-dragging');
         this.renderer.removeStyle(this.document.body, 'user-select');
         const rect = this.host.nativeElement.getBoundingClientRect();
         this.resizeEnd.emit({ width: rect.width, height: rect.height });

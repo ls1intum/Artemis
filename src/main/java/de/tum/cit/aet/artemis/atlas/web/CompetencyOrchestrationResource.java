@@ -89,7 +89,6 @@ public class CompetencyOrchestrationResource {
             case PARTIAL -> HttpStatus.MULTI_STATUS;
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason()) {
-                case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
                 case TOOL_CALL_LIMIT_EXCEEDED, INCOMPLETE_ORCHESTRATION -> HttpStatus.UNPROCESSABLE_CONTENT;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
                 case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;

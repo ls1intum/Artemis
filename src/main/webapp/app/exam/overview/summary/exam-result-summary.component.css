@@ -1,0 +1,7 @@
+.exercise-buttons > :first-child {
+    margin-bottom: 1.5rem;
+}
+
+.exercise-buttons > :last-child {
+    margin-left: 1.5rem !important;
+}

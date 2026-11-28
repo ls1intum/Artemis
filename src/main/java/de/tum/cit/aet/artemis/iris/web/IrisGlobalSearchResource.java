@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
 import de.tum.cit.aet.artemis.iris.service.IrisSearchScopeService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisUnavailableException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
@@ -111,7 +113,13 @@ public class IrisGlobalSearchResource {
         if (scope.searchesNothing()) {
             return ResponseEntity.ok(List.of());
         }
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
+        try {
+            return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), scope.courseIds(), scope.excludeCourseIds(), accessContext));
+        }
+        catch (PyrisUnavailableException e) {
+            // Pyris is not reachable or too slow. That is no defect of this request, so it is answered as an unavailable service instead of an unhandled error.
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
     }
 
     /**
@@ -160,8 +168,14 @@ public class IrisGlobalSearchResource {
         // Pyris may have received the request and already started the pipeline. Removing the job
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), job, selectedLlmUsage, accessContext, entityCandidates, scope.courseIds(),
-                scope.excludeCourseIds(), scope.searchesNothing());
+        try {
+            pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), job, selectedLlmUsage, accessContext, entityCandidates, scope.courseIds(),
+                    scope.excludeCourseIds(), scope.searchesNothing());
+        }
+        catch (PyrisUnavailableException e) {
+            // Like the lecture search: Pyris is not reachable or too slow, which is no defect of this request
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         return ResponseEntity.accepted().build();
     }
 

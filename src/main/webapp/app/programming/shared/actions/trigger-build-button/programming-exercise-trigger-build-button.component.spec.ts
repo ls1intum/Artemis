@@ -9,7 +9,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -20,9 +20,11 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('TriggerBuildButtonSpec', () => {
     let comp: ProgrammingExerciseStudentTriggerBuildButtonComponent;
@@ -159,6 +161,136 @@ describe('TriggerBuildButtonSpec', () => {
         fixture.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeNull();
+    });
+
+    describe('refused triggers', () => {
+        const triggerFailedWithError = (error: HttpErrorResponse) => {
+            const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+            fixture.componentRef.setInput('exercise', { id: 6 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participation', newParticipation);
+            fixture.detectChanges();
+            getLatestPendingSubmissionSubject.next({
+                submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+                submission: undefined,
+                participationId: newParticipation.id!,
+            });
+            fixture.detectChanges();
+            triggerFailedBuildSpy.mockReturnValue(throwError(() => error));
+            getTriggerButton().click();
+        };
+
+        it('should not add a generic alert when the server refused because of the build time window, as it explains the reason itself', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.buildOutsideTimeWindow' }) }));
+
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still show the generic alert for other errors', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            triggerFailedWithError(new HttpErrorResponse({ status: 500 }));
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.resubmitUnsuccessful');
+        });
+    });
+
+    describe('build time window', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const setUp = (now: dayjs.Dayjs, options: { isAtLeastEditor?: boolean; testRun?: boolean; individualDueDateExtension?: number } = {}) => {
+            vi.useFakeTimers();
+            vi.setSystemTime(now.toDate());
+            const exerciseWithWindow = new ProgrammingExercise(undefined, undefined);
+            exerciseWithWindow.id = 21;
+            exerciseWithWindow.isAtLeastEditor = options.isAtLeastEditor ?? false;
+            exerciseWithWindow.buildConfig!.advancedSettings = { buildTimeWindow: { start: windowStart, end: windowEnd } };
+            const studentParticipation = new ProgrammingExerciseStudentParticipation();
+            studentParticipation.id = 2;
+            studentParticipation.testRun = options.testRun;
+            studentParticipation.initializationState = InitializationState.INITIALIZED;
+            if (options.individualDueDateExtension) {
+                exerciseWithWindow.dueDate = windowEnd;
+                studentParticipation.individualDueDate = windowEnd.add(options.individualDueDateExtension, 'hour');
+            }
+            fixture.componentRef.setInput('exercise', exerciseWithWindow);
+            fixture.componentRef.setInput('participation', studentParticipation);
+            comp.showForSuccessfulSubmissions.set(true);
+            fixture.detectChanges();
+        };
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it.each([
+            ['before', windowStart.subtract(1, 'minute')],
+            ['after', windowEnd.add(1, 'minute')],
+        ])('should disable the button %s the window and explain why', (_, now) => {
+            setUp(now);
+
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+            expect(getTriggerButton().disabled).toBe(true);
+            expect(debugElement.query(By.css('jhi-button')).componentInstance.tooltip()).toBe('artemisApp.programmingExercise.buildTimeWindow.triggerDisabled');
+        });
+
+        it('should keep the button enabled inside the window', () => {
+            setUp(windowStart.add(1, 'minute'));
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+            expect(debugElement.query(By.css('jhi-button')).componentInstance.tooltip()).toBe('artemisApp.programmingExercise.resubmit');
+        });
+
+        it('should keep the button enabled while the individual due date extension keeps the window open', () => {
+            setUp(windowEnd.add(1, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+
+        it('should disable the button after the window extended by the individual due date', () => {
+            setUp(windowEnd.add(4, 'hour'), { individualDueDateExtension: 3 });
+
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+        });
+
+        it.each([
+            ['editors and instructors', { isAtLeastEditor: true }],
+            ['the practice mode', { testRun: true }],
+        ])('should not block %s', (_, options) => {
+            setUp(windowEnd.add(1, 'day'), options);
+
+            expect(comp.isBlockedByBuildWindow()).toBe(false);
+            expect(getTriggerButton().disabled).toBe(false);
+        });
+
+        it('should also block triggering a failed build outside the window', () => {
+            setUp(windowEnd.add(1, 'day'));
+
+            getLatestPendingSubmissionSubject.next({
+                submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
+                submission: undefined,
+                participationId: 2,
+            });
+            fixture.detectChanges();
+
+            // the retry builds the latest commit, which may have been pushed outside the window
+            expect(comp.isBlockedByBuildWindow()).toBe(true);
+            expect(getTriggerButton().disabled).toBe(true);
+        });
+
+        it('should enable the button when the window starts', () => {
+            setUp(windowStart.subtract(1, 'minute'));
+            expect(getTriggerButton().disabled).toBe(true);
+
+            vi.advanceTimersByTime(60 * 1000);
+            fixture.detectChanges();
+
+            expect(getTriggerButton().disabled).toBe(false);
+        });
     });
 
     it('should set the latest result correctly to manual', () => {

@@ -2,7 +2,8 @@ import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, comput
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faMagnifyingGlass, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiIconFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -19,7 +20,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
     selector: 'jhi-tutorial-registrations-register-search-bar',
     imports: [FormsModule, FaIconComponent, TumAetUiIconFieldComponent, TumAetUiInputDirective, OverlayModule, ScrollingModule, TranslateDirective],
     templateUrl: './tutorial-registrations-register-search-bar.component.html',
-    styleUrl: './tutorial-registrations-register-search-bar.component.scss',
+    styleUrl: './tutorial-registrations-register-search-bar.component.css',
 })
 export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestroy {
     private translateService = inject(TranslateService);

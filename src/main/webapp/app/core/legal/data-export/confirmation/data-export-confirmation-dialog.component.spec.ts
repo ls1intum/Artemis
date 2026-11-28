@@ -122,7 +122,7 @@ describe('DataExportConfirmationDialogComponent', () => {
         comp.expectedLoginOfOtherUser.set('other login');
         if (checkboxChecked) {
             comp.ownLogin = '';
-            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } } as unknown as Event);
+            comp.onRequestDataExportForOtherUserChanged(checkboxChecked);
 
             expect(comp.expectedLogin()).toBe('other login');
             expect(comp.ownLogin).toBe('login');
@@ -130,7 +130,7 @@ describe('DataExportConfirmationDialogComponent', () => {
             expect(comp.enteredLogin()).toBe('');
         } else {
             comp.ownLogin = 'login';
-            comp.onRequestDataExportForOtherUserChanged({ target: { checked: checkboxChecked } } as unknown as Event);
+            comp.onRequestDataExportForOtherUserChanged(checkboxChecked);
             expect(comp.enteredLogin()).toBe('');
             expect(comp.confirmationTextHint()).toBe('artemisApp.dataExport.typeLoginToConfirm');
             expect(comp.expectedLogin()).toBe('login');

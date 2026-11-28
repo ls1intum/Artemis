@@ -20,6 +20,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.ServiceCredentialBudget;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import inet.ipaddr.IPAddress;
@@ -32,7 +33,7 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 @Profile(PROFILE_CORE)
 @Service
 @Lazy
-public class RateLimitService {
+public class RateLimitService implements ServiceCredentialBudget {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
@@ -162,7 +163,8 @@ public class RateLimitService {
         ConsumptionProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
-            log.warn("Rate limit exceeded for a key at {}, retry after {} seconds", rpmType.name(), seconds);
+            // Keys can originate in request bodies; report the limit and retry delay without logging untrusted identifiers.
+            log.warn("Rate limit exceeded at {}, retry after {} seconds", rpmType.name(), seconds);
             throw new RateLimitExceededException(seconds);
         }
     }
@@ -189,6 +191,7 @@ public class RateLimitService {
      *
      * @throws RateLimitExceededException if the address has used up its budget of failed checks
      */
+    @Override
     public void requireServiceCredentialBudget() {
         enforcePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
     }
@@ -196,6 +199,7 @@ public class RateLimitService {
     /**
      * Gives back the token reserved by {@link #requireServiceCredentialBudget()}, because the secret was right.
      */
+    @Override
     public void refundServiceCredentialBudget() {
         refundPerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
     }
@@ -250,7 +254,7 @@ public class RateLimitService {
      * <p>
      * Like {@link #resolveClientId()}, this never reads {@code X-Forwarded-For} or any other header itself, so a sender cannot pick a new
      * rate limit budget for every request, or pick an exempt address, by sending a header. The address is what Tomcat concluded:
-     * with {@code server.forward-headers-strategy: native} it believes the forwarding headers only of the proxies in
+     * with {@code server.request.header.forwarded.strategy: web-server} it believes the forwarding headers only of the proxies in
      * {@code server.tomcat.remoteip.internal-proxies}, which by default are the private networks. Behind a reverse proxy
      * outside of them, every client has the address of the proxy until that setting names it.
      * </p>

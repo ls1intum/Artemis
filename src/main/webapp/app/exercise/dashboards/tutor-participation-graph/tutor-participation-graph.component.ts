@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
@@ -16,7 +16,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 @Component({
     selector: 'jhi-tutor-participation-graph',
     templateUrl: './tutor-participation-graph.component.html',
-    styleUrls: ['./tutor-participation-graph.component.scss'],
+    styleUrls: ['./tutor-participation-graph.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TumAetUiTooltipDirective, NgClass, FaIconComponent, ProgressBarComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
