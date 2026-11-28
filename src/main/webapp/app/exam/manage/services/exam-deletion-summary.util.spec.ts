@@ -84,12 +84,13 @@ describe('exam deletion summary util', () => {
             });
 
             expect(categories.map((category) => category.titleKey)).toEqual([
+                'artemisApp.exercise.delete.summary.category.regenerateExams',
                 `${prefix}.category.structure`,
                 `${prefix}.category.studentWork`,
                 `${prefix}.category.assessment`,
                 `${prefix}.category.infrastructure`,
             ]);
-            expect(categories[1].items.map((item) => item.labelKey)).toEqual([`${prefix}.numberStudentExamsOfGroup`, `${prefix}.numberStudentParticipations`]);
+            expect(categories[0].items).toEqual([{ labelKey: `${prefix}.numberStudentExamsOfGroup`, value: 30, highlight: false }]);
         });
 
         it('lists nothing for an empty exercise group', () => {

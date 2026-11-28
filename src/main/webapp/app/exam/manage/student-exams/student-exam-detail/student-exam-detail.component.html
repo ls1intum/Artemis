@@ -11,6 +11,15 @@
 </div>
 @if (student() && studentExam()) {
     <div>
+        @if (missingExercises(); as counts) {
+            <p
+                class="mb-4 font-semibold text-state-danger"
+                role="alert"
+                data-testid="missing-exercises-warning"
+                jhiTranslate="artemisApp.studentExamDetail.missingExercises"
+                [translateValues]="counts"
+            ></p>
+        }
         <div class="mb-6">
             <h5><span jhiTranslate="artemisApp.studentExamDetail.student"></span></h5>
             <ol class="my-0 ms-6 list-none p-0">

@@ -50,6 +50,7 @@ export function buildExamDeletionSummary(summary: ExamDeletionSummaryDTO): Entit
  */
 export function buildExerciseGroupDeletionSummary(summary: ExerciseGroupDeletionSummaryDTO): EntitySummaryCategory[] {
     return summaryCategories([
+        summaryCategory('artemisApp.exercise.delete.summary.category.regenerateExams', [summaryItem(`${PREFIX}.numberStudentExamsOfGroup`, summary.numberOfStudentExams)]),
         summaryCategory(`${PREFIX}.category.structure`, [
             summaryItem(`${PREFIX}.numberProgrammingExercises`, summary.numberOfProgrammingExercises),
             summaryItem(`${PREFIX}.numberQuizExercises`, summary.numberOfQuizExercises),
@@ -58,7 +59,6 @@ export function buildExerciseGroupDeletionSummary(summary: ExerciseGroupDeletion
             summaryItem(`${PREFIX}.numberFileUploadExercises`, summary.numberOfFileUploadExercises),
         ]),
         summaryCategory(`${PREFIX}.category.studentWork`, [
-            summaryItem(`${PREFIX}.numberStudentExamsOfGroup`, summary.numberOfStudentExams),
             summaryItem(`${PREFIX}.numberStudentParticipations`, summary.numberOfStudentParticipations),
             summaryItem(`${PREFIX}.numberSubmissions`, summary.numberOfSubmissions),
         ]),

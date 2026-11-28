@@ -832,7 +832,7 @@
                     "numberCommunicationPosts": "Beiträge im Klausurkanal",
                     "numberAnswerPosts": "Antworten im Klausurkanal",
                     "numberBuilds": "Build-Jobs",
-                    "numberStudentExamsOfGroup": "Klausuren von Studierenden, die Aufgaben dieser Gruppe enthalten"
+                    "numberStudentExamsOfGroup": "Individuelle Klausuren, aus denen eine Aufgabe dieser Gruppe entfernt wird"
                 }
             },
             "reset": {
@@ -998,6 +998,7 @@
             }
         },
         "studentExamDetail": {
+            "missingExercises": "Diese individuelle Klausur enthält {{ actual }} von {{ expected }} vorgesehenen Aufgaben.",
             "studentExam": "Studierenden Klausur",
             "studentTestExam": "Studierenden Test Klausur",
             "testRun": "Testlauf",

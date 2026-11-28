@@ -624,6 +624,11 @@ describe('Exercise Service', () => {
             return result;
         }
 
+        it('warns before deleting an exercise assigned to a generated individual exam', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.TEXT } as Exercise, { numberOfStudentExams: 1 });
+            expect(result).toEqual([{ titleKey: `${prefix}.category.regenerateExams`, items: [{ labelKey: `${prefix}.numberOfStudentExams`, value: 1, highlight: false }] }]);
+        });
+
         it('should group everything that is deleted with a programming exercise into readable categories', () => {
             const result = fetchSummary({ id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise, {
                 numberOfStudentParticipations: 50,
