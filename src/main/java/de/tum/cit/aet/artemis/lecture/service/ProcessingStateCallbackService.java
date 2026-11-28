@@ -2,13 +2,17 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -57,6 +61,12 @@ import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 public class ProcessingStateCallbackService {
 
     private static final Logger log = LoggerFactory.getLogger(ProcessingStateCallbackService.class);
+
+    /** How long the runs a worker keeps listing after they were revoked are not reported at {@code WARN} again. */
+    private static final Duration REVOKED_RUNS_REPORT_INTERVAL = Duration.ofMinutes(10);
+
+    /** Per worker boot id, the revoked runs this node reported last. Local to the node on purpose: it only limits what this node writes to its own log. */
+    private final Map<String, RevokedRunsReport> lastRevokedRunsReports = new ConcurrentHashMap<>();
 
     /**
      * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
@@ -454,9 +464,42 @@ public class ProcessingStateCallbackService {
             }
         }
         if (!revoked.isEmpty()) {
-            log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
+            logRevokedRuns(workerBootId, revoked);
         }
         return revoked;
+    }
+
+    /**
+     * Reports the runs of a worker that Artemis revoked. A worker that ignores the revocation lists the same runs with every heartbeat, once every few seconds, for as long as it
+     * lives, which filled the log with one warning per heartbeat. The runs are therefore reported at {@code WARN} when they differ from the ones reported last for this worker or
+     * when the last report is older than {@link #REVOKED_RUNS_REPORT_INTERVAL}, and at {@code DEBUG} otherwise. The reply to the worker is not affected.
+     *
+     * @param workerBootId boot id of the heartbeating worker process
+     * @param revoked      the tokens of the runs that were reported revoked, not empty
+     */
+    private void logRevokedRuns(String workerBootId, List<String> revoked) {
+        long nowNanos = System.nanoTime();
+        Set<String> tokens = Set.copyOf(revoked);
+        // The boot id comes from the request body of the worker and may be missing, which a concurrent map does not accept as a key.
+        String workerKey = String.valueOf(workerBootId);
+        RevokedRunsReport previous = lastRevokedRunsReports.get(workerKey);
+        if (previous != null && previous.tokens().equals(tokens) && nowNanos - previous.reportedAtNanos() < REVOKED_RUNS_REPORT_INTERVAL.toNanos()) {
+            log.debug("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked again", workerBootId, revoked.size());
+            return;
+        }
+        // Forget the workers that stopped listing runs, so that the map stays as small as the set of workers that currently misbehave.
+        lastRevokedRunsReports.values().removeIf(report -> nowNanos - report.reportedAtNanos() >= REVOKED_RUNS_REPORT_INTERVAL.toNanos());
+        lastRevokedRunsReports.put(workerKey, new RevokedRunsReport(tokens, nowNanos));
+        log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
+    }
+
+    /**
+     * The runs of one worker that were last reported as revoked on this node, and when.
+     *
+     * @param tokens          the job tokens of the runs
+     * @param reportedAtNanos {@link System#nanoTime()} of the report
+     */
+    private record RevokedRunsReport(Set<String> tokens, long reportedAtNanos) {
     }
 
     // -------------------- Callback Handlers --------------------
