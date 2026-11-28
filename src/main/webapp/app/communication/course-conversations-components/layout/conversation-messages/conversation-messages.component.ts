@@ -46,7 +46,7 @@ import { canCreateNewMessageInConversation } from 'app/communication/conversatio
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 interface PostGroup {
     author: User | undefined;

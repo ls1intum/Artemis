@@ -170,7 +170,8 @@ class LocalVCServletServiceTest {
         localVCServletService = new LocalVCServletService(authenticationManager, userRepository, programmingExerciseRepository, programmingExerciseBuildConfigRepository,
                 repositoryAccessService, programmingExerciseParticipationService, auxiliaryRepositoryService, Optional.of(vcsAccessLogService),
                 participationVCSAccessTokenRepository, repositoryVCSAccessTokenRepository, authorizationCheckService, rateLimitService, userVcsAccessTokenService,
-                repositoryResolver, accessLogRecorder, buildAgentAuthenticationService, passwordAuthenticationNoticeService, buildAgentNetworkPolicy, 20, 50);
+                repositoryResolver, accessLogRecorder, buildAgentAuthenticationService, passwordAuthenticationNoticeService, buildAgentNetworkPolicy,
+                mock(LocalVCAgentTokenService.class), 20, 50);
     }
 
     @Test

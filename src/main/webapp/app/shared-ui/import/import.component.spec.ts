@@ -7,7 +7,7 @@ import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';

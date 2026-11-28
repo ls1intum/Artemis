@@ -3,7 +3,7 @@ import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { PublicUsageStatistics, UsageSemester } from 'app/core/usage-statistics/usage-statistics.model';
 import { UsageStatisticsService } from 'app/core/usage-statistics/usage-statistics.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

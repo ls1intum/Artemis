@@ -24,7 +24,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-repository-view',

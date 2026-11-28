@@ -13,7 +13,10 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { TumAetUiChipComponent, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiSearchFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { forkJoin } from 'rxjs';
 

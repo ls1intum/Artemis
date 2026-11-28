@@ -1,5 +1,5 @@
 import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 
 export function buildDbQueryFromTableEvent(event: TumAetUiTableQueryEvent, defaults: { pageSize?: number } = {}): SearchTermPageableSearch {
     return {

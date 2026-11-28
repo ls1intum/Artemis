@@ -49,7 +49,7 @@ public final class VcsAccessLogOperations {
      */
     private static final Set<AuthenticationMechanism> HTTPS_MECHANISMS = Set.of(AuthenticationMechanism.PASSWORD, AuthenticationMechanism.USER_VCS_ACCESS_TOKEN,
             AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN, AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN, AuthenticationMechanism.VCS_ACCESS_TOKEN,
-            AuthenticationMechanism.AUTH_HEADER_MISSING);
+            AuthenticationMechanism.AGENT_ACCESS_TOKEN, AuthenticationMechanism.AUTH_HEADER_MISSING);
 
     /** Who advertised the references of a repository, how, from where, and for which kind of transfer. Advertisements with the same key are interchangeable. */
     private record AdvertisementKey(Long userId, AuthenticationMechanism mechanism, String ipAddress, RepositoryActionType advertisement) {

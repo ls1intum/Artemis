@@ -71,6 +71,7 @@
                     "announcements_post": "Ankündigungen veröffentlichen",
                     "exercises_draft": "Unveröffentlichte Aufgaben erstellen und bearbeiten",
                     "programming_draft": "Unveröffentlichte Programmieraufgaben erstellen und bearbeiten",
+                    "programming_repositories": "Template-, Lösungs- und Test-Repositories mit Git klonen und, solange unveröffentlicht, pushen",
                     "lectures_write": "Vorlesungen und Folien erstellen und bearbeiten"
                 }
             },

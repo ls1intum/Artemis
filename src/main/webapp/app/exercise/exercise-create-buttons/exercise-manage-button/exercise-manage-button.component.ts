@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 @Component({

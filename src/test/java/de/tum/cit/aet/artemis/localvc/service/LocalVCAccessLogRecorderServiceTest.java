@@ -208,6 +208,18 @@ class LocalVCAccessLogRecorderServiceTest {
     }
 
     @Test
+    void aPersonalAccessTokenOfACodingAgentIsLoggedAsSuch() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:art_pat_" + "a".repeat(43)).getBytes());
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
+
+        AuthenticationMechanism result = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(new AuthenticationContext.Request(request), testUser,
+                testRepositoryUri);
+
+        assertThat(result).isEqualTo(AuthenticationMechanism.AGENT_ACCESS_TOKEN);
+    }
+
+    @Test
     void testResolveAuthenticationMechanismFromSessionOrRequest_withRepositoryToken() throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
         // A valid token that does NOT match the user-level token, but matches a repository-scoped staff token for the requested repository.

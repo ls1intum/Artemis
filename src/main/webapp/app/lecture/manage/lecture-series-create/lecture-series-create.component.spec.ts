@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { LectureSeriesCreateComponent } from './lecture-series-create.component';
 import { LectureApi } from 'app/openapi/api/lecture-api';
 import type { LectureSeriesCreateLecture } from 'app/openapi/model/lecture-series-create-lecture';
