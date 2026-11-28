@@ -497,6 +497,13 @@ export default tseslint.config(
             'localRules/prefer-signal-template-state': 'error',
         },
     },
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/src/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/sharing-module-boundary': 'error',
+        },
+    },
     // Copy objects with deepClone, never with object spread, Object.assign or structuredClone. All three
     // alternatives are wrong in ways the type checker cannot see: structuredClone drops prototypes, so a cloned
     // dayjs date loses its methods while isDayjs() still returns true (the bug behind PR #11910); spread and

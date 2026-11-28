@@ -1,0 +1,313 @@
+package de.tum.cit.aet.artemis.sharing.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Locale;
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.ResponseActions;
+import org.springframework.test.web.client.response.MockRestResponseCreators;
+
+import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.sharing.connector.ShoppingBasket;
+import de.tum.cit.aet.artemis.sharing.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.sharing.dto.SharingSetupInfoDTO;
+
+/**
+ * Special tests for ExerciseSharingService focusing on validation failures.
+ */
+class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken";
+
+    private static final String TEST_RETURN_URL = "http://unused.return.url/";
+
+    private static final String TEST_PREFIX = "exercisesharingservicetest";
+
+    public static final String INSTRUCTOR1 = TEST_PREFIX + "instructor";
+
+    @Autowired
+    private SharingPlatformMockProvider sharingPlatformMockProvider;
+
+    @Autowired
+    private ExerciseSharingService exerciseSharingService;
+
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
+
+    @Autowired
+    private VersionControlService versionControlService;
+
+    @BeforeEach
+    void startUp() throws Exception {
+        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        sharingPlatformMockProvider.reset();
+        // reset caches!
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void shouldReturnFalseForInvalidTokenAndSecurityString() {
+        assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedBase64Token() {
+        // A single Base64 character passes the alphabet check but cannot be decoded.
+        assertThat(exerciseSharingService.getExportedExerciseByToken("a")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForMalformedUtf8Token() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { (byte) 0xff });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyForTokenContainingNullByte() {
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[] { 0 });
+        assertThat(exerciseSharingService.getExportedExerciseByToken(token)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFalseForNullTokenAndSecurityString() {
+        assertThat(exerciseSharingService.validate(null, null)).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(null)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFalseForEmptyTokenAndSecurityString() {
+        assertThat(exerciseSharingService.validate("", "")).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken("")).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFalseForExceedingTokenAndSecurityString() {
+        String extraHugeToken = "Something" + "x".repeat(ExerciseSharingService.MAX_EXPORT_TOKEN_LENGTH);
+        assertThat(exerciseSharingService.validate(extraHugeToken, "")).isFalse();
+        assertThat(exerciseSharingService.getExportedExerciseByToken(extraHugeToken)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyBasketInfoOnNullToken() {
+        assertThat(exerciseSharingService.getBasketInfo(null, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyBasketInfoOnInvalidToken() {
+        assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)).isEmpty();
+    }
+
+    @Test
+    void testGetBasketInfo() throws URISyntaxException, IOException {
+        mockSampleBasketLoadingForToken(SAMPLE_BASKET_TOKEN);
+
+        Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo(SAMPLE_BASKET_TOKEN, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
+
+        assertThat(basket).isNotEmpty();
+    }
+
+    @Test
+    void testGetBasketInfoWithFalseToken() throws URISyntaxException {
+        URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/FalseBasketToken");
+
+        final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
+                .andExpect(method(HttpMethod.GET));
+        responseActionsJSON.andRespond(MockRestResponseCreators.withResourceNotFound());
+
+        Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo("FalseBasketToken", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
+
+        assertThat(basket).isEmpty();
+    }
+
+    @Test
+    void testGetBasketInfoWithServerFailure() throws URISyntaxException {
+        URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/FalseBasketToken");
+
+        final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
+                .andExpect(method(HttpMethod.GET));
+        responseActionsJSON.andRespond(MockRestResponseCreators.withServerError());
+
+        Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo("FalseBasketToken", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
+
+        assertThat(basket).isEmpty();
+        // Could be more assertions, however not really helpful here, The details of the basket are tested in testGetExerciseInfoFromBasket
+    }
+
+    @Test
+    void testGetBasketInfoWithEmptyToken() {
+        Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo("", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
+        assertThat(basket).isEmpty();
+    }
+
+    @Test
+    void testGetExerciseInfoFromBasket() throws URISyntaxException, IOException {
+        getExerciseInfoFromBasket();
+    }
+
+    ImportProgrammingExerciseRequestDTO getExerciseInfoFromBasket() throws URISyntaxException, IOException {
+        mockSampleBasketLoadingForToken(SAMPLE_BASKET_TOKEN);
+        mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
+
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
+                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
+                0);
+
+        ImportProgrammingExerciseRequestDTO exercise = exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+
+        assertThat(exercise).isNotNull();
+        // The exported id belongs to the source instance and must never reach the create form.
+        assertThat(exercise.id()).isNull();
+        // The details object backs the whole create form: the fields it drives must survive the round trip.
+        assertThat(exercise.title()).isNotBlank();
+        assertThat(exercise.shortName()).isNotBlank();
+        assertThat(exercise.programmingLanguage()).isNotNull();
+        assertThat(exercise.buildConfig()).isNotNull();
+
+        return exercise;
+    }
+
+    @Test
+    void testGetNonexistingExercise999InfoFromBasket() throws URISyntaxException, IOException {
+        mockSampleBasketLoadingForToken(SAMPLE_BASKET_TOKEN);
+        URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN + "/repository/999?format=artemis");
+
+        final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketRepositoryZipURI))
+                .andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(MockRestResponseCreators.withResourceNotFound());
+
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
+                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
+                999);
+
+        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(EntityNotFoundException.class);
+
+    }
+
+    @Test
+    void testGetNonexistingExerciseWithZipFailure() throws URISyntaxException, IOException {
+        mockSampleBasketLoadingForToken(SAMPLE_BASKET_TOKEN);
+
+        URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN + "/repository/0?format=artemis");
+
+        final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketRepositoryZipURI))
+                .andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(MockRestResponseCreators.withServerError());
+
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
+                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
+                0);
+
+        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(EntityNotFoundException.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR1, roles = "USER")
+    void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, SharingException {
+        userUtilService.addInstructor(INSTRUCTOR1);
+        mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
+
+        SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase(Locale.ENGLISH)));
+
+        ImportProgrammingExerciseRequestDTO exercise = getExerciseInfoFromBasket();
+        Course course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
+        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
+                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
+                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
+                0);
+
+        ProgrammingExerciseResponseDTO importedExercise = null;
+        try {
+
+            SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exercise, course1.getId(), sharingInfo);
+
+            importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
+
+            assertThat(importedExercise.id()).isNotNull();
+            assertThat(importedExercise.packageName()).isEqualTo(exercise.packageName());
+        }
+        finally {
+            // we have to explicitly clean up the repository, otherwise repeated tests will fail, because the repository already exists.
+            // we do this in a finally, because otherwise we would have to repeat it every afterEach.
+            // The project key is derived from the target course, not taken from the exported details.
+            versionControlService.deleteProject(importedExercise != null ? importedExercise.projectKey() : exercise.projectKey());
+        }
+    }
+
+    @Test
+    void trivialSharingExceptionTests() {
+        SharingException e = new SharingException("trivial");
+        assertThat(e.getMessage()).isEqualTo("trivial");
+
+        SharingException e1 = new SharingException("trivial", e);
+        assertThat(e1.getMessage()).isEqualTo("trivial");
+        assertThat(e1.getCause()).isEqualTo(e);
+
+        SharingException e2 = SharingException.withEndpoint("trivial", e);
+        assertThat(e2.getMessage()).isEqualTo("Failed to connect to sharing platform at " + "trivial");
+        assertThat(e2.getCause()).isEqualTo(e);
+
+    }
+
+    private void mockSampleBasketLoadingForToken(String basketToken) throws URISyntaxException, IOException {
+        URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken);
+        var sampleBasketResource = getClass().getResource("/test-data/sharing-platform/basket/sampleBasket.json");
+        assertThat(sampleBasketResource).isNotNull();
+        try (InputStream in = sampleBasketResource.openStream()) {
+            String basketJSON = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
+                    .andExpect(method(HttpMethod.GET));
+            responseActionsJSON.andRespond(MockRestResponseCreators.withSuccess(basketJSON, MediaType.APPLICATION_JSON));
+        }
+    }
+
+    private void mockSampleBasketZipForToken(String basketToken) throws URISyntaxException, IOException {
+        URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
+        var sampleExerciseResource = getClass().getResource("/test-data/sharing-platform/basket/sampleExercise.zip");
+        assertThat(sampleExerciseResource).isNotNull();
+        try (InputStream inputStream = sampleExerciseResource.openStream()) {
+            byte[] zippedBytes = inputStream.readAllBytes();
+            final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketRepositoryZipURI))
+                    .andExpect(method(HttpMethod.GET));
+            responseActions.andRespond(MockRestResponseCreators.withSuccess(zippedBytes, MediaType.APPLICATION_OCTET_STREAM));
+        }
+    }
+
+}
