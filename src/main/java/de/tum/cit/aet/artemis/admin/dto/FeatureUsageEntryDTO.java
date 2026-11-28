@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One inventory row, that is one endpoint, git operation or background feature, and what it was used for over the window.
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.core.domain.FeatureKind;
  *                             headline counts and the tables cannot disagree.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "featureId", "featureKind", "module", "identifier", "interaction", "callCount", "errorCount", "durationSumMs", "durationMaxMs", "activeDays",
+        "lastRegisteredAt", "retired" })
 public record FeatureUsageEntryDTO(long featureId, FeatureKind featureKind, String module, String identifier, @Nullable String featureLabel, FeatureInteraction interaction,
         @Nullable String resource, long callCount, long errorCount, long durationSumMs, int durationMaxMs, long activeDays, @Nullable LocalDate lastUsedDay,
         Instant lastRegisteredAt, boolean retired) {

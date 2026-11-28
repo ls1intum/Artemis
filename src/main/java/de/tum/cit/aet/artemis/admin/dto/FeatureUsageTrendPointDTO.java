@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One day of calls of one interaction, for the trend chart.
@@ -17,5 +18,6 @@ import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
  * @param callCount   calls of that interaction on that day
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "usageDay", "interaction", "callCount" })
 public record FeatureUsageTrendPointDTO(LocalDate usageDay, FeatureInteraction interaction, long callCount) {
 }

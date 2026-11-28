@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.security.Role;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The whole feature usage report for one window.
@@ -42,7 +43,11 @@ import de.tum.cit.aet.artemis.core.security.Role;
  *                                 comparable
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FeatureUsageOverviewDTO(int days, LocalDate from, @Nullable Role callerRole, long availableFeatures, long usedFeatures, long onlyAutomatic, long unusedFeatures,
-        long notAvailable, long noActions, long retiredEndpoints, long actionCount, long viewCount, long automaticCount, long systemCount, Instant inventoryRefreshedAt,
-        @Nullable Instant recordingSince, List<UserFeatureUsageDTO> features, List<FeatureUsageEntryDTO> endpoints, List<FeatureUsageRoleShareDTO> roleDistribution) {
+@Schema(requiredProperties = { "days", "from", "availableFeatures", "usedFeatures", "onlyAutomatic", "unusedFeatures", "notAvailable", "noActions", "retiredEndpoints",
+        "actionCount", "viewCount", "automaticCount", "systemCount", "inventoryRefreshedAt" })
+public record FeatureUsageOverviewDTO(int days, LocalDate from, @Schema(implementation = String.class, allowableValues = {
+        "SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "EDITOR", "TEACHING_ASSISTANT", "STUDENT", "ANONYMOUS" }) @Nullable Role callerRole, long availableFeatures, long usedFeatures,
+        long onlyAutomatic, long unusedFeatures, long notAvailable, long noActions, long retiredEndpoints, long actionCount, long viewCount, long automaticCount, long systemCount,
+        Instant inventoryRefreshedAt, @Nullable Instant recordingSince, List<UserFeatureUsageDTO> features, List<FeatureUsageEntryDTO> endpoints,
+        List<FeatureUsageRoleShareDTO> roleDistribution){
 }

@@ -2,12 +2,22 @@ package de.tum.cit.aet.artemis.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.hamcrest.Matchers.hasItem;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -17,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.core.type.TypeReference;
@@ -27,6 +38,7 @@ import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO;
 import de.tum.cit.aet.artemis.admin.dto.UserFeatureUsageDTO;
+import de.tum.cit.aet.artemis.admin.service.FeatureUsageDigestScheduleService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.domain.FeatureUsageDaily;
@@ -39,7 +51,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Tests the admin read API against a real database.
+ * Tests the admin feature usage API against a real database.
  * <p>
  * The aggregate queries are the reason this test exists rather than a unit test: they drive the inventory with an outer
  * join so that features with no usage still come back, and they count distinct days per feature across endpoints. Both
@@ -56,11 +68,20 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
 
     private static final String TEST_PREFIX = "featureusage";
 
+    private static final String OVERVIEW_PATH = "/api/admin/feature-usage";
+
+    private static final String TREND_PATH = OVERVIEW_PATH + "/trend";
+
+    private static final String DIGEST_PATH = OVERVIEW_PATH + "/digest/send-email";
+
     @Autowired
     private TrackedFeatureRepository trackedFeatureRepository;
 
     @Autowired
     private FeatureUsageDailyRepository featureUsageDailyRepository;
+
+    @MockitoBean
+    private FeatureUsageDigestScheduleService digestScheduleService;
 
     private final List<TrackedFeature> fixture = new ArrayList<>();
 
@@ -140,7 +161,30 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRejectANonAdmin() throws Exception {
-        request.get("/api/admin/feature-usage", HttpStatus.FORBIDDEN, FeatureUsageOverviewDTO.class);
+        request.get(OVERVIEW_PATH, HttpStatus.FORBIDDEN, FeatureUsageOverviewDTO.class);
+        request.performMvcRequest(post(DIGEST_PATH)).andExpect(status().isForbidden());
+        verify(digestScheduleService, never()).sendDigestEmail();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldDefaultToThirtyDaysAndOmitAnUnselectedCallerRole() throws Exception {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        request.performMvcRequest(get(OVERVIEW_PATH)).andExpect(status().isOk()).andExpect(jsonPath("$.days").value(30))
+                .andExpect(jsonPath("$.from").value(today.minusDays(29).toString())).andExpect(jsonPath("$.callerRole").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$.inventoryRefreshedAt").isString()).andExpect(jsonPath("$.roleDistribution[*].callerRole").value(hasItem("STUDENT")))
+                .andExpect(jsonPath("$.features[?(@.feature == 'FAQ')].lastActionDay").isEmpty()).andExpect(jsonPath("$.endpoints[?(@.featureKind == 'GIT')].resource").isEmpty());
+
+        request.performMvcRequest(get(TREND_PATH).param("feature", "PROGRAMMING_ONLINE_EDITOR").param("callerRole", "STUDENT")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].usageDay").value(today.minusDays(20).toString())).andExpect(jsonPath("$[0].interaction").value("ACTION"))
+                .andExpect(jsonPath("$[0].callCount").value(1000));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldUseTheEnumNameForTheCallerRole() throws Exception {
+        request.performMvcRequest(get(OVERVIEW_PATH).param("days", "7").param("callerRole", "TEACHING_ASSISTANT")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.callerRole").value("TEACHING_ASSISTANT"));
     }
 
     @Test
@@ -391,10 +435,9 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldRejectAWindowThatIsNotOffered() throws Exception {
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("days", "5");
-
-        request.get("/api/admin/feature-usage", HttpStatus.BAD_REQUEST, FeatureUsageOverviewDTO.class, params);
+        request.performMvcRequest(get(OVERVIEW_PATH).param("days", "5")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidWindow"));
+        request.performMvcRequest(get(TREND_PATH).param("feature", "FAQ").param("days", "5")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidWindow"));
     }
 
     /**
@@ -457,8 +500,24 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldRejectATrendRequestWithoutExactlyOneSelector() throws Exception {
-        request.get("/api/admin/feature-usage/trend?days=7", HttpStatus.BAD_REQUEST, List.class);
-        request.get("/api/admin/feature-usage/trend?feature=FAQ&featureIds=" + faqList.getId() + "&days=7", HttpStatus.BAD_REQUEST, List.class);
+        request.performMvcRequest(get(TREND_PATH).param("days", "7")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidTrendSelector"));
+        request.performMvcRequest(get(TREND_PATH).param("featureIds", "").param("days", "7")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidTrendSelector"));
+        request.performMvcRequest(get(TREND_PATH).param("feature", "FAQ").param("featureIds", faqList.getId().toString()).param("days", "5")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidTrendSelector"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldLimitTrendRequestsToTwoHundredEndpointIds() throws Exception {
+        String endpointId = faqList.getId().toString();
+        String[] allowedIds = Collections.nCopies(200, endpointId).toArray(String[]::new);
+        String[] tooManyIds = Collections.nCopies(201, endpointId).toArray(String[]::new);
+        request.performMvcRequest(get(TREND_PATH).param("featureIds", allowedIds).param("days", "7")).andExpect(status().isOk()).andExpect(jsonPath("$[0].callCount").value(20));
+        request.performMvcRequest(get(TREND_PATH).param("featureIds", tooManyIds).param("days", "7")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("tooManyFeatures"));
+        request.performMvcRequest(get(TREND_PATH).param("featureIds", tooManyIds).param("days", "5")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("invalidWindow"));
     }
 
     @Test
@@ -477,8 +536,26 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
         });
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldReturnAnEmptyOkWhenTheDigestWasSent() throws Exception {
+        when(digestScheduleService.sendDigestEmail()).thenReturn(true);
+
+        request.performMvcRequest(post(DIGEST_PATH)).andExpect(status().isOk()).andExpect(content().string(""));
+        verify(digestScheduleService).sendDigestEmail();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldReturnAnEmptyBadRequestWhenTheDigestWasNotSent() throws Exception {
+        when(digestScheduleService.sendDigestEmail()).thenReturn(false);
+
+        request.performMvcRequest(post(DIGEST_PATH)).andExpect(status().isBadRequest()).andExpect(content().string(""));
+        verify(digestScheduleService).sendDigestEmail();
+    }
+
     private List<FeatureUsageTrendPointDTO> getTrend(String query) throws Exception {
-        return request.get("/api/admin/feature-usage/trend?" + query, HttpStatus.OK, new TypeReference<>() {
+        return request.get(TREND_PATH + "?" + query, HttpStatus.OK, new TypeReference<>() {
         });
     }
 
@@ -492,7 +569,7 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
         if (callerRole != null) {
             params.add("callerRole", callerRole.name());
         }
-        return request.get("/api/admin/feature-usage", HttpStatus.OK, FeatureUsageOverviewDTO.class, params);
+        return request.get(OVERVIEW_PATH, HttpStatus.OK, FeatureUsageOverviewDTO.class, params);
     }
 
     private static UserFeatureUsageDTO featureOf(FeatureUsageOverviewDTO overview, UserFeature feature) {

@@ -47,6 +47,7 @@ api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/athena-resources.ts
 api/tum-live-upload-resources.ts
+api/admin-feature-usage-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/quiz-exercise-resources.ts
 api/calendar-resources.ts
