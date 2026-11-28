@@ -1,39 +1,20 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {
-    IrisDashboardAiSelection,
-    IrisDashboardBreakdownDimension,
-    IrisDashboardBreakdownEntry,
-    IrisDashboardConfig,
-    IrisDashboardMetric,
-    IrisDashboardOverview,
-    IrisDashboardTimeSeries,
-    IrisDashboardTimeSpan,
-} from './iris-dashboard.model';
+import { IrisAdminDashboardApi } from 'app/openapi/api/iris-admin-dashboard-api';
+import { IrisDashboardBreakdownEntry } from 'app/openapi/model/iris-dashboard-breakdown-entry';
+import { IrisDashboardOverview } from 'app/openapi/model/iris-dashboard-overview';
+import { IrisDashboardAiSelection, IrisDashboardBreakdownDimension } from './iris-dashboard.model';
 
+/** Dashboard feature facade; generated transport keeps the reads cold and cancellable. */
 @Service()
 export class IrisDashboardService {
-    private http = inject(HttpClient);
-
-    private readonly baseUrl = 'api/iris/admin/dashboard';
+    private readonly dashboardApi = inject(IrisAdminDashboardApi);
 
     getOverview(from: string, to: string, aiSelection: IrisDashboardAiSelection): Observable<IrisDashboardOverview> {
-        const params = new HttpParams().set('from', from).set('to', to).set('aiSelection', aiSelection);
-        return this.http.get<IrisDashboardOverview>(`${this.baseUrl}/overview`, { params });
-    }
-
-    getTimeSeries(from: string, to: string, span: IrisDashboardTimeSpan, metric: IrisDashboardMetric, aiSelection: IrisDashboardAiSelection): Observable<IrisDashboardTimeSeries> {
-        const params = new HttpParams().set('from', from).set('to', to).set('span', span).set('metric', metric).set('aiSelection', aiSelection);
-        return this.http.get<IrisDashboardTimeSeries>(`${this.baseUrl}/time-series`, { params });
+        return this.dashboardApi.getOverview(from, to, aiSelection);
     }
 
     getBreakdown(from: string, to: string, dimension: IrisDashboardBreakdownDimension, aiSelection: IrisDashboardAiSelection): Observable<IrisDashboardBreakdownEntry[]> {
-        const params = new HttpParams().set('from', from).set('to', to).set('dimension', dimension).set('aiSelection', aiSelection);
-        return this.http.get<IrisDashboardBreakdownEntry[]>(`${this.baseUrl}/breakdown`, { params });
-    }
-
-    getConfig(): Observable<IrisDashboardConfig> {
-        return this.http.get<IrisDashboardConfig>(`${this.baseUrl}/config`);
+        return this.dashboardApi.getBreakdown(from, to, dimension, aiSelection);
     }
 }
