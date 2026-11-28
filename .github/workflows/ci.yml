@@ -118,7 +118,7 @@ jobs:
             # so a change that touches only those has nothing new for CodeQL to look at. A deny-list,
             # so a new top-level directory is scanned until someone decides it is not worth it.
             sonar:
-              - '{src/main/java,src/main/resources,src/main/webapp,packages/tum-aet-ui/src}/**'
+              - '{src/main/java,src/main/resources,src/core,src/buildagent,src/aiworker,src/worker,src/main/webapp,packages/tum-aet-ui/src}/**'
               - '!src/main/resources/templates/**'
               - '!**/*.spec.ts'
               - '!**/*.stories.ts'
@@ -156,6 +156,7 @@ jobs:
               - '!LICENSE'
               - '!documentation/**'
               - '!src/main/java/**'
+              - '!src/{core,buildagent,aiworker,worker}/**'
               - '!src/test/java/**'
               - '!src/test/resources/**'
               - '!src/main/resources/**'
@@ -214,6 +215,7 @@ jobs:
               - '.github/workflows/ci-quality.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
+              - 'src/{core,buildagent,buildagentTest,aiworker,aiworkerTest,worker}/**'
               - 'build.gradle'
               - 'gradle/**'
               - 'config/checkstyle/**'
@@ -226,6 +228,7 @@ jobs:
               - '.github/workflows/ci-test.yml'
               - 'build.gradle'
               - 'gradle/**'
+              - 'src/{aiworker,aiworkerTest,worker}/**'
               - 'deployment/docker/hyperion/**'
               - 'src/main/java/de/tum/cit/aet/artemis/aiworker/**'
               - 'src/test/java/de/tum/cit/aet/artemis/aiworker/**'
@@ -350,6 +353,13 @@ jobs:
               - 'gradlew'
               - 'gradlew.bat'
             has_workflows:
+              - 'deployment/ansible/**'
+              - 'deployment/docker/test-server-*'
+              - 'deployment/docker/prepare-test-server-agent.sh'
+              - 'deployment/docker/artemis/config/**'
+              - 'deployment/docker/{artemis,nginx,mysql,postgres,redis,broker-registry}.yml'
+              - '.github/python-dependencies/**'
+              - '.env'
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'

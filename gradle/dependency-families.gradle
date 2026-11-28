@@ -198,78 +198,81 @@ static void verifyVersionComparator() {
     }
 }
 
-tasks.register('verifyDependencyFamilies') {
-    group = 'verification'
-    description = 'Fails if a tightly-coupled dependency family (HttpComponents, Bouncy Castle, JGit, SSHD) resolves to mixed or downgraded versions.'
+ext.registerDependencyFamilyCheck = { String taskName, String classpathName ->
+    tasks.register(taskName) {
+        group = 'verification'
+        description = 'Fails if a tightly-coupled dependency family (HttpComponents, Bouncy Castle, JGit, SSHD) resolves to mixed or downgraded versions.'
 
-    def resolutionResult = configurations.named('runtimeClasspath').map { it.incoming.resolutionResult.root }
-    def families = watchedFamilies
+        def resolutionResult = configurations.named(classpathName).map { it.incoming.resolutionResult.root }
+        def families = watchedFamilies
 
-    doLast {
-        verifyVersionComparator()
-        def problems = []
-        def selectedByGroup = [:].withDefault { [:] }
-        def requestedFor = [:].withDefault { [] as Set }
+        doLast {
+            verifyVersionComparator()
+            def problems = []
+            def selectedByGroup = [:].withDefault { [:] }
+            def requestedFor = [:].withDefault { [] as Set }
 
-        def visited = [] as Set
-        def walk
-        walk = { component ->
-            if (!visited.add(component.id.displayName)) {
-                return
-            }
-            component.dependencies.each { dependency ->
-                if (!(dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult)) {
+            def visited = [] as Set
+            def walk
+            walk = { component ->
+                if (!visited.add(component.id.displayName)) {
                     return
                 }
-                def requested = dependency.requested
-                def selected = dependency.selected
-                if (requested instanceof org.gradle.api.artifacts.component.ModuleComponentSelector) {
-                    def group = requested.group
-                    if (families.contains(group) && requested.version) {
-                        requestedFor["${group}:${requested.module}"] << requested.version
+                component.dependencies.each { dependency ->
+                    if (!(dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult)) {
+                        return
+                    }
+                    def requested = dependency.requested
+                    def selected = dependency.selected
+                    if (requested instanceof org.gradle.api.artifacts.component.ModuleComponentSelector) {
+                        def group = requested.group
+                        if (families.contains(group) && requested.version) {
+                            requestedFor["${group}:${requested.module}"] << requested.version
+                        }
+                    }
+                    def selectedId = selected.moduleVersion
+                    if (selectedId != null && families.contains(selectedId.group)) {
+                        selectedByGroup[selectedId.group][selectedId.name] = selectedId.version
+                    }
+                    walk(selected)
+                }
+            }
+            walk(resolutionResult.get())
+
+            // Rule A: one version per family, compared at the family's declared precision.
+            selectedByGroup.each { group, modules ->
+                def precision = familyVersionPrecision[group]
+                def versions = modules.values().collect { precision ? versionLine(it, precision) : it }.toSet()
+                if (versions.size() > 1) {
+                    def detail = modules.sort().collect { name, version -> "    ${group}:${name}:${version}" }.join('\n')
+                    problems << "Family '${group}' resolves to mixed versions ${versions.sort()}. Its modules are built and released together and must share one version:\n${detail}"
+                }
+            }
+
+            // Rule B: nothing in a watched family resolved below a version another module asked for.
+            requestedFor.each { coordinate, requestedVersions ->
+                def (group, name) = coordinate.split(':', 2)
+                def selected = selectedByGroup[group][name]
+                if (selected == null) {
+                    return
+                }
+                requestedVersions.findAll { !it.startsWith('[') && !it.startsWith('(') && !it.endsWith('+') }.each { requested ->
+                    if (compareVersions(selected, requested) < 0) {
+                        problems << "'${group}:${name}' resolved to ${selected}, below the ${requested} that another module on the classpath asks for. " +
+                                'A pinned or BOM-managed version is holding it under what its sibling needs, which is a LinkageError at runtime rather than a build failure ' +
+                                "(see the httpclient5/httpcore5 note in gradle/dependency-families.gradle). Raise the pin for '${group}:${name}' to at least ${requested}."
                     }
                 }
-                def selectedId = selected.moduleVersion
-                if (selectedId != null && families.contains(selectedId.group)) {
-                    selectedByGroup[selectedId.group][selectedId.name] = selectedId.version
-                }
-                walk(selected)
             }
-        }
-        walk(resolutionResult.get())
 
-        // Rule A: one version per family, compared at the family's declared precision.
-        selectedByGroup.each { group, modules ->
-            def precision = familyVersionPrecision[group]
-            def versions = modules.values().collect { precision ? versionLine(it, precision) : it }.toSet()
-            if (versions.size() > 1) {
-                def detail = modules.sort().collect { name, version -> "    ${group}:${name}:${version}" }.join('\n')
-                problems << "Family '${group}' resolves to mixed versions ${versions.sort()}. Its modules are built and released together and must share one version:\n${detail}"
+            if (problems) {
+                throw new GradleException("Dependency family verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
             }
+            logger.lifecycle("Dependency families verified: ${families.size()} families, all consistent.")
         }
-
-        // Rule B: nothing in a watched family resolved below a version another module asked for.
-        requestedFor.each { coordinate, requestedVersions ->
-            def (group, name) = coordinate.split(':', 2)
-            def selected = selectedByGroup[group][name]
-            if (selected == null) {
-                return
-            }
-            requestedVersions.findAll { !it.startsWith('[') && !it.startsWith('(') && !it.endsWith('+') }.each { requested ->
-                if (compareVersions(selected, requested) < 0) {
-                    problems << "'${group}:${name}' resolved to ${selected}, below the ${requested} that another module on the classpath asks for. " +
-                            'A pinned or BOM-managed version is holding it under what its sibling needs, which is a LinkageError at runtime rather than a build failure ' +
-                            "(see the httpclient5/httpcore5 note in gradle/dependency-families.gradle). Raise the pin for '${group}:${name}' to at least ${requested}."
-                }
-            }
-        }
-
-        if (problems) {
-            throw new GradleException("Dependency family verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
-        }
-        logger.lifecycle("Dependency families verified: ${families.size()} families, all consistent.")
     }
 }
+registerDependencyFamilyCheck('verifyDependencyFamilies', 'runtimeClasspath')
 
 /**
  * Patched minimum versions for libraries that reach the build-script (plugin) classpath transitively and have been

@@ -1,0 +1,83 @@
+---
+- name: Check inventory and binaries before updating any service
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  any_errors_fatal: true
+  tags: [preflight]
+  vars:
+    target_hosts: "{{ groups[artemis_node_group] }}"
+    core_hosts: "{{ groups[artemis_core_group] }}"
+    agent_hosts: "{{ groups[artemis_agent_group] }}"
+    filenames: "{{ ['Artemis.war'] if artemis_universal_rollback | default(false) | bool else ['Artemis-core.war', 'Artemis-buildagent.war'] }}"
+    update_plays: "{{ lookup('ansible.builtin.file', artemis_update_playbook) | from_yaml }}"
+  tasks:
+    - name: Check that the update playbook targets exactly this inventory group
+      ansible.builtin.assert:
+        that:
+          - artemis_cluster in ['artemis_staging1', 'artemis_staging2', 'artemis_production']
+          - update_plays | length == 1
+          - update_plays[0].hosts == artemis_node_group
+          - (artemis_war_directory is defined) != (artemis_release is defined)
+          - artemis_release is not defined or artemis_release is match('^[0-9]+\.[0-9]+(\.[0-9]+)?\Z')
+          - core_hosts | length > 0
+          - agent_hosts | length > 0
+          - core_hosts | intersect(agent_hosts) | length == 0
+          - target_hosts | symmetric_difference(core_hosts | union(agent_hosts)) | length == 0
+
+    - name: Check the checksum of each local executable
+      when: artemis_war_directory is defined
+      block:
+        - name: Hash the exact files the collection will copy
+          ansible.builtin.stat:
+            path: "{{ artemis_war_directory }}/{{ item }}"
+            checksum_algorithm: sha256
+          loop: "{{ filenames }}"
+          register: binaries
+
+        - name: Require one matching manifest entry for each executable
+          ansible.builtin.assert:
+            that:
+              - item.stat.isreg | default(false)
+              - item.stat.size > 0
+              - entries | length == 1
+              - entries[0].split()[0] == item.stat.checksum
+            fail_msg: "Missing or mismatched {{ item.item }} in {{ artemis_war_directory }}"
+          loop: "{{ binaries.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+          vars:
+            manifest: "{{ lookup('ansible.builtin.file', artemis_war_directory ~ '/SHA256SUMS').splitlines() }}"
+            entries: "{{ manifest | select('match', '^[0-9a-f]{64} [ *]' ~ (item.item | regex_escape) ~ '$') | list }}"
+
+    - name: Verify every role WAR is published with its expected digest before a release update
+      when: artemis_release is defined
+      block:
+        - name: Read the published release manifest
+          ansible.builtin.uri:
+            url: "{{ artemis_release_base }}/SHA256SUMS"
+            return_content: true
+          check_mode: false
+          register: manifest_response
+
+        - name: Read the registry of assets and their SHA-256 digests
+          ansible.builtin.uri:
+            url: "{{ artemis_release_metadata_url }}"
+          check_mode: false
+          register: release_response
+
+        - name: Compare each published role asset with the release manifest
+          ansible.builtin.assert:
+            that:
+              - assets | length == 1
+              - assets[0].size > 0
+              - assets[0].browser_download_url == artemis_release_base ~ '/' ~ item
+              - entries | length == 1
+              - assets[0].digest == 'sha256:' ~ entries[0].split()[0]
+          loop: "{{ filenames }}"
+          vars:
+            assets: "{{ release_response.json.assets | selectattr('name', 'equalto', item) | list }}"
+            entries: "{{ manifest_response.content.splitlines() | select('match', '^[0-9a-f]{64} [ *]' ~ (item | regex_escape) ~ '$') | list }}"
+
+- name: Update Artemis with the collection's systemd ordering and backup
+  ansible.builtin.import_playbook: "{{ artemis_update_playbook }}"

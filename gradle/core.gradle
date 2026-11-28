@@ -1,0 +1,51 @@
+// Compile the core against the dependencies it will ship. Shared queue DTOs retain their
+// original package names so queued work can survive an upgrade.
+sourceSets {
+    core {
+        java {
+            srcDir "src/main/java"
+            exclude "**/buildagent/BuildAgentConfiguration.java", "**/buildagent/config/**", "**/buildagent/service/**"
+            // Exercise configuration uses the shared static-analysis categories. Report parsing runs on the agent.
+            exclude "**/localci/service/scaparser/**/*Parser.java", "**/localci/service/scaparser/strategy/ParserPolicy.java"
+            exclude "**/hyperion/service/worker/**"
+            exclude "**/aiworker/config/DockerConfiguration.java", "**/aiworker/config/WorkerSandboxConfiguration.java"
+            exclude "**/aiworker/config/WorkerSandboxImageResolver.java", "**/aiworker/config/WorkerSettings.java"
+            exclude "**/aiworker/config/WorkerDistributedDataConfiguration.java", "**/aiworker/config/WorkerMessaging.java", "**/aiworker/config/telemetry/**"
+            exclude "**/aiworker/service/sandbox/**", "**/aiworker/service/WorkerSupervisorService.java"
+            exclude "**/aiworker/service/messaging/WorkerCommandListener.java", "**/aiworker/service/messaging/WorkerEventPublisher.java"
+        }
+    }
+}
+configurations.coreImplementation.extendsFrom(configurations.implementation)
+configurations.coreRuntimeOnly.extendsFrom(configurations.runtimeOnly)
+configurations.coreCompileOnly.extendsFrom(configurations.compileOnly)
+configurations.coreAnnotationProcessor.extendsFrom(configurations.annotationProcessor)
+[configurations.coreCompileClasspath, configurations.coreRuntimeClasspath].each {
+    it.exclude group: "io.fabric8"
+    it.exclude group: "com.github.docker-java", module: "docker-java-core"
+    it.exclude group: "com.github.docker-java", module: "docker-java-transport-zerodep"
+}
+
+// Previous build agents can still send Docker exception classes in a queued result.
+dependencies {
+    coreRuntimeOnly "com.github.docker-java:docker-java-api:${docker_java_version}"
+}
+
+tasks.named('processCoreResources') {
+    // Reuse the Angular build, version filtering, git properties and release client SBOM.
+    dependsOn tasks.named('processResources'), tasks.named('bootBuildInfo'), tasks.named('generateGitProperties')
+    from(layout.buildDirectory.dir('resources/main')) {
+        exclude 'config/application-aiworker.yml', 'config/application-buildagent.yml'
+        exclude 'templates/hyperion/**', 'prompts/hyperion/critic/**'
+        exclude 'META-INF/sbom/**', 'sbom/**'
+    }
+    if (project.hasProperty('sbom') && project.hasProperty('prod')) {
+        from(tasks.named('generateClientSbom').map { layout.buildDirectory.file('reports/client-sbom.json').get() }) {
+            into 'sbom'
+        }
+    }
+}
+registerRoleWar('bootCoreWar', 'core', 'de.tum.cit.aet.artemis.CoreApp', sourceSets.core)
+tasks.named('bootCoreWar') {
+    webXml = file('src/main/webapp/WEB-INF/web.xml')
+}

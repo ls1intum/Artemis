@@ -96,14 +96,17 @@ class RepositoryExportGitServiceTest {
     private Repository repository() throws Exception {
         Repository repository = new Repository(workingTree.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-student"));
         ReflectionTestUtils.setField(repository, "localPath", workingTree);
+        return repository;
+    }
+
+    private ProgrammingExerciseStudentParticipation participation() {
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         User student = new User();
         student.setFirstName("Anna");
         student.setLastName("Studentin");
         student.setEmail(STUDENT_EMAIL);
         participation.setParticipant(student);
-        repository.setParticipation(participation);
-        return repository;
+        return participation;
     }
 
     private List<RevCommit> commitsOnHead() throws Exception {
@@ -191,7 +194,7 @@ class RepositoryExportGitServiceTest {
             commitAsStudent(git, "third attempt", "Main.java", "three");
         }
 
-        repositoryExportGitService.combineAllStudentCommits(repository(), true, setupCommitHash);
+        repositoryExportGitService.combineAllStudentCommits(repository(), participation(), true, setupCommitHash);
 
         assertThat(studentCommits()).as("the three attempts become one commit").hasSize(1);
         assertThat(studentCommits().getFirst().getFullMessage()).isEqualTo("All student changes in one commit");
@@ -206,7 +209,7 @@ class RepositoryExportGitServiceTest {
             commitAsStudent(git, "second attempt", "Main.java", "two");
         }
 
-        repositoryExportGitService.combineAllStudentCommits(repository(), false, setupCommitHash);
+        repositoryExportGitService.combineAllStudentCommits(repository(), participation(), false, setupCommitHash);
 
         try (Git git = Git.open(workingTree.toFile())) {
             assertThat(git.getRepository().getBranch()).as("the squash happens on a branch of its own").isEqualTo("diff");
@@ -222,7 +225,7 @@ class RepositoryExportGitServiceTest {
             commitAsStudent(git, "work", "Main.java", "one");
         }
 
-        assertThatCode(() -> repositoryExportGitService.combineAllStudentCommits(repository(), true, null)).doesNotThrowAnyException();
+        assertThatCode(() -> repositoryExportGitService.combineAllStudentCommits(repository(), participation(), true, null)).doesNotThrowAnyException();
 
         assertThat(studentCommits()).hasSize(1);
     }

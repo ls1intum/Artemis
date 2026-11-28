@@ -2,7 +2,7 @@
 id: aiworker
 title: AI Worker Operations
 sidebar_label: AI Worker Setup
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-28
 ---
 
 AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
@@ -54,7 +54,7 @@ the same Eureka registry as a Build Agent. It does not register itself. Set
 The addresses that core nodes publish must be reachable from the worker host.
 Do not configure a fixed list of core addresses on the worker.
 For Redis/Valkey, configure the same `spring.data.redis.*` endpoint and credentials
-used by the core deployment. Redis turns Eureka off. The normal Artemis entry point in worker-only mode
+used by the core deployment. Redis turns Eureka off. The worker
 rejects `local`: process-local state cannot carry worker messages.
 
 Keep the provider port private to trusted hosts. A host-loopback Docker port map
@@ -106,20 +106,21 @@ Never flush or replace the store under running writers.
 
 ## Worker configuration
 
-Build the normal Artemis WAR once per release with `./gradlew -Pprod -Pwar bootWar`.
-Use the same WAR for core nodes, build agents, and AI Workers. There is no separate
-worker WAR.
-Run AI Workers from the normal Artemis image of the release (`ghcr.io/ls1intum/artemis:<version>`),
-as for Build Agents, with the Spring profiles `prod,aiworker`. Disable the image's HTTP
-health check, because a worker has no HTTP server, and give the container 8 GB of
-memory: the image fixes a 5 GB maximum heap. The worker starts the
-normal `ArtemisApp` in a separate process. It uses the normal Artemis component scan.
-Profiles and feature conditions select AI Worker services and the configured workload.
-The `aiworker` profile disables server modules, the HTTP server, and database services.
-The selected distributed-data provider supplies the shared client.
-Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
-and rejects any attempt to turn the HTTP server back on. Do not run this profile
-on a core node. Keep the core container away from the worker's Docker socket.
+Run `Artemis-aiworker.war` or `ghcr.io/ls1intum/artemis-aiworker` from the same release or
+commit as core. Start the executable with the worker configuration and its dedicated profile:
+
+```bash
+java -jar Artemis-aiworker.war --spring.profiles.active=prod,aiworker \
+    --spring.config.additional-location=file:/etc/artemis/worker/application.yml
+```
+
+The worker starts a headless supervisor, its provider client and the selected workload.
+The dedicated image starts with a 256 MiB heap and a 2 GiB maximum. Reserve additional
+memory for JVM native allocations and the separate sandbox containers.
+The universal WAR and `ghcr.io/ls1intum/artemis` also support `prod,aiworker`.
+Disable the universal image's HTTP health check for this profile. Verify worker readiness
+from core using the advertised capability and available slots. The packaged worker rejects
+a combined core, LocalVC, LocalCI or build-agent profile. Keep the core container away from the worker's Docker socket.
 Like the build agents' default build images, the sandbox has its own toolchain version.
 The shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-2`.
 The worker reuses the local image if present and pulls it only when missing. Before accepting jobs,
@@ -253,6 +254,32 @@ The role validates inputs, protects rendered secrets and preloads a configured s
 It does not provision the provider, firewall or isolation boundary, or drain jobs.
 Stop new admission and drain active work and persistence before replacing a worker.
 Shared-host rootless deployment requires separate provisioning outside this role.
+
+Resolve the supervisor digest from the tag used by core. Run the worker playbook from
+the collection checkout with your worker inventory and deployment variables. Save the
+qualified digest with the release so the same command can restore it after draining workers.
+
+```bash
+repo=ghcr.io/ls1intum/artemis-aiworker
+digest=$(docker buildx imagetools inspect "$repo:$ARTEMIS_DOCKER_TAG" | awk '/^Digest:/ {print $2; exit}')
+[[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] &&
+    ansible-playbook -i "$WORKER_INVENTORY" examples/ai_worker/deploy.yml \
+        -e "@$WORKER_RELEASE_VARS" -e "ai_worker_image=$repo@$digest"
+```
+
+The collection's `ai_worker_sandbox_image` controls the independently versioned sandbox.
+For a Compose test installation, run the following on the designated worker host. Set
+`AI_WORKER_CONFIG` to its protected worker configuration, readable by the image user
+(UID 1337 by default). Set `AI_WORKER_DOCKER_SOCKET` and `AI_WORKER_DOCKER_GID` to
+its dedicated daemon socket and group. Configure the same private, reachable distributed
+provider as core and the worker's model presets in that file. Use the core commit tag as
+`ARTEMIS_DOCKER_TAG`. This Compose project runs separately from the grading stack.
+
+```bash
+export DOCKER_HOST="unix://$AI_WORKER_DOCKER_SOCKET"
+docker compose -f deployment/docker/test-server-aiworker.yml pull
+docker compose -f deployment/docker/test-server-aiworker.yml up -d
+```
 
 Before staging admission, verify provider reachability and access control, image digests, Docker runtime,
 store durability, worker capability and capacity. Then exercise successful completion,

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.WorkerHazelcastClientFactory;
+
 class HazelcastStandaloneClientBindingTest {
 
     @ParameterizedTest
@@ -31,12 +34,10 @@ class HazelcastStandaloneClientBindingTest {
         if (shortName != null) {
             environment.setProperty("artemis.continuous-integration.build-agent.short-name", shortName);
         }
-        var configuration = new HazelcastConfiguration(mock(ApplicationContext.class), new ServerProperties(), Optional.empty(), mock(EurekaInstanceHelper.class), environment,
-                Optional.empty());
-        ReflectionTestUtils.setField(configuration, "instanceName", "Artemis");
+        var factory = new WorkerHazelcastClientFactory(mock(ApplicationContext.class), mock(EurekaInstanceHelper.class), environment, "Artemis", false, List.of());
         var client = new ClientConfig();
 
-        ReflectionTestUtils.invokeMethod(configuration, "configureClientIdentity", client);
+        ReflectionTestUtils.invokeMethod(factory, "configureClientIdentity", client);
 
         assertThat(client.getInstanceName()).isEqualTo(shortName == null || shortName.isBlank() ? "Artemis-client" : shortName);
     }

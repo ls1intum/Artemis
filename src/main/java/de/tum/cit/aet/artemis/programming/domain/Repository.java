@@ -22,8 +22,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     /** The hooks directory of every repository: below the null device no hook can exist, so that git finds none. This relies on a POSIX file system. */
     private static final String NO_HOOKS_PATH = "/dev/null";
 
-    private ProgrammingExerciseParticipation participation;
-
     private volatile boolean configOverrideUnsaved;
 
     @Nullable
@@ -110,14 +108,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     /** Records that the configuration was written to the file, including the settings that are always applied. */
     public void markConfigOverrideSaved() {
         configOverrideUnsaved = false;
-    }
-
-    public ProgrammingExerciseParticipation getParticipation() {
-        return participation;
-    }
-
-    public void setParticipation(ProgrammingExerciseParticipation participation) {
-        this.participation = participation;
     }
 
     public Path getLocalPath() {

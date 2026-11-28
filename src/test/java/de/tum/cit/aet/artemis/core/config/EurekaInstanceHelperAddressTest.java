@@ -21,6 +21,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.cloud.netflix.eureka.serviceregistry.EurekaRegistration;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.env.MockEnvironment;
 
 import com.netflix.appinfo.ApplicationInfoManager;
 import com.netflix.appinfo.EurekaInstanceConfig;
@@ -51,7 +52,9 @@ class EurekaInstanceHelperAddressTest {
         info.unsetIsDirty(Long.MAX_VALUE);
         when(registration.getMetadata()).thenReturn(metadata);
         when(registration.getApplicationInfoManager()).thenReturn(manager);
-        EurekaInstanceHelper helper = new EurekaInstanceHelper(Mockito.mock(DiscoveryClient.class), Optional.of(registration), Mockito.mock(Environment.class));
+        var environment = new MockEnvironment();
+        environment.setActiveProfiles("prod", "core");
+        EurekaInstanceHelper helper = new EurekaInstanceHelper(Mockito.mock(DiscoveryClient.class), Optional.of(registration), environment);
 
         helper.registerHazelcastAddress("172.30.131.10", 5701);
 

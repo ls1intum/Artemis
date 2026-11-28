@@ -1,0 +1,13 @@
+---
+# Pass with -e @role-wars.yml so the external update playbook's empty artemis_version
+# cannot shadow the value. The preflight validates the entire target group first.
+artemis_core_group: "{{ artemis_cluster }}_core"
+artemis_agent_group: "{{ artemis_cluster }}_{{ 'buildagent' if artemis_cluster == 'artemis_production' else 'agents' }}"
+artemis_node_group: "{{ artemis_cluster }}_nodes"
+artemis_role_filename: >-
+  {{ 'Artemis.war' if artemis_universal_rollback | default(false) | bool else
+     ('Artemis-core.war' if artemis_core_group in group_names else 'Artemis-buildagent.war') }}
+artemis_release_base: "https://github.com/ls1intum/Artemis/releases/download/{{ artemis_release }}"
+artemis_release_metadata_url: "https://api.github.com/repos/ls1intum/Artemis/releases/tags/{{ artemis_release }}"
+artemis_version: "{{ artemis_release if artemis_release is defined else artemis_war_directory ~ '/' ~ artemis_role_filename }}"
+artemis_war_url: "{{ artemis_release_base }}/{{ artemis_role_filename }}"

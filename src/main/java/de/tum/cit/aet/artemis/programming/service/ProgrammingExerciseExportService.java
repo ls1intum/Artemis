@@ -770,7 +770,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         if (repositoryExportOptions.combineStudentCommits()) {
             log.debug("Combining commits for participation {}", participation);
-            repositoryExportGitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommitHash);
+            repositoryExportGitService.combineAllStudentCommits(repository, participation, repositoryExportOptions.anonymizeRepository(), latestSetupCommitHash);
         }
 
         if (repositoryExportOptions.anonymizeRepository()) {
@@ -795,7 +795,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-        return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository());
+        return gitRepositoryExportService.getRepositoryWithParticipation(repository, participation, outputDir.toString(), repositoryExportOptions.anonymizeRepository());
     }
 
     /**

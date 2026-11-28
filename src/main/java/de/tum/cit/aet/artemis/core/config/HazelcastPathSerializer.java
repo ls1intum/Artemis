@@ -9,10 +9,15 @@ import java.nio.file.Path;
 
 import org.springframework.context.annotation.Profile;
 
+import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.nio.serialization.ByteArraySerializer;
 
 @Profile(PROFILE_CORE)
 public class HazelcastPathSerializer implements ByteArraySerializer<Path> {
+
+    public static SerializerConfig configuration() {
+        return new SerializerConfig().setTypeClass(Path.class).setImplementation(new HazelcastPathSerializer());
+    }
 
     @Override
     public byte[] write(Path path) throws IOException {

@@ -87,15 +87,16 @@ public class GitRepositoryExportService {
      * straight from the bare repository instead - to a ZIP with {@link #exportRepositoryToZipFile} or to a directory
      * with {@link #exportRepositoryToDirectory} - and never produces a working copy to copy from.
      *
-     * @param repo            Local Repository Object.
+     * @param repo            checked-out repository
+     * @param participation   participation whose repository is exported
      * @param repositoryDir   path where the copy should be placed
      * @param hideStudentName option to hide the student name in the directory name
      * @return path to the copied directory.
      * @throws IOException if the copying process failed.
      */
-    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName) throws IOException {
-        var exercise = repo.getParticipation().getProgrammingExerciseElseThrow();
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
+    public Path getRepositoryWithParticipation(Repository repo, ProgrammingExerciseStudentParticipation participation, String repositoryDir, boolean hideStudentName)
+            throws IOException {
+        var exercise = participation.getProgrammingExerciseElseThrow();
 
         Path targetDir = Path.of(repositoryDir, getStudentRepositoryName(exercise, participation, hideStudentName));
         FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());

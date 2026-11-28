@@ -108,18 +108,20 @@ class EurekaInstanceHelperTest {
         assertThat(registration.getMetadata()).containsEntry("hazelcast.host", "192.0.2.9").containsEntry("hazelcast.port", "5704");
 
         EurekaRegistration eureka = mock(EurekaRegistration.class);
-        var metadata = new HashMap<>(Map.of("profile", "core", "zone", "existing"));
+        var metadata = new HashMap<>(Map.of("profile", "prod,localci", "zone", "existing"));
         InstanceInfo info = InstanceInfo.Builder.newBuilder().setAppName("artemis").setHostName("core").setMetadata(new HashMap<>(metadata)).build();
         var manager = new ApplicationInfoManager(mock(EurekaInstanceConfig.class), info);
         when(eureka.getMetadata()).thenReturn(metadata);
         when(eureka.getApplicationInfoManager()).thenReturn(manager);
-        var sdkHelper = helper(mock(DiscoveryClient.class), Optional.of(eureka), new MockEnvironment());
+        var environment = new MockEnvironment().withProperty("spring.profiles.active", "prod,localci");
+        environment.setActiveProfiles("core", "prod", "localci");
+        var sdkHelper = helper(mock(DiscoveryClient.class), Optional.of(eureka), environment);
         for (int port : List.of(5703, 5704)) {
             info.unsetIsDirty(Long.MAX_VALUE);
             sdkHelper.registerHazelcastAddress("192.0.2.10", port);
             assertThat(metadata).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port));
-            assertThat(info.getMetadata()).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port)).containsEntry("profile", "core")
-                    .containsEntry("zone", "existing");
+            assertThat(info.getMetadata()).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port))
+                    .containsEntry("profile", "core,prod,localci").containsEntry("zone", "existing");
             assertThat(info.isDirty()).isTrue();
         }
     }

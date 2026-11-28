@@ -432,7 +432,7 @@ public class LocalCIResultProcessingService {
             localCIQueueWebsocketService.ifPresent(service -> {
                 try {
                     buildJobRepository.findWithDataByBuildJobId(finalSavedBuildJob.getBuildJobId()).ifPresent(buildJobWithData -> {
-                        FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJobWithData);
+                        FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobMapper.of(buildJobWithData);
                         service.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
                     });
                 }

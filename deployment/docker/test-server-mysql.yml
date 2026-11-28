@@ -8,14 +8,13 @@
 services:
     artemis-app:
         extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
+            file: ./test-server-services.yml
+            service: artemis-app-core
         depends_on:
             mysql:
                 condition: service_healthy
-        pull_policy: always
-        restart: always
+        environment:
+            SPRING_JPA_DATABASE: MYSQL
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod.env}
             - ./artemis/config/prod-singlenode.env

@@ -14,6 +14,8 @@ import java.util.concurrent.TimeoutException;
 import org.eclipse.jgit.errors.TransportException;
 import org.junit.jupiter.api.Test;
 
+import com.github.dockerjava.api.exception.NotFoundException;
+
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter.FilteringClassLoader;
 
@@ -58,6 +60,16 @@ class ResultQueueExceptionNormalizerTest {
         var failure = new RuntimeException("Error while cloning", new TransportException("not authorized"));
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> roundTrip(failure)).hasMessageContaining(TransportException.class.getName());
+    }
+
+    @Test
+    void dockerFailuresFromOlderAgentsRemainReadableAndNewEntriesUseStandardExceptions() throws Exception {
+        var legacyFailure = new IllegalStateException("Could not start the build", new NotFoundException("Image missing"));
+
+        assertThat(roundTrip(legacyFailure).getCause()).isInstanceOf(NotFoundException.class);
+        var normalized = roundTrip(ResultQueueExceptionNormalizer.normalize(legacyFailure));
+        assertThat(normalized).hasMessage(legacyFailure.getMessage());
+        assertThat(normalized.getCause()).isExactlyInstanceOf(RuntimeException.class).hasMessageContaining("Image missing");
     }
 
     @Test

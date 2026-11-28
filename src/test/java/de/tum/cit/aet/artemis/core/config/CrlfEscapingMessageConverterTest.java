@@ -135,7 +135,10 @@ class CrlfEscapingMessageConverterTest {
     @ParameterizedTest
     @CsvSource({ "m", "msg", "message" })
     void shouldDeclareTheConversionRuleInTheProductionLogbackConfiguration(String conversionWord) throws Exception {
-        String configuration = Files.readString(Path.of("src/main/resources/logback-spring.xml"));
+        for (String sourceSet : List.of("main", "worker")) {
+            assertThat(Files.readString(Path.of("src", sourceSet, "resources/logback-spring.xml"))).contains("<include resource=\"logback/message-converters.xml\"/>");
+        }
+        String configuration = Files.readString(Path.of("src/main/resources/logback/message-converters.xml"));
 
         assertThat(configuration).contains("<conversionRule conversionWord=\"" + conversionWord + "\" class=\"" + CONVERTER + "\"/>");
     }

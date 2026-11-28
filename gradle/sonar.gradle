@@ -90,10 +90,14 @@ sonar {
         property "sonar.sources", [
             "src/main/java",
             "src/main/resources",
+            "src/core", "src/buildagent", "src/aiworker", "src/worker",
             "src/main/webapp",
             "packages/tum-aet-ui/src",
         ].join(",")
 
+        if (project.hasProperty("war")) {
+            property "sonar.java.binaries", ["main", "core", "buildagent", "aiworker"].collect { layout.buildDirectory.dir("classes/java/${it}").get().asFile }
+        }
         property "sonar.exclusions", sharedExclusions.join(",")
 
         property "sonar.issue.ignore.multicriteria", issueIgnores.indices.collect { "e${it}" }.join(",")

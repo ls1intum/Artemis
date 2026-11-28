@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.service.FinishedBuildJobMapper;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
@@ -106,7 +106,7 @@ public class BuildJobQueueResource {
 
         // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
         return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId)
-                .<BuildJobDTO>map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), distributedDataAccessService.getBuildAgentInformation()))
+                .<BuildJobDTO>map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobMapper.of(buildJob), distributedDataAccessService.getBuildAgentInformation()))
                 .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -223,7 +223,7 @@ public class BuildJobQueueResource {
                 search.buildDurationUpper(), search.pageable());
         Slice<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(courseSearch, courseId);
         var agents = distributedDataAccessService.getBuildAgentInformation();
-        Slice<CourseFinishedBuildJobDTO> finishedBuildJobDTOs = buildJobPage.map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobDTO.of(buildJob), agents));
+        Slice<CourseFinishedBuildJobDTO> finishedBuildJobDTOs = buildJobPage.map(buildJob -> CourseFinishedBuildJobDTO.of(FinishedBuildJobMapper.of(buildJob), agents));
         HttpHeaders headers = SliceUtil.generateSliceHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }

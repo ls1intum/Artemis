@@ -32,14 +32,6 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 public class CachingHttpHeadersFilter implements Filter {
 
     /**
-     * How long a versioned asset may be cached when nothing is configured.
-     * <p>
-     * A response here is immutable for the life of its URL, so this is a trade-off about how long a returning browser
-     * may skip asking, not about how long a mistake would persist.
-     */
-    public static final int DEFAULT_DAYS_TO_LIVE = 30;
-
-    /**
      * Seconds, because that is the unit {@code Cache-Control: max-age} is defined in.
      * <p>
      * This used to be computed with {@code TimeUnit.DAYS.toMillis}, inherited from JHipster, whose constant was
@@ -48,7 +40,7 @@ public class CachingHttpHeadersFilter implements Filter {
      * it, which was correct. {@code Cache-Control} wins where the two differ, so browsers held the bundle
      * indefinitely.
      */
-    private long cacheTimeToLiveSeconds = TimeUnit.DAYS.toSeconds(DEFAULT_DAYS_TO_LIVE);
+    private long cacheTimeToLiveSeconds = TimeUnit.DAYS.toSeconds(ArtemisProperties.Http.Cache.DEFAULT_VERSIONED_ASSET_TTL_DAYS);
 
     private final ArtemisProperties jHipsterProperties;
 

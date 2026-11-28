@@ -4,12 +4,6 @@ import java.util.Locale;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-
 public enum ExerciseType {
 
     TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz");
@@ -41,27 +35,12 @@ public enum ExerciseType {
     }
 
     /**
-     * Used to filter the exercise type using the TYPE-operator.
-     *
-     * @return the class corresponding to the ExerciseType
-     */
-    public Class<? extends Exercise> getExerciseClass() {
-        return switch (this) {
-            case TEXT -> TextExercise.class;
-            case PROGRAMMING -> ProgrammingExercise.class;
-            case MODELING -> ModelingExercise.class;
-            case FILE_UPLOAD -> FileUploadExercise.class;
-            case QUIZ -> QuizExercise.class;
-        };
-    }
-
-    /**
      * Get the exercise type based on a class.
      *
      * @param exerciseClass the class for which the ExerciseType should be returned
      * @return the exercise type corresponding to the class
      */
-    public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
+    public static ExerciseType getExerciseTypeFromClass(Class<?> exerciseClass) {
         return switch (exerciseClass.getSimpleName()) {
             case "TextExercise" -> TEXT;
             case "ProgrammingExercise" -> PROGRAMMING;

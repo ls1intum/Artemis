@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -54,7 +54,7 @@ public interface BuildResultNotification {
 
     boolean hasLogs();
 
-    List<BuildLogEntry> extractBuildLogs();
+    List<BuildLogDTO> extractBuildLogs();
 
     /**
      * Gets the build jobs that are part of the build result.

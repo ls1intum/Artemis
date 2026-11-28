@@ -2,11 +2,33 @@
 id: builds-and-dependencies
 title: Builds and Dependency Management
 sidebar_label: Builds and Dependency Management
-last_reviewed: 2026-11-27
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+## Build the server WARs
+
+Build all four executables for a single revision with `./gradlew -Pprod -Pwar bootWar roleWars`.
+Add `-Psbom` for release artifacts. The universal WAR and core WAR share one Angular production build.
+Each dedicated executable has its own Gradle source set, compile classpath, runtime classpath and resource directory.
+
+| Deployment | Gradle task | Local output |
+| --- | --- | --- |
+| Existing installations and combined nodes | `bootWar` | `build/libs/Artemis-<version>.war` |
+| Core, including the client, LocalCI scheduling, and AI Worker coordination | `bootCoreWar` | `build/role-wars/Artemis-core.war` |
+| LocalCI build agent with the Docker and Kubernetes runners | `bootBuildAgentWar` | `build/role-wars/Artemis-buildagent.war` |
+| Headless AI Worker with the Hyperion generation workload | `bootAiWorkerWar` | `build/role-wars/Artemis-aiworker.war` |
+
+To build a worker on its own, invoke its Gradle task with `-Pprod -Pwar`. The worker build requires the
+Java toolchain. Supply its normal deployment configuration when starting it with `java -jar`.
+The `war` task still produces the original, non-executable archive, and the universal release asset is named `Artemis.war`.
+
+Use `./gradlew -Pprod -Pwar verifyRoleDependencies` to check the dependency graph for each role.
+After building all four WARs, run `node .github/scripts/verify-role-wars.mjs build/libs/Artemis-<version>.war build/role-wars`
+with the actual version. It checks packaged classes, resources and libraries and reports bytes saved against the universal build.
+The CI build runs these checks before publishing artifacts. [Deployment instructions](/admin/production-setup)
 
 ## GitHub Actions dependencies
 

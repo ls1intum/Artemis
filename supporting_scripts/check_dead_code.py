@@ -60,7 +60,8 @@ from collections import defaultdict
 #
 # Naming a class in a comment anywhere under these roots makes it look referenced -- the name-collision
 # limitation in the module docstring. Do not name candidate classes here.
-REFERENCE_ROOTS = ["src/main", "deployment/docker", "supporting_scripts", "documentation", ".github", "gradle"]
+ROLE_ROOTS = ["src/core", "src/buildagent", "src/aiworker", "src/worker"]
+REFERENCE_ROOTS = ["src/main", *ROLE_ROOTS, "deployment/docker", "supporting_scripts", "documentation", ".github", "gradle"]
 
 # Only classes below this root are *candidates* for removal. Test-only classes are out of scope:
 # a test helper that no test uses yet is a different problem with a different fix.
@@ -247,23 +248,24 @@ def find_candidates(root: str, composed_interfaces: set[str] | None = None):
             yield simple_name, path
 
 
-def find_dead_classes(candidate_root=CANDIDATE_ROOT, reference_roots=REFERENCE_ROOTS):
+def find_dead_classes(candidate_roots, reference_roots=REFERENCE_ROOTS):
     """Return the sorted paths of candidate classes that no other file mentions."""
     index = build_reference_index(reference_roots)
     dead = []
-    for simple_name, path in find_candidates(candidate_root):
-        if path.replace(os.sep, "/") in ALLOWLIST:
-            continue
-        if not index.get(simple_name, set()) - {path}:
-            dead.append(path)
+    for candidate_root in candidate_roots:
+        for simple_name, path in find_candidates(candidate_root):
+            if path.replace(os.sep, "/") in ALLOWLIST:
+                continue
+            if not index.get(simple_name, set()) - {path}:
+                dead.append(path)
     return sorted(dead)
 
 
 def report(dead: list[str]) -> int:
     if not dead:
-        print(f"No dead classes. Checked every top-level class below {CANDIDATE_ROOT}.")
+        print("No dead classes. Checked the universal and dedicated server source sets.")
         return 0
-    print(f"{len(dead)} class(es) below {CANDIDATE_ROOT} are referenced by no other file:\n")
+    print(f"{len(dead)} server class(es) are referenced by no other file:\n")
     for path in dead:
         print(f"  {path}")
     print(
@@ -336,7 +338,7 @@ def self_test() -> int:
         allowlisted_path = os.path.join(java, "Allowlisted.java")
         ALLOWLIST[allowlisted_path.replace(os.sep, "/")] = "self-test entry"
         try:
-            dead = set(find_dead_classes(os.path.join(tmp, "src", "main", "java"), [os.path.join(tmp, "src", "main")]))
+            dead = set(find_dead_classes([os.path.join(tmp, "src", "main", "java")], [os.path.join(tmp, "src", "main")]))
         finally:
             del ALLOWLIST[allowlisted_path.replace(os.sep, "/")]
 
@@ -376,7 +378,7 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
-    return report(find_dead_classes())
+    return report(find_dead_classes([CANDIDATE_ROOT, *(os.path.join(root, "java") for root in ROLE_ROOTS)]))
 
 
 if __name__ == "__main__":

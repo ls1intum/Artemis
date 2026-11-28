@@ -272,10 +272,9 @@ class GitRepositoryExportServiceExportTest {
         ReflectionTestUtils.setField(repository, "localPath", workingCopy);
         var participation = participationOf("ge12abc");
         participation.setProgrammingExercise(exercise);
-        repository.setParticipation(participation);
         Path exportDirectory = Files.createDirectories(baseDir.resolve("export"));
 
-        Path copied = exportService.getRepositoryWithParticipation(repository, exportDirectory.toString(), false);
+        Path copied = exportService.getRepositoryWithParticipation(repository, participation, exportDirectory.toString(), false);
 
         assertThat(copied.getFileName().toString()).endsWith("ge12abc");
         assertThat(copied.resolve("Main.java")).content(StandardCharsets.UTF_8).isEqualTo("public class Main {}");
@@ -289,10 +288,9 @@ class GitRepositoryExportServiceExportTest {
         ReflectionTestUtils.setField(repository, "localPath", workingCopy);
         var participation = participationOf("ge12abc");
         participation.setProgrammingExercise(exercise);
-        repository.setParticipation(participation);
         Path exportDirectory = Files.createDirectories(baseDir.resolve("export"));
 
-        Path copied = exportService.getRepositoryWithParticipation(repository, exportDirectory.toString(), true);
+        Path copied = exportService.getRepositoryWithParticipation(repository, participation, exportDirectory.toString(), true);
 
         assertThat(copied.getFileName().toString()).doesNotContain("ge12abc");
     }

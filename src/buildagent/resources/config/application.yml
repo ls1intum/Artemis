@@ -1,0 +1,73 @@
+spring:
+    application:
+        name: Artemis
+    threads:
+        virtual:
+            enabled: true
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                core-size: 16
+                max-size: 50
+                queue-capacity: 500
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                size: 2
+    hazelcast:
+        localInstances: false
+    data:
+        redis:
+            client-name: artemis-${artemis.continuous-integration.build-agent.short-name}
+            repositories:
+                enabled: false
+    cloud:
+        refresh:
+            enabled: false
+
+artemis:
+    version: "#project.version#"
+    temp-path: ./tmp
+    continuous-integration:
+        build-agent:
+            short-name: artemis-build-agent-1
+            display-name: Artemis Build Agent 1
+        build:
+            default-docker-flags:
+                - { flag: --cpus, value: 2 }
+                - { flag: --memory, value: 2g }
+                - { flag: --memory-swap, value: 2g }
+                - { flag: --pids-limit, value: 1000 }
+
+management:
+    endpoint:
+        health:
+            access: read-only
+    endpoints:
+        access:
+            default: none
+        web:
+            base-path: /management
+            exposure:
+                include: health
+
+eureka:
+    client:
+        region: default
+        service-url:
+            defaultZone: http://admin:${jhipster.registry.password:admin}@localhost:8761/eureka/
+        fetch-registry: true
+        register-with-eureka: true
+        instance-info-replication-interval-seconds: 15
+        registry-fetch-interval-seconds: 15
+    instance:
+        prefer-ip-address: true
+        appname: Artemis
+        instanceId: ${artemis.continuous-integration.build-agent.short-name}
+        lease-renewal-interval-in-seconds: 10
+        lease-expiration-duration-in-seconds: 30
+        health-check-url-path: /management/health
+        metadata-map:
+            zone: primary
+            profile: ${spring.profiles.active:buildagent}

@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO.ParticipationExerciseDTO;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -91,7 +92,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
         ParticipantViewDTO participantView = includeParticipant ? ParticipantViewDTO.of(participant) : ParticipantViewDTO.HIDDEN;
         return new StudentParticipationDTO(target.id(), target.initializationState(), target.initializationDate(), target.individualDueDate(), target.presentationScore(),
                 target.testRun(), StudentParticipation.TYPE, null, participantView.name(), participantView.identifier(), participantView.student(), participantView.team(),
-                ParticipationExerciseDTO.of(exercise), null, null, null, null);
+                ParticipationMapper.exercise(exercise), null, null, null, null);
     }
 
     /**
@@ -106,7 +107,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
             return null;
         }
         return build(participation, includeStudent ? ParticipantViewDTO.of(initializedParticipant(participation)) : ParticipantViewDTO.HIDDEN,
-                ParticipationExerciseDTO.of(participation.getExercise()), null);
+                ParticipationMapper.exercise(participation.getExercise()), null);
     }
 
     /**

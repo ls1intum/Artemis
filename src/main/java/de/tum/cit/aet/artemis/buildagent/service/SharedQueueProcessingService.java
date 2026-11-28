@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
@@ -779,10 +778,6 @@ public class SharedQueueProcessingService {
      * On completion, check for next job.
      */
     private void processBuild(BuildJobQueueItem buildJob) {
-        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-        // Therefore, a mock auth object has to be created.
-        SecurityUtils.setSystemAuthorizationObject();
-
         if (buildJob == null) {
             return;
         }

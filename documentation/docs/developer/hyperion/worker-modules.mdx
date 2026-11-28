@@ -2,11 +2,12 @@
 id: worker-modules
 title: AI Worker and Hyperion Boundaries
 sidebar_label: AI Worker Boundaries
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
-Artemis builds **one WAR**. AI Worker and Hyperion are feature packages in the main
-source tree, like Build Agent and LocalCI. They are not Gradle subprojects.
+Artemis packages the AI Worker supervisor and Hyperion generation workload together in
+`Artemis-aiworker.war`. Core owns admission, monitoring and persistence.
+The universal WAR can run either process role.
 
 ## Package ownership
 
@@ -24,16 +25,14 @@ services, Docker, the database or distributed state. A workload may use `Sandbox
 and `WorkloadApi`; it must not reach into the generic worker supervisor. Core-side
 Hyperion uses the `AiWorkerApi` facade to claim work and receive results.
 
-## One artifact, two process roles
+## Worker startup
 
-The normal `ArtemisApp` entry point starts either process role. With only
-`prod,aiworker`, it uses the normal application component scan and profile
-conditions to load AI Worker services and the selected workload. Worker-only
-conditions keep server modules disabled, including when their feature flags are
-inherited. It starts no HTTP server and excludes database auto-configuration. It rejects a combined
-core/LocalCI/LocalVC/Build Agent profile and HTTP override. The worker VM must
-also block access to core database and repository services. The selected Hazelcast
-or Redis client still starts through the shared distributed-data provider.
+The dedicated `AiWorkerApplication` entry point loads the supervisor, worker provider
+configuration, LLM catalog and Hyperion generation workload. Start it with
+`prod,aiworker`. The universal executable also supports this profile using
+`ArtemisApp`. Both run without an HTTP server and reject incompatible profiles.
+The worker VM must block access to core database and repository services. The selected
+Hazelcast or Redis client connects through the shared distributed-data provider.
 
 The worker runs a workload only when `artemis.aiworker.workload` selects it. Hyperion
 selects `hyperion-generation`; other values do not activate its authoring services.

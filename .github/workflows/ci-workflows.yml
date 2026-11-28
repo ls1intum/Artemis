@@ -38,6 +38,27 @@ jobs:
           shellcheck -e SC1091 deployment/kubernetes/install-localci-kubernetes-ubuntu.sh supporting_scripts/update_python_dependency_locks.sh
           python3 supporting_scripts/test_verified_installers.py
 
+  deployment-fixtures:
+    name: Ansible and Compose deployment fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Install the deployment runner's locked Ansible dependencies
+        run: python -m pip install --require-hashes -r .github/python-dependencies/requirements.txt
+      - name: Validate inventory selection, rollback and rendered test-server topologies
+        run: |
+          shellcheck deployment/docker/prepare-test-server-agent.sh
+          node --test .github/scripts/deployment-artifacts.test.mjs deployment/ansible/role-wars.test.mjs deployment/docker/test-server-roles.test.mjs
+
   # The test templates are copied verbatim into every new exercise's test repository, so their
   # unit test lives under supporting_scripts/ instead of next to them.
   programming-template-tests:
@@ -82,7 +103,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Test revision gate, coverage reporting and affected client/E2E selection
         run: |
-          node --test .github/scripts/sonar-pr.test.cjs .github/scripts/sonar-duplication.test.cjs .github/scripts/cancel-closed-pr-ci.test.cjs supporting_scripts/tests/sonar-test-artifacts.test.mjs .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs .github/scripts/limit-issue-body.test.cjs .github/scripts/verify-war-client.test.mjs \
+          node --test .github/scripts/sonar-pr.test.cjs .github/scripts/sonar-duplication.test.cjs .github/scripts/cancel-closed-pr-ci.test.cjs supporting_scripts/tests/sonar-test-artifacts.test.mjs .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs .github/scripts/limit-issue-body.test.cjs .github/scripts/verify-war-client.test.mjs .github/scripts/verify-role-wars.test.mjs \
             supporting_scripts/client/run-affected-tests.test.mjs \
             supporting_scripts/ci/E2E-tests/selection.test.mjs \
             supporting_scripts/chunk-eager-loading/diff_eager_chunks.test.mjs \

@@ -128,69 +128,72 @@ static void verifyDuplicateClassScanner() {
     }
 }
 
-tasks.register('verifyRuntimeClasspathHygiene') {
-    group = 'verification'
-    description = 'Fails if the runtime classpath contains a forbidden artifact or the same class in more than one jar.'
+ext.registerClasspathHygieneCheck = { String taskName, String classpathName ->
+    tasks.register(taskName) {
+        group = 'verification'
+        description = 'Fails if the runtime classpath contains a forbidden artifact or the same class in more than one jar.'
 
-    def artifacts = configurations.named('runtimeClasspath').flatMap { it.incoming.artifacts.resolvedArtifacts }
-    def forbidden = forbiddenRuntimeModules
-    def allowed = allowedDuplicateClassJars
+        def artifacts = configurations.named(classpathName).flatMap { it.incoming.artifacts.resolvedArtifacts }
+        def forbidden = forbiddenRuntimeModules
+        def allowed = allowedDuplicateClassJars
 
-    doLast {
-        verifyDuplicateClassScanner()
-        def problems = []
-        def jarClasses = [:]
-        artifacts.get().each { artifact ->
-            def id = artifact.id.componentIdentifier
-            if (!(id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) || !artifact.file.name.endsWith('.jar')) {
-                return
-            }
-            // The plain module coordinate is what the forbidden list names; the jar label also carries the classifier and is what
-            // class ownership and the allowlist are keyed by.
-            def coordinate = "${id.group}:${id.module}".toString()
-            def label = jarLabel(id.group, id.module, id.version, artifact.file.name)
-            def reason = forbidden[coordinate]
-            if (reason != null) {
-                problems << "'${coordinate}:${id.version}' must not be on the runtime classpath. ${reason}"
-            }
-            def names = [] as List<String>
-            new java.util.zip.ZipFile(artifact.file).withCloseable { zip ->
-                zip.entries().each { entry ->
-                    if (!entry.directory && entry.name.endsWith('.class')) {
-                        names << entry.name
+        doLast {
+            verifyDuplicateClassScanner()
+            def problems = []
+            def jarClasses = [:]
+            artifacts.get().each { artifact ->
+                def id = artifact.id.componentIdentifier
+                if (!(id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier) || !artifact.file.name.endsWith('.jar')) {
+                    return
+                }
+                // The plain module coordinate is what the forbidden list names; the jar label also carries the classifier and is what
+                // class ownership and the allowlist are keyed by.
+                def coordinate = "${id.group}:${id.module}".toString()
+                def label = jarLabel(id.group, id.module, id.version, artifact.file.name)
+                def reason = forbidden[coordinate]
+                if (reason != null) {
+                    problems << "'${coordinate}:${id.version}' must not be on the runtime classpath. ${reason}"
+                }
+                def names = [] as List<String>
+                new java.util.zip.ZipFile(artifact.file).withCloseable { zip ->
+                    zip.entries().each { entry ->
+                        if (!entry.directory && entry.name.endsWith('.class')) {
+                            names << entry.name
+                        }
                     }
                 }
+                jarClasses.merge(label, names, { a, b -> a + b })
             }
-            jarClasses.merge(label, names, { a, b -> a + b })
-        }
 
-        // The runtime classpath of the root project always carries hundreds of jars; an (almost) empty scan means this task
-        // is looking at the wrong configuration and every check below would pass for the wrong reason.
-        if (jarClasses.size() < 100) {
-            throw new GradleException("Runtime classpath verification looked at only ${jarClasses.size()} jars; expected the application's runtime classpath.")
-        }
-
-        def shared = findSharedClasses(jarClasses)
-        shared.each { jars, classes ->
-            if (!allowed.containsKey(jars)) {
-                def sample = classes.take(5).collect { it.replace('/', '.').replaceAll(/\.class$/, '') }.join(', ')
-                problems << "${classes.size()} class(es) exist in more than one jar: ${jars}\n" +
-                        "    e.g. ${sample}${classes.size() > 5 ? ', ...' : ''}\n" +
-                        '    Exclude the redundant jar where it is brought in, or add exactly this set of jars to allowedDuplicateClassJars in gradle/dependency-hygiene.gradle with the reason.'
+            // The runtime classpath of the root project always carries hundreds of jars; an (almost) empty scan means this task
+            // is looking at the wrong configuration and every check below would pass for the wrong reason.
+            if (jarClasses.size() < 100) {
+                throw new GradleException("Runtime classpath verification looked at only ${jarClasses.size()} jars; expected the application's runtime classpath.")
             }
-        }
-        allowed.each { jars, reason ->
-            if (!shared.containsKey(jars)) {
-                problems << "allowedDuplicateClassJars lists '${jars}', but those jars no longer share classes. Remove the entry (reason was: ${reason})."
-            }
-        }
 
-        if (problems) {
-            throw new GradleException("Runtime classpath verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
+            def shared = findSharedClasses(jarClasses)
+            shared.each { jars, classes ->
+                if (!allowed.containsKey(jars)) {
+                    def sample = classes.take(5).collect { it.replace('/', '.').replaceAll(/\.class$/, '') }.join(', ')
+                    problems << "${classes.size()} class(es) exist in more than one jar: ${jars}\n" +
+                            "    e.g. ${sample}${classes.size() > 5 ? ', ...' : ''}\n" +
+                            '    Exclude the redundant jar where it is brought in, or add exactly this set of jars to allowedDuplicateClassJars in gradle/dependency-hygiene.gradle with the reason.'
+                }
+            }
+            allowed.each { jars, reason ->
+                if (classpathName == 'runtimeClasspath' && !shared.containsKey(jars)) {
+                    problems << "allowedDuplicateClassJars lists '${jars}', but those jars no longer share classes. Remove the entry (reason was: ${reason})."
+                }
+            }
+
+            if (problems) {
+                throw new GradleException("Runtime classpath verification failed:\n\n" + problems.collect { "  - ${it}" }.join('\n\n') + '\n')
+            }
+            logger.lifecycle("Runtime classpath verified: ${jarClasses.size()} jars, ${forbidden.size()} forbidden artifacts absent, ${allowed.size()} allowed overlaps.")
         }
-        logger.lifecycle("Runtime classpath verified: ${jarClasses.size()} jars, ${forbidden.size()} forbidden artifacts absent, ${allowed.size()} allowed overlaps.")
     }
 }
+registerClasspathHygieneCheck('verifyRuntimeClasspathHygiene', 'runtimeClasspath')
 
 tasks.named('check') {
     dependsOn 'verifyRuntimeClasspathHygiene'

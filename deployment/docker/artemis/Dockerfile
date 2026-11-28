@@ -18,11 +18,14 @@
 
 # defines the default .war file build stage (options: builder, external_builder)
 ARG WAR_FILE_STAGE="builder"
+ARG ARTEMIS_ROLE="universal"
+ARG RUNTIME_STAGE="runtime_${ARTEMIS_ROLE}"
 
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS builder
+ARG ARTEMIS_ROLE
 
 # The downloaded Node 26 ARM64 binary links libatomic.so.1, which the JDK base image
 # does not include. Install it before Gradle bootstraps pnpm.
@@ -59,7 +62,7 @@ RUN \
   --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.pnpm-store \
   mkdir -p /opt/artemis/.pnpm-store \
-  && ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpmInstall
+  && case "$ARTEMIS_ROLE" in universal|core) ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar pnpmSetCacheDockerfile pnpmInstall ;; buildagent|aiworker) : ;; *) exit 1 ;; esac
 
 # so far just using the .dockerignore to define what isn't necessary here
 COPY . .
@@ -79,19 +82,24 @@ RUN \
   --mount=type=cache,target=/root/.gradle/caches \
   --mount=type=cache,target=/opt/artemis/.pnpm-store \
   --mount=type=cache,target=/opt/artemis/.cache \
-  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar -Psbom clean bootWar -x pnpmInstall
+  set -eu; \
+  case "$ARTEMIS_ROLE" in \
+    universal) task=bootWar ;; core) task=bootCoreWar ;; \
+    buildagent) task=bootBuildAgentWar ;; aiworker) task=bootAiWorkerWar ;; *) exit 1 ;; \
+  esac; \
+  ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar -Psbom clean "$task" -x pnpmInstall; \
+  if [ "$ARTEMIS_ROLE" = universal ]; then set -- build/libs/Artemis-*.war; else set -- "build/role-wars/Artemis-${ARTEMIS_ROLE}.war"; fi; \
+  [ "$#" = 1 ] && cp "$1" /opt/artemis/Artemis.war
 
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
 FROM docker.io/library/alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS external_builder
 
-#default path of the built .war files
-ARG WAR_FILE_PATH="/opt/artemis/build/libs"
-
-# transfer the .war file from the current directory to the default WAR_FILE_PATH
-WORKDIR ${WAR_FILE_PATH}
-COPY ./build/libs/*.war Artemis.war
+# Existing local scripts supply the versioned universal WAR in build/libs.
+# CI supplies an exact filename when packaging a role WAR.
+ARG PREBUILT_WAR="build/libs/*.war"
+COPY ${PREBUILT_WAR} /opt/artemis/Artemis.war
 
 #-----------------------------------------------------------------------------------------------------------------------
 # war file stage (decides whether an external .war file will be used or the Docker built .war file)
@@ -105,12 +113,10 @@ FROM ${WAR_FILE_STAGE} AS war_file
 # extract stage (explode the WAR so the runtime image runs from a flat classpath -> faster startup)
 #-----------------------------------------------------------------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d AS extractor
-
-#default path of the built .war files
-ARG WAR_FILE_PATH="/opt/artemis/build/libs"
+ARG ARTEMIS_ROLE
 
 WORKDIR /extract
-COPY --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
+COPY --from=war_file /opt/artemis/Artemis.war Artemis.war
 # `jarmode=tools extract` produces app/Artemis.jar (thin) + app/lib/ with a flat Class-Path. Running
 # from this exploded layout avoids Spring Boot's nested-jar classloader, which dominates cold start
 # (~38s -> ~25s measured). The extraction cost is paid once here at image-build time, so every
@@ -118,6 +124,11 @@ COPY --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 # Spring Boot 4.1 wrote the thin archive as app/Artemis.war, Spring Boot 4.2 writes app/Artemis.jar. The check
 # names the file, because a missing one otherwise only shows as a NoSuchFileException in a later stage.
 RUN set -eu; \
+  case "$ARTEMIS_ROLE" in universal) title=Artemis ;; core|buildagent|aiworker) title="Artemis $ARTEMIS_ROLE" ;; *) exit 1 ;; esac; \
+  jar xf Artemis.war META-INF/MANIFEST.MF; \
+  if ! tr -d '\r' < META-INF/MANIFEST.MF | grep -Fxq "Implementation-Title: $title"; then \
+    echo "The supplied WAR does not match ARTEMIS_ROLE=$ARTEMIS_ROLE" >&2; exit 1; \
+  fi; \
   java -Djarmode=tools -jar Artemis.war extract --destination /extract/app; \
   if [ ! -f /extract/app/Artemis.jar ]; then \
     echo "jarmode=tools extract did not produce app/Artemis.jar. It produced:"; \
@@ -157,15 +168,13 @@ RUN case "${TARGETARCH}" in \
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime
+FROM docker.io/library/ubuntu:26.04@sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db AS runtime_base
 
 # Same location as in the Temurin images, so that JAVA_HOME does not change for anything that relies on it.
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 COPY --from=runtime_jdk /opt/java/openjdk /opt/java/openjdk
 
-#default path of the built .war files
-ARG WAR_FILE_PATH="/opt/artemis/build/libs"
 #default UID/GID of the artemis user
 ARG UID=1337
 ARG GID=1337
@@ -212,8 +221,10 @@ COPY --chown=artemis:artemis --from=extractor /extract/app /opt/artemis/app
 # invariant is asserted for the package stylesheet in packages/tum-aet-ui/check-styles.mjs.
 # `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
 # map embeds the original source, directives and all. Only the .css files are scanned.
+ARG ARTEMIS_ROLE
 RUN set -eu; \
   war_entries="$(jar tf app/Artemis.jar)"; \
+  case "$ARTEMIS_ROLE" in buildagent|aiworker) ! printf '%s\n' "$war_entries" | grep -qx 'static/index.html' || exit 1; exit 0 ;; esac; \
   if ! printf '%s\n' "$war_entries" | grep -qx 'static/index.html'; then \
     echo "app/Artemis.jar does not contain static/index.html. The Angular client is missing from the deployable WAR."; \
     exit 1; \
@@ -243,27 +254,23 @@ RUN set -eu; \
     exit 1; \
   fi
 
-VOLUME ["/opt/artemis/config"]
-VOLUME ["/opt/artemis/data"]
-VOLUME ["/opt/artemis/public/content"]
+# java expands this argument file just like command-line flags. _JAVA_OPTIONS from
+# the deployment can still override the heap for a particular installation.
+RUN case "$ARTEMIS_ROLE" in \
+      universal|core) printf '%s\n' -Xms2560m -Xmx5120m ;; \
+      buildagent) printf '%s\n' -Xms128m -Xmx1024m ;; \
+      aiworker) printf '%s\n' -Xms256m -Xmx2048m ;; \
+      *) exit 1 ;; \
+    esac > /opt/artemis/heap.options
 
-EXPOSE 8080 5701 7921
-
-# Mirrors deployment/docker/artemis.yml's compose-level healthcheck so `docker run`/`docker ps` report
-# health even for anyone running the raw image directly, outside the provided compose files.
-# When run via compose, the service's own `healthcheck:` block there takes precedence over this.
-HEALTHCHECK --interval=1s --timeout=5s --start-period=600s --retries=3 \
-  CMD wget -q -t1 -T5 -O - http://localhost:8080/management/health/readiness | grep -xq '{"status":"UP"}' || exit 1
-
-# use exec format (square brackets) as otherwise the shell fromat will not forward signals
+# Use exec form so Java receives shutdown signals directly.
 CMD [ "java", \
 "-Djdk.tls.ephemeralDHKeySize=2048", \
 "-DLC_CTYPE=UTF-8", \
 "-Dfile.encoding=UTF-8", \
 "-Dsun.jnu.encoding=UTF-8", \
 "-Djava.security.egd=file:/dev/./urandom", \
-"-Xmx5120m", \
-"-Xms2560m", \
+"@/opt/artemis/heap.options", \
 "--add-modules", "java.se", \
 "--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED", \
 "--add-exports", "java.naming/com.sun.jndi.ldap=ALL-UNNAMED", \
@@ -273,3 +280,25 @@ CMD [ "java", \
 "--add-opens", "java.management/sun.management=ALL-UNNAMED", \
 "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED", \
 "-jar", "/opt/artemis/app/Artemis.jar" ]
+
+# The AI Worker reports its capacity to core and has no listening HTTP socket.
+FROM runtime_base AS runtime_aiworker
+ENV SPRING_PROFILES_ACTIVE=prod,aiworker
+
+FROM runtime_base AS runtime_web
+EXPOSE 8080
+HEALTHCHECK --interval=1s --timeout=5s --start-period=600s --retries=3 \
+  CMD wget -q -t1 -T5 -O - http://localhost:8080/management/health/readiness | grep -xq '{"status":"UP"}' || exit 1
+
+FROM runtime_web AS runtime_buildagent
+ENV SPRING_PROFILES_ACTIVE=prod,buildagent
+VOLUME ["/opt/artemis/data"]
+
+FROM runtime_web AS runtime_universal
+EXPOSE 5701 7921
+VOLUME ["/opt/artemis/config", "/opt/artemis/data", "/opt/artemis/public/content"]
+
+FROM runtime_universal AS runtime_core
+
+# hadolint ignore=DL3006
+FROM ${RUNTIME_STAGE} AS runtime

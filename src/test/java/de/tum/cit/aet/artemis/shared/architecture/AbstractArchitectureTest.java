@@ -9,12 +9,20 @@ import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.annotation.Annotation;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.springframework.core.annotation.MergedAnnotations;
 
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -27,11 +35,44 @@ import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.core.importer.Location;
+import com.tngtech.archunit.core.importer.Locations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 
 @Tag("ArchitectureTest")
+@ExtendWith(AbstractArchitectureTest.RoleClassLoader.class)
 public abstract class AbstractArchitectureTest {
+
+    // Some rules use Spring to resolve annotation semantics via JavaMethod.reflect(). Give only
+    // architecture tests a loader for these classes so universal Spring tests keep their normal component scan.
+    static class RoleClassLoader implements BeforeEachCallback, AfterEachCallback {
+
+        private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(RoleClassLoader.class);
+
+        @Override
+        public void beforeEach(ExtensionContext context) throws Exception {
+            String directory = System.getProperty("artemis.architecture.roleClasses");
+            if (directory == null) {
+                return;
+            }
+            URL location = Path.of(directory).toUri().toURL();
+            Thread thread = Thread.currentThread();
+            ClassLoader previous = thread.getContextClassLoader();
+            context.getStore(NAMESPACE).put("previousLoader", previous);
+            // JUnit closes the shared URLClassLoader when the root store closes.
+            var loader = context.getRoot().getStore(NAMESPACE).computeIfAbsent(previous, parent -> new URLClassLoader(new URL[] { location }, parent), URLClassLoader.class);
+            thread.setContextClassLoader(loader);
+        }
+
+        @Override
+        public void afterEach(ExtensionContext context) {
+            ClassLoader previous = context.getStore(NAMESPACE).remove("previousLoader", ClassLoader.class);
+            if (previous != null) {
+                Thread.currentThread().setContextClassLoader(previous);
+            }
+        }
+    }
 
     protected static final String ARTEMIS_PACKAGE = "de.tum.cit.aet.artemis";
 
@@ -47,10 +88,16 @@ public abstract class AbstractArchitectureTest {
     static void loadClasses() {
         if (allClasses == null) {
             testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-            allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-            // Also include hazelcast to find usages of hazelcast methods. (see testNoHazelcastUsageInConstructors)
-            allClassesWithHazelcast = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
+            var artemisLocations = new HashSet<>(Locations.ofPackage(ARTEMIS_PACKAGE));
+            String roleClasses = System.getProperty("artemis.architecture.roleClasses");
+            if (roleClasses != null) {
+                artemisLocations.add(Location.of(Path.of(roleClasses)));
+            }
+            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importLocations(artemisLocations);
+            allClasses = new ClassFileImporter().importLocations(artemisLocations);
+            // Also include Hazelcast method declarations for testNoHazelcastUsageInConstructors.
+            artemisLocations.addAll(Locations.ofPackage("com.hazelcast.core"));
+            allClassesWithHazelcast = new ClassFileImporter().importLocations(artemisLocations);
         }
         ensureClassSetsNonEmpty();
         ensureAllClassesFound();

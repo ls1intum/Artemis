@@ -556,7 +556,7 @@ eureka:
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:
             zone: primary # This is needed for the load balancer
-            profile: ${spring.profiles.active}
+            profile: ${spring.profiles.active:}
             version: #project.version#
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}

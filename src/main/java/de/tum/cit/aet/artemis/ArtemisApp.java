@@ -1,13 +1,8 @@
 package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -21,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,6 +27,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
+import de.tum.cit.aet.artemis.core.config.AiWorkerProfileValidation;
 import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
@@ -40,7 +35,6 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.DefaultProfileUtil;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
-import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
 import de.tum.cit.aet.artemis.core.config.InternalAccessConfiguration;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -91,27 +85,14 @@ public class ArtemisApp {
      */
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
+        run(app, args);
+    }
+
+    static void run(SpringApplication app, String[] args) {
         DefaultProfileUtil.addDefaultProfile(app);
         app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
             Environment environment = event.getEnvironment();
-            if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
-                throw new IllegalArgumentException("An AI Worker node cannot also run the core profile");
-            }
-            if (!isWorkerOnly(environment)) {
-                return;
-            }
-            if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
-                throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
-            }
-            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
-                throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
-            }
-            if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
-                throw new IllegalArgumentException("An AI Worker-only node requires a shared Hazelcast or Redis data provider");
-            }
-            if (DistributedDataProviderResolver.isProvider(environment, HAZELCAST) && !environment.getProperty("eureka.client.enabled", Boolean.class, false)) {
-                throw new IllegalArgumentException("An AI Worker-only node requires Eureka discovery with Hazelcast");
-            }
+            AiWorkerProfileValidation.validate(environment);
         });
         // The upload root of FilePathConverter is not set here. It is set by FileUploadPathEnvironmentPostProcessor,
         // before the context is created, because ApplicationReadyEvent fires inside run() and its listeners resolve

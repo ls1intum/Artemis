@@ -5,6 +5,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.jspecify.annotations.Nullable;
 
+import com.github.dockerjava.api.exception.DockerException;
+
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
 
 /**
@@ -42,7 +44,8 @@ final class ResultQueueExceptionNormalizer {
         if (throwable == null) {
             return true;
         }
-        if (depth >= MAX_DEPTH || !FILTER.isAllowed(throwable.getClass().getName()) || throwable.getSuppressed().length > 0) {
+        // The type filter also reads Docker exceptions from older agents. New items need no Docker library on their reader.
+        if (depth >= MAX_DEPTH || throwable instanceof DockerException || !FILTER.isAllowed(throwable.getClass().getName()) || throwable.getSuppressed().length > 0) {
             return false;
         }
         return isStorable(throwable.getCause(), depth + 1);

@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.service.FinishedBuildJobMapper;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
@@ -107,7 +108,7 @@ public class AdminBuildJobQueueResource {
         }
 
         // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
-        return buildJobRepository.findWithDataByBuildJobId(buildJobId).<BuildJobDTO>map(FinishedBuildJobDTO::of).map(ResponseEntity::ok)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).<BuildJobDTO>map(FinishedBuildJobMapper::of).map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -311,7 +312,7 @@ public class AdminBuildJobQueueResource {
 
         Slice<BuildJob> buildJobPage = localCIBuildJobQueueService.getFilteredFinishedBuildJobs(search, null);
 
-        Slice<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobDTO.fromBuildJobsSlice(buildJobPage);
+        Slice<FinishedBuildJobDTO> finishedBuildJobDTOs = FinishedBuildJobMapper.fromBuildJobsSlice(buildJobPage);
         HttpHeaders headers = SliceUtil.generateSliceHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), buildJobPage);
         return new ResponseEntity<>(finishedBuildJobDTOs.getContent(), headers, HttpStatus.OK);
     }
