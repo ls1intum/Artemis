@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;
@@ -12,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -24,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 @Service
 @Lazy
+@Profile({ PROFILE_LOCALCI, PROFILE_JENKINS })
 @Conditional(HyperionEnabled.class)
 public class HyperionCodeGenerationJobService {
 

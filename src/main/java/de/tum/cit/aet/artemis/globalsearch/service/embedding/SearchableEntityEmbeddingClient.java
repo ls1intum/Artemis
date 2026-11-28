@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
  * Computes global search embeddings with the preset assigned in {@code embedding-llm-preset}, through {@link LlmClientService}.
  * <p>
  * Two time limits: a short one for user searches, which fall back to keyword search when it is exceeded, and a longer one for index writes,
- * which the outbox retries. transport retries are disabled for both. Every response is validated before use: one finite, non-zero vector of one
+ * which the outbox retries. The transport sends each embedding request once. Every response is validated before use: one finite, non-zero vector of one
  * dimension per input, in input order. Anything else is an {@link EmbeddingFailedException}, so a write never stores a partial or invalid result.
  */
 @Lazy

@@ -151,14 +151,13 @@ yet is added to `LlmClientService`.
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/LlmClientArchitectureTest.java`. It fails
 when a production class outside `core.service.llm` and `core.config.llm` depends on the Artemis provider transport or Responses adapter, or on `com.openai.client..`,
 `com.openai.services..`, `org.springframework.ai.openai.setup..` or a Spring AI OpenAI model class, or reads `LlmProperties.Endpoint`
-or the methods that return endpoints. Request options, response, usage and exception types of the SDKs
-stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model
+or the methods that return endpoints. Modules may use the shared request options, response and usage types. The test cannot see a module that adds its own URL and key properties and calls a model
 with a plain HTTP client; that is forbidden too, and reviews have to catch it.
 
 **Why it matters.** The core applies the preset's options, the timeouts, the custom headers,
 Microsoft Foundry authentication and observations; chat calls also get the preset's retries, and every
-chat response is tagged with its preset for cost tracking. `embed` makes no SDK retries, whatever the
-endpoint configures, so the caller decides whether and when to retry. The startup validation checks
+chat response is tagged with its preset for cost tracking. The caller of `embed` decides whether and
+when to retry a failed request. The startup validation checks
 every assignment. A module with its own client skips all of that, and every deployment has to
 configure the same provider a second time.
 

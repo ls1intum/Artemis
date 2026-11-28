@@ -102,14 +102,18 @@ public final class LlmChatOptions extends DefaultToolCallingChatOptions implemen
         @Override
         public Builder combineWith(ChatOptions.Builder<?> other) {
             super.combineWith(other);
+            ChatOptions overrides = other.build();
+            // Responses has one output limit. A request's portable limit supersedes the preset's completion limit.
+            if (overrides.getMaxTokens() != null) {
+                maxCompletionTokens = null;
+            }
             if (other instanceof Builder options) {
                 reasoningEffort = options.reasoningEffort != null ? options.reasoningEffort : reasoningEffort;
                 verbosity = options.verbosity != null ? options.verbosity : verbosity;
                 parallelToolCalls = options.parallelToolCalls != null ? options.parallelToolCalls : parallelToolCalls;
                 maxCompletionTokens = options.maxCompletionTokens != null ? options.maxCompletionTokens : maxCompletionTokens;
             }
-            if (other instanceof StructuredOutputChatOptions.Builder<?> && other.build() instanceof StructuredOutputChatOptions structured
-                    && structured.getOutputSchema() != null) {
+            if (overrides instanceof StructuredOutputChatOptions structured && structured.getOutputSchema() != null) {
                 outputSchema = structured.getOutputSchema();
             }
             return this;

@@ -108,12 +108,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         if (options instanceof LlmChatOptions llm) {
             return llm;
         }
-        var builder = defaultOptions.mutate().combineWith(options.mutate());
-        if (options.getMaxTokens() != null) {
-            // The portable API has one output limit. An explicit request limit supersedes either spelling on the preset.
-            builder.maxCompletionTokens(null);
-        }
-        return builder.build();
+        return defaultOptions.mutate().combineWith(options.mutate()).build();
     }
 
     private Request request(List<Message> messages, LlmChatOptions options) {
@@ -294,8 +289,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     }
 
     private record Request(String model, List<InputItem> input, boolean store, List<String> include, Reasoning reasoning, Double temperature, @JsonProperty("top_p") Double topP,
-            Text text, @JsonProperty("max_output_tokens") Integer maxOutputTokens, @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls, List<FunctionTool> tools)
-            implements LlmHttpClient.Request {
+            Text text, @JsonProperty("max_output_tokens") Integer maxOutputTokens, @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls, List<FunctionTool> tools) {
     }
 
     private interface InputItem {

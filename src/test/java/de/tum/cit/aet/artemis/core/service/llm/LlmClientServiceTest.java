@@ -263,15 +263,30 @@ class LlmClientServiceTest {
     }
 
     @Test
-    void legacyFoundryUsesTheDeploymentPathAndVersion() {
+    void legacyFoundryResponsesUseTheResourcePathAndConfiguredVersion() {
         var endpoint = new Endpoint(EndpointType.MICROSOFT_FOUNDRY, baseUrl(""), "azure-key", Duration.ofSeconds(3), 0, null, "2025-03-01-preview", null, null);
         var preset = new Preset("main", "deployment", Api.RESPONSES, null, null, null, null, null, null, null, null);
         var service = service(Map.of("main", endpoint), Map.of("chat", preset));
         service.chatModel("chat").call(new Prompt("Hello", LlmChatOptions.builder().model("team/model v2").build()));
 
         assertThat(requests).singleElement().satisfies(request -> {
-            assertThat(request.path()).isEqualTo("/openai/deployments/team%2Fmodel%20v2/responses");
+            assertThat(request.path()).isEqualTo("/openai/responses");
+            assertThat(request.body().get("model").asString()).isEqualTo("team/model v2");
             assertThat(request.query()).isEqualTo("api-version=2025-03-01-preview");
+        });
+    }
+
+    @Test
+    void legacyFoundryDefaultsToAVersionSupportingResponses() {
+        var endpoint = endpoint(EndpointType.MICROSOFT_FOUNDRY, "", "azure-key");
+        var chat = new Preset("main", "chat", Api.RESPONSES, null, null, null, null, null, null, null, null);
+        var service = service(Map.of("main", endpoint), Map.of("chat", chat));
+
+        service.chatModel("chat").call(new Prompt("Hello"));
+
+        assertThat(requests).singleElement().satisfies(request -> {
+            assertThat(request.path()).isEqualTo("/openai/responses");
+            assertThat(request.query()).isEqualTo("api-version=2025-04-01-preview");
         });
     }
 

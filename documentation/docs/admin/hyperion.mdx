@@ -24,6 +24,8 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. When generation is enabled anywhere in a deployment, all writer nodes must enable cluster fencing through the selected distributed provider. Default-off deployments do not claim generation slots.
 
+Generating template, solution, or test code for an existing programming exercise requires an active LocalCI or Jenkins profile to build the generated code. Other authoring features, such as FAQ rewriting and quiz-question generation, also run on a core node without a CI provider.
+
 ```yaml
 artemis:
     hyperion:

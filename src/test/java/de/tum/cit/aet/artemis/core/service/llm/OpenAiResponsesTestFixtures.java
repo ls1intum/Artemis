@@ -35,7 +35,7 @@ public final class OpenAiResponsesTestFixtures {
         var mapper = LlmHttpClient.wireMapper(configured);
         var client = mock(LlmHttpClient.class);
         when(client.post(eq("responses"), any(), any())).thenAnswer(call -> {
-            Map<String, Object> request = mapper.readValue(mapper.writeValueAsBytes(call.getArgument(1, LlmHttpClient.Request.class)), new TypeReference<>() {
+            Map<String, Object> request = mapper.readValue(mapper.writeValueAsBytes(call.getArgument(1, Record.class)), new TypeReference<>() {
             });
             // The provider encodes its own response independently of the application's null/empty inclusion settings.
             Class<?> responseType = call.getArgument(2);

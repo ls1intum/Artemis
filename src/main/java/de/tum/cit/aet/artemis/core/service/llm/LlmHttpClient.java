@@ -32,13 +32,8 @@ import io.micrometer.observation.ObservationRegistry;
 /** Synchronous JSON transport shared by the Responses and embeddings APIs. */
 final class LlmHttpClient {
 
-    interface Request {
-
-        String model();
-    }
-
     // Legacy resource endpoints require an API version even if the operator did not configure one.
-    private static final String LEGACY_FOUNDRY_VERSION = "2024-10-21";
+    private static final String LEGACY_FOUNDRY_RESPONSES_VERSION = "2025-04-01-preview";
 
     private static final long MAX_BACKOFF_MILLIS = 8000;
 
@@ -77,8 +72,8 @@ final class LlmHttpClient {
         return configured.rebuild().changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL)).build();
     }
 
-    <T> T post(String path, Request request, Class<T> responseType) {
-        URI uri = url(path, request.model());
+    <T> T post(String path, Record request, Class<T> responseType) {
+        URI uri = url(path);
         byte[] body = mapper.writeValueAsBytes(request);
         for (int attempt = 0;; attempt++) {
             if (Thread.currentThread().isInterrupted()) {
@@ -130,19 +125,16 @@ final class LlmHttpClient {
         }
     }
 
-    private URI url(String path, String model) {
+    private URI url(String path) {
         URI base = URI.create(endpoint.baseUrl());
         var url = UriComponentsBuilder.fromUri(base);
         if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
             String version = endpoint.microsoftFoundryServiceVersion();
             boolean legacy = !StringUtils.trimTrailingCharacter(base.getPath(), '/').endsWith("/openai/v1");
             if (legacy) {
-                if (".".equals(model) || "..".equals(model)) {
-                    throw new IllegalArgumentException("Invalid Microsoft Foundry deployment name");
-                }
-                url.pathSegment("openai", "deployments", UriUtils.encode(model, StandardCharsets.UTF_8));
+                url.pathSegment("openai");
                 if (!StringUtils.hasText(version)) {
-                    version = LEGACY_FOUNDRY_VERSION;
+                    version = LEGACY_FOUNDRY_RESPONSES_VERSION;
                 }
             }
             if (StringUtils.hasText(version)) {

@@ -52,7 +52,7 @@ public class LlmClientService {
 
     private final Map<Api, HttpClient> connectionsByApi = new ConcurrentHashMap<>();
 
-    private record EmbeddingRequest(String model, List<String> input, @JsonProperty("encoding_format") String encodingFormat) implements LlmHttpClient.Request {
+    private record EmbeddingRequest(String model, List<String> input, @JsonProperty("encoding_format") String encodingFormat) {
     }
 
     private final Map<String, ChatModel> chatModelsByPreset = new ConcurrentHashMap<>();

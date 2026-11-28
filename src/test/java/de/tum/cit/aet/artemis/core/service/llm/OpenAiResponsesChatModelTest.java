@@ -100,8 +100,13 @@ class OpenAiResponsesChatModelTest {
             return response(List.of(message("done")), "limit");
         });
         adapter.call(new Prompt("work", ChatOptions.builder().maxTokens(40).build()));
-        adapter.call(new Prompt("work"));
+        var client = ChatClient.create(adapter);
+        client.prompt("work").options(ChatOptions.builder().maxTokens(41)).call().content();
+        client.prompt("work").options(LlmChatOptions.builder().maxTokens(42)).call().content();
+        client.prompt("work").call().content();
 
+        assertThat(requests.get(1)).containsEntry("max_output_tokens", 41);
+        assertThat(requests.get(2)).containsEntry("max_output_tokens", 42);
         assertThat(requests.getFirst()).containsEntry("max_output_tokens", 40).containsEntry("reasoning", Map.of("effort", "none")).containsEntry("temperature", 0.6)
                 .containsEntry("top_p", 0.9);
         assertThat(requests.getLast()).containsEntry("max_output_tokens", 8000);

@@ -99,8 +99,9 @@ When a provider requests a retry delay longer than eight seconds, Artemis return
 | `prices-usd-per-million`            | none     | Prices for cost estimates, see [Costs](#costs).                                                                                               |
 
 For `microsoft-foundry`, the `api-key` is required. The `model` of a preset on this endpoint is the name of the
-deployment. A `base-url` that ends with `/openai/v1` uses the unified Foundry API; a resource URL such as
-`https://<resource>.openai.azure.com` uses the deployment paths.
+deployment. A `base-url` that ends with `/openai/v1` uses the unified Foundry API. With a legacy resource URL
+such as `https://<resource>.openai.azure.com`, Responses presets call `/openai/responses` and default to
+`2025-04-01-preview`. Set `microsoft-foundry-service-version` to override the API version for the endpoint.
 
 ## Presets
 
