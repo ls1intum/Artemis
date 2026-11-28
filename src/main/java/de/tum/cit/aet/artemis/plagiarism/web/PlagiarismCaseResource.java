@@ -194,7 +194,8 @@ public class PlagiarismCaseResource {
      *
      * @param courseId   the id of the course
      * @param exerciseId the id of the exercise
-     * @return the plagiarism case id for the exercise and student if and only if the comparison was confirmed and the student was notified
+     * @return the ResponseEntity with status 200 (OK) and with body the plagiarism case info for the exercise and student if and only if the comparison was confirmed
+     *         and the student was notified, otherwise status 200 (OK) with an empty body
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @EnforceAtLeastStudent

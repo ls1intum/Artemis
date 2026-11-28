@@ -11,10 +11,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismComparisonDTO(Long id, @Nullable PlagiarismSubmissionDTO submissionA, @Nullable PlagiarismSubmissionDTO submissionB,
-        @Nullable Set<PlagiarismMatchDTO> matches, double similarity, PlagiarismStatus status) {
+public record PlagiarismComparisonDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable PlagiarismSubmissionDTO submissionA,
+        @Nullable PlagiarismSubmissionDTO submissionB, @Nullable Set<PlagiarismMatchDTO> matches, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double similarity,
+        PlagiarismStatus status) {
 
     /**
      * Maps a plagiarism comparison entity to the DTO used by the split view.

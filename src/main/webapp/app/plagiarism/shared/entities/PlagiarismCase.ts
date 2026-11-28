@@ -1,4 +1,3 @@
-import dayjs from 'dayjs/esm';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,7 +10,8 @@ export interface PlagiarismCase {
     plagiarismSubmissionCount?: number;
     student?: PlagiarismCaseUser;
     verdict?: PlagiarismVerdict;
-    verdictDate?: dayjs.Dayjs;
+    /** ISO 8601 date-time string as sent by the server. */
+    verdictDate?: string;
     verdictMessage?: string;
     verdictBy?: PlagiarismCaseUser;
     verdictPointDeduction?: number;
@@ -37,7 +37,8 @@ export interface PlagiarismCaseExercise {
     title?: string;
     shortName?: string;
     type?: ExerciseType;
-    dueDate?: dayjs.Dayjs;
+    /** ISO 8601 date-time string as sent by the server. */
+    dueDate?: string;
     courseId?: number;
     courseTitle?: string;
     examId?: number;
@@ -47,13 +48,15 @@ export interface PlagiarismCaseExercise {
 
 export interface PlagiarismCasePostSummary {
     id?: number;
-    creationDate?: dayjs.Dayjs;
+    /** ISO 8601 date-time string as sent by the server. */
+    creationDate?: string;
 }
 
 export interface PlagiarismCaseVerdictResponse {
-    verdict?: PlagiarismVerdict;
-    verdictDate?: dayjs.Dayjs;
+    verdict: PlagiarismVerdict;
+    /** ISO 8601 date-time string as sent by the server. */
+    verdictDate: string;
     verdictMessage?: string;
-    verdictBy?: PlagiarismCaseUser;
-    verdictPointDeduction?: number;
+    verdictBy: PlagiarismCaseUser;
+    verdictPointDeduction: number;
 }

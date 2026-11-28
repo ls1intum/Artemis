@@ -272,7 +272,7 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should clean up plagiarism', async () => {
-        const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
+        const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(undefined));
         const getLatestPlagiarismResultSpy = vi.spyOn(comp, 'getLatestPlagiarismResult');
         comp.exercise.set(textExercise);
         comp.plagiarismResult.set(textPlagiarismResult);
@@ -287,7 +287,7 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should clean up plagiarism and delete all plagiarism comparisons', async () => {
-        const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
+        const cleanUpPlagiarismSpy = vi.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(undefined));
         comp.exercise.set(textExercise);
         comp.plagiarismResult.set(textPlagiarismResult);
         comp.deleteAllPlagiarismComparisons.set(true);

@@ -8,9 +8,11 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismSubmissionDTO(Long id, long submissionId, @Nullable String studentLogin, @Nullable List<PlagiarismSubmissionElementDTO> elements, int size,
+public record PlagiarismSubmissionDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long submissionId,
+        @Nullable String studentLogin, @Nullable List<PlagiarismSubmissionElementDTO> elements, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int size,
         @Nullable Double score) {
 
     /**

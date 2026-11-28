@@ -5,8 +5,8 @@ import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiaris
 import { ActivatedRoute, Params } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { BehaviorSubject, of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase, PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
@@ -66,14 +66,11 @@ describe('Plagiarism Cases Student View Component', () => {
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismCasesServiceSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
-        plagiarismCasesServiceSpy.mockImplementation(
-            (courseId: number, plagiarismCaseId: number) =>
-                of({
-                    body: {
-                        ...plagiarismCase,
-                        id: plagiarismCaseId,
-                    },
-                }) as Observable<HttpResponse<PlagiarismCase>>,
+        plagiarismCasesServiceSpy.mockImplementation((courseId: number, plagiarismCaseId: number) =>
+            of<PlagiarismCase>({
+                ...plagiarismCase,
+                id: plagiarismCaseId,
+            }),
         );
     });
 
@@ -94,7 +91,7 @@ describe('Plagiarism Cases Student View Component', () => {
 
     it('should set isAfterDueDate', async () => {
         const now = dayjs();
-        exercise.dueDate = now.add(1, 'day');
+        exercise.dueDate = now.add(1, 'day').toISOString();
         component.ngOnInit();
         await Promise.resolve();
         expect(component.isAfterDueDate()).toBe(false);
@@ -102,7 +99,7 @@ describe('Plagiarism Cases Student View Component', () => {
 
     it('should unset isAfterDueDate', async () => {
         const now = dayjs();
-        exercise.dueDate = now.subtract(1, 'day');
+        exercise.dueDate = now.subtract(1, 'day').toISOString();
         component.ngOnInit();
         await Promise.resolve();
         expect(component.isAfterDueDate()).toBe(true);

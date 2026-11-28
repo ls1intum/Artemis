@@ -1,40 +1,48 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { PlagiarismApi } from 'app/openapi/api/plagiarism-api';
+import { PlagiarismCaseApi } from 'app/openapi/api/plagiarism-case-api';
+import { PlagiarismVerdict as PlagiarismVerdictRequest } from 'app/openapi/model/plagiarism-verdict';
 import { PlagiarismCase, PlagiarismCaseDTO, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import {
+    toPlagiarismCaseForScores,
+    toPlagiarismCaseFromDetail,
+    toPlagiarismCaseFromOverview,
+    toPlagiarismCaseInfoMap,
+    toPlagiarismCaseVerdictResponse,
+    toPlagiarismComparison,
+} from 'app/plagiarism/shared/services/plagiarism-api.mapper';
 
-export type EntityResponseType = HttpResponse<PlagiarismCase>;
-export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
-export type VerdictResponseType = HttpResponse<PlagiarismCaseVerdictResponse>;
-export type Comparison = PlagiarismComparison;
-
+/**
+ * Plagiarism cases and comparisons. Delegates the transport to the generated {@link PlagiarismCaseApi} and {@link PlagiarismApi} and maps their models to the
+ * client models the views use.
+ */
 @Service()
 export class PlagiarismCasesService {
-    private http = inject(HttpClient);
-    private resourceUrl = 'api/plagiarism/courses';
-    private resourceUrlExercises = 'api/plagiarism/exercises';
+    private plagiarismCaseApi = inject(PlagiarismCaseApi);
+    private plagiarismApi = inject(PlagiarismApi);
 
     /* Instructor */
 
     /**
-     * Get all plagiarism cases for the instructor of the course with the given id
+     * Get all plagiarism cases of the course with the given id for the course scores
      * @param courseId id of the course
      */
-    public getCoursePlagiarismCasesForScores(courseId: number): Observable<HttpResponse<PlagiarismCaseDTO[]>> {
-        return this.http.get<PlagiarismCaseDTO[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases/for-scores`, { observe: 'response' });
+    public getCoursePlagiarismCasesForScores(courseId: number): Observable<PlagiarismCaseDTO[]> {
+        return this.plagiarismCaseApi.getPlagiarismCasesForCourseScores(courseId).pipe(map((plagiarismCases) => plagiarismCases.map(toPlagiarismCaseForScores)));
     }
 
     /**
      * Get all plagiarism cases for the instructor of the course with the given id
      * @param courseId id of the course
      */
-    public getCoursePlagiarismCasesForInstructor(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases/for-instructor`, { observe: 'response' });
+    public getCoursePlagiarismCasesForInstructor(courseId: number): Observable<PlagiarismCase[]> {
+        return this.plagiarismCaseApi.getPlagiarismCasesForCourseForInstructor(courseId).pipe(map((plagiarismCases) => plagiarismCases.map(toPlagiarismCaseFromOverview)));
     }
 
     /**
@@ -42,8 +50,8 @@ export class PlagiarismCasesService {
      * @param courseId id of the course
      * @param examId id of the exam
      */
-    public getExamPlagiarismCasesForInstructor(courseId: number, examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/plagiarism-cases/for-instructor`, { observe: 'response' });
+    public getExamPlagiarismCasesForInstructor(courseId: number, examId: number): Observable<PlagiarismCase[]> {
+        return this.plagiarismCaseApi.getPlagiarismCasesForExamForInstructor(courseId, examId).pipe(map((plagiarismCases) => plagiarismCases.map(toPlagiarismCaseFromOverview)));
     }
 
     /**
@@ -51,8 +59,8 @@ export class PlagiarismCasesService {
      * @param courseId id of the course
      * @param plagiarismCaseId id of the plagiarismCase
      */
-    public getPlagiarismCaseDetailForInstructor(courseId: number, plagiarismCaseId: number): Observable<EntityResponseType> {
-        return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/plagiarism-cases/${plagiarismCaseId}/for-instructor`, { observe: 'response' });
+    public getPlagiarismCaseDetailForInstructor(courseId: number, plagiarismCaseId: number): Observable<PlagiarismCase> {
+        return this.plagiarismCaseApi.getPlagiarismCaseForInstructor(courseId, plagiarismCaseId).pipe(map(toPlagiarismCaseFromDetail));
     }
 
     /**
@@ -65,34 +73,27 @@ export class PlagiarismCasesService {
         courseId: number,
         plagiarismCaseId: number,
         plagiarismVerdict: { verdict: PlagiarismVerdict; verdictMessage?: string; verdictPointDeduction?: number },
-    ): Observable<VerdictResponseType> {
-        return this.http.put<PlagiarismCaseVerdictResponse>(`${this.resourceUrl}/${courseId}/plagiarism-cases/${plagiarismCaseId}/verdict`, plagiarismVerdict, {
-            observe: 'response',
-        });
+    ): Observable<PlagiarismCaseVerdictResponse> {
+        // Only the fields the caller set are sent; the server defaults a missing point deduction to 0.
+        const request: PlagiarismVerdictRequest = { verdict: plagiarismVerdict.verdict };
+        if (plagiarismVerdict.verdictMessage !== undefined) {
+            request.verdictMessage = plagiarismVerdict.verdictMessage;
+        }
+        if (plagiarismVerdict.verdictPointDeduction !== undefined) {
+            request.verdictPointDeduction = plagiarismVerdict.verdictPointDeduction;
+        }
+        return this.plagiarismCaseApi.savePlagiarismCaseVerdict(courseId, plagiarismCaseId, request).pipe(map(toPlagiarismCaseVerdictResponse));
     }
 
     /* Student */
 
     /**
-     * Get the plagiarism case info for the student for the given course and exercise
-     * @param courseId id of the course
-     * @param exerciseId id of the exercise
-     */
-    public getPlagiarismCaseInfoForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<PlagiarismCaseInfo>> {
-        return this.http.get<PlagiarismCaseInfo>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
-    }
-
-    /**
      * Get the plagiarism case infos for the student for the given course and exercise id list for the exercises that the student is allowed to access.
      * @param courseId id of the course
-     * @param exerciseIds ids of the exercises
+     * @param exerciseIds ids of the exercises, sent as one repeated exerciseId query parameter each
      */
-    public getPlagiarismCaseInfosForStudent(courseId: number, exerciseIds: number[]): Observable<HttpResponse<{ [exerciseId: number]: PlagiarismCaseInfo }>> {
-        let params = new HttpParams();
-        for (const exerciseId of exerciseIds) {
-            params = params.append('exerciseId', exerciseId);
-        }
-        return this.http.get<PlagiarismCaseInfo[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases`, { params, observe: 'response' });
+    public getPlagiarismCaseInfosForStudent(courseId: number, exerciseIds: number[]): Observable<{ [exerciseId: number]: PlagiarismCaseInfo }> {
+        return this.plagiarismCaseApi.getPlagiarismCasesForExercisesForStudent(courseId, exerciseIds).pipe(map(toPlagiarismCaseInfoMap));
     }
 
     /**
@@ -100,19 +101,17 @@ export class PlagiarismCasesService {
      * @param courseId id of the course
      * @param plagiarismCaseId id of the plagiarismCase
      */
-    public getPlagiarismCaseDetailForStudent(courseId: number, plagiarismCaseId: number): Observable<EntityResponseType> {
-        return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/plagiarism-cases/${plagiarismCaseId}/for-student`, { observe: 'response' });
+    public getPlagiarismCaseDetailForStudent(courseId: number, plagiarismCaseId: number): Observable<PlagiarismCase> {
+        return this.plagiarismCaseApi.getPlagiarismCaseForStudent(courseId, plagiarismCaseId).pipe(map(toPlagiarismCaseFromDetail));
     }
 
     /**
-     * Get the plagiarism comparison with the given id
+     * Get the plagiarism comparison with the given id. Emits undefined when the server sent the comparison without one of its two submissions.
      * @param courseId
      * @param plagiarismComparisonId
      */
-    public getPlagiarismComparisonForSplitView(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<Comparison>> {
-        return this.http.get<Comparison>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view`, {
-            observe: 'response',
-        });
+    public getPlagiarismComparisonForSplitView(courseId: number, plagiarismComparisonId: number): Observable<PlagiarismComparison | undefined> {
+        return this.plagiarismApi.getPlagiarismComparisonForSplitView(courseId, plagiarismComparisonId).pipe(map(toPlagiarismComparison));
     }
 
     /**
@@ -121,8 +120,8 @@ export class PlagiarismCasesService {
      * @param plagiarismComparisonId
      * @param { PlagiarismStatus } status
      */
-    public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
+    public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<void> {
+        return this.plagiarismApi.updatePlagiarismComparisonStatus(courseId, plagiarismComparisonId, { status });
     }
 
     /**
@@ -132,15 +131,12 @@ export class PlagiarismCasesService {
      *
      * @param exerciseId
      * @param plagiarismResultId
-     * @param deleteAll
+     * @param deleteAll sent as deleteAll=true or deleteAll=false
      */
-    public cleanUpPlagiarism(exerciseId: number, plagiarismResultId: number, deleteAll = false): Observable<HttpResponse<void>> {
-        const params = new HttpParams().append('deleteAll', deleteAll ? 'true' : 'false');
-        return this.http.delete<void>(`${this.resourceUrlExercises}/${exerciseId}/plagiarism-results/${plagiarismResultId}/plagiarism-comparisons`, {
-            params,
-            observe: 'response',
-        });
+    public cleanUpPlagiarism(exerciseId: number, plagiarismResultId: number, deleteAll = false): Observable<void> {
+        return this.plagiarismApi.deletePlagiarismComparisons(exerciseId, plagiarismResultId, deleteAll);
     }
+
     public getNumberOfPlagiarismCasesForExercise(exercise: Exercise): Observable<number> {
         let courseId: number;
         if (exercise.exerciseGroup) {
@@ -148,7 +144,6 @@ export class PlagiarismCasesService {
         } else {
             courseId = exercise.course!.id!;
         }
-        const exerciseId = exercise.id;
-        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-cases-count`);
+        return this.plagiarismCaseApi.getNumberOfPlagiarismCasesForExercise(courseId, exercise.id!);
     }
 }

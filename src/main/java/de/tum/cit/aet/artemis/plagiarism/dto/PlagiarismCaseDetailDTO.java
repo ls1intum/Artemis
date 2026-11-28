@@ -8,12 +8,15 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseDetailDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student, @Nullable PlagiarismCasePostSummaryDTO post,
-        @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount,
-        boolean createdByContinuousPlagiarismControl, @Nullable String verdictMessage, int verdictPointDeduction,
-        @Nullable List<PlagiarismSubmissionForCaseDTO> plagiarismSubmissions) {
+public record PlagiarismCaseDetailDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student,
+        @Nullable PlagiarismCasePostSummaryDTO post, @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int plagiarismSubmissionCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean createdByContinuousPlagiarismControl, @Nullable String verdictMessage,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int verdictPointDeduction, @Nullable List<PlagiarismSubmissionForCaseDTO> plagiarismSubmissions) {
 
     /**
      * JPQL constructor for detail projections. It keeps optional nested DTOs absent when the joined entity is absent.

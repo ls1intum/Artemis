@@ -8,11 +8,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student, @Nullable PlagiarismCasePostSummaryDTO post,
-        @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy, int plagiarismSubmissionCount,
-        boolean createdByContinuousPlagiarismControl, boolean hasStudentAnswer) {
+public record PlagiarismCaseOverviewDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PlagiarismCaseExerciseDTO exercise, @Nullable PlagiarismCaseUserDTO student,
+        @Nullable PlagiarismCasePostSummaryDTO post, @Nullable PlagiarismVerdict verdict, @Nullable ZonedDateTime verdictDate, @Nullable PlagiarismCaseUserDTO verdictBy,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int plagiarismSubmissionCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean createdByContinuousPlagiarismControl,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean hasStudentAnswer) {
 
     /**
      * JPQL constructor for overview projections. It keeps optional nested DTOs absent when the joined entity is absent.

@@ -347,8 +347,8 @@ export class ExamResultSummaryComponent implements OnInit {
 
         const exerciseIds = studentExam?.exercises?.map((exercise) => exercise.id!);
         if (exerciseIds?.length && this.courseId()) {
-            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId(), exerciseIds).subscribe((res) => {
-                this.plagiarismCaseInfos.set(res.body ?? {});
+            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId(), exerciseIds).subscribe((plagiarismCaseInfos) => {
+                this.plagiarismCaseInfos.set(plagiarismCaseInfos);
             });
         }
     }
