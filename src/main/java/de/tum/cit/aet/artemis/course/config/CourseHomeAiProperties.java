@@ -1,46 +1,65 @@
 package de.tum.cit.aet.artemis.course.config;
 
 import java.util.Locale;
+import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+
 /**
- * Home's welcome provider: the LLM preset it calls and where that preset's inference takes place. Missing values leave Home deterministic.
+ * Presets that write Course Home welcomes, selected by the student's AI preference.
  *
- * @param enabled   whether Home may call a model
- * @param location  {@code LOCAL} when the preset's endpoint runs within the installation's approved local environment, {@code CLOUD} otherwise; it decides
- *                      which students' consent permits a welcome
- * @param llmPreset the preset under {@code artemis.llm.presets} that writes the welcomes
+ * @param enabled        whether Home may call a model
+ * @param location       inference location of the legacy single preset
+ * @param llmPreset      legacy preset for the mode matching its declared location
+ * @param localLlmPreset preset for approved local inference
+ * @param cloudLlmPreset preset for external inference
  */
 @Lazy
-@ConfigurationProperties(prefix = "artemis.course-home.ai")
-public record CourseHomeAiProperties(boolean enabled, @Nullable String location, @Nullable String llmPreset) {
+@ConfigurationProperties(prefix = CourseHomeAiProperties.PREFIX)
+public record CourseHomeAiProperties(boolean enabled, @Nullable String location, @Nullable String llmPreset, @Nullable String localLlmPreset, @Nullable String cloudLlmPreset) {
 
-    /** The key that assigns Home's preset. */
-    public static final String PRESET_KEY = "artemis.course-home.ai.llm-preset";
+    static final String PREFIX = "artemis.course-home.ai";
+
+    static final String PRESET_KEY = PREFIX + ".llm-preset";
+
+    static final String LOCAL_PRESET_KEY = PREFIX + ".local-llm-preset";
+
+    static final String CLOUD_PRESET_KEY = PREFIX + ".cloud-llm-preset";
 
     public CourseHomeAiProperties {
-        // the same name the startup validation checks: without surrounding blanks, and no name when blank
-        llmPreset = llmPreset == null || llmPreset.isBlank() ? null : llmPreset.strip();
+        location = location == null ? null : location.strip().toUpperCase(Locale.ROOT);
+        llmPreset = normalize(llmPreset);
+        localLlmPreset = normalize(localLlmPreset);
+        cloudLlmPreset = normalize(cloudLlmPreset);
     }
 
-    public String providerLocation() {
-        return location == null ? "" : location.strip().toUpperCase(Locale.ROOT);
+    @Nullable
+    private static String normalize(@Nullable String preset) {
+        return preset == null || preset.isBlank() ? null : preset.strip();
     }
 
     /**
-     * Checks whether Home is enabled with a known location and an assigned preset; the preset itself is checked at startup with the LLM catalog.
+     * Finds the configured welcome preset for the selected inference mode.
      *
-     * @return true when Home can call its provider
+     * @param decision the student's recorded AI choice
+     * @return the matching preset, if enabled and configured
      */
-    public boolean isConfigured() {
-        return enabled && (providerLocation().equals("LOCAL") || providerLocation().equals("CLOUD")) && llmPreset != null;
+    public Optional<String> presetFor(AiSelectionDecision decision) {
+        if (!enabled) {
+            return Optional.empty();
+        }
+        return switch (decision) {
+            case LOCAL_AI -> Optional.ofNullable(localLlmPreset != null ? localLlmPreset : "LOCAL".equals(location) ? llmPreset : null);
+            case CLOUD_AI -> Optional.ofNullable(cloudLlmPreset != null ? cloudLlmPreset : "CLOUD".equals(location) ? llmPreset : null);
+            case NO_AI -> Optional.empty();
+        };
     }
 
-    @Override
-    public String toString() {
-        return "CourseHomeAiProperties[enabled=" + enabled + ", location=" + providerLocation() + ", configured=" + isConfigured() + "]";
+    public boolean isConfigured() {
+        return presetFor(AiSelectionDecision.LOCAL_AI).isPresent() || presetFor(AiSelectionDecision.CLOUD_AI).isPresent();
     }
 }
