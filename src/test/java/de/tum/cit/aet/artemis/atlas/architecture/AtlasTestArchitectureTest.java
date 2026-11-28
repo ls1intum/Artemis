@@ -4,6 +4,7 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
 
 class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest {
 
@@ -14,6 +15,6 @@ class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest {
 
     @Override
     protected Set<Class<?>> getAbstractModuleIntegrationTestClasses() {
-        return Set.of(AbstractAtlasIntegrationTest.class);
+        return Set.of(AbstractAtlasIntegrationTest.class, AbstractSpringIntegrationLocalCILocalVCBatchTest.class);
     }
 }

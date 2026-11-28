@@ -1,0 +1,235 @@
+package de.tum.cit.aet.artemis.atlas.web;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeQuestionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionReviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSessionSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.practice.PracticeSubmissionDTO;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.EntityIdRefDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveClientDTO;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCBatchTest;
+
+class PracticeQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCBatchTest {
+
+    private static final String TEST_PREFIX = "practicequiztest";
+
+    @Autowired
+    private QuizQuestionPoolItemRepository quizQuestionPoolItemRepository;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
+    private Course course;
+
+    private QuizQuestionPoolItem poolItem1;
+
+    private QuizQuestionPoolItem poolItemUnreleased;
+
+    private Competency competency;
+
+    private LectureUnit lectureUnit;
+
+    @BeforeEach
+    void initTestCase() {
+        featureToggleService.enableFeature(Feature.SmartQuizzes);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+
+        competency = competencyUtilService.createCompetency(course, "Practice Competency");
+        Lecture lecture = lectureUtilService.createLecture(course);
+        lectureUnit = lectureUtilService.createTextUnit(lecture);
+
+        // Create practice-eligible questions in the AI question pool
+        poolItem1 = createPoolItem(0, "Item 1 Title", "Item 1 Text", competency.getId(), lectureUnit.getId());
+        createPoolItem(1, "Item 2 Title", "Item 2 Text", competency.getId(), lectureUnit.getId());
+
+        // Create an unreleased lecture unit with a pool item to test that future-dated units are excluded
+        TextUnit unreleasedUnit = lectureUtilService.createTextUnit(lecture);
+        unreleasedUnit.setReleaseDate(ZonedDateTime.now().plusDays(7));
+        lectureUnitRepository.save(unreleasedUnit);
+        poolItemUnreleased = createPoolItem(2, "Item Unreleased", "Text", competency.getId(), unreleasedUnit.getId());
+    }
+
+    @AfterEach
+    void tearDown() {
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
+    }
+
+    private QuizQuestionPoolItem createPoolItem(int index, String title, String text, Long competencyId, Long lectureUnitId) {
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setCourse(course);
+        item.setCompetencyId(competencyId);
+        item.setLectureUnitId(lectureUnitId);
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
+        item.setItemIndex(index);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        item.setAccepted(true);
+        item.setReviewState(QuizQuestionReviewState.APPROVED);
+
+        GeneratedQuizAnswerOptionDTO opt1 = new GeneratedQuizAnswerOptionDTO("Correct Option", true, "Hint 1", "Explanation 1");
+        GeneratedQuizAnswerOptionDTO opt2 = new GeneratedQuizAnswerOptionDTO("Wrong Option", false, null, null);
+        GeneratedQuizQuestionDTO question = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, title, text, List.of(opt1, opt2), "Overall Hint",
+                "Overall Explanation");
+        item.setQuestion(question);
+
+        return quizQuestionPoolItemRepository.save(item);
+    }
+
+    @Test
+    void testPracticeEligibilityFollowsPoolReviewRules() {
+        QuizQuestionPoolItem flaggedPending = createPoolItem(3, "Flagged", "Text", competency.getId(), lectureUnit.getId());
+        flaggedPending.setReviewState(QuizQuestionReviewState.PENDING);
+        flaggedPending.setFlagged(true);
+        QuizQuestionPoolItem materialChanged = createPoolItem(4, "Material changed", "Text", competency.getId(), lectureUnit.getId());
+        materialChanged.setMaterialChanged(true);
+        QuizQuestionPoolItem excluded = createPoolItem(5, "Excluded", "Text", competency.getId(), lectureUnit.getId());
+        excluded.setReviewState(QuizQuestionReviewState.EXCLUDED);
+        QuizQuestionPoolItem acceptedPending = createPoolItem(6, "Accepted and not flagged", "Text", competency.getId(), lectureUnit.getId());
+        acceptedPending.setReviewState(QuizQuestionReviewState.PENDING);
+        acceptedPending.setFlagged(false);
+        // An instructor approval overrides the filter's rejection
+        QuizQuestionPoolItem approvedRejected = createPoolItem(7, "Approved after rejection", "Text", competency.getId(), lectureUnit.getId());
+        approvedRejected.setAccepted(false);
+        quizQuestionPoolItemRepository.saveAll(List.of(flaggedPending, materialChanged, excluded, acceptedPending, approvedRejected));
+
+        List<Long> eligibleIds = quizQuestionPoolItemRepository.findAllPracticeEligibleCandidatesByCourseId(course.getId()).stream().map(QuizQuestionPoolCandidateDTO::id).toList();
+
+        assertThat(eligibleIds).contains(poolItem1.getId(), acceptedPending.getId(), approvedRejected.getId()).doesNotContain(flaggedPending.getId(), materialChanged.getId(),
+                excluded.getId(), poolItemUnreleased.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStartAndSubmitPracticeQuizFlow() throws Exception {
+        // 1. Start practice session
+        PracticeSessionDTO sessionDTO = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/start", null, PracticeSessionDTO.class,
+                HttpStatus.OK);
+
+        assertThat(sessionDTO).isNotNull();
+        assertThat(sessionDTO.id()).isPositive();
+        assertThat(sessionDTO.questions()).isNotEmpty();
+
+        long sessionId = sessionDTO.id();
+        // Verify question explanation is hidden in practice session DTO and unreleased unit questions are excluded
+        assertThat(sessionDTO.questions()).extracting(PracticeQuestionDTO::id).doesNotContain(poolItemUnreleased.getId());
+        assertThat(sessionDTO.questions().getFirst().explanation()).isNull();
+
+        // 2. Check current in-progress session
+        PracticeSessionDTO currentSession = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/current", HttpStatus.OK, PracticeSessionDTO.class);
+        assertThat(currentSession).isNotNull();
+        assertThat(currentSession.id()).isEqualTo(sessionId);
+
+        // 2b. Resume the session by its ID; its questions were stored together with the session and stay without solutions
+        PracticeSessionDTO resumedSession = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/resume", HttpStatus.OK,
+                PracticeSessionDTO.class);
+        assertThat(resumedSession.id()).isEqualTo(sessionId);
+        assertThat(resumedSession.questions()).extracting(PracticeQuestionDTO::id).containsExactlyElementsOf(sessionDTO.questions().stream().map(PracticeQuestionDTO::id).toList());
+        assertThat(resumedSession.questions().getFirst().explanation()).isNull();
+
+        // 3. Attempting to review an unfinished session should fail to prevent leaking solutions
+        request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.BAD_REQUEST, PracticeSessionReviewDTO.class);
+
+        // 4. Submit answers
+        SubmittedAnswerFromLiveClientDTO answerDTO = new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(poolItem1.getId()), Set.of(new EntityIdRefDTO(0L)));
+        PracticeSubmissionDTO submission = new PracticeSubmissionDTO(List.of(answerDTO));
+
+        PracticeSessionReviewDTO reviewDTO = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/submit", submission,
+                PracticeSessionReviewDTO.class, HttpStatus.OK);
+
+        assertThat(reviewDTO).isNotNull();
+        assertThat(reviewDTO.id()).isEqualTo(sessionId);
+        assertThat(reviewDTO.completedAt()).isNotNull();
+        assertThat(reviewDTO.questions()).isNotEmpty();
+        // Verify question explanation is exposed in review DTO
+        assertThat(reviewDTO.questions().getFirst().question().explanation()).isEqualTo("Overall Explanation");
+
+        // 4b. A second submission of the completed session is rejected, and it can no longer be resumed
+        request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/submit", submission, PracticeSessionReviewDTO.class,
+                HttpStatus.BAD_REQUEST);
+        request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId + "/resume", HttpStatus.BAD_REQUEST, PracticeSessionDTO.class);
+
+        // 5. Verify review endpoint
+        PracticeSessionReviewDTO fetchedReview = request.get("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions/" + sessionId, HttpStatus.OK,
+                PracticeSessionReviewDTO.class);
+        assertThat(fetchedReview).isNotNull();
+        assertThat(fetchedReview.id()).isEqualTo(sessionId);
+        assertThat(fetchedReview.questions().getFirst().question().explanation()).isEqualTo("Overall Explanation");
+
+        // 6. Verify sessions list
+        List<PracticeSessionSummaryDTO> summaries = request.getList("/api/atlas/courses/" + course.getId() + "/smart-quizzes/sessions", HttpStatus.OK,
+                PracticeSessionSummaryDTO.class);
+        assertThat(summaries).hasSize(1);
+        assertThat(summaries.getFirst().id()).isEqualTo(sessionId);
+        assertThat(summaries.getFirst().completed()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEndpointsBlockWhenFeatureToggleDisabled() throws Exception {
+        featureToggleService.disableFeature(Feature.SmartQuizzes);
+        request.post("/api/atlas/courses/" + course.getId() + "/smart-quizzes/start", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCrossCourseSessionAccessBlocked() throws Exception {
+        PracticeSessionDTO sessionDTO = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/smart-quizzes/start", null, PracticeSessionDTO.class,
+                HttpStatus.OK);
+        // 1. Not enrolled in other course -> 403 Forbidden
+        Course foreignCourse = courseUtilService.createCourse();
+        request.get("/api/atlas/courses/" + foreignCourse.getId() + "/smart-quizzes/sessions/" + sessionDTO.id(), HttpStatus.FORBIDDEN, PracticeSessionReviewDTO.class);
+
+        // 2. Enrolled in other course, but session belongs to course -> 404 Not Found
+        Course enrolledOtherCourse = courseUtilService.createCourse();
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.enrollUserInCourse(student, enrolledOtherCourse, CourseRole.STUDENT);
+        request.get("/api/atlas/courses/" + enrolledOtherCourse.getId() + "/smart-quizzes/sessions/" + sessionDTO.id(), HttpStatus.NOT_FOUND, PracticeSessionReviewDTO.class);
+    }
+}

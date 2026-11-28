@@ -1,0 +1,300 @@
+<div class="max-w-5xl mx-auto min-h-[70vh]">
+    <!-- Header (Overview only) -->
+    @if (state() === 'OVERVIEW') {
+        <div class="flex items-center justify-between border-b pb-4 mb-6">
+            <div>
+                <h2 class="text-2xl font-bold flex items-center gap-2.5">
+                    <fa-icon [icon]="faListCheck" class="text-primary" />
+                    <span>Smart Quiz</span>
+                    <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-surface-sunken text-muted-color border border-surface-200"> exploratory </span>
+                </h2>
+                <p class="text-sm text-muted-color mt-1">Practice course concepts on-demand. These quizzes do not affect your grade.</p>
+            </div>
+        </div>
+    }
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+        <div class="mb-4 p-3 rounded-lg border border-state-danger text-state-danger bg-surface-sunken flex items-center justify-between">
+            <span>{{ errorMessage() }}</span>
+            <button type="button" class="text-state-danger hover:opacity-75 font-bold px-2" (click)="errorMessage.set(null)">✕</button>
+        </div>
+    }
+
+    <!-- Main View Switch -->
+    @switch (state()) {
+        <!-- 1. OVERVIEW / DASHBOARD STATE -->
+        @case ('OVERVIEW') {
+            <!-- Minimalist Action Card -->
+            <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <fa-icon [icon]="faListCheck" class="text-lg" />
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-color mb-1">Generate a Practice Quiz</h3>
+                        <p class="text-sm text-muted-color mb-0">Questions are dynamically sampled from the course question pool.</p>
+                    </div>
+                </div>
+                <button tumAetUiButton type="button" [disabled]="isLoading()" (click)="startNewQuiz()">
+                    <fa-icon [icon]="faPlay" class="me-1" />
+                    <span>{{ isLoading() ? 'Generating...' : 'Generate Quiz' }}</span>
+                </button>
+            </div>
+
+            <!-- Past Sessions Section -->
+            <div class="bg-surface-card border border-surface-200 rounded-xl p-6 shadow-sm">
+                <h3 class="text-base font-bold text-color mb-4 flex items-center gap-2">
+                    <fa-icon [icon]="faHistory" class="text-muted-color" />
+                    Past Quizzes
+                </h3>
+
+                @if (isLoading()) {
+                    <div class="text-center py-8 text-muted-color">
+                        <span class="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin me-2"></span>
+                        Loading...
+                    </div>
+                } @else if (pastSessions().length === 0) {
+                    <div class="text-center py-8 bg-surface-sunken rounded-lg border border-dashed border-surface-200">
+                        <p class="text-muted-color text-sm mb-0">No past quizzes completed yet. Click "Generate Quiz" to begin.</p>
+                    </div>
+                } @else {
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-surface-sunken text-muted-color text-xs uppercase font-semibold border-b border-surface-200">
+                                <tr>
+                                    <th class="px-4 py-3">#</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Score</th>
+                                    <th class="px-4 py-3">Percentage</th>
+                                    <th class="px-4 py-3 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-surface-200">
+                                @for (s of pastSessions(); track s.id) {
+                                    <tr class="hover:bg-surface-hover transition">
+                                        <td class="px-4 py-3 font-mono text-xs text-muted-color">#{{ s.id }}</td>
+                                        <td class="px-4 py-3">{{ s.startTime | artemisDate: 'short' }}</td>
+                                        <td class="px-4 py-3">
+                                            <span
+                                                class="px-2 py-0.5 rounded text-xs font-semibold bg-surface-sunken border"
+                                                [class.text-state-success]="s.completed"
+                                                [class.border-state-success]="s.completed"
+                                                [class.text-state-warning]="!s.completed"
+                                                [class.border-state-warning]="!s.completed"
+                                            >
+                                                {{ s.completed ? 'Completed' : 'In Progress' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null) {
+                                                <span class="font-semibold">{{ s.score | number: '1.0-1' }}</span> / {{ s.maxPoints | number: '1.0-1' }}
+                                            } @else {
+                                                <span class="text-muted-color">-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if (s.completed && s.score !== undefined && s.score !== null && s.maxPoints !== undefined && s.maxPoints !== null && s.maxPoints > 0) {
+                                                <span class="font-medium">{{ (s.score / s.maxPoints) * 100 | number: '1.0-0' }}%</span>
+                                            } @else {
+                                                <span class="text-muted-color">-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-3 text-end">
+                                            @if (s.completed) {
+                                                <button tumAetUiButton type="button" size="small" variant="outlined" (click)="openReview(s.id)">Review</button>
+                                            } @else {
+                                                <button tumAetUiButton type="button" size="small" (click)="resumeSession(s.id)">Resume</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- 2. QUIZ RUNNER STATE -->
+        @case ('QUIZ') {
+            @if (currentSession(); as session) {
+                <div>
+                    <!-- Standard Artemis Quiz Header -->
+                    <div id="quiz-header" class="flex items-center justify-between gap-2 pb-2 border-b border-surface-200 mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <h3 class="text-xl font-bold text-color mb-0">Smart Quiz</h3>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-surface-sunken text-muted-color border border-surface-200">
+                                {{ activeQuestions().length }} Questions • Practice
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [disabled]="isSubmitting()" (click)="backToOverview()">
+                                Cancel
+                            </button>
+                            <button tumAetUiButton type="button" size="small" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                                <fa-icon [icon]="faCheck" class="me-1" />
+                                <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Layout: Step-Wizard on Left, Quiz Questions on Right -->
+                    <div class="flex flex-col md:flex-row gap-5 items-start">
+                        <!-- Step-Wizard Navigation -->
+                        <div class="pe-3 md:shrink-0">
+                            <div class="quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling">
+                                @for (question of activeQuestions(); track question.id; let i = $index) {
+                                    <div class="stepwizardquiz__step" [class.mb-4!]="!$last">
+                                        <button
+                                            type="button"
+                                            class="quiz-nav-step multiplechoicecolor-question"
+                                            (click)="navigateToQuestion(i)"
+                                            [class.changed-question]="isAnswered(question.id!)"
+                                            [attr.aria-label]="'Question ' + (i + 1)"
+                                            [tumAetUiTooltip]="
+                                                (isAnswered(question.id!) ? 'artemisApp.quizExercise.explanationAnswered' : 'artemisApp.quizExercise.explanationNotAnswered')
+                                                    | artemisTranslate
+                                            "
+                                            tumAetUiTooltipPlacement="right"
+                                        >
+                                            <b>MC</b>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Questions List -->
+                        <div class="quiz-content mb-4 min-w-0 md:flex-1">
+                            <p class="text-sm text-muted-color mb-4" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
+
+                            @for (q of activeQuestions(); track q.id; let i = $index) {
+                                <div>
+                                    <jhi-multiple-choice-question
+                                        [id]="'question' + i"
+                                        [question]="q"
+                                        [selectedAnswerOptions]="selectedAnswerOptions()[q.id!] ?? []"
+                                        (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(q.id!, $event)"
+                                        [clickDisabled]="isSubmitting()"
+                                        [showResult]="false"
+                                        [questionIndex]="i + 1"
+                                    />
+                                </div>
+                            }
+
+                            <!-- Bottom Submit Action -->
+                            <div class="flex items-center justify-between pt-4 border-t border-surface-200">
+                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" [disabled]="isSubmitting()" (click)="backToOverview()">Cancel</button>
+                                <button tumAetUiButton type="button" [disabled]="isSubmitting()" (click)="submitQuiz()">
+                                    <fa-icon [icon]="faCheck" class="me-1" />
+                                    <span>{{ isSubmitting() ? 'Submitting...' : 'Submit Answers' }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- 3. REVIEW & RESULTS STATE -->
+        @case ('REVIEW') {
+            @if (reviewSession(); as review) {
+                <div>
+                    <!-- Standard Artemis Review Header with Score -->
+                    <div id="quiz-header" class="flex flex-col md:flex-row items-center justify-between gap-4 pb-3 border-b border-surface-200 mb-4">
+                        <div class="flex items-center gap-2.5">
+                            <h3 class="text-xl font-bold text-color mb-0">Smart Quiz Review</h3>
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-surface-sunken text-state-success border border-state-success"> Completed </span>
+                        </div>
+
+                        <!-- Standard Artemis Quiz Score -->
+                        <div class="text-center">
+                            <div id="quiz-score" [class.incorrect]="(review.score ?? 0) < (review.maxPoints ?? 0)">
+                                <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
+                                <span id="quiz-score-result">
+                                    {{ review.score | number: '1.0-1' }}/{{ review.maxPoints | number: '1.0-1' }} ({{
+                                        ((review.score ?? 0) / (review.maxPoints || 1)) * 100 | number: '1.0-0'
+                                    }}%)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" [disabled]="isLoading()" (click)="backToOverview()">
+                                Back to Overview
+                            </button>
+                            <button tumAetUiButton type="button" size="small" [disabled]="isLoading()" (click)="startNewQuiz()">
+                                <fa-icon [icon]="faRedo" class="me-1" />
+                                <span>Practice Again</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Layout: Step-Wizard on Left, Reviewed Questions on Right -->
+                    <div class="flex flex-col md:flex-row gap-5 items-start">
+                        <!-- Step-Wizard Navigation: Standard Artemis Style -->
+                        <div class="pe-3 md:shrink-0">
+                            <div class="quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling">
+                                @for (question of reviewQuestions(); track question.id; let i = $index) {
+                                    <div class="stepwizardquiz__step" [class.mb-4!]="!$last">
+                                        <button
+                                            type="button"
+                                            class="quiz-nav-step multiplechoicecolor-question"
+                                            [class.changed-question]="isAnswered(question.id!)"
+                                            (click)="navigateToQuestion(i)"
+                                            [attr.aria-label]="'Question ' + (i + 1)"
+                                            [tumAetUiTooltip]="questionTooltip(question.id!, question.points ?? 1)"
+                                            tumAetUiTooltipPlacement="right"
+                                        >
+                                            <b>MC</b>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Questions in Review Mode -->
+                        <div class="quiz-content mb-4 min-w-0 md:flex-1">
+                            <p
+                                class="text-sm text-muted-color mb-4"
+                                jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
+                                [translateValues]="{
+                                    userScore: review.score | number: '1.0-1',
+                                    maxScore: review.maxPoints | number: '1.0-1',
+                                    percentage: ((review.score ?? 0) / (review.maxPoints || 1)) * 100 | number: '1.0-0',
+                                }"
+                            ></p>
+
+                            @for (q of reviewQuestions(); track q.id; let i = $index) {
+                                <div>
+                                    <jhi-multiple-choice-question
+                                        [id]="'question' + i"
+                                        [question]="q"
+                                        [selectedAnswerOptions]="reviewSelectedAnswerOptions()[q.id!] ?? []"
+                                        [clickDisabled]="true"
+                                        [showResult]="true"
+                                        [submittedResult]="reviewSubmittedResult()"
+                                        [quizQuestions]="reviewQuestions()"
+                                        [questionIndex]="i + 1"
+                                        [score]="questionScores()[q.id!] ?? 0"
+                                    />
+                                </div>
+                            }
+
+                            <!-- Bottom Return Action -->
+                            <div class="flex justify-center pt-4">
+                                <button tumAetUiButton type="button" severity="secondary" variant="outlined" [disabled]="isLoading()" (click)="backToOverview()">
+                                    Back to Overview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+        @default {}
+    }
+</div>

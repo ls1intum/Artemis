@@ -114,6 +114,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.LEARNER_PROFILE, bind(learning::countLearnerProfiles, learning::deleteLearnerProfile));
         bindings.put(UserDeletionReferencePolicy.LEARNING_PATH, bind(learning::countLearningPaths, learning::deleteLearningPaths));
         bindings.put(UserDeletionReferencePolicy.SCIENCE_COURSE_CONSENT, bind(learning::countScienceCourseConsents, learning::deleteScienceCourseConsents));
+        bindings.put(UserDeletionReferencePolicy.PRACTICE_SESSION, bind(learning::countPracticeSessions, learning::deletePracticeSessions));
 
         bindings.put(UserDeletionReferencePolicy.COURSE_ROLE, bind(courseContext::countCourseRoles, courseContext::deleteCourseRoles));
         bindings.put(UserDeletionReferencePolicy.COURSE_REQUEST, bind(courseContext::countCourseRequests, courseContext::deleteCourseRequests));

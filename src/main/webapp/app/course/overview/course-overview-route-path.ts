@@ -21,5 +21,6 @@ export enum CourseOverviewRoutePath {
     SETTINGS = 'settings',
     TRAINING = 'training',
     TRAINING_QUIZ = 'training/quiz',
+    SMART_QUIZZES = 'smart-quizzes',
     CALENDAR = 'calendar',
 }

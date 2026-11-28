@@ -8,6 +8,8 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
+import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
@@ -311,6 +313,16 @@ export const courseRoutes: Routes = [
                     pageTitle: 'overview.learningPath',
                 },
                 canActivate: [CourseOverviewGuard],
+            },
+            {
+                path: CourseOverviewRoutePath.SMART_QUIZZES,
+                loadComponent: () => import('app/atlas/overview/practice-quiz/practice-quiz.component').then((m) => m.PracticeQuizComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.smartQuizzes',
+                    hasSidebar: false,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard, featureToggleGuard(FeatureToggle.SmartQuizzes)],
             },
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,

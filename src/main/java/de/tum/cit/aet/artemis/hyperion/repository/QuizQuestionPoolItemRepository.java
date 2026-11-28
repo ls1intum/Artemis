@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
@@ -59,6 +60,29 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             WHERE item.course.id = :courseId AND (:competencyId IS NULL OR item.competencyId = :competencyId)
             """)
     Page<QuizQuestionPoolItem> findPageForCourse(@Param("courseId") long courseId, @Param("competencyId") @Nullable Long competencyId, Pageable pageable);
+
+    /**
+     * Finds lightweight candidate metadata for all items of a course that are eligible for adaptive practice quizzing: the same review rules as
+     * {@link #findAllForSelection} apply, and the item's lecture unit must be released.
+     * Selects only ID, competency ID, and difficulty to avoid loading full question JSON for candidates that are not sampled.
+     *
+     * @param courseId the course ID
+     * @return the list of lightweight practice-eligible candidate DTOs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCandidateDTO(item.id, item.competencyId, item.difficulty)
+            FROM QuizQuestionPoolItem item
+                JOIN LectureUnit lu ON item.lectureUnitId = lu.id
+            WHERE item.course.id = :courseId
+                AND (lu.releaseDate IS NULL OR lu.releaseDate <= CURRENT_TIMESTAMP)
+                AND item.state = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState.FILTERED
+                AND item.materialChanged = FALSE
+                AND item.question IS NOT NULL
+                AND (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.APPROVED
+                    OR (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.PENDING AND item.accepted = TRUE AND item.flagged = FALSE))
+            ORDER BY item.competencyId, item.difficulty, item.itemIndex
+            """)
+    List<QuizQuestionPoolCandidateDTO> findAllPracticeEligibleCandidatesByCourseId(@Param("courseId") long courseId);
 
     /**
      * Returns one page of the items flagged for review, those awaiting a decision first and then in pool order.

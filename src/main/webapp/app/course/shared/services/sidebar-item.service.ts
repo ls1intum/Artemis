@@ -184,6 +184,15 @@ export class CourseSidebarItemService {
             hidden: false,
         };
     }
+    getSmartQuizzesItem(): SidebarItem {
+        return {
+            routerLink: 'smart-quizzes',
+            icon: faListCheck,
+            title: 'Smart Quizzes',
+            translation: 'artemisApp.courseOverview.menu.smartQuizzes',
+            hidden: false,
+        };
+    }
     getLearningPathItem(): SidebarItem {
         return {
             routerLink: 'learning-path',

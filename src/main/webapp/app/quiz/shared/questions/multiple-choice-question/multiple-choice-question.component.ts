@@ -129,7 +129,7 @@ export class MultipleChoiceQuestionComponent {
         let updatedSelection: AnswerOption[];
         if (this.isAnswerOptionSelected(answerOption)) {
             updatedSelection = current.filter((selectedAnswerOption) => {
-                if (answerOption.id) {
+                if (answerOption.id !== undefined && answerOption.id !== null) {
                     return selectedAnswerOption.id !== answerOption.id;
                 }
                 return selectedAnswerOption !== answerOption;
@@ -155,7 +155,7 @@ export class MultipleChoiceQuestionComponent {
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
             this.currentSelectedAnswerOptions().findIndex((selectedAnswerOption) => {
-                if (answerOption.id) {
+                if (answerOption.id !== undefined && answerOption.id !== null) {
                     return selectedAnswerOption.id === answerOption.id;
                 }
                 return selectedAnswerOption === answerOption;

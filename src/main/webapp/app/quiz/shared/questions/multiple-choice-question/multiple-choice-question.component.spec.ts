@@ -208,6 +208,27 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBe(false);
     });
 
+    it('should correctly select and toggle options with id 0', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 0, invalid: false },
+            { id: 1, invalid: false },
+        ];
+        const question: MultipleChoiceQuestion = { text: 'text', exportQuiz: false, randomizeOrder: true, invalid: false, answerOptions, scoringType: ScoringType.ALL_OR_NOTHING };
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.toggleSelection(answerOptions[0]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(true);
+
+        fixture.componentRef.setInput('selectedAnswerOptions', [{ id: 0, invalid: false }]);
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(true);
+
+        component.toggleSelection(answerOptions[0]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBe(false);
+    });
+
     it('should keep pre-existing selections when adding another option (multi-select)', () => {
         // Regression test for answer loss in exams: when the component is initialized with
         // already-selected options (e.g. a resumed exam, a page reload, or a recreated

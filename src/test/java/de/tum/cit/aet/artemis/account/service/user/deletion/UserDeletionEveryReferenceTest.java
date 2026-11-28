@@ -98,6 +98,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
 
         assertThat(userTestRepository.findById(targetId)).isEmpty();
         assertThat(counts(target)).as("nothing may be left pointing at the deleted account").isEmpty();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM practice_log", Long.class)).as("practice logs are removed").isZero();
         assertThat(userTestRepository.findById(bystander.getId())).as("the account that shares the seeded parents survives").isPresent();
     }
 
@@ -277,6 +278,9 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.LLM_USAGE_ACTOR, userId, values());
         seed(UserDeletionReferencePolicy.VCS_ACCESS_LOG, userId, values("participation_id", participationId, "name", "Deleted Account", "email", "deleted@localhost",
                 "repository_action_type", 0, "authentication_mechanism", 0, "timestamp", now));
+        seed(UserDeletionReferencePolicy.PRACTICE_SESSION, userId, values("course_id", courseId, "start_time", now));
+        Long practiceSessionId = jdbcTemplate.queryForObject("SELECT id FROM practice_session WHERE user_id = ?", Long.class, userId);
+        insertInto("practice_log", values("practice_session_id", practiceSessionId, "pool_item_id", 1L, "is_adaptive", false));
     }
 
     /**

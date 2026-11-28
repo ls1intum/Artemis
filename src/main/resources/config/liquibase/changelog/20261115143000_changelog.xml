@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261115143000-01-create-practice-session" author="yusraatia">
+        <comment>
+            Create practice_session table to record on-demand adaptive practice quiz sessions
+            per user and course, strictly isolated from core grading and Atlas competency records.
+        </comment>
+        <createTable tableName="practice_session">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="datetime(3)"/>
+            <column name="score" type="double"/>
+            <column name="max_points" type="double"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="practice_session" baseColumnNames="user_id"
+                                 constraintName="fk_practice_session_user"
+                                 referencedTableName="jhi_user" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="practice_session" baseColumnNames="course_id"
+                                 constraintName="fk_practice_session_course"
+                                 referencedTableName="course" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex indexName="idx_practice_session_user_course" tableName="practice_session">
+            <column name="user_id"/>
+            <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="idx_practice_session_course" tableName="practice_session">
+            <column name="course_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="practice_session"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261115143000-02-create-practice-log" author="yusraatia">
+        <comment>
+            Create practice_log table to record individual delivered questions from the AI quiz question pool,
+            whether they were adaptive or non-adaptive (50/50 split condition), student answers, and timestamps.
+        </comment>
+        <createTable tableName="practice_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="practice_session_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pool_item_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="competency_id" type="bigint"/>
+            <column name="difficulty" type="varchar(20)"/>
+            <column defaultValueBoolean="false" name="is_adaptive" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="double"/>
+            <column name="submitted_answer" type="json"/>
+            <column name="answered_at" type="datetime(3)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="practice_log" baseColumnNames="practice_session_id"
+                                 constraintName="fk_practice_log_practice_session"
+                                 referencedTableName="practice_session" referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex indexName="idx_practice_log_session" tableName="practice_log">
+            <column name="practice_session_id"/>
+        </createIndex>
+        <createIndex indexName="idx_practice_log_pool_item" tableName="practice_log">
+            <column name="pool_item_id"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="practice_log"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

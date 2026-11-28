@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Params, RouterOutlet } from '@angular/router';
@@ -18,6 +18,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -61,6 +62,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private scienceSettingsService = inject(ScienceSettingsService);
     private scienceService = inject(ScienceService);
     private llmSelectionModalService = inject(LLMSelectionModalService);
+    private featureToggleService = inject(FeatureToggleService);
+    private readonly destroyRef = inject(DestroyRef);
+
+    private readonly smartQuizzesActive = signal(false);
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
@@ -199,6 +204,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
             this.isExamStarted.set(isStarted);
         });
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.SmartQuizzes)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.smartQuizzesActive.set(isActive);
+                this.sidebarItems.set(this.getSidebarItems());
+            });
 
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed() ?? false);
@@ -461,6 +474,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 const learningPathItem = this.sidebarItemService.getLearningPathItem();
                 sidebarItems.push(learningPathItem);
             }
+        }
+
+        if (this.atlasEnabled && this.smartQuizzesActive()) {
+            const smartQuizzesItem = this.sidebarItemService.getSmartQuizzesItem();
+            sidebarItems.push(smartQuizzesItem);
         }
 
         if (tabs?.faq) {
