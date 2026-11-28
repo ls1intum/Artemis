@@ -117,6 +117,8 @@ export class AssessmentInstructionsComponent {
         effect(() => {
             const exercise = this.exercise();
             this.gradingCriteria.set(exercise.gradingCriteria);
+            // The feedback cards and Apollon name a linked instruction's criterion through the selection service.
+            this.selectionService.setCriteria(exercise.gradingCriteria ?? []);
         });
     }
 }

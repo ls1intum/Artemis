@@ -1,9 +1,24 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    WritableSignal,
+    afterNextRender,
+    afterRenderEffect,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faInfo, faLink, faLinkSlash, faMinus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -17,7 +32,7 @@ import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-a
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
-import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
@@ -42,9 +57,9 @@ interface FeedbackTypeConfig {
         TumAetUiTooltipDirective,
         FormsModule,
         ConfirmIconComponent,
-        GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
         PointsInputComponent,
     ],
 })
@@ -52,6 +67,7 @@ export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
     private destroyRef = inject(DestroyRef);
+    private gradingInstructionSelectionService = inject(GradingInstructionSelectionService);
 
     constructor() {
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
@@ -100,6 +116,10 @@ export class UnifiedFeedbackComponent {
             }
             this.destroyRef.onDestroy(() => resizeObserver.disconnect());
         });
+
+        // The title and the criterion chip repeat themselves in a tooltip once a narrow card cuts them off
+        this.observeTruncation(() => [this.titleText()?.nativeElement], this.titleTruncated);
+        this.observeTruncation(() => [this.criterionTitle()?.nativeElement, this.gradingScaleSegment()?.nativeElement], this.linkedCriterionTruncated);
     }
 
     feedbackContent = input<string>('');
@@ -114,27 +134,38 @@ export class UnifiedFeedbackComponent {
 
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
-    highlightDifferences = input<boolean>(false);
     /**
      * Whether the title may be edited while {@link editable} is true. Consumers that derive the title themselves on
      * save (e.g. the programming inline feedback, which auto-generates "File X at line Y" for non-suggestions) set
      * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
      */
     titleEditable = input<boolean>(true);
+    highlightDifferences = input<boolean>(false);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
     feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
+    /** Emitted after the assessor removed the link to a grading instruction, which changes the feedback without changing its fields. */
+    readonly gradingInstructionUnlinked = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
-    private readonly confirmIcon = viewChild(ConfirmIconComponent);
+    // By reference: the unlink control of a linked criterion is a ConfirmIconComponent too, and comes first.
+    private readonly deleteConfirmIcon = viewChild('deleteConfirmIcon', { read: ConfirmIconComponent });
+    private readonly titleText = viewChild<ElementRef<HTMLElement>>('titleText');
+    /** Whether a read-only feedback cuts off its title, which its tooltip then repeats in full. */
+    readonly titleTruncated = signal(false);
+    private readonly criterionTitle = viewChild<ElementRef<HTMLElement>>('criterionTitle');
+    private readonly gradingScaleSegment = viewChild<ElementRef<HTMLElement>>('gradingScaleSegment');
+    /** Whether the criterion chip cuts off the criterion's name or its grading scale, which its tooltip then repeats in full. */
+    readonly linkedCriterionTruncated = signal(false);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
-        needs_revision: { icon: faExclamationTriangle, alertClass: 'unified-feedback--info' },
+        // Feedback without points informs rather than warns, like the zero badge on the Apollon canvas
+        needs_revision: { icon: faInfo, alertClass: 'unified-feedback--info' },
         not_attempted: { icon: faMinus, alertClass: 'unified-feedback--neutral' },
         non_compliant: { icon: faTimes, alertClass: 'unified-feedback--danger' },
     };
@@ -227,7 +258,7 @@ export class UnifiedFeedbackComponent {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     canDismissWithoutConfirm(): boolean {
         return (
             (this.feedbackCredits() ?? 0) === 0 &&
@@ -240,23 +271,76 @@ export class UnifiedFeedbackComponent {
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
 
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    /** Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call. */
     isDetailMissing(): boolean {
         return this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
     }
 
-    readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
     readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
     readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
     /**
+     * Keeps `truncated` telling whether any of the segments is cut off by its ellipsis. The segments come and go with
+     * the feedback (e.g. a dropped grading instruction), so the observer follows them rather than being set up once.
+     */
+    private observeTruncation(segments: () => (HTMLElement | undefined)[], truncated: WritableSignal<boolean>): void {
+        effect((onCleanup) => {
+            const elements = segments().filter((element): element is HTMLElement => !!element);
+            if (!elements.length) {
+                truncated.set(false);
+                return;
+            }
+            const resizeObserver = new ResizeObserver(() => truncated.set(elements.some((element) => element.scrollWidth > element.clientWidth)));
+            elements.forEach((element) => resizeObserver.observe(element));
+            onCleanup(() => resizeObserver.disconnect());
+        });
+    }
+
+    /**
+     * The title of the criterion the feedback is linked to, shown as a chip beside its reference.
      * A plain method, not a computed: consumers (drag-and-drop rubric assignment, the rubric dropdown) mutate
      * `feedback().gradingInstruction` in place rather than replacing the feedback object, so a computed signal
      * keyed on the `feedback` input would never see its dependency change and would keep returning a stale value.
      */
-    gradingInstructionText(): string | undefined {
-        return this.feedback()?.gradingInstruction?.feedback;
+    linkedCriterionTitle(): string | undefined {
+        const instruction = this.feedback()?.gradingInstruction;
+        // Only the assessor sees which criterion a feedback is linked to, never the student.
+        if (!instruction || !this.editable()) {
+            return undefined;
+        }
+        return this.gradingInstructionSelectionService.criterionTitleOf(instruction) ?? this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterionFallback');
+    }
+
+    /**
+     * Whether the chip names the criterion itself, which it follows with "Criterion"; the generic fallback name already says it.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
+    isLinkedCriterionKnown(): boolean {
+        const instruction = this.feedback()?.gradingInstruction;
+        return !!instruction && !!this.gradingInstructionSelectionService.criterionTitleOf(instruction);
+    }
+
+    /**
+     * The linked instruction's grading scale, e.g. "Partially correct", shown in its own segment of the criterion chip. Instructors may leave it empty.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
+    linkedGradingScale(): string | undefined {
+        return this.feedback()?.gradingInstruction?.gradingScale?.trim() || undefined;
+    }
+
+    /**
+     * The chip's full text, e.g. "Linked to Documentation Criterion | Correct", shown only once the chip cuts the criterion's name or grading scale off.
+     * Plain method, not computed: see {@link linkedCriterionTitle} for why this must re-read on every call.
+     */
+    linkedCriterionTooltip(): string {
+        if (!this.linkedCriterionTruncated()) {
+            return '';
+        }
+        const label = this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterion');
+        const suffix = this.isLinkedCriterionKnown() ? ` ${this.artemisTranslatePipe.transform('artemisApp.assessment.linkedCriterionSuffix')}` : '';
+        const gradingScale = this.linkedGradingScale();
+        return `${label} ${this.linkedCriterionTitle() ?? ''}${suffix}${gradingScale ? ` | ${gradingScale}` : ''}`;
     }
 
     /**
@@ -274,12 +358,6 @@ export class UnifiedFeedbackComponent {
         return this.feedback()?.correctionStatus === 'CORRECT';
     }
 
-    /** A non-graded feedback suggestion (an Athena hint with no credits) has no points pill in read-only mode. */
-    readonly showPoints = computed(() => {
-        const feedback = this.feedback();
-        return !feedback || !Feedback.isNonGradedFeedbackSuggestion(feedback);
-    });
-
     /** Usage-limit-excess feedback whose credits are excluded from the total score, e.g. a subsequent SCA finding beyond the configured limit. */
     readonly isSubsequentFeedback = computed(() => !!this.feedback()?.isSubsequent);
 
@@ -288,7 +366,8 @@ export class UnifiedFeedbackComponent {
     protected readonly Feedback = Feedback;
     protected readonly faTimes = faTimes;
     protected readonly faTrashAlt = faTrashAlt;
-    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faLink = faLink;
+    protected readonly faLinkSlash = faLinkSlash;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faMinus = faMinus;
 
@@ -296,6 +375,14 @@ export class UnifiedFeedbackComponent {
     protected readonly CREDITS_MIN = -MAX_MANUAL_CREDITS;
     protected readonly CREDITS_MAX = MAX_MANUAL_CREDITS;
     protected readonly CREDITS_STEP = 0.5;
+
+    /** Matches Apollon's give-feedback title cap, so a title stays a headline well under the 500-character text column. */
+    protected readonly TITLE_MAX_LENGTH = 100;
+
+    /** Matches Apollon's give-feedback description cap, shown to the assessor as an `n/500` counter. */
+    protected readonly DETAIL_MAX_LENGTH = 500;
+
+    readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
@@ -329,8 +416,23 @@ export class UnifiedFeedbackComponent {
         }
     }
 
+    /**
+     * Unlinks the feedback from its grading instruction, which makes its points editable again, and tells the host, whose applied
+     * instructions and score depend on the link. For an accepted AI suggestion this is an edit like any other, so it becomes adapted.
+     */
+    removeGradingInstructionLink(): void {
+        const feedback = this.feedback();
+        if (!feedback) {
+            return;
+        }
+        feedback.gradingInstruction = undefined;
+        this.markAdaptedIfSuggestion();
+        this.gradingInstructionUnlinked.emit();
+    }
+
     onTitleInput(value: string): void {
-        this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
+        const title = Feedback.withinLength(value, this.displayTitle(), this.TITLE_MAX_LENGTH);
+        this.feedbackTitle.set(`${this.nextTitlePrefix()}${title}`);
     }
 
     onTitleTextareaInput(): void {
@@ -338,7 +440,7 @@ export class UnifiedFeedbackComponent {
     }
 
     onDetailChange(value: string): void {
-        this.feedbackDetail.set(value);
+        this.feedbackDetail.set(Feedback.withinLength(value, this.feedbackDetail() ?? '', this.DETAIL_MAX_LENGTH));
         this.markAdaptedIfSuggestion();
     }
 
@@ -378,7 +480,7 @@ export class UnifiedFeedbackComponent {
         if (this.canDismissWithoutConfirm()) {
             this.handleDeleteConfirmed();
         } else {
-            this.confirmIcon()?.toggle();
+            this.deleteConfirmIcon()?.toggle();
         }
     }
 
@@ -410,18 +512,20 @@ export class UnifiedFeedbackComponent {
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
+            // An assessor may clear a suggestion's title, leaving only its prefix; show the same default title the
+            // editor offered as placeholder instead of an empty heading.
             if (Feedback.isFeedbackSuggestion(feedback)) {
-                return Feedback.stripSuggestionPrefix(feedback.text);
+                return Feedback.stripSuggestionPrefix(feedback.text).trim() || this.defaultTitlePlaceholder();
             }
             if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length);
+                return feedback.text.slice(NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER.length).trim() || this.defaultTitlePlaceholder();
             }
             if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
                 return feedback.text.slice(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
             }
-            // Only use feedback.text as title when detailText exists as separate content;
-            // otherwise text is used as content by buildFeedbackTextForReview and would duplicate here.
-            if (feedback.detailText) {
+            // Without a body of its own, feedback.text is a comment written before titles existed; buildFeedbackTextForReview
+            // shows it as content, so it gets the default title instead of being repeated here.
+            if (Feedback.isTextTitle(feedback)) {
                 return feedback.text;
             }
             return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);

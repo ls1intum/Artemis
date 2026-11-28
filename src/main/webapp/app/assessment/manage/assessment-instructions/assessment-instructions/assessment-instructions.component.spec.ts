@@ -18,6 +18,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Component, input, output, signal } from '@angular/core';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -167,6 +168,12 @@ describe('AssessmentInstructionsComponent', () => {
 
         beforeEach(() => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, gradingCriteria: criteria } as ProgrammingExercise);
+        });
+
+        it('should hand the criteria to the selection service so feedback can name the criterion of its instruction', () => {
+            fixture.detectChanges();
+
+            expect(TestBed.inject(GradingInstructionSelectionService).criterionTitleOf({ id: 2 } as GradingInstruction)).toBe('Documentation');
         });
 
         it('should not be selectable, and count nothing as applied, without a registered feedback list', () => {

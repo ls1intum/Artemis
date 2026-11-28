@@ -43,6 +43,20 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(() => fixture.detectChanges()).not.toThrow();
     });
 
+    it('should emit the feedback when the card removes its link to a grading instruction', () => {
+        const feedback = { id: 1, text: 'Missing null check', detailText: '', credits: 2, gradingInstruction: { id: 3, credits: 2 } as GradingInstruction } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        fixture.debugElement.query((element) => element.name === 'jhi-unified-feedback').componentInstance.removeGradingInstructionLink();
+
+        expect(feedback.gradingInstruction).toBeUndefined();
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(feedback);
+    });
+
     it('should call getLongFeedbackText on init if feedback has long text', async () => {
         const feedbackId = 42;
         const exampleText = 'This is a long feedback text';

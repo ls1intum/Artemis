@@ -194,6 +194,24 @@ export class Feedback implements BaseEntity {
     }
 
     /**
+     * Whether `text` holds the feedback's title rather than its comment. It is a title once the feedback has a
+     * description, even an empty one; feedback written before titles existed never set `detailText` and kept its
+     * whole comment in `text`, which is then shown as the body under a default title, also when a grading
+     * instruction supplies feedback of its own.
+     */
+    public static isTextTitle(that: Feedback): boolean {
+        return that.detailText != undefined;
+    }
+
+    /**
+     * Applies a field's character limit the way `maxlength` does for typing, also to values that bypass it (e.g. set by
+     * a script): the value cannot grow past the limit, but an older value that already exceeds it is left as it is.
+     */
+    public static withinLength(value: string, previous: string, maxLength: number): string {
+        return value.length > maxLength && previous.length <= maxLength ? value.slice(0, maxLength) : value;
+    }
+
+    /**
      * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
      * feedbacks before they are saved.
      * @param f1 The feedback that is compared to f2
@@ -370,7 +388,8 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (includeText) {
+        // A title is not repeated here, as without a grading instruction; only a legacy comment in `text` is.
+        if (includeText && !Feedback.isTextTitle(feedback)) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
     } else if (feedback.detailText) {
