@@ -5,27 +5,52 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { combineLatest } from 'rxjs';
+import { Observable, Subscription, combineLatest, tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RecordingRecoveryScope, TumLiveSaveRecoveryComponent } from '../tum-live-upload/tum-live-save-recovery.component';
+import {
+    RecordingLeaveComponent,
+    RecordingRedirect,
+    RecordingTarget,
+    confirmRecordingLeave,
+    createOutcomeIsUnknown,
+    injectRecordingAvailability,
+    unknownCreateDetail,
+} from '../tum-live-upload/tum-live-creation';
 import { finalize } from 'rxjs/operators';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
     selector: 'jhi-create-attachment-video-unit',
     templateUrl: './create-attachment-video-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    imports: [
+        LectureUnitLayoutComponent,
+        AttachmentVideoUnitFormComponent,
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        TumLiveSaveRecoveryComponent,
+        ArtemisTranslatePipe,
+    ],
+    providers: [TumAetUiConfirmationService],
+    host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateAttachmentVideoUnitComponent implements OnInit {
+export class CreateAttachmentVideoUnitComponent implements OnInit, RecordingLeaveComponent {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
+    private readonly confirmation = inject(TumAetUiConfirmationService);
+    private readonly translate = inject(TranslateService);
+    private readonly redirect = new RecordingRedirect();
 
     readonly attachmentVideoUnitForm = viewChild<AttachmentVideoUnitFormComponent>('attachmentVideoUnitForm');
     attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
@@ -34,6 +59,13 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     readonly isLoading = signal(false);
     readonly lectureId = signal<number | undefined>(undefined);
     readonly courseId = signal<number | undefined>(undefined);
+    protected readonly recordingAvailable = injectRecordingAvailability(this.courseId);
+    protected readonly savingRecording = signal(false);
+    protected readonly savedRecording = signal<RecordingTarget | undefined>(undefined);
+    protected readonly recovery = signal<RecordingRecoveryScope | undefined>(undefined);
+    private recordingRequest?: Subscription;
+    private recording?: File;
+    private createdUnit?: AttachmentVideoUnit;
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent?.parent;
@@ -48,6 +80,21 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                 const courseIdParam = parentParams.get('courseId');
                 this.lectureId.set(lectureIdParam ? Number(lectureIdParam) : undefined);
                 this.courseId.set(courseIdParam ? Number(courseIdParam) : undefined);
+                const courseId = this.courseId();
+                const lectureId = this.lectureId();
+                if (!courseId || !lectureId) {
+                    return;
+                }
+                const recovery = this.redirect.recoverPendingSave(courseId, lectureId);
+                this.recovery.set(recovery);
+                if (recovery) {
+                    return;
+                }
+                const checkpoint = this.redirect.recover(courseId, lectureId);
+                if (checkpoint?.unitId) {
+                    this.savedRecording.set(checkpoint);
+                    this.continueRecording();
+                }
             });
         this.attachmentVideoUnitToCreate = new AttachmentVideoUnit();
         this.attachmentToCreate = new Attachment();
@@ -58,8 +105,10 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
 
         const lectureId = this.lectureId();
+        const courseId = this.courseId();
         // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
-        if (!name || lectureId === undefined) {
+        const recording = attachmentVideoUnitFormData.recording;
+        if (!name || lectureId === undefined || this.isLoading() || this.savedRecording() || this.recovery() || (recording && courseId === undefined)) {
             return;
         }
 
@@ -74,25 +123,56 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         this.attachmentVideoUnitToCreate.name = name;
         this.attachmentVideoUnitToCreate.releaseDate = releaseDate;
         this.attachmentVideoUnitToCreate.description = description;
-        this.attachmentVideoUnitToCreate.videoSource = videoSource;
+        this.attachmentVideoUnitToCreate.videoSource = recording ? undefined : videoSource;
         this.attachmentVideoUnitToCreate.competencyLinks = competencyLinks || [];
 
         this.isLoading.set(true);
-
-        const formData = new FormData();
-
-        if (!!file && !!fileName) {
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
+        if (recording) {
+            this.redirect.checkpointPendingSave({ courseId: courseId!, lectureId });
+            this.savingRecording.set(true);
         }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
-        this.attachmentVideoUnitService
-            .create(formData, lectureId)
-            .pipe(finalize(() => this.isLoading.set(false)))
+        const upload = !!file && !!fileName;
+        const creation = this.attachmentVideoUnitService.create(
+            lectureId,
+            this.attachmentVideoUnitToCreate,
+            upload ? this.attachmentToCreate : undefined,
+            upload ? withFileName(file, fileName) : undefined,
+        );
+        const request = (recording ? creation.pipe(takeUntilDestroyed(this.destroyRef)) : creation)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                    this.savingRecording.set(false);
+                }),
+            )
             .subscribe({
-                next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+                next: (created) => {
+                    if (!recording) {
+                        if (!this.destroyRef.destroyed) {
+                            void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                        }
+                        return;
+                    }
+                    if (created.id === undefined) {
+                        this.markSaveUnknown();
+                        return;
+                    }
+                    const target = { courseId: courseId!, lectureId, unitId: created.id };
+                    this.recording = recording;
+                    this.createdUnit = created;
+                    this.savedRecording.set(target);
+                    this.redirect.checkpoint(target);
+                    this.continueRecording();
+                },
                 error: (res: HttpErrorResponse | Error) => {
+                    if (recording) {
+                        if (createOutcomeIsUnknown(res)) {
+                            this.markSaveUnknown(res);
+                            return;
+                        }
+                        this.redirect.checkpoint();
+                    }
                     if (res instanceof Error) {
                         this.alertService.error(res.message);
                         return;
@@ -104,5 +184,39 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                     }
                 },
             });
+        if (recording) {
+            this.recordingRequest = request;
+        }
+    }
+
+    protected continueRecording(): void {
+        const target = this.savedRecording();
+        if (target) {
+            void this.redirect.open(target, true, this.recording, this.createdUnit);
+        }
+    }
+
+    protected onBeforeUnload(event: BeforeUnloadEvent): void {
+        if (this.savingRecording()) {
+            event.preventDefault();
+        }
+    }
+
+    confirmRecordingLeave(nextUrl?: string): Observable<boolean> | boolean {
+        if (this.redirect.allows(nextUrl) || !this.savingRecording()) {
+            return true;
+        }
+        return confirmRecordingLeave(this.confirmation, this.translate, 'saving').pipe(
+            tap((leave) => {
+                if (leave && this.savingRecording()) {
+                    this.markSaveUnknown();
+                    this.recordingRequest?.unsubscribe();
+                }
+            }),
+        );
+    }
+
+    private markSaveUnknown(error?: unknown): void {
+        this.recovery.set({ courseId: this.courseId()!, lectureId: this.lectureId(), detail: unknownCreateDetail(error) });
     }
 }

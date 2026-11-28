@@ -1,6 +1,7 @@
 import { User } from 'app/account/user/user.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { TumAetUiDialogOptions } from '@tumaet/ui-angular/dialog';
 
 export function getUserLabel({ firstName, lastName, login }: User | ConversationUserDTO, showLogin = true) {
     let label = '';
@@ -30,22 +31,25 @@ export function getChannelSubTypeReferenceTranslationKey(subType: ChannelSubType
     }
 }
 
-export const defaultFirstLayerDialogOptions = {
-    width: '55rem',
-    modal: true,
+/**
+ * Options of the dialogs opened from the conversation layout. The dialog content renders its own header, so the opener adds
+ * the accessible name (`ariaLabel`) and the `data` the content reads through `TumAetUiDialogConfig`.
+ */
+export const defaultFirstLayerDialogOptions: TumAetUiDialogOptions = {
+    size: 'medium',
     closable: true,
     closeOnEscape: true,
     dismissableMask: true,
     showHeader: false,
-    styleClass: 'communication-dialog',
+    autoFocus: 'first-tabbable',
 };
 
-export const defaultSecondLayerDialogOptions = {
-    width: '40rem',
-    modal: true,
+/** Options of a dialog opened on top of a first layer dialog, which is narrower than the first layer. */
+export const defaultSecondLayerDialogOptions: TumAetUiDialogOptions = {
+    size: 'small',
     closable: true,
     closeOnEscape: true,
     dismissableMask: true,
     showHeader: false,
-    styleClass: 'communication-dialog',
+    autoFocus: 'first-tabbable',
 };

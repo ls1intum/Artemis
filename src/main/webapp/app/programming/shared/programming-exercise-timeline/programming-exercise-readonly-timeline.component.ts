@@ -6,7 +6,7 @@ import { TimelineComponent, TimelineItem } from 'app/shared-ui/timeline/timeline
     selector: 'jhi-programming-exercise-timeline',
     imports: [TimelineComponent],
     templateUrl: './programming-exercise-readonly-timeline.component.html',
-    styleUrl: './programming-exercise-readonly-timeline.component.scss',
+    styleUrl: './programming-exercise-readonly-timeline.component.css',
 })
 export class ProgrammingExerciseReadonlyTimelineComponent {
     releaseDate = model<Dayjs | undefined>();

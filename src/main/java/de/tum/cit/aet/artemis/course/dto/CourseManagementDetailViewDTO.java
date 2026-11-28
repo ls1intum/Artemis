@@ -20,11 +20,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param currentPercentageAverageScore  average score of the students, in percent
  * @param currentAbsoluteAverageScore    average points of the students
  * @param currentMaxAverageScore         reachable points, including presentation points
- * @param currentTotalLlmCostInEur       total cost of the course's LLM usage, in euros
+ * @param currentTotalLlmCostInUsd       total cost of priced LLM requests in the course, in US dollars
+ * @param unpricedLlmRequestCount        number of LLM requests in the course with no recorded price
  */
 @Schema(description = "The figures of the course management detail view. A null figure is omitted; a present 0 is a real value.")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseManagementDetailViewDTO(Double currentPercentageAssessments, Long currentAbsoluteAssessments, Long currentMaxAssessments, Double currentPercentageComplaints,
         Long currentAbsoluteComplaints, Long currentMaxComplaints, Double currentPercentageMoreFeedbacks, Long currentAbsoluteMoreFeedbacks, Long currentMaxMoreFeedbacks,
-        Double currentPercentageAverageScore, Double currentAbsoluteAverageScore, Double currentMaxAverageScore, Double currentTotalLlmCostInEur) {
+        Double currentPercentageAverageScore, Double currentAbsoluteAverageScore, Double currentMaxAverageScore, Double currentTotalLlmCostInUsd, long unpricedLlmRequestCount) {
 }

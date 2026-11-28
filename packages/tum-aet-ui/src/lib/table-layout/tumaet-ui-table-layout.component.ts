@@ -23,7 +23,7 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
 }
 
 /**
- * Frame shared by every data table: a sticky toolbar of at most 40px, a body that is the only part that scrolls
+ * Frame shared by every data table: a sticky toolbar of 40px by default, a body that is the only part that scrolls
  * (with the 30px column header of `table[tumAetUiTable]` stuck to its top) and a sticky footer of at most 40px.
  *
  * ```html
@@ -50,7 +50,7 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
 @Component({
     selector: 'tumaet-ui-table-layout',
     templateUrl: './tumaet-ui-table-layout.component.html',
-    styleUrl: './tumaet-ui-table-layout.component.scss',
+    styleUrl: './tumaet-ui-table-layout.component.css',
     imports: [TumAetUiEmptyStateComponent, TumAetUiProgressSpinnerComponent, TumAetUiTranslatePipe],
     host: {
         '[class.tumaet-ui-table-layout-fill]': 'fill()',

@@ -4,12 +4,12 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    styleUrl: './grading-instruction-link-icon.component.scss',
+    styleUrl: './grading-instruction-link-icon.component.css',
     imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent implements OnInit {

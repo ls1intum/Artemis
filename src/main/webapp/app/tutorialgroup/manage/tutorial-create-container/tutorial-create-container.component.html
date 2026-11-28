@@ -1,7 +1,7 @@
 <div>
     @let courseIdToPass = courseId();
     @if (courseIdToPass) {
-        <div class="form-container">
+        <div class="flex flex-col items-center">
             <jhi-tutorial-edit [courseId]="courseIdToPass" [tutors]="tutors()" (onCreate)="createTutorialGroup($event)" />
         </div>
     }

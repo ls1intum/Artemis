@@ -6,17 +6,23 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.course.service.CourseStatsService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -36,6 +42,12 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
     private CourseStatsService courseStatsService;
 
     @Autowired
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Autowired
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Autowired
     private ExerciseTestRepository exerciseRepository;
 
     @Autowired
@@ -50,6 +62,27 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "0,false", "0.002000135,false", "0,true" })
+    void consistencyCallsWithoutUsageRemainUnpricedInCourseTotals(double knownCallCost, boolean allUnknown) {
+        var course = courseUtilService.createCourse();
+        var missingUsage = new LLMRequest("", 0, 0, "HYPERION_CONSISTENCY");
+        var priced = new LLMRequest("cost-test", 100, 20, "HYPERION_CONSISTENCY", 0, 0, knownCallCost);
+        var requests = allUnknown ? List.of(missingUsage, missingUsage, missingUsage) : List.of(priced, priced, missingUsage);
+
+        var trace = llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()));
+
+        assertThat(trace.getLLMRequests()).hasSize(3).allSatisfy(request -> assertThat(request.getId()).isNotNull());
+        long expectedUnpriced = allUnknown ? 3 : 1;
+        assertThat(trace.getLLMRequests().stream().filter(request -> request.getTotalCostUsd() == null)).hasSize((int) expectedUnpriced);
+        double expectedCost = allUnknown ? 0 : knownCallCost * 2;
+        assertThat(llmTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId())).isEqualTo(expectedCost);
+        assertThat(llmTokenUsageTraceRepository.countUnpricedRequestsForCourse(course.getId())).isEqualTo(expectedUnpriced);
+        var stats = courseStatsService.getStatsForDetailView(course, null);
+        assertThat(stats.currentTotalLlmCostInUsd()).isEqualTo(expectedCost);
+        assertThat(stats.unpricedLlmRequestCount()).isEqualTo(expectedUnpriced);
     }
 
     static IntStream weekRangeProvider() {

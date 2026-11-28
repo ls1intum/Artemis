@@ -1,13 +1,13 @@
 <div class="relative" [tumAetUiTooltip]="tooltip()">
     <tumaet-ui-progress-bar
-        class="h-4! rounded-sm!"
+        class="h-4! rounded-sm"
         data-testid="tutor-progress-track"
         [ariaLabel]="tooltip()"
         [value]="normalizedPercentage()"
         [showValue]="false"
         [severity]="normalizedPercentage() < 50 ? 'danger' : normalizedPercentage() < 100 ? 'warn' : 'success'"
     />
-    <span class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium text-text" data-testid="tutor-progress-label">
+    <span class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium text-color" data-testid="tutor-progress-label">
         {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
     </span>
     <span

@@ -7,7 +7,6 @@ export enum CompetencyOrchestrationStatus {
 }
 
 export enum CompetencyOrchestrationFailureReason {
-    NoChatClient = 'NO_CHAT_CLIENT',
     LlmError = 'LLM_ERROR',
     ToolCallLimitExceeded = 'TOOL_CALL_LIMIT_EXCEEDED',
     IncompleteOrchestration = 'INCOMPLETE_ORCHESTRATION',

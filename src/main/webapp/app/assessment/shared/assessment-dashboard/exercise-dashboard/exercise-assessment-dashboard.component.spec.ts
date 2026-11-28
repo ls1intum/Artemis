@@ -16,7 +16,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
@@ -31,7 +31,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -62,15 +62,16 @@ import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboa
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import type { TutorParticipation } from 'app/openapi/model/tutor-participation';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/language-table-cell/language-table-cell.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
@@ -96,8 +97,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseService: ExerciseService;
     let exerciseServiceGetForTutorsStub: MockInstance;
     let exerciseServiceGetStatsForTutorsStub: MockInstance;
-
-    let tutorParticipationService: TutorParticipationService;
 
     let accountService: AccountService;
 
@@ -248,7 +247,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
-        MockProvider(TutorParticipationService),
         MockProvider(ArtemisMarkdownService),
         MockProvider(ComplaintService),
         MockProvider(ArtemisDatePipe),
@@ -280,7 +278,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         vi.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
         const router = fixture.debugElement.injector.get(Router);
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        tutorParticipationService = TestBed.inject(TutorParticipationService);
         exerciseServiceGetForTutorsStub = vi.spyOn(exerciseService, 'getForTutors');
         exerciseServiceGetStatsForTutorsStub = vi.spyOn(exerciseService, 'getStatsForTutors');
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
@@ -367,6 +364,65 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
         expect(complaintsLink).not.toBeNull();
         expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
+    });
+
+    it.each([
+        [AssessmentType.SEMI_AUTOMATIC, true, undefined],
+        [AssessmentType.AUTOMATIC, false, 'artemisApp.assessmentUpload.notPossible.automaticAssessment'],
+    ])('should enable the manual assessment upload only when %s allows it', (assessmentType, expectedEnabled, expectedReason) => {
+        // The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is. It stays visible when it is not allowed,
+        // with the reason, rather than disappearing without explanation.
+        setUpProgrammingExerciseForUpload({ assessmentType, dueDate: dayjs().subtract(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canOfferManualAssessmentUpload()).toBe(true);
+        expect(comp.canUploadManualAssessments()).toBe(expectedEnabled);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe(expectedReason);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]')).not.toBeNull();
+    });
+
+    it('should disable the manual assessment upload until the due date has passed, naming that reason', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(false);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe('artemisApp.assessmentUpload.notPossible.beforeDueDate');
+    });
+
+    it('should not open the upload dialog when the upload is not allowed', () => {
+        // The disabled button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(false);
+    });
+
+    function setUpProgrammingExerciseForUpload(overrides: Partial<ProgrammingExercise>): void {
+        const exerciseForUpload = { ...programmingExercise, isAtLeastInstructor: true, ...overrides } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForUpload, headers: new HttpHeaders() })));
+        comp.exerciseId.set(exerciseForUpload.id!);
+    }
+
+    it('should open the manual assessment upload dialog', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+        expect(comp['uploadDialogVisible']()).toBe(false);
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(true);
+    });
+
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -505,31 +561,50 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
-        const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
-        const dto: TutorParticipationDTO = {
+        const dto: TutorParticipation = {
             id: 1,
             exerciseId: comp.exerciseId(),
             tutorId: 2,
-            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            status: 'REVIEWED_INSTRUCTIONS',
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false }],
         };
-
-        tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading()).toBe(true);
-            return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
-        });
+        const http = TestBed.inject(HttpTestingController);
 
         expect(comp.tutorParticipation()).toBeUndefined();
         expect(comp.isLoading()).toBe(false);
 
         comp.readInstruction();
 
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
-        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());
+        expect(comp.isLoading()).toBe(true);
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush(dto);
 
         expect(comp.isLoading()).toBe(false);
 
-        expect(comp.tutorParticipation()).toEqual(dto);
+        expect(comp.tutorParticipation()).toEqual({
+            id: 1,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            trainedExampleSubmissions: [{ id: 5, usedForTutorial: false, assessmentExplanation: undefined }],
+        });
         expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+    });
+
+    it('starts a fresh tutor participation whose response has no trained example submissions', () => {
+        const alertService = TestBed.inject(AlertService);
+        const successSpy = vi.spyOn(alertService, 'success');
+        const http = TestBed.inject(HttpTestingController);
+
+        comp.readInstruction();
+
+        const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
+        expect(request.request.method).toBe('POST');
+        request.flush({ id: 3, exerciseId: comp.exerciseId(), tutorId: 2, status: 'REVIEWED_INSTRUCTIONS' });
+
+        expect(comp.tutorParticipation()).toEqual({ id: 3, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS, trainedExampleSubmissions: undefined });
+        expect(comp.tutorParticipationStatus()).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+        expect(comp.isLoading()).toBe(false);
     });
 
     describe('test calls for all exercise types', () => {
@@ -820,11 +895,30 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    it('generate exercise detail link', () => {
-        comp.exercise.set(modelingExercise);
+    it('generate exercise detail link of a course exercise', () => {
+        comp.exercise.set({ ...modelingExercise, exerciseGroup: undefined });
         comp.courseId.set(4);
         const exerciseDetailsLink = comp.exerciseDetailsLink();
         expect(exerciseDetailsLink).toEqual(['/course-management', 4, ExerciseType.MODELING + '-exercises', modelingExercise.id]);
+    });
+
+    it('generates the exercise detail link of an exam exercise below its exam', () => {
+        comp.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, id: 7, exerciseGroup: { id: 8, exam: { id: 9 } } as ExerciseGroup });
+        comp.courseId.set(4);
+        expect(comp.exerciseDetailsLink()).toEqual(['/course-management', 4, 'exams', 9, 'exercise-groups', 8, 'programming-exercises', 7]);
+    });
+
+    it.each([
+        { description: 'a tutor of an exam programming exercise', editor: false, group: true, type: ExerciseType.PROGRAMMING, expected: false },
+        { description: 'an editor of an exam programming exercise', editor: true, group: true, type: ExerciseType.PROGRAMMING, expected: true },
+        { description: 'a tutor of an exam modeling exercise, which the server gives to tutors', editor: false, group: true, type: ExerciseType.MODELING, expected: true },
+        { description: 'a tutor of a course exercise', editor: false, group: false, type: ExerciseType.PROGRAMMING, expected: true },
+    ])('should offer the exercise details to $description: $expected', ({ editor, group, type, expected }) => {
+        vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(editor);
+        comp.courseId.set(4);
+        comp.exercise.set({ ...exercise, type, exerciseGroup: group ? ({ id: 8, exam: { id: 9 } } as ExerciseGroup) : undefined });
+
+        expect(comp.canOpenExerciseDetails()).toBe(expected);
     });
 
     it('should toggle second correction', () => {

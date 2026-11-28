@@ -3,7 +3,7 @@ id: trust
 title: Trust and Transparency
 sidebar_label: Trust and Transparency
 description: Central entry point for security, privacy, accessibility, AI data processing, supply chain, and support questions, with a clear split between platform capabilities and operator responsibilities.
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-26
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -136,7 +136,8 @@ standard.
 - Contrast is expressed through theming variables rather than hard-coded colors, so both the light and
   the dark theme are checked together.
 - A Lighthouse runner is part of the repository tooling (`pnpm run lighthouse`) and is used to check
-  pages during development.
+  pages during development. It downloads a pinned Lighthouse release on first use, so the command needs
+  network access.
 - The pull request checklist requires authors of user-facing changes to confirm that they followed the
   AET UI/UX guidelines and the theming guidelines, and reviewers check that.
 

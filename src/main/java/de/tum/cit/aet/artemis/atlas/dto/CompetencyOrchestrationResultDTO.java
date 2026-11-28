@@ -57,8 +57,6 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
      * string. Drives the HTTP status code returned by {@link de.tum.cit.aet.artemis.atlas.web.CompetencyOrchestrationResource}.
      */
     public enum FailureReason {
-        /** No {@code ChatClient} bean is configured (Atlas chat disabled or misconfigured) — surfaced as 503. */
-        NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
         /** The shared tool-call budget was exhausted; terminal, not automatically retried. */

@@ -1,4 +1,4 @@
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgTemplateOutlet } from '@angular/common';
@@ -13,7 +13,7 @@ const SPLIT_SUPPORT_AT = 560;
 @Component({
     selector: 'jhi-assessment-workspace',
     templateUrl: './assessment-workspace.component.html',
-    styleUrls: ['./assessment-workspace.component.scss'],
+    styleUrls: ['./assessment-workspace.component.css'],
     imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, TumAetUiSplitterComponent, TranslateDirective],
 })
 export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {

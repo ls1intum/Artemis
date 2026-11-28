@@ -210,6 +210,7 @@ public class ChannelResource extends ConversationManagementResource {
         if (channel == null) {
             return ResponseEntity.ok(null);
         }
+        checkEntityIdMatchesPathIds(channel, Optional.of(courseId), Optional.empty());
         checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
@@ -236,6 +237,7 @@ public class ChannelResource extends ConversationManagementResource {
             return ResponseEntity.ok(null);
 
         }
+        checkEntityIdMatchesPathIds(channel, Optional.of(courseId), Optional.empty());
         checkChannelMembership(channel, requestingUser);
 
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, channel));
@@ -255,7 +257,7 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
-        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser, Boolean.TRUE.equals(channelDTO.getIsAnnouncementChannel()));
 
         var channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
@@ -549,6 +551,7 @@ public class ChannelResource extends ConversationManagementResource {
         User requestingUser = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser, Boolean.TRUE.equals(channelDTO.getIsAnnouncementChannel()));
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }

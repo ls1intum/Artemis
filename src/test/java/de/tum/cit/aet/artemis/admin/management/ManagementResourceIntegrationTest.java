@@ -184,6 +184,31 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventsOfOnePrincipal() throws Exception {
+        // the search bar of the admin UI sends the typed login as principal
+        var ofStudent1 = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student1", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(ofStudent1).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "student1");
+
+        // together with the date range: student2 only has an event from five days ago
+        String from = LocalDate.now().minusDays(7).toString();
+        String to = LocalDate.now().toString();
+        var student2InRange = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student2&fromDate=" + from + "&toDate=" + to, HttpStatus.OK,
+                PersistentAuditEvent.class);
+        assertThat(student2InRange).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "student2");
+        String yesterday = LocalDate.now().minusDays(1).toString();
+        var student2Recently = request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "student2&fromDate=" + yesterday + "&toDate=" + to, HttpStatus.OK,
+                PersistentAuditEvent.class);
+        assertThat(student2Recently).isEmpty();
+
+        // a principal of another log finds nothing in this one, and an unknown principal finds nothing at all
+        assertThat(request.getList("/api/admin/audits?logType=GENERAL&principal=" + TEST_PREFIX + "securityprincipal", HttpStatus.OK, PersistentAuditEvent.class)).isEmpty();
+        assertThat(request.getList("/api/admin/audits?logType=GENERAL&principal=nobody", HttpStatus.OK, PersistentAuditEvent.class)).isEmpty();
+        assertThat(request.getList("/api/admin/audits?logType=SECURITY&principal=" + TEST_PREFIX + "securityprincipal", HttpStatus.OK, PersistentAuditEvent.class))
+                .extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "securityprincipal");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllAuditEventsScopedToEachLogType() throws Exception {
         // each tab in the admin UI queries one log; a query must never return another log's rows
         var generalEvents = request.getList("/api/admin/audits?logType=GENERAL", HttpStatus.OK, PersistentAuditEvent.class);

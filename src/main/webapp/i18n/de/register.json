@@ -20,6 +20,7 @@
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
                 "userExists": "<strong>Login bereits vergeben!</strong> Bitte wähle einen anderen aus.",
                 "emailExists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
+                "emailNotAllowed": "<strong>Diese E-Mail-Adresse ist nicht erlaubt.</strong> Bitte verwende eine der erlaubten E-Mail-Adressen.",
                 "blocked": "<strong>Die Registrierung für die E-Mail bzw. den Login ist gesperrt!</strong> Bitte versuche es später noch einmal."
             }
         }

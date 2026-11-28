@@ -79,7 +79,6 @@ import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -199,7 +198,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
-                MockProvider(DialogService),
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
             ],
         });
@@ -377,7 +375,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipations[0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo()).toEqual(plagiarismCaseInfo);
         expect(comp.showMoreResults()).toBe(false);
-        expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     });
 
     it('should not be a quiz exercise', () => {
@@ -1217,6 +1214,28 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'text-exercises', 42, 'participate', 1, 'submission', 5]);
         });
 
+        it('should alert the Athena feedback even when a newer build result arrives with it', () => {
+            startWith([changed([athenaResult(undefined, undefined)], { exercise: { id: 42 } as Exercise })]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.exercise!.dueDate = undefined;
+            // The build finished while the feedback was pending, so its result has a higher id than the Athena result.
+            const buildResult = { id: 99, assessmentType: AssessmentType.AUTOMATIC, successful: true, completionDate: dayjs() } as Result;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true), buildResult], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+        });
+
+        it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
+            startWith([changed([athenaResult(true)], { exercise: { id: 42 } as Exercise })]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.exercise!.dueDate = undefined;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
         it.each([ExerciseType.TEXT, ExerciseType.MODELING].flatMap((type) => [undefined, false].map((successful) => ({ type, successful }))))(
             'does not reopen prior Athena feedback for a $type pending or failed request (successful=$successful)',
             ({ type, successful }) => {
@@ -1385,6 +1404,49 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.liveQuizStatus()).toBeUndefined();
         });
 
+        describe('focus mode', () => {
+            const runningQuiz = () => {
+                vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+                comp.handleNewExercise({ exercise: { type: ExerciseType.QUIZ, quizBatches: [{ started: true }] } as unknown as Exercise });
+            };
+
+            it('should not know yet before the exercise has loaded, so the sidebars keep their state', () => {
+                expect(comp.focusMode()).toBeUndefined();
+            });
+
+            it('should focus while the student takes a running graded quiz', () => {
+                runningQuiz();
+
+                expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.PARTICIPATING);
+                expect(comp.focusMode()).toBe(true);
+            });
+
+            it.each([LiveQuizParticipationStatus.NOT_STARTED, LiveQuizParticipationStatus.SUBMITTED, LiveQuizParticipationStatus.MISSED, undefined])(
+                'should not focus for the live quiz status %s',
+                (status) => {
+                    runningQuiz();
+                    comp.onLiveQuizStatusChange(status);
+
+                    expect(comp.focusMode()).toBe(false);
+                },
+            );
+
+            it('should not focus in practice mode', () => {
+                runningQuiz();
+                comp.participationMode.set('practice');
+
+                expect(comp.focusMode()).toBe(false);
+            });
+
+            it('should not focus on an exercise that is not a quiz', () => {
+                vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+                comp.handleNewExercise({ exercise: { type: ExerciseType.PROGRAMMING } as unknown as Exercise });
+                comp.onLiveQuizStatusChange(LiveQuizParticipationStatus.PARTICIPATING);
+
+                expect(comp.focusMode()).toBe(false);
+            });
+        });
+
         it('should show the submitted quiz in the graded participation and leave the practice participation alone', () => {
             const graded = { id: 1, testRun: false, submissions: [{ id: 10, submitted: false }] } as unknown as StudentParticipation;
             const practice = { id: 2, testRun: true, submissions: [{ id: 20, submitted: true }] } as unknown as StudentParticipation;
@@ -1496,13 +1558,6 @@ describe('CourseExerciseDetailsComponent', () => {
 
             comp.toggleShowMoreResults();
             expect(comp.showMoreResults()).toBe(false);
-        });
-
-        it.each([
-            { badge: 'bg-success', rated: true },
-            { badge: 'bg-info', rated: false },
-        ])('should use the badge $badge for a result with rated $rated', ({ badge, rated }) => {
-            expect(comp.exerciseRatedBadge({ rated } as Result)).toBe(badge);
         });
     });
 

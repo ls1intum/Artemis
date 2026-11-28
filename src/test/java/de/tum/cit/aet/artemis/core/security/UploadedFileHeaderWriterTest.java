@@ -25,7 +25,7 @@ class UploadedFileHeaderWriterTest {
     @ParameterizedTest
     @CsvSource({ "/api/core/files/users/1/profile-pictures/ProfilePicture_x.svg, image/svg+xml", "/api/core/files/markdown/Markdown_x.html, text/html",
             "/api/core/files/courses/1/conversations/2/x.svg, image/svg+xml", "/user/profile-pictures/ProfilePicture_x.svg, image/svg+xml",
-            "/course/icons/CourseIcon_x.svg, image/svg+xml", "/markdown/Markdown_x.html, text/html;charset=UTF-8", "/api/core/files/users/1/profile-pictures/x.png, image/png" })
+            "/course/icons/CourseIcon_x.svg, image/svg+xml", "/drag-and-drop/backgrounds/1/x.png, image/png", "/api/core/files/users/1/profile-pictures/x.png, image/png" })
     void sandboxesUploadedFiles(String path, String contentType) {
         assertThat(writeHeaders(path, contentType).getHeader("Content-Security-Policy")).isEqualTo(UploadedFileHeaderWriter.UPLOADED_FILE_POLICY_DIRECTIVES);
     }
@@ -40,7 +40,7 @@ class UploadedFileHeaderWriterTest {
      * A 304 without a content type must get the policy of the response it revalidates, because browsers copy it onto the cached file.
      */
     @ParameterizedTest
-    @CsvSource({ "/user/profile-pictures/ProfilePicture_x.svg, true", "/api/core/files/courses/1/attachment-video-units/2, true", "/markdown/Markdown_x.pdf, false",
+    @CsvSource({ "/user/profile-pictures/ProfilePicture_x.svg, true", "/api/core/files/courses/1/attachment-video-units/2, true", "/drag-and-drop/backgrounds/1/x.png, true",
             "/api/core/files/attachments/lectures/1/Slides.PDF, false" })
     void decidesNotModifiedWithoutContentTypeByPath(String path, boolean sandboxed) {
         var response = writeHeaders(path, null);

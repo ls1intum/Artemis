@@ -14,7 +14,10 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -38,7 +41,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
-    styleUrls: ['./standardized-competency-management.component.scss'],
+    styleUrls: ['./standardized-competency-management.component.css'],
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },

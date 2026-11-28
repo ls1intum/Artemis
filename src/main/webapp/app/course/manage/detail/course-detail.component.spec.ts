@@ -20,8 +20,6 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -56,7 +54,8 @@ describe('Course Management Detail Component', () => {
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
         // LLM
-        currentTotalLlmCostInEur: 82.3,
+        currentTotalLlmCostInUsd: 82.3,
+        unpricedLlmRequestCount: 0,
     };
     const courseDataSubject = new BehaviorSubject<Data>({ course: { ...course } });
     const mockActivatedRoute = {
@@ -83,7 +82,6 @@ describe('Course Management Detail Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
                 MockProvider(Router),
-                { provide: DialogService, useClass: MockDialogService },
             ],
             deferBlockBehavior: DeferBlockBehavior.Manual,
         }).compileComponents();
@@ -183,6 +181,28 @@ describe('Course Management Detail Component', () => {
         expect(fixture.nativeElement.querySelectorAll('jhi-course-detail-doughnut-chart').length).toBeGreaterThan(0);
         expect(fixture.nativeElement.querySelector('jhi-course-detail-line-chart')).toBeTruthy();
     });
+
+    it.each([
+        { cost: 82.3, unpriced: 0, expected: '82.30 USD' },
+        { cost: 0, unpriced: 0, expected: '0.00 USD' },
+        { cost: 0.004, unpriced: 2, expected: '≥ 0.004 USD' },
+        { cost: 0.00000001, unpriced: 0, expected: '0.00000001 USD' },
+        { cost: 0, unpriced: 2, expected: 'artemisApp.course.detail.llmCostNotPriced' },
+    ])('shows USD course costs without counting $unpriced unpriced requests as free', async ({ cost, unpriced, expected }) => {
+        vi.spyOn(courseManagementService, 'getStatisticsData').mockReturnValue(of([]));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.isHyperionEnabled.set(true);
+        component.courseDTO.set({ ...dtoMock, currentTotalLlmCostInUsd: cost, unpricedLlmRequestCount: unpriced });
+        const [chartsBlock] = await fixture.getDeferBlocks();
+        await chartsBlock.render(DeferBlockState.Complete);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const costCard = fixture.nativeElement.querySelector('[data-testid="course-llm-cost"]');
+        expect(costCard.querySelector('[data-testid="course-chart-values"]').textContent).toContain(expected);
+        expect(costCard.querySelector('[data-testid="course-llm-unpriced-requests"]') !== null).toBe(unpriced > 0);
+    });
     it('reloads the instructor projection and statistics when the course list changes', async () => {
         const events = new EventManager();
         vi.spyOn(eventManager, 'subscribe').mockImplementation(events.subscribe.bind(events));
@@ -195,7 +215,13 @@ describe('Course Management Detail Component', () => {
         expect(component.courseDTO()).toEqual(dtoMock);
         statistics.mockClear();
         // a real 0 and a missing figure stay distinguishable
-        const refreshed: CourseManagementDetailView = { currentPercentageAssessments: 0, currentAbsoluteAssessments: 0, currentMaxAssessments: 3, currentTotalLlmCostInEur: 0 };
+        const refreshed: CourseManagementDetailView = {
+            currentPercentageAssessments: 0,
+            currentAbsoluteAssessments: 0,
+            currentMaxAssessments: 3,
+            currentTotalLlmCostInUsd: 0,
+            unpricedLlmRequestCount: 0,
+        };
         statistics.mockReturnValue(of(refreshed));
 
         events.broadcast({ name: 'courseListModification', content: 'updated' });

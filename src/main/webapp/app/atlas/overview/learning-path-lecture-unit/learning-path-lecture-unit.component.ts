@@ -1,3 +1,4 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -6,23 +7,34 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { lastValueFrom } from 'rxjs';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import { toLectureUnit } from 'app/lecture/shared/util/generated-lecture.util';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TextUnitComponent, AttachmentVideoUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
+    imports: [
+        TextUnitComponent,
+        AttachmentVideoUnitComponent,
+        OnlineUnitComponent,
+        DiscussionSectionComponent,
+        TumAetUiProgressSpinnerComponent,
+        ArtemisTranslatePipe,
+        ExerciseUnitComponent,
+    ],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
     private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
 
@@ -47,8 +59,8 @@ export class LearningPathLectureUnitComponent {
     async loadLectureUnit(lectureUnitId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
-            this.lectureUnit.set(lectureUnit);
+            const lectureUnit = await lastValueFrom(this.lectureUnitApi.getLectureUnitById(lectureUnitId));
+            this.lectureUnit.set(toLectureUnit(lectureUnit));
         } catch (error) {
             this.alertService.error(getErrorMessage(error));
         } finally {

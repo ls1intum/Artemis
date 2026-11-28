@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortService } from 'app/foundation/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,9 +13,11 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
@@ -26,8 +29,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
         TranslateDirective,
-        FormsModule,
+        FaIconComponent,
         HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
@@ -49,6 +56,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faWrench = faWrench;
+    protected readonly faChevronDown = faChevronDown;
 
     courseId!: number; // set in ngOnInit() from route params
     readonly exercises = signal<Exercise[]>([]);

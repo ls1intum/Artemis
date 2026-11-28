@@ -2,18 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { TumLiveTransferEvent, TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { TumLiveTransferError, TumLiveTransferEvent, TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 
 /** A stand-in for the browser's XMLHttpRequest that the test drives by hand. */
 class FakeXhr {
     static last: FakeXhr;
     method?: string;
     url?: string;
-    withCredentials = true;
     readyState = 1;
     status = 0;
     responseText = '';
-    body?: FormData;
+    body?: File;
     aborted = false;
     readonly upload: { onprogress?: (event: { lengthComputable: boolean; loaded: number; total: number }) => void } = {};
     onload?: () => void;
@@ -33,7 +32,7 @@ class FakeXhr {
         this.requestHeaders[name] = value;
     }
 
-    send(body: FormData) {
+    send(body: File) {
         this.body = body;
     }
 
@@ -78,41 +77,59 @@ describe('TumLiveUploadService', () => {
         expect(httpMock.expectOne({ method: 'GET', url: 'api/lecture/courses/3/tumlive-uploads' })).toBeTruthy();
     });
 
-    it('sends the file straight to TUM.Live without credentials and reports progress', () => {
+    it.each([true, false])('reports course upload availability (%s)', (available) => {
+        const result = vi.fn();
+        service.isAvailable(3).subscribe(result);
+
+        httpMock.expectOne({ method: 'GET', url: '/api/lecture/courses/3/tumlive-upload-availability' }).flush({ available });
+        expect(result).toHaveBeenCalledExactlyOnceWith(available);
+    });
+
+    it('sends the raw file to Artemis and reports progress', () => {
         const events: TumLiveTransferEvent[] = [];
         let completed = false;
         const file = new File(['video'], 'lecture.mp4', { type: 'video/mp4' });
 
-        service.transfer('https://tum.live/api/v2/integration/uploads/ticket', file).subscribe({ next: (event) => events.push(event), complete: () => (completed = true) });
+        service
+            .transfer('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000', file)
+            .subscribe({ next: (event) => events.push(event), complete: () => (completed = true) });
         const xhr = FakeXhr.last;
         xhr.upload.onprogress?.({ lengthComputable: true, loaded: 25, total: 100 });
-        xhr.respond(200, '{}');
+        xhr.respond(204);
 
         expect(xhr.method).toBe('POST');
-        expect(xhr.url).toBe('https://tum.live/api/v2/integration/uploads/ticket');
-        expect(xhr.withCredentials).toBe(false);
-        expect(xhr.requestHeaders).toEqual({});
-        expect((xhr.body!.get('file') as File).name).toBe('lecture.mp4');
+        expect(xhr.url).toBe('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000');
+        expect(xhr.requestHeaders).toEqual({ 'Content-Type': 'application/octet-stream', 'ngsw-bypass': 'true' });
+        expect(xhr.body).toBe(file);
         expect(events).toEqual([{ type: 'progress', percent: 25 }, { type: 'done' }]);
         expect(completed).toBe(true);
     });
 
-    it('reports TUM.Live errors and network failures', () => {
+    it('reports Artemis errors and network failures', () => {
         const errors: string[] = [];
         const file = new File(['video'], 'lecture.mp4');
 
-        service.transfer('https://tum.live/u', file).subscribe({ error: (error: Error) => errors.push(error.message) });
-        FakeXhr.last.respond(400, '{"code":3,"message":"runner: no file in request"}');
-        service.transfer('https://tum.live/u', file).subscribe({ error: (error: Error) => errors.push(error.message) });
+        service.transfer('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000', file).subscribe({ error: (error: Error) => errors.push(error.message) });
+        FakeXhr.last.respond(400, '{"status":400,"detail":"The video is empty."}');
+        service.transfer('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000', file).subscribe({ error: (error: Error) => errors.push(error.message) });
         FakeXhr.last.respond(413, '<html>Request Entity Too Large</html>');
-        service.transfer('https://tum.live/u', file).subscribe({ error: (error: Error) => errors.push(error.message) });
+        service.transfer('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000', file).subscribe({ error: (error: Error) => errors.push(error.message) });
         FakeXhr.last.onerror?.();
 
-        expect(errors).toEqual(['runner: no file in request', 'HTTP 413', 'network']);
+        expect(errors).toEqual(['The video is empty.', 'HTTP 413', 'network']);
+    });
+
+    it('keeps Artemis translation keys separate from display text', () => {
+        const error = vi.fn();
+        service.transfer('/upload', new File(['video'], 'lecture.mp4')).subscribe({ error });
+        FakeXhr.last.respond(409, '{"status":409,"detail":"Another upload is already running.","message":"error.tumLiveUploadInProgress"}');
+
+        expect(error).toHaveBeenCalledWith(expect.any(TumLiveTransferError));
+        expect(error).toHaveBeenCalledWith(expect.objectContaining({ status: 409, message: 'HTTP 409', translationKey: 'error.tumLiveUploadInProgress' }));
     });
 
     it('aborts the transfer when unsubscribed', () => {
-        const subscription = service.transfer('https://tum.live/u', new File(['video'], 'lecture.mp4')).subscribe();
+        const subscription = service.transfer('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000', new File(['video'], 'lecture.mp4')).subscribe();
 
         subscription.unsubscribe();
 

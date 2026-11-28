@@ -19,7 +19,7 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
 @Component({
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
-    styleUrls: ['./assessment-layout.component.scss'],
+    styleUrls: ['./assessment-layout.component.css'],
     imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
     host: { class: 'assessment-container' },
 })

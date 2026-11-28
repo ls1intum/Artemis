@@ -24,7 +24,7 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { greenColor, greyColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;

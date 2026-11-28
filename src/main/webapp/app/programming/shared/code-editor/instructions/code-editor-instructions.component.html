@@ -1,11 +1,11 @@
 <div
     id="cardInstructions"
     data-testid="cardInstructions"
-    class="instructions-wrapper card collapsable-card"
+    class="instructions-wrapper editor-panel collapsable-card"
     [style.height]="collapsed() ? (isAssessmentMode() ? '200px' : '250px') : '100%'"
 >
     <div
-        class="card-header code-editor-panel-header d-flex justify-content-left"
+        class="editor-panel-header code-editor-panel-header flex justify-start"
         (click)="!disableCollapse() && toggleEditorCollapse($event)"
         [attr.aria-expanded]="!collapsed()"
         #keyboardAction2
@@ -16,7 +16,7 @@
         (keydown.space)="!disableCollapse() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="!disableCollapse() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     >
-        <h3 class="card-title">
+        <h3 class="editor-panel-title">
             @if (!collapsed()) {
                 <span>
                     <fa-icon [icon]="farListAlt" />
@@ -57,7 +57,7 @@
             }
         </h3>
         @if (!collapsed() && !disableCollapse()) {
-            <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
+            <fa-icon class="ms-auto cursor-pointer" [icon]="faChevronRight" />
         }
     </div>
     <div class="instructions-wrapper__content" [hidden]="collapsed()">

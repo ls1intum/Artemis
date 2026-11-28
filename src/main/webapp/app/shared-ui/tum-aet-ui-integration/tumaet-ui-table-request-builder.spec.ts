@@ -1,5 +1,5 @@
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 import { buildDbQueryFromTableEvent } from './tumaet-ui-table-request-builder';
 
 function event(overrides: Partial<TumAetUiTableQueryEvent> = {}): TumAetUiTableQueryEvent {

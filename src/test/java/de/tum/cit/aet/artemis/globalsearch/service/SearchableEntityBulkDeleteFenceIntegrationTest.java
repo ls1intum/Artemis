@@ -19,6 +19,7 @@ import org.springframework.core.env.Environment;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
@@ -49,6 +50,9 @@ class SearchableEntityBulkDeleteFenceIntegrationTest extends AbstractProgramming
 
     @Autowired
     private WeaviateConfigurationProperties weaviateConfigurationProperties;
+
+    @Autowired
+    private LlmProperties llmProperties;
 
     @Autowired
     private Environment environment;
@@ -89,11 +93,9 @@ class SearchableEntityBulkDeleteFenceIntegrationTest extends AbstractProgramming
             return config.properties(propertiesBeforeTheUpgrade);
         });
         var properties = weaviateConfigurationProperties;
-        var weaviateService = new WeaviateService(Optional.of(weaviateClient),
-                new WeaviateConfigurationProperties(properties.enabled(), properties.httpHost(), properties.httpPort(), properties.grpcPort(), properties.scheme(),
-                        COLLECTION_PREFIX, properties.vectorizerModule(), properties.openAiEmbeddingModel(), properties.openAiBaseUrl(), properties.gpuApiKey(),
-                        properties.apiKey(), null),
-                environment);
+        var weaviateService = new WeaviateService(Optional.of(weaviateClient), new WeaviateConfigurationProperties(properties.enabled(), properties.httpHost(),
+                properties.httpPort(), properties.grpcPort(), properties.scheme(), COLLECTION_PREFIX, properties.vectorizerModule(), "embedding", properties.apiKey(), null),
+                llmProperties, environment);
         var searchableEntityWeaviateService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, jsonMapper, contentHasher, eventPublisher,
                 mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), Runnable::run);
 

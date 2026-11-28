@@ -55,10 +55,25 @@ between the read and save, which could overwrite a change made in the meantime.
 
 ## Edit the code with git
 
-The template, solution and test repositories are ordinary git repositories. Their addresses are in the exercise from
-`GET`. Clone them with git and the instructor's VCS access token from the user settings (not the agent token), edit
-the files, run the tests locally, commit and push. After a push to the test repository Artemis builds the exercise and
-the test cases appear.
+The template, solution and test repositories are ordinary git repositories. The token needs the scope
+`programming:repositories`. `GET $ARTEMIS_URL/api/programming/programming-exercises/{id}/repositories` (MCP:
+`get_programming_repositories`) returns their clone addresses, the branch, the user name and `writable`. Clone over HTTPS
+with that user name and the agent token as the password, without writing the token into the address or a file:
+
+```bash
+ARTEMIS_GIT_AUTH="Authorization: Basic $(printf '%s:%s' "$USER_NAME" "$ARTEMIS_TOKEN" | base64 | tr -d '\n')" \
+  git --config-env="http.${ARTEMIS_URL%/}/.extraHeader=ARTEMIS_GIT_AUTH" clone "$URL"
+```
+
+Hand the header to git through an environment variable, as shown, and not with `git -c http.extraHeader=...`: the arguments
+of a running process can be read by other users of the same machine, its environment cannot. The key names the address of
+Artemis, so that git sends the header to Artemis only and not to any other host a repository may point to.
+
+Push the same way, to the branch from the response, and only while `writable` is true. A push never rewrites history: a
+force push with the token is refused. A push is refused once students
+can see the exercise or have started it; ask the instructor to change that in Artemis, do not look for a way around it.
+The token cannot open the repositories of students or of exams. Edit the files, run the tests locally, commit and push.
+After a push to the test repository Artemis builds the exercise and the test cases appear.
 
 Work on the solution first and check that it passes the tests, then derive the template from it by removing what the
 students must write. Keep the template compiling.

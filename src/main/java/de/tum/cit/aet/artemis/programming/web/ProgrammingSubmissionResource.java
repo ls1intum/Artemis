@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,8 +30,10 @@ import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
@@ -150,12 +153,13 @@ public class ProgrammingSubmissionResource {
      * @param participationId of the participation.
      * @param submissionType  will be used for the newly created submission.
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is
-     *         not available.
+     *         not available. Answers 429 (Too Many Requests) if the user triggers builds too often.
      *         The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
     @PostMapping({ "participations/{participationId}/trigger-build", "programming-submissions/{participationId}/trigger-build" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
+    @LimitRequestsPerMinute(type = RateLimitType.PROGRAMMING_BUILD_TRIGGER, perUser = true)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // this call supports TemplateProgrammingExerciseParticipation, SolutionProgrammingExerciseParticipation and ProgrammingExerciseStudentParticipation
@@ -168,6 +172,7 @@ public class ProgrammingSubmissionResource {
         if (submissionType != SubmissionType.MANUAL) {
             throw new AccessForbiddenException("The ordinary build operation only accepts manual submissions");
         }
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
         return triggerSingleBuild(programmingExerciseParticipation, SubmissionType.MANUAL);
     }
 
@@ -223,6 +228,15 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
+     * A student must not get around the build time window of the exercise by triggering the build of a commit pushed outside of it.
+     */
+    private void checkInsideBuildTimeWindowElseThrow(ProgrammingExerciseParticipation participation) {
+        if (programmingSubmissionService.findBuildTimeWindowExcluding(participation, userRepository.getUserWithAuthorities(), ZonedDateTime.now()).isPresent()) {
+            throw new BadRequestAlertException("Builds of this exercise are only run inside its build time window", "programmingSubmission", "buildOutsideTimeWindow");
+        }
+    }
+
+    /**
      * Trigger the CI build for the latest submission of a given participation, if it did not receive a result.
      *
      * @param participationId to which the submission belongs.
@@ -240,6 +254,8 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+        // the build runs on the latest commit, which may have been pushed outside the window
+        checkInsideBuildTimeWindowElseThrow(programmingExerciseParticipation);
 
         ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
                 .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));

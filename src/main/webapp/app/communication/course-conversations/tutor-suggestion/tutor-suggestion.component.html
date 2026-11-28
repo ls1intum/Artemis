@@ -6,17 +6,17 @@
                     <div class="iris-text-content">
                         <div class="iris-logo">
                             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-                            <span class="fw-semibold">Iris-Suggestion:</span>
+                            <span class="font-semibold">Iris-Suggestion:</span>
                         </div>
                         @for (content of suggestion.content; track content.id) {
                             <div>
                                 @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                    <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                                    <div class="iris-suggestion-text">{{ line }}</div>
                                 }
                             </div>
                         }
                         <div class="timestamp-container">
-                            <span [ngbTooltip]="suggestion.sentAt | artemisDate"> ({{ suggestion.sentAt | artemisTimeAgo }}) </span>
+                            <span [tumAetUiTooltip]="suggestion.sentAt | artemisDate"> ({{ suggestion.sentAt | artemisTimeAgo }}) </span>
                         </div>
                     </div>
                     <div class="iris-suggestion-buttons">

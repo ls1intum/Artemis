@@ -32,6 +32,9 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -72,6 +75,7 @@ public class LongFeedbackTextResource {
      * @return The long feedback text belonging to the feedback with id {@code feedbackId}.
      */
     @GetMapping("feedbacks/{feedbackId}/long-feedback")
+    @ApiResponse(responseCode = "200", description = "The long feedback text.", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLongFeedback(@PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {}", feedbackId);

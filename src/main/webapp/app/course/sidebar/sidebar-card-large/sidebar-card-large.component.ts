@@ -9,7 +9,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-large-sidebar-card',
     templateUrl: './sidebar-card-large.component.html',
-    styleUrls: ['./sidebar-card-large.component.scss'],
+    styleUrls: ['../sidebar-card.css'],
     imports: [RouterLink, RouterLinkActive, SidebarCardItemComponent],
 })
 export class SidebarCardLargeComponent {

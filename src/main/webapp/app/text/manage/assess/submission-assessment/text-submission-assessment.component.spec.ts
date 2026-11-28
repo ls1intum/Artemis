@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { ReplaySubject, of, throwError } from 'rxjs';
+import { ReplaySubject, Subject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -24,7 +24,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
@@ -42,13 +42,12 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -65,13 +64,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionService: ExampleSubmissionApi;
     let athenaService: AthenaService;
     let router: Router;
 
@@ -202,7 +203,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionApi);
         textAssessmentService = TestBed.inject(TextAssessmentService);
         athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
@@ -453,6 +454,59 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(onErrorCalled).toBe(serverReturnsError);
     });
 
+    it('should refuse to update points outside the bounds after a complaint and name the bounds', () => {
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 100.5;
+        unreferencedFeedback.detailText = 'too many points';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+        let onErrorCalled = false;
+
+        component.updateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+        expect(updateAssessmentAfterComplaintStub).not.toHaveBeenCalled();
+        expect(onErrorCalled).toBe(true);
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it('should name the bounds when the server refuses the points after a complaint', () => {
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+        );
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component.updateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it.each(['save', 'submit'] as const)('should name the bounds once when the server refuses the points on %s', async (action) => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        vi.spyOn(component, 'assessmentsAreValid').mockReturnValue(true);
+        vi.spyOn(textAssessmentService, action).mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', skipAlert: true } })),
+        );
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component[action]();
+
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
     it('should submit the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();
@@ -505,13 +559,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const importStub = vi.spyOn(exampleSubmissionService, 'import');
-        importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importStub = vi.spyOn(exampleSubmissionService, 'importExampleSubmission');
+        importStub.mockReturnValue(of({}));
 
         component.useStudentSubmissionAsExampleSubmission();
 
         expect(importStub).toHaveBeenCalledOnce();
-        expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
+        expect(importStub).toHaveBeenCalledWith(exercise.id, submission.id);
     });
 
     it('should cancel assessment', async () => {
@@ -787,6 +841,25 @@ describe('TextSubmissionAssessmentComponent', () => {
         await fixture.whenStable();
         expect(athenaServiceFeedbackSuggestionsStub).toHaveBeenCalled();
         expect(component.textBlockRefs[0].feedback?.text).toEqual(feedbackSuggestionTextBlockRef.feedback!.text);
+    });
+
+    it('should cancel a pending feedback-suggestions request when the component is reused for a new submission', async () => {
+        component.textBlockRefs = [];
+        component.unreferencedFeedback.set([]);
+        const subject = new Subject<(TextBlockRef | Feedback)[]>();
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(subject.asObservable());
+
+        component.loadFeedbackSuggestions();
+        // The component is reused for a new assessment before the stale request resolves.
+        component['resetComponent']();
+
+        const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
+        subject.next([feedbackSuggestionTextBlockRef]);
+        subject.complete();
+        await fixture.whenStable();
+
+        // The stale response must not leak into the reused component's state.
+        expect(component.textBlockRefs).toHaveLength(0);
     });
 
     it.each([

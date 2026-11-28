@@ -7,11 +7,11 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.5.12'
+    id 'com.github.spotbugs' version '6.5.13'
     // %static-code-analysis-stop%
-    id 'com.teamscale' version '39.0.0'
+    id 'com.teamscale' version '40.0.1'
     id 'java'
-    id 'io.freefair.aspectj.post-compile-weaving' version '9.8.0'
+    id 'io.freefair.aspectj.post-compile-weaving' version '9.8.3'
 }
 
 java {
@@ -36,7 +36,7 @@ repositories {
 
 ext {
     aresVersion = '2.2.1'
-    aspectjVersion = '1.9.25.1'
+    aspectjVersion = '1.9.27'
 }
 
 configurations {
@@ -61,7 +61,16 @@ dependencies {
     implementation "org.aspectj:aspectjrt:${aspectjVersion}"
     aresAgent "de.tum.cit.ase:ares:${aresVersion}:agent"
     aresAspectjRuntime "org.aspectj:aspectjrt:${aspectjVersion}"
-    implementation 'org.apache.commons:commons-lang3:3.21.0'
+    implementation 'org.apache.commons:commons-lang3:3.22.0'
+
+    constraints {
+        // Ares brings Guava with it. Keep it on a release that fixes GHSA-xxph-c9ww-hj94 (33.7.2 or newer), like the Maven template
+        testImplementation 'com.google.guava:guava:33.8.0-jre'
+        aspect 'com.google.guava:guava:33.8.0-jre'
+        // Ares brings commons-beanutils 1.9.4 with it, which is affected by CVE-2025-48734
+        testImplementation 'commons-beanutils:commons-beanutils:1.11.0'
+        aspect 'commons-beanutils:commons-beanutils:1.11.0'
+    }
 
     // testImplementation(':${exerciseNamePomXml}')
     // testImplementation(':${exerciseNamePomXml}-Solution')
@@ -219,7 +228,7 @@ pmd {
     ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
     rulesMinimumPriority = 5
     ignoreFailures = true
-    toolVersion = '7.28.0'
+    toolVersion = '7.29.0'
     // exclude the test files
     pmdTest.enabled = false
     pmdMain.reports {
