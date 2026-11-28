@@ -14,16 +14,16 @@ export interface ExerciseSnapshotDTO {
     competencyLinks?: CompetencyExerciseLinkSnapshotDTO[];
     maxPoints?: number;
     bonusPoints?: number;
-    assessmentType?: AssessmentType;
+    assessmentType?: `${AssessmentType}`;
     releaseDate?: string;
     startDate?: string;
     dueDate?: string;
     assessmentDueDate?: string;
     exampleSolutionPublicationDate?: string;
-    difficulty?: DifficultyLevel;
-    mode?: ExerciseMode;
+    difficulty?: `${DifficultyLevel}`;
+    mode?: `${ExerciseMode}`;
     allowComplaintsForAutomaticAssessments?: boolean;
-    includedInOverallScore?: IncludedInOverallScore;
+    includedInOverallScore?: `${IncludedInOverallScore}`;
     problemStatement?: string;
     gradingInstructions?: string;
     categories?: string[];
@@ -66,7 +66,8 @@ export interface ProgrammingExerciseSnapshotDTO {
     allowOnlineIde?: boolean;
     staticCodeAnalysisEnabled?: boolean;
     maxStaticCodeAnalysisPenalty?: number;
-    programmingLanguage?: ProgrammingLanguage;
+    // History can contain server language values outside the client exercise editor's enum.
+    programmingLanguage?: `${ProgrammingLanguage}` | 'OCAML' | 'SQL' | 'POWERSHELL' | 'ADA' | 'PHP';
     packageName?: string;
     showTestNamesToStudents?: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: string;
@@ -77,7 +78,7 @@ export interface ProgrammingExerciseSnapshotDTO {
     tasks?: TaskSnapshotDTO[];
     staticCodeAnalysisCategories?: StaticCodeAnalysisCategorySnapshotDTO[];
     submissionPolicy?: SubmissionPolicySnapshotDTO;
-    projectType?: ProjectType;
+    projectType?: `${ProjectType}`;
     releaseTestsWithExampleSolution?: boolean;
     buildConfig?: ProgrammingExerciseBuildConfigSnapshotDTO;
     testsCommitId?: string;
@@ -112,7 +113,7 @@ export interface TestCaseSnapshotDTO {
     weight?: number;
     bonusMultiplier?: number;
     bonusPoints?: number;
-    visibility?: Visibility;
+    visibility?: `${Visibility}`;
 }
 
 export interface TaskSnapshotDTO {
@@ -126,7 +127,7 @@ export interface StaticCodeAnalysisCategorySnapshotDTO {
     name?: string;
     penalty?: number;
     maxPenalty?: number;
-    state?: StaticCodeAnalysisCategoryState;
+    state?: `${StaticCodeAnalysisCategoryState}`;
 }
 
 export interface ProgrammingExerciseBuildConfigSnapshotDTO {
@@ -141,7 +142,7 @@ export interface ProgrammingExerciseBuildConfigSnapshotDTO {
     timeoutSeconds?: number;
     dockerFlags?: string;
     theiaImage?: string;
-    onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
+    onlineIdeExperienceLevel?: `${OnlineIdeExperienceLevel}`;
     allowBranching?: boolean;
     branchRegex?: string;
     advancedSettings?: BuildConfigAdvancedSettingsDTO;

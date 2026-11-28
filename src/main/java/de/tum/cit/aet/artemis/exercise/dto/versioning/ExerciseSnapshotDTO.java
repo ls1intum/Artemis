@@ -28,12 +28,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
-        long id, String title, String shortName,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title, String shortName,
         // channelName is transient on Exercise and is included here so metadata sync can detect and apply channel updates across editors.
         String channelName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DifficultyLevel difficulty, ExerciseMode mode,

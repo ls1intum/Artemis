@@ -101,6 +101,7 @@ public class OpenAPIConfiguration {
             if (components != null && components.getSchemas() != null) {
                 Map<String, Schema> schemas = filterForSchemasWithDtoSuffixAndStripSuffix(components);
                 removeDtoSuffixFromAttributeNames(schemas);
+                describeSnapshotSchemas(schemas);
 
                 components.setSchemas(schemas);
             }
@@ -122,6 +123,27 @@ public class OpenAPIConfiguration {
                 });
             });
         };
+    }
+
+    private static void describeSnapshotSchemas(Map<String, Schema> schemas) {
+        Schema<?> competencyLink = schemas.get("CompetencyExerciseLinkSnapshot");
+        if (competencyLink != null) {
+            // The embedded key has no Jackson-visible properties. A reference to its Java class would also be pruned.
+            Schema<?> competencyKey = new Schema<>().additionalProperties(false).description("Stored competency key with no serialized fields");
+            competencyKey.addType("object");
+            competencyLink.addProperty("competencyId", competencyKey);
+        }
+
+        Schema<?> quizSnapshot = schemas.get("QuizExerciseSnapshot");
+        if (quizSnapshot == null) {
+            return;
+        }
+
+        // A question without a persisted ID leaves a null slot. Keep nullability on the item, away from the referenced DTO.
+        Schema<?> questions = quizSnapshot.getProperties().get("quizQuestions");
+        Schema<?> nullItem = new Schema<>();
+        nullItem.addType("null");
+        questions.setItems(new Schema<>().addAnyOfItem(questions.getItems()).addAnyOfItem(nullItem));
     }
 
     private void removeDtoSuffixFromResponseSchemas(Operation operation) {

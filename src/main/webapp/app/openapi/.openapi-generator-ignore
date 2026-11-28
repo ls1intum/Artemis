@@ -63,6 +63,7 @@ api/tutorial-group-session-resources.ts
 api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
+api/exercise-version-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/long-feedback-text-resources.ts
 api/admin-hyperion-generation-resources.ts
