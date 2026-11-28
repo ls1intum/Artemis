@@ -1,4 +1,5 @@
-import { ApollonEdge, ApollonNode, UMLModel, importDiagram } from '@tumaet/apollon';
+import type { ApollonEdge, ApollonNode } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 interface V3Element {

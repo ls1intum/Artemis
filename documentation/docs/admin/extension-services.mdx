@@ -2,7 +2,7 @@
 id: extensions-setup
 title: Setup of Extension Services
 sidebar_label: Extensions Setup
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-28
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -253,7 +253,7 @@ ARTEMIS_SHARING_APIKEY=<Enter your API Key here>
 ARTEMIS_SHARING_ACTIONNAME=Export to Artemis@<Enter an ID here>
 ```
 
-Once configured, restart your Artemis instance.
+Restart Artemis to apply the configuration. To disable the integration, set `artemis.sharing.enabled` to `false` (the default) or set `ARTEMIS_SHARING_ENABLED=false` in Docker and restart. This turns off the connector, its callback endpoints, and the sharing actions in the client. Instructors can still import and export programming exercises as ZIP files.
 
 #### Instructor Access Requirements
 

@@ -403,25 +403,6 @@ dependencies {
         }
     }
 
-    // Required by Sharing Platform
-    // The artifact declares gitlab4j-api, and one of its classes (search.GitProjectDTO) has a field of the gitlab4j type Visibility,
-    // so Jackson fails with NoClassDefFoundError when it introspects that DTO without the jar. Only these model classes are
-    // used: Artemis has no GitLab support anymore (removed in #10382) and never calls the GitLab client. gitlab4j-api brings the
-    // whole Jersey client stack (jersey-client, jersey-hk2 and HK2, the Jackson 2 and multipart media modules, the old Apache
-    // connector), javassist and mimepull for that client, and none of them is needed for the model classes. jakarta.ws.rs-api
-    // and jersey-common stay: they are declared explicitly below.
-    implementation("org.codeability:SharingPluginPlatformAPI:1.2.1") {
-        exclude group: "org.glassfish.jersey.core", module: "jersey-client"
-        exclude group: "org.glassfish.jersey.inject", module: "jersey-hk2"
-        exclude group: "org.glassfish.jersey.ext", module: "jersey-entity-filtering"
-        exclude group: "org.glassfish.jersey.media"
-        exclude group: "org.glassfish.jersey.connectors"
-        exclude group: "org.glassfish.hk2"
-        exclude group: "org.glassfish.hk2.external"
-        exclude group: "org.javassist", module: "javassist"
-        exclude group: "org.jvnet.mimepull", module: "mimepull"
-        exclude group: "jakarta.servlet", module: "jakarta.servlet-api"
-    }
     // Required by Spring cloud.
     // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
     // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
