@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -170,7 +171,7 @@ public class LectureResource {
             its units can stay hidden with a releaseDate in the future. channelName names the lecture's communication channel and is derived from the \
             title if omitted.""")
     @ApiResponse(responseCode = "201", description = "The lecture was created.")
-    public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody SimpleLectureDTO newLectureDto) throws URISyntaxException {
+    public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody @Valid SimpleLectureDTO newLectureDto) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", newLectureDto);
         if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
@@ -195,7 +196,7 @@ public class LectureResource {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record SimpleLectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+    public record SimpleLectureDTO(Long id, String title, @Size(max = 50_000) String description, ZonedDateTime startDate, ZonedDateTime endDate,
             @JsonProperty("isTutorialLecture") boolean isTutorialLecture, String channelName, CourseDTO course) implements LectureDTO {
 
         public static SimpleLectureDTO from(Lecture lecture, String channelName) {
@@ -263,7 +264,7 @@ public class LectureResource {
     @PutMapping("lectures")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<SimpleLectureDTO> updateLecture(@RequestBody SimpleLectureDTO updatedLectureDto) {
+    public ResponseEntity<SimpleLectureDTO> updateLecture(@RequestBody @Valid SimpleLectureDTO updatedLectureDto) {
         log.debug("REST request to update Lecture : {}", updatedLectureDto);
         if (updatedLectureDto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
