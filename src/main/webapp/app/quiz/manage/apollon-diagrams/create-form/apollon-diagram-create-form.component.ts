@@ -9,7 +9,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 
 /** The diagram types Artemis offers for Apollon drag-and-drop quiz questions. */
 const DIAGRAM_TYPES: readonly UMLDiagramType[] = [

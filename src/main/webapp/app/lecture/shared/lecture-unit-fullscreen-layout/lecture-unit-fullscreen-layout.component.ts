@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type SplitSizes = [number, number];

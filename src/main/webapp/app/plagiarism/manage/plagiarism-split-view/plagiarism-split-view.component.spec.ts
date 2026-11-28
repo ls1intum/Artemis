@@ -18,7 +18,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 
 describe('Plagiarism Split View Component', () => {
     let comp: PlagiarismSplitViewComponent;

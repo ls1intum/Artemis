@@ -18,7 +18,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',

@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util';
 
 const appRoot = 'src/main/webapp/app/';
 const integrationSpec = /^src\/test\/javascript\/spec\/integration\/(?:code-editor|monaco-editor)\/.*\.spec\.ts$/;
-const resourceExtension = /\.(?:html|scss|css)$/;
+const resourceExtension = /\.(?:html|css)$/;
 const infrastructure =
     /^(?:package\.json$|pnpm-(?:lock|workspace)\.yaml$|\.npmrc$|angular\.json$|tsconfig[^/]*\.json$|vite(?:st)?[^/]*\.[cm]?[jt]s$|config\/|packages\/|supporting_scripts\/|\.github\/)/;
 // Shared components, services and utilities have the same import edges as feature code. Keep
@@ -64,37 +64,17 @@ function resourcePath(root, importer, reference) {
         .join('/');
 }
 
-function sassImports(root, file, source, files, importers) {
-    const directives = [...source.matchAll(/@(?:use|forward|import)\s+([^;]+);/g)];
-    if (directives.length !== [...source.matchAll(/@(?:use|forward|import)\b/g)].length || /\bload-css\s*\(/.test(source)) {
-        throw new Error(`Unsupported Sass resource import in ${file}`);
+/** Records the stylesheets that a stylesheet pulls in with a CSS `@import`, so a change of one reaches the components of the other. */
+function stylesheetImports(root, file, source, files, importers) {
+    const imports = [...source.matchAll(/@import\s+(?:url\(\s*)?(['"])([^'"]+)\1/g)];
+    if (imports.length !== [...source.matchAll(/@import\b/g)].length) {
+        throw new Error(`Unsupported stylesheet import in ${file}`);
     }
-    for (const directive of directives) {
-        const body = directive[1];
-        if (body.includes('#{') || body.includes('\\') || !/^\s*['"]/.test(body) || (directive[0].startsWith('@import') && /\$|\burl\(/.test(body))) {
-            throw new Error(`Dynamic or unsupported Sass resource import in ${file}`);
-        }
-        for (const literal of body.matchAll(/(['"])([^'"]+)\1/g)) {
-            const reference = literal[2];
-            if (/^(?:sass:|https?:|\/\/|data:)/.test(reference)) continue;
-            for (const base of [path.dirname(path.join(root, file)), root]) {
-                const absolute = path.resolve(base, reference);
-                const directory = path.dirname(absolute);
-                const basename = path.basename(absolute);
-                // Sass accepts omitted extensions, underscored partials, and directory index files.
-                const candidates = [absolute, path.join(directory, `_${basename}`)];
-                if (!/\.(?:css|scss)$/.test(reference)) {
-                    for (const extension of ['scss', 'css']) {
-                        candidates.push(`${absolute}.${extension}`, path.join(directory, `_${basename}.${extension}`));
-                        candidates.push(path.join(absolute, `index.${extension}`), path.join(absolute, `_index.${extension}`));
-                    }
-                }
-                for (const candidate of candidates) {
-                    const relative = path.relative(root, candidate).split(path.sep).join('/');
-                    if (files.has(relative)) addImporter(importers, relative, file);
-                }
-            }
-        }
+    for (const [, , reference] of imports) {
+        // A package or a remote stylesheet is not a file of the repository; a change of it arrives as a dependency change.
+        if (/^(?:https?:|\/\/|data:)/.test(reference)) continue;
+        const imported = resourcePath(root, file, reference);
+        if (files.has(imported)) addImporter(importers, imported, file);
     }
 }
 
@@ -104,10 +84,10 @@ async function resourceOwners(root, changedResources, files) {
     const knownFiles = new Set(files);
     for (const file of files) {
         if (!file.startsWith(appRoot) && !integrationSpec.test(file)) continue;
-        if (!/\.(?:ts|scss|css)$/.test(file)) continue;
+        if (!/\.(?:ts|css)$/.test(file)) continue;
         const source = fs.readFileSync(path.join(root, file), 'utf8');
-        if (/\.(?:scss|css)$/.test(file)) {
-            sassImports(root, file, source, knownFiles, importers);
+        if (file.endsWith('.css')) {
+            stylesheetImports(root, file, source, knownFiles, importers);
             continue;
         }
         const syntax = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
@@ -135,14 +115,14 @@ async function resourceOwners(root, changedResources, files) {
                     const values = ts.isArrayLiteralExpression(value) ? value.elements : [value];
                     for (const item of values) {
                         if (!ts.isStringLiteralLike(item)) throw new Error(`Dynamic component resource metadata in ${file}`);
-                        if (name === 'styles') sassImports(root, file, item.text, knownFiles, importers);
+                        if (name === 'styles') stylesheetImports(root, file, item.text, knownFiles, importers);
                         else addImporter(importers, resourcePath(root, file, item.text), file);
                     }
                 }
             }
             if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier)) {
                 const reference = node.moduleSpecifier.text;
-                if (/\.(?:html|scss|css)(?:\?.*)?$/.test(reference)) addImporter(importers, resourcePath(root, file, reference), file);
+                if (/\.(?:html|css)(?:\?.*)?$/.test(reference)) addImporter(importers, resourcePath(root, file, reference), file);
             }
             ts.forEachChild(node, visit);
         };
@@ -167,7 +147,7 @@ async function resourceOwners(root, changedResources, files) {
     return owners;
 }
 
-/** Expand Angular/Sass resources before Vitest walks transitive TypeScript imports. */
+/** Expand Angular resources before Vitest walks transitive TypeScript imports. */
 export async function planTests({ root, changes, files }) {
     const sources = new Set();
     const resources = [];

@@ -48,7 +48,8 @@ import { CourseConversationsService } from 'app/communication/service/course-con
 import { Subject, of, throwError } from 'rxjs';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
-import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 describe('PostingReactionsBarComponent', () => {

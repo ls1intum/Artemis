@@ -6,7 +6,7 @@ import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model'
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { createTeamSearch } from 'app/exercise/team/team-search.util';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

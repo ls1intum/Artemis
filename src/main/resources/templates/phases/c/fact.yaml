@@ -9,6 +9,7 @@
 - name: compile
   script: |-
     rm -f ${studentParentWorkingDirectoryName}/GNUmakefile
+    rm -f ${studentParentWorkingDirectoryName}/makefile
     rm -f ${studentParentWorkingDirectoryName}/Makefile
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     make -C ${studentParentWorkingDirectoryName} exercise

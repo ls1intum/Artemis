@@ -11,7 +11,8 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export const GLOBAL_NOTIFICATION_TYPES = {

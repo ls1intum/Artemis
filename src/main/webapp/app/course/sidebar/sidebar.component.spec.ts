@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import { EventEmitter } from '@angular/core';

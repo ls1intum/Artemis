@@ -1,6 +1,7 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiCheckboxChangeEvent, TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxChangeEvent, TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';

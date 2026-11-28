@@ -6,7 +6,8 @@ import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversa
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
 import { faPeopleGroup, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabValue, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabValue, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
