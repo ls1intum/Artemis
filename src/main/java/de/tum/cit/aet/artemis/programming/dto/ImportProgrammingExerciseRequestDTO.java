@@ -141,6 +141,20 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
     }
 
     /**
+     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance.
+     *
+     * @return the same details with a {@code null} id
+     */
+    public ImportProgrammingExerciseRequestDTO withoutId() {
+        return new ImportProgrammingExerciseRequestDTO(null, title, shortName, channelName, packageName, problemStatement, gradingInstructions, categories, difficulty, mode,
+                teamAssignmentConfig, maxPoints, bonusPoints, includedInOverallScore, releaseDate, startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate,
+                buildAndTestStudentSubmissionsAfterDueDate, assessmentType, allowComplaintsForAutomaticAssessments, presentationScoreEnabled, secondCorrectionEnabled,
+                allowOnlineEditor, allowOfflineIde, allowOnlineIde, staticCodeAnalysisEnabled, maxStaticCodeAnalysisPenalty, showTestNamesToStudents,
+                releaseTestsWithExampleSolution, programmingLanguage, projectType, projectKey, testRepositoryUri, buildConfig, gradingCriteria, competencyLinks,
+                auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig, course, exerciseGroup, templateParticipation, solutionParticipation);
+    }
+
+    /**
      * Reference to a source template or solution participation. The from-file import reads the repository URI off the
      * JSON part to rewrite legacy project names; the plain import ignores it. The wire property name comes from the
      * enclosing record's component, so both slots share one record.

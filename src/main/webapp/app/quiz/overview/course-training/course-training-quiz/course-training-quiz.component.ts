@@ -22,7 +22,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionTraining } from 'app/openapi/model/quiz-question-training';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 

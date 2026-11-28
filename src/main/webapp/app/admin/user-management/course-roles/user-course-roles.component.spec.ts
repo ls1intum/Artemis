@@ -8,7 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 
 import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 import { UserCourseRole } from 'app/account/user/shared/user-course-role.model';

@@ -1,0 +1,41 @@
+.pool-create-quiz {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pool-create-quiz .pool-create-quiz-intro {
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.pool-create-quiz .pool-create-quiz-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.pool-create-quiz .pool-create-quiz-row .pool-create-quiz-field {
+    flex: 1 1 10rem;
+}
+
+.pool-create-quiz .pool-create-quiz-field label {
+    color: var(--tumaet-ui-text-color);
+    font-weight: 600;
+}
+
+.pool-create-quiz .pool-create-quiz-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pool-create-quiz .pool-create-quiz-available {
+    color: var(--tumaet-ui-muted-color);
+    margin: 0;
+}
+
+.pool-create-quiz .pool-create-quiz-available-none {
+    color: var(--tumaet-ui-state-danger);
+}

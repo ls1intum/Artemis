@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
-import { TumAetUiOverlayPlacement, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiOverlayPlacement } from '@tumaet/ui-angular/overlay';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

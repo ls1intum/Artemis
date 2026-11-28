@@ -4,7 +4,7 @@ import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent } from '@tumaet/ui-angular';
+import { TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent } from '@tumaet/ui-angular/tabs';
 import { faAlignLeft, faComment } from '@fortawesome/free-solid-svg-icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

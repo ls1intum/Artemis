@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.session.SessionService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
@@ -63,7 +63,7 @@ public class AtlasAgentService {
 
     private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)(?::exerciseId=(\\d+))?(?::exerciseTitle=([^%]*))?%%");
 
-    private final ChatMemory chatMemory;
+    private final SessionService sessionService;
 
     private final AtlasAgentDelegationService delegationService;
 
@@ -89,13 +89,13 @@ public class AtlasAgentService {
 
     private final AtlasAgentPreviewService previewService;
 
-    public AtlasAgentService(@Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
+    public AtlasAgentService(@Nullable SessionService sessionService, AtlasAgentDelegationService delegationService,
             @Qualifier("mainAgentToolCallbackProvider") AtlasToolSurface mainAgentToolCallbackProvider,
             @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
             @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
             @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
-        this.chatMemory = chatMemory;
+        this.sessionService = sessionService;
         this.delegationService = delegationService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider.provider();
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider.provider();
@@ -175,9 +175,8 @@ public class AtlasAgentService {
                     response != null ? response.length() : 0);
 
             // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
-            // The current response was already added to chat memory by Spring AI's MessageChatMemoryAdvisor,
-            // so the index of the current response = count - 1.
-            if (hasPreviewData) {
+            // Delegation has already stored a nonblank response, so its index is count - 1.
+            if (hasPreviewData && replyIsPersisted(response)) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;
                 log.debug("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
                 if (assistantIndex >= 0) {
@@ -295,7 +294,7 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        return chatMemory != null;
+        return sessionService != null;
     }
 
     /**
@@ -307,10 +306,10 @@ public class AtlasAgentService {
      */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
-            if (chatMemory == null) {
+            if (sessionService == null) {
                 return List.of();
             }
-            List<Message> messages = chatMemory.get(sessionId);
+            List<Message> messages = AtlasChatSessions.conversation(sessionService, sessionId);
 
             if (messages.isEmpty()) {
                 return List.of();
@@ -386,7 +385,7 @@ public class AtlasAgentService {
         }
 
         // Store preview data in cache for history reconstruction
-        if (!previews.isEmpty()) {
+        if (!previews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex, new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
@@ -435,7 +434,7 @@ public class AtlasAgentService {
         List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
         // Store preview data in cache for history reconstruction
-        if (relationPreviews != null && !relationPreviews.isEmpty()) {
+        if (relationPreviews != null && !relationPreviews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex,
@@ -750,17 +749,26 @@ public class AtlasAgentService {
     }
 
     /**
-     * Counts the number of assistant messages currently in chat memory for the given session.
-     * Used to determine the index for storing preview data in the preview history cache.
+     * Whether delegation stored a reply in the session. Blank replies have no preview index.
+     *
+     * @param reply the text of the reply of the agent
+     * @return true if delegation stored the reply
+     */
+    private static boolean replyIsPersisted(@Nullable String reply) {
+        return reply != null && !reply.isBlank();
+    }
+
+    /**
+     * Counts the assistant messages in the session for indexing the preview history.
      *
      * @param sessionId the session ID
      * @return the count of assistant messages
      */
     private int countAssistantMessages(String sessionId) {
-        if (chatMemory == null) {
+        if (sessionService == null) {
             return 0;
         }
-        List<Message> messages = chatMemory.get(sessionId);
+        List<Message> messages = AtlasChatSessions.conversation(sessionService, sessionId);
         return (int) messages.stream().filter(m -> m.getMessageType() == MessageType.ASSISTANT).count();
     }
 

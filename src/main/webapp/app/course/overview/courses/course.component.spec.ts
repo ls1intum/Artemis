@@ -36,7 +36,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/account/user/user.model';
 
