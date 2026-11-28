@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -26,7 +28,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 @Component({
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
-    styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
+    styleUrls: ['./programming-exercise-grading-tasks-table.css'],
     imports: [
         TumAetUiButtonDirective,
         TranslateDirective,
@@ -56,6 +58,11 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     readonly isSaving = signal(false);
     readonly tasks = signal<ProgrammingExerciseTask[]>([]);
     readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
+    /**
+     * Incremented whenever the tasks or their test cases are changed in place: when the points are recalculated and when the test cases are sorted. The task objects keep
+     * their identity then, so the OnPush task rows would not notice; passing the revision to every row makes all of them render the new state.
+     */
+    readonly rowsRevision = signal(0);
 
     currentSort: Sort | undefined;
 
@@ -81,6 +88,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
     updateTasks = () => {
         this.tasks.set(this.taskService.updateTasks());
+        this.rowsRevision.update((revision) => revision + 1);
     };
 
     toggleShowInactiveTestsShown = () => {
@@ -153,6 +161,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
         }
         sortedTasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
         this.tasks.set(sortedTasks);
+        // the test cases of each task were sorted in place, which no row sees without it
+        this.rowsRevision.update((revision) => revision + 1);
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {

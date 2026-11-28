@@ -10,7 +10,11 @@ import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
  * <p>

@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';

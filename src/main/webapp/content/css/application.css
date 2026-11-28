@@ -1,0 +1,43 @@
+/*
+ * The global stylesheet of the application: the entry that `angular.json` lists. It only imports the files below, in the
+ * order in which they are loaded. A rule belongs in one of them only if a component stylesheet cannot hold it; prefer
+ * Tailwind utilities and component stylesheets.
+ *
+ * The order of the cascade layers. A later layer overrides an earlier one, whatever the specificity of the selectors.
+ * - `components`: third-party stylesheets that are loaded later (Apollon). Declared first, so the element defaults
+ *   still override it, as they did when they were not in a layer.
+ * - `base`: the element defaults of base.css.
+ * - `tumaet-ui-theme`, `tumaet-ui-cdk`, `tumaet-ui`: TUM AET UI. Its components override the element defaults.
+ * - `utilities`: the Tailwind utilities of the application (declared in `tailwind.css`, which is loaded later).
+ *   A utility class on a TUM AET UI component therefore overrides the style of the component.
+ * The boot styles of `index.html` declare the same order for the time before this stylesheet has loaded; keep the two
+ * lists equal.
+ */
+@layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
+
+/*
+ * Styles of libraries. Bare specifiers (not 'node_modules/…'), so the `@import` resolver of Tailwind can resolve them.
+ * KaTeX renders the mathematical formulas of the markdown editor, highlight.js its code blocks (the `vs` style; the
+ * dark theme overrides it in themes/dark-rules.css).
+ */
+@import 'katex/dist/katex.min.css';
+@import '@angular/cdk/a11y-prebuilt.css';
+@import 'highlight.js/styles/vs.css';
+
+/* The colour and size tokens: the light theme, and the values of the dark theme that differ. */
+@import './themes/light.css';
+@import './themes/dark.css';
+@import './apollon.css';
+
+/* The element defaults (body, headings, links, tables, form controls) that every page builds on. */
+@import './base.css';
+
+/* Emojis in message reactions */
+@import '@ctrl/ngx-emoji-mart/picker';
+@import './third-party.css';
+@import './github-alerts.css';
+@import './rendered-content.css';
+@import './layout.css';
+@import './shared-classes.css';
+@import './print.css';
+@import './themes/dark-rules.css';

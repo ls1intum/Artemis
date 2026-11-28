@@ -1,4 +1,7 @@
-import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -83,7 +86,7 @@ interface ReactionMetaDataMap {
 @Component({
     selector: 'jhi-posting-reactions-bar',
     templateUrl: './posting-reactions-bar.component.html',
-    styleUrls: ['./posting-reactions-bar.component.scss'],
+    styleUrls: ['../communication.component.css', './posting-reactions-bar.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TumAetUiTooltipDirective,

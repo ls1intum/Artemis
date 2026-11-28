@@ -6,7 +6,9 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -14,7 +16,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
     templateUrl: './multiple-choice-visual-question.component.html',
-    styleUrls: ['../multiple-choice-question.component.scss', '../../../../overview/participation/quiz-participation.scss'],
+    styleUrls: ['../multiple-choice-question.component.css', '../../../../overview/participation/quiz-participation.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, FormsModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective, NgClass, ArtemisTranslatePipe],
 })

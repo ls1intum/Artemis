@@ -29,10 +29,10 @@ public final class LLMResponseCost {
     public static Double reportedUsd(@Nullable Object nativeUsage, @Nullable Integer inputTokens, @Nullable Integer outputTokens) {
         try {
             if (nativeUsage instanceof CompletionUsage completion && countsMatch(inputTokens, outputTokens, completion.promptTokens(), completion.completionTokens())) {
-                return fromProperties(completion._additionalProperties());
+                return fromProperties(completion._allProperties());
             }
             if (nativeUsage instanceof ResponseUsage response && countsMatch(inputTokens, outputTokens, response.inputTokens(), response.outputTokens())) {
-                return fromProperties(response._additionalProperties());
+                return fromProperties(response._allProperties());
             }
             if (nativeUsage instanceof Map<?, ?> transported && transported.get("prompt_tokens") instanceof Number input
                     && transported.get("completion_tokens") instanceof Number output && countsMatch(inputTokens, outputTokens, input.longValue(), output.longValue())

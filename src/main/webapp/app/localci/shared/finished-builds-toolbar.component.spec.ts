@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BuildJobSearchComponent } from './build-job-search.component';

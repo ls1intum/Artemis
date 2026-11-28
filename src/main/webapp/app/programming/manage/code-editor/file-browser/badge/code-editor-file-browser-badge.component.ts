@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { IconDefinition, faComments, faLightbulb } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -8,7 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-file-browser-badge',
     templateUrl: './code-editor-file-browser-badge.component.html',
-    styleUrls: ['./code-editor-file-browser-badge.component.scss'],
+    styleUrls: ['./code-editor-file-browser-badge.component.css'],
     imports: [TumAetUiTooltipDirective, FaIconComponent],
 })
 export class CodeEditorFileBrowserBadgeComponent {

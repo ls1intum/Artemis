@@ -3,7 +3,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { Component, inject, input } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from '../team.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

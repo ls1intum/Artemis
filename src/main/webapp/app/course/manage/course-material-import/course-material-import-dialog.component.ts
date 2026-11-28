@@ -3,16 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiPaginatorComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -45,7 +43,7 @@ type DialogStep = 'selectCourse' | 'selectOptions';
         ArtemisTranslatePipe,
     ],
     templateUrl: './course-material-import-dialog.component.html',
-    styleUrl: './course-material-import-dialog.component.scss',
+    styleUrl: './course-material-import-dialog.component.css',
 })
 export class CourseMaterialImportDialogComponent {
     private readonly translateService = inject(TranslateService);

@@ -299,7 +299,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
 
     /**
      * Return the number of students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type.
-     * Optimized: fetches exercise type and student group pairs first, then counts students per group efficiently.
+     * Counts the distinct students per exercise type in one query.
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
      *
      * @param minDate the minimum due date

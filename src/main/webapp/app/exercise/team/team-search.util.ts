@@ -1,6 +1,6 @@
 import { DestroyRef, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
 import { Observable, Subject } from 'rxjs';
 
 interface TeamSearchSuggestion<T> {

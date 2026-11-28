@@ -13,12 +13,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -35,9 +37,12 @@ public class ProgrammingExerciseImportRepositoryService {
 
     private final GitService gitService;
 
-    public ProgrammingExerciseImportRepositoryService(RepositoryService repositoryService, GitService gitService) {
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
+    public ProgrammingExerciseImportRepositoryService(RepositoryService repositoryService, GitService gitService, CourseConfigurationRepository courseConfigurationRepository) {
         this.repositoryService = repositoryService;
         this.gitService = gitService;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -65,9 +70,13 @@ public class ProgrammingExerciseImportRepositoryService {
             gitService.stageAllChanges(auxRepo);
         }
 
-        gitService.commitAndPush(templateRepo, "Import template from file", true, user);
-        gitService.commitAndPush(solutionRepo, "Import solution from file", true, user);
-        gitService.commitAndPush(testRepo, "Import tests from file", true, user);
+        // The import is the first commit of the template, solution and test repository, so the course decides who authors it, as it does for a new exercise.
+        PersonIdent importer = new PersonIdent(user.getName(), user.getEmail());
+        PersonIdent firstCommitAuthor = courseConfigurationRepository.findInitialCommitAuthorByExerciseId(newExercise.getId())
+                .map(setting -> setting.toIdentity(gitService.getPlaceholderIdentity(), importer)).orElse(importer);
+        gitService.commitAndPushAs(templateRepo, "Import template from file", true, firstCommitAuthor);
+        gitService.commitAndPushAs(solutionRepo, "Import solution from file", true, firstCommitAuthor);
+        gitService.commitAndPushAs(testRepo, "Import tests from file", true, firstCommitAuthor);
         for (Repository auxRepo : auxiliaryRepositories) {
             gitService.commitAndPush(auxRepo, "Import auxiliary repo from file", true, user);
         }

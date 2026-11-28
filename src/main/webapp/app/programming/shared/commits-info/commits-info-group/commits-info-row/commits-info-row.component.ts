@@ -3,7 +3,9 @@ import type { CommitInfo } from 'app/programming/shared/entities/programming-sub
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from 'app/exercise/result/result.component';

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, input, output } from '@angular/core';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

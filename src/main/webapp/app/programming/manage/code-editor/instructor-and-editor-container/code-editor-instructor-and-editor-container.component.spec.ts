@@ -68,7 +68,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
