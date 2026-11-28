@@ -80,7 +80,7 @@ public interface ManualResultCreationRepository extends ArtemisJpaRepository<Res
     }
 
     /**
-     * Saves the exam result with its feedback if the correction round is free and marks the submission as submitted for the assessment dashboard.
+     * Marks the submission as submitted for the assessment dashboard and saves the exam result with its feedback if the correction round is free.
      *
      * @param submissionId    the id of the submission to assess
      * @param correctionRound the correction round of the result
@@ -90,9 +90,7 @@ public interface ManualResultCreationRepository extends ArtemisJpaRepository<Res
     @Transactional
     default Optional<Result> saveExamResultIfCorrectionRoundIsFree(long submissionId, int correctionRound, Result newResult) {
         var savedResult = saveManualResultIfCorrectionRoundIsFree(submissionId, correctionRound, newResult);
-        if (savedResult.isPresent()) {
-            markExamSubmissionSubmitted(submissionId);
-        }
+        markExamSubmissionSubmitted(submissionId);
         return savedResult;
     }
 

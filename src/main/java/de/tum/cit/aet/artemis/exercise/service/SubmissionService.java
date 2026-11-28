@@ -551,7 +551,7 @@ public class SubmissionService {
     public void addResultWithFeedbackByCorrectionRound(StudentParticipation studentParticipation, User assessor, double score, String feedbackText, int correctionRound) {
         if (studentParticipation.getExercise().isExamExercise()) {
             var latestSubmission = studentParticipation.findLatestSubmission();
-            if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
+            if (latestSubmission.isPresent()) {
                 var submission = latestSubmission.get();
                 Result result = new Result();
                 result.setSubmission(submission);

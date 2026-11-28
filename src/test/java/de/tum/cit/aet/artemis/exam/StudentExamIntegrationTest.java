@@ -1765,6 +1765,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 .filter(candidate -> candidate.getExercise() instanceof TextExercise).findFirst().orElseThrow();
         var submission = participation.findLatestSubmission().orElseThrow();
         assertThat(submission.getResults()).isEmpty();
+        assertThat(submission.isSubmitted()).isFalse();
 
         // The tutor commits after the exam assessment loaded the submission.
         var tutorResult = new Result();
@@ -1776,6 +1777,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         submissionService.addResultWithFeedbackByCorrectionRound(participation, instructor, 0D, "Empty submission", 0);
+        var submissionAfterOccupiedRound = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        assertThat(submissionAfterOccupiedRound.isSubmitted()).isTrue();
+        assertThat(submissionAfterOccupiedRound.getResults()).extracting(Result::getId).containsExactly(tutorResultId);
+
         submissionService.addResultWithFeedbackByCorrectionRound(participation, instructor, 0D, "Empty submission", 1);
 
         var storedSubmission = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
