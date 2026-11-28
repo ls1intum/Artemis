@@ -9,7 +9,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
 import org.springframework.ai.openai.setup.OpenAiSetup;
@@ -37,10 +36,8 @@ import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Builds the clients and chat models of the configured LLM presets. This is the only place in Artemis that connects to an LLM provider, and
- * {@code LlmClientArchitectureTest} keeps it so: a preset with {@code api: chat-completions} gets Spring AI's {@link OpenAiChatModel}, a preset
- * with {@code api: responses} gets the {@link OpenAiResponsesChatModel}, and a preset with {@code api: embeddings} is called through
- * {@link #embed}. All carry exactly the options the preset sets and use one provider client per endpoint. A module that needs another kind of
- * call adds it here.
+ * {@code LlmClientArchitectureTest} keeps it so. Responses presets use {@link OpenAiResponsesChatModel}, and embeddings presets use
+ * {@link #embed}. Both use the configured options and share one provider client per endpoint.
  */
 @Conditional(LlmEnabled.class)
 @Lazy
@@ -76,7 +73,7 @@ public class LlmClientService {
     }
 
     /**
-     * @param presetName a configured preset with {@code api: responses} or {@code api: chat-completions}
+     * @param presetName a configured preset with {@code api: responses}
      * @return a chat client over the preset's model
      */
     public ChatClient chatClient(String presetName) {
@@ -84,7 +81,7 @@ public class LlmClientService {
     }
 
     /**
-     * @param presetName a configured preset with {@code api: responses} or {@code api: chat-completions}
+     * @param presetName a configured preset with {@code api: responses}
      * @return the preset's chat model; every response carries the preset name under {@link #PRESET_METADATA_KEY}
      */
     public ChatModel chatModel(String presetName) {
@@ -96,7 +93,7 @@ public class LlmClientService {
      * preset's, and the model records no observations, so prompts and completions never reach tracing. It shares the endpoint's connections and is not
      * cached.
      *
-     * @param presetName a configured preset with {@code api: responses} or {@code api: chat-completions}
+     * @param presetName a configured preset with {@code api: responses}
      * @param timeout    the time limit of one call
      * @param maxRetries the SDK retries of one call
      * @return the chat model; every response carries the preset name under {@link #PRESET_METADATA_KEY}
@@ -189,11 +186,8 @@ public class LlmClientService {
     }
 
     private ChatModel chatModel(String presetName, Preset preset, OpenAIClient client, ObservationRegistry observations) {
-        OpenAiChatOptions options = options(preset);
-        // the startup validation ensures that every preset has an api
         ChatModel model = switch (preset.api()) {
-            case RESPONSES -> new OpenAiResponsesChatModel(client, jsonMapper, options);
-            case CHAT_COMPLETIONS -> OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(client.async()).options(options).observationRegistry(observations).build();
+            case RESPONSES -> new OpenAiResponsesChatModel(client, jsonMapper, options(preset), observations);
             case EMBEDDINGS -> throw new IllegalArgumentException("The LLM preset " + presetName + " is an embeddings preset and has no chat model");
         };
         return new PresetTaggingChatModel(model, presetName);

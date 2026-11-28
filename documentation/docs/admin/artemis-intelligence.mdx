@@ -71,10 +71,8 @@ artemis:
                 chat: atlaschat
 ```
 
-The preset's `api` decides whether a task uses the Responses API or Chat Completions; there is no separate switch.
-Orchestration and its workers replay encrypted reasoning with `store: false`, so their presets need a provider or
-gateway that supports `/responses` with function tools, or `api: chat-completions`. No automatic transport fallback
-occurs after an error. If flavor stripping fails, Artemis keeps the original text.
+Atlas presets use `api: responses`. Orchestration and its workers replay encrypted reasoning with `store: false`,
+so their endpoint and model must support `/responses` with function tools. If flavor stripping fails, Artemis keeps the original text.
 
 Each autonomous run has a fixed tool-call budget. A run that exhausts it, or ends without a verified result, ends as failed if it changed nothing and as partial otherwise, and Artemis does not retry it automatically. The [developer AI pipeline catalog](/developer/ai-pipelines#atlas-agents-and-competency-orchestration) lists the exact limits.
 

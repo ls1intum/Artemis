@@ -11,6 +11,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
 import reactor.core.publisher.Flux;
 
 /**
@@ -61,10 +62,11 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         for (Generation generation : response.getResults()) {
             AssistantMessage output = generation.getOutput();
             String text = output.getText();
-            if (text != null && text.contains("<|")) {
+            String clean = sanitizeHarmonyTokens(text);
+            if (text != null && !text.equals(clean)) {
                 changed = true;
-                AssistantMessage cleaned = AssistantMessage.builder().content(sanitizeHarmonyTokens(text)).properties(output.getMetadata()).media(output.getMedia())
-                        .toolCalls(output.getToolCalls()).build();
+                AssistantMessage cleaned = AssistantMessage.builder().content(clean).properties(ResponsesOutputRepair.removeTextMatches(output, HARMONY_CONTROL_TOKEN))
+                        .media(output.getMedia()).toolCalls(output.getToolCalls()).build();
                 rebuilt.add(new Generation(cleaned, generation.getMetadata()));
             }
             else {

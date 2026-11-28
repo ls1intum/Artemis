@@ -145,6 +145,21 @@ class OpenAiResponsesChatModelTest {
     }
 
     @Test
+    void outputTokenLimitPreservesTheTruncationSignalAndSuppressesPartialToolCalls() {
+        var incomplete = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "truncated");
+        when(incomplete.status()).thenReturn(Optional.of(ResponseStatus.INCOMPLETE));
+        when(incomplete.incompleteDetails()).thenReturn(Optional.of(Response.IncompleteDetails.builder().reason(Response.IncompleteDetails.Reason.MAX_OUTPUT_TOKENS).build()));
+        withUsage(incomplete, 10, 2);
+        when(responseService.create(any(ResponseCreateParams.class))).thenReturn(incomplete);
+
+        var result = new OpenAiResponsesChatModel(openAIClient, new JsonMapper(), "gpt-test").call(new Prompt("work"));
+
+        assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("length");
+        assertThat(result.hasToolCalls()).isFalse();
+        assertThat(result.getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
+    }
+
+    @Test
     void incompleteResponseRetainsUsageAndNeverExecutesItsToolCalls() {
         var incomplete = response(List.of(ResponseOutputItem.ofFunctionCall(functionCall())), "incomplete-usage");
         when(incomplete.status()).thenReturn(Optional.of(ResponseStatus.INCOMPLETE));

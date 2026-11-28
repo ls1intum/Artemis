@@ -147,7 +147,7 @@ public class OrchestratorDelegationToolsService {
                     readTools, roleTools, terminalTools);
             AtlasToolCallBudget.checkResponse(response, workerContext);
             if (response == null || response.getResult() == null
-                    || java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
+                    || java.util.Set.of("failed", "incomplete", "length", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
                             .contains(java.util.Objects.requireNonNullElse(response.getResult().getMetadata().getFinishReason(), ""))) {
                 return new WorkerResultDTO(false, role.displayName + " worker provider response did not complete.", actionSlice(buffer, actionStart));
             }

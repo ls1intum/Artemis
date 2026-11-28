@@ -22,7 +22,7 @@ public record LlmPresetAssignment(String propertyKey, @Nullable String fallbackK
      * What an assigned preset is used for.
      */
     public enum Usage {
-        /** Chat calls through the Responses or the Chat Completions API. */
+        /** Chat calls through the Responses API. */
         CHAT,
         /** Embedding calls. */
         EMBEDDING

@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.openai.core.JsonValue;
-import com.openai.models.completions.CompletionUsage;
 import com.openai.models.responses.ResponseUsage;
 
 /** Reads the USD amount on an individual provider response, never a partial amount for accumulated usage. */
@@ -28,9 +27,6 @@ public final class LLMResponseCost {
     @Nullable
     public static Double reportedUsd(@Nullable Object nativeUsage, @Nullable Integer inputTokens, @Nullable Integer outputTokens) {
         try {
-            if (nativeUsage instanceof CompletionUsage completion && countsMatch(inputTokens, outputTokens, completion.promptTokens(), completion.completionTokens())) {
-                return fromProperties(completion._allProperties());
-            }
             if (nativeUsage instanceof ResponseUsage response && countsMatch(inputTokens, outputTokens, response.inputTokens(), response.outputTokens())) {
                 return fromProperties(response._allProperties());
             }

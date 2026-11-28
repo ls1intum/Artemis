@@ -104,12 +104,12 @@ artemis:
         presets:
             testchat:
                 endpoint: test
-                model: openai/gpt-oss-20b
-                api: chat-completions
+                model: qwen/qwen3.8-27b
+                api: responses
             testgeneration:
                 endpoint: test
-                model: openai/gpt-oss-20b
-                api: chat-completions
+                model: qwen/qwen3.8-27b
+                api: responses
                 max-retries: 0
     hyperion:
         llm-presets:

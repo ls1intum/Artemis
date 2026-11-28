@@ -47,7 +47,7 @@ public record LlmProperties(@Nullable Map<String, Endpoint> endpoints, @Nullable
      * API a preset calls.
      */
     public enum Api {
-        RESPONSES, CHAT_COMPLETIONS, EMBEDDINGS
+        RESPONSES, EMBEDDINGS
     }
 
     /**
@@ -112,7 +112,7 @@ public record LlmProperties(@Nullable Map<String, Endpoint> endpoints, @Nullable
      * @param temperature         the sampling temperature; only without a reasoning effort or with {@code none}
      * @param topP                the nucleus sampling value, if any
      * @param verbosity           the response verbosity, if any
-     * @param maxTokens           the Chat Completions {@code max_tokens} limit (for servers such as Ollama); at most one of the two limits
+     * @param maxTokens           an alternative output token limit; at most one of the two limits
      * @param maxCompletionTokens the {@code max_completion_tokens} limit; the Responses API receives either limit as {@code max_output_tokens}
      * @param timeout             overrides the endpoint timeout
      * @param maxRetries          overrides the endpoint retries

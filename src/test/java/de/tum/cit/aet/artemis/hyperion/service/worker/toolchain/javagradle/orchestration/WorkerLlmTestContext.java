@@ -13,6 +13,12 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  */
 final class WorkerLlmTestContext {
 
+    static final String SUCCESS = """
+            {"id":"resp-test","object":"response","model":"test-model","status":"completed",
+             "output":[{"type":"message","id":"msg-1","role":"assistant","status":"completed",
+             "content":[{"type":"output_text","text":"OK","annotations":[]}]}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}
+            """;
+
     private WorkerLlmTestContext() {
     }
 
@@ -22,6 +28,6 @@ final class WorkerLlmTestContext {
                 .withUserConfiguration(LlmConfiguration.class, LlmClientService.class, JavaGradleGenerationAdapterService.class)
                 .withBean(MeterRegistry.class, SimpleMeterRegistry::new).withPropertyValues("artemis.aiworker.workload=hyperion-generation",
                         "artemis.llm.endpoints.test.base-url=https://example.invalid/v1", "artemis.llm.endpoints.test.api-key=test-key",
-                        "artemis.llm.presets.testpreset.endpoint=test", "artemis.llm.presets.testpreset.model=test-model", "artemis.llm.presets.testpreset.api=chat-completions");
+                        "artemis.llm.presets.testpreset.endpoint=test", "artemis.llm.presets.testpreset.model=test-model", "artemis.llm.presets.testpreset.api=responses");
     }
 }

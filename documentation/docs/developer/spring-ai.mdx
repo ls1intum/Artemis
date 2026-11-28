@@ -2,14 +2,14 @@
 id: spring-ai
 title: Spring AI
 sidebar_label: Spring AI
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Callout from "../../src/components/Callout/Callout";
 
-This guide explains how to set up a local LLM (Large Language Model) service for development purposes using LM Studio.
-This allows you to test Hyperion's AI-assisted features locally without requiring cloud API keys.
+For local Artemis development, we recommend [LM Studio 0.4.29](https://lmstudio.ai/changelog/lmstudio/lmstudio-v0.4.29)
+with [Qwen/Qwen3.8-27B](https://lmstudio.ai/models/qwen/qwen3.8-27b). This setup lets you test Hyperion locally without cloud API keys.
 
 <Callout variant={CalloutVariant.info}>
     For production setups with cloud providers (OpenAI, Microsoft Foundry), refer to [LLM configuration](/admin/llm-configuration).
@@ -32,10 +32,11 @@ brew install --cask lm-studio
 
 ### Download and Configure a Model
 
-#### Download LM Studio
-1. Open the **LM Studio** GUI application and choose **Developer**
-2. Download the `gpt-oss-20b` model (this will take a few moments depending on your internet connection)
-3. Make sure **Enable local LLM service on login** is active
+#### Configure LM Studio via the GUI
+
+1. Open **Model Search** in LM Studio and search for `qwen/qwen3.8-27b`.
+2. Download a quantization that fits your hardware and load the model.
+3. Open **Developer** and start the local server.
 
 The GUI application enables you to see logs and interact with the model in a chat similar to ChatGPT.
 
@@ -46,12 +47,12 @@ LM Studio provides a CLI tool (`lms`) for managing models and the server. For mo
 1. Download a model
 
     ```bash
-    lms get openai/gpt-oss-20b
+    lms get qwen/qwen3.8-27b
     ```
 2. Load the model to activate it
 
     ```bash
-    lms load openai/gpt-oss-20b --context-length 32000
+    lms load qwen/qwen3.8-27b --context-length 32000
     ```
 
 3. Start the LMS server
@@ -64,9 +65,15 @@ The LLM service should now be running on http://localhost:1234.
 
 #### Verify the Service Works
 
-Verify http://localhost:1234/api/v0/models lists the models.
+Send a prompt to the same endpoint Artemis uses and check that the response contains a reply in `output`.
 
-The model `openai/gpt-oss-20b` should appear in the list.
+```bash
+curl --fail-with-body http://localhost:1234/v1/responses \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen/qwen3.8-27b","input":"Reply with hello.","store":false}'
+```
+
+If you loaded the model under a custom identifier, use its `id` from `GET /v1/models` in both the request and the Artemis preset.
 
 ## Configuring Artemis
 
@@ -77,14 +84,14 @@ artemis:
   llm:
     endpoints:
       lmstudio:
-        # The OpenAI SDK appends /chat/completions itself, so the base URL includes the /v1 prefix.
+        # The OpenAI SDK appends /responses itself, so the base URL includes the /v1 prefix.
         # Without api-key Artemis sends no Authorization header, which LM Studio does not need.
         base-url: http://localhost:1234/v1
     presets:
       local:
         endpoint: lmstudio
-        model: openai/gpt-oss-20b    # or whatever name your local server expects
-        api: chat-completions
+        model: qwen/qwen3.8-27b
+        api: responses
         temperature: 0.7
   hyperion:
     enabled: true
@@ -104,7 +111,7 @@ artemis:
 4. Click the **Check Consistency** button
 5. At startup, the **Artemis Server logs** list each assignment, for example:
     ```
-    LLM artemis.hyperion.llm-presets.consistency-check -> local (default) | openai/gpt-oss-20b | chat-completions | localhost | timeout PT5M, retries 3, auth none, no fallback price
+    LLM artemis.hyperion.llm-presets.consistency-check -> local (default) | qwen/qwen3.8-27b | responses | localhost | timeout PT5M, retries 3, auth none, no fallback price
     ```
 6. View the **LMS Server logs**
     1. Via CLI
@@ -119,7 +126,7 @@ artemis:
 
 ## Performance Considerations
 
-- **Model Size**: Larger models provide better results but require more RAM and processing power. The `gpt-oss-20b` model is a good balance for development.
+- **Model Size**: For Qwen3.8-27B, a lower-bit quantization uses less memory. Leave enough memory for the context window and the local Artemis instance.
 - **Context Length**: The `--context-length 32000` parameter controls how much text the model can process at once. Adjust based on your hardware capabilities.
 - **GPU Acceleration**: LM Studio automatically uses GPU acceleration when available (Metal on macOS, CUDA on Linux/Windows).
 

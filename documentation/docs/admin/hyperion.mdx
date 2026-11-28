@@ -200,7 +200,8 @@ names the missing key.
 An institution without its own model gateway can host a model on an OpenAI-compatible server and point an endpoint at
 it. With [vLLM](https://docs.vllm.ai/), `vllm serve Qwen/Qwen3.8-27B` serves the model under the name
 `Qwen/Qwen3.8-27B` at `http://<host>:8000/v1`; at 16-bit precision it needs a GPU with about 80 GB of memory. Use
-`api: chat-completions` for such servers and set `max-tokens` if the server needs an output limit.
+`api: responses` and verify that the selected model and server version support `POST /v1/responses`. Set
+`max-completion-tokens` if the model needs an output limit.
 
 Every generation and filter call is recorded in the LLM token usage tracking. Add the models to the price list of
 their endpoint if the endpoint does not report the cost itself.

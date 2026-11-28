@@ -37,12 +37,6 @@ import okio.Buffer;
  */
 class LlmClientServiceTest {
 
-    private static final String CHAT_COMPLETION = """
-            {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"served-model",
-             "choices":[{"index":0,"message":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],
-             "usage":{"prompt_tokens":3,"completion_tokens":1,"total_tokens":4}}
-            """;
-
     private static final String RESPONSE = """
             {"id":"resp-test","object":"response","created_at":1,"model":"served-model","status":"completed","error":null,"incomplete_details":null,
              "instructions":null,"metadata":{},"parallel_tool_calls":true,"temperature":null,"tool_choice":"auto","tools":[],"top_p":null,
@@ -60,8 +54,8 @@ class LlmClientServiceTest {
     }
 
     @Test
-    void chatCompletionsPresetSendsExactlyItsOptionsAndTagsTheResponse() {
-        var preset = new Preset("main", "gpt-6-luna", Api.CHAT_COMPLETIONS, "none", 0.2, 0.9, null, null, 100, null, null);
+    void responsesPresetSendsSamplingOptionsAndTagsTheResponse() {
+        var preset = new Preset("main", "gpt-6-luna", Api.RESPONSES, "none", 0.2, 0.9, null, null, 100, null, null);
         var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret")), Map.of("fast", preset));
 
         ChatResponse response = service.chatModel("fast").call(new Prompt("Hello"));
@@ -69,14 +63,14 @@ class LlmClientServiceTest {
         assertThat(response.getResult().getOutput().getText()).isEqualTo("OK");
         assertThat(LlmClientService.presetOf(response.getMetadata())).isEqualTo("fast");
         assertThat(requests).singleElement().satisfies(request -> {
-            assertThat(request.path()).isEqualTo("/v1/chat/completions");
+            assertThat(request.path()).isEqualTo("/v1/responses");
             assertThat(request.authorization()).isEqualTo("Bearer secret");
             assertThat(request.customHeader()).isEqualTo("on");
             assertThat(request.body().get("model").asString()).isEqualTo("gpt-6-luna");
-            assertThat(request.body().get("reasoning_effort").asString()).isEqualTo("none");
+            assertThat(request.body().get("reasoning").get("effort").asString()).isEqualTo("none");
             assertThat(request.body().get("temperature").asDouble()).isEqualTo(0.2);
             assertThat(request.body().get("top_p").asDouble()).isEqualTo(0.9);
-            assertThat(request.body().get("max_completion_tokens").asInt()).isEqualTo(100);
+            assertThat(request.body().get("max_output_tokens").asInt()).isEqualTo(100);
             assertThat(request.callTimeout()).isEqualTo(Duration.ofSeconds(300));
         });
     }
@@ -104,7 +98,7 @@ class LlmClientServiceTest {
     @Test
     void endpointWithoutKeySendsNoAuthorizationHeader() {
         var service = service(Map.of("local", endpoint(EndpointType.OPENAI, "http://localhost:11434/v1", null)),
-                Map.of("local", new Preset("local", "gpt-oss:20b", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null)));
+                Map.of("local", new Preset("local", "qwen/qwen3.8-27b", Api.RESPONSES, null, null, null, null, null, null, null, null)));
 
         service.chatModel("local").call(new Prompt("Hello"));
 
@@ -117,14 +111,14 @@ class LlmClientServiceTest {
     @Test
     void microsoftFoundryEndpointSendsTheAzureKeyHeader() {
         var service = service(Map.of("azure", endpoint(EndpointType.MICROSOFT_FOUNDRY, "https://resource.openai.azure.com/openai/v1", "azure-secret")),
-                Map.of("large", new Preset("azure", "my-deployment", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null)));
+                Map.of("large", new Preset("azure", "my-deployment", Api.RESPONSES, null, null, null, null, null, null, null, null)));
 
         service.chatModel("large").call(new Prompt("Hello"));
 
         assertThat(requests).singleElement().satisfies(request -> {
             assertThat(request.azureKey()).isEqualTo("azure-secret");
             assertThat(request.authorization()).isNull();
-            assertThat(request.path()).isEqualTo("/openai/v1/chat/completions");
+            assertThat(request.path()).isEqualTo("/openai/v1/responses");
             assertThat(request.body().get("model").asString()).isEqualTo("my-deployment");
         });
     }
@@ -132,8 +126,8 @@ class LlmClientServiceTest {
     @Test
     void presetTimeoutAndRetriesOverrideTheEndpointWhileOtherPresetsKeepIt() {
         var endpoint = endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret");
-        var slow = new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, Duration.ofMinutes(20), 2);
-        var normal = new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null);
+        var slow = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, Duration.ofMinutes(20), 2);
+        var normal = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, null);
         var service = service(Map.of("main", endpoint), Map.of("slow", slow, "normal", normal));
 
         service.chatModel("slow").call(new Prompt("Hello"));
@@ -161,7 +155,7 @@ class LlmClientServiceTest {
                 observed.add(context.getName() + " " + context.getLowCardinalityKeyValues() + " " + context.getHighCardinalityKeyValues());
             }
         });
-        var preset = new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null);
+        var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, null);
         var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret")), Map.of("welcome", preset), registry);
 
         service.isolatedChatModel("welcome", Duration.ofSeconds(3), 0).call(new Prompt("private student situation"));
@@ -189,7 +183,7 @@ class LlmClientServiceTest {
         var endpoint = endpoint(EndpointType.OPENAI, "https://llm.example.org/v1", "secret");
         var service = service(Map.of("main", endpoint),
                 Map.of("embed", new Preset("main", "Qwen/Qwen3-Embedding-8B", Api.EMBEDDINGS, null, null, null, null, null, null, null, null), "chat",
-                        new Preset("main", "m", Api.CHAT_COMPLETIONS, null, null, null, null, null, null, null, null)));
+                        new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, null)));
 
         var response = service.embed("embed", List.of("first", "second"), Duration.ofSeconds(2));
 
@@ -230,7 +224,8 @@ class LlmClientServiceTest {
             requests.add(new Captured(request.url().encodedPath(), request.header("Authorization"), request.header("api-key"), request.header("X-Test"), body,
                     Duration.ofNanos(chain.call().timeout().timeoutNanos())));
             String path = request.url().encodedPath();
-            String json = path.endsWith("/responses") ? RESPONSE : path.endsWith("/embeddings") ? EMBEDDINGS : CHAT_COMPLETION;
+            assertThat(path).matches(".*/(responses|embeddings)");
+            String json = path.endsWith("/responses") ? RESPONSE : EMBEDDINGS;
             return respond(request, json);
         });
         return new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), observations, new SimpleMeterRegistry(), List.of(capture));

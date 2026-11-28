@@ -40,8 +40,8 @@ artemis:
     presets:
       large:              { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: medium }
       small:              { endpoint: logos, model: gpt-6-luna,              api: responses,        reasoning-effort: low }
-      atlaschat:          { endpoint: logos, model: gpt-5.6-terra,           api: chat-completions, reasoning-effort: none }
-      selfhosted:         { endpoint: logos, model: Qwen/Qwen3.8-27B,        api: chat-completions, max-tokens: 8000 }
+      atlaschat:          { endpoint: logos, model: gpt-5.6-terra,           api: responses       , reasoning-effort: none }
+      selfhosted:         { endpoint: logos, model: Qwen/Qwen3.8-27B,        api: responses       , max-tokens: 8000 }
       embed:              { endpoint: logos, model: Qwen/Qwen3-Embedding-8B, api: embeddings }
       generation:         { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: medium, max-retries: 0 }
       generationthorough: { endpoint: logos, model: gpt-6.1-terra,           api: responses,        reasoning-effort: xhigh,  max-retries: 0 }
@@ -110,13 +110,13 @@ A preset is one model on one endpoint, plus the options that Artemis sends with 
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `endpoint`              | Required. The name of an endpoint.                                                                                                         |
 | `model`                 | Required. The model name the provider expects, for Microsoft Foundry the deployment name.                                                  |
-| `api`                   | Required. `responses`, `chat-completions` or `embeddings`. Use `responses` when the provider supports it; reasoning models need it for tool calls. |
+| `api`                   | Required. `responses` for text generation or `embeddings` for vector search.                                                              |
 | `reasoning-effort`      | For example `none`, `low`, `medium`, `high`, `xhigh`, as the model supports.                                                               |
 | `temperature`           | Only without `reasoning-effort` or with `reasoning-effort: none`.                                                                         |
 | `top-p`                 | Nucleus sampling, as the model supports.                                                                                                   |
 | `verbosity`             | Text verbosity, as the model supports.                                                                                                     |
 | `max-tokens`            | Output token limit. Set at most one of `max-tokens` and `max-completion-tokens`.                                                          |
-| `max-completion-tokens` | Output token limit for models that need this field name.                                                                                  |
+| `max-completion-tokens` | Alternative name for the output token limit. The Responses API receives `max_output_tokens` for either setting.                                                                                  |
 | `timeout`               | Overrides the endpoint's `timeout` for this preset.                                                                                        |
 | `max-retries`           | Overrides the endpoint's `max-retries` for this preset.                                                                                    |
 
@@ -205,6 +205,11 @@ LLM artemis.hyperion.llm-presets.faq-rewrite -> small | gpt-6-luna | responses |
 ```
 
 ## Upgrade from the previous configuration
+
+For every chat preset that used `api: chat-completions`, verify that its endpoint and model support `POST /responses`
+with the features the assigned task uses, then set `api: responses` (or set the equivalent `ARTEMIS_LLM_PRESETS_<NAME>_API`).
+Point presets on endpoints that only offer Chat Completions at a Responses-capable deployment. Keep embedding presets on
+`api: embeddings`. Update the catalog on core nodes and AI workers together.
 
 Earlier releases configured models under `spring.ai.openai`, in module keys and with built-in defaults. Artemis now
 reads none of these keys. It logs a warning that lists the old keys it finds, and stops at startup if an enabled

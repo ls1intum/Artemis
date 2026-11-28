@@ -34,7 +34,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 
 import com.openai.core.JsonValue;
-import com.openai.models.completions.CompletionUsage;
+import com.openai.models.responses.ResponseUsage;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
@@ -190,7 +190,9 @@ class AtlasTokenUsageAdvisorTest {
     }
 
     private static ChatResponse response(String model, boolean tools, int input, int output, double usd) {
-        var nativeUsage = CompletionUsage.builder().promptTokens(input).completionTokens(output).totalTokens(input + output).putAdditionalProperty("cost", JsonValue.from(usd))
+        var nativeUsage = ResponseUsage.builder().inputTokens(input).outputTokens(output).totalTokens(input + output)
+                .inputTokensDetails(ResponseUsage.InputTokensDetails.builder().cachedTokens(0).cacheWriteTokens(0).build())
+                .outputTokensDetails(ResponseUsage.OutputTokensDetails.builder().reasoningTokens(0).build()).putAdditionalProperty("cost", JsonValue.from(usd))
                 .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
         return new ChatResponse(List.of(new Generation(assistant(tools))),
                 ChatResponseMetadata.builder().model(model).usage(new DefaultUsage(input, output, input + output, nativeUsage)).build());

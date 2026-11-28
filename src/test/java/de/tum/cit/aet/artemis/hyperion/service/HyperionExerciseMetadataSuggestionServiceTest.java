@@ -106,8 +106,8 @@ class HyperionExerciseMetadataSuggestionServiceTest {
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
         HyperionChatClientService chatClients = mock(HyperionChatClientService.class);
         when(chatClients.forTask(any())).thenReturn(ChatClient.create(chatModel));
-        when(chatClients.presetFor(any())).thenReturn(
-                new LlmProperties.Preset("test", "m", LlmProperties.Api.CHAT_COMPLETIONS, null, null, null, null, presetMaxTokens, presetMaxCompletionTokens, null, null));
+        when(chatClients.presetFor(any()))
+                .thenReturn(new LlmProperties.Preset("test", "m", LlmProperties.Api.RESPONSES, null, null, null, null, presetMaxTokens, presetMaxCompletionTokens, null, null));
         var service = new HyperionExerciseMetadataSuggestionService(chatClients, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository, courseRepository,
                 programmingExerciseRepository);
 

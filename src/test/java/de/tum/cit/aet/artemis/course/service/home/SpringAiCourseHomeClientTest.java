@@ -41,7 +41,7 @@ import io.micrometer.observation.ObservationRegistry;
 
 class SpringAiCourseHomeClientTest {
 
-    private static final LlmProperties.Preset PRESET = LlmTestCatalog.preset("local", "test-model", LlmProperties.Api.CHAT_COMPLETIONS);
+    private static final LlmProperties.Preset PRESET = LlmTestCatalog.preset("local", "test-model", LlmProperties.Api.RESPONSES);
 
     private final CourseHomeAiClient.Input input = new CourseHomeAiClient.Input("Encourage learning.", "Published context.");
 
@@ -92,7 +92,7 @@ class SpringAiCourseHomeClientTest {
         var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         server.setExecutor(executor);
-        server.createContext("/v1/chat/completions", exchange -> {
+        server.createContext("/v1/responses", exchange -> {
             calls.incrementAndGet();
             body.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
             received.countDown();
@@ -113,7 +113,7 @@ class SpringAiCourseHomeClientTest {
             assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
             assertThat(result).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
             assertThat(calls).hasValue(1);
-            assertThat(body.get()).contains("\"max_completion_tokens\":160");
+            assertThat(body.get()).contains("\"max_output_tokens\":160");
         }
         finally {
             server.stop(0);
@@ -142,7 +142,7 @@ class SpringAiCourseHomeClientTest {
     void aLowerPresetLimitAndItsTokenFieldAreKept() {
         var model = model();
         when(model.call(any(Prompt.class))).thenReturn(response());
-        var preset = new LlmProperties.Preset("local", "m", LlmProperties.Api.CHAT_COMPLETIONS, null, null, null, null, 100, null, null, null);
+        var preset = new LlmProperties.Preset("local", "m", LlmProperties.Api.RESPONSES, null, null, null, null, 100, null, null, null);
         try (var client = new SpringAiCourseHomeClient(Map.of("welcome", new SpringAiCourseHomeClient.Model(model, preset)), new SimpleMeterRegistry())) {
             assertThat(client.generate("welcome", input)).succeedsWithin(Duration.ofSeconds(8));
         }

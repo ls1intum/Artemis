@@ -16,9 +16,13 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
+import org.springframework.ai.chat.metadata.FinishReasonCategory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.observation.ChatModelObservationContext;
+import org.springframework.ai.chat.observation.ChatModelObservationDocumentation;
+import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
@@ -50,12 +54,14 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
+import io.micrometer.observation.ObservationRegistry;
+
 /**
  * Synchronous Spring AI {@link ChatModel} adapter for the OpenAI Responses API.
  *
  * <p>
- * Spring AI 2.0.2 does not expose Responses as a chat model. Callers therefore use this narrow
- * adapter behind a dedicated {@code ChatClient}; Spring AI's native {@code ToolCallingAdvisor}
+ * Artemis uses this adapter for Responses presets. Spring AI's native {@code ToolCallingAdvisor}
  * owns tool execution and recursion. Each request is stateless ({@code store=false}) and carries
  * the complete conversation history, including the original ordered Responses output items. The
  * latter is required to replay reasoning items and their encrypted content on the next round.
@@ -63,15 +69,19 @@ import tools.jackson.databind.json.JsonMapper;
 public final class OpenAiResponsesChatModel implements ChatModel {
 
     /** Metadata key containing the original ordered Responses output items. */
-    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
+    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = ResponsesOutputRepair.OUTPUT_ITEMS_METADATA_KEY;
 
     private static final String NO_REASONING = "none";
+
+    private static final DefaultChatModelObservationConvention OBSERVATION_CONVENTION = new DefaultChatModelObservationConvention();
 
     private final OpenAIClient openAIClient;
 
     private final JsonMapper objectMapper;
 
     private final OpenAiChatOptions defaultOptions;
+
+    private final ObservationRegistry observationRegistry;
 
     /**
      * Creates a Responses adapter with a default model only.
@@ -94,9 +104,14 @@ public final class OpenAiResponsesChatModel implements ChatModel {
      * @param defaultOptions the default request options
      */
     public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, OpenAiChatOptions defaultOptions) {
+        this(openAIClient, objectMapper, defaultOptions, ObservationRegistry.NOOP);
+    }
+
+    OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, OpenAiChatOptions defaultOptions, ObservationRegistry observationRegistry) {
         this.openAIClient = openAIClient;
         this.objectMapper = objectMapper;
         this.defaultOptions = defaultOptions.mutate().store(false).build();
+        this.observationRegistry = observationRegistry;
     }
 
     /**
@@ -135,8 +150,12 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         if (Thread.currentThread().isInterrupted()) {
             throw new CancellationException("Responses dispatch interrupted before request");
         }
-        Response response = openAIClient.responses().create(request.build());
-        return toChatResponse(response, model);
+        var context = ChatModelObservationContext.builder().prompt(new Prompt(prompt.getInstructions(), options)).provider("openai").build();
+        return ChatModelObservationDocumentation.CHAT_MODEL_OPERATION.observation(null, OBSERVATION_CONVENTION, () -> context, observationRegistry).observe(() -> {
+            ChatResponse response = toChatResponse(openAIClient.responses().create(request.build()), model);
+            context.setResponse(response);
+            return response;
+        });
     }
 
     private OpenAiChatOptions requireOpenAiOptions(@Nullable ChatOptions options) {
@@ -303,8 +322,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
             if (response.error().isPresent() || !ResponseStatus.COMPLETED.equals(status)) {
                 // Return a terminal, tool-free response so the native advisor retains earlier rounds' usage.
                 // The orchestration layer rejects this finish reason after accounting; incomplete tools never run.
-                String finish = response.error().isPresent() ? "failed" : status == null ? "missing_status" : status.asString();
-                return terminalResponse(finish, responseMetadata);
+                return terminalResponse(finishReason(response, status), responseMetadata);
             }
             return completedResponse(response, responseMetadata);
         }
@@ -313,8 +331,21 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         }
     }
 
+    private static String finishReason(Response response, @Nullable ResponseStatus status) {
+        if (response.error().isPresent()) {
+            return "failed";
+        }
+        if (ResponseStatus.INCOMPLETE.equals(status)
+                && response.incompleteDetails().flatMap(Response.IncompleteDetails::reason).filter(Response.IncompleteDetails.Reason.MAX_OUTPUT_TOKENS::equals).isPresent()) {
+            return "length";
+        }
+        return status == null ? "missing_status" : status.asString();
+    }
+
     private static ChatResponse terminalResponse(String reason, ChatResponseMetadata.Builder metadata) {
-        return new ChatResponse(List.of(new Generation(new AssistantMessage(""), ChatGenerationMetadata.builder().finishReason(reason).build())), metadata.build());
+        var category = "length".equals(reason) ? FinishReasonCategory.TRUNCATED : FinishReasonCategory.OTHER;
+        var generationMetadata = ChatGenerationMetadata.builder().finishReason(reason).finishReasonCategory(category).build();
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(""), generationMetadata)), metadata.build());
     }
 
     private static ChatResponse completedResponse(Response response, ChatResponseMetadata.Builder responseMetadata) {

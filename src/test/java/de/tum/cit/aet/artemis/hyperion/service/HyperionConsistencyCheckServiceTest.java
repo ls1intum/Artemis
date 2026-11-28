@@ -40,7 +40,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import com.openai.core.JsonValue;
-import com.openai.models.completions.CompletionUsage;
+import com.openai.models.responses.ResponseUsage;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -245,7 +245,9 @@ class HyperionConsistencyCheckServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt prompt = invocation.getArgument(0);
             boolean unparseable = prompt.getInstructions().stream().anyMatch(message -> Objects.toString(message.getText(), "").contains("stage::" + failedStage));
-            var nativeUsage = CompletionUsage.builder().promptTokens(100).completionTokens(50).totalTokens(150).putAdditionalProperty("cost", JsonValue.from(callCost))
+            var nativeUsage = ResponseUsage.builder().inputTokens(100).outputTokens(50).totalTokens(150)
+                    .inputTokensDetails(ResponseUsage.InputTokensDetails.builder().cachedTokens(0).cacheWriteTokens(0).build())
+                    .outputTokensDetails(ResponseUsage.OutputTokensDetails.builder().reasoningTokens(0).build()).putAdditionalProperty("cost", JsonValue.from(callCost))
                     .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
             var metadata = ChatResponseMetadata.builder().model("gpt-5-mini").usage(new DefaultUsage(100, 50, 150, nativeUsage)).build();
             return new ChatResponse(List

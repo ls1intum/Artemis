@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.util.JsonHelper;
+
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
 
 /**
  * How {@link AgentLoopRunner} reads and answers one batch of model tool calls. Before execution it repairs leaked tool names, validates the batch, and recognizes a completion
@@ -66,12 +69,12 @@ final class AgentToolBatch {
         if (toolCalls.isEmpty()) {
             return response;
         }
-        boolean changed = false;
+        Map<String, String> renamed = new HashMap<>();
         List<AssistantMessage.ToolCall> normalized = new ArrayList<>(toolCalls.size());
         for (AssistantMessage.ToolCall toolCall : toolCalls) {
             String sanitized = sanitizeToolName(toolCall.name());
             if (!sanitized.equals(toolCall.name())) {
-                changed = true;
+                renamed.put(toolCall.name(), sanitized);
                 log.warn("Normalized a leaked model tool name to '{}'", sanitized);
                 normalized.add(new AssistantMessage.ToolCall(toolCall.id(), toolCall.type(), sanitized, toolCall.arguments()));
             }
@@ -79,11 +82,11 @@ final class AgentToolBatch {
                 normalized.add(toolCall);
             }
         }
-        if (!changed) {
+        if (renamed.isEmpty()) {
             return response;
         }
-        AssistantMessage rebuilt = AssistantMessage.builder().content(output.getText() == null ? "" : output.getText()).properties(output.getMetadata()).media(output.getMedia())
-                .toolCalls(normalized).build();
+        AssistantMessage rebuilt = AssistantMessage.builder().content(output.getText() == null ? "" : output.getText())
+                .properties(ResponsesOutputRepair.renameTools(output, renamed)).media(output.getMedia()).toolCalls(normalized).build();
         return new ChatResponse(List.of(new Generation(rebuilt, response.getResult().getMetadata())), response.getMetadata());
     }
 
@@ -121,7 +124,7 @@ final class AgentToolBatch {
     }
 
     /**
-     * Answers every call of a batch that was not executed with the same outcome, because the chat-completions tool-pairing contract requires a result for every requested call
+     * Answers every call of a batch that was not executed with the same outcome, because the Responses tool-pairing contract requires a result for every requested call
      * id.
      */
     static ToolResponseMessage unexecutedResponses(List<AssistantMessage.ToolCall> toolCalls, String outcome) {
