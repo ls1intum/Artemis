@@ -9152,6 +9152,7 @@ components:
         login: {type: string}
         email: {type: string}
         registrationNumber: {type: string}
+        registrationDate: {type: string, format: date-time}
       required: [id, login]
     StudentQuizParticipation:
       discriminator:

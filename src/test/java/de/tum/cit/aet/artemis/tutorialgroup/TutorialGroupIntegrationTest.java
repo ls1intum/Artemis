@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.tutorialgroup;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -1790,6 +1792,106 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             var registeredStudents = tutorialGroupRegistrationTestRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
                     .stream().map(registration -> registration.getStudent().getId()).collect(Collectors.toSet());
             assertThat(registeredStudents).containsExactlyInAnyOrderElementsOf(expectedStudents.stream().map(User::getId).collect(Collectors.toSet()));
+        }
+    }
+
+    @Nested
+    class RegistrationDateTests {
+
+        private Set<TutorialGroupStudentDTO> registeredStudentsOf(TutorialGroup tutorialGroup) throws Exception {
+            return request.getSet("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId() + "/registered-students", HttpStatus.OK,
+                    TutorialGroupStudentDTO.class);
+        }
+
+        private Instant registrationDateOf(TutorialGroup tutorialGroup, User student) throws Exception {
+            return registeredStudentsOf(tutorialGroup).stream().filter(dto -> dto.login().equals(student.getLogin())).findFirst().orElseThrow().registrationDate();
+        }
+
+        private void importIntoGroup(TutorialGroup tutorialGroup, User student) throws Exception {
+            var registration = new TutorialGroupImportDataDTO(tutorialGroup.getTitle(), new StudentDTO(student), null, null, null, null, null);
+            request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(registration), TutorialGroupImportDataDTO.class,
+                    HttpStatus.OK);
+        }
+
+        private Set<User> channelMembers(Channel channel) {
+            return conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+                    .collect(Collectors.toSet());
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void batchRegister_shouldRecordTheRegistrationDate() throws Exception {
+            Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/batch-register",
+                    List.of(FIRST_COURSE_STUDENT3_LOGIN), HttpStatus.NO_CONTENT);
+            Instant after = Instant.now();
+
+            assertThat(registrationDateOf(firstCourseTutorialGroup1, firstCourseStudent3)).isBetween(before, after);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void importRegistrations_shouldRecordTheRegistrationDate() throws Exception {
+            Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+            request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/import-registrations",
+                    List.of(new TutorialGroupStudentImportDataDTO(FIRST_COURSE_STUDENT3_LOGIN, null)), TutorialGroupStudentImportDataDTO.class, HttpStatus.OK);
+            Instant after = Instant.now();
+
+            assertThat(registrationDateOf(firstCourseTutorialGroup1, firstCourseStudent3)).isBetween(before, after);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void importTutorialGroups_studentStayingInTheirGroup_shouldKeepRegistrationDateAndChannelMembership() throws Exception {
+            Instant originalDate = registrationDateOf(firstCourseTutorialGroup1, firstCourseStudent1);
+            assertThat(originalDate).isNotNull();
+
+            importIntoGroup(firstCourseTutorialGroup1, firstCourseStudent1);
+
+            assertThat(registrationDateOf(firstCourseTutorialGroup1, firstCourseStudent1)).isEqualTo(originalDate);
+            assertThat(channelMembers(firstCourseChannel1)).contains(firstCourseStudent1);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void importTutorialGroups_studentMovingToAnotherGroup_shouldGetNewRegistrationDateAndLeaveOldChannel() throws Exception {
+            Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+            importIntoGroup(firstCourseTutorialGroup2, firstCourseStudent1);
+
+            assertThat(registeredStudentsOf(firstCourseTutorialGroup1)).extracting(TutorialGroupStudentDTO::login).doesNotContain(FIRST_COURSE_STUDENT1_LOGIN);
+            assertThat(registrationDateOf(firstCourseTutorialGroup2, firstCourseStudent1)).isAfterOrEqualTo(before);
+            assertThat(channelMembers(firstCourseChannel1)).doesNotContain(firstCourseStudent1);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "USER")
+        void importTutorialGroups_newStudent_shouldRecordTheRegistrationDate() throws Exception {
+            Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+            importIntoGroup(firstCourseTutorialGroup2, firstCourseStudent3);
+
+            assertThat(registrationDateOf(firstCourseTutorialGroup2, firstCourseStudent3)).isAfterOrEqualTo(before);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void getRegisteredStudents_registrationWithoutDate_shouldOmitTheRegistrationDate() throws Exception {
+            tutorialGroupRegistrationTestRepository.clearRegistrationDate(firstCourseTutorialGroup1.getId(), firstCourseStudent1.getId());
+
+            String response = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/registered-students",
+                    HttpStatus.OK, String.class);
+
+            assertThat(response).contains(FIRST_COURSE_STUDENT1_LOGIN).doesNotContain("registrationDate");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "USER")
+        void searchUnregisteredStudents_shouldNotContainARegistrationDate() throws Exception {
+            String response = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId()
+                    + "/unregistered-students?loginOrName=student&pageIndex=0&pageSize=10", HttpStatus.OK, String.class);
+
+            assertThat(response).contains(FIRST_COURSE_STUDENT3_LOGIN).doesNotContain("registrationDate");
         }
     }
 }

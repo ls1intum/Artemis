@@ -16,4 +16,5 @@ export interface TutorialGroupStudent {
     login: string;
     email?: string;
     registrationNumber?: string;
+    registrationDate?: string;
 }

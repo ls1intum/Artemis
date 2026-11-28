@@ -161,7 +161,8 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                         student.imageUrl,
                         student.login,
                         student.email,
-                        student.registrationNumber
+                        student.registrationNumber,
+                        registration.registrationDate
                     )
                     FROM TutorialGroup tutorialGroup
                         JOIN tutorialGroup.registrations registration

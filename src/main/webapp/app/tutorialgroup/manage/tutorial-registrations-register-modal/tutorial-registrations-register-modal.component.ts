@@ -77,7 +77,8 @@ export class TutorialRegistrationsRegisterModalComponent {
             )
             .subscribe({
                 next: () => {
-                    this.tutorialGroupRegisteredStudentsService.addStudentsToRegisteredStudentsState(this.selectedStudents());
+                    // Reload instead of appending the selected students: only the server knows their registration date
+                    this.tutorialGroupRegisteredStudentsService.fetchRegisteredStudents(this.courseId(), this.tutorialGroupId());
                     this.isLoading.set(false);
                     this.selectedStudents.set([]);
                     this.isOpen.set(false);

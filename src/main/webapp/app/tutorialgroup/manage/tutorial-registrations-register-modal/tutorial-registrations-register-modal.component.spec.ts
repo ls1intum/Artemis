@@ -26,7 +26,7 @@ interface AlertServiceMock {
 }
 
 interface TutorialGroupRegisteredStudentsServiceMock {
-    addStudentsToRegisteredStudentsState: ReturnType<typeof vi.fn>;
+    fetchRegisteredStudents: ReturnType<typeof vi.fn>;
 }
 
 describe('TutorialRegistrationsRegisterModalComponent', () => {
@@ -65,7 +65,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         };
 
         tutorialGroupRegisteredStudentsServiceMock = {
-            addStudentsToRegisteredStudentsState: vi.fn(),
+            fetchRegisteredStudents: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -176,7 +176,9 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
         loadingOverlay = fixture.nativeElement.querySelector('jhi-loading-indicator-overlay');
 
-        expect(tutorialGroupRegisteredStudentsServiceMock.addStudentsToRegisteredStudentsState).toHaveBeenCalledWith([firstStudent, secondStudent]);
+        // The list is reloaded from the server, which knows the registration dates, instead of appending the selected students
+        expect(tutorialGroupRegisteredStudentsServiceMock.fetchRegisteredStudents).toHaveBeenCalledOnce();
+        expect(tutorialGroupRegisteredStudentsServiceMock.fetchRegisteredStudents).toHaveBeenCalledWith(7, 11);
         expect(component.isLoading()).toBe(false);
         expect(component.isOpen()).toBe(false);
         expect(dialog.visible()).toBe(false);

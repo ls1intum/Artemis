@@ -41,18 +41,4 @@ export class TutorialGroupRegisteredStudentsService {
             },
         });
     }
-
-    addStudentsToRegisteredStudentsState(students: TutorialGroupStudent[]) {
-        this.registeredStudentsInternal.update((registeredStudents) => {
-            const existingStudentIds = new Set(registeredStudents.map((student) => student.id));
-            const newStudents: TutorialGroupStudent[] = students.filter((student) => {
-                if (existingStudentIds.has(student.id)) {
-                    return false;
-                }
-                existingStudentIds.add(student.id);
-                return true;
-            });
-            return [...registeredStudents, ...newStudents];
-        });
-    }
 }

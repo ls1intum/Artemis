@@ -12,6 +12,11 @@
                 <th scope="col" [tumAetUiSortableColumn]="'registrationNumber'">
                     <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></span>
                 </th>
+                @if (showRegistrationDate()) {
+                    <th scope="col" [tumAetUiSortableColumn]="'registrationDate'">
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationDate"></span>
+                    </th>
+                }
                 @if (actionColumn) {
                     <th scope="col" class="action-column text-right" [jhiTranslate]="actionColumn.headerStringKey"></th>
                 }
@@ -30,6 +35,16 @@
                     <td>{{ student.login }}</td>
                     <td>{{ student.email }}</td>
                     <td>{{ student.registrationNumber }}</td>
+                    @if (showRegistrationDate()) {
+                        <td>
+                            @if (student.registrationDate) {
+                                {{ student.registrationDate | artemisDate: 'short' }}
+                            } @else {
+                                <span aria-hidden="true">–</span>
+                                <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableNoRegistrationDate"></span>
+                            }
+                        </td>
+                    }
                     @if (actionColumn) {
                         <td class="action-column text-right">
                             <button
