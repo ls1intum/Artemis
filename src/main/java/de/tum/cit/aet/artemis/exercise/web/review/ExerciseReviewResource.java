@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -68,6 +69,7 @@ public class ExerciseReviewResource {
      */
     @PostMapping("exercises/{exerciseId}/review-threads")
     @EnforceAtLeastEditorInExercise
+    @ApiResponse(responseCode = "201", description = "The review thread was created.")
     public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @NotNull @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
@@ -104,6 +106,7 @@ public class ExerciseReviewResource {
      */
     @PostMapping("exercises/{exerciseId}/review-thread-groups")
     @EnforceAtLeastEditorInExercise
+    @ApiResponse(responseCode = "201", description = "The review thread group was created.")
     public ResponseEntity<CommentThreadGroupDTO> createThreadGroup(@PathVariable long exerciseId,
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
@@ -122,6 +125,7 @@ public class ExerciseReviewResource {
      */
     @DeleteMapping("exercises/{exerciseId}/review-thread-groups/{groupId}")
     @EnforceAtLeastEditorInExercise
+    @ApiResponse(responseCode = "204", description = "The review thread group was deleted.")
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
         var threadIds = exerciseReviewService.deleteGroup(exerciseId, groupId);
@@ -139,6 +143,7 @@ public class ExerciseReviewResource {
      */
     @PostMapping("exercises/{exerciseId}/review-threads/{threadId}/comments")
     @EnforceAtLeastEditorInExercise
+    @ApiResponse(responseCode = "201", description = "The review comment was created.")
     public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @NotNull @RequestBody UserCommentContentDTO content)
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
@@ -157,6 +162,7 @@ public class ExerciseReviewResource {
      */
     @DeleteMapping("exercises/{exerciseId}/review-comments/{commentId}")
     @EnforceAtLeastEditorInExercise
+    @ApiResponse(responseCode = "204", description = "The review comment was deleted.")
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
         exerciseReviewService.deleteComment(exerciseId, commentId);

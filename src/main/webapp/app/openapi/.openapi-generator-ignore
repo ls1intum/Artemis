@@ -38,6 +38,8 @@ api/quiz-exercise-evaluation-resources.ts
 api/lecture-resources.ts
 api/hyperion-programming-variant-resources.ts
 api/hyperion-exercise-generation-resources.ts
+api/team-resources.ts
+api/exercise-review-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
 api/lecture-transcription-resources.ts

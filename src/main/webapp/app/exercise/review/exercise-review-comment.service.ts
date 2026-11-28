@@ -1,8 +1,8 @@
 import { OnDestroy, Service, Signal, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,6 +14,8 @@ import {
     ExerciseEditorSyncTarget,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { ExerciseReviewApi } from 'app/openapi/api/exercise-review-api';
+import { fromComment, fromCommentThread, toCommentThread, toUserComment } from './review-comment-api.mapper';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
@@ -32,11 +34,10 @@ export interface ReviewAdaptationAvailability {
 
 @Service()
 export class ExerciseReviewCommentService implements OnDestroy {
-    private http = inject(HttpClient);
+    private reviewApi = inject(ExerciseReviewApi);
     private alertService = inject(AlertService);
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
 
-    public readonly resourceUrl = 'api/exercise/exercises';
     private activeExerciseId?: number;
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;
@@ -420,7 +421,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the created thread.
      */
     createThread(exerciseId: number, thread: CreateCommentThread): Observable<CommentThreadResponseType> {
-        return this.http.post<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads`, thread, { observe: 'response' });
+        return this.reviewApi.createThread(exerciseId, toCommentThread(thread)).pipe(map((dto) => this.response(fromCommentThread(dto), 201)));
     }
 
     /**
@@ -440,7 +441,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the threads.
      */
     getThreads(exerciseId: number): Observable<CommentThreadArrayResponseType> {
-        return this.http.get<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-threads`, { observe: 'response' });
+        return this.reviewApi.getThreads(exerciseId).pipe(map((dtos) => this.response(dtos.map(fromCommentThread))));
     }
 
     /**
@@ -452,7 +453,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the created comment.
      */
     createUserComment(exerciseId: number, threadId: number, comment: CreateComment): Observable<CommentResponseType> {
-        return this.http.post<Comment>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/comments`, comment, { observe: 'response' });
+        return this.reviewApi.createUserComment(exerciseId, threadId, toUserComment(comment)).pipe(map((dto) => this.response(fromComment(dto), 201)));
     }
 
     /**
@@ -464,8 +465,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the updated thread.
      */
     updateThreadResolvedState(exerciseId: number, threadId: number, resolved: boolean): Observable<CommentThreadResponseType> {
-        const body: UpdateThreadResolvedState = { resolved };
-        return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
+        return this.reviewApi.updateThreadResolvedState(exerciseId, threadId, { resolved }).pipe(map((dto) => this.response(fromCommentThread(dto))));
     }
 
     /**
@@ -477,8 +477,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the updated threads.
      */
     updateThreadGroupResolvedState(exerciseId: number, groupId: number, resolved: boolean): Observable<CommentThreadArrayResponseType> {
-        const body: UpdateThreadResolvedState = { resolved };
-        return this.http.put<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-thread-groups/${groupId}/resolved`, body, { observe: 'response' });
+        return this.reviewApi.updateThreadGroupResolvedState(exerciseId, groupId, { resolved }).pipe(map((dtos) => this.response(dtos.map(fromCommentThread))));
     }
 
     /**
@@ -490,7 +489,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the updated comment.
      */
     updateUserCommentContent(exerciseId: number, commentId: number, content: UpdateCommentContent): Observable<CommentResponseType> {
-        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, content, { observe: 'response' });
+        return this.reviewApi.updateUserCommentContent(exerciseId, commentId, toUserComment(content)).pipe(map((dto) => this.response(fromComment(dto))));
     }
 
     /**
@@ -501,7 +500,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable containing the updated comment.
      */
     markConsistencyInlineFixApplied(exerciseId: number, commentId: number): Observable<CommentResponseType> {
-        return this.http.put<Comment>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}/inline-fix/applied`, {}, { observe: 'response' });
+        return this.reviewApi.markConsistencyInlineFixApplied(exerciseId, commentId).pipe(map((dto) => this.response(fromComment(dto))));
     }
 
     /**
@@ -512,7 +511,12 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @returns The HTTP response observable.
      */
     deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
+        return this.reviewApi.deleteComment(exerciseId, commentId).pipe(map(() => this.response<void>(undefined, 204)));
+    }
+
+    // Callers read the body. HTTP interceptors have already processed the original response.
+    private response<T>(body?: T, status = 200): HttpResponse<T> {
+        return new HttpResponse({ body, status });
     }
 
     private setThreads(threads: CommentThread[]): void {

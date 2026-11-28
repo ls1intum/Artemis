@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Teams.
@@ -151,6 +152,7 @@ public class TeamResource {
      */
     @PostMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutorInExercise
+    @ApiResponse(responseCode = "201", description = "The team was created.")
     public ResponseEntity<TeamResponseDTO> createTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", dto);
         if (dto.id() != null) {

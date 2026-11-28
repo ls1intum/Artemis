@@ -4,4 +4,5 @@ export const enum SubmissionType {
     INSTRUCTOR = 'INSTRUCTOR',
     EXTERNAL = 'EXTERNAL',
     TEST = 'TEST',
+    OTHER = 'OTHER',
 }

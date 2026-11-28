@@ -14,6 +14,11 @@ import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { ConnectionState } from 'app/foundation/service/websocket.service';
 import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import * as DownloadUtil from 'app/foundation/util/download.util';
 
 describe('Team overview service', () => {
@@ -32,14 +37,56 @@ describe('Team overview service', () => {
     });
 
     it.each(['student', 'staff'] as const)('should request the explicit %s overview and preserve its payload', (purpose) => {
+        const setAccessRights = vi.spyOn(TestBed.inject(AccountService), 'setAccessRightsForCourse');
         let received: Course | undefined;
         service
-            .findCourseWithExercisesAndParticipationsForTeam({ id: 7, isAtLeastInstructor: true }, { shortName: 'team' }, purpose)
+            .findCourseWithExercisesAndParticipationsForTeam({ id: 7, isAtLeastInstructor: true }, { shortName: 'team & one' }, purpose)
             .subscribe((response) => (received = response.body ?? undefined));
         const request = http.expectOne((r) => r.method === 'GET');
-        request.flush({ id: 7, exercises: [{ id: 8, studentParticipations: [{ id: 9, submissionCount: 2 }] }] });
-        expect(request.request.url).toBe(`api/exercise/courses/7/teams/team/with-exercises-and-participations${purpose === 'staff' ? '/for-staff' : ''}`);
-        expect(received?.exercises?.[0].studentParticipations?.[0].submissionCount).toBe(2);
+        request.flush({
+            id: 7,
+            exercises: [
+                {
+                    id: 8,
+                    type: 'programming',
+                    releaseDate: '2026-01-01T10:00:00Z',
+                    teams: [{ id: 10, students: [{ id: 3, login: 'alice' }] }],
+                    studentParticipations: [
+                        {
+                            id: 9,
+                            type: 'programming',
+                            repositoryUri: 'https://example.org/team.git',
+                            submissionCount: 2,
+                            submissions: [{ id: 11, submissionExerciseType: 'programming', commitHash: 'abcdef', results: [{ id: 12, score: 90 }] }],
+                        },
+                    ],
+                },
+            ],
+        });
+        expect(request.request.url).toBe(`/api/exercise/courses/7/teams/team%20%26%20one/with-exercises-and-participations${purpose === 'staff' ? '/for-staff' : ''}`);
+        expect(received).toBeInstanceOf(Course);
+        expect(setAccessRights).toHaveBeenCalledExactlyOnceWith(received);
+        const exercise = received?.exercises?.[0];
+        expect(exercise).toBeInstanceOf(ProgrammingExercise);
+        expect(dayjs.isDayjs(exercise?.releaseDate)).toBe(true);
+        expect(exercise?.teams?.[0]).toBeInstanceOf(Team);
+        expect(exercise?.teams?.[0].students?.[0]).toBeInstanceOf(User);
+        const participation = exercise?.studentParticipations?.[0];
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(participation?.submissionCount).toBe(2);
+        const submission = participation?.submissions?.[0];
+        expect(submission).toBeInstanceOf(ProgrammingSubmission);
+        expect(submission).toMatchObject({ commitHash: 'abcdef' });
+        expect(submission?.results?.[0]).toBeInstanceOf(Result);
+        expect(submission?.results?.[0].score).toBe(90);
+    });
+
+    it('keeps missing overview collections optional', () => {
+        service.findCourseWithExercisesAndParticipationsForTeam({ id: 7 }, { shortName: 'team' }).subscribe(({ body }) => {
+            expect(body).toBeInstanceOf(Course);
+            expect(body?.exercises).toBeUndefined();
+        });
+        http.expectOne('/api/exercise/courses/7/teams/team/with-exercises-and-participations').flush({ id: 7 });
     });
     it.each(['create', 'update'] as const)('sends only student and owner ids when teams %s', (method) => {
         const team: Team = {
@@ -54,7 +101,7 @@ describe('Team overview service', () => {
         };
         let result: Team | undefined;
         service[method](Object.assign(new TextExercise(undefined, undefined), { id: 7 }), team).subscribe((response) => (result = response.body ?? undefined));
-        const req = http.expectOne({ method: method === 'create' ? 'POST' : 'PUT', url: `api/exercise/exercises/7/teams${method === 'update' ? '/9' : ''}` });
+        const req = http.expectOne({ method: method === 'create' ? 'POST' : 'PUT', url: `/api/exercise/exercises/7/teams${method === 'update' ? '/9' : ''}` });
         expect(req.request.body).toEqual({ id: 9, name: 'Pair', shortName: 'pair', students: [3], ownerId: 4 });
         req.flush({ id: 9, name: 'Pair', createdDate: '2026-01-01T10:00:00Z', lastModifiedDate: '2026-01-02T10:00:00Z' });
         expect(result?.name).toBe('Pair');
@@ -69,31 +116,37 @@ describe('Team overview service', () => {
             expect(dayjs.isDayjs(response.body?.createdDate)).toBe(true);
             expect(dayjs.isDayjs(response.body?.lastModifiedDate)).toBe(true);
         });
-        http.expectOne({ method: 'GET', url: 'api/exercise/exercises/7/teams/9' }).flush({ id: 9, createdDate: '2026-01-01T10:00:00Z', lastModifiedDate: '2026-01-02T10:00:00Z' });
+        http.expectOne({ method: 'GET', url: '/api/exercise/exercises/7/teams/9' }).flush({ id: 9, createdDate: '2026-01-01T10:00:00Z', lastModifiedDate: '2026-01-02T10:00:00Z' });
     });
 
-    it.each([undefined, 4])('loads teams with optional owner filter %s and converts every date', (ownerId) => {
+    it.each([undefined, 0, 4])('loads teams with optional owner filter %s and converts every date', (ownerId) => {
         service.findAllByExerciseId(7, ownerId).subscribe((response) => {
             expect(response.body?.map((team) => team.id)).toEqual([9, 10]);
             expect(response.body?.every((team) => dayjs.isDayjs(team.createdDate) && dayjs.isDayjs(team.lastModifiedDate))).toBe(true);
         });
-        const req = http.expectOne((r) => r.url === 'api/exercise/exercises/7/teams');
+        const req = http.expectOne((r) => r.url.split('?')[0] === '/api/exercise/exercises/7/teams');
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('teamOwnerId')).toBe(ownerId === undefined ? null : '4');
+        expect(new URLSearchParams(req.request.urlWithParams.split('?')[1]).get('teamOwnerId')).toBe(ownerId ? '4' : null);
         req.flush([9, 10].map((id) => ({ id, createdDate: '2026-01-01T10:00:00Z', lastModifiedDate: '2026-01-02T10:00:00Z' })));
     });
 
     it('deletes a selected team and checks short name and course-scoped member search', () => {
-        let deleted = false;
-        service.delete(Object.assign(new TextExercise(undefined, undefined), { id: 7 }), 9).subscribe(() => (deleted = true));
-        http.expectOne({ method: 'DELETE', url: 'api/exercise/exercises/7/teams/9' }).flush(null);
-        expect(deleted).toBe(true);
-        service.existsByShortName({ id: 2 }, 'pair').subscribe((response) => expect(response.body).toBe(true));
-        http.expectOne({ method: 'GET', url: 'api/exercise/courses/2/teams/exists?shortName=pair' }).flush(true);
-        service
-            .searchInCourseForExerciseTeam({ id: 2 }, Object.assign(new TextExercise(undefined, undefined), { id: 7 }), 'alice')
-            .subscribe((response) => expect(response.body?.[0].login).toBe('alice'));
-        http.expectOne({ method: 'GET', url: 'api/exercise/courses/2/exercises/7/team-search-users?loginOrName=alice' }).flush([{ login: 'alice' }]);
+        service.delete(Object.assign(new TextExercise(undefined, undefined), { id: 7 }), 9).subscribe(({ body, status }) => {
+            expect(body).toBeNull();
+            expect(status).toBe(200);
+        });
+        http.expectOne({ method: 'DELETE', url: '/api/exercise/exercises/7/teams/9' }).flush(null, { status: 200, statusText: 'OK' });
+        service.existsByShortName({ id: 2 }, 'pair & one').subscribe((response) => expect(response.body).toBe(true));
+        const exists = http.expectOne((req) => req.method === 'GET' && req.url.split('?')[0] === '/api/exercise/courses/2/teams/exists');
+        expect(new URLSearchParams(exists.request.urlWithParams.split('?')[1]).get('shortName')).toBe('pair & one');
+        exists.flush(true);
+        service.searchInCourseForExerciseTeam({ id: 2 }, Object.assign(new TextExercise(undefined, undefined), { id: 7 }), 'Alice & Bob').subscribe(({ body }) => {
+            expect(body?.[0]).toBeInstanceOf(TeamSearchUser);
+            expect(body?.[0].login).toBe('alice');
+        });
+        const search = http.expectOne((req) => req.method === 'GET' && req.url.split('?')[0] === '/api/exercise/courses/2/exercises/7/team-search-users');
+        expect(new URLSearchParams(search.request.urlWithParams.split('?')[1]).get('loginOrName')).toBe('Alice & Bob');
+        search.flush([{ login: 'alice' }]);
     });
 
     it('imports list members by login or registration number without shipping private user data', () => {
@@ -112,10 +165,14 @@ describe('Team overview service', () => {
                 ],
                 TeamImportStrategyType.CREATE_ONLY,
             )
-            .subscribe((response) => expect(response.body?.[0].id).toBe(9));
-        const req = http.expectOne({ method: 'PUT', url: 'api/exercise/exercises/7/teams/import-from-list?importStrategyType=CREATE_ONLY' });
+            .subscribe(({ body }) => {
+                expect(body?.[0]).toBeInstanceOf(Team);
+                expect(body?.[0].id).toBe(9);
+                expect(body?.[0].createdDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+            });
+        const req = http.expectOne({ method: 'PUT', url: '/api/exercise/exercises/7/teams/import-from-list?importStrategyType=CREATE_ONLY' });
         expect(req.request.body).toEqual([{ name: 'Pair', shortName: 'pair', students: [{ login: 'alice' }, { visibleRegistrationNumber: '123' }] }]);
-        req.flush([{ id: 9 }]);
+        req.flush([{ id: 9, createdDate: '2026-01-01T10:00:00Z' }]);
         service
             .importTeamsFromSourceExercise(
                 Object.assign(new TextExercise(undefined, undefined), { id: 7 }),
@@ -123,8 +180,11 @@ describe('Team overview service', () => {
                 TeamImportStrategyType.PURGE_EXISTING,
             )
             .subscribe((response) => expect(response.body).toEqual([{ id: 10 }]));
-        const source = http.expectOne({ method: 'PUT', url: 'api/exercise/exercises/7/teams/import-from-exercise?sourceExerciseId=8&importStrategyType=PURGE_EXISTING' });
-        expect(source.request.body).toEqual({});
+        const source = http.expectOne((req) => req.method === 'PUT' && req.url.split('?')[0] === '/api/exercise/exercises/7/teams/import-from-exercise');
+        const query = new URLSearchParams(source.request.urlWithParams.split('?')[1]);
+        expect(query.get('sourceExerciseId')).toBe('8');
+        expect(query.get('importStrategyType')).toBe('PURGE_EXISTING');
+        expect(source.request.body).toBeNull();
         source.flush([{ id: 10 }]);
     });
 

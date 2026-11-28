@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "DTO representing a comment thread group.")
 public record CommentThreadGroupDTO(@Schema(description = "Group identifier.") @NotNull Long id,
         @Schema(description = "Identifier of the owning exercise.") @NotNull Long exerciseId,
-        @Schema(description = "Thread identifiers associated with the group.") @NotNull List<@NotNull Long> threadIds) {
+        @Schema(description = "Thread identifiers associated with the group.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @NotNull List<@NotNull Long> threadIds) {
 
     /**
      * Maps a CommentThreadGroup entity to a DTO.
