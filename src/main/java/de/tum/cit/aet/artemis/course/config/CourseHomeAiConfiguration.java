@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiClient;
 import de.tum.cit.aet.artemis.course.service.home.SpringAiCourseHomeClient;
 import io.micrometer.core.instrument.MeterRegistry;
 
-/** Home's optional welcome provider, built from its LLM preset with its own limits and workers. */
+/** Home's optional welcome provider, built from the configured LLM presets with its own limits and workers. */
 @Lazy
 @Configuration(proxyBeanMethods = false)
 @Profile(PROFILE_CORE)
@@ -37,16 +38,26 @@ public class CourseHomeAiConfiguration {
     }
 
     /**
-     * Requires Home's preset once Home AI is enabled. A static method without the properties bean keeps a disabled Home out of the startup beans.
+     * Registers the assigned Home presets for validation when Home AI is enabled. A static method without the properties bean keeps a disabled Home out of the startup beans.
      *
      * @param environment the environment
-     * @return Home's preset assignment
+     * @return Home's preset assignments
      */
     @Bean
     @Conditional(HomeAiEnabled.class)
     static LlmPresetAssignments courseHomeLlmPresetAssignments(Environment environment) {
-        String preset = Binder.get(environment).bind(CourseHomeAiProperties.PRESET_KEY, String.class).orElse(null);
-        return () -> List.of(LlmPresetAssignment.ofSingle(CourseHomeAiProperties.PRESET_KEY, preset, LlmPresetAssignment.Usage.CHAT));
+        var properties = Binder.get(environment).bind(CourseHomeAiProperties.PREFIX, CourseHomeAiProperties.class).get();
+        List<LlmPresetAssignment> assignments = new ArrayList<>();
+        if (properties.localLlmPreset() != null || (properties.cloudLlmPreset() == null && properties.llmPreset() == null)) {
+            assignments.add(LlmPresetAssignment.ofSingle(CourseHomeAiProperties.LOCAL_PRESET_KEY, properties.localLlmPreset(), LlmPresetAssignment.Usage.CHAT));
+        }
+        if (properties.cloudLlmPreset() != null) {
+            assignments.add(LlmPresetAssignment.ofSingle(CourseHomeAiProperties.CLOUD_PRESET_KEY, properties.cloudLlmPreset(), LlmPresetAssignment.Usage.CHAT));
+        }
+        if (properties.llmPreset() != null) {
+            assignments.add(LlmPresetAssignment.ofSingle(CourseHomeAiProperties.PRESET_KEY, properties.llmPreset(), LlmPresetAssignment.Usage.CHAT));
+        }
+        return () -> List.copyOf(assignments);
     }
 
     /** Binds the flag as Spring binds the properties (true, on, yes, ...), so the assignment exists exactly when Home counts as enabled. */
@@ -62,7 +73,7 @@ public class CourseHomeAiConfiguration {
 
         @Override
         public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-            return Binder.get(context.getEnvironment()).bind("artemis.course-home.ai", CourseHomeAiProperties.class).map(CourseHomeAiProperties::isConfigured).orElse(false);
+            return Binder.get(context.getEnvironment()).bind(CourseHomeAiProperties.PREFIX, CourseHomeAiProperties.class).map(CourseHomeAiProperties::isConfigured).orElse(false);
         }
     }
 }
