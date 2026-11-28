@@ -11,6 +11,8 @@ import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/man
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('AthenaEnabledComponent', () => {
     let comp: AthenaEnabledComponent;
@@ -32,7 +34,13 @@ describe('AthenaEnabledComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [AthenaEnabledComponent, TranslatePipeMock],
-            providers: [provideRouter([]), MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideRouter([]),
+                MockProvider(AthenaCourseConfigService),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AthenaEnabledComponent);

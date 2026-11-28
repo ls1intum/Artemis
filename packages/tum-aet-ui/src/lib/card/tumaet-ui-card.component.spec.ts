@@ -35,6 +35,23 @@ describe('TumAetUiCardComponent', () => {
         const subtitle = fixture.debugElement.query(By.css('.tumaet-ui-card-subtitle')).nativeElement as HTMLElement;
         expect(subtitle.textContent?.trim()).toBe('last 30 days');
     });
+
+    it('is elevated by default', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.getAttribute('data-variant')).toBe('elevated');
+        expect(host.classList).toContain('tumaet:shadow-sm');
+        expect(host.classList).toContain('tumaet:bg-overlay-background');
+    });
+
+    it('sets a muted card on the neutral fill with a border instead of a shadow', () => {
+        fixture.componentRef.setInput('variant', 'muted');
+        fixture.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.getAttribute('data-variant')).toBe('muted');
+        expect(host.classList).toContain('tumaet:bg-hover-background');
+        expect(host.classList).toContain('tumaet:border');
+        expect(host.classList).not.toContain('tumaet:shadow-sm');
+    });
 });
 
 @Component({

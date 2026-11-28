@@ -11,7 +11,7 @@ export {
     type TumAetUiButtonVariantOptions,
 } from './lib/button';
 export { TumAetUiButtonGroupComponent } from './lib/button-group';
-export { TumAetUiCardComponent } from './lib/card';
+export { TumAetUiCardComponent, type TumAetUiCardVariant } from './lib/card';
 export {
     TumAetUiBarChartComponent,
     TumAetUiDoughnutChartComponent,
