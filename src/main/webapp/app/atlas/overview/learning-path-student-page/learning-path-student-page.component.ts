@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
@@ -13,6 +15,7 @@ import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -20,9 +23,16 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-learning-path-student-page',
     templateUrl: './learning-path-student-page.component.html',
-    styleUrl: './learning-path-student-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
+    imports: [
+        LearningPathNavComponent,
+        LearningPathLectureUnitComponent,
+        LearningPathExerciseComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+    ],
 })
 export class LearningPathStudentPageComponent {
     private readonly learningApiService = inject(LearningPathApiService);
@@ -59,7 +69,7 @@ export class LearningPathStudentPageComponent {
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
             this.learningPath.set(learningPath);
 
-            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id);
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id, courseId);
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (!(error instanceof HttpErrorResponse) || error.status != 404) {

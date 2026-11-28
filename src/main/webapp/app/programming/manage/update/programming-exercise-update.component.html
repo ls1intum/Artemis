@@ -1,14 +1,32 @@
 <div>
-    <div class="d-flex align-items-center gap-2">
-        @if (!isImportFromExistingExercise && !(isImportFromFile || isImportFromSharing) && !programmingExercise.id) {
+    <div class="flex items-center gap-2">
+        @if (!isImportFromExistingExercise && !(isImportFromFile || isExternalImport) && !programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></h2>
         } @else if (!isImportFromExistingExercise && programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel"></h2>
-        } @else if (isImportFromExistingExercise || isImportFromFile || isImportFromSharing) {
+        } @else if (isImportFromExistingExercise || isImportFromFile || isExternalImport) {
             <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
+    <tumaet-ui-confirm-dialog key="hyperionSettingsReloadConfirmation" />
+    @if (generationSaveBlocked()) {
+        <div role="status" class="my-4 flex flex-wrap items-center gap-2" data-testid="hyperion-settings-save-blocked">
+            @if (generationActivity.statusLoadFailed()) {
+                <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
+                <button type="button" tumAetUiButton variant="outlined" (click)="generationActivity.retryStatus()" data-testid="hyperion-settings-retry-status">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
+                </button>
+            } @else if (generationRefreshRequired()) {
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.settingsContentNotValidated"></span>
+                <button type="button" tumAetUiButton variant="outlined" (click)="reloadSavedSettings()" data-testid="hyperion-settings-reload-saved">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
+                </button>
+            } @else {
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.checkingStatus"></span>
+            }
+        </div>
+    }
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <jhi-exercise-group-timeline-lock #variantLock [exercise]="programmingExercise" [courseId]="courseId()" (exerciseChange)="programmingExercise = $event" />
@@ -17,14 +35,14 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode()"
-                [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
+                [isImport]="isImportFromExistingExercise || isImportFromFile || isExternalImport"
                 [importOptions]="importOptions"
                 [isSimpleMode]="isSimpleMode()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 [courseId]="courseId()"
                 [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12" />
             @if (!isSimpleMode()) {
                 <!-- The mode section would only contain the difficulty in the simple mode,
                 in the simple mode the difficulty will be part of the general section -->
@@ -34,26 +52,39 @@
                     [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                     (triggerValidation)="calculateFormStatusSections()"
                 />
-                <hr class="mb-5" />
+                <hr class="mb-12" />
             }
             <jhi-programming-exercise-language
                 [(programmingExercise)]="programmingExercise"
+                [allowOnlineIde]="!!programmingExercise.allowOnlineIde"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12" />
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
-                <hr class="mb-5" />
+                <hr class="mb-12" />
+            }
+            <!-- Shown in the advanced mode, collapsed until a window is wanted. The simple mode shows it only for a window that a date change there invalidated, which blocks saving -->
+            @if (isBuildTimeWindowDisplayed()) {
+                <jhi-programming-exercise-build-time-window
+                    [programmingExercise]="programmingExercise"
+                    [buildTimeWindow]="programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow"
+                    [error]="getBuildTimeWindowError()"
+                />
+                <hr class="mb-12" />
             }
             <jhi-programming-exercise-problem
+                [editingLocked]="generationEditingLocked()"
+                [beforeStatementSave]="generationExerciseId() !== undefined ? beforeStatementSave : undefined"
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
+                (problemStatementSaved)="onCanonicalStatementSaved($event)"
                 (programmingExerciseChange)="programmingExercise = $event"
             />
-            <hr class="mb-5" />
+            <hr class="mb-12" />
             <jhi-programming-exercise-grading
                 class="form-step"
                 [programmingExercise]="programmingExercise"
@@ -70,12 +101,19 @@
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
                 </jhi-feature-overlay>
             }
+            @if (programmingExercise.id && !isImportFromExistingExercise && !isImportFromFile && !isExternalImport) {
+                <div class="mb-4 flex flex-wrap items-start gap-2" data-testid="programming-settings-ai-actions">
+                    <jhi-create-variant-with-ai-button
+                        [exercise]="programmingExercise"
+                        [disabledReason]="editForm.dirty || variantSourceHasUnsavedChanges || isSaving() ? 'artemisApp.hyperion.generation.blocker.saveBeforeVariant' : undefined"
+                    />
+                </div>
+            }
             <jhi-form-footer
                 [isCreation]="!programmingExercise.id"
-                [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
+                [isImport]="isImportFromExistingExercise || isImportFromFile || isExternalImport"
                 [isSaving]="isSaving()"
-                [isGeneratingWithAi]="isGeneratingWithAi()"
-                [showGenerateWithAi]="showGenerateWithAi()"
+                [isDisabled]="generationFullSaveBlocked()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
@@ -83,7 +121,6 @@
                 [invalidReasons]="getInvalidReasons()"
                 [revalidate]="revalidate"
                 (save)="save()"
-                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

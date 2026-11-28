@@ -16,6 +16,9 @@ export enum FeedbackHighlightColor {
     GREEN = 'rgba(40, 167, 69, 0.6)',
 }
 
+/** The bound the server enforces on the points of a feedback the assessor gives. */
+export const MAX_MANUAL_CREDITS = 100;
+
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
@@ -288,6 +291,21 @@ export class Feedback implements BaseEntity {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
 
+    /**
+     * Checks that every feedback the assessor gives has points the server accepts (Feedback.MAX_MANUAL_CREDITS on the server). A feedback linked to a grading instruction
+     * takes the points of the instruction, and an automatic feedback is not given by the assessor, so neither is checked here.
+     * @param that the feedback of the assessment
+     */
+    public static haveCreditsInBounds(that: Feedback[] | undefined): boolean {
+        return (that ?? []).every(
+            (feedback) =>
+                feedback.credits === undefined ||
+                feedback.gradingInstruction !== undefined ||
+                feedback.type === FeedbackType.AUTOMATIC ||
+                (Number.isFinite(feedback.credits) && Math.abs(feedback.credits) <= MAX_MANUAL_CREDITS),
+        );
+    }
+
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string, dropInfo?: DropInfo): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId;
@@ -334,12 +352,10 @@ export class Feedback implements BaseEntity {
  *
  * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
  * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
- * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
- * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
- * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
- * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
- * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
- * assessor-authored content is ever hiding behind the excluded `text`.
+ * That title is shown separately: in the editable unified feedback editor's own title field, in the "name · title"
+ * heading of the read-only feedback item, and for modeling exercises in the title of Apollon's assessment box (see
+ * `ModelingAssessmentComponent`, which also writes an assessor's description edits into `detailText`). Dropping it
+ * here only avoids showing it twice.
  *
  * @param feedback that contains feedback text and grading instruction
  * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.
@@ -390,6 +406,18 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
         }
     }
 };
+
+/** Count all applications of each persisted grading instruction across an assessment. */
+export function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number> {
+    const counts = new Map<number, number>();
+    for (const feedback of feedbacks) {
+        const instructionId = feedback.gradingInstruction?.id;
+        if (instructionId !== undefined) {
+            counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
+        }
+    }
+    return counts;
+}
 
 /**
  * DTO representing feedback returned by the server.

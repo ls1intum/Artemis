@@ -1,22 +1,18 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiMessageComponent,
-    TumAetUiPanelComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTableDirective,
-    TumAetUiTabsComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisDashboardService } from './iris-dashboard.service';
-import { IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview, IrisDashboardTimeSpan } from './iris-dashboard.model';
+import { IrisDashboardAiSelection, IrisDashboardBreakdownEntry, IrisDashboardConfig, IrisDashboardOverview, IrisDashboardTimeSpan } from './iris-dashboard.model';
 import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Subscription } from 'rxjs';
@@ -25,6 +21,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
 type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: number };
+type AiSelectionOption = { label: string; value: IrisDashboardAiSelection };
 
 @Component({
     selector: 'jhi-iris-dashboard',
@@ -49,7 +46,7 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
         AdminTitleBarActionsDirective,
     ],
     templateUrl: './iris-dashboard.component.html',
-    styleUrls: ['./iris-dashboard.component.scss'],
+    styleUrls: ['./iris-dashboard.component.css'],
 })
 export class IrisDashboardComponent implements OnInit, OnDestroy {
     private dashboardService = inject(IrisDashboardService);
@@ -79,6 +76,10 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
 
     readonly selectedTimeSpan = signal<TimeSpanOption>({ label: 'Month', value: 'MONTH', days: 30 });
 
+    readonly aiSelectionOptions = signal<AiSelectionOption[]>([]);
+
+    readonly selectedAiSelection = signal<AiSelectionOption>({ label: 'All', value: 'ALL' });
+
     private readonly refreshTrigger = signal(0);
 
     readonly dateRange = computed(() => {
@@ -99,6 +100,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.quarter'), value: 'QUARTER', days: 90 },
         ]);
         this.selectedTimeSpan.set(this.timeSpanOptions()[2]);
+        this.aiSelectionOptions.set([
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.all'), value: 'ALL' },
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.cloud'), value: 'CLOUD' },
+            { label: this.translateService.instant('artemisApp.irisDashboard.aiSelection.local'), value: 'LOCAL' },
+        ]);
+        this.selectedAiSelection.set(this.aiSelectionOptions()[0]);
         this.loadData();
         this.dashboardService
             .getConfig()
@@ -112,6 +119,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
 
     onTimeSpanChange(newValue: TimeSpanOption): void {
         this.selectedTimeSpan.set(newValue);
+        this.refreshTrigger.update((v) => v + 1);
+        this.loadData();
+    }
+
+    onAiSelectionChange(newValue: AiSelectionOption): void {
+        this.selectedAiSelection.set(newValue);
         this.refreshTrigger.update((v) => v + 1);
         this.loadData();
     }
@@ -130,11 +143,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
         this.courseBreakdown.set([]);
         this.modelBreakdown.set([]);
         const { from, to } = this.dateRange();
+        const aiSelection = this.selectedAiSelection().value;
 
         const sub = new Subscription();
 
         sub.add(
-            this.dashboardService.getOverview(from, to).subscribe({
+            this.dashboardService.getOverview(from, to, aiSelection).subscribe({
                 next: (data) => {
                     this.overview.set(data);
                     this.loading.set(false);
@@ -146,9 +160,9 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
             }),
         );
 
-        sub.add(this.dashboardService.getBreakdown(from, to, 'CHAT_MODE').subscribe({ next: (data) => this.chatModeBreakdown.set(data), error: (_err) => {} }));
-        sub.add(this.dashboardService.getBreakdown(from, to, 'COURSE').subscribe({ next: (data) => this.courseBreakdown.set(data), error: (_err) => {} }));
-        sub.add(this.dashboardService.getBreakdown(from, to, 'MODEL').subscribe({ next: (data) => this.modelBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'CHAT_MODE', aiSelection).subscribe({ next: (data) => this.chatModeBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'COURSE', aiSelection).subscribe({ next: (data) => this.courseBreakdown.set(data), error: (_err) => {} }));
+        sub.add(this.dashboardService.getBreakdown(from, to, 'MODEL', aiSelection).subscribe({ next: (data) => this.modelBreakdown.set(data), error: (_err) => {} }));
 
         this.dataSubscription = sub;
     }

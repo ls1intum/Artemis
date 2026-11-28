@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -109,8 +108,6 @@ public class UserService {
 
     private final PasswordService passwordService;
 
-    private final AuthorityService authorityService;
-
     private final Optional<LdapUserService> ldapUserService;
 
     private final AuthorityRepository authorityRepository;
@@ -141,7 +138,7 @@ public class UserService {
 
     private final UserActivityService userActivityService;
 
-    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
@@ -153,7 +150,6 @@ public class UserService {
         this.userActivityService = userActivityService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
-        this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
         this.passwordService = passwordService;
@@ -238,6 +234,8 @@ public class UserService {
             // back off the argument would depend on whether the save persisted or merged.
             if (internalAdminPasswordChanged) {
                 userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
+                // A request to change the address that was made before the password was rotated must not stay confirmable.
+                userRecoveryKeyService.clearPendingEmailChange(savedInternalAdmin.getId());
             }
         }
         else {
@@ -349,6 +347,9 @@ public class UserService {
                     // Hashing can reject the password; keep the reset link usable if it fails.
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
+                    // A request to change the address that was made before the reset must not stay confirmable: it may have been made by
+                    // whoever the reset takes the account back from.
+                    userRecoveryKeyService.clearPendingEmailChange(user.getId());
                     saveUser(user);
                     // Stops sessions established before the reset from being extended any further.
                     userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
@@ -461,15 +462,24 @@ public class UserService {
             throw new UsernameAlreadyUsedException();
         }
 
-        // The user has the same login and email, but the account is not activated.
+        // Only an internal account that is still waiting for its activation may be registered again. Any other account
+        // with this login is not the subject of a registration request.
+        if (!existingUser.isInternal() || userRecoveryKeyService.findActivationKey(existingUser.getId()) == null) {
+            throw new UsernameAlreadyUsedException();
+        }
+
+        // The user has the same login and email, and the account still awaits its activation.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
         // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
         // still get its activation link resent rather than a NullPointerException.
         if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
-            // Update the existing user and VCS
-            newUser.setId(existingUser.getId());
-            User updatedExistingUser = userRepository.save(newUser);
+            // Only the data supplied in the registration request is applied to the stored account
+            existingUser.setPassword(newUser.getPassword());
+            existingUser.setFirstName(newUser.getFirstName());
+            existingUser.setLastName(newUser.getLastName());
+            existingUser.setLangKey(newUser.getLangKey());
+            User updatedExistingUser = userRepository.save(existingUser);
 
             // Post-pone the cleaning up of the account
             instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
@@ -478,7 +488,8 @@ public class UserService {
 
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
-        throw new AccountRegistrationBlockedException(existingUser.getEmail());
+        // The message names the address of the request, not the one of the stored account.
+        throw new AccountRegistrationBlockedException(newUser.getEmail());
     }
 
     /**
@@ -653,6 +664,9 @@ public class UserService {
             user.setPassword(newPasswordHash);
             saveUser(user);
             userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+            // Changing the password is how an owner reacts to a suspected intrusion, and a pending change of the address would let that
+            // intruder carry on from there.
+            userRecoveryKeyService.clearPendingEmailChange(user.getId());
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
@@ -714,8 +728,7 @@ public class UserService {
      */
     public void addUserToCourse(User user, Course course, CourseRole role) {
         log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
-        // Idempotent: if the user already holds this role, there is nothing to write and the (coarse, global) authorities
-        // cannot change — skip the reload + authority rebuild + save. This keeps bulk re-enrollment cheap.
+        // Avoid duplicate writes when re-enrolling a user who already holds this course role.
         if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             return;
         }
@@ -731,13 +744,6 @@ public class UserService {
             // The request that inserted the row is the one that rebuilds the authorities, so this one stops here like the check above.
             log.debug("User {} was concurrently added to course {} with role {}", user.getLogin(), course.getId(), role);
             return;
-        }
-        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
-        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
         }
     }
 
@@ -766,16 +772,6 @@ public class UserService {
             return;
         }
         userCourseRoleRepository.saveAll(newlyEnrolled.stream().map(user -> new UserCourseRole(user, course, role)).toList());
-
-        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
-        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            Set<String> logins = newlyEnrolled.stream().map(User::getLogin).collect(Collectors.toSet());
-            List<User> usersWithAuthorities = new ArrayList<>(userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(logins));
-            Map<Long, Set<Authority>> rebuiltAuthorities = authorityService.buildAuthoritiesForUsers(usersWithAuthorities);
-            usersWithAuthorities.forEach(user -> user.setAuthorities(rebuiltAuthorities.get(user.getId())));
-            userRepository.saveAll(usersWithAuthorities);
-        }
     }
 
     /**
@@ -788,13 +784,6 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        // ROLE_STUDENT is always granted, so revoking a STUDENT role never changes the global authorities; only revoking
-        // a TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
-        if (role != CourseRole.STUDENT) {
-            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
-        }
     }
 
     /**

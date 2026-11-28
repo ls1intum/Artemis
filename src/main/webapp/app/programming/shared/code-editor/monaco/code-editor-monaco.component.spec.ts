@@ -20,11 +20,11 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { IKeyboardEvent } from 'monaco-editor';
+import { IKeyboardEvent, editor } from 'monaco-editor';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
@@ -63,6 +63,179 @@ type MonacoInternals = Omit<
 };
 
 const internals = (c: CodeEditorMonacoComponent): MonacoInternals => c as unknown as MonacoInternals;
+
+describe('CodeEditorMonacoComponent same-line suggestions', () => {
+    let fixture: ComponentFixture<CodeEditorMonacoComponent>;
+    let comp: CodeEditorMonacoComponent;
+    let originalResizeObserver: typeof ResizeObserver;
+    let overlays: Map<string, editor.IOverlayWidget>;
+    let zones: Map<string, editor.IViewZone>;
+
+    const settle = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    };
+
+    const suggestions = (): Feedback[] => [
+        {
+            type: FeedbackType.MANUAL,
+            reference: 'file:file1.java_line:1',
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'First suggestion',
+            detailText: 'First suggestion detail',
+            credits: -1,
+        },
+        {
+            type: FeedbackType.MANUAL,
+            reference: 'file:file1.java_line:1',
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Second suggestion',
+            detailText: 'Second suggestion detail',
+            credits: -2,
+        },
+    ];
+
+    beforeEach(async () => {
+        originalResizeObserver = global.ResizeObserver;
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorMonacoComponent],
+            providers: [
+                CodeEditorFileService,
+                { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(CodeEditorMonacoComponent);
+        comp = fixture.componentInstance;
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('sessionId', 'same-line-suggestions');
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
+        fixture.componentRef.setInput('commitState', CommitState.CLEAN);
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+
+        // Keep the real Angular feedback cards and Artemis widget/view-zone classes. Only Monaco's
+        // registration API is simulated: overlay IDs are unique, and each zone positions its own card.
+        overlays = new Map();
+        zones = new Map();
+        let nextZoneId = 0;
+        const monaco = comp.editor().getActiveEditor();
+        vi.spyOn(monaco, 'addOverlayWidget').mockImplementation((widget) => {
+            overlays.set(widget.getId(), widget);
+        });
+        vi.spyOn(monaco, 'removeOverlayWidget').mockImplementation((widget) => {
+            overlays.delete(widget.getId());
+        });
+        vi.spyOn(monaco, 'changeViewZones').mockImplementation((callback) => {
+            callback({
+                addZone: (zone) => {
+                    const id = String(nextZoneId++);
+                    zones.set(id, zone);
+                    return id;
+                },
+                removeZone: (id) => {
+                    zones.delete(id);
+                },
+                layoutZone: () => {},
+            });
+        });
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        global.ResizeObserver = originalResizeObserver;
+        vi.restoreAllMocks();
+    });
+
+    it('gives unsaved suggestions on the same line independent cards and scroll positions after switching files', async () => {
+        const feedbacks = suggestions();
+        fixture.componentRef.setInput('feedbacks', feedbacks);
+        await settle();
+
+        const assertIndependentCards = () => {
+            expect(overlays.size).toBe(2);
+            expect(zones.size).toBe(2);
+            const cards = [...overlays.values()].map((overlay) => overlay.getDomNode());
+            expect(cards[0]).not.toBe(cards[1]);
+            expect(cards.map((card) => card.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.value)).toEqual([
+                'First suggestion detail',
+                'Second suggestion detail',
+            ]);
+            const viewZones = [...zones.values()];
+            expect(viewZones.map((zone) => zone.afterLineNumber)).toEqual([2, 2]);
+            viewZones[0].onDomNodeTop?.(80);
+            viewZones[1].onDomNodeTop?.(180);
+            expect(cards.map((card) => card.style.top)).toEqual(['80px', '180px']);
+            viewZones[0].onDomNodeTop?.(-20);
+            viewZones[1].onDomNodeTop?.(80);
+            expect(cards.map((card) => card.style.top)).toEqual(['-20px', '80px']);
+        };
+        assertIndependentCards();
+
+        fixture.componentRef.setInput('selectedFile', 'file2.java');
+        await settle();
+        expect(overlays.size).toBe(0);
+        expect(zones.size).toBe(0);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        await settle();
+        assertIndependentCards();
+    });
+
+    it('edits and deletes only the selected unsaved suggestion on a shared line', async () => {
+        const [first, second] = suggestions();
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const secondCard = comp.inlineFeedbackComponents()[1];
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
+        textarea.value = 'Edited second suggestion';
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+
+        expect(comp.feedbackInternal()).toEqual([first, second]);
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(comp.feedbackInternal()[1]).toBe(second);
+        expect(first.detailText).toBe('First suggestion detail');
+        expect(second.detailText).toBe('Edited second suggestion');
+        expect(secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input')).toBe(textarea);
+
+        secondCard.deleteFeedback();
+        await settle();
+        expect(comp.feedbackInternal()).toEqual([first]);
+        expect(overlays.size).toBe(1);
+        expect(zones.size).toBe(1);
+        const remainingCard = [...overlays.values()][0].getDomNode();
+        expect(remainingCard.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.value).toBe('First suggestion detail');
+    });
+
+    it('retains the focused input on a cloned update and deletes only one of two identical unsaved suggestions', async () => {
+        const first = suggestions()[0];
+        const second = { ...first };
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const secondCard = comp.inlineFeedbackComponents()[1];
+        const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
+        textarea.focus();
+        textarea.setSelectionRange(7, 7);
+        const changedCopy = { ...second };
+
+        secondCard.onUpdateFeedback.emit(changedCopy);
+        await settle();
+
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(comp.feedbackInternal()[1]).toBe(changedCopy);
+        expect(comp.inlineFeedbackComponents()[1]).toBe(secondCard);
+        expect(secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input')).toBe(textarea);
+        expect(document.activeElement).toBe(textarea);
+        expect(textarea.value).toBe('First suggestion detail');
+        expect(textarea.selectionStart).toBe(7);
+        expect(textarea.selectionEnd).toBe(7);
+        secondCard.deleteFeedback();
+        await settle();
+
+        expect(comp.feedbackInternal()).toHaveLength(1);
+        expect(comp.feedbackInternal()[0]).toBe(first);
+        expect(overlays.size).toBe(1);
+    });
+});
 
 describe('CodeEditorMonacoComponent', () => {
     let originalResizeObserver: typeof ResizeObserver | undefined;
@@ -170,7 +343,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         await new Promise(process.nextTick);
 
-        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java');
+        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java', expect.any(Number));
         expect(updateInteractionModeStub).toHaveBeenCalled();
     });
 
@@ -311,6 +484,97 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.fileSession()).toEqual({
             [selectedFile]: { ...fileSession[selectedFile], code: newCode, scrollTop: 0 },
         });
+    });
+
+    it('should mark a user edit dirty after a same-content state replacement', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'unchanged', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'unchanged' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
+    });
+
+    it('marks a late replacement dirty when it diverges from the persisted fallback and suppresses only its echo', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'initial', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'remote replacement' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'remote replacement' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'remote replacement' });
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'local edit after replacement' });
+
+        expect(onFileContentChangeSpy).toHaveBeenNthCalledWith(2, { fileName: filePath, text: 'local edit after replacement' });
+    });
+
+    it('should mark a user edit dirty when finalized content already matches the hydrated model', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const isAwaitingInitialSync = vi.fn(() => true);
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: isAwaitingInitialSync,
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        comp.onFileTextChanged({ fileName: filePath, text: '' });
+        isAwaitingInitialSync.mockReturnValue(false);
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'line 1\r\nline 2' });
+        comp.onFileTextChanged({ fileName: filePath, text: 'line 1\nline 2' });
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
     });
 
     it('should suppress initial hydration change after initial sync finalizes and emit only user changes afterwards', () => {
@@ -611,28 +875,28 @@ describe('CodeEditorMonacoComponent', () => {
             expect(errorCallbackStub).not.toHaveBeenCalled();
         });
 
-        it('should revoke the previous URL when two in-flight loads for the same file resolve back-to-back', async () => {
+        it('ignores the superseded same-path image response without replacing the newest preview', async () => {
             const fileName = 'assets/logo.png';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
             const firstSubject = new Subject<Blob>();
             const secondSubject = new Subject<Blob>();
             const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
-            createObjectURLMock.mockReturnValueOnce('blob:first-url').mockReturnValueOnce('blob:second-url');
+            createObjectURLMock.mockReturnValueOnce('blob:newest-url');
             fixture.componentRef.setInput('selectedFile', fileName);
 
             // Kick off two loads for the same file before either resolves (mirrors the editorWasRefreshed re-entry path).
             const firstPending = comp.selectFileInEditor(fileName);
             const secondPending = comp.selectFileInEditor(fileName);
-            firstSubject.next(blob);
-            firstSubject.complete();
             secondSubject.next(blob);
-            secondSubject.complete();
-            await Promise.all([firstPending, secondPending]);
+            await secondPending;
+            expect(comp.imagePreviewUrl()).toBe('blob:newest-url');
+            firstSubject.next(blob);
+            await firstPending;
 
             expect(getFileAsBlobSpy).toHaveBeenCalledTimes(2);
-            expect(createObjectURLMock).toHaveBeenCalledTimes(2);
-            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:first-url');
-            expect(comp.imagePreviewUrl()).toBe('blob:second-url');
+            expect(createObjectURLMock).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURLMock).not.toHaveBeenCalled();
+            expect(comp.imagePreviewUrl()).toBe('blob:newest-url');
         });
 
         it('should revoke the previously generated image preview URL when switching files', async () => {
@@ -722,6 +986,40 @@ describe('CodeEditorMonacoComponent', () => {
         longLoadingFileSubject.next({ fileName: 'file1', fileContent: 'some code that took a while to retrieve' });
         await firstFileChange;
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
+    });
+
+    it('rejects a stale same-path response before changing cached content or Monaco', async () => {
+        const responses = [new Subject<{ fileContent: string }>(), new Subject<{ fileContent: string }>(), new Subject<{ fileContent: string }>()];
+        const getFile = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
+        for (const response of responses) getFile.mockReturnValueOnce(response);
+        const changeModel = vi.spyOn(comp.editor(), 'changeModel');
+        const cascade = (previous: string | undefined) =>
+            comp['handleInputChangeCascade']({
+                editorWasRefreshed: false,
+                editorWasReset: false,
+                selectedFileChanged: true,
+                feedbacksChanged: false,
+                prevSelectedFile: previous,
+            }) as Promise<void>;
+
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const firstA = cascade(undefined);
+        fixture.componentRef.setInput('selectedFile', 'B.java');
+        const b = cascade('A.java');
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const latestA = cascade('B.java');
+        responses[2].next({ fileContent: 'new A' });
+        await latestA;
+        comp.fileSession.update((files) => ({ ...files, 'A.java': { ...files['A.java'], code: 'local edit' } }));
+        changeModel.mockClear();
+        responses[0].next({ fileContent: 'old A' });
+        await firstA;
+        responses[1].next({ fileContent: 'old B' });
+        await b;
+
+        expect(comp.fileSession()['A.java'].code).toBe('local edit');
+        expect(comp.fileSession()['B.java']).toBeUndefined();
+        expect(changeModel).not.toHaveBeenCalled();
     });
 
     it('should use the code and cursor position of the selected file', async () => {
@@ -1113,7 +1411,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', selectedFile);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(selectFileInEditorSpy).toHaveBeenCalledWith(selectedFile);
+        expect(selectFileInEditorSpy).toHaveBeenCalledWith(selectedFile, expect.any(Number));
         expect(renderReviewCommentWidgetsSpy).not.toHaveBeenCalled();
 
         isFileAwaitingInitialSync.mockReturnValue(false);
@@ -1142,7 +1440,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         renderReviewCommentWidgetsSpy.mockClear();
-        stateReplaced$.next({ filePath: selectedFile });
+        stateReplaced$.next({ filePath: selectedFile, text: { toJSON: () => '' } });
 
         expect(renderReviewCommentWidgetsSpy).toHaveBeenCalledOnce();
     });
@@ -1175,7 +1473,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
 
         // Replacement arrives for a background file while A is selected.
-        stateReplaced$.next({ filePath: fileB });
+        stateReplaced$.next({ filePath: fileB, text: { toJSON: () => 'B0' } });
 
         // Switch to B and perform first user edit.
         fixture.componentRef.setInput('selectedFile', fileB);
@@ -1245,6 +1543,9 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should commit and mark inline fix as applied after successful code-editor apply', () => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        comp.fileSession.set({
+            'src/Foo.java': { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
         const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
@@ -1269,6 +1570,31 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
         expect(onInlineFixCommittedSpy).toHaveBeenCalled();
         expect(markAppliedSpy).toHaveBeenCalledWith(42);
+    });
+
+    it('should not report an inline-fix file as saved after a newer edit', () => {
+        const fileName = 'src/Foo.java';
+        const saveResult = new Subject<Record<string, never>>();
+        fixture.componentRef.setInput('selectedFile', fileName);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(saveResult);
+        const onSavedFilesSpy = vi.fn();
+        comp.onSavedFiles.subscribe(onSavedFilesSpy);
+        const thread = {
+            comments: [{ id: 42, type: CommentType.CONSISTENCY_CHECK, createdDate: '2026-01-01T00:00:00Z' }],
+        } as any;
+
+        internals(comp).persistInlineFixApplication(thread);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo { /* newer edit */ }', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        saveResult.next({});
+
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should clear review comment drafts through the manager', () => {

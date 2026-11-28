@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -125,12 +126,16 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course2, true);
         testExam1 = examUtilService.addTestExamWithExerciseGroup(course1, true);
+        var testExamExerciseGroup = testExam1.getExerciseGroups().getFirst();
         testExam1 = examRepository.save(testExam1);
         ExamUser examUser = new ExamUser();
         examUser.setExam(testExam1);
         examUser.setUser(student1);
         examUser = examUserRepository.save(examUser);
         testExam1.setExamUsers(Set.of(examUser));
+        QuizExercise testExamQuiz = QuizExerciseFactory.generateQuizExerciseForExam(testExamExerciseGroup);
+        testExamExerciseGroup.addExercise(testExamQuiz);
+        exerciseRepository.save(testExamQuiz);
         testExam2 = examUtilService.addTestExamWithExerciseGroup(course2, true);
         testExam2 = examRepository.save(testExam2);
         ExamUser examUser1 = new ExamUser();
@@ -176,7 +181,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCheckCourseAccess_asTutor() {
         // checkCourseAccess
         assertThatThrownBy(() -> examAccessService.checkCourseAccessForInstructorElseThrow(course1.getId())).isInstanceOf(AccessForbiddenException.class);
@@ -193,7 +198,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCheckCourseAccess_asEditor() {
         // checkCourseAccess
         examAccessService.checkCourseAccessForEditorElseThrow(course1.getId());
@@ -207,7 +212,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void testCheckCourseAccess_asInstructorWithoutCourseAccess() {
         // checkCourseAccess
         assertThatThrownBy(() -> examAccessService.checkCourseAccessForInstructorElseThrow(course1.getId())).isInstanceOf(AccessForbiddenException.class);
@@ -228,7 +233,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
      * This test intentionally contains no asserts as the methods work as expected if no exception is thrown.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCheckCourseAccess_asTutorWithCourseAccess() {
         // checkCourseAccess
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
@@ -240,7 +245,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
      * This test intentionally contains no asserts as the methods work as expected if no exception is thrown.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAccess_asInstructorWithCourseAccess() {
         // checkCourseAccess
         examAccessService.checkCourseAccessForInstructorElseThrow(course1.getId());
@@ -253,7 +258,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAccess_notFound() {
         // checkCourseAndExamAccessElseThrow
         assertThatThrownBy(() -> examAccessService.checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), 99999L)).isInstanceOf(EntityNotFoundException.class);
@@ -266,7 +271,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAccess_conflict() {
         // checkCourseAndExamAccessElseThrow
         assertThatThrownBy(() -> examAccessService.checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId())).isInstanceOf(ConflictException.class);
@@ -282,7 +287,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
      * This test intentionally contains no asserts as the methods work as expected if no exception is thrown.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAccess() {
         exerciseGroup1.setExam(exam1);
         // checkCourseAndExamAccessElseThrow
@@ -294,7 +299,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAndExerciseGroupAccess_badRequest() {
         assertThatThrownBy(() -> examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup2))
                 .isInstanceOf(ConflictException.class);
@@ -304,20 +309,20 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
      * This test intentionally contains no asserts as the method works as expected if no exception is thrown.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAndExerciseGroupAccess() {
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAndStudentExamAccess_notFound() {
         assertThatThrownBy(() -> examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(course1.getId(), exam1.getId(), 99999L))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAndStudentExamAccess_conflict() {
         assertThatThrownBy(() -> examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExam2.getId()))
                 .isInstanceOf(ConflictException.class);
@@ -327,7 +332,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
      * This test intentionally contains no asserts as the method works as expected if no exception is thrown.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckCourseAndExamAndStudentExamAccess() {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExam1.getId());
     }
@@ -361,7 +366,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_instructor() {
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenAlertException.class);
     }
@@ -380,6 +385,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGenerateIndividualStudentExam_ignoresStaleCallerExerciseGroups() {
+        // Exercise generation, rather than reusing the empty student exam installed by the common fixture.
+        studentExamRepository.delete(studentExam1);
         // Simulates a caller (ExamAccessService) that loaded the exam before a concurrent exercise-group move: the
         // in-memory exercise groups no longer match the database, which actually has exerciseGroup1 with a quiz.
         Exam staleExam = new Exam();
@@ -448,7 +455,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetOrCreateStudentExamElseThrow_testExamEnded() {
         testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("examHasAlreadyEnded");
+                });
     }
 
     @Test
@@ -470,7 +482,66 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveReturnsExistingAttempt() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam.getId()).isEqualTo(studentExamForTestExam1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveGeneratesNewAttemptIfRegistered() {
+        studentExamRepository.delete(studentExamForTestExam1);
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER") // student2 is typically not registered
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionActiveThrowsIfNotRegistered() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        // student2 is not registered for testExam1
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class)
+                .hasMessageContaining("User is not registered for the exam.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_supervisedSessionAndPracticeCreatesNewAttemptAfterPracticeStart() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusHours(2), 1800, 180, true, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
+    }
+
+    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean testExamWithSupervisedSession, ZonedDateTime endDate) {
+        exam.setVisibleDate(startDate.minusMinutes(10));
+        exam.setStartDate(startDate);
+        exam.setWorkingTime(workingTime);
+        exam.setGracePeriod(gracePeriod);
+        exam.setExamMode(testExamWithSupervisedSession ? ExamMode.TEST_WITH_SUPERVISED_SESSION : ExamMode.TEST);
+        exam.setEndDate(endDate);
+        examRepository.save(exam);
+    }
+
+    private void markStudentExamSubmitted(StudentExam studentExam) {
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(20));
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(studentExam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetOrCreateStudentExamElseThrow_tutor_skipAlert() {
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }

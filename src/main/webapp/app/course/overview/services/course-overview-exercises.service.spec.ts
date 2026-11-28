@@ -11,6 +11,7 @@ import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -23,6 +24,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('CourseOverviewExercisesService', () => {
+    let authentication: Subject<User | undefined>;
     let service: CourseOverviewExercisesService;
     let courseManagementService: CourseManagementService;
     let courseStorageService: CourseStorageService;
@@ -53,6 +55,10 @@ describe('CourseOverviewExercisesService', () => {
                 MockProvider(AlertService),
             ],
         });
+        authentication = new Subject<User | undefined>();
+        const account = TestBed.inject(AccountService);
+        vi.spyOn(account, 'userIdentity').mockReturnValue({ id: 1 } as User);
+        vi.spyOn(account, 'getAuthenticationState').mockReturnValue(authentication);
         service = TestBed.inject(CourseOverviewExercisesService);
         service.clear();
         courseManagementService = TestBed.inject(CourseManagementService);
@@ -67,6 +73,28 @@ describe('CourseOverviewExercisesService', () => {
         service.clear();
         teamUpdates.complete();
         vi.restoreAllMocks();
+    });
+
+    it('preserves held state for the same user and clears it when the identity changes', () => {
+        service.load(1).subscribe();
+        authentication.next({ id: 1 } as User);
+        expect(service.dataFor(1)).toBeDefined();
+        const clear = vi.spyOn(service, 'clear');
+        authentication.next({ id: 2 } as User);
+        expect(service.dataFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        authentication.next(undefined);
+        authentication.next(undefined);
+        expect(clear).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears state and stops observing authentication when destroyed', () => {
+        service.load(1).subscribe();
+        const clear = vi.spyOn(service, 'clear');
+        service.ngOnDestroy();
+        expect(service.dataFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        expect(clear).toHaveBeenCalledOnce();
     });
 
     it('should not report a hit for an undefined course id on empty state', () => {

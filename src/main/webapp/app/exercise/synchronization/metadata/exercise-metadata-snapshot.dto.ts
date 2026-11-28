@@ -3,6 +3,8 @@ import { DifficultyLevel, ExerciseMode, IncludedInOverallScore, PlagiarismDetect
 import { StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BuildConfigAdvancedSettingsDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 
 export interface ExerciseSnapshotDTO {
     id: number;
@@ -139,8 +141,10 @@ export interface ProgrammingExerciseBuildConfigSnapshotDTO {
     timeoutSeconds?: number;
     dockerFlags?: string;
     theiaImage?: string;
+    onlineIdeExperienceLevel?: OnlineIdeExperienceLevel;
     allowBranching?: boolean;
     branchRegex?: string;
+    advancedSettings?: BuildConfigAdvancedSettingsDTO;
 }
 
 /**

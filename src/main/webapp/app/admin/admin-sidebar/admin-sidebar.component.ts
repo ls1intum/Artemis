@@ -4,12 +4,14 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faBug,
     faChartLine,
     faClipboardList,
     faCubes,
     faDownload,
     faEye,
     faFlag,
+    faFlask,
     faGears,
     faHeart,
     faKey,
@@ -25,9 +27,8 @@ import {
     faToggleOn,
     faUniversity,
     faUser,
-    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -52,7 +53,7 @@ export interface AdminSidebarGroup {
 @Component({
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
-    styleUrls: ['./admin-sidebar.component.scss'],
+    styleUrls: ['./admin-sidebar.component.css'],
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective, RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
@@ -61,17 +62,19 @@ export class AdminSidebarComponent {
     layoutService = inject(LayoutService);
 
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);
     ltiEnabled = input<boolean>(false);
     standardizedCompetenciesEnabled = input<boolean>(false);
+    scienceEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
+    hyperionGenerationEnabled = input<boolean>(false);
+    aiWorkerEnabled = input<boolean>(false);
     weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
@@ -160,6 +163,15 @@ export class AdminSidebarComponent {
             translation: 'global.menu.admin.sidebar.upcoming',
             testId: 'admin-upcoming-exams-and-exercises',
         });
+        if (this.atlasEnabled() && this.scienceEnabled()) {
+            contentItems.push({
+                routerLink: '/admin/science',
+                icon: faFlask,
+                title: 'Science',
+                translation: 'global.menu.admin.sidebar.science',
+                testId: 'admin-science',
+            });
+        }
 
         // Sort alphabetically by title
         contentItems.sort((a, b) => a.title.localeCompare(b.title));
@@ -228,6 +240,13 @@ export class AdminSidebarComponent {
                 testId: 'admin-feature-usage',
             },
             {
+                routerLink: '/admin/error-analysis',
+                icon: faBug,
+                title: 'Error Analysis',
+                translation: 'global.menu.admin.sidebar.errorAnalysis',
+                testId: 'admin-error-analysis',
+            },
+            {
                 routerLink: '/admin/websocket',
                 icon: faPlug,
                 title: 'Websocket',
@@ -235,6 +254,16 @@ export class AdminSidebarComponent {
                 testId: 'admin-websocket',
             },
         ];
+
+        if (this.hyperionGenerationEnabled() || this.aiWorkerEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/ai-generation',
+                icon: faRobot,
+                title: 'AI Generation',
+                translation: 'artemisApp.hyperion.workers.title',
+                testId: 'admin-ai-generation',
+            });
+        }
 
         // Only surface the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance.
         if (this.weaviateEnabled()) {

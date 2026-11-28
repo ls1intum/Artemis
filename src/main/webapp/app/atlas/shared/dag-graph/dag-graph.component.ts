@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef,
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { curveBundle, line } from 'd3-shape';
 import { DagGraphEdge, DagGraphLayout, DagGraphLayoutEdge, DagGraphLayoutNode, DagGraphNode, GraphNodeDimension, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 interface PanState {
     pointerX: number;
@@ -40,7 +40,7 @@ interface PanState {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgTemplateOutlet],
     templateUrl: './dag-graph.component.html',
-    styleUrl: './dag-graph.component.scss',
+    styleUrl: './dag-graph.component.css',
 })
 export class DagGraphComponent implements OnDestroy {
     private static readonly DEFAULT_NODE_WIDTH = 100;

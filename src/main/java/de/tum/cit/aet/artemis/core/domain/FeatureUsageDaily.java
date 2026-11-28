@@ -33,9 +33,8 @@ public class FeatureUsageDaily extends DomainObject {
     private LocalDate usageDay;
 
     /**
-     * The caller's highest <i>global</i> authority, not their role in the course the request touched. A user who
-     * instructs any course carries {@code INSTRUCTOR} globally, so this measures who the audience of a feature is, not
-     * in which capacity a given call was made.
+     * The caller's highest global authority. Course roles do not contribute to this dimension, so teaching staff without
+     * an administrator authority are recorded as {@code STUDENT}. Historical entries may still contain teaching roles.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "caller_role", length = 32, nullable = false)

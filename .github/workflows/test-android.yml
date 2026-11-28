@@ -70,7 +70,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6  # v6.4.0
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c  # v6.4.1
 
         # sanity cleanup
       - name: Stop mysql server
@@ -83,6 +83,14 @@ jobs:
 
       - name: Remove mysql volume
         run: docker volume rm artemis-mysql-data || exit 0
+
+      # Docker Hub limits anonymous pulls per IP address, so the database image comes through the registry proxy
+      # and `docker compose up` below finds it locally instead of pulling it from Docker Hub.
+      - name: Fetch the mysql image through the registry proxy
+        run: |
+          images=$(docker compose -f main-repo/deployment/docker/mysql.yml config --images mysql)
+          # shellcheck disable=SC2086
+          bash main-repo/supporting_scripts/ci/pull-through-registry-proxy.sh $images
 
       - name: Launch mysql docker container
         run: docker compose -f main-repo/deployment/docker/mysql.yml up -d mysql

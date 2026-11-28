@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.json.JsonFactory;
 import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
@@ -56,14 +55,12 @@ public class LegacyBuildPlanConverterService {
 
         String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         String buildScript = buildConfig.getBuildScript();
-        JsonNode node = null;
+        LegacyBuildPlanConfiguration configuration = null;
 
         if (buildPlanConfiguration != null && !buildPlanConfiguration.isBlank()) {
             try {
-                node = objectMapper.readTree(buildPlanConfiguration);
-                if (!node.isObject()) {
-                    node = null;
-                }
+                // A configuration that is not a JSON object cannot be mapped and is handled like unparseable text, which leaves it without any usable part
+                configuration = objectMapper.readValue(buildPlanConfiguration, LegacyBuildPlanConfiguration.class);
             }
             catch (JacksonException e) {
                 if (buildScript == null) {
@@ -72,17 +69,17 @@ public class LegacyBuildPlanConverterService {
             }
         }
 
-        JsonNode actionsNode = node == null ? null : node.path("actions");
-        if (buildScript == null && !isLegacyWindfile(actionsNode)) {
+        List<LegacyBuildPlanConfiguration.Action> actions = configuration == null ? null : configuration.actions();
+        if (buildScript == null && !isLegacyWindfile(actions)) {
             return Optional.empty();
         }
 
         if (buildScript == null) {
-            buildScript = createLegacyBuildScriptFromActions(actionsNode);
+            buildScript = createLegacyBuildScriptFromActions(actions);
         }
 
-        String dockerImage = node == null ? null : parseDockerImage(node);
-        List<String> resultPaths = parseResultPaths(actionsNode);
+        String dockerImage = configuration == null ? null : parseDockerImage(configuration);
+        List<String> resultPaths = parseResultPaths(actions);
 
         return Optional.of(new BuildPlanPhasesDTO(wrapLegacyBuildScript(buildScript, resultPaths), dockerImage));
     }
@@ -101,41 +98,37 @@ public class LegacyBuildPlanConverterService {
         return List.of(new BuildPhaseDTO("script", wrappedScript, BuildPhaseCondition.ALWAYS, false, resultPaths));
     }
 
-    private static String parseDockerImage(JsonNode node) {
-        JsonNode imageNode = node.path("metadata").path("docker").path("image");
-        if (imageNode.isMissingNode() || imageNode.isNull()) {
+    private static String parseDockerImage(LegacyBuildPlanConfiguration configuration) {
+        LegacyBuildPlanConfiguration.Metadata metadata = configuration.metadata();
+        if (metadata == null || metadata.docker() == null || metadata.docker().image() == null) {
             return null;
         }
-        if (!imageNode.isString()) {
-            return null;
-        }
-        return imageNode.asString().trim();
+        return metadata.docker().image().trim();
     }
 
-    private static boolean isLegacyWindfile(JsonNode actionsNode) {
-        return actionsNode != null && actionsNode.isArray();
+    private static boolean isLegacyWindfile(List<LegacyBuildPlanConfiguration.Action> actions) {
+        return actions != null;
     }
 
-    private static String createLegacyBuildScriptFromActions(JsonNode actionsNode) {
+    private static String createLegacyBuildScriptFromActions(List<LegacyBuildPlanConfiguration.Action> actions) {
         StringBuilder buildScriptBuilder = new StringBuilder();
         buildScriptBuilder.append("#!/bin/bash\n");
         buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
 
-        if (!isLegacyWindfile(actionsNode)) {
+        if (!isLegacyWindfile(actions)) {
             return buildScriptBuilder.toString();
         }
 
-        for (JsonNode actionNode : actionsNode) {
-            if (!actionNode.isObject() || !actionNode.path("script").isString()) {
+        for (LegacyBuildPlanConfiguration.Action action : actions) {
+            if (action.script() == null) {
                 continue;
             }
 
-            JsonNode workdirNode = actionNode.path("workdir");
-            String workdir = workdirNode.isString() ? workdirNode.asString().trim() : null;
+            String workdir = action.workdir() == null ? null : action.workdir().trim();
             if (workdir != null && !workdir.isBlank()) {
                 buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
             }
-            buildScriptBuilder.append(actionNode.path("script").asString()).append("\n");
+            buildScriptBuilder.append(action.script()).append("\n");
             if (workdir != null && !workdir.isBlank()) {
                 buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
             }
@@ -144,34 +137,22 @@ public class LegacyBuildPlanConverterService {
         return buildScriptBuilder.toString();
     }
 
-    private static List<String> parseResultPaths(JsonNode actionsNode) {
-        if (!isLegacyWindfile(actionsNode)) {
+    private static List<String> parseResultPaths(List<LegacyBuildPlanConfiguration.Action> actions) {
+        if (!isLegacyWindfile(actions)) {
             return List.of();
         }
 
         List<String> resultPaths = new ArrayList<>();
-        for (JsonNode actionNode : actionsNode) {
-            if (!actionNode.isObject()) {
+        for (LegacyBuildPlanConfiguration.Action action : actions) {
+            if (action.results() == null) {
                 continue;
             }
 
-            JsonNode resultsNode = actionNode.path("results");
-            if (resultsNode.isMissingNode() || resultsNode.isNull()) {
-                continue;
-            }
-            if (!resultsNode.isArray()) {
-                continue;
-            }
-
-            for (JsonNode resultNode : resultsNode) {
-                if (!resultNode.isObject()) {
+            for (LegacyBuildPlanConfiguration.Result result : action.results()) {
+                if (result.path() == null) {
                     continue;
                 }
-                JsonNode pathNode = resultNode.path("path");
-                if (!pathNode.isString()) {
-                    continue;
-                }
-                resultPaths.add(pathNode.asString().trim());
+                resultPaths.add(result.path().trim());
             }
         }
 

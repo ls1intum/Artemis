@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.text.web;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,34 +21,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
+import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 /**
@@ -81,9 +77,11 @@ public class TextExerciseExportImportResource {
 
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
+    private final TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService;
+
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExerciseVersionService exerciseVersionService,
-            CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi) {
+            CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi, TextExerciseWithSubmissionsExportService textExerciseWithSubmissionsExportService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -92,6 +90,7 @@ public class TextExerciseExportImportResource {
         this.exerciseVersionService = exerciseVersionService;
         this.courseRepository = courseRepository;
         this.exerciseGroupApi = exerciseGroupApi;
+        this.textExerciseWithSubmissionsExportService = textExerciseWithSubmissionsExportService;
     }
 
     /**
@@ -108,7 +107,8 @@ public class TextExerciseExportImportResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("text-exercises/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<TextExerciseResponseDTO> importExercise(@RequestParam long sourceExerciseId, @RequestBody ImportTextExerciseDTO importExerciseDTO)
             throws URISyntaxException {
         // Build a transient entity from the dumb DTO, attaching managed Course/ExerciseGroup loaded by id.
@@ -145,44 +145,7 @@ public class TextExerciseExportImportResource {
             throw new BadRequestAlertException("No text exercise was provided.", ENTITY_NAME, "isNull");
         }
         TextExercise exercise = new TextExercise();
-        exercise.setId(dto.id());
-        exercise.setTitle(dto.title());
-        exercise.setChannelName(dto.channelName());
-        exercise.setShortName(dto.shortName());
-        exercise.setProblemStatement(dto.problemStatement());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        // mode and includedInOverallScore have non-null entity defaults (INDIVIDUAL, INCLUDED_COMPLETELY) that the old
-        // entity request body preserved when a client omitted them. Guard the setters so an import payload that omits
-        // them (older/API clients) keeps those defaults instead of overwriting with null, which would violate the
-        // non-null mode column and make validateGeneralSettings() reject the missing included-score. Mirrors the create
-        // path's mode guard.
-        if (dto.mode() != null) {
-            exercise.setMode(dto.mode());
-        }
-        // Text exercises are always manually assessed (mirrors the create path); the import DTO does not carry
-        // assessmentType, so set it explicitly to avoid copyExerciseBasis persisting null.
-        exercise.setAssessmentType(AssessmentType.MANUAL);
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        if (dto.includedInOverallScore() != null) {
-            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        }
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
-        exercise.setGradingInstructions(dto.gradingInstructions());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        dto.applyImportSettingsTo(exercise);
         exercise.setExampleSolution(dto.exampleSolution());
 
         if (dto.teamAssignmentConfig() != null) {
@@ -192,41 +155,7 @@ public class TextExerciseExportImportResource {
             exercise.setPlagiarismDetectionConfig(dto.plagiarismDetectionConfig().toEntity());
         }
 
-        // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
-        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
-            Set<GradingCriterion> criteria = new HashSet<>();
-            dto.gradingCriteria().forEach(gcDto -> {
-                GradingCriterion criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-                criteria.add(criterion);
-            });
-            exercise.setGradingCriteria(criteria);
-        }
-
-        // Competency links as new unmanaged objects referencing only the competency id
-        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
-            Set<CompetencyExerciseLink> links = new HashSet<>();
-            for (CompetencyLinkDTO linkDto : dto.competencyLinks()) {
-                if (linkDto == null || linkDto.competency() == null) {
-                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-                }
-                Competency competencyRef = new Competency();
-                competencyRef.setId(linkDto.competency().id());
-                links.add(new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight()));
-            }
-            exercise.setCompetencyLinks(links);
-        }
-
-        // Attach a managed Course and/or ExerciseGroup so role checks see the configured groups. The exclusivity invariant
-        // (exactly one of the two) is validated downstream by checkCourseAndExerciseGroupExclusivity.
-        if (dto.courseId() != null) {
-            Course course = courseRepository.findByIdElseThrow(dto.courseId());
-            exercise.setCourse(course);
-        }
-        if (dto.exerciseGroupId() != null) {
-            ExerciseGroup exerciseGroup = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId());
-            exercise.setExerciseGroup(exerciseGroup);
-        }
+        ExerciseImportService.applyImportReferences(dto, exercise, courseRepository, exerciseGroupApi, ENTITY_NAME);
         return exercise;
     }
 
@@ -238,13 +167,30 @@ public class TextExerciseExportImportResource {
      * @return ResponseEntity with status
      */
     @PostMapping("text-exercises/{exerciseId}/export-submissions")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-        TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, null);
-
         Path zipFilePath = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
+    }
+
+    /**
+     * GET /text-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the text exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details, the problem statement and its embedded files
+     */
+    @GetMapping("text-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        TextExercise textExercise = textExerciseRepository.findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(textExerciseWithSubmissionsExportService.exportExerciseForDownload(textExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting text exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting text exercise with id " + exerciseId + " for instructor");
+        }
     }
 }

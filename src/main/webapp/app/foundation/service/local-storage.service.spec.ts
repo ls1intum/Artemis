@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocalStorageService } from './local-storage.service';
 
 enum TestStringEnum {
@@ -15,7 +15,7 @@ describe('LocalStorageService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({});
         service = TestBed.inject(LocalStorageService);
-        service.clear();
+        localStorage.clear();
     });
 
     it('should store and retrieve a string correctly', () => {
@@ -66,6 +66,18 @@ describe('LocalStorageService', () => {
         expect(service.retrieve<string>('key3')).toBeUndefined();
     });
 
+    it('preserves each user’s build notification preference through logout while clearing session data', () => {
+        service.store('buildNotifications.7', true);
+        service.store('buildNotifications.8', false);
+        service.store('authenticationToken', 'expired-token');
+
+        service.clear();
+
+        expect(service.retrieve<boolean>('buildNotifications.7')).toBe(true);
+        expect(service.retrieve<boolean>('buildNotifications.8')).toBe(false);
+        expect(service.retrieve<string>('authenticationToken')).toBeUndefined();
+    });
+
     it('should clear all items except specified keys', () => {
         service.store<string>('key1', 'value1');
         service.store<string>('key2', 'value2');
@@ -103,5 +115,56 @@ describe('LocalStorageService', () => {
         expect(service.retrieve<string>('key1')).toBeUndefined();
         expect(service.retrieveDate('dateKey')).toBeDefined();
         expect(service.retrieveDate('dateKey')?.toISOString()).toBe(testDate.toISOString());
+    });
+
+    describe('stored values that are not in the current format', () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('reads the bare ISO date of an older client and rewrites it in the current format', () => {
+            const iso = '2026-12-08T10:00:00.000Z';
+            localStorage.setItem(testKey, iso);
+
+            expect(service.retrieveDate(testKey)?.toISOString()).toBe(iso);
+            expect(localStorage.getItem(testKey)).toBe(JSON.stringify(iso));
+            expect(service.retrieveDate(testKey)?.toISOString()).toBe(iso);
+        });
+
+        it('removes only the key of a date that is garbage', () => {
+            localStorage.setItem(testKey, 'not a date {');
+            localStorage.setItem('otherKey', 'keep me');
+
+            expect(service.retrieveDate(testKey)).toBeUndefined();
+            expect(localStorage.getItem(testKey)).toBeNull();
+            expect(localStorage.getItem('otherKey')).toBe('keep me');
+        });
+
+        it.each([['42'], ['{"a":1}'], ['"tomorrow"'], ['"2026-12-08"'], ['null']])('removes the key of a date that is stored as %s', (stored) => {
+            localStorage.setItem(testKey, stored);
+
+            expect(service.retrieveDate(testKey)).toBeUndefined();
+            expect(localStorage.getItem(testKey)).toBeNull();
+        });
+
+        it('returns undefined for a missing date', () => {
+            expect(service.retrieveDate(testKey)).toBeUndefined();
+        });
+
+        it('treats a value that is not JSON as absent and removes it', () => {
+            localStorage.setItem(testKey, '123e4567-e89b-12d3-a456-426614174000');
+
+            expect(service.retrieve<string>(testKey)).toBeUndefined();
+            expect(localStorage.getItem(testKey)).toBeNull();
+        });
+
+        it('treats an inaccessible storage as empty', () => {
+            vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+                throw new TypeError("null is not an object (evaluating 'localStorage.getItem')");
+            });
+
+            expect(service.retrieve<string>(testKey)).toBeUndefined();
+            expect(service.retrieveDate(testKey)).toBeUndefined();
+        });
     });
 });

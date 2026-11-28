@@ -7,7 +7,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
@@ -162,8 +162,8 @@ describe('SCA category distribution chart', () => {
             programmingExercerise.course = { id: 7 };
             programmingExercerise.id = 10;
             fixture.componentRef.setInput('exercise', programmingExercerise);
-            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
-            // a click that carries no penalty segment navigates to the scores page instead of filtering
+            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'participations'];
+            // a click that carries no penalty segment navigates to the participation page instead of filtering
             event = { seriesIndex: 0, index: 0 };
 
             component.onSelect(event);

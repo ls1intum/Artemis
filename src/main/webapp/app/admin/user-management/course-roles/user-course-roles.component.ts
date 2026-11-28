@@ -10,7 +10,6 @@ import {
     effect,
     inject,
     input,
-    output,
     signal,
     untracked,
     viewChild,
@@ -19,16 +18,13 @@ import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { faGraduationCap, faTrash } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiCardComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiEmptyStateComponent,
-    TumAetUiMessageComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import {
     COURSE_ROLES_DESCENDING,
@@ -93,12 +89,6 @@ export class UserCourseRolesComponent {
 
     /** Blocks every change from outside, for example while the form around the component is being saved. */
     readonly disabled = input(false, { transform: booleanAttribute });
-
-    /** Emits after a role was added or removed, or a change failed, so the host can refresh what depends on it, such as the global authorities. */
-    readonly courseRolesChanged = output<void>();
-
-    /** Emits `true` when a request that adds or removes a role starts and `false` when it ends, so the host can hold back actions that must not overlap with it. */
-    readonly changeInProgress = output<boolean>();
 
     protected readonly courseRolesResource = rxResource({
         params: () => this.login(),
@@ -210,7 +200,6 @@ export class UserCourseRolesComponent {
 
     protected onAddInProgress(inProgress: boolean): void {
         this.adding.set(inProgress);
-        this.emitIfAlive(() => this.changeInProgress.emit(inProgress));
     }
 
     protected onRoleAdded(): void {
@@ -218,7 +207,7 @@ export class UserCourseRolesComponent {
         this.reloadAfterChange();
     }
 
-    /** A failed request may still have changed the server, for example when only the response got lost, so the list and the host look at the server again. */
+    /** A failed request may still have changed the server, for example when only the response got lost, so the list looks at the server again. */
     protected onChangeFailed(): void {
         this.focusTarget = undefined;
         this.reloadAfterChange();
@@ -233,23 +222,20 @@ export class UserCourseRolesComponent {
             .flatMap((group) => group.courses)
             .findIndex((course) => this.removalKey(course) === this.removalKey(courseRole));
         this.removing.set(this.removalKey(courseRole));
-        this.emitIfAlive(() => this.changeInProgress.emit(true));
         this.adminUserService.removeCourseRole(this.login(), courseRole.courseId, courseRole.role).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userManagement.courseRoles.remove.success', params);
                 this.focusTarget = { kind: 'remove', index: Math.max(index, 0) };
                 this.reloadAfterChange();
-                this.emitIfAlive(() => this.changeInProgress.emit(false));
             },
             error: () => {
                 this.removing.set(undefined);
                 this.onChangeFailed();
-                this.emitIfAlive(() => this.changeInProgress.emit(false));
             },
         });
     }
 
-    /** Loads the list again and tells the host. The entry that was just removed stays busy until the list answered. */
+    /** Loads the list again. The entry that was just removed stays busy until the list answered. */
     private reloadAfterChange(): void {
         if (this.destroyed) {
             return;
@@ -259,7 +245,6 @@ export class UserCourseRolesComponent {
         if (!this.courseRolesResource.reload()) {
             this.finishReload();
         }
-        this.emitIfAlive(() => this.courseRolesChanged.emit());
     }
 
     private finishReload(): void {
@@ -286,13 +271,6 @@ export class UserCourseRolesComponent {
 
     private removeButtons(): HTMLButtonElement[] {
         return Array.from(this.host.nativeElement.querySelectorAll<HTMLButtonElement>('[data-testid="user-course-roles-remove"] button'));
-    }
-
-    /** A response can arrive after the component was destroyed, and an output must not emit then. */
-    private emitIfAlive(emit: () => void): void {
-        if (!this.destroyed) {
-            emit();
-        }
     }
 
     private removalKey(courseRole: UserCourseRole): string {

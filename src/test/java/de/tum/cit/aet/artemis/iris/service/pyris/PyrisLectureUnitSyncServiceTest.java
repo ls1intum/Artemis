@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,7 +54,8 @@ class PyrisLectureUnitSyncServiceTest {
     void updateLectureUnitMetadataInPyrisSendsLightweightMetadataWithoutReadingAttachmentFile() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         unit.setVideoSource("https://live.rbg.tum.de/watch/1");
-        when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo("https://cdn.example.org/playlist.m3u8", VideoSourceType.TUM_LIVE, null));
+        when(videoSourceResolver.resolve(eq(unit.getVideoSource()), anyLong()))
+                .thenReturn(new ResolvedVideo("https://cdn.example.org/playlist.m3u8", VideoSourceType.TUM_LIVE, null));
 
         when(pyrisConnectorService.executeLectureMetadataWebhook(any())).thenReturn(true);
 
@@ -82,7 +85,7 @@ class PyrisLectureUnitSyncServiceTest {
         unit.getAttachment().setLink(null);
         // Without a stored PDF, only a supported video makes the unit processable
         when(videoSourceResolver.isSupportedSource(unit.getVideoSource())).thenReturn(true);
-        when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo(null, null, null));
+        when(videoSourceResolver.resolve(eq(unit.getVideoSource()), anyLong())).thenReturn(new ResolvedVideo(null, null, null));
 
         service.updateLectureUnitMetadataInPyris(unit);
 
@@ -111,7 +114,7 @@ class PyrisLectureUnitSyncServiceTest {
         ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
         verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
         assertThat(dtoCaptor.getValue().videoLink()).isNull();
-        verify(videoSourceResolver, never()).resolve(any());
+        verify(videoSourceResolver, never()).resolve(any(), anyLong());
     }
 
     @Test
@@ -152,7 +155,7 @@ class PyrisLectureUnitSyncServiceTest {
         assertThat(service.updateLectureUnitMetadataInPyris(unit)).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
 
         verify(pyrisConnectorService, never()).executeLectureMetadataWebhook(any());
-        verify(videoSourceResolver, never()).resolve(any());
+        verify(videoSourceResolver, never()).resolve(any(), anyLong());
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit() {

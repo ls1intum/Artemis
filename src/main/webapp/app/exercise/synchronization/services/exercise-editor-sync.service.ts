@@ -56,6 +56,7 @@ export interface ExerciseEditorSyncEventBase {
 export interface ProblemStatementSyncFullContentRequestEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST;
     requestId: string;
+    canonicalBase?: string;
 }
 
 export interface ProblemStatementSyncFullContentResponseEvent extends ExerciseEditorSyncEventBase {
@@ -63,16 +64,20 @@ export interface ProblemStatementSyncFullContentResponseEvent extends ExerciseEd
     responseTo: string;
     yjsUpdate: string;
     leaderTimestamp: number;
+    canonicalBase?: string;
+    documentEpoch?: string;
 }
 
 export interface ProblemStatementSyncUpdateEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE;
     yjsUpdate: string;
+    documentEpoch?: string;
 }
 
 export interface ProblemStatementAwarenessUpdateEvent extends ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE;
     awarenessUpdate: string;
+    documentEpoch?: string;
 }
 
 export interface FileSyncFullContentRequestEvent extends ExerciseEditorSyncEventBase {

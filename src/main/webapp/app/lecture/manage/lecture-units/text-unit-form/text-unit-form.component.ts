@@ -1,3 +1,4 @@
+import { LectureUnitReleaseDateFormDirective } from '../lecture-unit-release-date-form.directive';
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,7 +10,10 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -47,7 +51,7 @@ export type MarkdownCache = {
         ArtemisTranslatePipe,
     ],
 })
-export class TextUnitFormComponent implements OnInit, OnDestroy {
+export class TextUnitFormComponent extends LectureUnitReleaseDateFormDirective implements OnInit, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private localStorageService = inject(LocalStorageService);
@@ -70,7 +74,6 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     private applyingFormData = false;
 
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
-    readonly isReleaseDateTextValid = signal(true);
 
     readonly markdownEditor = viewChild(MarkdownEditorMonacoComponent);
 
@@ -101,6 +104,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     private appliedFormData?: TextUnitFormData;
 
     constructor() {
+        super();
         // Patch the form with the provided data in edit mode (replaces ngOnChanges).
         // Patch ONCE per distinct formData value: `form.patchValue()` synchronously emits the form's
         // statusChanges, which is mirrored into the `statusChanges` signal via `toSignal(...)`. Under
@@ -127,26 +131,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
         return this.form.get('name');
     }
 
-    get releaseDateControl() {
-        return this.form.get('releaseDate');
-    }
-
-    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
-        this.releaseDateControl?.setValue(releaseDate);
-        this.releaseDateControl?.markAsDirty();
-        this.reportChange(true);
-    }
-
-    onReleaseDateTextValidityChange(valid: boolean): void {
-        // The picker also reports the validity it starts with, which is no change of the user.
-        if (valid === this.isReleaseDateTextValid()) {
-            return;
-        }
-        this.isReleaseDateTextValid.set(valid);
-        this.reportChange(false);
-    }
-
-    private reportChange(immediate: boolean): void {
+    protected override reportChange(immediate: boolean): void {
         if (!this.autosave() || this.applyingFormData) {
             return;
         }

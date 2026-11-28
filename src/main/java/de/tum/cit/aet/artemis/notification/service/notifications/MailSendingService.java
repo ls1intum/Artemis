@@ -24,7 +24,6 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.NestedExceptionUtils;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -312,7 +311,7 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
-            log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage(), ex);
+            log.error("Failed to build email with subject key '{}' and template '{}' (exception {})", subjectKey, contentTemplate, ex.getClass().getSimpleName());
             return Delivery.FAILED;
         }
 
@@ -322,8 +321,8 @@ public class MailSendingService {
     /**
      * Hands an e-mail to the SMTP server, or keeps it for later if the server does not accept it for now.
      *
-     * Neither the address nor the login of the recipient is written to the log: a log line says what kind of mail it was and what became
-     * of it, and the id of the message is what a bounce message of the mail server refers to.
+     * Recipient details, rendered subjects and exception messages stay out of logs: all of them may contain personal data.
+     * The delivery outcome, priority and failure category explain what happened; the message id links an accepted mail to a bounce.
      *
      * @param recipient   who the mail is for
      * @param subject     The mail subject
@@ -335,11 +334,11 @@ public class MailSendingService {
      */
     private Delivery deliver(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml, MailPriority priority, boolean mayBeQueued) {
         if (!mailConfigured) {
-            log.debug("Skipping email with subject '{}' - mail not configured", subject);
+            log.debug("Skipping email - mail not configured");
             return Delivery.NOT_CONFIGURED;
         }
         if (testAccountEmailPolicy.suppressesEmailTo(recipient.login(), recipient.testUser())) {
-            log.debug("Skipping email with subject '{}' to a test user that has not opted in to e-mail", subject);
+            log.debug("Skipping email to a test user that has not opted in to e-mail");
             retryQueue.record(Outcome.SUPPRESSED);
             return Delivery.SUPPRESSED;
         }
@@ -350,7 +349,7 @@ public class MailSendingService {
 
         if (canBeQueued && retryQueue.isPaused(now)) {
             // The SMTP server asked this node to stop sending. Trying each mail again would only collect the same refusal.
-            log.debug("Queued email with subject '{}' because sending is paused", subject);
+            log.debug("Queued email with priority {} because sending is paused", priority);
             if (!retryQueue.offer(mail, now)) {
                 return Delivery.FAILED;
             }
@@ -361,7 +360,7 @@ public class MailSendingService {
         SendAttempt attempt = trySend(mail);
         if (attempt.isAccepted()) {
             retryQueue.record(Outcome.SENT);
-            log.info("Sent email with subject '{}' (message id {})", subject, attempt.messageId());
+            log.info("Sent email with priority {} (message id {})", priority, attempt.messageId());
             return Delivery.SENT;
         }
         // Read the clock again: a connection that timed out has used up part of the pause the failure is about to start.
@@ -379,7 +378,8 @@ public class MailSendingService {
         if (failure == MailFailureKind.PERMANENT || !canBeQueued) {
             retryQueue.record(Outcome.REJECTED);
             // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
-            log.error("Email with subject '{}' could not be sent (reason {}) and will not be tried again", mail.subject(), failure, exception);
+            log.error("Email with priority {} could not be sent (reason {}, exception {}) and will not be tried again", mail.priority(), failure,
+                    exception == null ? "unknown" : exception.getClass().getSimpleName());
             return Delivery.FAILED;
         }
 
@@ -392,15 +392,16 @@ public class MailSendingService {
         if (!wasQueued) {
             retryQueue.record(Outcome.QUEUED_FOR_RETRY);
         }
-        String reason = exception == null ? "unknown" : NestedExceptionUtils.getMostSpecificCause(exception).getMessage();
+        String exceptionType = exception == null ? "unknown" : exception.getClass().getSimpleName();
         if (failure.pausesDelivery()) {
             if (!wasPaused) {
-                log.warn("The SMTP server does not accept mail ({}: {}). This node stops sending until {} and keeps the e-mails that arrive meanwhile ({} queued).", failure,
-                        reason, nextAttemptAt, retryQueue.size());
+                log.warn(
+                        "The SMTP server does not accept mail (reason {}, exception {}). This node stops sending until {} and keeps the e-mails that arrive meanwhile ({} queued).",
+                        failure, exceptionType, nextAttemptAt, retryQueue.size());
             }
         }
         else {
-            log.warn("Email with subject '{}' could not be sent (reason {}: {}), will try again at {}", mail.subject(), failure, reason, nextAttemptAt);
+            log.warn("Email with priority {} could not be sent (reason {}, exception {}), will try again at {}", mail.priority(), failure, exceptionType, nextAttemptAt);
         }
         return Delivery.QUEUED;
     }
@@ -409,7 +410,7 @@ public class MailSendingService {
      * Builds the message of a mail and hands it to the SMTP server.
      */
     private SendAttempt trySend(PendingMail mail) {
-        log.debug("Send email[multipart '{}' and html '{}'] with subject '{}'", mail.multipart(), mail.html(), mail.subject());
+        log.debug("Send email[multipart '{}' and html '{}'] with priority {}", mail.multipart(), mail.html(), mail.priority());
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
@@ -426,7 +427,7 @@ public class MailSendingService {
             if (e.getFailedMessages().isEmpty()) {
                 // Spring reports no failed message only if the server accepted the mail and closing the connection failed afterwards.
                 // Trying again would deliver the mail twice and stop this node from sending for no reason.
-                log.warn("Email with subject '{}' was accepted, but closing the connection to the SMTP server failed: {}", mail.subject(), e.getMessage());
+                log.warn("Email was accepted, but closing the connection to the SMTP server failed (exception {})", e.getClass().getSimpleName());
                 return SendAttempt.accepted(messageIdOf(mimeMessage));
             }
             return SendAttempt.failed(MailFailureClassifier.classify(e), e);
@@ -501,14 +502,14 @@ public class MailSendingService {
             if (mail.isExpired(now)) {
                 // It expired during this run, after the purge above.
                 retryQueue.record(Outcome.EXPIRED);
-                log.warn("Email with subject '{}' was dropped after {} failed attempts, because it is too old to be sent", mail.subject(), mail.attempts());
+                log.warn("Email with priority {} was dropped after {} failed attempts, because it is too old to be sent", mail.priority(), mail.attempts());
                 continue;
             }
             SendAttempt attempt = trySend(mail);
             if (attempt.isAccepted()) {
                 sent++;
                 retryQueue.record(Outcome.SENT_AFTER_RETRY);
-                log.info("Sent email with subject '{}' (message id {}) after {} failed attempts", mail.subject(), attempt.messageId(), mail.attempts());
+                log.info("Sent email with priority {} (message id {}) after {} failed attempts", mail.priority(), attempt.messageId(), mail.attempts());
             }
             else {
                 // Read the clock again, like deliver() does: an attempt that took longer than the backoff or the pause would otherwise

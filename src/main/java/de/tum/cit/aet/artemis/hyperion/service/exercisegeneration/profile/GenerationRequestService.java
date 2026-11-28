@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class GenerationRequestService {
      * @return whether authoring is unavailable because this is an exam or its release date has arrived
      */
     public static boolean hasReleaseDateInThePast(ProgrammingExercise exercise) {
-        return exercise.isExamExercise() || exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+        return exercise.isExamExercise() || exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now(ZoneOffset.UTC));
     }
 
     private Optional<String> defaultTemplateReadme(ProgrammingExercise exercise) {

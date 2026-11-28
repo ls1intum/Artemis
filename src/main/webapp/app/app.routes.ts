@@ -1,3 +1,5 @@
+import { COURSE_MANAGEMENT_EXTENSION_ROUTES } from './course/manage/course-management-extension-routes';
+import { sharingCourseRoutes, sharingExportProvider, sharingGuard } from './sharing/sharing.routes';
 import { inject } from '@angular/core';
 import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -126,6 +128,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'usage',
+        loadComponent: () => import('app/core/usage-statistics/usage-dashboard.component').then((m) => m.UsageDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.usageDashboard.title',
+            usesModuleBackground: true,
+        },
+    },
+    {
         path: 'about',
         loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
         data: {
@@ -143,6 +153,14 @@ const routes: Routes = [
                 loadComponent: () => import('app/account/activate/activate.component').then((m) => m.ActivateComponent),
                 data: {
                     pageTitle: 'activate.title',
+                },
+            },
+            {
+                path: 'confirm-email-change',
+                pathMatch: 'full',
+                loadComponent: () => import('app/account/confirm-email-change/confirm-email-change.component').then((m) => m.ConfirmEmailChangeComponent),
+                data: {
+                    pageTitle: 'confirmEmailChange.title',
                 },
             },
             {
@@ -179,16 +197,6 @@ const routes: Routes = [
                     pageTitle: 'register.title',
                 },
             },
-            {
-                path: 'settings',
-                pathMatch: 'full',
-                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'global.menu.account.settings',
-                },
-                canActivate: [UserRouteAccessService],
-            },
         ],
         data: {
             usesModuleBackground: true,
@@ -203,6 +211,7 @@ const routes: Routes = [
     },
     {
         path: 'course-management',
+        providers: [{ provide: COURSE_MANAGEMENT_EXTENSION_ROUTES, useValue: sharingCourseRoutes }, sharingExportProvider],
         loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
         // No canActivate here, so `authorities` is read only by RoleAwarePreloadingStrategy: it lets eligible
         // staff warm this lazy parent (so its management children are discovered and preloaded) while a pure
@@ -253,6 +262,7 @@ const routes: Routes = [
     // ===== EXAM =====
     {
         path: 'course-management/:courseId/exams',
+        providers: [sharingExportProvider],
         loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
         // Preload-only authorities (no canActivate): least-privileged authority the exam-management routes require.
         data: {
@@ -291,11 +301,10 @@ const routes: Routes = [
     // ===== SHARING =====
     {
         path: 'sharing/import/:basketToken',
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.sharing.title',
-        },
-        loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
+        canMatch: [sharingGuard],
+        canActivate: [UserRouteAccessService],
+        data: { authorities: IS_AT_LEAST_EDITOR, pageTitle: 'artemisApp.sharing.title', preload: 'never' },
+        loadChildren: () => import('./sharing-basket.route').then((m) => m.routes),
     },
 ];
 

@@ -47,7 +47,7 @@ class ExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testToggleSecondCorrectionEnabled_createsExerciseVersion() throws Exception {
 
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(textExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);

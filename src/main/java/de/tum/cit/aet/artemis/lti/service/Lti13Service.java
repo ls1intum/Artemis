@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -13,35 +16,35 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -95,6 +98,15 @@ public class Lti13Service {
     /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
     private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
 
+    /**
+     * ISO 8601 with millisecond precision and the offset of the server ("Z" for UTC), the format Joda-Time's DateTime.toString() produced
+     * for the score timestamp of the LTI Assignment and Grade Services.
+     */
+    private static final DateTimeFormatter SCORE_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
+    /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
+    private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
+
     private final UserRepository userRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -107,7 +119,7 @@ public class Lti13Service {
 
     private final LtiService ltiService;
 
-    private final ResultRepository resultRepository;
+    private final ResultGradeRepository resultGradeRepository;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
@@ -121,15 +133,15 @@ public class Lti13Service {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
             DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, IRIS_LEGACY_DASHBOARD_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN,
             DeepLinkingType.LECTURE);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository,
-            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
+            CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultGradeRepository resultGradeRepository,
+            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, @Qualifier("ltiRestClient") RestClient restClient,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
             OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
@@ -138,11 +150,11 @@ public class Lti13Service {
         this.courseRepository = courseRepository;
         this.ltiService = ltiService;
         this.launchRepository = launchRepository;
-        this.resultRepository = resultRepository;
+        this.resultGradeRepository = resultGradeRepository;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
@@ -175,15 +187,31 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
+        requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
+
+        // The email address identifies the person, so a launch without one is refused before an account is looked up or created
+        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !USABLE_EMAIL.matcher(ltiIdToken.getEmail()).matches()) {
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
                 .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
 
-        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
-            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
-                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+        // Without an account for the email address there is nobody to sign in, and the derived login does not identify a person
+        if (optionalUsername.isEmpty() && onlineCourseConfiguration.isRequireExistingUser()) {
+            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
         }
 
-        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        // The login of a newly created account is not always the derived one, so the account is looked up under the login it actually got.
+        String createdLogin = null;
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
+            Authentication authentication = ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
+                    ltiIdToken.getGivenName(), ltiIdToken.getFamilyName());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            createdLogin = authentication.getName();
+        }
+
+        String username = createdLogin != null ? createdLogin : optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
@@ -198,6 +226,27 @@ public class Lti13Service {
             log.error("No course content to launch at {}", targetLinkUrl);
             throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
+    }
+
+    /**
+     * The target of a launch has to belong to the course whose configuration the launch refers to.
+     */
+    private static void requireTargetInCourse(Optional<Exercise> exercise, Optional<Lecture> lecture, Course course, String targetLinkUrl) {
+        boolean exerciseInCourse = exercise.map(target -> belongsToCourse(target, course)).orElse(true);
+        boolean lectureInCourse = lecture.map(target -> target.getCourse() != null && Objects.equals(target.getCourse().getId(), course.getId())).orElse(true);
+        if (!exerciseInCourse || !lectureInCourse) {
+            log.error("The target of the link {} does not belong to the launched course", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+    }
+
+    private static boolean belongsToCourse(Exercise exercise, Course course) {
+        // An exam exercise is not part of the course content that a platform links to, and is reached through the exam only.
+        if (exercise.isExamExercise()) {
+            return false;
+        }
+        Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return exerciseCourse != null && Objects.equals(exerciseCourse.getId(), course.getId());
     }
 
     /**
@@ -269,7 +318,7 @@ public class Lti13Service {
         }
 
         // the result (and its synthesized feedback) is identical for all launches - load and synthesize it once
-        Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        Optional<Result> result = resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId());
 
         if (result.isEmpty()) {
             log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
@@ -307,12 +356,10 @@ public class Lti13Service {
         }
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-            headers.setBearerAuth(token);
             String body = getScoreBody(launch.getSub(), comment, score);
-            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
-            restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
+            // The response body is not needed, and the platform may answer without a content type that could be read as a JSON object.
+            restClient.post().uri(scoreLineItemUrl).contentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json")).headers(headers -> headers.setBearerAuth(token))
+                    .body(body).retrieve().toBodilessEntity();
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
         catch (HttpClientErrorException | JacksonException e) {
@@ -333,17 +380,24 @@ public class Lti13Service {
         return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
     }
 
+    /**
+     * The body of an LTI 1.3 Assignment and Grading Services score publish request.
+     * It is deliberately not annotated with {@code @JsonInclude}: a missing comment or score is sent as {@code null}, as it always was.
+     *
+     * @param userId           the ID of the user on the platform
+     * @param timestamp        the time at which the score was given
+     * @param activityProgress the progress of the user on the activity
+     * @param gradingProgress  the progress of the grading
+     * @param comment          the feedback of the score
+     * @param scoreGiven       the score that was given
+     * @param scoreMaximum     the maximum score
+     */
+    private record ScorePublishRequest(String userId, String timestamp, String activityProgress, String gradingProgress, String comment, Double scoreGiven, double scoreMaximum) {
+    }
+
     private String getScoreBody(String userId, String comment, Double score) {
-        JsonMapper objectMapper = JsonObjectMapper.get();
-        ObjectNode requestBody = objectMapper.createObjectNode();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", new DateTime().toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return objectMapper.writeValueAsString(requestBody);
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, SCORE_TIMESTAMP_FORMAT.format(ZonedDateTime.now()), "Submitted", "FullyGraded", comment, score, 100D);
+        return JsonObjectMapper.get().writeValueAsString(requestBody);
     }
 
     /**
@@ -499,10 +553,22 @@ public class Lti13Service {
     }
 
     private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
-        createOrUpdateResourceLaunch(launchRequest, user, exercise);
+        // The account is checked first: a refused launch must not leave an association behind that later results are published through.
+        try {
+            ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                    ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        }
+        catch (LtiAccountNotAcceptedException e) {
+            // An account that is not accepted from a launch leaves no association behind
+            throw e;
+        }
+        catch (LtiEmailAlreadyInUseException e) {
+            // The person has an account and signs in by hand. The launch is not repeated after the sign-in, so its association is kept as it always was.
+            createOrUpdateResourceLaunch(launchRequest, user, exercise);
+            throw e;
+        }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
 
         if (exercise != null) {
             ltiService.onSuccessfulLtiAuthentication(user, exercise);

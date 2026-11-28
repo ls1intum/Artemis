@@ -248,6 +248,10 @@ public class ParticipantScoreScheduleService {
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
+            // Provider request state is not an assessment and must not refresh score or competency recency.
+            if (result.isAthenaBased() && !Boolean.TRUE.equals(result.isSuccessful())) {
+                return;
+            }
             var submission = result.getSubmission();
             if (submission != null && submission.getParticipation() instanceof StudentParticipation studentParticipation && hasParticipantScore(studentParticipation)) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();

@@ -2,6 +2,7 @@
 id: consistency-check
 title: Consistency Check
 sidebar_label: Consistency Check
+last_reviewed: 2026-11-20
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -102,7 +103,7 @@ The verification checker is the current production approach: 76% fewer false pos
 The workflow runs end-to-end via `run_pecv_bench.py` and connects Artemis to two external repositories:
 
 - **[PECV-bench](https://github.com/ls1intum/PECV-bench)** — public: evaluation framework, public exercise dataset, ground-truth annotations, accumulated approach results.
-- **[PECV-bench-dataset](https://github.com/ls1intum/PECV-bench-dataset)** — private: confidential solution repos and test suites. Directory structure mirrors `data/` in PECV-bench; both are merged before variant materialization.
+- **PECV-bench-dataset** (`ls1intum/PECV-bench-dataset`), a private repository, not linked: confidential solution repos and test suites. Directory structure mirrors `data/` in PECV-bench; both are merged before variant materialization.
 
 The diagram shows the three swim lanes: **Developer** triggers the run; **Artemis** handles course management, exercise import, and consistency check execution; **PECV-bench** materializes variants, prepares exercise ZIPs, saves results, and generates the report. The `create_course` flag in `config.ini` controls whether the workflow creates a new benchmark course or reuses an existing one (diamond in the diagram).
 
@@ -152,7 +153,7 @@ model_effort = medium
 consistency_check_exercises = {"V2": {"ITP2425": ["H01E01-Lectures", ...]}}
 ```
 
-`model_name` and `model_effort` must match `spring.ai.openai.chat.model` in Artemis.
+`model_name` and `model_effort` label the results. Set them to the `model` and `reasoning-effort` of the preset that Artemis assigns to `artemis.hyperion.llm-presets.consistency-check` (or `default`); see [LLM configuration](/admin/llm-configuration).
 
 ### Running the Workflow
 

@@ -2,14 +2,14 @@ import { Component, OnInit, ViewEncapsulation, computed, inject, signal } from '
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { TeamService } from 'app/exercise/team/team.service';
+import { TeamOverviewPurpose, TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';
 import { TeamDeleteButtonComponent } from './team-update-dialog/team-delete-button.component';
 import { TeamParticipationTableComponent } from './team-participation-table/team-participation-table.component';
@@ -23,12 +23,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styleUrls: ['./team.component.scss'],
+    styleUrls: ['./team.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         RouterLink,
         TranslateDirective,
-        Tooltip,
+        TumAetUiTooltipDirective,
         TeamUpdateButtonComponent,
         TeamDeleteButtonComponent,
         TeamParticipationTableComponent,
@@ -45,6 +45,8 @@ export class TeamComponent implements OnInit {
     private accountService = inject(AccountService);
     private router = inject(Router);
     private courseStorageService = inject(CourseStorageService);
+
+    readonly overviewPurpose: TeamOverviewPurpose = this.router.url.startsWith('/course-management/') ? 'staff' : 'student';
 
     team = signal<Team | undefined>(undefined);
     exercise = signal<Exercise | undefined>(undefined);
@@ -86,7 +88,7 @@ export class TeamComponent implements OnInit {
         this.route.params.subscribe({
             next: (params) => {
                 this.setLoadingState(true);
-                this.exerciseService.find(params['exerciseId']).subscribe({
+                (this.overviewPurpose === 'staff' ? this.exerciseService.findForStaff(params['exerciseId']) : this.exerciseService.find(params['exerciseId'])).subscribe({
                     next: (exerciseResponse) => {
                         const exercise = exerciseResponse.body!;
                         this.exercise.set(exercise);

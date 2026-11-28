@@ -11,7 +11,7 @@
             "updated": "Updated Course with title {{ param }}",
             "deleted": "Deleted Course with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to permanently delete the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Are you sure you want to reset the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to reset the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -244,22 +244,52 @@
             },
             "athenaConfig": {
                 "title": "Athena AI Feedback",
+                "enabledLabel": "Enable Athena",
+                "configure": "Configure",
+                "learnMore": "Learn more",
+                "loadFailed": "The Athena configuration of this course could not be loaded. Please reload the page to try again.",
                 "formativeFeedbackEnabled": {
                     "label": "Formative feedback requests",
-                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date.",
+                    "enabledLabel": "Formative feedback requests are enabled",
+                    "disabledLabel": "Formative feedback requests are disabled",
                     "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
                     "disabledHint": "Students cannot request preliminary AI feedback in this course."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading feedback suggestions",
-                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises.",
+                    "enabledLabel": "Grading feedback suggestions are enabled",
+                    "disabledLabel": "Grading feedback suggestions are disabled",
                     "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
                     "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
+                },
+                "settingsPage": {
+                    "title": "Athena Settings",
+                    "sidebarTitle": "Athena"
+                },
+                "aboutAthenaModal": {
+                    "close": "Close",
+                    "meetAthena": "Meet Athena",
+                    "subtitle": "AI feedback for your tutors and students",
+                    "description": "Athena drafts feedback for text, programming, and modeling submissions, helping tutors grade faster and letting students get a first read on their work before the deadline.",
+                    "whatAthenaCanDo": "What Athena can do",
+                    "gradingFeedbackTitle": "Grading feedback suggestions",
+                    "gradingFeedbackDesc": "Athena drafts feedback suggestions while tutors assess text, programming, and modeling submissions.",
+                    "formativeFeedbackTitle": "Formative feedback requests",
+                    "formativeFeedbackDesc": "Students can request preliminary AI feedback on their own submission before the due date.",
+                    "exerciseTypesTitle": "Works across exercise types",
+                    "exerciseTypesDesc": "Grading suggestions cover text, programming, and modeling exercises. Formative feedback requests do too, but a programming exercise must be assessed semi-automatically.",
+                    "whatToExpect": "What to expect",
+                    "suggestionsNotGradesTitle": "Suggestions, not final grades",
+                    "suggestionsNotGradesDesc": "Tutors accept, edit, or discard every grading suggestion before they submit an assessment. Formative feedback comes with a provisional score that never counts toward the student's grade.",
+                    "requestLimitTitle": "A limited number of requests",
+                    "requestLimitDesc": "Students receive only a limited number of AI feedback results per exercise participation; failed requests do not count.",
+                    "configurablePerFeatureTitle": "Configurable per feature",
+                    "configurablePerFeatureDesc": "Grading and formative feedback can be switched independently from the settings page."
                 }
             },
             "autoOrchestration": {
                 "label": "Atlas Auto-Orchestration Enabled",
-                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "tooltip": "Lets Atlas update this course's competencies and their links to exercises and lecture units without asking for approval, whenever exercises or lecture units are created or their content changes. Only changes made after you turn it on are considered. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
                 "overridePlaceholder": "Use default",
                 "overridePlaceholderWithValue": "Use default ({{ value }})",
                 "debounceWindowSecondsOverride": {
@@ -362,6 +392,9 @@
                     "hint": "Between 3 and 24 letters or digits, starting with a letter. It appears in URLs and group names and cannot be changed later.",
                     "hintReadOnly": "The short name cannot be changed after the course has been created."
                 },
+                "codeOfConduct": {
+                    "maxlength": "Code of Conduct must not exceed {{max}} characters."
+                },
                 "description": {
                     "maxlength": "Description must not exceed 2000 characters."
                 },
@@ -433,7 +466,7 @@
             "assessmentDueDate": "Assessment Due",
             "cleanup": {
                 "title": "Cleanup",
-                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
+                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-state-danger'>NOT</strong> be undone!"
             },
             "detail": {
                 "title": "Course Details:",
@@ -447,7 +480,9 @@
                 "complaintsTitle": "Total Complaints",
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score",
-                "currentTotalLLMCostTitle": "Total LLM Cost"
+                "currentTotalLLMCostTitle": "LLM Cost (USD)",
+                "llmCostNotPriced": "No USD cost available",
+                "llmCostUnpricedRequests": "Requests without USD pricing: {{ count }}. Excluded from the total."
             },
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
@@ -558,6 +593,39 @@
                     }
                 },
                 "replayWizard": "Replay Setup Wizard"
+            },
+            "initialCommitAuthor": {
+                "label": "Author of the first commit",
+                "hint": "Choose who is shown as the author of the first commit that Artemis creates: in the template, solution and test repository of programming exercises that you create or import from a file, and in the repository of each student that Artemis creates from now on. Existing repositories keep their history. With the first option nothing is rewritten: a student repository keeps the author of the first commit of the template repository, which can differ from the exercise creator.",
+                "creator": {
+                    "label": "The user who creates the exercise",
+                    "description": "Nothing is rewritten. Repositories keep the author they were created with."
+                },
+                "placeholder": {
+                    "label": "The Artemis placeholder",
+                    "description": "The name and email address that the Artemis server configures for commits it makes itself."
+                },
+                "custom": {
+                    "label": "A name and email address of your choice",
+                    "description": "For example a course team. Use an address that you are happy to show to students."
+                },
+                "name": {
+                    "label": "Author name",
+                    "required": "Enter a name.",
+                    "tooLong": "Use at most {{ max }} characters.",
+                    "invalid": "The name must not contain < or > or line breaks."
+                },
+                "email": {
+                    "label": "Author email address",
+                    "required": "Enter an email address.",
+                    "tooLong": "Use at most {{ max }} characters.",
+                    "invalid": "Enter a valid email address."
+                }
+            },
+            "studentWelcomeContext": {
+                "label": "Student Home: learning approach",
+                "hint": "Optional guidance on how to learn in this course (up to 2,000 characters). Shown on the first Home visit and used for optional AI welcomes.",
+                "tooLong": "Use at most 2,000 characters."
             }
         },
         "courseStatistics": {

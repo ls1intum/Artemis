@@ -115,15 +115,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final FileService fileService;
-
     private final GitService gitService;
 
     private final GitRepositoryExportService gitRepositoryExportService;
 
     private final RepositoryExportGitService repositoryExportGitService;
-
-    private final ZipFileService zipFileService;
 
     private final BuildPlanRepository buildPlanRepository;
 
@@ -154,16 +150,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
         // Programming exercises do not have a submission export service
-        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
+        super(objectMapper, null, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository, fileService, zipFileService);
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.fileService = fileService;
         this.gitService = gitService;
         this.gitRepositoryExportService = gitRepositoryExportService;
         this.repositoryExportGitService = repositoryExportGitService;
-        this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
     }
@@ -733,56 +727,75 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;
             }
-
-            String latestSetupCommitHash = null;
-            if (repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository()) {
-                // only retrieve the setup commit once, even if it is needed for both operations
-                latestSetupCommitHash = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+            try {
+                return exportCheckedOutRepository(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, outputDir, repository);
             }
-
-            if (repositoryExportOptions.filterLateSubmissions()) {
-                filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
+            finally {
+                // Each step that rewrites the repository closes it when it is done, which is one close too many: a repository counts its users, and a close that
+                // finds the count at zero only logs a warning. The pack files that a later step opened are then never released. On a shared file system (NFS) a file that
+                // is still open cannot be deleted, and the checkout directory could not be removed. Closing here releases them for good.
+                repository.closeBeforeDelete();
             }
-
-            if (repositoryExportOptions.addParticipantName() && !repositoryExportOptions.anonymizeRepository()) {
-                log.debug("Adding student or team name to participation {}", participation);
-                addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
-            }
-
-            if (repositoryExportOptions.combineStudentCommits()) {
-                log.debug("Combining commits for participation {}", participation);
-                repositoryExportGitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommitHash);
-            }
-
-            if (repositoryExportOptions.anonymizeRepository()) {
-                log.debug("Anonymizing commits for participation {}", participation);
-                repositoryExportGitService.anonymizeStudentCommits(repository, latestSetupCommitHash);
-                // Verify anonymization succeeded before proceeding
-                repositoryExportGitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommitHash);
-            }
-            else {
-                gitService.removeRemotesFromRepository(repository);
-            }
-
-            if (repositoryExportOptions.normalizeCodeStyle()) {
-                try {
-                    log.debug("Normalizing code style for participation {}", participation);
-                    FileUtil.normalizeLineEndingsDirectory(repository.getLocalPath());
-                    FileUtil.convertFilesInDirectoryToUtf8(repository.getLocalPath());
-                }
-                catch (IOException ex) {
-                    log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
-                }
-            }
-
-            log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository());
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
                     participation.getProgrammingExercise().getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * Applies the rewriting options of the export to a repository that has been checked out and copies it to the output directory.
+     *
+     * @return the path of the copy in the output directory
+     */
+    private Path exportCheckedOutRepository(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
+            final RepositoryExportOptionsDTO repositoryExportOptions, @Nullable String relevantCommitHash, Path outputDir, Repository repository)
+            throws GitAPIException, IOException {
+
+        String latestSetupCommitHash = null;
+        if (repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository()) {
+            // only retrieve the setup commit once, even if it is needed for both operations
+            latestSetupCommitHash = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+        }
+
+        if (repositoryExportOptions.filterLateSubmissions()) {
+            filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
+        }
+
+        if (repositoryExportOptions.addParticipantName() && !repositoryExportOptions.anonymizeRepository()) {
+            log.debug("Adding student or team name to participation {}", participation);
+            addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
+        }
+
+        if (repositoryExportOptions.combineStudentCommits()) {
+            log.debug("Combining commits for participation {}", participation);
+            repositoryExportGitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommitHash);
+        }
+
+        if (repositoryExportOptions.anonymizeRepository()) {
+            log.debug("Anonymizing commits for participation {}", participation);
+            repositoryExportGitService.anonymizeStudentCommits(repository, latestSetupCommitHash);
+            // Verify anonymization succeeded before proceeding
+            repositoryExportGitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommitHash);
+        }
+        else {
+            gitService.removeRemotesFromRepository(repository);
+        }
+
+        if (repositoryExportOptions.normalizeCodeStyle()) {
+            try {
+                log.debug("Normalizing code style for participation {}", participation);
+                FileUtil.normalizeLineEndingsDirectory(repository.getLocalPath());
+                FileUtil.convertFilesInDirectoryToUtf8(repository.getLocalPath());
+            }
+            catch (IOException ex) {
+                log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            }
+        }
+
+        log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
+        return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository());
     }
 
     /**

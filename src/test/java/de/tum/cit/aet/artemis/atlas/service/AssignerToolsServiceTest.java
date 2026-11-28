@@ -526,6 +526,58 @@ class AssignerToolsServiceTest {
         assertThat(OrchestratorToolHelpers.hasWorkerMutationError(toolContext)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "context", "competencyId", "objectId", "weight", "justification", "missingCompetency", "foreignCompetency" })
+    void assignAndUnassignValidationNeverMutatesLinks(String invalid) {
+        ToolContext context = invalid.equals("context") ? null : toolContext;
+        Long competencyId = invalid.equals("competencyId") ? null : 5L;
+        Long objectId = invalid.equals("objectId") ? null : 20L;
+        Double weight = invalid.equals("weight") ? null : 0.5;
+        String justification = invalid.equals("justification") ? " " : JUSTIFICATION;
+        if (invalid.equals("foreignCompetency")) {
+            when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(newCompetency(5L, "Foreign", "Desc", CompetencyTaxonomy.APPLY, courseWithId(OTHER_COURSE_ID))));
+        }
+        assertThat(service.assignExerciseToCompetency(competencyId, objectId, weight, justification, context)).contains("error");
+        assertThat(service.assignLectureUnitToCompetency(competencyId, objectId, weight, justification, context)).contains("error");
+        if (!invalid.equals("weight")) {
+            assertThat(service.unassignExerciseFromCompetency(competencyId, objectId, justification, context)).contains("error");
+            assertThat(service.unassignLectureUnitFromCompetency(competencyId, objectId, justification, context)).contains("error");
+        }
+        assertThat(appliedActions).isEmpty();
+        org.mockito.Mockito.verifyNoInteractions(competencyExerciseLinkRepository, competencyLectureUnitLinkRepository, competencyProgressApi);
+    }
+
+    @Test
+    void unassignRejectsLinkWithMissingExerciseAndMissingLectureUnit() {
+        var competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(new CompetencyExerciseLink()));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(new CompetencyLectureUnitLink()));
+        assertThat(service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext)).contains("does not belong");
+        assertThat(service.unassignLectureUnitFromCompetency(5L, 20L, JUSTIFICATION, toolContext)).contains("not a linkable lecture unit");
+        verify(competencyExerciseLinkRepository, never()).delete(any());
+        verify(competencyLectureUnitLinkRepository, never()).delete(any());
+    }
+
+    @Test
+    void unassignUsesStableFallbackNamesForUntitledObjects() {
+        var course = courseWithId(COURSE_ID);
+        var competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        var exercise = exerciseInCourse(20L, null, course);
+        var unit = lectureUnitInCourse(30L, null, course);
+        unit.setContent("Learning");
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        var exerciseLink = new CompetencyExerciseLink(competency, exercise, 0.5);
+        var unitLink = new CompetencyLectureUnitLink(competency, unit, 0.5);
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(exerciseLink));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(30L, 5L)).thenReturn(Optional.of(unitLink));
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(unit));
+        assertThat(service.unassignExerciseFromCompetency(5L, 20L, JUSTIFICATION, toolContext)).contains("ok");
+        assertThat(service.unassignLectureUnitFromCompetency(5L, 30L, JUSTIFICATION, toolContext)).contains("ok");
+        assertThat(appliedActions).extracting(AppliedActionDTO::detail).containsExactly("Removed link between exercise exercise 20 and competency Target.",
+                "Removed link between lecture unit lecture unit 30 and competency Target.");
+    }
+
     private static TextUnit lectureUnitInCourse(long id, String name, Course course) {
         TextUnit unit = new TextUnit();
         unit.setId(id);

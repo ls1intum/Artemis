@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
@@ -82,6 +86,9 @@ class SharedQueueManagementServiceEstimationTest {
 
     @Mock
     private DistributedQueue<ResultQueueItem> buildResultQueue;
+
+    @Mock
+    private DistributedQueue<ResultQueueItem> deferredBuildResultQueue;
 
     @Mock
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
@@ -295,6 +302,74 @@ class SharedQueueManagementServiceEstimationTest {
     }
 
     @Test
+    void filteredFinishedBuildJobs_rejectAnUnknownSortColumn() {
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn("unknownColumn");
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
+        verify(buildJobRepository, never()).findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_rejectMissingPagingParameters() {
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, null), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, null), null))
+                .isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_sortByTheBuildAgentAddressOnlyInTheAdministration() {
+        when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 20), false));
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn("buildAgentAddress");
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+        var search = new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable);
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(search, 5L)).isInstanceOf(BadRequestAlertException.class);
+        assertThatCode(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(search, null)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_rejectAMissingSortColumn() {
+        SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+        pageable.setPage(1);
+        pageable.setPageSize(20);
+        pageable.setSortedColumn(null);
+        pageable.setSortingOrder(SortingOrder.ASCENDING);
+        pageable.setSearchTerm("");
+
+        assertThatThrownBy(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                .isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void filteredFinishedBuildJobs_acceptEveryColumnTheClientSortsBy() {
+        when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 20), false));
+        for (String column : List.of("name", "buildStatus", "courseId", "buildCompletionDate", "buildSubmissionDate")) {
+            SearchTermPageableSearchDTO<String> pageable = new SearchTermPageableSearchDTO<>();
+            pageable.setPage(1);
+            pageable.setPageSize(20);
+            pageable.setSortedColumn(column);
+            pageable.setSortingOrder(SortingOrder.ASCENDING);
+            pageable.setSearchTerm("");
+
+            assertThatCode(() -> sharedQueueManagementService.getFilteredFinishedBuildJobs(new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, pageable), 5L))
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
     void filteredFinishedBuildJobs_passTheBuildDurationBoundsOnAsDurations() {
         // The client sends seconds; the query compares durations, so the conversion has to happen here.
         when(buildJobRepository.findFinishedIdsByFilterCriteria(any(), any(), any(), any(), any(), any(), any(), any(), any()))
@@ -317,6 +392,7 @@ class SharedQueueManagementServiceEstimationTest {
         when(distributedDataAccessService.getDistributedProcessingJobs()).thenReturn(processingJobs);
         when(distributedDataAccessService.getDistributedDockerImageCleanupInfo()).thenReturn(dockerImageCleanupInfo);
         when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(buildResultQueue);
+        when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredBuildResultQueue);
         when(distributedDataAccessService.getDistributedBuildAgentInformation()).thenReturn(buildAgentInformation);
 
         sharedQueueManagementService.clearDistributedData();
@@ -325,6 +401,7 @@ class SharedQueueManagementServiceEstimationTest {
         verify(processingJobs).clear();
         verify(dockerImageCleanupInfo).clear();
         verify(buildResultQueue).clear();
+        verify(deferredBuildResultQueue).clear();
         verify(buildAgentInformation).clear();
     }
 }

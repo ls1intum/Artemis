@@ -1,33 +1,29 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { AccountService } from 'app/core/auth/account.service';
-import { FormsModule } from '@angular/forms';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
-    styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective, FormsModule, ToggleSwitchModule],
+    styleUrls: ['./llm-selection-popup.component.css'],
+    imports: [TranslateDirective, AiModeSelectorComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
-    protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
     private router = inject(Router);
 
     readonly choice = output<LLMModalResult>();
 
     readonly isVisible = signal(false);
     readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
-    readonly memirisEnabled = signal(true);
     private modalSubscription?: Subscription;
 
     readonly isOnPremiseEnabled = signal<boolean>(undefined!);
@@ -35,7 +31,6 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
             this.currentSelection.set(currentSelection);
-            this.memirisEnabled.set(this.accountService.userIdentity()?.memirisEnabled ?? true);
             this.open();
         });
         this.isOnPremiseEnabled.set(this.profileService.isLLMDeploymentEnabled());
@@ -51,6 +46,26 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     close(): void {
         this.isVisible.set(false);
+    }
+
+    dismiss(): void {
+        this.choice.emit(LLM_MODAL_DISMISSED);
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
+        this.close();
+    }
+
+    selectMode(choice: LLMSelectionDecision): void {
+        switch (choice) {
+            case LLMSelectionDecision.CLOUD_AI:
+                this.selectCloud();
+                break;
+            case LLMSelectionDecision.LOCAL_AI:
+                this.selectLocal();
+                break;
+            case LLMSelectionDecision.NO_AI:
+                this.selectNone();
+                break;
+        }
     }
 
     selectCloud(): void {
@@ -71,15 +86,10 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    onMemirisToggle(): void {
-        this.accountService.setUserEnabledMemiris(this.memirisEnabled());
-    }
-
-    onBackdropClick(event: MouseEvent): void {
-        if (event.target === event.currentTarget) {
-            this.choice.emit(LLM_MODAL_DISMISSED);
-            this.modalService.emitChoice(LLM_MODAL_DISMISSED);
-            this.close();
+    /** Escape and a click on the backdrop close the dialog itself; the popup answers that as a dismissal. */
+    onVisibleChange(visible: boolean): void {
+        if (!visible && this.isVisible()) {
+            this.dismiss();
         }
     }
 
@@ -90,6 +100,5 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    protected readonly Theme = Theme;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

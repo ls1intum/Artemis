@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PreRemove;
 import jakarta.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -45,6 +46,9 @@ public class GradingInstruction extends DomainObject {
     @Column(name = "usage_count")
     private int usageCount;
 
+    @Column(name = "sort_order", nullable = false)
+    private long sortOrder;
+
     // Note: this is intended to be lazy because the other side is eager
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
@@ -54,6 +58,15 @@ public class GradingInstruction extends DomainObject {
     @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "gradingInstruction", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
+
+    @JsonIgnore
+    public long getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(long sortOrder) {
+        this.sortOrder = sortOrder;
+    }
 
     public double getCredits() {
         return credits;

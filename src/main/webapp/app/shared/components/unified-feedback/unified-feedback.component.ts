@@ -1,14 +1,15 @@
 import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMinus, faPlus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
+    MAX_MANUAL_CREDITS,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
@@ -20,6 +21,7 @@ import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instr
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
@@ -33,7 +35,7 @@ interface FeedbackTypeConfig {
     selector: 'jhi-unified-feedback',
     standalone: true,
     templateUrl: './unified-feedback.component.html',
-    styleUrls: ['./unified-feedback.component.scss'],
+    styleUrls: ['./unified-feedback.component.css'],
     imports: [
         NgClass,
         FaIconComponent,
@@ -43,7 +45,7 @@ interface FeedbackTypeConfig {
         GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
-        ArtemisTranslatePipe,
+        PointsInputComponent,
     ],
 })
 export class UnifiedFeedbackComponent {
@@ -128,7 +130,6 @@ export class UnifiedFeedbackComponent {
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
-    private readonly creditsInput = viewChild<ElementRef<HTMLInputElement>>('creditsInput');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
@@ -290,24 +291,11 @@ export class UnifiedFeedbackComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faMinus = faMinus;
-    protected readonly faPlus = faPlus;
 
-    /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
+    /** Points are graded in half steps throughout Artemis, so the arrow keys and the step buttons of the points input move in the same increments. */
+    protected readonly CREDITS_MIN = -MAX_MANUAL_CREDITS;
+    protected readonly CREDITS_MAX = MAX_MANUAL_CREDITS;
     protected readonly CREDITS_STEP = 0.5;
-
-    /**
-     * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
-     * fires before the button steals focus and blurs the input). Without this, clicking a stepper after typing an
-     * off-grid value like `1.3` blurs the input first, which snaps it to `1.5` via {@link onCreditsChange} before
-     * the button's own `click` handler runs, and stepping from the already-snapped value overshoots. Consumed
-     * exactly once by {@link stepCredits}.
-     */
-    private pendingRawCredits: string | undefined;
-
-    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
-    protected stepCreditsDisabled(): boolean {
-        return this.readOnly() || !!this.feedback()?.gradingInstruction;
-    }
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
@@ -354,62 +342,32 @@ export class UnifiedFeedbackComponent {
         this.markAdaptedIfSuggestion();
     }
 
-    /** Clearing the field must invalidate the score immediately, without waiting for `change` to fire on blur. */
-    onCreditsInput(rawValue: string): void {
-        if (rawValue.trim() === '') {
-            this.feedbackCredits.set(undefined);
-            this.markAdaptedIfSuggestion();
-        }
-    }
-
-    onCreditsChange(value: number): void {
-        const normalized = this.normalizedCredits(value);
-        this.feedbackCredits.set(normalized);
-        // [ngModel] is one-way here, and set() is a no-op under Object.is when normalization lands back on the
-        // value the signal already held (e.g. 1.6 snapping to an already-current 1.5), so the DOM would otherwise
-        // keep showing the un-normalized value the tutor typed while the stored/saved credits differ from it.
-        const input = this.creditsInput()?.nativeElement;
-        if (input) {
-            input.value = normalized === undefined ? '' : String(normalized);
-        }
+    /**
+     * Takes over the value of the points input on every keystroke and step, so that clearing the field invalidates the
+     * score immediately. The value is only snapped onto the half-point grid when the field is left, see
+     * {@link onCreditsCommit}, because snapping while typing would fight the caret (typing `1.3` would jump to `1.5`).
+     */
+    onCreditsChange(value: number | undefined): void {
+        this.feedbackCredits.set(value);
         this.markAdaptedIfSuggestion();
     }
 
     /**
-     * Increments or decrements the points by one half-point step, mirroring what typing into the field does. A
-     * hand-typed value is snapped onto the half-point grid in the direction of travel first, so stepping up from
-     * 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.
-     * @param delta the signed step to apply
+     * Snaps the typed credits onto the half-point grid and into the bounds when the field is left or Enter is pressed.
+     * The points input shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
      */
-    stepCredits(delta: number): void {
-        if (this.stepCreditsDisabled()) {
-            return;
+    onCreditsCommit(): void {
+        const normalized = this.normalizedCredits(this.feedbackCredits());
+        if (normalized !== this.feedbackCredits()) {
+            this.feedbackCredits.set(normalized);
         }
-        const base = this.consumePendingRawCredits() ?? this.feedbackCredits() ?? 0;
-        const snapped = (delta > 0 ? Math.floor(base / this.CREDITS_STEP) : Math.ceil(base / this.CREDITS_STEP)) * this.CREDITS_STEP;
-        this.onCreditsChange(snapped + delta);
-    }
-
-    /** See {@link pendingRawCredits}. */
-    stashRawCredits(rawValue: string): void {
-        this.pendingRawCredits = rawValue;
-    }
-
-    private consumePendingRawCredits(): number | undefined {
-        const raw = this.pendingRawCredits;
-        this.pendingRawCredits = undefined;
-        if (raw === undefined || raw.trim() === '') {
-            return undefined;
-        }
-        const parsed = Number(raw);
-        return Number.isFinite(parsed) ? parsed : undefined;
     }
 
     private normalizedCredits(value: number | null | undefined): number | undefined {
         if (value === null || value === undefined || !Number.isFinite(value)) {
             return undefined;
         }
-        return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
+        return Math.min(this.CREDITS_MAX, Math.max(this.CREDITS_MIN, Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP));
     }
 
     handleDeleteConfirmed(): void {

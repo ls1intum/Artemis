@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261030185342-01-create-personal-access-token" author="krusche">
+        <createTable tableName="personal_access_token">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_personal_access_token" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="name" type="varchar(100)"><constraints nullable="false"/></column>
+            <column name="token_prefix" type="varchar(16)"><constraints nullable="false"/></column>
+            <column name="token_hash" type="varchar(64)"><constraints nullable="false"/></column>
+            <column name="scopes" type="varchar(512)"><constraints nullable="false"/></column>
+            <column name="created_date" type="datetime(3)"><constraints nullable="false"/></column>
+            <column name="expiry_date" type="datetime(3)"><constraints nullable="false"/></column>
+            <column name="last_used_date" type="datetime(3)"/>
+            <column name="revoked_date" type="datetime(3)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="personal_access_token" constraintName="fk_personal_access_token_user_id"
+                                 referencedColumnNames="id" referencedTableName="jhi_user" onDelete="CASCADE" onUpdate="RESTRICT"/>
+        <addUniqueConstraint tableName="personal_access_token" columnNames="token_hash" constraintName="uc_personal_access_token_token_hash"/>
+        <createIndex indexName="idx_personal_access_token_user_id" tableName="personal_access_token"><column name="user_id"/></createIndex>
+    </changeSet>
+</databaseChangeLog>

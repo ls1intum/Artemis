@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Params, provideRouter } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subscription, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -87,6 +87,7 @@ describe('FileUploadExerciseDetailComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: routeParams$.asObservable(),
+                        snapshot: { pathFromRoot: [{ params: {} }] },
                     },
                 },
                 {
@@ -131,6 +132,24 @@ describe('FileUploadExerciseDetailComponent', () => {
         if (fixture) {
             fixture.destroy();
         }
+    });
+
+    it('loads exam details from ancestor exam context', async () => {
+        const route = TestBed.inject(ActivatedRoute);
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const exercise = createExercise(undefined, new ExerciseGroup());
+        const examFind = vi.spyOn(fileUploadExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const courseFind = vi.spyOn(fileUploadExerciseService, 'find');
+        fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(456);
+        expect(courseFind).not.toHaveBeenCalled();
+        expect(component.fileUploadExercise()).toEqual(exercise);
     });
 
     describe('initialization with course exercise', () => {

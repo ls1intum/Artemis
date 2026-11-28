@@ -93,4 +93,15 @@ class HyperionExerciseTitleSanitizerTest {
         assertThat(suffixed).hasSize(HyperionExerciseTitleSanitizer.MAX_TITLE_LENGTH).endsWith(" 17");
         assertThat(TITLE_NAME_PATTERN.matcher(suffixed).matches()).isTrue();
     }
+
+    @Test
+    void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading("# Roman Numerals\n\nConvert integers 1..3999.")).isEqualTo("Roman Numerals");
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading("\n\n#   Balanced BST   \n## Tasks")).isEqualTo("Balanced BST");
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading("## Subsection only\nbody")).isNull();
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading("No heading at all")).isNull();
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading("#NotAHeading")).isNull();
+        String longHeading = "# " + "x".repeat(400);
+        assertThat(HyperionExerciseTitleSanitizer.fromProblemStatementHeading(longHeading)).hasSize(255);
+    }
 }

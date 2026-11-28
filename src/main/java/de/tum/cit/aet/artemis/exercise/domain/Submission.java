@@ -151,9 +151,28 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * Returns the most recent result that has been completed, i.e. has a non-null completion date.
+     * Returns the highest-id result eligible for grading selection, excluding pending and failed Athena requests.
+     * Ordinary failed automatic results and manual drafts keep their existing ordering and publication checks in callers.
+     * The complete result history remains available through {@link #getResults()} and {@link #getLatestResult()}.
+     *
+     * @return the latest grade-relevant result, or {@code null} if none exists
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestGradingResult() {
+        Result latestResult = results.stream().filter(Objects::nonNull).filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(BY_ID)
+                .orElse(null);
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
+        }
+        return latestResult;
+    }
+
+    /**
+     * Returns the most recent completed assessment or successfully generated Athena feedback.
      * This ignores draft results that might exist when an assessment lock was created but not
-     * finished.
+     * finished. Pending Athena requests use a future completion date as their lease, and failed requests have a
+     * terminal timestamp too; neither is an assessed score.
      *
      * @return the latest completed {@link Result} or {@code null} if none exists
      */
@@ -161,7 +180,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestCompletedResult() {
         Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
+                .filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID))
+                .orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);

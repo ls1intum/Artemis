@@ -14,14 +14,16 @@ export class ParticipationPrivacyService {
     /**
      * Hides identities until an exercise is available and throughout exam assessment for non-instructors.
      * Course programming exercises expose identities until the manual/semi-automatic assessment due date;
-     * automatic assessment and exercises without a due date retain that visibility. Uses server time so an
-     * already-open page updates at the cutoff. This display policy never grants server repository access.
+     * automatic assessment and exercises without a due date retain that visibility. Course quizzes are always
+     * assessed automatically, so there is no tutor assessment to anonymize and their identities stay visible. Uses
+     * server time so an already-open page updates at the cutoff. This display policy never grants server repository access.
      * @param exercise the currently loaded exercise, or undefined while loading
      * @returns whether participant names and repository links must be hidden
      */
     isParticipantInformationHidden(exercise: Exercise | undefined): boolean {
         if (!exercise) return true;
         if (exercise.isAtLeastInstructor) return false;
+        if (exercise.type === ExerciseType.QUIZ) return !!exercise.exerciseGroup;
         if (exercise.type !== ExerciseType.PROGRAMMING || exercise.exerciseGroup) return true;
         return this.hasManualAssessmentDeadline(exercise) && !this.now().isBefore(exercise.dueDate);
     }

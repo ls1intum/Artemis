@@ -3,20 +3,15 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    CellTemplateRef,
-    ColumnDef,
-    TumAetUiButtonDirective,
-    TumAetUiEmptyStateComponent,
-    TumAetUiSearchFieldComponent,
-    TumAetUiTableComponent,
-    TumAetUiTableQueryEvent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
@@ -26,8 +21,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { TutorialGroupManagementService } from 'app/tutorialgroup/manage/service/tutorial-group-management.service';
 import { tutorialGroupUtilization } from 'app/tutorialgroup/shared/util/tutorial-group-utilization';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
@@ -139,7 +133,7 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
     ],
 })
 export class TutorialGroupsManagementComponent {
-    private readonly tutorialGroupApiService = inject(TutorialGroupApi);
+    private readonly tutorialGroupApiService = inject(TutorialGroupManagementService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
@@ -187,8 +181,6 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            // "Registrations / Capacity" is far wider than the "0 / 15" beneath it, so it wraps rather than setting the floor.
-            wrapHeader: true,
             templateRef: this.registrationsColumn(),
         },
         // Last to appear and the one most often empty, so it waits for the width that fits every other column comfortably.
@@ -272,7 +264,6 @@ export class TutorialGroupsManagementComponent {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
             .pipe(
-                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
                 finalize(() => this.isLoading.set(false)),
                 takeUntilDestroyed(this.destroyRef),
             )

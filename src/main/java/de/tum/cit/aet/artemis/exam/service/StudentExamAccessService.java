@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -44,6 +45,23 @@ public class StudentExamAccessService {
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
+    }
+
+    /**
+     * Checks the persisted attempt's exam and owning course against the requested path before any state is changed.
+     *
+     * @param studentExam the persisted attempt
+     * @param examId      the requested exam
+     * @param courseId    the requested course
+     */
+    public void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
+        var exam = studentExam.getExam();
+        if (!Objects.equals(exam.getId(), examId)) {
+            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
+        }
+        if (!Objects.equals(exam.getCourse().getId(), courseId)) {
+            throw new ConflictException("The exam does not belong to the course", "Exam", "examCourseConflict");
+        }
     }
 
     /**
@@ -136,7 +154,16 @@ public class StudentExamAccessService {
      * @param currentUser the user for which the access should be checked
      */
     public void checkCourseAccessForStudentElseThrow(Long courseId, User currentUser) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkCourseAccessForStudentElseThrow(courseRepository.findByIdElseThrow(courseId), currentUser);
+    }
+
+    /**
+     * Checks if the user is allowed to access the already loaded course
+     *
+     * @param course      the course
+     * @param currentUser the user for which the access should be checked
+     */
+    public void checkCourseAccessForStudentElseThrow(Course course, User currentUser) {
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException("You are not allowed to access exams in this course!");
         }

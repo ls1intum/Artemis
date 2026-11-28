@@ -2,6 +2,7 @@
 id: entity-ownership
 title: Entity Ownership and Orphans
 sidebar_label: Entity Ownership
+last_reviewed: 2026-11-03
 ---
 
 Every row in the Artemis database belongs to something. A quiz question belongs to its quiz, a
@@ -134,8 +135,10 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `KnowledgeArea` | KnowledgeArea `parent_id` | Optional | **Yes** | Self-referencing tree; a null parent is a legitimate root. |
 | `LearnerProfile` | User `user_id` | Required | No | Unique per account, cascades on account deletion. |
 | `LearningPath` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
-| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
-| `ScienceSetting` | — | Root | No | Keyed by user login rather than by foreign key. |
+| `ScienceCourseConsent` | User `user_id` and Course `course_id` | Required (both) | No | One decision per account and course; cascades on both. |
+| `ScienceEnabledCourse` | Course `course_id` | Required | No | Whether a course collects science data; cascades on the course. |
+| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key, and `course_id` is optional because events predating course-level collection have no course to name. |
+| `ScienceResearchExportAudit` | — | Root | No | Immutable record of a research export, which outlives every course and event it describes. |
 | `Source` | — | Root | No | Reference data. |
 | `StandardizedCompetency` | KnowledgeArea `knowledge_area_id` | Required | No |  |
 
@@ -326,6 +329,12 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
 | `TutorialGroupsConfiguration` | Course `course_id` | Required | No | Cascades on course deletion, and takes its free periods along. The course carries no association to it. |
+
+### Video source
+
+| Entity | Belongs to | Parent required | Orphan possible | Notes |
+| --- | --- | --- | --- | --- |
+| `GocastCourseBinding` | Course `course_id` | Required | No | Pending approvals and completed connections share one row; cascades on course deletion. |
 
 ## Finding orphans
 

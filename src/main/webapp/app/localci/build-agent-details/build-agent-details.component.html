@@ -18,11 +18,11 @@
         }
     </div>
     @if (buildAgent(); as agent) {
-        <div class="mb-4">
-            <div class="mb-3">
+        <div class="mb-6">
+            <div class="mb-4">
                 <span class="text-muted-color" id="build-agent-info">{{ agent.buildAgent?.name }} - {{ agent.buildAgent?.memberAddress }}</span>
             </div>
-            <div class="mb-4">
+            <div class="mb-6">
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.status"></span>
                     <span class="font-bold">:</span>
@@ -79,27 +79,26 @@
                 }
             </div>
 
-            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-4" />
+            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-6" />
 
             <div>
                 <h4 id="build-queue-running-heading" class="flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
                     <tumaet-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h4>
-                <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
+                <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-4"></div>
                 <jhi-running-jobs-table
                     [buildJobs]="runningBuildJobs()"
                     [showCourseId]="true"
                     [isAdminView]="true"
                     (cancelJob)="cancelBuildJob($event)"
-                    (cancelAll)="cancelAllBuildJobs()"
                     (jobClick)="navigateToJobDetail($event)"
                 />
             </div>
         </div>
     }
     @if (agentNotFound()) {
-        <tumaet-ui-message severity="warn" class="mb-4 block">
+        <tumaet-ui-message severity="warn" class="mb-6">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />
@@ -109,60 +108,39 @@
     }
     @if (buildAgent() || agentNotFound()) {
         <div>
-            <div class="flex justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <h4 id="build-agents-recent-builds-heading" class="my-0 flex items-center gap-2">
-                        <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
-                        <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
-                    </h4>
-                    <div class="flex items-center gap-2">
-                        <input
-                            [attr.aria-label]="'artemisApp.buildQueue.filter.search.title' | artemisTranslate"
-                            tumAetUiInput
-                            type="text"
-                            name="searchTerm"
-                            id="field_searchTerm"
-                            [(ngModel)]="searchTerm"
-                            (focusout)="triggerLoadFinishedJobs()"
-                        />
-                        <jhi-help-icon text="artemisApp.buildQueue.filter.search.tooltip" />
-                        <tumaet-ui-button size="small" (clicked)="triggerLoadFinishedJobs()">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
-                        </tumaet-ui-button>
-                    </div>
-                    <tumaet-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
-                        <fa-icon [icon]="faSync" />
-                        <span jhiTranslate="metrics.refresh.button"></span>
-                    </tumaet-ui-button>
-                    @if (isLoading()) {
-                        <span jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
-                    }
-                </div>
-                <div>
-                    <tumaet-ui-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (clicked)="this.openFilterModal()">
-                        <fa-icon [icon]="faFilter" />
-                        <span class="hidden md:inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
-                        </span>
-                    </tumaet-ui-button>
-                </div>
-            </div>
-            <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
-            <jhi-finished-jobs-table
-                [buildJobs]="finishedBuildJobs()"
-                [showCourseId]="true"
-                [isAdminView]="true"
-                [(predicate)]="predicate"
-                [(ascending)]="ascending"
-                (sortChange)="loadFinishedBuildJobs()"
-                (jobClick)="navigateToJobDetail($event)"
-                (viewLogs)="viewBuildLogs($event)"
-            />
-            @if (finishedBuildJobs()) {
-                <div class="flex justify-center">
+            <h4 id="build-agents-recent-builds-heading" class="mb-4 flex items-center gap-2">
+                <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
+                <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
+            </h4>
+            <tumaet-ui-table-layout
+                [empty]="finishedBuildJobs().length === 0 && !isLoading()"
+                emptyTitle="artemisApp.buildQueue.noFinishedBuilds"
+                style="--table-layout-offset: 24rem"
+            >
+                <jhi-finished-builds-toolbar
+                    tumAetUiTableToolbar
+                    [(searchTerm)]="searchTerm"
+                    [loading]="isLoading()"
+                    [appliedFilterCount]="appliedFilterCount()"
+                    (searchRequested)="triggerLoadFinishedJobs()"
+                    (refreshRequested)="loadFinishedBuildJobs()"
+                    (filterRequested)="openFilterModal()"
+                />
+                <jhi-finished-jobs-table
+                    class="block"
+                    [buildJobs]="finishedBuildJobs()"
+                    [showCourseId]="true"
+                    [isAdminView]="true"
+                    [(predicate)]="predicate"
+                    [(ascending)]="ascending"
+                    (sortChange)="loadFinishedBuildJobs()"
+                    (jobClick)="navigateToJobDetail($event)"
+                    (viewLogs)="viewBuildLogs($event)"
+                />
+                <div tumAetUiTableFooter class="flex h-10 items-center justify-end border-t border-border px-2" [hidden]="finishedBuildJobs().length === 0 && currentPage() <= 1">
                     <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading()" (pageChange)="onPageChange($event)" />
                 </div>
-            }
+            </tumaet-ui-table-layout>
         </div>
     }
 

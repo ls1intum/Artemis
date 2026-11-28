@@ -1,15 +1,15 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ExerciseVersionMetadata } from 'app/exercise/version-history/shared/exercise-version-history.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-import { SkeletonModule } from 'primeng/skeleton';
-import { TimelineModule } from 'primeng/timeline';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 
-/** View-model for a single entry rendered in the PrimeNG Timeline. */
+/** View-model for a single entry rendered in the version timeline. */
 interface TimelineEntryViewModel {
     id: number;
     createdDate?: ExerciseVersionMetadata['createdDate'];
@@ -30,8 +30,16 @@ interface TimelineEntryViewModel {
 @Component({
     selector: 'jhi-exercise-version-history-timeline',
     templateUrl: './exercise-version-history-timeline.component.html',
-    styleUrls: ['./exercise-version-history-timeline.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ButtonModule, MessageModule, SkeletonModule, TimelineModule, ProfilePictureComponent],
+    styleUrls: ['./exercise-version-history-timeline.component.css'],
+    imports: [
+        TumAetUiButtonDirective,
+        TranslateDirective,
+        ArtemisDatePipe,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
+        ProfilePictureComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionHistoryTimelineComponent {
@@ -55,7 +63,7 @@ export class ExerciseVersionHistoryTimelineComponent {
 
     /**
      * Transforms raw {@link ExerciseVersionMetadata} entries into view-model
-     * objects suitable for the PrimeNG Timeline template, resolving display
+     * objects suitable for the version timeline template, resolving display
      * names and profile picture URLs.
      */
     readonly timelineEntries = computed<TimelineEntryViewModel[]>(() =>

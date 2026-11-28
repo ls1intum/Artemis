@@ -1,13 +1,14 @@
 import { SecurityContext, Service, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { AlertError } from 'app/core/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { HttpErrorResponse } from '@angular/common/http';
+import type { HttpErrorEvent } from 'app/core/interceptor/errorhandler.interceptor';
 import dayjs from 'dayjs/esm';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -81,14 +82,21 @@ export class AlertService {
         });
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: EventWithContent<unknown> | string) => {
-            const httpErrorResponse = (response as EventWithContent<HttpErrorResponse>).content;
+            const event = response as HttpErrorEvent;
+            const httpErrorResponse = event.content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
-                    this.addErrorAlert('Server not reachable', 'error.server.not.reachable');
+                    // The translations come from the same server, so they may be missing as well. The key is in the part that the landing page loads, so only a client that
+                    // could not load any translation falls back to English. That is no mistake of the key, so a missing translation is not reported.
+                    this.addAlert({
+                        type: AlertType.DANGER,
+                        message: this.translateIfKnown('global.generic.serverNotReachable') ?? 'Server not reachable',
+                        disableTranslation: true,
+                    });
                     break;
 
                 case 400:
@@ -125,20 +133,93 @@ export class AlertService {
                     }
                     break;
 
+                case 403: {
+                    // Some callers explain a denied action locally; preserve their suppression.
+                    if (this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey)) {
+                        break;
+                    }
+                    const messageKey = httpErrorResponse.error?.message;
+                    const translatedMessage = typeof messageKey === 'string' && messageKey ? this.translateService.instant(messageKey, httpErrorResponse.error?.params) : undefined;
+                    const hasSpecificTranslation =
+                        messageKey !== 'error.http.403' &&
+                        typeof translatedMessage === 'string' &&
+                        translatedMessage !== messageKey &&
+                        !translatedMessage.startsWith(translationNotFoundMessage);
+                    if (hasSpecificTranslation) {
+                        this.addErrorAlert('Access denied', messageKey, httpErrorResponse.error.params);
+                    } else {
+                        // A refused background request does not mean the current page itself is forbidden.
+                        const fallbackKey = !event.requestMethod
+                            ? 'error.http.403'
+                            : ['GET', 'HEAD', 'OPTIONS'].includes(event.requestMethod)
+                              ? 'error.http.403Read'
+                              : 'error.http.403Action';
+                        this.addErrorAlert('You do not have permission to access this content or perform this action.', fallbackKey);
+                    }
+                    break;
+                }
+
                 case 404:
                     // Disabled
                     break;
 
+                case 429: {
+                    const seconds = Math.ceil(Number(httpErrorResponse.headers?.get('Retry-After')));
+                    if (Number.isFinite(seconds) && seconds > 0) {
+                        this.addErrorAlert('Too many requests. Please try again in a few seconds.', 'error.http.429Wait', { seconds });
+                    } else {
+                        this.addErrorAlert('Too many requests. Please try again later.', 'error.http.429');
+                    }
+                    break;
+                }
+
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
-                        // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
-                        if (httpErrorResponse.status === 403 && this.conflictErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
-                            break;
-                        }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     }
             }
         });
+    }
+
+    /**
+     * Whether the handling of `artemisApp.httpError` shows an alert for the given rejected request. A caller that reports a rejection itself uses this
+     * to avoid showing the same failure twice. It decides like the listener in the constructor, branch by branch, so change both together.
+     */
+    showsHttpErrorAlert(httpErrorResponse: HttpErrorResponse): boolean {
+        if (httpErrorResponse.error?.skipAlert) {
+            return false;
+        }
+        switch (httpErrorResponse.status) {
+            case 0:
+                return true;
+            case 400: {
+                let errorHeader: string | null = null;
+                for (const entry of httpErrorResponse.headers?.keys() ?? []) {
+                    if (entry.toLowerCase().endsWith('app-error')) {
+                        errorHeader = httpErrorResponse.headers.get(entry);
+                    }
+                }
+                if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
+                    return true;
+                }
+                if (httpErrorResponse.error?.fieldErrors) {
+                    // One alert per field error, so none for an empty list.
+                    return Array.isArray(httpErrorResponse.error.fieldErrors) && httpErrorResponse.error.fieldErrors.length > 0;
+                }
+                if (httpErrorResponse.error?.title) {
+                    return !this.badRequestErrorKeysToSkip.includes(httpErrorResponse.error.errorKey);
+                }
+                return false;
+            }
+            case 403:
+                return !this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey);
+            case 404:
+                return false;
+            case 429:
+                return true;
+            default:
+                return !!httpErrorResponse.error?.title;
+        }
     }
 
     closeAll(): void {
@@ -176,30 +257,32 @@ export class AlertService {
             },
         };
 
-        if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
-            // in case a translation key is defined, we use it to create the message
-            // Note: in most cases, our code passes the translation key as message
-            let translationKey: string;
-            if (alert.translationKey) {
-                translationKey = alert.translationKey;
+        // Callers may forward a server or error field typed `any`, which is not necessarily a string. ngx-translate throws on a key that is not a string.
+        // in case a translation key is defined, we use it to create the message
+        // Note: in most cases, our code passes the translation key as message
+        const translationKey: unknown = alert.translationKey || alert.message;
+        if (!alert.disableTranslation && translationKey) {
+            if (typeof translationKey !== 'string') {
+                alertInternal.message = String(alert.message ?? '');
             } else {
-                translationKey = alert.message!;
-            }
+                const translatedMessage = this.translateService.instant(translationKey, alert.translationParams);
 
-            const translatedMessage = this.translateService.instant(translationKey, alert.translationParams);
+                const translationFound = !translatedMessage.startsWith(translationNotFoundMessage);
+                if (translationFound) {
+                    alertInternal.message = translatedMessage;
+                } else {
+                    // Report the unknown translation key. A text with whitespace cannot be a key: some callers pass an English text or the message of a failed
+                    // request as `message`, which is shown as it is and is no missing translation.
+                    if (!/\s/.test(translationKey)) {
+                        captureException(new Error('Unknown translation key: ' + translationKey));
+                    }
 
-            const translationFound = !translatedMessage.startsWith(translationNotFoundMessage);
-            if (translationFound) {
-                alertInternal.message = translatedMessage;
-            } else {
-                // Sent a sentry warning with the unknown translation key
-                captureException(new Error('Unknown translation key: ' + translationKey));
-
-                // Fallback to displaying the translation key
-                // Keeping the original message if it exists in case the message field is supplied with a default english version, and
-                // the translationKey field is used for translations
-                if (!alert.message) {
-                    alertInternal.message = translationKey;
+                    // Fallback to displaying the translation key
+                    // Keeping the original message if it exists in case the message field is supplied with a default english version, and
+                    // the translationKey field is used for translations
+                    if (!alert.message) {
+                        alertInternal.message = translationKey;
+                    }
                 }
             }
         }
@@ -270,6 +353,12 @@ export class AlertService {
             message,
             translationParams,
         });
+    }
+
+    /** The translation of the key, or undefined if the translations do not contain it, for example because they have not been loaded. */
+    private translateIfKnown(translationKey: string): string | undefined {
+        const translated = this.translateService.instant(translationKey);
+        return translated.startsWith(translationNotFoundMessage) ? undefined : translated;
     }
 
     addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {

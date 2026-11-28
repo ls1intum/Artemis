@@ -3,7 +3,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -27,7 +26,8 @@ import {
     CourseExamArchiveWarningDialogComponent,
 } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type CourseExamArchiveState = {
@@ -39,7 +39,6 @@ export type CourseExamArchiveState = {
 @Component({
     selector: 'jhi-course-exam-archive-button',
     templateUrl: './course-exam-archive-button.component.html',
-    styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
     imports: [ArtemisTranslatePipe, TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective, TumAetUiButtonDirective],
 })
@@ -49,10 +48,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private accountService = inject(AccountService);
     private websocketRegistered = false;
-    private dialogRef?: DynamicDialogRef;
+    private dialogRef?: TumAetUiDialogRef<CourseExamArchiveDialogResult>;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
@@ -241,7 +240,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 this.currentExam.set(res.body ?? undefined);
             });
         } else {
-            this.courseService.find(course.id).subscribe((res) => {
+            this.courseService.findForInstructor(course.id).subscribe((res) => {
                 this.currentCourse.set(res.body ?? undefined);
             });
         }
@@ -274,17 +273,18 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     openArchiveWarningDialog() {
-        const dialogRef = this.openArchiveDialog(CourseExamArchiveWarningDialogComponent);
+        const dialogRef = this.openArchiveDialog(CourseExamArchiveWarningDialogComponent, this.getWarningDialogHeaderKey(), true);
         dialogRef?.onClose.subscribe((result: CourseExamArchiveDialogResult) => this.handleArchiveDialogResult(result));
     }
 
     private openArchiveOverwriteDialog() {
-        const dialogRef = this.openArchiveDialog(CourseExamArchiveOverwriteDialogComponent);
+        const dialogRef = this.openArchiveDialog(CourseExamArchiveOverwriteDialogComponent, 'artemisApp.courseExamArchive.confirmArchive.title', false);
         dialogRef?.onClose.subscribe((result: CourseExamArchiveDialogResult) => this.handleArchiveDialogResult(result));
     }
 
     private openCompletedWithWarningsDialog() {
-        this.openArchiveDialog(CourseExamArchiveCompletedWithWarningsDialogComponent, { warnings: this.archiveWarnings() });
+        const headerKey = this.archiveMode() === 'Course' ? 'artemisApp.courseExamArchive.archiveCourseSuccess' : 'artemisApp.courseExamArchive.archiveExamSuccess';
+        this.openArchiveDialog(CourseExamArchiveCompletedWithWarningsDialogComponent, headerKey, true, { warnings: this.archiveWarnings() });
     }
 
     private handleArchiveDialogResult(result: CourseExamArchiveDialogResult) {
@@ -295,19 +295,22 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    private openArchiveDialog<T>(component: Type<T>, data: Partial<CourseExamArchiveDialogData> = {}) {
-        this.dialogRef =
-            this.dialogService.open(component, {
-                width: '50rem',
-                modal: true,
-                closable: false,
-                closeOnEscape: true,
-                dismissableMask: false,
-                data: cloneWith(
-                    { archiveMode: this.archiveMode(), courseTitle: this.currentCourse()?.title, examTitle: this.currentExam()?.title },
-                    data,
-                ) satisfies CourseExamArchiveDialogData,
-            }) ?? undefined;
+    private getWarningDialogHeaderKey(): string {
+        return this.archiveMode() === 'Course' ? 'artemisApp.courseExamArchive.popup.course.title' : 'artemisApp.courseExamArchive.popup.exam.title';
+    }
+
+    private openArchiveDialog<T>(component: Type<T>, headerKey: string, closable: boolean, data: Partial<CourseExamArchiveDialogData> = {}) {
+        this.dialogRef = this.dialogService.open<T, CourseExamArchiveDialogResult, CourseExamArchiveDialogData>(component, {
+            header: this.translateService.instant(headerKey),
+            size: 'medium',
+            closable,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: cloneWith(
+                { archiveMode: this.archiveMode(), courseTitle: this.currentCourse()?.title, examTitle: this.currentExam()?.title },
+                data,
+            ) satisfies CourseExamArchiveDialogData,
+        });
         return this.dialogRef;
     }
 

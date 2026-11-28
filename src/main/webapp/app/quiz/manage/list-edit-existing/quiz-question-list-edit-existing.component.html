@@ -1,12 +1,13 @@
 @if (show()) {
     <div>
-        <div class="w100 row justify-content-center card-header">
-            <div class="btn-group">
+        <div class="flex w-full flex-wrap justify-center border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4 py-2">
+            <div class="flex flex-wrap gap-2">
                 @for (state of State | keyvalue; track state; let i = $index) {
                     <button
                         type="button"
-                        class="btn"
-                        [ngClass]="{ 'btn-primary': currentState() === state.value, 'btn-default': currentState() !== state.value }"
+                        tumAetUiButton
+                        size="small"
+                        [severity]="currentState() === state.value ? 'primary' : 'secondary'"
                         (click)="setCurrentState(state.value)"
                         [attr.aria-pressed]="currentState() === state.value"
                     >
@@ -16,162 +17,196 @@
             </div>
         </div>
         <hr />
-        <div class="form-group question-options existing-question-container">
+        <div class="question-options existing-question-container [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
             @if (currentState() === State.COURSE) {
-                <div class="existing-question-select-course w-100">
-                    <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="font-weight-bold align-middle"></span>
-                    <select
-                        [attr.aria-label]="'artemisApp.quizExercise.selectCourse' | artemisTranslate"
-                        class="form-select ms-5"
+                <div class="existing-question-select-course w-full">
+                    <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="align-middle font-bold"></span>
+                    <tumaet-ui-select
+                        class="ms-12 flex-1"
+                        [options]="courses()"
+                        optionLabel="title"
+                        optionValue="id"
+                        [ariaLabel]="'artemisApp.quizExercise.selectCourse' | artemisTranslate"
                         [(ngModel)]="selectedCourseId"
-                        (change)="onCourseSelect()"
-                        style="flex: 1"
-                    >
-                        @for (course of courses(); track course) {
-                            <option [value]="course.id">{{ course.title }}</option>
-                        }
-                    </select>
+                        (ngModelChange)="onCourseSelect()"
+                    />
                 </div>
             }
             @if (currentState() === State.EXAM) {
-                <div class="existing-question-select-course w-100">
-                    <span jhiTranslate="artemisApp.quizExercise.selectExam" class="font-weight-bold align-middle"></span>
-                    <select
-                        [attr.aria-label]="'artemisApp.quizExercise.selectExam' | artemisTranslate"
-                        class="form-select ms-5"
+                <div class="existing-question-select-course w-full">
+                    <span jhiTranslate="artemisApp.quizExercise.selectExam" class="align-middle font-bold"></span>
+                    <tumaet-ui-select
+                        class="ms-12 flex-1"
+                        [options]="exams()"
+                        optionLabel="title"
+                        optionValue="id"
+                        [ariaLabel]="'artemisApp.quizExercise.selectExam' | artemisTranslate"
                         [(ngModel)]="selectedExamId"
-                        (change)="onExamSelect()"
-                        style="flex: 1"
-                    >
-                        @for (exam of exams(); track exam) {
-                            <option [value]="exam.id">{{ exam.title }}</option>
-                        }
-                    </select>
+                        (ngModelChange)="onExamSelect()"
+                    />
                 </div>
             }
             @if (currentState() === State.FILE) {
-                <div class="question-options row d-flex justify-content-start">
-                    <div class="me-2 col flex-grow-0" style="white-space: nowrap">
-                        <span jhiTranslate="artemisApp.quizExercise.importJSON" class="font-weight-bold colon-suffix no-flex-shrink"></span>
+                <div class="question-options m-0 flex-wrap! justify-start!">
+                    <div class="me-2 grow-0" style="white-space: nowrap">
+                        <span jhiTranslate="artemisApp.quizExercise.importJSON" class="colon-suffix shrink-0 font-bold"></span>
                     </div>
-                    <div class="input-group flex-grow-1 col">
+                    <div class="flex flex-1 items-stretch gap-2">
                         <input
                             [attr.aria-label]="'artemisApp.quizExercise.importJSON' | artemisTranslate"
                             id="importFileInput"
                             type="file"
                             accept=".json,.zip"
-                            class="form-control"
+                            tumAetUiInput
+                            class="min-w-0 flex-1"
                             (change)="setImportFile($event)"
                             placeholder="Upload file..."
                         />
                         <button
                             type="button"
-                            class="btn btn-outline-primary"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
                             (click)="importQuiz()"
                             jhiTranslate="entity.action.import"
-                            [ngClass]="{ disabled: !importFile() }"
+                            [disabled]="!importFile()"
                         ></button>
                     </div>
                 </div>
             }
             @if (currentState() !== State.FILE) {
                 @if (allExistingQuestions().length !== 0) {
-                    <div class="existing-question-filter w-100">
+                    <div class="existing-question-filter w-full">
                         <input
                             [attr.aria-label]="'entity.action.search' | artemisTranslate"
-                            class="form-control search-query"
+                            tumAetUiInput
+                            class="search-query"
                             [(ngModel)]="searchQueryText"
                             placeholder="Search Query"
                         />
-                        <div class="checkboxes">
-                            <div class="form-check">
-                                <input type="checkbox" id="cbDnDFilter" class="form-check-input" [(ngModel)]="dndFilterEnabled" />
-                                <label class="form-check-label" for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
+                        <div class="checkboxes gap-x-4">
+                            <div class="flex items-center gap-2">
+                                <tumaet-ui-checkbox inputId="cbDnDFilter" [(ngModel)]="dndFilterEnabled" />
+                                <label for="cbDnDFilter" jhiTranslate="artemisApp.quizExercise.filter.dnd"></label>
                             </div>
-                            <div class="form-check">
-                                <input type="checkbox" id="cbMCFilter" class="form-check-input" [(ngModel)]="mcqFilterEnabled" />
-                                <label class="form-check-label" for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
+                            <div class="flex items-center gap-2">
+                                <tumaet-ui-checkbox inputId="cbMCFilter" [(ngModel)]="mcqFilterEnabled" />
+                                <label for="cbMCFilter" jhiTranslate="artemisApp.quizExercise.filter.mcq"></label>
                             </div>
-                            <div class="form-check">
-                                <input type="checkbox" id="cbShortAnswerFilter" class="form-check-input" [(ngModel)]="shortAnswerFilterEnabled" />
-                                <label class="form-check-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
+                            <div class="flex items-center gap-2">
+                                <tumaet-ui-checkbox inputId="cbShortAnswerFilter" [(ngModel)]="shortAnswerFilterEnabled" />
+                                <label for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-outline-secondary" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            (click)="applyFilter()"
+                            jhiTranslate="artemisApp.quizExercise.filter.applyFilter"
+                        ></button>
                     </div>
                 }
-                @if (allExistingQuestions().length === 0 && selectedCourseId !== undefined) {
-                    <div>
-                        <div>&nbsp;</div>
-                        <span jhiTranslate="artemisApp.quizExercise.noQuestionsFoundCourse"></span>
-                    </div>
-                }
-                @if (existingQuestions().length !== 0) {
-                    <div class="table-responsive existing-question-table">
-                        <table class="table table-striped">
-                            <thead class="thead-dark">
+                @if (existingQuestions().length !== 0 || selectedCourseId !== undefined) {
+                    <tumaet-ui-table-layout
+                        class="[--table-layout-offset:20rem]"
+                        [empty]="existingQuestions().length === 0"
+                        [emptyTitle]="allExistingQuestions().length === 0 ? 'artemisApp.quizExercise.noQuestionsFoundCourse' : 'artemisApp.quizExercise.noMatchingQuestionsFound'"
+                    >
+                        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                            <span class="flex-1"></span>
+                            <button
+                                [hidden]="existingQuestions().length === 0"
+                                type="button"
+                                tumAetUiButton
+                                severity="primary"
+                                variant="outlined"
+                                size="small"
+                                (click)="addExistingQuestions()"
+                                jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"
+                            ></button>
+                        </div>
+                        <table tumAetUiTable size="small" striped [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="onSort($event)">
+                            <thead>
                                 <tr>
-                                    <th width="55%">
+                                    <th class="w-[45%]" [tumAetUiSortableColumn]="'title'">
                                         <span jhiTranslate="artemisApp.quizExercise.export.questionTitle"></span>
                                     </th>
-                                    <th width="30%">
+                                    <th class="w-[28%]" [tumAetUiSortableColumn]="'exercise'">
                                         <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle"></span>
                                     </th>
-                                    <th width="10%">
+                                    <th class="w-[10%]" [tumAetUiSortableColumn]="'type'">
                                         <span jhiTranslate="artemisApp.exercise.type"></span>
                                     </th>
-                                    <th width="5%">
+                                    <th class="w-[10%]">
+                                        <span jhiTranslate="entity.action.preview"></span>
+                                    </th>
+                                    <th class="w-[7%]">
                                         <span jhiTranslate="entity.action.add"></span>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (question of existingQuestions(); track question) {
+                                @for (question of sortedQuestions(); track question) {
                                     <tr>
-                                        <td width="55%">{{ question.title }}</td>
-                                        <td width="30%">{{ question.exercise?.title }}</td>
-                                        <td width="10%" class="mb-0">
-                                            <h5>
-                                                @if (question.type === MULTIPLE_CHOICE) {
-                                                    <span class="badge bg-info align-text-top">MC</span>
-                                                }
-                                            </h5>
-                                            <h5>
-                                                @if (question.type === DRAG_AND_DROP) {
-                                                    <span class="badge bg-warning align-text-top">DnD</span>
-                                                }
-                                            </h5>
-                                            <h5>
-                                                @if (question.type === SHORT_ANSWER) {
-                                                    <span class="badge bg-success align-text-top">SA</span>
-                                                }
-                                            </h5>
+                                        <td>{{ question.title }}</td>
+                                        <td>{{ question.exercise?.title }}</td>
+                                        <td>
+                                            @if (question.type === MULTIPLE_CHOICE) {
+                                                <span class="question-type-badge question-type-badge--mc">MC</span>
+                                            }
+                                            @if (question.type === DRAG_AND_DROP) {
+                                                <span class="question-type-badge question-type-badge--dnd">DnD</span>
+                                            }
+                                            @if (question.type === SHORT_ANSWER) {
+                                                <span class="question-type-badge question-type-badge--sa">SA</span>
+                                            }
                                         </td>
-                                        <td width="5%">
-                                            <div class="form-check">
-                                                <input
-                                                    type="checkbox"
-                                                    id="cbExportQuizQuestion{{ question.id }}"
-                                                    class="form-check-input"
-                                                    [(ngModel)]="question.exportQuiz"
-                                                    style="margin-left: 0"
-                                                />
-                                                <label class="form-check-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
-                                            </div>
+                                        <td>
+                                            <tumaet-ui-button
+                                                severity="success"
+                                                variant="outlined"
+                                                size="small"
+                                                [icon]="faEye"
+                                                [ariaLabel]="'artemisApp.quizExercise.previewQuestion' | artemisTranslate: { title: question.title }"
+                                                [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                                tumAetUiTooltipDescribesHost="false"
+                                                [attr.data-testid]="'preview-question-' + question.id"
+                                                (clicked)="openPreview(question)"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                id="cbExportQuizQuestion{{ question.id }}"
+                                                class="size-4"
+                                                [attr.aria-label]="'entity.action.add' | artemisTranslate"
+                                                [(ngModel)]="question.exportQuiz"
+                                            />
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
-                    </div>
-                }
-                @if (allExistingQuestions().length !== 0 && existingQuestions().length === 0 && selectedCourseId !== undefined) {
-                    <div jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound" class="ms-3"></div>
-                }
-                @if (existingQuestions().length !== 0) {
-                    <button type="button" class="btn btn-outline-primary" (click)="addExistingQuestions()" jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"></button>
+                    </tumaet-ui-table-layout>
                 }
             }
         </div>
     </div>
+    <tumaet-ui-dialog [(visible)]="previewVisible" [header]="'entity.action.preview' | artemisTranslate" size="large" (hidden)="previewQuestion.set(undefined)">
+        @if (previewQuestion(); as question) {
+            <jhi-quiz-question-preview [question]="question" />
+        }
+        <ng-template #footer>
+            <tumaet-ui-button severity="secondary" variant="outlined" data-testid="question-preview-close" (clicked)="previewVisible.set(false)">
+                <span jhiTranslate="entity.action.close"></span>
+            </tumaet-ui-button>
+            <tumaet-ui-button data-testid="question-preview-add" (clicked)="addPreviewedQuestion()">
+                <span jhiTranslate="artemisApp.quizExercise.addThisQuestion"></span>
+            </tumaet-ui-button>
+        </ng-template>
+    </tumaet-ui-dialog>
 }

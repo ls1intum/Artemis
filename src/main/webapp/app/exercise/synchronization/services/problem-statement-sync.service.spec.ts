@@ -62,6 +62,263 @@ describe('ProblemStatementSyncService', () => {
         vi.clearAllMocks();
     });
 
+    describe('canonical baseline isolation', () => {
+        function initIsolated(content: string): ProblemStatementSyncState {
+            return service.init(42, content, true);
+        }
+
+        function peerDocument(canonical: string, content: string, epoch: string): Y.Doc {
+            const doc = new Y.Doc();
+            doc.getText('problem-statement').insert(0, content);
+            doc.getMap('problem-statement-canonical').set('content', canonical);
+            doc.getMap('problem-statement-canonical').set('epoch', epoch);
+            return doc;
+        }
+
+        function respond(doc: Y.Doc, canonical: string, epoch: string): void {
+            const request = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            )?.[1] as { requestId: string };
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                responseTo: request.requestId,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc)),
+                leaderTimestamp: 1,
+                canonicalBase: canonical,
+                documentEpoch: epoch,
+            } as ExerciseEditorSyncEvent);
+        }
+
+        it('advances the canonical base after Save without losing subsequent unsent edits or changing the epoch', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            const metadata = state.doc.getMap<string>('problem-statement-canonical');
+            const epoch = metadata.get('epoch');
+            state.text.insert(state.text.length, ' saved and later unsent');
+            service.acknowledgeCanonicalSave(42, 'base saved', state.doc);
+            expect(state.text.toString()).toBe('base saved and later unsent');
+            expect(metadata.get('content')).toBe('base saved');
+            expect(metadata.get('epoch')).toBe(epoch);
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenLastCalledWith(42, expect.objectContaining({ documentEpoch: epoch }));
+        });
+
+        it('answers a queued new-baseline bootstrap after the Save acknowledgement', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                requestId: 'fresh-peer',
+                canonicalBase: 'saved',
+            });
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(42, expect.objectContaining({ responseTo: 'fresh-peer' }));
+            service.acknowledgeCanonicalSave(42, 'saved', state.doc);
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(42, expect.objectContaining({ responseTo: 'fresh-peer', documentEpoch: expect.any(String) }));
+        });
+
+        it('does not accept a delayed Save acknowledgement after the same exercise was reinitialized', () => {
+            const old = initIsolated('old');
+            vi.advanceTimersByTime(500);
+            const current = initIsolated('new');
+            vi.advanceTimersByTime(500);
+            service.acknowledgeCanonicalSave(42, 'old saved', old.doc);
+            expect(current.doc.getMap('problem-statement-canonical').get('content')).toBe('new');
+        });
+
+        it('compares the full canonical statement beyond ten thousand characters', () => {
+            const canonical = 'x'.repeat(12000) + 'new';
+            const state = initIsolated(canonical);
+            const stale = peerDocument('x'.repeat(12000) + 'old', 'wrong', 'old-epoch');
+            respond(stale, 'x'.repeat(12000) + 'old', 'old-epoch');
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe(canonical);
+            stale.destroy();
+        });
+
+        it('rejects live foreign updates after bootstrap', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            const stale = peerDocument('old', 'foreign', 'old-epoch');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                documentEpoch: 'old-epoch',
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stale)),
+            });
+            expect(state.text.toString()).toBe('base');
+            stale.destroy();
+        });
+
+        it('rejects an envelope that disagrees with the encoded canonical metadata', () => {
+            const state = initIsolated('new');
+            const stale = peerDocument('old', 'wrong', 'old-epoch');
+            respond(stale, 'new', 'old-epoch');
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('new');
+            stale.destroy();
+        });
+
+        it('accepts a compatible late bootstrap without merging independently seeded text', () => {
+            initIsolated('base');
+            vi.advanceTimersByTime(500);
+            const replaced = vi.fn();
+            const subscription = service.stateReplaced$.subscribe(replaced);
+            const peer = peerDocument('base', 'shared unsent', 'existing-epoch');
+            respond(peer, 'base', 'existing-epoch');
+            expect(replaced).toHaveBeenCalledOnce();
+            expect(replaced.mock.calls[0][0].text.toString()).toBe('shared unsent');
+            subscription.unsubscribe();
+            peer.destroy();
+        });
+
+        it('does not discard a local unsent edit when a compatible bootstrap arrives late', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            state.text.insert(state.text.length, ' local unsent');
+            const peer = peerDocument('base', 'other unsent', 'existing-epoch');
+            const replaced = vi.fn();
+            const subscription = service.stateReplaced$.subscribe(replaced);
+            respond(peer, 'base', 'existing-epoch');
+            expect(state.text.toString()).toBe('base local unsent');
+            expect(replaced).not.toHaveBeenCalled();
+            subscription.unsubscribe();
+            peer.destroy();
+        });
+
+        it('drops a malformed full snapshot without breaking bootstrap', () => {
+            const state = initIsolated('base');
+            const request = syncService.sendSynchronizationUpdate.mock.calls.find(
+                ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            )?.[1] as { requestId: string };
+            expect(() =>
+                incomingMessages$.next({
+                    eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                    target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                    responseTo: request.requestId,
+                    documentEpoch: 'invalid',
+                    yjsUpdate: 'invalid-base64',
+                    leaderTimestamp: 1,
+                }),
+            ).not.toThrow();
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('base');
+        });
+
+        it('clears deferred canonical requests when the editor is reset', () => {
+            initIsolated('base');
+            vi.advanceTimersByTime(500);
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                requestId: 'old-request',
+                canonicalBase: 'saved',
+            });
+            service.reset();
+            const state = service.init(43, 'base', true);
+            vi.advanceTimersByTime(500);
+            syncService.sendSynchronizationUpdate.mockClear();
+            service.acknowledgeCanonicalSave(43, 'saved', state.doc);
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(43, expect.objectContaining({ responseTo: 'old-request' }));
+        });
+
+        it('bounds deferred requests by count and retained canonical characters', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            for (let i = 0; i < 70; i++) {
+                incomingMessages$.next({
+                    eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+                    target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                    requestId: `request-${i}`,
+                    canonicalBase: 'saved',
+                });
+            }
+            syncService.sendSynchronizationUpdate.mockClear();
+            service.acknowledgeCanonicalSave(42, 'saved', state.doc);
+            const replies = syncService.sendSynchronizationUpdate.mock.calls.filter(
+                ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            );
+            expect(replies).toHaveLength(64);
+            expect(replies[0][1]).toEqual(expect.objectContaining({ responseTo: 'request-6' }));
+            const large = 'x'.repeat(131072);
+            for (let i = 0; i < 3; i++) {
+                incomingMessages$.next({
+                    eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+                    target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                    requestId: `large-${i}`,
+                    canonicalBase: large,
+                });
+            }
+            syncService.sendSynchronizationUpdate.mockClear();
+            service.acknowledgeCanonicalSave(42, large, state.doc);
+            const largeReplies = syncService.sendSynchronizationUpdate.mock.calls.filter(
+                ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            );
+            expect(largeReplies).toHaveLength(2);
+            expect(largeReplies[0][1]).toEqual(expect.objectContaining({ responseTo: 'large-1' }));
+        });
+
+        it('uses a normalized empty canonical baseline and ignores unversioned peers', () => {
+            const state = initIsolated('');
+            const legacy = new Y.Doc();
+            legacy.getText('problem-statement').insert(0, 'old legacy text');
+            respond(legacy, '', 'missing-epoch');
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('');
+            expect(state.doc.getMap('problem-statement-canonical').get('content')).toBe('');
+            legacy.destroy();
+        });
+
+        it('does not let a late bootstrap restore the pre-Save canonical baseline', () => {
+            const state = initIsolated('base');
+            vi.advanceTimersByTime(500);
+            service.acknowledgeCanonicalSave(42, 'saved', state.doc);
+            const old = peerDocument('base', 'obsolete draft', 'old-epoch');
+            const replaced = vi.fn();
+            const subscription = service.stateReplaced$.subscribe(replaced);
+            respond(old, 'base', 'old-epoch');
+            expect(replaced).not.toHaveBeenCalled();
+            expect(state.doc.getMap('problem-statement-canonical').get('content')).toBe('saved');
+            subscription.unsubscribe();
+            old.destroy();
+        });
+
+        it('does not let an old clean peer replace the saved canonical statement', () => {
+            const state = initIsolated('saved new statement');
+            const stale = peerDocument('saved old statement', 'saved old statement', 'old-epoch');
+            respond(stale, 'saved old statement', 'old-epoch');
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('saved new statement');
+            stale.destroy();
+        });
+
+        it('keeps genuinely unsaved collaboration from the same canonical base', () => {
+            const state = initIsolated('saved statement');
+            const current = peerDocument('saved statement', 'shared unsaved draft', 'current-epoch');
+            respond(current, 'saved statement', 'current-epoch');
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('shared unsaved draft');
+            current.destroy();
+        });
+
+        it('does not merge buffered updates from an incompatible document epoch', () => {
+            const state = initIsolated('saved statement');
+            const current = peerDocument('saved statement', 'shared current draft', 'current-epoch');
+            const stale = peerDocument('old statement', 'old statement', 'old-epoch');
+            respond(current, 'saved statement', 'current-epoch');
+            incomingMessages$.next({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(stale)),
+                documentEpoch: 'old-epoch',
+            } as ExerciseEditorSyncEvent);
+            vi.advanceTimersByTime(500);
+            expect(state.text.toString()).toBe('shared current draft');
+            stale.destroy();
+            current.destroy();
+        });
+    });
+
     it('initializes synchronization and requests initial content', () => {
         service.init(42, 'Initial content');
 

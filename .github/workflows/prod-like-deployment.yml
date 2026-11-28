@@ -122,7 +122,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.14'
 
@@ -155,6 +155,8 @@ jobs:
       # it goes through the real public/load-balanced URL (all nodes, through nginx) rather than
       # a single node's actuator endpoint, and /management/health runs deeper checks (DB, disk
       # space, etc.) than /management/info's static build metadata.
+      # DEGRADED (HTTP 200) means that only an optional external system such as Athena, Pyris or Hermes is not available while the
+      # core works, so it counts as healthy here. DOWN (HTTP 503) of a critical component still fails the check.
       - name: Verify deployment health
         run: |
           for tool in curl jq; do
@@ -166,7 +168,7 @@ jobs:
 
           attempts=0
           max_attempts=30
-          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
+          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP" or .status == "DEGRADED"' > /dev/null; do
             attempts=$((attempts + 1))
             if [ "$attempts" -ge "$max_attempts" ]; then
               echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5-10 minutes, depending on how quickly each attempt fails) following deployment."

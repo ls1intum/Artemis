@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
@@ -265,7 +266,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
+        @WithMockUser(username = "student1", roles = "USER")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
             boolean isInstructor = false;
@@ -275,7 +276,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
+        @WithMockUser(username = "student1", roles = "USER")
         void testThrowsExceptionIfNotPublished() {
             studentExam.setSubmitted(true);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
@@ -286,12 +287,12 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = "instructor1", roles = "USER")
         void testDoesNotThrowExceptionForInstructors() {
             studentExam.setId(1L);
             studentExam.setSubmitted(false);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
-            studentExam.getExam().setTestExam(true); // test runs are an edge case where instructors want to have access before the publishing date of results
+            studentExam.getExam().setExamMode(ExamMode.TEST); // test runs are an edge case where instructors want to have access before the publishing date of results
             studentExam.setUser(instructor1);
             boolean isInstructor = true;
 

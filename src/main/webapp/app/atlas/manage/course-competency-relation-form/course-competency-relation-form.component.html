@@ -1,142 +1,85 @@
-<div class="course-competency-relation-form-container row gx-2 m-0 p-3 align-items-end">
-    <div class="form-group col m-0 ps-0 pe-2">
-        <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
-        <select
-            [ngClass]="{ 'border-danger': showCircularDependencyError() }"
-            class="form-select mt-1"
-            id="head"
-            name="head"
-            [ngModel]="headCompetencyId()"
-            (ngModelChange)="selectHeadCourseCompetency($event)"
+<div class="course-competency-relation-form-container p-4">
+    <div class="flex items-end gap-2">
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="tail"
+            [label]="'artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
         >
-            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
-            @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
-                <option [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
-            }
-        </select>
-    </div>
-    <div class="form-group col m-0 pe-2">
-        <label for="type" jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeLabel"></label>
-        <select [ngClass]="{ 'border-danger': showCircularDependencyError() }" class="form-select mt-1" id="type" name="type" [(ngModel)]="relationType">
-            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeDefaultOption"></option>
-            @for (relationType of competencyRelationType | keyvalue; track relationType) {
-                <option [value]="relationType.value" [jhiTranslate]="'artemisApp.courseCompetency.relations.relationTypes.' + relationType.value"></option>
-            }
-        </select>
-    </div>
-    <div class="form-group col m-0">
-        <label for="tail" jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel"></label>
-        <select
-            [ngClass]="{ 'border-danger': showCircularDependencyError() }"
-            class="form-select mt-1"
-            id="tail"
-            name="tail"
-            [ngModel]="tailCompetencyId()"
-            (ngModelChange)="selectTailCourseCompetency($event)"
-        >
-            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
-            @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
-                <option [disabled]="!isCourseCompetencySelectable(courseCompetency.id!)" [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
-            }
-        </select>
-    </div>
-    <div class="col-3 ps-2 pe-0 d-flex justify-content-end gap-2">
-        @if (shouldShowSuggestionsButton()) {
-            <jhi-button
-                [btnType]="ButtonType.WARNING"
-                [icon]="faLightbulb"
-                (onClick)="fetchSuggestions()"
-                [disabled]="isLoadingSuggestions()"
-                [isLoading]="isLoadingSuggestions()"
-                tooltip="artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip"
-                [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+            <tumaet-ui-select
+                name="tail"
+                optionLabel="title"
+                optionValue="id"
+                [options]="courseCompetencies()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption' | artemisTranslate"
+                [ngModel]="tailCompetencyId()"
+                (ngModelChange)="selectTailCourseCompetency($event)"
             />
-        }
-        @if (exactRelationAlreadyExists()) {
-            <button type="button" (click)="deleteRelation()" class="btn btn-danger">
-                @if (isLoading()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                }
-                <span jhiTranslate="artemisApp.courseCompetency.relations.form.deleteRelationButtonLabel"></span>
-            </button>
-        } @else if (relationAlreadyExists()) {
-            <button type="button" (click)="updateRelation()" class="btn btn-info" [disabled]="showCircularDependencyError()">
-                @if (isLoading()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                }
-                <span jhiTranslate="artemisApp.courseCompetency.relations.form.updateRelationButtonLabel"></span>
-            </button>
-        } @else {
-            <button
-                type="button"
-                (click)="createRelation()"
-                [disabled]="showCircularDependencyError() || !tailCompetencyId() || !headCompetencyId() || !relationType()"
-                class="btn btn-primary"
-            >
-                @if (isLoading()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                }
-                <span jhiTranslate="artemisApp.courseCompetency.relations.form.createRelationButtonLabel"></span>
-            </button>
-        }
+        </tumaet-ui-form-field>
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="type"
+            [label]="'artemisApp.courseCompetency.relations.form.relationTypeLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
+        >
+            <tumaet-ui-select
+                name="type"
+                optionLabel="label"
+                optionValue="value"
+                [options]="relationTypeOptions()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.relationTypeDefaultOption' | artemisTranslate"
+                [ngModel]="relationType()"
+                (ngModelChange)="relationType.set($event)"
+            />
+        </tumaet-ui-form-field>
+        <tumaet-ui-form-field
+            class="min-w-0 flex-1"
+            controlId="head"
+            [label]="'artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel' | artemisTranslate"
+            [invalid]="!!showCircularDependencyError()"
+        >
+            <tumaet-ui-select
+                name="head"
+                optionLabel="title"
+                optionValue="id"
+                [options]="headOptions()"
+                [placeholder]="'artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption' | artemisTranslate"
+                [ngModel]="headCompetencyId()"
+                (ngModelChange)="selectHeadCourseCompetency($event)"
+            />
+        </tumaet-ui-form-field>
+        <div class="flex w-1/4 shrink-0 justify-end gap-2">
+            @if (exactRelationAlreadyExists()) {
+                <button tumAetUiButton type="button" severity="danger" (click)="deleteRelation()">
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.deleteRelationButtonLabel"></span>
+                </button>
+            } @else if (relationAlreadyExists()) {
+                <button tumAetUiButton type="button" severity="info" (click)="updateRelation()" [disabled]="showCircularDependencyError()">
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.updateRelationButtonLabel"></span>
+                </button>
+            } @else {
+                <button
+                    tumAetUiButton
+                    type="button"
+                    severity="primary"
+                    (click)="createRelation()"
+                    [disabled]="showCircularDependencyError() || !tailCompetencyId() || !headCompetencyId() || !relationType()"
+                >
+                    @if (isLoading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    }
+                    <span jhiTranslate="artemisApp.courseCompetency.relations.form.createRelationButtonLabel"></span>
+                </button>
+            }
+        </div>
     </div>
     @if (showCircularDependencyError()) {
-        <small class="p-0 mt-2 text-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
+        <small class="mt-2 block text-state-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
     }
 </div>
-
-@if (suggestedRelations().length) {
-    <div class="p-3 pt-0 suggestions-scroll-container">
-        <div class="mb-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.aiSuggestionsTitle"></h6>
-            <jhi-button
-                [btnType]="ButtonType.PRIMARY"
-                (onClick)="addSelectedSuggestions()"
-                [disabled]="selectedSuggestionsCount() === 0 || isLoading()"
-                [isLoading]="isLoading()"
-                title="artemisApp.courseCompetency.relations.suggestions.addSelectedSuggestions"
-                class="mt-2"
-                data-testid="add-suggestions-button"
-            />
-        </div>
-        <div class="list-group">
-            @for (s of suggestedRelations(); track s; let i = $index) {
-                <div class="list-group-item">
-                    <div class="d-flex align-items-center">
-                        <input
-                            type="checkbox"
-                            class="form-check-input me-3"
-                            [checked]="isSuggestionSelected(i)"
-                            [disabled]="doesSuggestionAlreadyExist(s)"
-                            (change)="toggleSuggestionSelection(i); applySuggestion(s)"
-                            [id]="'suggestion-' + i"
-                        />
-                        <label
-                            class="flex-grow-1 mb-0"
-                            [class.cursor-pointer]="!doesSuggestionAlreadyExist(s)"
-                            [class.text-muted]="doesSuggestionAlreadyExist(s)"
-                            [for]="'suggestion-' + i"
-                        >
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ getCompetencyTitleById(s.head_id) }}</strong>
-                                    <span class="mx-1">→</span>
-                                    <strong>{{ getCompetencyTitleById(s.tail_id) }}</strong>
-                                    @if (doesSuggestionAlreadyExist(s)) {
-                                        <small class="text-muted ms-2" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.alreadyExists"></small>
-                                    }
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <small class="badge bg-secondary" [title]="'artemisApp.courseCompetency.relations.suggestions.aiTooltip'">
-                                        <span jhiTranslate="artemisApp.courseCompetency.relations.suggestions.aiBadge"></span>
-                                    </small>
-                                    <small [jhiTranslate]="'artemisApp.courseCompetency.relations.relationTypes.' + getUiRelationTypeKey(s)"></small>
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-}

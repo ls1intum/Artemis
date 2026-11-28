@@ -9,6 +9,8 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
+import { isImageSourceAllowed, setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {
@@ -42,6 +44,16 @@ describe('ProfileService', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             const infoUrl = 'management/info';
             expect(req.request.url).toEqual(infoUrl);
+        });
+
+        it('should hand the allowed image hosts to the markdown rendering', async () => {
+            const promise = service.loadProfileInfo();
+            httpMock.expectOne('management/info').flush({ ...expectedProfileInfo, allowedImageHosts: 'images.example.net' });
+            await promise;
+
+            expect(isImageSourceAllowed('https://images.example.net/a.png')).toBe(true);
+            expect(isImageSourceAllowed('https://other.example.org/a.png')).toBe(false);
+            setAllowedImageHosts(undefined);
         });
 
         it('should get the profile info', async () => {
@@ -98,6 +110,20 @@ describe('ProfileService', () => {
                 // @ts-ignore
                 service.profileInfo = {};
                 expect(service.isModuleFeatureActive(MODULE_FEATURE_ATLAS)).toBe(false);
+            });
+        });
+
+        describe('isGocastEnabled', () => {
+            it('should expose the published Gocast availability', () => {
+                // @ts-ignore
+                service.profileInfo = { gocastEnabled: true };
+                expect(service.isGocastEnabled()).toBe(true);
+            });
+
+            it('should default to unavailable when the server does not publish Gocast availability', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isGocastEnabled()).toBe(false);
             });
         });
 
@@ -160,5 +186,25 @@ describe('ProfileService', () => {
                 expect(service.isTestServer()).toBe(false);
             });
         });
+    });
+    it.each([
+        { name: 'a configured local Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL', expected: false },
+        { name: 'a configured cloud Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: false },
+        { name: 'no Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: false },
+        { name: 'the global flag and a cloud Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: true },
+        { name: 'the global flag without a Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: true },
+    ])('offers the shared local option only by the global flag with $name', async ({ localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation, expected }) => {
+        const loading = service.loadProfileInfo();
+        httpMock.expectOne('management/info').flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation });
+        await loading;
+        expect(service.isLLMDeploymentEnabled()).toBe(expected);
+    });
+    it('still opens the AI preferences page for a standalone Home provider', async () => {
+        const loading = service.loadProfileInfo();
+        httpMock
+            .expectOne('management/info')
+            .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL' });
+        await loading;
+        expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
     });
 });

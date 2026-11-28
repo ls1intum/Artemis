@@ -5,31 +5,45 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
-    styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorPrimengComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [
+        CategorySelectorComponent,
+        MarkdownEditorMonacoComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        FormsModule,
+        FaqConsistencyComponent,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+    ],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -78,7 +92,6 @@ export class FaqUpdateComponent implements OnInit {
     });
 
     // Icons
-    readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
     readonly faBan = faBan;
 
@@ -138,7 +151,7 @@ export class FaqUpdateComponent implements OnInit {
      */
     protected onSaveSuccess(faq: Faq) {
         if (!this.faq.id) {
-            this.faqService.find(this.courseId, faq.id!).subscribe({
+            this.faqService.findForManagement(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
                     this.isSaving.set(false);
                     const faqBody = response.body;
@@ -185,7 +198,7 @@ export class FaqUpdateComponent implements OnInit {
     }
 
     private loadCourseFaqCategories(courseId: number) {
-        loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, undefined, 'management').subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
         });
     }

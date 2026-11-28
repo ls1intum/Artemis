@@ -45,7 +45,7 @@ public interface CourseDefaultConfigurationsRepository {
         if (courseConfiguration != null) {
             updateCourseConfiguration(courseId, courseConfiguration.isGradeRelevant(), courseConfiguration.isDataRetentionHold(),
                     courseConfiguration.isPresentationAssessmentsEnabled(), courseConfiguration.isAutoOrchestratorEnabled(), courseConfiguration.getDebounceWindowSecondsOverride(),
-                    courseConfiguration.getMaxDailyOrchestrationOverride());
+                    courseConfiguration.getMaxDailyOrchestrationOverride(), courseConfiguration.getStudentWelcomeContext());
         }
     }
 
@@ -76,6 +76,7 @@ public interface CourseDefaultConfigurationsRepository {
      * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
      * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
      * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
+     * @param studentWelcomeContext          optional learning guidance for the student Home
      */
     @Modifying
     @Transactional // ok because of the update
@@ -83,13 +84,14 @@ public interface CourseDefaultConfigurationsRepository {
             UPDATE CourseConfiguration config
             SET config.gradeRelevant = :gradeRelevant, config.dataRetentionHold = :dataRetentionHold, config.autoOrchestratorEnabled = :autoOrchestratorEnabled,
                 config.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
-                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
+                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride,
+                config.studentWelcomeContext = :studentWelcomeContext
             WHERE config.course.id = :courseId
             """)
     void updateCourseConfiguration(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant, @Param("dataRetentionHold") boolean dataRetentionHold,
             @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
             @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
-            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
+            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride, @Param("studentWelcomeContext") @Nullable String studentWelcomeContext);
 
     /**
      * Creates the Athena settings of a newly stored course with every feature switched off.
@@ -119,7 +121,7 @@ public interface CourseDefaultConfigurationsRepository {
 
     /**
      * Inserts the default settings a stored course is missing, which is what a creation that failed half-way leaves behind.
-     * For a course that has all its settings this is five unlocked reads and nothing else.
+     * For a course that has all its settings this is six unlocked reads and nothing else.
      * <p>
      * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
      * saves repair the same course at the same moment, the unique key lets one insert win and the other finds the row
@@ -144,6 +146,9 @@ public interface CourseDefaultConfigurationsRepository {
         }
         if (!hasIrisCourseSettings(courseId)) {
             added += insertUnlessAlreadyThere(() -> initializeIrisCourseSettings(courseId), () -> hasIrisCourseSettings(courseId));
+        }
+        if (!hasHyperionCourseSettings(courseId)) {
+            added += insertUnlessAlreadyThere(() -> initializeHyperionCourseSettings(courseId), () -> hasHyperionCourseSettings(courseId));
         }
         return added;
     }
@@ -197,6 +202,13 @@ public interface CourseDefaultConfigurationsRepository {
             """)
     boolean hasIrisCourseSettings(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT COUNT(settings) > 0
+            FROM HyperionCourseSettingsEntity settings
+            WHERE settings.courseId = :courseId
+            """)
+    boolean hasHyperionCourseSettings(@Param("courseId") long courseId);
+
     /**
      * Creates the default LTI settings for a newly stored course, independently of whether online mode is enabled.
      *
@@ -235,4 +247,17 @@ public interface CourseDefaultConfigurationsRepository {
             VALUES (:courseId, '{"enabled":true,"variant":"default","supportLevel":"moderate"}')
             """, nativeQuery = true)
     void initializeIrisCourseSettings(@Param("courseId") long courseId);
+
+    /**
+     * Creates the Hyperion settings of a new course with the defaults of the quiz question pool.
+     *
+     * @param courseId the new course id
+     */
+    @Modifying
+    @Transactional // ok because of the insert
+    @Query(value = """
+            INSERT INTO hyperion_course_settings (course_id, settings)
+            VALUES (:courseId, '{"poolGenerationEnabled":false,"singleChoiceQuestionsPerLectureUnit":12,"multipleChoiceEnabled":false,"multipleChoiceQuestionsPerLectureUnit":12,"multipleChoiceMinCorrectOptions":1,"multipleChoiceMaxCorrectOptions":4,"easyPercent":20,"mediumPercent":50,"hardPercent":30}')
+            """, nativeQuery = true)
+    void initializeHyperionCourseSettings(@Param("courseId") long courseId);
 }

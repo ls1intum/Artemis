@@ -2,6 +2,7 @@
 id: dead-code
 title: Dead Code
 sidebar_label: Dead Code
+last_reviewed: 2026-11-18
 ---
 
 Artemis deletes code that nothing can reach. Two checks enforce this on every pull request, one for
@@ -10,7 +11,7 @@ the server and one for the client, and both are part of the required **All requi
 ## Why a check rather than an occasional cleanup
 
 Nothing else in the build can see dead code. Checkstyle covers Javadoc and braces, Modernizer covers
-legacy APIs, and SonarQube Cloud and Codacy report only *file-local* unused things: a private method,
+legacy APIs, and SonarQube Cloud reports only *file-local* unused things: a private method,
 a private field, a local variable. A public DTO, exception, pipe or component that no longer has a
 single caller passes every one of them.
 
@@ -80,7 +81,7 @@ class does not make it dead. And a `@Bean` method returning a type that is itsel
 `@Bean` method is named after the method, a scanned component after its decapitalized class name — so
 both are normally registered, and the application ends up with two beans of that type. Where the names
 do coincide, Artemis fails to start rather than picking a winner, because
-`spring.main.allow-bean-definition-overriding` is `false` in `config/application.yml`, so the collision
+`spring.main.allow-bean-definition-overriding` is `false` in `src/main/resources/config/application.yml`, so the collision
 is a `BeanDefinitionOverrideException` and not something that can hide. Either way the question is
 settled by provenance, like every other one here.
 

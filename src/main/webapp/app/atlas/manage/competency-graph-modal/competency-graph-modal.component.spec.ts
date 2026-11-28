@@ -5,14 +5,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MockProvider } from 'ng-mocks';
+import { TumAetUiDialogConfig, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { By } from '@angular/platform-browser';
-import { ScienceService } from 'app/foundation/science/science.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockComponent } from 'ng-mocks';
 
@@ -58,12 +55,7 @@ describe('CompetencyGraphModalComponent', () => {
                     provide: AlertService,
                     useClass: MockAlertService,
                 },
-                MockProvider(DynamicDialogRef),
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: { data: { learningPathId } },
-                },
-                MockProvider(ScienceService),
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: { learningPathId } }) },
             ],
         })
             .overrideComponent(CompetencyGraphModalComponent, {
@@ -114,13 +106,27 @@ describe('CompetencyGraphModalComponent', () => {
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 
-    it('should close modal', () => {
-        const closeSpy = vi.spyOn(component, 'closeModal');
-        const closeButton = fixture.debugElement.query(By.css('#close-button'));
-        closeButton.nativeElement.click();
+    it('should open the dialog with a translated title including the name', () => {
+        const open = vi.fn();
 
-        fixture.detectChanges();
+        CompetencyGraphModalComponent.openCompetencyGraphModal({ open } as unknown as TumAetUiDialogService, learningPathId, 'Alice');
 
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(open).toHaveBeenCalledOnce();
+        const options = open.mock.calls[0][1];
+        expect(options.size).toBe('large');
+        expect(options.data).toEqual({
+            learningPathId,
+            name: 'Alice',
+            headerKey: 'artemisApp.learningPath.competencyGraphModal.titleWithName',
+            headerParams: { name: 'Alice' },
+        });
+    });
+
+    it('should open the dialog with the plain title without a name', () => {
+        const open = vi.fn();
+
+        CompetencyGraphModalComponent.openCompetencyGraphModal({ open } as unknown as TumAetUiDialogService, learningPathId, undefined);
+
+        expect(open.mock.calls[0][1].data).toEqual({ learningPathId, name: undefined, headerKey: 'artemisApp.learningPath.competencyGraphModal.title' });
     });
 });

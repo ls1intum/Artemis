@@ -2,6 +2,7 @@
 id: client-theming
 title: Client Theming
 sidebar_label: Client Theming
+last_reviewed: 2026-11-23
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -12,8 +13,8 @@ Artemis supports light and dark themes. The active scheme is exposed as
 and embedded content share one framework-neutral signal.
 
 <Callout variant={CalloutVariant.danger}>
-    Verify every visual change in light and dark mode. Do not hard-code colors in component stylesheets, templates, or TypeScript. Do not introduce Bootstrap, PrimeNG, or
-    package-owned color properties as a shortcut.
+    Verify every visual change in light and dark mode. Do not hard-code colors in component stylesheets, templates, or TypeScript. Do not use package-owned color properties as a
+    shortcut.
 </Callout>
 
 For design intent and accessibility requirements, follow the
@@ -22,18 +23,17 @@ documents how Artemis implements those decisions.
 
 ## Theme architecture
 
-The theming boundary has four layers:
+The theming boundary has three layers:
 
-1. The light and dark SCSS variable files define Artemis semantic roles and compile them to CSS
-   custom properties.
+1. `content/css/themes/light.css` defines the Artemis semantic roles as CSS custom properties on the root
+   element; `themes/dark.css` overrides the roles whose value differs in the dark theme. Both are part of
+   the one global stylesheet. The theme service sets `data-theme` on the root element, and the selector
+   `:root[data-theme='dark']` of `dark.css` applies the dark values.
 2. `src/main/webapp/tailwind.css` exposes selected roles as semantic Tailwind utilities.
 3. The same file maps Artemis foundations and color roles to the public `--tumaet-ui-*` contract.
    TUM AET UI components consume only that package-owned contract.
-4. Bootstrap and PrimeNG receive compatible values while they remain in the application. They are
-   migration consumers, not the source of Artemis design decisions.
 
-This keeps one semantic source of truth while allowing legacy frameworks to leave independently.
-Do not reference Artemis properties from package source, and do not reference `--tumaet-ui-*`
+This keeps one semantic source of truth. Do not reference Artemis properties from package source, and do not reference `--tumaet-ui-*`
 directly from application components. Change the host mapping when a package-wide theme decision
 changes.
 
@@ -44,8 +44,9 @@ Use the first suitable option:
 1. **TUM AET UI component input or variant.** Use `severity`, `variant`, `size`, and other supported
    contracts instead of overriding component internals.
 2. **Semantic Tailwind utility.** Use one when Artemis owns the mapping, such as
-   `text-state-danger`. PrimeUI surface scales are not Artemis design tokens.
-3. **Artemis semantic CSS property.** Use an existing role in component SCSS or an irreducible
+   `text-state-danger`, `text-muted-color` or `border-surface`. The neutral `surface` scale
+   (`bg-surface-100`) is a primitive: prefer a role such as `bg-surface-raised`.
+3. **Artemis semantic CSS property.** Use an existing role in a component stylesheet or an irreducible
    dynamic style when a utility cannot express the requirement.
 4. **New semantic role.** Add one only when the concept recurs and no existing role has the correct
    meaning. Define both light and dark values and expose it to TUM AET UI only when it is a supported
@@ -83,15 +84,227 @@ Color must never be the only signal. Pair a state color with text, an icon, or a
 cue as required by
 [WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
 
+## Button intent and hierarchy
+
+Use TUM AET UI `severity` for an action's established functional category, and `variant`, placement,
+and grouping for its emphasis. These action families apply throughout Artemis. Keep the same action
+recognizable across course lists, exam exercise groups, details, dialogs, and other management areas.
+
+| Action category                                                   | Severity                   | Examples                                                                                                                                   |
+| ----------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Main workflow, work-area navigation, and creation                 | `primary` (blue)           | Create Exercise, Participations, Teams, quiz Batches, Add Batch; ordinary Save actions                                                     |
+| Authoring, configuration, and changes requiring attention         | `warn` (yellow)            | Edit, Edit in Editor, Grading, Edit Build Plan, Iris Settings, Create Variant, Edit Selected, Evaluate and Re-evaluate Quiz, Show Quiz Now |
+| Analytics and assessment                                          | `info` (cyan/teal)         | Statistics, Assessment Dashboard                                                                                                           |
+| Data transfer                                                     | `secondary` (neutral gray) | Import, Export, Export Results, Download Repository, Download Example Solution                                                             |
+| Preview, reference material, and positive execution or activation | `success` (green)          | Quiz Preview, Quiz Solution, Example Submissions, Start Quiz, Start Batch, Activate Submission Policy                                      |
+| Destructive, interrupting, or consequential bulk operation        | `danger` (red)             | Delete, reset participations, discard work, End Quiz Now, Re-evaluate All, Trigger All student builds                                      |
+| Supporting utilities and overflow controls                        | `secondary` (neutral gray) | More actions, deselect, ordinary Cancel/Close/Refresh; repository history, access log, Code                                                |
+
+Yellow authoring controls, cyan analysis controls, and green preview/reference controls are
+established action families. The color identifies the category of the action: green Preview opens a
+preview, and yellow Edit opens an editing workflow. Status messages, result icons, tags, and validation
+feedback retain their usual success, warning, error, and information meanings. Color is accompanied
+by the action label and icon.
+
+For a new action, first check its counterpart in the list, details, and exam context. Use that action
+family rather than choosing a different color because one page presents it as navigation and another
+presents it as a prominent button. Use blue for a new main workflow action and neutral for an ordinary
+supporting utility when no established family applies. Opening Edit is yellow; saving the form is a
+separate primary action. Keep destructive actions red even when they are secondary in the layout.
+The impact of an operation takes precedence over its general family: the programming grading page
+uses red for Re-evaluate All and Trigger All because they affect student results or run builds for
+the whole exercise. This differs from opening a yellow configuration or quiz re-evaluation workflow.
+
+Multiple blue navigation actions can appear together in an exercise-management toolbar. For forms
+and dialogs, prefer one main primary action and neutral alternatives. Equivalent utility actions share
+the same severity and variant: the repository toolbar uses neutral **Open Commit History**, **Open
+Access Log**, **Code**, and **Download Repository**, all at the same small size. Transfer is a distinct
+functional category that shares gray with other supporting utilities. Labels and import/export/download
+icons identify the operation. On exercise details, **Participations** remains blue,
+**Statistics** cyan, and **Edit** yellow according to their action families.
+
+Here, neutral means the `secondary` button's gray-toned background and theme-appropriate foreground:
+dark text in the light theme, light text in the dark theme. It is an enabled supporting action.
+Disabled state is a separate behavior, conveyed by disabled semantics and reduced emphasis; a gray
+button alone does not mean the action is unavailable.
+
+Use `variant="outlined"` or `variant="text"` to reduce emphasis without changing the action family.
+For example, Check Consistency uses an outlined primary action, Version History is a link, and Suggest
+Competencies uses a text action. Lighter/darker blue shades, outlines, and disabled styling are not
+additional action categories. Use `contrast` only when the surrounding surface requires the inverse
+theme treatment. Ordinary menu entries follow the menu component's presentation; moving an action
+into More actions does not require a colored button inside the menu.
+
+### Coverage and contextual differences
+
+The course list's `ExerciseActionsComponent` and the exam list's `ExamExerciseRowButtonsComponent`
+define matching colors for Participations/Teams, Edit/Edit in Editor/Create Variant, quiz
+Statistics/Preview/Solution/Re-evaluate, Example Submissions, and Delete. The programming details,
+`NonProgrammingExerciseDetailCommonActionsComponent`, and `QuizExerciseManageButtonsComponent`
+retain these categories. `QuizExerciseLifecycleButtonsComponent` is shared by the course list and
+quiz details, keeping Start green, Show Now yellow, and End Now red in both locations.
+
+The convention also covers lecture/tutorial/competency authoring, FAQ and communication controls,
+account settings, imports/exports, assessment configuration, and code-editor actions. Application
+source audits trace wrapper defaults and handlers as well as explicit severities. Selected-state
+controls, ordinary links, menu entries, and status indicators require their own semantics.
+
+Some labels need their context to determine the category:
+
+- **Import, export, and download:** standalone buttons use gray (`secondary`) for data transfer,
+  including dialog launchers, result/report exports, and repository archive downloads. Reserve cyan
+  for opening analytics and assessment views. Use the same transfer styling in the course list and
+  details. Quiz Export inside
+  More actions retains the menu component's presentation. Save or Confirm buttons keep the role of
+  their form or dialog rather than inheriting the launcher's color automatically.
+- **Start or retry:** starting a quiz or batch is green. Triggering or retrying an ordinary programming
+  build is blue. An instructor build that overrides a manual result is red. A Retry that only reloads
+  a failed view is a gray utility; an error state does not make the recovery action destructive.
+- **Preview or assess:** opening reference examples from exercise management is green. Starting a
+  tutor's assessment workflow can be a primary action on the assessment dashboard.
+- **Reset:** resetting student participations or saved code-analysis/test-case grading configuration
+  is destructive and red. Reset Filter only clears the current view and is gray. Trace whether a
+  reset writes to the server before choosing its severity.
+- **Edit and Save:** opening a content/configuration editor, including inline editing and AI
+  refinement, is yellow. Save/Create stays blue. A shared Create/Edit button changes severity with
+  its actual action. If Edit first deletes an existing example assessment, its destructive effect
+  takes precedence and the launcher and confirmation stay red.
+- **Cancel and Close:** ordinary form/dialog cancellation and closing a completed workflow are gray.
+  Cancelling a saved assessment or tutorial session, deleting a draft question, or discarding saved
+  content is red. Explicit Approve, Activate, or Save and Approve operations remain green.
+- **Selection:** blue selected tabs, filters, and pressed view controls express selection, not a new
+  action family. Keep those states distinct. On a colored selected row, use a solid semantic button
+  when its text/outlined version would not provide enough contrast.
+
+When changing a complete action group, preserve these shared meanings and resolve differences for
+the same action together. Avoid a broad recoloring of established workflows as a side effect of a
+single toolbar change.
+
+Use `size="small"` consistently within compact toolbars, including nested Code and download controls.
+Match the sizes within an existing form action group; the default size suits new standalone actions.
+Keep sufficient space between controls, allow the
+group to wrap on narrow screens, and retain accessible names when a visible label collapses to an icon.
+The existing `jhi-button` adapter maps `ButtonType.SECONDARY` and `ButtonSize.SMALL` to the same TUM AET UI
+secondary/small styling; new standalone controls should use the package directly.
+
+```html
+<div class="flex flex-wrap items-center gap-2">
+    <a tumAetUiButton severity="secondary" size="small" [routerLink]="historyRoute">
+        <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
+    </a>
+    <button tumAetUiButton severity="secondary" size="small" type="button" (click)="download()">
+        <span jhiTranslate="artemisApp.programmingExercise.export.downloadRepo"></span>
+    </button>
+</div>
+```
+
+Let the component select the paired foreground token for its background. Do not force white or black
+text, color the icon separately, or combine framework button classes with TUM AET UI. Verify normal,
+hover, focus, loading, and disabled states in both themes. Normal-size button text needs at least 4.5:1
+contrast. Labels, icons, confirmation dialogs, and disabled semantics carry the meaning alongside color.
+White text is not automatically more readable: yellow, green, or cyan surfaces can require a dark
+foreground. Use the theme's paired contrast token instead of selecting a text color by appearance.
+
+### Change the global button palette
+
+Edit the **Button palette** blocks in `packages/tum-aet-ui/themes.css`. The light and dark blocks
+are the source of truth for button colors. Every severity has three paired properties:
+
+| Property                                   | Used by                                   |
+| ------------------------------------------ | ----------------------------------------- |
+| `--tumaet-ui-button-<severity>-background` | Solid fill and colored borders            |
+| `--tumaet-ui-button-<severity>-contrast`   | Text/icons on the solid fill              |
+| `--tumaet-ui-button-<severity>-foreground` | Text/outlined buttons on the page surface |
+
+`<severity>` is `primary`, `secondary`, `success`, `info`, `warn`, `danger`, or `contrast`.
+`--tumaet-ui-button-secondary-border` controls the neutral outlined border. Focus and interaction
+emphasis use `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+`--tumaet-ui-button-active-overlay` in the same blocks.
+
+Most defaults alias existing semantic colors; primary has a contrast-checked fill/text pair that
+is independent of legacy host branding. In the light theme the Artemis application sets the solid success
+button (`--tumaet-ui-button-success-background` and `-contrast`) to a darker green with a white label,
+which stays above WCAG AA contrast, while the success status colour keeps its value. Override the button properties to adjust buttons
+without recoloring success/error messages, charts, status tags, or the rest of the brand palette.
+Always review the fill and its paired contrast color together; review text/outlined foregrounds
+against the actual surrounding surface. To customize a consuming application, declare unlayered
+light and dark overrides on the document element after loading the package stylesheet:
+
+```css
+:root,
+[data-theme='light'] {
+    --tumaet-ui-button-primary-background: #125293;
+    --tumaet-ui-button-primary-contrast: #fff;
+    --tumaet-ui-button-primary-foreground: #125293;
+}
+
+[data-theme='dark'] {
+    --tumaet-ui-button-primary-background: #8cb8e0;
+    --tumaet-ui-button-primary-contrast: #16191d;
+    --tumaet-ui-button-primary-foreground: #8cb8e0;
+}
+```
+
+TUM AET UI components/directives and the `jhi-button`/exercise-action adapters consume these roles.
+When changing a button, prefer a
+native `<button tumAetUiButton>` or `<a tumAetUiButton>` and migrate its adjacent action group to the
+same size, spacing, radius, and typography. Do not attach `tumAetUiButton` to an element already owned
+by an Angular component: the directive also renders a component. Attribute-selector adapters use
+the package's `tumAetUiButtonClasses()` helper on their existing native host instead.
+
+The **Actions / Button / Palette** Storybook story compares all families and variants. Its browser
+tests verify text contrast in both themes and that button-only overrides leave status colors alone.
+Run `pnpm --dir packages/tum-aet-ui run storybook:build` followed by
+`pnpm --dir packages/tum-aet-ui exec playwright test --config .storybook/playwright.config.ts button-palette.spec.ts`
+after editing the palette. Check the real affected pages, including hover/focus, disabled/loading,
+colored selected rows, and narrow layouts, before merging.
+
+### Automated button checks
+
+`localRules/enforce-button-intent` runs in the existing client ESLint CI check for external and inline
+application templates. It recognizes common action labels, resolving translation keys through the
+English catalog, and checks their severity across TUM AET UI, application adapters and transitional
+buttons. It also rejects local color classes/styles on native TUM buttons; use the component's
+severity, variant and size instead. Visible labels take precedence over tooltip text.
+For `<tumaet-ui-button>`, pass `ariaLabel` to name its native button; `aria-label` on the wrapper
+does not reach that button. The check rejects this mistake. Native `<button tumAetUiButton>` and
+`<a tumAetUiButton>` continue to use their normal `aria-label` attribute.
+
+For an opaque label, declare `data-button-intent` as `workflow`, `authoring`, `transfer`, `utility`,
+`analytics`, `positive` or `destructive`. The rule checks the corresponding severity. When context
+changes the usual meaning of a recognized label, add a static explanation:
+
+```html
+<button tumAetUiButton severity="danger" data-button-intent="destructive" data-button-intent-reason="Cancels the persisted assessment">Cancel assessment</button>
+```
+
+Do not recolor such an action merely to satisfy its label, or suppress the rule for a whole file.
+Selection is separate: semantic tabs/radio/switch controls are not action-family buttons; a custom
+mode chooser can declare `data-button-intent="selection"` with an explanation. A conditional green
+completion indicator is allowed when the same condition demonstrably disables the control; its
+enabled action still follows its family.
+
+When one control changes intent with its label, bind `attr.data-button-intent` using the same
+condition as its severity and explain the difference. For example, the quiz editor declares
+`pendingChangesCache() ? 'destructive' : 'utility'` alongside `pendingChangesCache() ? 'danger' :
+'secondary'`: Cancel discards edits, while Back only navigates. The rule checks corresponding
+branches rather than accepting an unordered set of colors; reversed or unrelated mappings fail.
+
+The rule does not infer arbitrary handler behavior, resolve computed component properties, or prove
+the meaning of every dynamic label. Keep focused behavioral tests and review for those cases. It
+complements the rendered light/dark palette/contrast tests rather than replacing browser testing.
+Run `pnpm run lint` and `pnpm run test:rules`; failures identify the button and required severity.
+
 ## Adding or changing a theme role
 
 Before adding a property, search the existing semantic roles and the
 [TUM AET UI theme contract](/developer/guidelines/tum-aet-ui-kit#theme-contract). If a new role is necessary:
 
 1. Name it after purpose rather than hue or a single screen.
-2. Add values to
-   `src/main/webapp/content/scss/themes/_default-variables.scss` and
-   `_dark-variables.scss`.
+2. Add the value to `src/main/webapp/content/css/themes/light.css`. Add a value to `themes/dark.css` only
+   if it differs in the dark theme. A role that follows another one refers to it
+   (`--link-item-color: var(--primary)`), so it follows that role in both themes and needs no value of its own in
+   `dark.css`.
 3. Check text and non-text contrast on every surface where the role is used.
 4. Add a semantic Tailwind mapping only when application markup needs a utility.
 5. Add a `--tumaet-ui-*` mapping only when package components need that supported customization
@@ -99,8 +312,9 @@ Before adding a property, search the existing semantic roles and the
 6. Verify the real component in both themes, compact layouts, forced-colors mode, and its relevant
    interaction states.
 
-Avoid theme-specific component selectors in `theme-default.scss` or `theme-dark.scss`. They are a
-last resort for legacy global integrations. A new application or TUM AET UI component should consume
+Avoid selectors that depend on the theme. `themes/dark-rules.css` holds the few global rules that only apply in
+the dark theme; it is a last resort for what a token cannot express. A component that needs one uses
+`:host-context([data-theme='dark'])`. A new application or TUM AET UI component should consume
 semantic properties instead.
 
 ## Reading and changing the active theme
@@ -114,10 +328,6 @@ private readonly themeService = inject(ThemeService);
 protected readonly isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
 ```
 
-Code that reads resolved CSS values after a stylesheet swap, such as a canvas chart, must also
-depend on `ThemeService.appliedThemeRevision`. This signal changes only after the selected theme
-stylesheet is active.
-
 Call `applyThemePreference()` only in response to an explicit user choice. Pass `undefined` to
 restore system-preference mode:
 
@@ -128,8 +338,8 @@ this.themeService.applyThemePreference(undefined);
 
 Do not subscribe manually to theme changes or mirror the current theme into a mutable field.
 
-## Migration coexistence
+## Cascade and source scanning
 
-Bootstrap is still global, and PrimeNG remains in screens whose TUM AET UI capability is incomplete.
-Their cascade and source-scanning constraints are documented in
+Element defaults live in `content/css/base.css`, in the cascade layer `base`, so a Tailwind utility overrides
+them. The stylesheets of application components are not in a layer and win over Tailwind utilities. Tailwind scans only the folders listed in `tailwind.css`. Both constraints are documented in
 [Client Development: Styling](/developer/guidelines/client-development#styling).

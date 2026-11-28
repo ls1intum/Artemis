@@ -24,6 +24,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                 class="enabled-toggle-btn"
                 [class.enabled-toggle-btn--active-on]="enabled()"
                 [attr.aria-pressed]="enabled()"
+                [disabled]="disabled()"
                 [attr.data-testid]="testId() ? testId() + '-enable' : undefined"
                 (click)="enabledChange.emit(true)"
             >
@@ -35,6 +36,7 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
                 class="enabled-toggle-btn"
                 [class.enabled-toggle-btn--active-off]="!enabled()"
                 [attr.aria-pressed]="!enabled()"
+                [disabled]="disabled()"
                 [attr.data-testid]="testId() ? testId() + '-disable' : undefined"
                 (click)="enabledChange.emit(false)"
             >
@@ -48,15 +50,16 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
             :host {
                 display: block;
                 width: 100%;
-
-                // The control is sized by the panel around it, not by the viewport: on a phone the
-                // app shell leaves a panel about 200px, less than the buttons want at full padding.
+                /*
+                 * The control is sized by the panel around it, not by the viewport: on a phone the
+                 * app shell leaves a panel about 200px, less than the buttons want at full padding.
+                 */
                 container-type: inline-size;
             }
 
             .enabled-toggle-group {
                 display: flex;
-                border: 1px solid var(--p-content-border-color);
+                border: 1px solid var(--tumaet-ui-border-color);
                 border-radius: 0.625rem;
                 overflow: hidden;
             }
@@ -64,41 +67,46 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
             .enabled-toggle-btn {
                 flex: 1;
                 min-width: 0;
-
-                // The icon sits next to its label rather than above it, and the pair
-                // stays centred as the two buttons share the width between them. Only
-                // when even the narrow padding below leaves too little room does the
-                // icon wrap above its label, since the group clips what overflows it.
+                /*
+                 * The icon sits next to its label rather than above it, and the pair
+                 * stays centred as the two buttons share the width between them. Only
+                 * when even the narrow padding below leaves too little room does the
+                 * icon wrap above its label, since the group clips what overflows it.
+                 */
                 display: inline-flex;
                 flex-wrap: wrap;
                 align-items: center;
                 justify-content: center;
                 gap: 0.15rem 0.4rem;
-
                 padding: 0.5rem 1rem;
                 border: none;
-                background: var(--overview-card-nested-bg, var(--p-content-background));
-                color: var(--p-text-muted-color);
+                background: var(--overview-card-nested-bg, var(--tumaet-ui-content-background));
+                color: var(--tumaet-ui-muted-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 cursor: pointer;
                 transition: all 0.2s ease;
+            }
 
-                &:first-child {
-                    border-right: 1px solid var(--p-content-border-color);
-                }
+            .enabled-toggle-btn:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
 
-                &--active-on {
-                    background: var(--tumaet-ui-state-success);
-                    color: var(--tumaet-ui-state-success-contrast);
-                    font-weight: 600;
-                }
+            .enabled-toggle-btn:first-child {
+                border-right: 1px solid var(--tumaet-ui-border-color);
+            }
 
-                &--active-off {
-                    background: var(--tumaet-ui-state-danger);
-                    color: var(--tumaet-ui-state-danger-contrast);
-                    font-weight: 600;
-                }
+            .enabled-toggle-btn--active-on {
+                background: var(--tumaet-ui-state-success);
+                color: var(--tumaet-ui-state-success-contrast);
+                font-weight: 600;
+            }
+
+            .enabled-toggle-btn--active-off {
+                background: var(--tumaet-ui-state-danger);
+                color: var(--tumaet-ui-state-danger-contrast);
+                font-weight: 600;
             }
 
             @container (max-width: 240px) {
@@ -118,6 +126,8 @@ export class EnabledToggleComponent {
     readonly ariaLabel = input<string>();
     /** When set, the two buttons get `<testId>-enable` and `<testId>-disable` as their test ids. */
     readonly testId = input<string>();
+    /** Blocks both buttons, e.g. while the state they would switch is still loading. */
+    readonly disabled = input(false);
 
     readonly enabledChange = output<boolean>();
 }

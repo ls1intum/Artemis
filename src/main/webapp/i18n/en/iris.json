@@ -237,7 +237,12 @@
                 "questionOf": "Question {{ current }} of {{ total }}",
                 "viewScore": "View Score",
                 "reviewQuestions": "Review Questions",
-                "score": "Score"
+                "score": "Score",
+                "previousQuestion": "Previous question",
+                "nextQuestion": "Next question",
+                "questionCorrect": "Question {{ number }}: answered correctly",
+                "questionIncorrect": "Question {{ number }}: answered incorrectly",
+                "questionUnanswered": "Question {{ number }}: not submitted"
             },
             "citation": {
                 "unitLabel": "Unit:",
@@ -246,7 +251,9 @@
                     "stale": "The cited material has changed since this answer was written, so the exact page or timestamp is not opened.",
                     "gone": "The cited material no longer exists, so the exact page or timestamp cannot be opened.",
                     "unverified": "The cited material cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
-                }
+                },
+                "previous": "Previous citation",
+                "next": "Next citation"
             },
             "contextSelection": {
                 "label": "Select chat context",
@@ -259,7 +266,10 @@
                 "chatTopicCleared": "Chat topic cleared",
                 "chatTopicSwitched": "Chat topic switched:",
                 "addContextTooltip": "Select lecture or exercise",
-                "tutorSuggestionContext": "Tutor suggestion"
+                "tutorSuggestionContext": "Tutor suggestion",
+                "searchLabel": "Search lectures and exercises",
+                "removeContext": "Remove chat context",
+                "noResults": "No results found"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
@@ -269,10 +279,10 @@
             "activities": {
                 "liveLabel": "Current Iris activity",
                 "trailLabel": "Iris activity trail",
-                "trailSummarySingular": "Thought process: {{ count }} tool used · {{ duration }}s",
-                "trailSummaryPlural": "Thought process: {{ count }} tools used · {{ duration }}s",
-                "trailSummaryWithoutDurationSingular": "Thought process: {{ count }} tool used",
-                "trailSummaryWithoutDurationPlural": "Thought process: {{ count }} tools used",
+                "trailSummarySingular": "Used {{ count }} tool · {{ duration }}s",
+                "trailSummaryPlural": "Used {{ count }} tools · {{ duration }}s",
+                "trailSummaryWithoutDurationSingular": "Used {{ count }} tool",
+                "trailSummaryWithoutDurationPlural": "Used {{ count }} tools",
                 "states": {
                     "running": "In progress",
                     "finished": "Done",
@@ -356,7 +366,8 @@
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
                 "sessionMenuAriaLabel": "Chat session actions",
-                "switchSession": "Switch chat session"
+                "switchSession": "Switch chat session",
+                "closeChat": "Close chat"
             },
             "aboutIrisModal": {
                 "learnMore": "Learn more",
@@ -384,49 +395,8 @@
                 "tryIris": "Try Iris",
                 "close": "Close"
             },
-            "memories": {
-                "title": "Memories",
-                "loadingList": "Loading memories...",
-                "empty": "No memories found.",
-                "delete": "Delete",
-                "deleting": "Deleting...",
-                "indicator": {
-                    "usedSingular": "1 memory used",
-                    "usedPlural": "{{count}} memories used",
-                    "createdSingular": "1 created",
-                    "createdPlural": "{{count}} created",
-                    "compactUsed": "{{count}} used",
-                    "compactCreated": "{{count}} created",
-                    "usedSectionTitle": "Used memories",
-                    "createdSectionTitle": "Created memories"
-                },
-                "conflict": {
-                    "warning": "There are conflicts between memories that need to be resolved.",
-                    "resolve": "Resolve",
-                    "modalTitle": "Resolve Memory Conflicts",
-                    "noConflicts": "No conflicts.",
-                    "conflictCount": "Conflict {{ current }} of {{ total }}",
-                    "keepThis": "Keep this",
-                    "previous": "Previous",
-                    "next": "Next",
-                    "memoryId": "ID"
-                },
-                "details": {
-                    "loading": "Loading details...",
-                    "learnings": "Learnings",
-                    "connections": "Connections",
-                    "reference": "Reference",
-                    "memories": "Memories",
-                    "weight": "Weight",
-                    "none": "None",
-                    "noDetails": "No details available."
-                },
-                "error": {
-                    "loadFailed": "Failed to load memories.",
-                    "deleteFailed": "Failed to delete memory.",
-                    "detailsLoadFailed": "Failed to load memory details."
-                }
-            }
+            "logoAlt": "Iris logo",
+            "logoButtonLabel": "Iris"
         },
         "pyrisSearchAskRequest": {
             "limit": "limit"

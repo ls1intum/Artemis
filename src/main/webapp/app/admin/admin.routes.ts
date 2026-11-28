@@ -1,3 +1,5 @@
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { AiGenerationGuard } from 'app/hyperion/admin/ai-generation.guard';
 import { CanActivateFn, Router, Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -17,6 +19,7 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
 import { AdminContainerComponent } from 'app/admin/admin-container/admin-container.component';
+import { adminScienceGuard } from 'app/admin/science/admin-science.guard';
 
 /**
  * Only allow the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance;
@@ -58,6 +61,15 @@ const childRoutes: Routes = [
         },
     },
     {
+        path: 'science',
+        loadComponent: () => import('app/admin/science/admin-science.component').then((m) => m.AdminScienceComponent),
+        data: {
+            pageTitle: 'artemisApp.admin.science.title',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+        canActivate: [adminScienceGuard],
+    },
+    {
         path: 'health',
         loadComponent: () => import('app/admin/health/health.component').then((m) => m.HealthComponent),
         data: {
@@ -97,6 +109,13 @@ const childRoutes: Routes = [
         loadComponent: () => import('app/admin/feature-usage/feature-usage.component').then((m) => m.FeatureUsageComponent),
         data: {
             pageTitle: 'artemisApp.featureUsage.title',
+        },
+    },
+    {
+        path: 'error-analysis',
+        loadComponent: () => import('app/admin/error-analysis/error-analysis.component').then((m) => m.ErrorAnalysisComponent),
+        data: {
+            pageTitle: 'artemisApp.errorAnalysis.title',
         },
     },
     {
@@ -199,6 +218,17 @@ const childRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_SUPER_ADMIN,
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
+        },
+    },
+    { path: 'ai-workers', redirectTo: 'ai-generation', pathMatch: 'full' },
+    { path: 'hyperion-generations', redirectTo: 'ai-generation', pathMatch: 'full' },
+    {
+        path: 'ai-generation',
+        canActivate: [UserRouteAccessService, AiGenerationGuard],
+        loadComponent: () => import('app/hyperion/admin/hyperion-generations.component').then((m) => m.HyperionGenerationsComponent),
+        data: {
+            pageTitle: 'artemisApp.hyperion.workers.title',
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {

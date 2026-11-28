@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { LegalDocumentFragmentDirective } from './legal-document-fragment.directive';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
@@ -19,8 +20,7 @@ import { switchMap } from 'rxjs';
     `,
     imports: [TranslateDirective, RouterLink, MarkdownDirective],
 })
-export class PrivacyComponent implements AfterViewInit, OnInit {
-    private readonly route = inject(ActivatedRoute);
+export class PrivacyComponent extends LegalDocumentFragmentDirective implements OnInit {
     private readonly legalDocumentService = inject(LegalDocumentService);
     private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly accountService = inject(AccountService);
@@ -28,7 +28,6 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
 
     readonly privacyStatement = signal<string | undefined>(undefined);
     readonly isAuthenticated = signal(false);
-    private currentFragmentId: string | undefined;
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -42,42 +41,5 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((statement) => this.privacyStatement.set(statement.text));
-    }
-
-    /**
-     * After view initialization scroll the fragment of the current route into view.
-     */
-    ngAfterViewInit(): void {
-        this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragmentId) => {
-            this.currentFragmentId = fragmentId ?? undefined;
-            this.scrollToFragment(this.currentFragmentId);
-        });
-    }
-
-    /** Re-attempt fragment scrolling once the lazy markdown pipeline has produced the document. */
-    protected onMarkdownRendered(): void {
-        this.scrollToFragment(this.currentFragmentId);
-    }
-
-    /**
-     * Scrolls to the anchor with the given id. The privacy statement is rendered asynchronously (HTTP load +
-     * lazy markdown rendering), so the anchor may not exist yet; retry over a few animation frames until it does.
-     */
-    private scrollToFragment(fragmentId: string | undefined, attemptsLeft = 20): void {
-        if (!fragmentId) {
-            return;
-        }
-        try {
-            const fragment = document.querySelector('#' + fragmentId);
-            if (fragment !== null) {
-                fragment.scrollIntoView();
-                return;
-            }
-        } catch (e) {
-            return; // invalid selector — nothing to scroll to
-        }
-        if (attemptsLeft > 0) {
-            requestAnimationFrame(() => this.scrollToFragment(fragmentId, attemptsLeft - 1));
-        }
     }
 }

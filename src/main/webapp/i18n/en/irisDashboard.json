@@ -5,6 +5,7 @@
             "loading": "Loading...",
             "error": "Failed to load dashboard data. Please try again.",
             "timeSpanSelectorAriaLabel": "Time span shown in the dashboard",
+            "aiSelectionSelectorAriaLabel": "AI selection of the users shown in the dashboard",
             "refresh": "Refresh",
             "totalSessions": "Total Sessions",
             "activeSessions": "Active Sessions",
@@ -20,7 +21,7 @@
             "absolute": "Absolute",
             "avgResponseTime": "Avg Response Time",
             "p50p95": "P50 / P95",
-            "tokenCost": "Token Cost",
+            "tokenCost": "Token Cost (USD)",
             "help": {
                 "totalSessions": "Total number of Iris chat sessions created during the selected time range (includes course/exercise chats and tutor-suggestion sessions).",
                 "activeSessions": "Sessions created in the selected time range that received at least one user message.",
@@ -35,7 +36,7 @@
                 "sessionsWithThumbsDown": "Number of distinct sessions with at least one thumbs-down rating.",
                 "avgResponseTime": "Average time between a user message and the following Iris response, in seconds.",
                 "p50p95": "Median (P50) and 95th-percentile (P95) response time between a user message and the following Iris response, in seconds.",
-                "tokenCost": "Estimated LLM token cost attributed to Iris during the selected time range, in euros (sum of input and output token costs)."
+                "tokenCost": "LLM costs attributed to Iris during the selected time range, in USD. Reported provider costs take precedence over configured USD estimates. Requests without USD pricing, including older records, are excluded and counted separately."
             },
             "breakdown": {
                 "byChatMode": "By Chat Mode",
@@ -46,9 +47,9 @@
                 "messages": "Messages",
                 "noResponseRate": "No-Response Rate",
                 "course": "Course",
-                "costEur": "Cost (EUR)",
                 "model": "Model",
-                "totalTokens": "Total Tokens"
+                "totalTokens": "Total Tokens",
+                "costUsd": "Cost (USD)"
             },
             "config": "Configuration (Read-Only)",
             "timeSpan": {
@@ -56,7 +57,15 @@
                 "week": "Week",
                 "month": "Month",
                 "quarter": "Quarter"
-            }
+            },
+            "aiSelection": {
+                "all": "All users",
+                "cloud": "Cloud AI only",
+                "local": "Local AI only",
+                "hint": "Only users whose current AI selection matches are counted. Artemis does not store which AI was used for each message, so a user who changed the selection is counted under the current choice for all of their sessions, messages and token costs."
+            },
+            "costNotPriced": "No USD cost available",
+            "unpricedRequests": "Requests without USD pricing: {{ count }}. Excluded from the total."
         }
     }
 }

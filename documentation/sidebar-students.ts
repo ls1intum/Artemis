@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'getting-started/general',
                 'getting-started/courses',
+                'getting-started/account',
                 'getting-started/user-experience',
                 'getting-started/mobile-applications',
             ],
@@ -75,6 +76,7 @@ const sidebars: SidebarsConfig = {
                 'progress-analytics/learning-analytics',
                 'progress-analytics/adaptive-learning',
                 'progress-analytics/calendar',
+                'progress-analytics/science-data-collection',
             ],
         },
         {
@@ -84,6 +86,21 @@ const sidebars: SidebarsConfig = {
             items: [
                 'tools-reference/markdown-support',
                 'tools-reference/integrated-code-lifecycle',
+                {
+                    type: 'category',
+                    label: 'VS Code Extension',
+                    link: {
+                        type: 'doc',
+                        id: 'tools-reference/vscode-extension/index',
+                    },
+                    items: [
+                        'tools-reference/vscode-extension/sign-in',
+                        'tools-reference/vscode-extension/courses-and-exercises',
+                        'tools-reference/vscode-extension/work-on-an-exercise',
+                        'tools-reference/vscode-extension/iris',
+                        'tools-reference/vscode-extension/settings-and-commands',
+                    ],
+                },
                 'tools-reference/exports',
             ],
         },

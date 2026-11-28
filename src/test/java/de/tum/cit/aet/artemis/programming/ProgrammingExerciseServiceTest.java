@@ -48,7 +48,7 @@ class ProgrammingExerciseServiceTest extends AbstractProgrammingIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldFindProgrammingExerciseWithBuildAndTestDateInFuture() {
         programmingExercise1.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise1);

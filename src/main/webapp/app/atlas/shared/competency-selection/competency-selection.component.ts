@@ -1,7 +1,6 @@
 import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
-import { HttpClient } from '@angular/common/http';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     CompetencyLearningObjectLink,
     CourseCompetency,
@@ -14,26 +13,20 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-/**
- * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
- */
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
-    styleUrls: ['./competency-selection.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -41,30 +34,20 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
-    imports: [
-        FaStackComponent,
-        NgbTooltip,
-        FaIconComponent,
-        FaStackItemSizeDirective,
-        FormsModule,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-        FeatureToggleHideDirective,
-        ButtonComponent,
-    ],
+    imports: [TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective, FaIconComponent, FormsModule, ArtemisTranslatePipe],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private profileService = inject(ProfileService);
-    private http = inject(HttpClient);
+    private translateService = inject(TranslateService);
 
     labelName = input<string>('');
     labelTooltip = input<string>('');
-    exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
+    availableCount = output<number>();
 
     readonly disabled = signal(false);
     // selected competencies
@@ -72,21 +55,15 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // all course competencies
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isLoading = signal(false);
-    readonly isSuggesting = signal(false);
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
-    suggestedCompetencyIds = new Set<number>();
     /** Pending links received via refreshWithLinks before competency loading finished. */
     private pendingRefreshLinks?: CompetencyLearningObjectLink[];
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
-    faStar = faStar;
-    faLightbulb = faLightbulb;
-
-    protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
+    private onTouched = () => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
@@ -95,13 +72,20 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    protected get weightOptions() {
+        return [
+            { value: LOW_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.low') },
+            { value: MEDIUM_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.medium') },
+            { value: HIGH_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.high') },
+        ];
+    }
 
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             this.initialize();
+        } else {
+            this.availableCount.emit(0);
         }
     }
 
@@ -113,29 +97,21 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading.set(true);
-                this.courseCompetencyService
-                    .getAllForCourse(courseId)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading.set(false);
-                        }),
-                    )
-                    .subscribe({
-                        next: (response) => {
-                            this.setCompetencyLinks(response.body!);
-                            // Apply any links that arrived via refreshWithLinks() while still loading
-                            if (this.pendingRefreshLinks) {
-                                this.refreshWithLinks(this.pendingRefreshLinks);
-                                this.pendingRefreshLinks = undefined;
-                            } else {
-                                this.writeValue(this.selectedCompetencyLinks);
-                            }
-                        },
-                        error: () => {
-                            this.disabled.set(true);
-                        },
-                    });
+                this.courseCompetencyService.getAllForCourse(courseId).subscribe({
+                    next: (response) => {
+                        this.setCompetencyLinks(response.body!);
+                        // Apply links received while the request was pending.
+                        if (this.pendingRefreshLinks) {
+                            this.refreshWithLinks(this.pendingRefreshLinks);
+                            this.pendingRefreshLinks = undefined;
+                        } else {
+                            this.writeValue(this.selectedCompetencyLinks);
+                        }
+                    },
+                    error: () => {
+                        this.disabled.set(true);
+                    },
+                });
             }
         }
     }
@@ -145,6 +121,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
      * @param competencies The competencies of the course
      */
     setCompetencyLinks(competencies: CourseCompetency[]) {
+        this.availableCount.emit(competencies.length);
         const competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;
@@ -180,6 +157,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                 this.selectedCompetencyLinks = undefined;
             }
 
+            this.onTouched();
             this._onChange(this.selectedCompetencyLinks);
             this.valueChange.emit(this.selectedCompetencyLinks);
         }
@@ -188,6 +166,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
         link.weight = value;
 
+        this.onTouched();
         this._onChange(this.selectedCompetencyLinks);
         this.valueChange.emit(this.selectedCompetencyLinks);
     }
@@ -212,6 +191,17 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             this.selectedCompetencyLinks = competencyLinks.filter((competencyLink) => ids.includes(competencyLink.competency?.id));
         } else {
             this.selectedCompetencyLinks = value ?? [];
+        }
+        if (competencyLinks) {
+            const selectedIds = new Set(this.selectedCompetencyLinks.map((link) => link.competency?.id));
+            this.checkboxStates.set(
+                competencyLinks.reduce<Record<number, boolean>>((states, link) => {
+                    if (link.competency?.id) {
+                        states[link.competency.id] = selectedIds.has(link.competency.id);
+                    }
+                    return states;
+                }, {}),
+            );
         }
     }
 
@@ -239,7 +229,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             .filter((link) => link.competency?.id && !availableIds.has(link.competency.id))
             .map((link) => new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
         if (newLinks.length > 0) {
-            this.competencyLinks.set([...this.competencyLinks()!, ...newLinks]);
+            const updatedLinks = [...this.competencyLinks()!, ...newLinks];
+            this.competencyLinks.set(updatedLinks);
+            this.availableCount.emit(updatedLinks.length);
         }
 
         // Update selection state
@@ -266,63 +258,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this._onChange = fn;
     }
 
-    registerOnTouched(_fn: () => void): void {}
-
-    suggestCompetencies(): void {
-        if (!this.exerciseDescription()?.trim()) {
-            return;
-        }
-
-        this.isSuggesting.set(true);
-        this.suggestedCompetencyIds.clear();
-
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
-
-        this.http
-            .post<{ competencies: { id: number | string }[] }>('/api/atlas/competencies/suggest', requestBody)
-            .pipe(
-                finalize(() => {
-                    this.isSuggesting.set(false);
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    response.competencies.forEach((suggestion) => {
-                        const matchingLink = this.competencyLinks()?.find((link) => link.competency?.id === Number(suggestion.id));
-                        if (matchingLink?.competency?.id) {
-                            this.suggestedCompetencyIds.add(matchingLink.competency.id);
-                        }
-                    });
-                    this.sortCompetenciesBySuggestion();
-                },
-                error: (error) => {
-                    // console.error('Error getting competency suggestions:', error);
-                },
-            });
-    }
-
-    isSuggested(competencyId: number): boolean {
-        return this.suggestedCompetencyIds.has(competencyId);
-    }
-
-    sortCompetenciesBySuggestion(): void {
-        const competencyLinks = this.competencyLinks();
-        if (competencyLinks) {
-            // Sort a fresh copy and set it back so the template re-renders the new order under zoneless.
-            const sorted = [...competencyLinks].sort((a, b) => {
-                const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
-                const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
-
-                // Sort suggested competencies to the top
-                if (aIsSuggested && !bIsSuggested) return -1;
-                if (!aIsSuggested && bIsSuggested) return 1;
-
-                // Keep original order for items with same suggestion status
-                return 0;
-            });
-            this.competencyLinks.set(sorted);
-        }
+    registerOnTouched(fn: () => void): void {
+        this.onTouched = fn;
     }
 
     setDisabledState?(isDisabled: boolean): void {

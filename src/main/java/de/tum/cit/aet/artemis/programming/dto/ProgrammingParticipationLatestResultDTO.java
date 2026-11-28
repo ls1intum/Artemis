@@ -389,7 +389,7 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
      * ({@code authorities}, {@code organizations}, {@code savedPosts}, {@code tutorialGroupRegistrations} and
      * {@code learnerProfile}) are absent because they are all lazy and this route's fetch graph never initializes
      * them, so the entity payload dropped them under {@code NON_EMPTY} as well. The special-case scalars
-     * ({@code ltiCreated}, {@code memirisEnabled}, {@code resetDate}, {@code selectedLLMUsage} and its timestamp)
+     * ({@code ltiCreated}, {@code resetDate}, {@code selectedLLMUsage} and its timestamp)
      * moved off the entity into their own tables (#13546) and left the wire with them.
      *
      * @param id                        the user id

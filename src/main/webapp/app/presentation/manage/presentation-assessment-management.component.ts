@@ -5,37 +5,33 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableCellsLarge, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiDialogComponent,
-    TumAetUiIconFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPaginatorComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import {
     PresentationAssessment,
     PresentationAssessmentInstance,
-    PresentationAssessmentMode,
     PresentationAssessmentStatistics,
     PresentationAssessmentStudentRow,
     PresentationAssessmentStudentRowsRequest,
+    PresentationGradingMethod,
+    PresentationRubricCriterion,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -47,23 +43,25 @@ import {
     PresentationAssessmentInstanceFormDialogComponent,
     PresentationAssessmentInstanceFormResult,
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/manage/presentation-assessment-instances-table.component';
+import { PresentationAssessmentOverviewTableComponent } from 'app/presentation/manage/presentation-assessment-overview-table.component';
+import { PresentationRubricDialogComponent } from 'app/presentation/manage/presentation-rubric-dialog.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { GRADING_METHOD_ICONS } from 'app/presentation/shared/presentation-grading-method-icons';
 import {
     AssessmentStatusFilter,
     FilterOption,
     PresentationStudentRow,
+    PresentationStudentTableRow,
     PresentationTypeFilter,
     PresentationViewMode,
     createPresentationSidebarData,
-    hasResultPoints,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
+import { isSet } from 'app/presentation/shared/presentation.util';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
 const PRESENTATION_SIDEBAR_COLLAPSE_STATE = presentationSidebarCollapseStateRecord as CollapseState;
@@ -81,17 +79,20 @@ function studentDisplayName(row: PresentationStudentRow): string {
     return row.student.name || fullName || row.studentLogin;
 }
 
-function decorateStudentRow(row: PresentationStudentRow, expandedRows: string[]) {
-    const rowKey = studentRowKey(row);
+/** An instance is assessed once it has a result; only the field of its grading method can be set. */
+function hasResult(instance: PresentationAssessmentInstance): boolean {
+    return isSet(instance.resultPoints) || isSet(instance.passed) || isSet(instance.rubricScore);
+}
+
+function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTableRow {
     return {
         studentLogin: row.studentLogin,
         student: row.student,
         presentationAssessment: row.presentationAssessment,
         instance: row.instance,
-        rowKey,
+        rowKey: studentRowKey(row),
         displayName: studentDisplayName(row),
-        assessed: hasResultPoints(row.instance.resultPoints),
-        expanded: expandedRows.includes(rowKey),
+        assessed: hasResult(row.instance),
     };
 }
 
@@ -103,17 +104,19 @@ function positiveRouteId(value: string | null): number | undefined {
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
-    styleUrl: './presentation-assessment-management.component.scss',
+    styleUrl: './presentation-assessment-management.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,
-        ArtemisDatePipe,
         CourseTitleBarActionsDirective,
         FormsModule,
         ArtemisTranslatePipe,
         RouterLink,
         PresentationAssessmentFormDialogComponent,
         PresentationAssessmentInstanceFormDialogComponent,
+        PresentationAssessmentInstancesTableComponent,
+        PresentationAssessmentOverviewTableComponent,
+        PresentationRubricDialogComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiButtonGroupComponent,
@@ -122,13 +125,10 @@ function positiveRouteId(value: string | null): number | undefined {
         TumAetUiInputDirective,
         TumAetUiMessageComponent,
         TumAetUiPaginatorComponent,
+        TumAetUiTableLayoutComponent,
         TumAetUiSelectComponent,
-        TumAetUiTableDirective,
-        TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
         SidebarComponent,
-        DeleteButtonDirective,
-        ProfilePictureComponent,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
@@ -152,14 +152,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     );
 
     protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faTableCellsLarge = faTableCellsLarge;
+    protected readonly gradingMethodIcons = GRADING_METHOD_ICONS;
     protected readonly faPlus = faPlus;
-    protected readonly faTrash = faTrash;
     protected readonly faLink = faLink;
     protected readonly faUsers = faUsers;
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
-    protected readonly ActionType = ActionType;
 
     private courseContextGeneration = 0;
 
@@ -192,13 +191,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly presentationTypeFilter = signal<PresentationTypeFilter>('all');
     readonly overviewPage = signal(0);
     readonly overviewPageSize = signal(25);
-    readonly expandedStudentRows = signal<string[]>([]);
     readonly presentationDialogVisible = signal(false);
+    /** Whether the presentation dialog shows the rubric editor, which needs the wide dialog. */
+    readonly presentationDialogWide = signal(false);
     readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly instanceDialogVisible = signal(false);
     readonly dialogInstancePresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly dialogInstance = signal<PresentationAssessmentInstance | undefined>(undefined);
     readonly dialogAssignedStudents = signal<User[]>([]);
+    readonly rubricDialogVisible = signal(false);
+    readonly dialogRubricPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
+    protected readonly PresentationGradingMethod = PresentationGradingMethod;
     readonly studentSortField = signal<PresentationAssessmentStudentRowsRequest['sortField']>('studentLogin');
     readonly studentSortOrder = signal(1);
     readonly studentRowsRequest = computed<PresentationAssessmentStudentRowsRequest>(() => {
@@ -274,10 +277,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             ];
         }),
     );
-    readonly studentRows = computed(() => {
-        const expandedRows = this.expandedStudentRows();
-        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
-    });
+    readonly studentRows = computed(() => this.currentPageStudentRows().map(decorateStudentRow));
     readonly assessedStudentCount = computed(() => this.statistics()?.assessedCount);
     readonly pendingStudentCount = computed(() => {
         const statistics = this.statistics();
@@ -321,76 +321,18 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             const assessmentsLoaded = this.presentationAssessmentsLoaded();
             untracked(() => {
                 if (courseId && courseId !== this.courseId()) {
-                    this.courseContextGeneration++;
-                    this.isSaving.set(false);
-                    this.courseId.set(courseId);
-                    this.presentationAssessmentsLoaded.set(false);
-                    this.presentationLoadFailed.set(false);
-                    this.presentationDialogVisible.set(false);
-                    this.instanceDialogVisible.set(false);
-                    this.dialogPresentationAssessment.set(undefined);
-                    this.dialogInstancePresentationAssessment.set(undefined);
-                    this.dialogInstance.set(undefined);
-                    this.dialogAssignedStudents.set([]);
-                    this.dialogErrorSource.next('');
-                    this.presentationAssessments.set([]);
-                    this.selectedPresentationId.set(undefined);
-                    this.exercises.set([]);
-                    this.expandedStudentRows.set([]);
-                    this.overviewPage.set(0);
-                    this.presentationFilter.set('all');
-                    this.studentSearchTerm.set('');
-                    this.assessmentStatusFilter.set('all');
-                    this.presentationTypeFilter.set('all');
-                    this.studentSortField.set('studentLogin');
-                    this.studentSortOrder.set(1);
-                    this.loadAll();
-                    const generation = this.courseContextGeneration;
-                    this.exerciseService.getTitlesForCourse(courseId).subscribe({
-                        next: (exercises) => {
-                            if (generation === this.courseContextGeneration) {
-                                this.exercises.set(exercises);
-                            }
-                        },
-                        error: (res: HttpErrorResponse) => {
-                            if (generation === this.courseContextGeneration) {
-                                onError(this.alertService, res);
-                            }
-                        },
-                    });
-                    return;
-                }
-                if (presentationId === undefined) {
-                    if (this.viewMode() !== 'students') {
-                        this.overviewPage.set(0);
-                    }
-                    this.viewMode.set('students');
-                    return;
-                }
-
-                const presentation = assessments.find((assessment) => assessment.id === presentationId);
-                if (!presentation && assessmentsLoaded) {
-                    void this.router.navigate(['/course-management', this.courseId(), 'presentations'], { replaceUrl: true });
-                    return;
-                }
-                if (!presentation) {
-                    return;
-                }
-
-                if (this.viewMode() !== 'presentations' || this.selectedPresentationId() !== presentation.id) {
-                    this.overviewPage.set(0);
-                }
-                this.selectedPresentationId.set(presentation.id);
-                this.viewMode.set('presentations');
-                if (presentation.exerciseId !== exerciseId) {
-                    this.navigateToPresentation(presentation, true);
+                    this.switchCourse(courseId);
+                } else if (presentationId === undefined) {
+                    this.showOverview();
+                } else {
+                    this.showPresentation(presentationId, exerciseId, assessments, assessmentsLoaded);
                 }
             });
         });
     }
 
     ngOnInit(): void {
-        this.route.parent?.data.subscribe(({ course }) => this.course.set(course));
+        this.route.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => this.course.set(course));
     }
 
     retryLoading(): void {
@@ -448,7 +390,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     onStudentSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
-        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate' && field !== 'resultPoints') {
+        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate') {
             return;
         }
         this.studentSortField.set(field);
@@ -476,13 +418,13 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.overviewPage.set(0);
     }
 
-    toggleStudentRowDetails(row: PresentationStudentRow): void {
-        const key = studentRowKey(row);
-        this.expandedStudentRows.update((keys) => (keys.includes(key) ? keys.filter((value) => value !== key) : [...keys, key]));
-    }
-
     startEdit(presentationAssessment: PresentationAssessment): void {
         this.openPresentationDialog(presentationAssessment);
+    }
+
+    startEditRubric(presentationAssessment: PresentationAssessment): void {
+        this.dialogRubricPresentationAssessment.set(presentationAssessment);
+        this.rubricDialogVisible.set(true);
     }
 
     startCreateInstance(presentationAssessment: PresentationAssessment): void {
@@ -582,6 +524,86 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         }
     }
 
+    /** Starts a new course context: drops everything of the previous course and loads the new one. */
+    private switchCourse(courseId: number): void {
+        this.courseContextGeneration++;
+        this.isSaving.set(false);
+        this.courseId.set(courseId);
+        this.resetCourseState();
+        this.loadAll();
+        this.loadExercises(courseId);
+    }
+
+    /** Closes the dialogs and resets data, filters, sorting and paging to the defaults of a fresh visit. */
+    private resetCourseState(): void {
+        this.presentationAssessmentsLoaded.set(false);
+        this.presentationLoadFailed.set(false);
+        this.presentationDialogVisible.set(false);
+        this.instanceDialogVisible.set(false);
+        this.rubricDialogVisible.set(false);
+        this.dialogPresentationAssessment.set(undefined);
+        this.dialogInstancePresentationAssessment.set(undefined);
+        this.dialogRubricPresentationAssessment.set(undefined);
+        this.dialogInstance.set(undefined);
+        this.dialogAssignedStudents.set([]);
+        this.dialogErrorSource.next('');
+        this.presentationAssessments.set([]);
+        this.selectedPresentationId.set(undefined);
+        this.exercises.set([]);
+        this.overviewPage.set(0);
+        this.presentationFilter.set('all');
+        this.studentSearchTerm.set('');
+        this.assessmentStatusFilter.set('all');
+        this.presentationTypeFilter.set('all');
+        this.studentSortField.set('studentLogin');
+        this.studentSortOrder.set(1);
+    }
+
+    /** Loads the exercise titles of the course for the exercise link of a presentation; a response for a previous course is ignored. */
+    private loadExercises(courseId: number): void {
+        const generation = this.courseContextGeneration;
+        this.exerciseService.getTitlesForCourseForStaff(courseId).subscribe({
+            next: (exercises) => {
+                if (generation === this.courseContextGeneration) {
+                    this.exercises.set(exercises);
+                }
+            },
+            error: (res: HttpErrorResponse) => {
+                if (generation === this.courseContextGeneration) {
+                    onError(this.alertService, res);
+                }
+            },
+        });
+    }
+
+    /** Shows the overview of all presenters; switching from a single presentation starts at the first page. */
+    private showOverview(): void {
+        if (this.viewMode() !== 'students') {
+            this.overviewPage.set(0);
+        }
+        this.viewMode.set('students');
+    }
+
+    /** Selects the presentation of the route. An unknown id leads to the overview, and a missing or wrong exercise segment is corrected. */
+    private showPresentation(presentationId: number, exerciseId: number | undefined, assessments: PresentationAssessment[], assessmentsLoaded: boolean): void {
+        const presentation = assessments.find((assessment) => assessment.id === presentationId);
+        if (!presentation) {
+            if (assessmentsLoaded) {
+                void this.router.navigate(['/course-management', this.courseId(), 'presentations'], { replaceUrl: true });
+            }
+            return;
+        }
+
+        if (this.viewMode() !== 'presentations' || this.selectedPresentationId() !== presentation.id) {
+            this.overviewPage.set(0);
+        }
+        this.selectedPresentationId.set(presentation.id);
+        this.viewMode.set('presentations');
+        if (presentation.exerciseId !== exerciseId) {
+            this.navigateToPresentation(presentation, true);
+        }
+    }
+
     private navigateToPresentation(presentationAssessment: PresentationAssessment, replaceUrl = false): void {
         if (!presentationAssessment.id) {
             return;
@@ -595,6 +617,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private openPresentationDialog(presentationAssessment?: PresentationAssessment): void {
         this.dialogPresentationAssessment.set(presentationAssessment);
+        this.presentationDialogWide.set(false);
         this.presentationDialogVisible.set(true);
     }
 
@@ -659,6 +682,47 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
         this.deletePresentationAssessment(presentationAssessment);
+    }
+
+    handleRubricDialogSave(rubricCriteria: PresentationRubricCriterion[]): void {
+        const presentationAssessment = this.dialogRubricPresentationAssessment();
+        if (!presentationAssessment || this.isSaving()) {
+            return;
+        }
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
+        this.isSaving.set(true);
+        this.presentationAssessmentService
+            .update(courseId, cloneWith(presentationAssessment, { rubricCriteria }))
+            .pipe(
+                finalize(() => {
+                    if (generation === this.courseContextGeneration) {
+                        this.isSaving.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    if (generation !== this.courseContextGeneration) {
+                        return;
+                    }
+                    this.rubricDialogVisible.set(false);
+                    // Changed weights recalculate the results of assessed presentations.
+                    this.studentRowsResource.reload();
+                    this.alertService.success('artemisApp.presentationAssessment.rubric.saved');
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (generation === this.courseContextGeneration) {
+                        this.onWriteError(res);
+                    }
+                },
+            });
+    }
+
+    handleRubricDialogCancel(): void {
+        if (!this.isSaving()) {
+            this.rubricDialogVisible.set(false);
+        }
     }
 
     private openInstanceDialog(presentationAssessment: PresentationAssessment, instance?: PresentationAssessmentInstance): void {

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 
 describe('DoughnutChartComponent', () => {
     let fixture: ComponentFixture<DoughnutChartComponent>;
@@ -64,13 +64,22 @@ describe('DoughnutChartComponent', () => {
     });
 
     describe('setting titles for different chart types', () => {
+        it.each([DoughnutChartType.AVERAGE_EXERCISE_SCORE, DoughnutChartType.PARTICIPATIONS])('should preserve exam context for chart type %s', (contentType) => {
+            fixture.componentRef.setInput('contentType', contentType);
+            fixture.componentRef.setInput('exerciseGroup', { id: 3, exam: { id: 4 } });
+
+            component.ngOnInit();
+
+            expect(component.titleLink()).toEqual(['/course-management/1/exams/4/exercise-groups/3/text-exercises/2/participations']);
+        });
+
         it('should set title for average exercise score', () => {
             fixture.componentRef.setInput('contentType', DoughnutChartType.AVERAGE_EXERCISE_SCORE);
 
             component.ngOnInit();
 
             expect(component.doughnutChartTitle()).toBe('averageScore');
-            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/scores']);
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/participations']);
         });
 
         it('should set title for participations', () => {

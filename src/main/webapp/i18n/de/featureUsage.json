@@ -390,7 +390,7 @@
                         "description": "Eine Klausur beginnen, bearbeiten und abgeben."
                     },
                     "EXAM_TEST_EXAMS": {
-                        "name": "Testklausuren",
+                        "name": "Übungsklausuren",
                         "description": "Übungsklausuren mit mehreren Versuchen."
                     },
                     "EXAM_RESULTS": {
@@ -541,10 +541,6 @@
                         "name": "Iris-Chat",
                         "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
                     },
-                    "IRIS_MEMORY": {
-                        "name": "Iris-Erinnerungen",
-                        "description": "Was Iris sich über Studierende merkt, und das Löschen davon."
-                    },
                     "IRIS_STRUGGLE_INTERVENTION": {
                         "name": "Iris-Hilfe bei Schwierigkeiten",
                         "description": "Iris bietet Hilfe an, wenn Studierende nicht weiterkommen."
@@ -669,6 +665,10 @@
                         "name": "Export persönlicher Daten",
                         "description": "Export der eigenen Daten."
                     },
+                    "AGENT_ACCESS": {
+                        "name": "Zugriffstoken für Agenten",
+                        "description": "Persönliche Zugriffstoken erstellen und widerrufen, mit denen Coding-Agenten im eigenen Namen handeln."
+                    },
                     "LTI": {
                         "name": "LTI",
                         "description": "Artemis-Inhalte aus einem Lernmanagementsystem öffnen."
@@ -748,6 +748,10 @@
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Anstehende Klausuren und Aufgaben",
                         "description": "Eine Übersicht über das Anstehende in allen Kursen."
+                    },
+                    "SCIENCE_ADMINISTRATION": {
+                        "name": "Verwaltung der Forschungsdatenerhebung",
+                        "description": "Kurse für die Erhebung von Forschungsdaten auswählen und diese Daten exportieren."
                     }
                 }
             }

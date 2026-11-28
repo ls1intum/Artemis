@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyLectureUnitIdDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -48,6 +50,17 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
      */
     public Set<Long> findLectureUnitIdsByCompetencyIds(Set<Long> competencyIds) {
         return lectureUnitLinkRepository.findLectureUnitIdsByCompetencyIds(competencyIds);
+    }
+
+    /**
+     * Returns the IDs of the lecture units linked to each of the given competencies.
+     *
+     * @param competencyIds the competencies
+     * @return the linked lecture unit IDs per competency; a competency without links is absent
+     */
+    public Map<Long, Set<Long>> findLectureUnitIdsPerCompetency(Set<Long> competencyIds) {
+        return lectureUnitLinkRepository.findLinkIdsByCompetencyIds(competencyIds).stream()
+                .collect(Collectors.groupingBy(CompetencyLectureUnitIdDTO::competencyId, Collectors.mapping(CompetencyLectureUnitIdDTO::lectureUnitId, Collectors.toSet())));
     }
 
     /**

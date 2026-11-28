@@ -40,6 +40,8 @@ import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/o
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { DecimalPipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -55,7 +57,7 @@ export enum DoughnutChartType {
 @Component({
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
-    styleUrls: ['./course-detail.component.scss'],
+    styleUrls: ['./course-detail.component.css'],
     imports: [
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,
@@ -65,6 +67,8 @@ export enum DoughnutChartType {
         OnboardingExploreComponent,
         FaIconComponent,
         TranslateDirective,
+        DecimalPipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -348,7 +352,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             this.eventManager.destroy(this.eventSubscription);
         }
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
-            this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+            this.courseManagementService.findForInstructor(courseId).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
                 this.getCourseDetailSections();
             });

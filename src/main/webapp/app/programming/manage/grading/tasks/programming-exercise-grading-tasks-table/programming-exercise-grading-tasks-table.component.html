@@ -1,134 +1,149 @@
-<div class="d-flex flex-column gap-3 mb-3">
-    <h2 class="fw-medium">Tasks</h2>
-    <div class="d-flex justify-content-between">
-        <div>
+<div class="mb-4 flex flex-col gap-4">
+    <h2 class="font-medium">Tasks</h2>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap gap-2">
             @if (tasks().length !== 1) {
-                <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(true)" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
-                    Expand all
-                </jhi-button>
+                <button tumAetUiButton size="small" severity="secondary" type="button" (click)="toggleAllTasksExpanded(true)">
+                    <fa-icon [icon]="faAngleDown" />
+                    <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
+                </button>
             }
             @if (tasks().length !== 1) {
-                <jhi-button
-                    [shouldSubmit]="false"
-                    (click)="toggleAllTasksExpanded(false)"
-                    title="artemisApp.programmingExercise.configureGrading.collapseAll"
-                    [icon]="faAngleRight"
-                >
-                    Collapse all
-                </jhi-button>
+                <button tumAetUiButton size="small" severity="secondary" type="button" (click)="toggleAllTasksExpanded(false)">
+                    <fa-icon [icon]="faAngleRight" />
+                    <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
+                </button>
             }
         </div>
-        <div>
+        <div class="flex flex-wrap gap-2">
             <button
                 type="button"
                 (click)="saveTestCases()"
-                class="btn btn-primary"
+                tumAetUiButton
+                size="small"
+                severity="primary"
                 [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             ></button>
             <button
                 type="button"
                 (click)="resetTestCases()"
-                class="btn btn-secondary"
+                data-button-intent="destructive"
+                data-button-intent-reason="Resets persisted test cases and grading configuration"
+                tumAetUiButton
+                size="small"
+                severity="danger"
                 [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
             ></button>
         </div>
     </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [value]="ignoreInactive" (click)="toggleShowInactiveTestsShown()" />
-        <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"></label>
+    <div class="flex items-center gap-2">
+        <tumaet-ui-toggle-switch
+            inputId="grading-task-inactive-toggle"
+            [ngModel]="!ignoreInactive"
+            [ngModelOptions]="{ standalone: true }"
+            (changed)="toggleShowInactiveTestsShown()"
+        />
+        <label class="mb-0" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"></label>
     </div>
     <div>
-        <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints"></label>
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints"></span>
         {{ exercise().maxPoints }} P
     </div>
 </div>
 <form>
-    <div class="ps-5 task__row">
+    <div class="ps-12! task__row">
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.name' | artemisTranslate"
-            placement="bottom auto"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.name' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('name')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate"></p>
             <fa-icon [icon]="getSortIcon('name')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
-            placement="bottom auto"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('weight')"
         >
             <fa-icon [icon]="faScaleUnbalanced" size="xl" />
             <fa-icon [icon]="getSortIcon('weight')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
-            placement="bottom auto"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('multiplier')"
         >
             <fa-icon [icon]="faAsterisk" size="xl" />
             <fa-icon [icon]="getSortIcon('multiplier')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
-            class="task__row__cell task__row__cell--small ps-2 sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
-            placement="bottom auto"
+            class="task__row__cell task__row__cell--small ps-2! sort__button"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('bonusPoints')"
         >
             <fa-icon [icon]="faMedal" size="xl" />
             <fa-icon [icon]="getSortIcon('bonusPoints')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="
+            [tumAetUiTooltip]="
                 (this.isExamExercise() ? 'artemisApp.programmingExercise.configureGrading.help.visibilityExam' : 'artemisApp.programmingExercise.configureGrading.help.visibility')
                     | artemisTranslate
             "
-            placement="bottom auto"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('visibility')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"></p>
             <fa-icon [icon]="getSortIcon('visibility')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.points' | artemisTranslate"
-            placement="bottom auto"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.help.points' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('resulting')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate"></p>
             <fa-icon [icon]="getSortIcon('resulting')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="exercise().programmingLanguage === 'JAVA' ? ('artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate) : undefined"
-            placement="bottom auto"
+            [tumAetUiTooltip]="exercise().programmingLanguage === 'JAVA' ? ('artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate) : undefined"
+            tumAetUiTooltipPlacement="bottom"
             (click)="changeSort('type')"
         >
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate"></p>
             <fa-icon [icon]="getSortIcon('type')" class="ms-2" />
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
+            <fa-icon [icon]="faQuestionCircle" class="ms-2 text-(--secondary)" />
         </button>
         <div class="task__row__cell" jhiTranslate="artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent"></div>
     </div>
     @for (task of tasks(); track task; let i = $index) {
-        <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject()" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise()" />
+        <jhi-programming-exercise-task
+            [index]="i"
+            [task]="task"
+            [rowsRevision]="rowsRevision()"
+            [openSubject]="allTasksExpandedSubject()"
+            (updateTasksEvent)="updateTasks()"
+            [isExamExercise]="isExamExercise()"
+        />
     }
 </form>

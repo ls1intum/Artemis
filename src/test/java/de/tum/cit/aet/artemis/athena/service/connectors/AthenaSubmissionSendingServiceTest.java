@@ -70,7 +70,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleService,
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestClient(), submissionRepository, athenaModuleService,
                 athenaDTOConverterService);
 
         var course = courseUtilService.createCourse();
@@ -114,7 +114,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendTextSubmissionsSuccess() {
         createTextSubmissionsForSubmissionSending(1);
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
@@ -139,7 +139,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendSubmissionsSuccessProgramming() {
         createProgrammingSubmissionForSubmissionSending();
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
@@ -154,7 +154,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendNoSubmissions() {
         athenaSubmissionSendingService.sendSubmissions(textExercise);
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
@@ -162,7 +162,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendMultipleSubmissionBatches() {
         createTextSubmissionsForSubmissionSending(MAX_NUMBER_OF_TOTAL_PARTICIPATIONS); // 190 = almost twice the batch size (100)
         // expect two batches of submissions
@@ -177,7 +177,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
         textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);

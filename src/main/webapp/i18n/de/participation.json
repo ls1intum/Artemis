@@ -1,9 +1,19 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Builds auslösen",
+            "resetDisabled": "Keine Filter ausgewählt",
+            "searchStudents": "Suchen: Müller, Schmidt",
+            "searchTeams": "Suchen: Team 1, Team 2",
+            "onlineEditor": "Online-Editor",
             "home": {
                 "title": "Teilnahmen",
                 "createLabel": "Teilnahme erstellen"
+            },
+            "filterGroup": {
+                "submissions": "Abgaben",
+                "results": "Ergebnisse",
+                "assessmentType": "Bewertungsart"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",

@@ -402,7 +402,7 @@ services:
             sh -c '
             cd /app/artemis &&
             chmod 777 /root &&
-            corepack enable &&
+            sh supporting_scripts/ci/E2E-tests/ensure-pnpm.sh &&
             pnpm install --frozen-lockfile &&
             cd /app/artemis/src/test/playwright &&
             rm -f test-reports/results*.xml &&

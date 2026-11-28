@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import dayjs from 'dayjs/esm';
 
 describe('ComplaintResponseComponent', () => {
@@ -38,8 +38,8 @@ describe('ComplaintResponseComponent', () => {
             providers: [MockProvider(TranslateService)],
         })
             .overrideComponent(ComplaintResponseComponent, {
-                remove: { imports: [ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(NgbTooltip)] },
+                remove: { imports: [ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe, TumAetUiTooltipDirective] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TumAetUiTooltipDirective)] },
             })
             .compileComponents()
             .then(() => {
@@ -150,7 +150,7 @@ describe('ComplaintResponseComponent', () => {
             const card = fixture.nativeElement.querySelector('[data-testid="complaint-response-card"]') as HTMLElement;
             expect(card).toBeTruthy();
             // The same card language as the complaint next to it and the feedback cards on the page.
-            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4']) {
                 expect(card.classList.contains(utility), utility).toBe(true);
             }
         });

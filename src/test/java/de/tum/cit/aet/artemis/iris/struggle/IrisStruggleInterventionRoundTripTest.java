@@ -22,14 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -42,6 +39,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
@@ -147,6 +145,22 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void acceptedResponseCarriesThePlainRunIdButNeverTheCallbackToken() throws Exception {
+        AtomicReference<PyrisPipelineExecutionSettingsDTO> sentSettings = new AtomicReference<>();
+        irisRequestMockProvider.mockStruggleInterventionResponse(dto -> sentSettings.set(dto.settings()));
+
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
+        var body = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
+        var response = request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED, null);
+        await().atMost(5, TimeUnit.SECONDS).until(() -> sentSettings.get() != null);
+
+        var settings = sentSettings.get();
+        assertThat(response.getContentAsString()).contains(settings.runId()).doesNotContain(settings.authenticationToken());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void activeDecision_createsSessionPersistsTaggedMessageAndPushes_andTrailingCallbackIsRejected() throws Exception {
         AtomicReference<String> runId = new AtomicReference<>();
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> {
@@ -241,7 +255,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
     }
 
     private void sendStruggleStatus(String runId, PyrisStruggleInterventionStatusUpdateDTO update, HttpStatus expected) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + runId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/struggle-intervention/runs/" + runId + "/status", update, expected, headers);
+        var callback = pyrisCallbackCredentials(runId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/struggle-intervention/runs/" + callback.runId() + "/status", update, expected, callback.headers());
     }
 }

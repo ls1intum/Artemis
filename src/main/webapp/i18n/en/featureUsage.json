@@ -390,7 +390,7 @@
                         "description": "Starting an exam, working on it and handing it in."
                     },
                     "EXAM_TEST_EXAMS": {
-                        "name": "Test exams",
+                        "name": "Practice exams",
                         "description": "Practice exams with several attempts."
                     },
                     "EXAM_RESULTS": {
@@ -541,10 +541,6 @@
                         "name": "Iris chat",
                         "description": "Chatting with Iris about a course, an exercise or a lecture."
                     },
-                    "IRIS_MEMORY": {
-                        "name": "Iris memories",
-                        "description": "What Iris remembers about a student, and deleting it."
-                    },
                     "IRIS_STRUGGLE_INTERVENTION": {
                         "name": "Iris struggle intervention",
                         "description": "Iris offering help when a student is stuck."
@@ -669,6 +665,10 @@
                         "name": "Personal data export",
                         "description": "Exporting one's own data."
                     },
+                    "AGENT_ACCESS": {
+                        "name": "Agent access tokens",
+                        "description": "Creating and revoking personal access tokens that let coding agents act on one's behalf."
+                    },
                     "LTI": {
                         "name": "LTI",
                         "description": "Opening Artemis content from a learning management system."
@@ -748,6 +748,10 @@
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Upcoming exams and exercises",
                         "description": "An overview of what is coming up across all courses."
+                    },
+                    "SCIENCE_ADMINISTRATION": {
+                        "name": "Research data collection administration",
+                        "description": "Choosing the courses that collect research data, and exporting that data."
                     }
                 }
             }

@@ -33,12 +33,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -66,8 +64,6 @@ public class CourseArchiveResource {
 
     private final CourseRepository courseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
 
     private final CourseArchiveService courseArchiveService;
@@ -77,10 +73,9 @@ public class CourseArchiveResource {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    public CourseArchiveResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            CourseArchiveService courseArchiveService, CourseOperationProgressService progressService) {
+    public CourseArchiveResource(CourseRepository courseRepository, UserRepository userRepository, CourseArchiveService courseArchiveService,
+            CourseOperationProgressService progressService) {
         this.courseRepository = courseRepository;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.courseArchiveService = courseArchiveService;
         this.progressService = progressService;
@@ -94,12 +89,11 @@ public class CourseArchiveResource {
      * @return the ResponseEntity with status 200 (OK) when no exception occurred
      */
     @PutMapping("courses/{courseId}/archive")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
         log.info("REST request to archive Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Archiving a course is only possible after the course is over
         if (now().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("You cannot archive a course that is not over.", Course.ENTITY_NAME, "courseNotOver", true);
@@ -141,12 +135,11 @@ public class CourseArchiveResource {
      * @param courseId The course id of the archived course
      * @return ResponseEntity with status
      */
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     @GetMapping("courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws IOException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (!course.hasCourseArchive()) {
             throw new EntityNotFoundException("Archived course", courseId);
         }
@@ -170,11 +163,10 @@ public class CourseArchiveResource {
      * @return ResponseEntity with status
      */
     @DeleteMapping("courses/{courseId}/cleanup")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, Principal principal) {
         log.info("REST request to cleanup the Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         // Forbid cleaning the course if no archive has been created
         if (!course.hasCourseArchive()) {
             throw new BadRequestAlertException("Failed to clean up course " + courseId + " because it needs to be archived first.", Course.ENTITY_NAME, "archivenonexistent");

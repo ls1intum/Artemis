@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -68,7 +69,8 @@ public class AutomaticAfterDueDateResource {
      */
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("programming-exercises/timeline/automatic-after-due-date-preview")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ZonedDateTime> previewAutomaticAfterDueDate(@RequestBody AutomaticAfterDueDatePreviewRequestDTO requestDTO) throws IOException {
         Long programmingExerciseId = requestDTO.programmingExerciseId();

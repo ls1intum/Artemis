@@ -72,7 +72,11 @@ export const Hoverable: Story = {
         await userEvent.hover(trigger);
         const tooltip = await screen.findByRole('tooltip', { name: 'Downloads the current result as a CSV file' });
 
-        await userEvent.hover(tooltip);
+        const bounds = tooltip.getBoundingClientRect();
+        await userEvent.unhover(trigger);
+        // The hint is transparent to pointer events, so the underlying document receives movement over its bounds.
+        await userEvent.pointer({ target: tooltip.ownerDocument.body, coords: { clientX: bounds.left + bounds.width / 2, clientY: bounds.top + bounds.height / 2 } });
+        await new Promise((resolve) => setTimeout(resolve, 150));
         await expect(tooltip).toBeVisible();
 
         const tooltipRemoved = waitForElementToBeRemoved(tooltip);

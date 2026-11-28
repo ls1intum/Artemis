@@ -1,3 +1,4 @@
+import { PasswordValidationErrorsComponent } from 'app/account/shared/password-validation-errors/password-validation-errors.component';
 import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
@@ -6,11 +7,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { CredentialRevocationChoice, PasswordService } from './password.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 /**
  * Type definition for the password change form controls.
@@ -31,6 +36,7 @@ interface PasswordForm {
     selector: 'jhi-password',
     templateUrl: './password.component.html',
     imports: [
+        PasswordValidationErrorsComponent,
         TranslateDirective,
         FormsModule,
         ReactiveFormsModule,
@@ -54,8 +60,6 @@ export class PasswordComponent implements OnInit {
     /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     /** Maximum UTF-8 byte length supported by BCrypt. */
-    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
-
     /** Indicates the new password and confirmation do not match */
     readonly doNotMatch = signal(false);
     /** Indicates an error occurred during password change */

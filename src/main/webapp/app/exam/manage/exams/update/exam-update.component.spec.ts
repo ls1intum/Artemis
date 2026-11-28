@@ -2,6 +2,7 @@ import { EmbeddedViewRef } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
 import { NgForm } from '@angular/forms';
@@ -39,6 +40,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -78,6 +80,7 @@ describe('ExamUpdateComponent', () => {
     }
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
         projectedViews.splice(0).forEach((view) => view.destroy());
     });
@@ -86,6 +89,7 @@ describe('ExamUpdateComponent', () => {
         beforeEach(() => {
             examWithoutExercises = new Exam();
             examWithoutExercises.id = 1;
+            examWithoutExercises.examMode = ExamMode.REAL;
             examWithoutExercises.title = 'Test Exam';
             course = new Course();
             course.id = 1;
@@ -160,7 +164,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.workingTime).toBe(0);
         });
 
@@ -179,6 +183,32 @@ describe('ExamUpdateComponent', () => {
             component.exam = examWithTitle;
             fixture.detectChanges();
             expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
+        });
+
+        it('should place the title and channel name messages below their inputs instead of pulling them up into the input', () => {
+            fixture.detectChanges();
+            component.hideChannelNameInput.set(false);
+            const exam = deepClone(component.exam);
+            exam.title = '';
+            exam.channelName = '';
+            component.exam = exam;
+            fixture.detectChanges();
+
+            const messages: HTMLElement[] = ['title-validation-message', 'channel-name-validation-message'].map((testId) =>
+                fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
+            );
+            expect(messages.every((message) => message !== null)).toBe(true);
+            // a negative top margin moves the message over the lower edge of the input field above it
+            expect(messages.map((message) => Array.from(message.classList).filter((cssClass) => cssClass.startsWith('-mt-')))).toEqual([[], []]);
+            expect(messages.map((message) => message.classList.contains('mt-1'))).toEqual([true, true]);
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            const channelInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_channel_name');
+            expect(titleInput.parentElement!.contains(messages[0])).toBe(true);
+            expect(titleInput.parentElement!.contains(messages[1])).toBe(false);
+            expect(channelInput.parentElement!.contains(messages[1])).toBe(true);
+            expect(channelInput.parentElement!.contains(messages[0])).toBe(false);
+            expect(titleInput.getAttribute('aria-describedby')).toBe(messages[0].id);
+            expect(channelInput.getAttribute('aria-describedby')).toBe(messages[1].id);
         });
 
         describe('explanations of invalid fields', () => {
@@ -315,6 +345,33 @@ describe('ExamUpdateComponent', () => {
                 }
                 renderWith({ examMaxPoints: 1 });
                 expect(shownMessage('max-points-low-error')).toBeUndefined();
+            });
+
+            it('should write the typed maximum points into the exam and explain a fractional or too high value', async () => {
+                fixture.detectChanges();
+                // the form registers its controls one microtask after the first change detection
+                await fixture.whenStable();
+                const input: HTMLInputElement = fixture.nativeElement.querySelector('input#examMaxPoints');
+                const shownError = (translationKey: string) => fixture.nativeElement.querySelector(`[jhiTranslate="${translationKey}"]`) !== null;
+
+                typeIntoInputNumber(input, '120');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(120);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(false);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(false);
+
+                typeIntoInputNumber(input, '12.5');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(12.5);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(true);
+
+                // the message is shown while the typed value exceeds the limit, before the field is left and clamps it
+                input.focus();
+                input.value = '10000';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(10000);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(true);
             });
 
             it('should explain a number of exercises below 1 but accept an empty one', () => {
@@ -464,7 +521,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should show channel name input for test exams', async () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
@@ -566,7 +623,7 @@ describe('ExamUpdateComponent', () => {
         it('should calculate the working time for real exams correctly', () => {
             fixture.detectChanges();
 
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
@@ -593,7 +650,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should not calculate the working time for test exams', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
@@ -620,7 +677,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for test exams correctly', () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
             expect(component.validateWorkingTime).toBe(false);
@@ -645,7 +702,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.workingTime = undefined;
             examWithoutExercises.startDate = undefined;
@@ -748,7 +805,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 
@@ -760,7 +817,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
-            examWithoutExercises.testExam = false;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -866,7 +923,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
 
             // Set up exam as a test exam with a long exam window
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
 
@@ -916,11 +973,14 @@ describe('ExamUpdateComponent', () => {
             expect(button?.disabled).toBe(false);
         });
 
-        it('should toggle save button disabled state based on form validity and configuration validity', () => {
+        it.each(['2026-10-25T00:30:45Z', '2026-10-25T01:30:45Z'])('should toggle save button disabled state based on form validity and configuration validity at %s', (instant) => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            vi.setSystemTime(new Date(instant));
+            // Keep initial and restored dates relative to the same anchor across clock changes.
             const now = dayjs().startOf('minute');
-            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
-            examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
             examWithoutExercises.workingTime = 3600;
 
             fixture.changeDetectorRef.detectChanges();
@@ -1170,7 +1230,7 @@ describe('ExamUpdateComponent', () => {
         const examForImport = new Exam();
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
-        examForImport.testExam = false;
+        examForImport.examMode = ExamMode.REAL;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
@@ -1185,6 +1245,7 @@ describe('ExamUpdateComponent', () => {
         examForImport.publishResultsDate = timeNow.add(1, 'days');
         examForImport.examStudentReviewStart = timeNow.add(2, 'days');
         examForImport.examStudentReviewEnd = timeNow.add(3, 'days');
+        examForImport.exampleSolutionPublicationDate = timeNow.add(4, 'days');
         examForImport.numberOfCorrectionRoundsInExam = 2;
         examForImport.startText = 'Hello World';
         examForImport.endText = 'Goodbye World';
@@ -1259,7 +1320,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');

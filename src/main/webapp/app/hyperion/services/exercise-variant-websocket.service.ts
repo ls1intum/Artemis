@@ -26,9 +26,8 @@ type SubscribedJob = { wsSubscription: Subscription; subject: Subject<VariantGen
 
 /**
  * Per-job websocket subscriptions for variant-generation progress on
- * `/user/topic/hyperion/variant-generation/jobs/{jobId}`. Same multiplexing pattern as
- * `HyperionWebsocketService.subscribeToJob`, kept separate because that service is bound to the
- * code-generation topic and is owned by another team.
+ * `/user/topic/hyperion/variant-generation/jobs/{jobId}`, multiplexed so several listeners of one
+ * job share a single subscription.
  */
 @Service()
 export class ExerciseVariantWebsocketService implements OnDestroy {

@@ -14,7 +14,7 @@ import { TumAetUiTabsService, tabKey, tabValue } from './tumaet-ui-tabs.service'
 @Component({
     selector: 'tumaet-ui-tab-list',
     templateUrl: './tumaet-ui-tab-list.component.html',
-    styleUrl: './tumaet-ui-tab-list.component.scss',
+    styleUrl: './tumaet-ui-tab-list.component.css',
     hostDirectives: [TabList],
     host: {
         class: 'tumaet-ui-tab-list tumaet:relative tumaet:flex tumaet:w-full tumaet:min-w-0 tumaet:max-w-full tumaet:overflow-x-auto tumaet:border-b tumaet:border-border',
@@ -49,7 +49,7 @@ export class TumAetUiTabListComponent implements OnDestroy {
         });
         // Aria's selection, changed by a click or the keyboard, flows back into the bound value, and a selection that
         // lands on no enabled tab falls back to the first enabled one.
-        effect(() => {
+        afterRenderEffect(() => {
             const tabs = this.tabsService.orderedTabs();
             const selected = tabs.find((tab) => tab.selected() && !tab.disabled()) ?? tabs.find((tab) => !tab.disabled());
             if (selected) {

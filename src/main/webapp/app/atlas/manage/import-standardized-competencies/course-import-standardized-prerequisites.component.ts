@@ -2,14 +2,16 @@ import { Component, inject } from '@angular/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
@@ -17,25 +19,30 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 
 @Component({
     selector: 'jhi-course-import-standardized-prerequisites',
-    templateUrl: './course-import-standardized-prerequisites.component.html',
+    templateUrl: './course-import-standardized-course-competencies.component.html',
     imports: [
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         FaIconComponent,
         FormsModule,
-        TooltipModule,
         MarkdownDirective,
         ButtonComponent,
         DocumentationButtonComponent,
         TranslateDirective,
-        SortByDirective,
-        SortDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         ArtemisTranslatePipe,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private prerequisiteService = inject(PrerequisiteService);
+
+    protected override readonly importTitle = 'artemisApp.standardizedCompetency.courseImport.prerequisiteTitle';
 
     protected override importCompetencies() {
         super.importCompetencies(this.prerequisiteService);

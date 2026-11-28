@@ -32,7 +32,8 @@ describe('IrisDashboardComponent', () => {
         avgResponseTimeSeconds: 5.5,
         p50ResponseTimeSeconds: 4.0,
         p95ResponseTimeSeconds: 12.0,
-        totalTokenCostEur: 150.75,
+        totalTokenCostUsd: 150.75,
+        unpricedTokenCostRequests: 0,
     };
 
     beforeEach(async () => {
@@ -80,12 +81,88 @@ describe('IrisDashboardComponent', () => {
         expect(component.error()).toBe(false);
     });
 
+    it.each([
+        { cost: 150.75, unpriced: 0, expected: '150.75 USD' },
+        { cost: 0.004, unpriced: 0, expected: '0.004 USD' },
+        { cost: 0.00000001, unpriced: 0, expected: '0.00000001 USD' },
+        { cost: 0, unpriced: 0, expected: '0.00 USD' },
+        { cost: 1.5, unpriced: 4, expected: '≥ 1.50 USD' },
+        { cost: 0, unpriced: 4, expected: 'artemisApp.irisDashboard.costNotPriced' },
+    ])('reports USD pricing honestly for $cost with $unpriced unpriced requests', async ({ cost, unpriced, expected }) => {
+        vi.mocked(dashboardService.getOverview).mockReturnValue(of({ ...mockOverview, totalTokenCostUsd: cost, unpricedTokenCostRequests: unpriced }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const amount = fixture.nativeElement.querySelector('[data-testid="iris-dashboard-token-cost"]');
+        expect(amount.textContent.trim()).toBe(expected);
+        expect(fixture.nativeElement.querySelector('[data-testid="iris-dashboard-unpriced-requests"]') !== null).toBe(unpriced > 0);
+    });
+
+    it('marks model totals as partial and never presents unpriced historical requests as free', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.activeBreakdownTab.set(2);
+        component.modelBreakdown.set([
+            { label: 'priced-model', values: { totalTokens: 500, costUsd: 0.25, unpricedRequests: 2 } },
+            { label: 'older-model', values: { totalTokens: 800, costUsd: 0, unpricedRequests: 3 } },
+        ]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rows = fixture.nativeElement.querySelectorAll('[data-testid="iris-dashboard-model-cost"]');
+        expect(rows[0].textContent).toContain('≥ 0.25 USD');
+        expect(rows[1].textContent).toContain('artemisApp.irisDashboard.costNotPriced');
+        expect(rows[1].textContent).not.toContain('0.00 USD');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="iris-dashboard-model-unpriced-requests"]')).toHaveLength(2);
+    });
+
     it('should reload data on time span change', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         component.onTimeSpanChange(component.timeSpanOptions()[0]);
         await fixture.whenStable();
         expect(dashboardService.getOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should request all users by default', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.selectedAiSelection().value).toBe('ALL');
+        expect(dashboardService.getOverview).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'CHAT_MODE', 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'COURSE', 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'MODEL', 'ALL');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.irisDashboard.aiSelection.hint');
+    });
+
+    it('should reload all data for the chosen AI selection', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        vi.mocked(dashboardService.getOverview).mockClear();
+        vi.mocked(dashboardService.getBreakdown).mockClear();
+
+        const local = component.aiSelectionOptions().find((option) => option.value === 'LOCAL')!;
+        component.onAiSelectionChange(local);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.selectedAiSelection()).toBe(local);
+        expect(dashboardService.getOverview).toHaveBeenCalledOnce();
+        expect(dashboardService.getOverview).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledTimes(3);
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'CHAT_MODE', 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'COURSE', 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'MODEL', 'LOCAL');
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.irisDashboard.aiSelection.hint');
+    });
+
+    it('should keep the AI selection when the time span changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onAiSelectionChange(component.aiSelectionOptions().find((option) => option.value === 'CLOUD')!);
+        component.onTimeSpanChange(component.timeSpanOptions()[0]);
+        await fixture.whenStable();
+        expect(dashboardService.getOverview).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 'CLOUD');
     });
 
     it('should set error signal on overview failure', async () => {

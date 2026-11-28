@@ -12,7 +12,6 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.assertj.core.data.Offset;
@@ -20,10 +19,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -31,7 +28,6 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
@@ -156,25 +152,22 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getModel()).isEqualTo(expectedCost.model());
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
-            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getNumCachedInputTokens()).isEqualTo(Math.toIntExact(expectedCost.numCachedInputTokens()));
-            assertThat(usage.getCostPerMillionCachedInputTokens()).isCloseTo(expectedCost.costPerMillionCachedInputToken(), Offset.offset(0.001f));
             assertThat(usage.getNumCacheWriteInputTokens()).isEqualTo(expectedCost.numCacheWriteInputTokens());
-            assertThat(usage.getCostPerMillionCacheWriteInputTokens()).isCloseTo(expectedCost.costPerMillionCacheWriteInputToken(), Offset.offset(0.001f));
+            assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCourseLlmCostBillsCachedAndCacheWriteTokensAtTheirOwnRates() {
+    void testCourseLlmCostUsesCompleteProviderUsdAmount() {
         // 2M input tokens: 1M read from the cache, 0.4M written to it, 0.6M uncached
-        var request = new LLMRequest("gpt-6-luna", 2_000_000, 1.0f, 100_000, 4.0f, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 0.1f, 400_000, 1.25f);
+        var request = new LLMRequest("gpt-6-luna", 2_000_000, 100_000, "IRIS_CHAT_EXERCISE_MESSAGE", 1_000_000, 400_000, 0.9);
         llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
 
-        // 0.6M x 1.0 + 1M x 0.1 + 0.4M x 1.25 + 0.1M x 4.0 = 0.6 + 0.1 + 0.5 + 0.4
-        assertThat(irisLLMTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId())).isCloseTo(1.6, Offset.offset(0.001));
+        // The reported USD amount supersedes the historical unit-rate estimate.
+        assertThat(irisLLMTokenUsageTraceRepository.calculateTotalLlmCostInUsdForCourse(course.getId())).isCloseTo(0.9, Offset.offset(0.001));
     }
 
     @Test
@@ -222,15 +215,14 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getModel()).isEqualTo(expectedCost.model());
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.getCostPerMillionInputTokens()).isCloseTo(expectedCost.costPerMillionInputToken(), Offset.offset(0.01f));
-            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
+            assertThat(usage.getTotalCostUsd()).isEqualTo(expectedCost.totalCostUsd());
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }
 
     private void sendStatus(String jobId, String result, PyrisRunState runState, List<LLMRequest> tokens) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens, null, null), HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, null, null, tokens), HttpStatus.OK, callback.headers());
     }
 }

@@ -1,10 +1,11 @@
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Component, computed, input } from '@angular/core';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiPanelComponent } from '@tumaet/ui-angular';
 
 export class AssessmentDashboardInformationEntry {
     constructor(
@@ -32,7 +33,7 @@ export class AssessmentDashboardInformationEntry {
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumAetUiPanelComponent],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumAetUiPanelComponent, TumAetUiTableDirective],
 })
 export class AssessmentDashboardInformationComponent {
     readonly isExamMode = input.required<boolean>();

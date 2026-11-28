@@ -21,7 +21,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
 import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {
@@ -82,7 +82,7 @@ describe('FaqUpdateComponent', () => {
                     },
                 },
                 MockProvider(FaqService, {
-                    find: () => {
+                    findForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: faq1,
@@ -90,7 +90,7 @@ describe('FaqUpdateComponent', () => {
                             }),
                         );
                     },
-                    findAllCategoriesByCourseId: () => {
+                    findAllCategoriesForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: [],
@@ -122,6 +122,15 @@ describe('FaqUpdateComponent', () => {
         router = TestBed.inject(Router);
         activatedRoute = TestBed.inject(ActivatedRoute);
         faqUpdateComponentFixture.detectChanges();
+    });
+
+    it('reloads newly proposed FAQ using management detail', () => {
+        const management = vi.spyOn(faqService, 'findForManagement');
+        const student = vi.spyOn(faqService, 'find');
+        faqUpdateComponent.faq = new Faq();
+        faqUpdateComponent['onSaveSuccess'](faq1);
+        expect(management).toHaveBeenCalledExactlyOnceWith(faqUpdateComponent.courseId, faq1.id);
+        expect(student).not.toHaveBeenCalled();
     });
 
     it('should create faq', () => {
@@ -239,6 +248,30 @@ describe('FaqUpdateComponent', () => {
 
         const expectedPath = ['course-management', 1, 'faqs'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+    });
+
+    it('should render the labelled fields and the cancel and save buttons', () => {
+        faqUpdateComponent.faq = { questionTitle: 'title', questionAnswer: 'answer', course: { id: 1, title: 'Course' } } as Faq;
+        faqUpdateComponent.validate();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        const element: HTMLElement = faqUpdateComponentFixture.nativeElement;
+
+        expect(element.querySelector('#jhi-faq-heading')).not.toBeNull();
+        expect(element.querySelector('label[for="field_title"]')).not.toBeNull();
+        expect(element.querySelector('#field_title')).not.toBeNull();
+        expect(element.querySelector('#field_description')).not.toBeNull();
+        expect(element.querySelector<HTMLInputElement>('#field_course')!.disabled).toBe(true);
+
+        const save = element.querySelector<HTMLButtonElement>('#save-entity')!;
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+        faqUpdateComponent.isSaving.set(true);
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
+        expect(save.disabled).toBe(true);
+
+        const previousState = vi.spyOn(faqUpdateComponent, 'previousState').mockImplementation(() => {});
+        element.querySelector<HTMLButtonElement>('#cancel-save')!.click();
+        expect(previousState).toHaveBeenCalledOnce();
     });
 
     it('should update categories', () => {

@@ -1,0 +1,61 @@
+.task__body {
+    display: flex;
+    flex-direction: column;
+    margin-left: 2rem;
+}
+
+.task__field {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.task__row {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.task__row--inactive {
+    background-color: var(--secondary);
+}
+
+.task__row__cell {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.task__row__cell--small {
+    width: 80px;
+    flex: initial;
+}
+
+.task__collapse {
+    color: inherit;
+    background: none;
+    border: none;
+    width: 2rem;
+}
+
+.sort__button {
+    border: none;
+    background: none;
+    color: inherit;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+    -moz-appearance: textfield;
+}

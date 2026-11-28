@@ -4,9 +4,12 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -27,9 +30,10 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
-    styleUrl: './build-agent-summary.component.scss',
+    styleUrl: './build-agent-summary.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         TranslateDirective,
         FontAwesomeModule,
         RouterModule,
@@ -47,7 +51,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildOverviewService);
-    private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
 
     /** Controls the visibility of the "pause all build agents" confirmation dialog */
@@ -58,6 +61,8 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     /** Signal containing the list of all build agents with their current status */
     readonly buildAgents = signal<BuildAgentInformation[]>([]);
+    /** True once the first list of build agents arrived, so the empty state does not flash while loading. */
+    readonly buildAgentsLoaded = signal(false);
 
     /**
      * Computed signal that calculates the total build capacity across all active agents.
@@ -93,9 +98,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     initialLoadSubscription?: Subscription;
 
-    /** Current router URL used for navigation */
-    routerLink!: string; // set in ngOnInit() from router.url
-
     // Font Awesome icons for the UI
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
@@ -103,7 +105,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
 
     ngOnInit(): void {
-        this.routerLink = this.router.url;
         this.loadBuildAgents();
         this.subscribeToWebsocketUpdates();
     }
@@ -120,6 +121,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private subscribeToWebsocketUpdates(): void {
         this.buildAgentsWebsocketSubscription = this.websocketService.subscribe<BuildAgentInformation[]>(this.buildAgentsWebsocketTopic).subscribe((updatedBuildAgents) => {
             this.buildAgents.set(updatedBuildAgents);
+            this.buildAgentsLoaded.set(true);
         });
     }
 
@@ -130,6 +132,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private loadBuildAgents(): void {
         this.initialLoadSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgentsList) => {
             this.buildAgents.set(buildAgentsList);
+            this.buildAgentsLoaded.set(true);
         });
     }
 
@@ -139,16 +142,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     cancelBuildJob(buildJobId: string): void {
         this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
-    }
-
-    /**
-     * Navigates to the build job detail page for a specific job.
-     * @param jobId The unique identifier of the build job
-     */
-    navigateToJobDetail(jobId?: string): void {
-        if (jobId) {
-            void this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
-        }
     }
 
     /**

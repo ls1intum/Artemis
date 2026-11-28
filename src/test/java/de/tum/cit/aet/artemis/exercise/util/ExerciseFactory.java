@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -33,20 +34,11 @@ public class ExerciseFactory {
      * @return The populated course exercise.
      */
     public static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
-        exercise.setTitle(UUID.randomUUID().toString());
-        exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
-        exercise.setProblemStatement("Problem Statement");
-        exercise.setMaxPoints(5.0);
-        exercise.setBonusPoints(0.0);
-        exercise.setReleaseDate(releaseDate);
-        exercise.setDueDate(dueDate);
-        exercise.setAssessmentDueDate(assessmentDueDate);
-        exercise.setDifficulty(DifficultyLevel.MEDIUM);
-        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        // The shared factory deliberately has no randomness of its own, so the test-only randomization that keeps fixtures independent of each other happens here.
+        // Fully qualified because this class shadows the simple name.
+        de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory.populateExercise(exercise, UUID.randomUUID().toString(), "t" + UUID.randomUUID().toString().substring(0, 3),
+                "Problem Statement", 5.0, 0.0, new ExerciseDates(releaseDate, null, dueDate, assessmentDueDate), course);
         exercise.getCategories().add("Category");
-        exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
-        exercise.setCourse(course);
-        exercise.setExerciseGroup(null);
         if (!(exercise instanceof QuizExercise) && !(exercise instanceof FileUploadExercise) && !(exercise instanceof ModelingExercise)) {
             exercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig());
         }

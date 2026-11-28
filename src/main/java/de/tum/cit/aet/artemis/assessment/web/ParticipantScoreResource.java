@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -84,12 +85,11 @@ public class ParticipantScoreResource {
      * @return list of scores for every member of the course
      */
     @GetMapping("courses/{courseId}/course-scores")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<ScoreDTO>> getScoresOfCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get course scores for course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateCourseScores(course);
         log.info("getScoresOfCourse took {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(scoreDTOS);
@@ -111,7 +111,8 @@ public class ParticipantScoreResource {
      */
     @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("exams/{examId}/exam-scores")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);

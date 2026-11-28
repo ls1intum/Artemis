@@ -23,7 +23,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 describe('ExerciseUtils', () => {
@@ -367,9 +367,9 @@ describe('ExerciseUtils', () => {
 
         const createWarning = () => ({ confirmed: new Subject<void>(), reEvaluated: new Subject<void>(), canceled: new Subject<void>(), deleteFeedback: () => true });
 
-        const createCommand = (editType: EditType, hasOpenModals = false, warning?: ReturnType<typeof createWarning>) => {
+        const createCommand = (editType: EditType, hasOpenDialogs = false, warning?: ReturnType<typeof createWarning>) => {
             const service = createService();
-            const modalService = { hasOpenModals: vi.fn().mockReturnValue(hasOpenModals) };
+            const modalService = { hasOpenDialogs: vi.fn().mockReturnValue(hasOpenDialogs) };
             const popupService = { checkExerciseBeforeUpdate: vi.fn().mockResolvedValue({ componentInstance: warning }) };
             const command = new SaveExerciseCommand(modalService as any, popupService as any, service, { id: 7 } as Exercise, editType);
             return { command, service, popupService };
@@ -478,6 +478,10 @@ describe('ExerciseUtils', () => {
             { totalScore: -3, maxPoints: 10, expected: 0 },
             { totalScore: 12.5, maxPoints: 10, expected: 10 },
             { totalScore: 3.14159, maxPoints: 10, expected: 3.14 },
+            // rounding to two decimal places must not lift a total above a maximum with three decimal places
+            { totalScore: 10.006, maxPoints: 10.006, expected: 10.006 },
+            { totalScore: 12, maxPoints: 10.006, expected: 10.006 },
+            { totalScore: 10.004, maxPoints: 10.006, expected: 10 },
         ])('should return $expected for the score $totalScore and the maximum $maxPoints', ({ totalScore, maxPoints, expected }) => {
             expect(getPositiveAndCappedTotalScore(totalScore, maxPoints)).toBe(expected);
         });

@@ -1,3 +1,4 @@
+import { refreshSidebarCard } from '../sidebar-card-refresh';
 import { Component, inject, input } from '@angular/core';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -8,7 +9,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-large-sidebar-card',
     templateUrl: './sidebar-card-large.component.html',
-    styleUrls: ['./sidebar-card-large.component.scss'],
+    styleUrls: ['../sidebar-card.css'],
     imports: [RouterLink, RouterLinkActive, SidebarCardItemComponent],
 })
 export class SidebarCardLargeComponent {
@@ -34,12 +35,6 @@ export class SidebarCardLargeComponent {
     }
 
     refreshChildComponent(): void {
-        void this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected()) {
-                void this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
-            } else {
-                void this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
-            }
-        });
+        void refreshSidebarCard(this.router, this.route, this.location, () => ({ id: this.sidebarItem().id, selected: !!this.itemSelected() }));
     }
 }

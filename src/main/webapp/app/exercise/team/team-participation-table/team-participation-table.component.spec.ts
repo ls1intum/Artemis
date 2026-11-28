@@ -13,13 +13,14 @@ import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entiti
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -170,6 +171,32 @@ describe('TeamParticipationTableComponent', () => {
         debugElement = fixture.debugElement;
         teamService = TestBed.inject(TeamService);
         router = TestBed.inject(Router);
+    });
+
+    it('should request the explicit staff overview rather than infer it from instructor flags', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'staff');
+    });
+
+    it('should keep the student overview for an instructor using the default student view', () => {
+        const find = vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: { ...course, exercises: [] } })));
+        comp.loadAll();
+        expect(find).toHaveBeenCalledWith(comp.course(), comp.team(), 'student');
+    });
+
+    it('should link to the student routes in the student overview', () => {
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/courses', comp.course().id, 'exercises', 7, 'teams', 3]);
+    });
+
+    it('should keep staff in course management, because the student team route requires team membership', () => {
+        fixture.componentRef.setInput('overviewPurpose', 'staff');
+        const row = { id: 7, type: ExerciseType.TEXT, team: { id: 3 } } as unknown as Parameters<typeof comp.teamLink>[0];
+        expect(comp.exerciseLink(row)).toEqual(['/course-management', comp.course().id, 'text-exercises', 7]);
+        expect(comp.teamLink(row)).toEqual(['/course-management', comp.course().id, 'exercises', 7, 'teams', 3]);
     });
 
     afterEach(() => {

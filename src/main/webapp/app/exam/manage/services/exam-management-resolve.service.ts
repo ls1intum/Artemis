@@ -18,7 +18,7 @@ export class CourseResolve implements Resolve<Course | null> {
         const courseId = route.params['courseId'];
 
         if (courseId) {
-            return this.courseManagementService.find(courseId).pipe(
+            return this.courseManagementService.findForManagement(courseId).pipe(
                 map((response) => response.body),
                 catchError(() => of(null)),
             );

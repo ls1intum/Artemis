@@ -33,7 +33,7 @@ export interface ICodeEditorRepositoryFileService {
 export interface ICodeEditorRepositoryService {
     getStatus: () => Observable<{ repositoryStatus: string }>;
     commit: () => Observable<void>;
-    pull: () => Observable<void>;
+    pull: (domain?: DomainChange) => Observable<void>;
     resetRepository: () => Observable<void>;
 }
 

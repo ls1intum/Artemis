@@ -36,6 +36,14 @@ describe('ConversationService', () => {
         vi.restoreAllMocks();
     });
 
+    it('loads mention suggestions from the current conversation', () => {
+        const users = [{ name: 'Recent member', login: 'recent' }];
+        service.searchMembersForUserMentions(1, 42, 'rec').subscribe((response) => expect(response.body).toEqual(users));
+        const request = httpMock.expectOne('/api/communication/courses/1/conversations/42/members/mentions?loginOrName=rec');
+        expect(request.request.method).toBe('GET');
+        request.flush(users);
+    });
+
     it('searchMembersOfConversation', () => {
         const returnedFromService = [new ConversationUserDTO()];
         const expected = returnedFromService;

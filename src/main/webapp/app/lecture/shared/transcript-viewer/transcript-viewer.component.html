@@ -5,6 +5,7 @@
             <div class="search-input-wrapper">
                 <fa-icon [icon]="faSearch" class="search-icon" />
                 <input
+                    tumAetUiInput
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | artemisTranslate"
                     type="text"
                     class="search-input"
@@ -13,7 +14,16 @@
                     (ngModelChange)="onSearchQueryChange($event)"
                 />
                 @if (searchQuery()) {
-                    <button type="button" class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate">
+                    <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        type="button"
+                        class="clear-button"
+                        (click)="clearSearch()"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faTimes" />
                     </button>
                 }
@@ -30,6 +40,10 @@
                         }
                     </span>
                     <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
                         type="button"
                         class="nav-button"
                         (click)="previousSearchResult()"
@@ -39,6 +53,10 @@
                         <fa-icon [icon]="faChevronUp" />
                     </button>
                     <button
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
                         type="button"
                         class="nav-button"
                         (click)="nextSearchResult()"

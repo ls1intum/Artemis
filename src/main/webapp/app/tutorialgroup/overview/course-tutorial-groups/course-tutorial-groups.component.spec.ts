@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, input, signal } from '@angular/core';
+import { Component, input, model, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -22,6 +22,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -80,7 +81,7 @@ describe('CourseTutorialGroupsComponent', () => {
         courseOverviewService = TestBed.inject(CourseOverviewService);
         courseStorageService = TestBed.inject(CourseStorageService);
         lectureService = TestBed.inject(LectureService);
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
         sessionStorageService = TestBed.inject(SessionStorageService);
         router = TestBed.inject(Router);
     });
@@ -154,7 +155,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([]));
-        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -197,9 +198,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
         const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([tutorialGroup1, tutorialGroup2]));
 
-        const tutorialLectureFetchSpy = vi
-            .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')
-            .mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1, tutorialLecture2] })));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([tutorialLecture1, tutorialLecture2]));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -225,6 +224,15 @@ describe('CourseTutorialGroupsComponent', () => {
             ungroupedData: [expectedSidebarCardElement1, expectedSidebarCardElement2, expectedSidebarCardElement3, expectedSidebarCardElement4],
         };
         expect(component.sidebarData()).toEqual(expectedSidebarData);
+        // The sidebar renders the sections in key order, and the lessons must come before the group overview
+        expect(Object.keys(component.sidebarData()!.groupedData!)).toEqual([
+            'allTutorialLectures',
+            'currentTutorialLecture',
+            'furtherTutorialLectures',
+            'allGroups',
+            'registeredGroups',
+            'furtherGroups',
+        ]);
     });
 
     it('should not reload groups and lectures when the stored course changes', async () => {
@@ -254,7 +262,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
         vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([tutorialLecture1]));
         vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
         vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
 
@@ -278,7 +286,7 @@ describe('CourseTutorialGroupsComponent', () => {
         // The group and the lecture are gone on the server; the refresh legitimately returns nothing. Keeping the old
         // cards would leave the student clicking entries that no longer exist.
         vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
         vi.mocked(courseOverviewService.mapTutorialGroupsToSidebarCardElements).mockReturnValue([]);
         vi.mocked(courseOverviewService.mapLecturesToSidebarCardElements).mockReturnValue([]);
 
@@ -298,7 +306,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
         vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
         // The tutorial lecture was deleted on the server, so the refresh legitimately returns nothing
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -338,6 +346,74 @@ describe('CourseTutorialGroupsComponent', () => {
         component.toggleSidebar();
         expect(component.isCollapsed()).toBe(!initialCollapseState);
         expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
+    });
+
+    describe('free-spots filter', () => {
+        // Mirrors the student response contract: the server sends capacityReached but never the registration count.
+        const fullGroup = Object.assign(createTutorialGroup(10, 'Full', false, false), { capacityReached: true });
+        const openGroup = Object.assign(createTutorialGroup(11, 'Open', false, false), { capacityReached: false });
+        const unknownGroup = Object.assign(createTutorialGroup(12, 'Unknown', false, false), { capacityReached: undefined });
+
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [fullGroup, openGroup, unknownGroup], lectures: [] });
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation((group) => ({ id: group.id!, title: group.title!, size: 'M' }));
+            vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockImplementation((groups) =>
+                groups.map((group) => ({ id: group.id!, title: group.title!, size: 'M' })),
+            );
+            vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        });
+
+        it('should list only groups the server reports as having free spots, treating unknown availability as open', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([11, 12]);
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([11, 12]);
+
+            component.freeSpotsOnly.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.groupedData!.allGroups.entityData.map((card) => card.id)).toEqual([10, 11, 12]);
+        });
+
+        it('should keep the availability flag through the API conversion and hide full groups', async () => {
+            // No cached groups, so the component loads from the API and runs the response through the converter.
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ lectures: [] });
+            // Student response contract: capacityReached is sent, the registration count is not.
+            const fullSummary: TutorialGroupSummary = { id: 20, title: 'Full', capacityReached: true };
+            const openSummary: TutorialGroupSummary = { id: 21, title: 'Open', capacityReached: false };
+            vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([fullSummary, openSummary]));
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([20, 21]);
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(component.sidebarData()!.ungroupedData!.map((card) => card.id)).toEqual([21]);
+        });
+
+        it('should not navigate when the filter is toggled', async () => {
+            vi.spyOn(courseOverviewService, 'getUpcomingTutorialGroup').mockReturnValue(openGroup);
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            // Nothing is selected on load, so it auto-navigates to the upcoming group exactly once.
+            expect(navigateSpy).toHaveBeenCalledOnce();
+
+            component.freeSpotsOnly.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
     });
 });
 
@@ -387,7 +463,7 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
         subtitleLeft: 'No upcoming session',
         subtitleRight: undefined,
         attendanceText: '1 / 10',
-        attendanceChipColor: 'var(--green)',
+        attendanceChipColor: 'var(--tumaet-ui-state-success)',
     };
 }
 
@@ -401,4 +477,6 @@ class MockSidebarComponent {
     pageTitle = input<string>();
     showSidebarToggle = input<boolean>();
     isSidebarCollapsed = input<boolean>();
+    inlineFilterLabel = input<string>();
+    inlineFilterActive = model<boolean>(false);
 }

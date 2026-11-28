@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -112,18 +114,36 @@ public class ProgrammingExerciseRepositoryService {
         gitService.commitAndPush(repository, message, emptyCommit, user);
     }
 
+    private void commitAndPushRepository(final Repository repository, final String message, final boolean emptyCommit, final PersonIdent identity) throws GitAPIException {
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPushAs(repository, message, emptyCommit, identity);
+    }
+
+    /**
+     * The identity that authors the first commit of the repositories of a new exercise.
+     *
+     * @param exerciseCreator     the user who creates the exercise
+     * @param initialCommitAuthor the setting of the course, or null if the course has none, which keeps the exercise creator
+     * @return the identity of the commit
+     */
+    private PersonIdent initialCommitIdentity(final User exerciseCreator, @Nullable final InitialCommitAuthorDTO initialCommitAuthor) {
+        PersonIdent creator = new PersonIdent(exerciseCreator.getName(), exerciseCreator.getEmail());
+        return initialCommitAuthor == null ? creator : initialCommitAuthor.toIdentity(gitService.getPlaceholderIdentity(), creator);
+    }
+
     /**
      * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
      * exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
-     * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @param exerciseCreator     the User that performed the action (used as Git commit author, unless the course chose another one)
+     * @param initialCommitAuthor who authors the first commit of the repositories according to the course, or null to use the exercise creator
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
-            boolean emptyRepositories) throws GitAPIException {
+            @Nullable final InitialCommitAuthorDTO initialCommitAuthor, boolean emptyRepositories) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }
@@ -134,7 +154,7 @@ public class ProgrammingExerciseRepositoryService {
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
-        setupRepositories(programmingExercise, buildConfig, exerciseCreator, exerciseResources, solutionResources, testResources);
+        setupRepositories(programmingExercise, buildConfig, initialCommitIdentity(exerciseCreator, initialCommitAuthor), exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
             clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
@@ -328,7 +348,7 @@ public class ProgrammingExerciseRepositoryService {
     private boolean hasSeparateStaticCodeAnalysisTemplateFiles(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             // Languages that have a separate staticCodeAnalysis directory with template files
-            case PYTHON, TYPESCRIPT, JAVASCRIPT, C_PLUS_PLUS, DART, R, RUBY -> true;
+            case PYTHON, TYPESCRIPT, JAVASCRIPT, C_PLUS_PLUS, DART, R, RUBY, GO -> true;
             default -> false;
         };
     }
@@ -338,18 +358,18 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise The exercise that should be set up.
      * @param buildConfig         Its build configuration, which is stored separately and read by the caller.
-     * @param exerciseCreator     The user that wants to create the exercise
+     * @param author              The identity that authors the first commit of each repository
      * @param exerciseResources   The resources for the template repository.
      * @param solutionResources   The resources for the solution repository.
      * @param testResources       The resources for the repository containing the tests.
      * @throws GitAPIException Thrown in case pushing a repository fails.
      */
-    private void setupRepositories(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
+    private void setupRepositories(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final PersonIdent author,
             final RepositoryResources exerciseResources, final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
         try {
-            setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, buildConfig, exerciseCreator);
-            setupTemplateAndPush(solutionResources, "Solution", programmingExercise, buildConfig, exerciseCreator);
-            setupTestTemplateAndPush(testResources, programmingExercise, buildConfig, exerciseCreator);
+            setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, buildConfig, author);
+            setupTemplateAndPush(solutionResources, "Solution", programmingExercise, buildConfig, author);
+            setupTestTemplateAndPush(testResources, programmingExercise, buildConfig, author);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -357,9 +377,9 @@ public class ProgrammingExerciseRepositoryService {
             log.warn("An exception occurred while setting up the repositories", ex);
 
             final String commitMessage = "Empty Setup by Artemis";
-            gitService.commitAndPush(exerciseResources.repository, commitMessage, true, exerciseCreator);
-            gitService.commitAndPush(testResources.repository, commitMessage, true, exerciseCreator);
-            gitService.commitAndPush(solutionResources.repository, commitMessage, true, exerciseCreator);
+            gitService.commitAndPushAs(exerciseResources.repository, commitMessage, true, author);
+            gitService.commitAndPushAs(testResources.repository, commitMessage, true, author);
+            gitService.commitAndPushAs(solutionResources.repository, commitMessage, true, author);
         }
     }
 
@@ -457,12 +477,12 @@ public class ProgrammingExerciseRepositoryService {
      * @param templateName        The name of the template
      * @param programmingExercise the programming exercise
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
-     * @param user                The user that triggered the action (used as Git commit author)
+     * @param author              The identity that authors the commit
      * @throws IOException     Thrown in case resources could be copied into the local repository.
      * @throws GitAPIException Thrown in case pushing to the version control system failed.
      */
     private void setupTemplateAndPush(RepositoryResources resources, String templateName, ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
-            User user) throws IOException, GitAPIException {
+            PersonIdent author) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (!gitService.getFiles(resources.repository).isEmpty()) {
             return;
@@ -480,7 +500,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         replacePlaceholders(programmingExercise, buildConfig, resources.repository);
-        commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
+        commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, author);
     }
 
     private static Path getRepoAbsoluteLocalPath(@NonNull final Repository repository) {
@@ -494,20 +514,20 @@ public class ProgrammingExerciseRepositoryService {
      * @param resources           The resources which should get added to the template
      * @param programmingExercise The related programming exercise for which the template should get created
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
-     * @param user                the user who has initiated the generation of the programming exercise
+     * @param author              the identity that authors the commit
      * @throws IOException     Thrown in case copying files fails.
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
     private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
-            final User user) throws IOException, GitAPIException {
+            final PersonIdent author) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (gitService.getFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            setupJVMTestTemplateAndPush(resources, programmingExercise, buildConfig, user);
+            setupJVMTestTemplateAndPush(resources, programmingExercise, buildConfig, author);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(resources, "Test", programmingExercise, buildConfig, user);
+            setupTemplateAndPush(resources, "Test", programmingExercise, buildConfig, author);
         }
     }
 
@@ -517,12 +537,12 @@ public class ProgrammingExerciseRepositoryService {
      * @param resources           The resources the repository should be filled with.
      * @param programmingExercise The programming exercise the new repository belongs to.
      * @param buildConfig         Its build configuration, which is stored separately and read by the caller.
-     * @param user                The user that is creating the exercise.
+     * @param author              The identity that authors the commit.
      * @throws IOException     Thrown in case copying files fails.
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
     private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
-            final User user) throws IOException, GitAPIException {
+            final PersonIdent author) throws IOException, GitAPIException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
@@ -559,7 +579,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         replacePlaceholders(programmingExercise, buildConfig, resources.repository);
-        commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
+        commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, author);
     }
 
     private static Path getJavaProjectTemplatePath(final Path templatePath, final ProjectType projectType) {

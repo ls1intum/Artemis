@@ -80,11 +80,6 @@ public class ExampleSubmission extends DomainObject {
         tutorParticipation.getTrainedExampleSubmissions().add(this);
     }
 
-    public void removeTutorParticipations(TutorParticipation tutorParticipation) {
-        this.tutorParticipations.remove(tutorParticipation);
-        tutorParticipation.getTrainedExampleSubmissions().remove(this);
-    }
-
     public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
         this.tutorParticipations = tutorParticipations;
     }

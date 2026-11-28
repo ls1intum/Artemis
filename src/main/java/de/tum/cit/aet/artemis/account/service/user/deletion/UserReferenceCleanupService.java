@@ -65,6 +65,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.USER_AI_PREFERENCE, bind(account::countAiPreferences, account::deleteAiPreferences));
         bindings.put(UserDeletionReferencePolicy.RECOVERY_KEY, bind(account::countRecoveryKeys, account::deleteRecoveryKeys));
         bindings.put(UserDeletionReferencePolicy.PASSKEY, bind(account::countPasskeyCredentials, account::deletePasskeyCredentials));
+        bindings.put(UserDeletionReferencePolicy.AGENT_ACCESS_TOKEN, bind(account::countAgentAccessTokens, account::deleteAgentAccessTokens));
         bindings.put(UserDeletionReferencePolicy.AUTHORITY, bind(account::countAuthorities, account::deleteAuthorities));
         bindings.put(UserDeletionReferencePolicy.ORGANIZATION_MEMBERSHIP, bind(account::countOrganizationMemberships, account::deleteOrganizationMemberships));
 
@@ -108,9 +109,11 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, bind(learning::countQuizQuestionProgress, learning::deleteQuizQuestionProgress));
         bindings.put(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, bind(learning::countQuizLeaderboardEntries, learning::deleteQuizLeaderboardEntries));
         bindings.put(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, bind(learning::countCompetencyProgress, learning::deleteCompetencyProgress));
+        bindings.put(UserDeletionReferencePolicy.COURSE_HOME_VISIT, bind(learning::countHomeVisits, learning::deleteHomeVisits));
         bindings.put(UserDeletionReferencePolicy.LECTURE_PROGRESS, bind(learning::countLectureUnitCompletions, learning::deleteLectureUnitCompletions));
         bindings.put(UserDeletionReferencePolicy.LEARNER_PROFILE, bind(learning::countLearnerProfiles, learning::deleteLearnerProfile));
         bindings.put(UserDeletionReferencePolicy.LEARNING_PATH, bind(learning::countLearningPaths, learning::deleteLearningPaths));
+        bindings.put(UserDeletionReferencePolicy.SCIENCE_COURSE_CONSENT, bind(learning::countScienceCourseConsents, learning::deleteScienceCourseConsents));
 
         bindings.put(UserDeletionReferencePolicy.COURSE_ROLE, bind(courseContext::countCourseRoles, courseContext::deleteCourseRoles));
         bindings.put(UserDeletionReferencePolicy.COURSE_REQUEST, bind(courseContext::countCourseRequests, courseContext::deleteCourseRequests));

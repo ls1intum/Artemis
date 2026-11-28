@@ -1,14 +1,19 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { AgentChatService } from '../services/agent-chat.service';
 import { CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from 'app/atlas/shared/entities/chat-message.model';
 import {
+    AgentChatResponse,
     ChatMessage,
     CompetencyMappingViewModel,
     ExerciseMappingPreview,
@@ -19,9 +24,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
-import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
-import { SelectModule } from 'primeng/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -40,23 +42,24 @@ export interface AgentChatModalData {
     selector: 'jhi-agent-chat-modal',
     standalone: true,
     imports: [
-        CommonModule,
         TranslateDirective,
         FontAwesomeModule,
         FormsModule,
         ArtemisTranslatePipe,
         CompetencyCardComponent,
         CourseCompetenciesRelationGraphComponent,
-        ButtonModule,
-        CheckboxModule,
-        SelectModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiTagComponent,
     ],
     templateUrl: './agent-chat-modal.component.html',
-    styleUrl: './agent-chat-modal.component.scss',
+    styleUrl: './agent-chat-modal.component.css',
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly dialogRef = inject(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<AgentChatModalData>>(TumAetUiDialogConfig, { optional: true });
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
 
@@ -103,7 +106,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngOnInit(): void {
-        const data = this.dialogConfig?.data as AgentChatModalData | undefined;
+        const data = this.dialogConfig?.data;
         if (!data) {
             // Fail closed: without a payload we have no course context, so do not load history or wire callbacks.
             return;
@@ -163,20 +166,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessage(
-                    response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'),
-                    false,
-                    response.competencyPreviews,
-                    response.relationPreviews,
-                    response.relationGraphPreview,
-                    response.exerciseMappingPreview,
-                );
-
-                if (response.competenciesModified) {
-                    this.competencyChanged.emit();
-                }
-
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+                this.handleAgentResponse(response, 'artemisApp.agent.chat.error.general', response.competenciesModified);
             },
             error: () => {
                 this.isAgentTyping.set(false);
@@ -227,18 +217,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { competencyCreated: true }) : msg)));
 
                 // Add agent response message (may include next step preview from plan continuation)
-                this.addMessage(
-                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.createdSingle'),
-                    false,
-                    response.competencyPreviews,
-                    response.relationPreviews,
-                    response.relationGraphPreview,
-                    response.exerciseMappingPreview,
-                );
-
-                this.competencyChanged.emit();
-
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+                this.handleAgentResponse(response, 'artemisApp.agent.chat.success.createdSingle', true);
             },
             error: () => {
                 this.isAgentTyping.set(false);
@@ -265,20 +244,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { relationCreated: true }) : msg)));
 
                 // Add agent response message
-                this.addMessage(
-                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.relationCreated'),
-                    false,
-                    response.competencyPreviews,
-                    response.relationPreviews,
-                    response.relationGraphPreview,
-                    response.exerciseMappingPreview,
-                );
-
-                // Emit event to refresh competencies (relations affect the graph)
-                this.competencyChanged.emit();
-
-                // Restore focus to input
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+                this.handleAgentResponse(response, 'artemisApp.agent.chat.success.relationCreated', true);
             },
             error: () => {
                 this.isAgentTyping.set(false);
@@ -315,18 +281,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 // Mark this message as saved to prevent resubmission
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? cloneWith(msg, { exerciseMappingCreated: true }) : msg)));
 
-                this.addMessage(
-                    response.message ?? this.translateService.instant('artemisApp.agent.chat.success.exerciseMappingCreated'),
-                    false,
-                    response.competencyPreviews,
-                    response.relationPreviews,
-                    response.relationGraphPreview,
-                    response.exerciseMappingPreview,
-                );
-
-                this.competencyChanged.emit();
-
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+                this.handleAgentResponse(response, 'artemisApp.agent.chat.success.exerciseMappingCreated', true);
             },
             error: () => {
                 this.isAgentTyping.set(false);
@@ -349,20 +304,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId()).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(
-                    response.message ?? this.translateService.instant('artemisApp.agent.chat.error.general'),
-                    false,
-                    response.competencyPreviews,
-                    response.relationPreviews,
-                    response.relationGraphPreview,
-                    response.exerciseMappingPreview,
-                );
-
-                if (response.competenciesModified) {
-                    this.competencyChanged.emit();
-                }
-
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
+                this.handleAgentResponse(response, 'artemisApp.agent.chat.error.general', response.competenciesModified);
             },
             error: () => {
                 this.isAgentTyping.set(false);
@@ -370,6 +312,21 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
+    }
+
+    private handleAgentResponse(response: AgentChatResponse, fallbackKey: string, refreshCompetencies: boolean): void {
+        this.addMessage(
+            response.message ?? this.translateService.instant(fallbackKey),
+            false,
+            response.competencyPreviews,
+            response.relationPreviews,
+            response.relationGraphPreview,
+            response.exerciseMappingPreview,
+        );
+        if (refreshCompetencies) {
+            this.competencyChanged.emit();
+        }
+        setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
     }
 
     /**

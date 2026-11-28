@@ -64,7 +64,9 @@ test.describe('Exam access', { tag: '@slow' }, () => {
 
         // Opening the exam by its address does not get the student into it either.
         await page.goto(`/courses/${course.id}/exams/${notRegistered.exam.id}`);
-        await expect(page.getByText('You are not authorized to access this page.')).toBeVisible();
+        await expect(
+            page.getByTestId('alert').filter({ hasText: 'You do not have permission to view the requested content. Contact your course team if you need access.' }),
+        ).toBeVisible();
         await expect(page.getByTestId('start-exam')).toHaveCount(0);
         await expect(page.getByTestId('hand-in-early')).toHaveCount(0);
     });

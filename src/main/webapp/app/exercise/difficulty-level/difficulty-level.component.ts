@@ -1,9 +1,10 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ColoredDifficultyLevel {
     label: string;
@@ -12,8 +13,8 @@ export interface ColoredDifficultyLevel {
 @Component({
     selector: 'jhi-difficulty-level',
     templateUrl: './difficulty-level.component.html',
-    styleUrls: ['./difficulty-level.component.scss'],
-    imports: [CommonModule, NgbTooltipModule],
+    styleUrls: ['./difficulty-level.component.css'],
+    imports: [TumAetUiTooltipDirective, CommonModule],
 })
 export class DifficultyLevelComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);

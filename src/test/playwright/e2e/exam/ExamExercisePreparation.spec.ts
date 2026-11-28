@@ -4,6 +4,7 @@ import { test } from '../../support/fixtures';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const course = { id: SEED_COURSES.examManagement.id } as any;
 
@@ -12,7 +13,7 @@ type PreparationStatus = { finished: number; failed: number; overall: number; pa
 /**
  * Before an exam the exercises are prepared for every individual exam: the participations and submissions of the students are created. The
  * instructor follows the preparation in the list of students: how many individual exams are prepared, how many failed, and whether everything is
- * ready. A change of the registered students makes the preparation incomplete again.
+ * ready. Students registered after preparation receive prepared individual exams without replacing the existing work.
  */
 test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -34,7 +35,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         return page.getByRole('dialog', { name: 'Individual exams status' });
     }
 
-    test('The preparation is tracked, reported in the student list and incomplete again when a student is added', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
+    test('Preparation is tracked and late registration prepares the new student while preserving existing work', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
@@ -57,7 +58,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         // Nothing is prepared yet: there is no status, and no participation exists.
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
         expect(await status(page)).toBeNull();
-        expect(await exerciseAPIRequests.getExerciseParticipations(exercises[0].id!)).toHaveLength(0);
+        expect(await exerciseAPIRequests.getExerciseParticipations(exercises[0].id!, 'exam')).toHaveLength(0);
         let popover = await openStatusPopover(page);
         await expect(popover).toContainText('Not all exercises are prepared for all individual exams');
         await page.keyboard.press('Escape');
@@ -72,8 +73,16 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         expect(done.overall).toBe(3);
         expect(done.failed, 'no preparation failed').toBe(0);
         expect(done.participationCount, 'one participation per student and exercise').toBe(6);
+        const existingExams: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
+        expect(existingExams).toHaveLength(3);
+        const existingParticipations = new Map<number, { participationId: number; studentLogin?: string }[]>();
         for (const exercise of exercises) {
-            expect((await exerciseAPIRequests.getExerciseParticipations(exercise.id!)).map((participation) => participation.studentLogin).sort()).toEqual(
+            const participations = await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam');
+            existingParticipations.set(
+                exercise.id!,
+                participations.map((participation) => ({ participationId: participation.participationId, studentLogin: participation.studentLogin })),
+            );
+            expect(participations.map((participation) => participation.studentLogin).sort()).toEqual(
                 [studentOne, studentTwo, studentThree].map((student) => student.username).sort(),
             );
         }
@@ -85,24 +94,40 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         await expect(popover).toContainText('3 / 3');
         await page.keyboard.press('Escape');
 
-        // A student who is registered afterwards has no individual exam and nothing prepared: the preparation is incomplete again, and the old status is gone.
+        // Late registration generates and prepares the new student's exam automatically.
         await login(admin);
         await examAPIRequests.registerStudentForExam(exam, studentFour);
-        await examAPIRequests.generateMissingIndividualExams(exam);
-        expect(await status(page), 'the status of the earlier preparation is dropped').toBeNull();
-        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
-        popover = await openStatusPopover(page);
-        await expect(popover).toContainText('Not all exercises are prepared for all individual exams');
-        await page.keyboard.press('Escape');
-
-        // Preparing again ends with all four individual exams prepared, and the students prepared before keep their participations.
-        await login(admin);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
-        await expect.poll(async () => (await status(page))?.finished, { timeout: 60_000 }).toBe(4);
-        expect((await status(page))!.failed).toBe(0);
+        await expect.poll(async () => (await status(page))?.finished, { message: 'late registration prepares all four individual exams', timeout: 60_000 }).toBe(4);
+        const afterRegistration = (await status(page))!;
+        expect(afterRegistration.overall).toBe(4);
+        expect(afterRegistration.failed).toBe(0);
+        expect(afterRegistration.participationCount, 'only the new student needs two new participations').toBe(2);
+        const allExams: StudentExam[] = await examAPIRequests.getAllStudentExams(exam);
+        expect(allExams).toHaveLength(4);
+        expect(allExams.map((studentExam) => studentExam.id)).toEqual(expect.arrayContaining(existingExams.map((studentExam) => studentExam.id)));
+        expect(new Set(allExams.map((studentExam) => studentExam.id)).size).toBe(4);
         for (const exercise of exercises) {
-            expect(await exerciseAPIRequests.getExerciseParticipations(exercise.id!), 'one participation per student, none twice').toHaveLength(4);
+            const participations = await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam');
+            expect(participations, 'one participation per student, none twice').toHaveLength(4);
+            expect(participations.map((participation) => participation.studentLogin).sort()).toEqual(
+                [studentOne, studentTwo, studentThree, studentFour].map((student) => student.username).sort(),
+            );
+            expect(participations.map((participation) => ({ participationId: participation.participationId, studentLogin: participation.studentLogin }))).toEqual(
+                expect.arrayContaining(existingParticipations.get(exercise.id!)!),
+            );
         }
+
+        await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
+        await expect(page.getByTestId('remove-student-button')).toHaveCount(4);
+        for (const student of [studentOne, studentTwo, studentThree, studentFour]) {
+            await expect(page.getByTestId('exam-students-table').getByText(student.username, { exact: true })).toBeVisible();
+        }
+        popover = await openStatusPopover(page);
+        await expect(popover).toContainText('All exercises are prepared for all individual exams');
+        await expect(popover).toContainText('4 / 4');
+        await page.keyboard.press('Escape');
+        await page.getByRole('button', { name: 'Individual exams', exact: true }).click();
+        await expect(page.getByTestId('exam-students-menu-entry').filter({ hasText: 'Generate missing individual exams' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     test('The list of students shows failed preparations and does not report the exam as ready', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {

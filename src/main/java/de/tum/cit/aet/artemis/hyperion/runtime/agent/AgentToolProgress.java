@@ -5,8 +5,14 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.cfg.CoercionAction;
+import tools.jackson.databind.cfg.CoercionInputShape;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.type.LogicalType;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 
@@ -19,7 +25,11 @@ final class AgentToolProgress {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
-    private static final JsonMapper MAPPER = JsonMapper.builder().build();
+    // A number or boolean in place of the path is not a path, so it must not be coerced to text.
+    private static final JsonMapper MAPPER = JsonMapper.builder()
+            .withCoercionConfig(LogicalType.Textual, config -> config.setCoercion(CoercionInputShape.Integer, CoercionAction.Fail)
+                    .setCoercion(CoercionInputShape.Float, CoercionAction.Fail).setCoercion(CoercionInputShape.Boolean, CoercionAction.Fail))
+            .build();
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
@@ -64,12 +74,21 @@ final class AgentToolProgress {
             return null;
         }
         try {
-            var arguments = MAPPER.readTree(json);
-            var path = arguments == null ? null : arguments.get("path");
-            return path != null && path.isString() ? path.asString() : null;
+            PathArguments arguments = MAPPER.readValue(json, PathArguments.class);
+            return arguments == null ? null : arguments.path();
         }
         catch (JacksonException e) {
             return null;
         }
+    }
+
+    /**
+     * The part of a tool call's JSON arguments that names a workspace path.
+     *
+     * @param path the path the tool call works on, absent when the tool takes none
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record PathArguments(@Nullable String path) {
     }
 }

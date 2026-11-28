@@ -20,7 +20,8 @@ services:
         expose:
             - "5432"
         healthcheck:
-            test: pg_isready -U Artemis -d Artemis
+            # The initialization server accepts socket connections before the final TCP server starts.
+            test: pg_isready -h 127.0.0.1 -U Artemis -d Artemis
             interval: 5s
             timeout: 3s
             retries: 30

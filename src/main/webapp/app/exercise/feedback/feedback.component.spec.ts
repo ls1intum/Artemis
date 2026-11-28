@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -9,14 +9,13 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subject, of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -27,6 +26,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 
@@ -36,7 +36,7 @@ describe('FeedbackComponent', () => {
 
     let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
-    let resultService: ResultService;
+    let resultApi: ResultApi;
     let profileService: ProfileService;
     let feedbackItemService: ProgrammingFeedbackItemService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
@@ -226,12 +226,12 @@ describe('FeedbackComponent', () => {
             },
         } as Result);
         buildLogService = TestBed.inject(BuildLogService);
-        resultService = TestBed.inject(ResultService);
+        resultApi = TestBed.inject(ResultApi);
         profileService = TestBed.inject(ProfileService);
         feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         buildlogsStub = vi.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails').mockReturnValue(of([]));
         // Set profile info
         const profileInfo = new ProfileInfo();
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -333,7 +333,7 @@ describe('FeedbackComponent', () => {
         fixture.detectChanges();
 
         expect(comp.participation()!.exercise).toBeUndefined();
-        const tagTexts = [...fixture.nativeElement.querySelectorAll('p-tag')].map((tag: Element) => tag.textContent?.trim());
+        const tagTexts = [...fixture.nativeElement.querySelectorAll('tumaet-ui-tag')].map((tag: Element) => tag.textContent?.trim());
         expect(tagTexts).toContain('ARTEMISAPP.RESULT.PRELIMINARY');
     });
 
@@ -460,12 +460,12 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
+        getFeedbackDetailsForResultStub.mockReturnValue(of(feedbacks));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result());
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result().id);
         expect(comp.isLoading()).toBe(false);
     });
 
@@ -518,8 +518,77 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed()).toBe(true);
+        expect(comp.loadingFailed()).toBe(false);
+        expect(comp.buildLogsFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
+    });
+
+    it('shows available build logs even while feedback details are still loading', () => {
+        getFeedbackDetailsForResultStub.mockReturnValue(new Subject<Feedback[]>());
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Available compiler diagnostic' }]));
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Available compiler diagnostic');
+        expect(fixture.nativeElement.querySelector('[data-testid="result-detail-spinner"]')).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+    });
+
+    it('keeps feedback visible while failed-build logs are still loading', () => {
+        const logs = new Subject<never[]>();
+        buildlogsStub.mockReturnValue(logs);
+        comp.result().feedbacks = [makeFeedback({ detailText: 'Retain this test feedback' })];
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="build-log-spinner"]')).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+    });
+
+    it('keeps feedback visible when logs fail and retries only the logs on request', () => {
+        buildlogsStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.result().feedbacks = [makeFeedback({ detailText: 'Retain this test feedback' })];
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-build-logs"]') as HTMLButtonElement;
+        expect(retry).not.toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Compiler diagnostic' }]));
+        retry.click();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('Compiler diagnostic');
+        expect(fixture.nativeElement.querySelector('[data-testid="retry-build-logs"]')).toBeNull();
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+    });
+
+    it('shows a details error instead of the empty state and allows retry', () => {
+        comp.result().submission = generateProgrammingSubmission(false);
+        getFeedbackDetailsForResultStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.noResultDetails');
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]') as HTMLButtonElement;
+        expect(retry).not.toBeNull();
+        getFeedbackDetailsForResultStub.mockReturnValue(of([makeFeedback({ detailText: 'Recovered feedback' })]));
+        retry.click();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.feedback-list')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]')).toBeNull();
+    });
+
+    it('loads logs for the selected historical result even when its submission was rebuilt successfully', () => {
+        comp.result().submission = generateProgrammingSubmission(false);
+        comp.result().successful = false;
+        buildlogsStub.mockReturnValue(of([{ time: '2026-01-01T10:00:00Z', log: 'Historical compiler diagnostic' }]));
+
+        fixture.detectChanges();
+
+        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
+        expect(fixture.nativeElement.textContent).toContain('Historical compiler diagnostic');
     });
 
     it('should leave a margin below the last build log entry of a timestamp', () => {
@@ -576,9 +645,9 @@ describe('FeedbackComponent', () => {
         expect(createSpy).toHaveBeenCalledWith(feedbacks, true);
     });
 
-    describe('when opened via DialogService (inputValues forwarded via setInput)', () => {
+    describe('when opened via TumAetUiDialogService (inputValues forwarded via setInput)', () => {
         it('reads the inputs forwarded by the dialog before initializing feedback', () => {
-            // The standalone-feedback page binds inputs via the template; PrimeNG's DialogService forwards `inputValues`
+            // The standalone-feedback page binds inputs via the template; PrimeNG's TumAetUiDialogService forwards `inputValues`
             // by calling componentRef.setInput on the same signal inputs. This verifies that dialog-forwarded path.
             TestBed.resetTestingModule();
 
@@ -598,7 +667,7 @@ describe('FeedbackComponent', () => {
             const dialogFixture = TestBed.createComponent(FeedbackComponent);
             const dialogComp = dialogFixture.componentInstance;
             vi.spyOn(TestBed.inject(BuildLogService), 'getBuildLogs').mockReturnValue(of([]));
-            vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+            vi.spyOn(TestBed.inject(ResultApi), 'getResultDetails').mockReturnValue(of([]));
             vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
             dialogFixture.componentRef.setInput('exercise', dialogExercise);

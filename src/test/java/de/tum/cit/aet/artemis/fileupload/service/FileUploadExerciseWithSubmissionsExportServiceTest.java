@@ -41,7 +41,7 @@ class FileUploadExerciseWithSubmissionsExportServiceTest extends AbstractSpringI
     private Path exportDir;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportFileUploadExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         FileUploadExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, FileUploadExercise.class);

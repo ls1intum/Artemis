@@ -5,7 +5,7 @@ import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChevronDown, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { LOGIN_PATTERN, LTI_USER_PREFIX_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -14,15 +14,20 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -31,18 +36,18 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
-        NgbTooltip,
-        PaginatorModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiPaginatorComponent,
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
-        ItemCountComponent,
         HelpIconComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
@@ -53,11 +58,13 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     private readonly courseService = inject(CourseManagementService);
     private readonly router = inject(Router);
     private readonly ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly accountService = inject(AccountService);
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faChevronDown = faChevronDown;
 
     readonly scrollableContent = viewChild.required<ElementRef>('scrollableContent');
 
@@ -104,6 +111,10 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     loadData(): void {
+        // Only administrators choose the LTI platform (see the template), and only they may list the platforms.
+        if (!this.accountService.isAdmin()) {
+            return;
+        }
         this.ltiConfigurationService
             .query({
                 page: this.page() - 1,
@@ -123,10 +134,10 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page.
+     * Handles a paginator page change. The paginator page is 0-indexed, so it is converted to the 1-indexed page.
      */
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
         this.transition();
     }
 

@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -41,6 +42,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     private static final String TEST_PREFIX = "exerciseunitintegration";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -102,7 +106,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -114,7 +118,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_asInstructor_shouldCreateExerciseUnit() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnitDTO> persistedExerciseUnits = new HashSet<>();
@@ -149,7 +153,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_withId_shouldReturnBadRequest() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoWithIdFor(1L, exercise), ExerciseUnitDTO.class,
@@ -157,28 +161,28 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_exerciseFromDifferentCourse_shouldReturnBadRequest() throws Exception {
         TextExercise exercise = textExerciseUtilService.createSampleTextExercise(course2);
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoFor(exercise), ExerciseUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_missingExercise_shouldReturnBadRequest() throws Exception {
         ExerciseUnitDTO exerciseUnitDTO = new ExerciseUnitDTO(null, null, null, false, false, null, null, null);
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDTO, ExerciseUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_missingExerciseId_shouldReturnBadRequest() throws Exception {
         ExerciseUnitDTO exerciseUnitDTO = new ExerciseUnitDTO(null, null, null, false, false, null, new ExerciseUnitDTO.ExerciseReferenceDTO(null, null, null, null), null);
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDTO, ExerciseUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createExerciseUnit_asStudent_shouldForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoWithIdFor(1L, exercise), ExerciseUnitDTO.class,
@@ -186,21 +190,21 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseUnit_notExistingLectureId_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + 0 + "/exercise-units", exerciseUnitDtoFor(exercise), ExerciseUnitDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void createExerciseUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoFor(exercise), ExerciseUnitDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_exerciseConnectedWithExerciseUnit_shouldDeleteExerciseUnit() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnitDTO> persistedExerciseUnits = new HashSet<>();
@@ -212,11 +216,16 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
         }
         assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(fileUploadExercise.getId());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
 
         List<ExerciseUnitDTO> exerciseUnitsOfLecture = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnitDTO.class);
         assertThat(exerciseUnitsOfLecture).isEmpty();
@@ -224,7 +233,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExerciseUnit_exerciseConnectedWithExerciseUnit_shouldNOTDeleteExercise() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnitDTO> persistedExerciseUnits = new HashSet<>();

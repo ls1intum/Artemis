@@ -1,15 +1,17 @@
 import { Component, computed, input } from '@angular/core';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
+import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-leaderboard',
-    imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective],
+    imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
     templateUrl: './leaderboard.component.html',
-    styleUrl: './leaderboard.component.scss',
+    styleUrl: './leaderboard.component.css',
 })
 export class LeaderboardComponent {
     currentUserId = input<number>();

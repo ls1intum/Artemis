@@ -9,7 +9,7 @@ import { ExerciseType } from '../../support/constants';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
 import { ExamExerciseGroupsPage } from '../../support/pageobjects/exam/ExamExerciseGroupsPage';
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
@@ -184,7 +184,12 @@ test.describe('Exam Checklists', async () => {
             await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
             await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXERCISES_PREPARED);
             await examDetails.clickStudentExamsToPrepareStart();
+            // The checklist loads a snapshot; wait for preparation before navigating away from the students page.
+            const preparationResponse = page.waitForResponse(
+                (response) => response.request().method() === 'POST' && response.url().endsWith(`/api/exam/courses/${course.id}/exams/${exam.id}/student-exams/start-exercises`),
+            );
             await studentExamManagement.clickPrepareExerciseStart();
+            expect((await preparationResponse).status()).toBe(200);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXAMS_GENERATED);
             await examDetails.checkItemChecked(ExamChecklistItem.ALL_EXERCISES_PREPARED);

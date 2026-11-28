@@ -12,7 +12,7 @@ const packageDirectoryArgument = process.argv.indexOf('--package-dir');
 const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, 'dist');
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
-const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
+const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,css,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
 const artifactRuntimePaths = globSync(resolve(packageDirectory, 'fesm2022/**/*.mjs'));
 const [css, manifestSource, cdkOverlayCss, ...sources] = await Promise.all([
     readFile(stylesheetPath, 'utf8'),
@@ -39,18 +39,94 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
-const allowedLayers = new Set(['properties', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
+const allowedLayers = new Set(['properties', 'tumaet-ui', 'tumaet-ui-cdk', 'tumaet-ui-theme']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
     }
-    if (atRule.name === 'layer' && !allowedLayers.has(atRule.params)) {
-        errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
+    if (atRule.name === 'layer') {
+        for (const layer of atRule.params.split(',').map((name) => name.trim())) {
+            if (!allowedLayers.has(layer)) {
+                errors.push(`the compiled stylesheet contains unexpected @layer ${layer}`);
+            }
+        }
     }
     if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tumaet-')) {
         errors.push(`the compiled stylesheet contains unnamespaced keyframes ${atRule.params}`);
     }
 });
+
+// A host overrides the package with a utility class of its own, which only works while every style of the package is in a
+// cascade layer. Outside a layer, a rule may only register or set custom properties.
+function isInLayer(node) {
+    for (let parent = node.parent; parent; parent = parent.parent) {
+        if (parent.type === 'atrule' && parent.name === 'layer') {
+            return true;
+        }
+    }
+    return false;
+}
+stylesheet.walkDecls((declaration) => {
+    const insideKeyframesOrProperty = (node) => {
+        for (let parent = node.parent; parent; parent = parent.parent) {
+            if (parent.type === 'atrule' && (parent.name.endsWith('keyframes') || parent.name === 'property')) {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (!declaration.prop.startsWith('--') && !isInLayer(declaration) && !insideKeyframesOrProperty(declaration)) {
+        errors.push(`${declaration.parent.selector ?? declaration.parent.params}: ${declaration.prop} is outside a cascade layer`);
+    }
+});
+
+// The styles of the components are compiled into the Angular package, not into the stylesheet above, so the same rule
+// is checked on their sources: everything after the `@use` lines is one block of the layer `tumaet-ui`.
+// True if the styles are exactly one `@layer tumaet-ui { … }` block: the brace that closes the block is the last character.
+function isOneLayerBlock(styles) {
+    const opening = /^@layer tumaet-ui\s*\{/.exec(styles);
+    if (!opening) {
+        return false;
+    }
+    let depth = 1;
+    for (let index = opening[0].length; index < styles.length; index++) {
+        if (styles[index] === '{') {
+            depth++;
+        } else if (styles[index] === '}' && --depth === 0) {
+            return index === styles.length - 1;
+        }
+    }
+    return false;
+}
+const componentStylePaths = runtimePaths.filter((path) => path.endsWith('.css'));
+for (const [index, path] of runtimePaths.entries()) {
+    const source = runtimeSources[index];
+    const name = path.slice(packageRoot.length + 1);
+    if (path.endsWith('.css')) {
+        const styles = source
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .trim();
+        if (styles && !isOneLayerBlock(styles)) {
+            errors.push(`${name} has styles outside the cascade layer tumaet-ui`);
+        }
+    } else if (path.endsWith('.ts')) {
+        for (const match of source.matchAll(/\bstyles:\s*`([^`]*)`/g)) {
+            if (!/^\s*@layer tumaet-ui\s*\{/.test(match[1])) {
+                errors.push(`${name} has inline styles outside the cascade layer tumaet-ui`);
+            }
+        }
+    }
+    // Angular scopes the keyframes of a component only at the top level of its stylesheet. Inside the layer they are
+    // global names, so they need the prefix of the package.
+    for (const match of source.matchAll(/@keyframes\s+([\w-]+)/g)) {
+        if (path.endsWith('.css') && !match[1].startsWith('tumaet-')) {
+            errors.push(`${name} declares the keyframes ${match[1]} without the tumaet- prefix`);
+        }
+    }
+}
+if (componentStylePaths.length === 0) {
+    errors.push('no component stylesheet was found to check');
+}
 
 function classNames(rule) {
     return [...rule.selector.matchAll(/(?<!\\)\.((?:\\.|[\w-])*)/g)].map((match) => match[1].replaceAll('\\', ''));
@@ -65,7 +141,13 @@ for (const className of cdkOverlayClasses) {
         errors.push(`CDK overlay selector .${className} is missing`);
     }
 }
-const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(/tumaet:[^\s"'`$]+/g)].map((match) => match[0])));
+// `tumaet:` matches the required utility prefix.
+// `[^\s"'`$]+?` lazily matches one or more characters that are not whitespace, string delimiters, or a template-interpolation marker.
+// `(?=...)` is a positive lookahead that requires, but does not consume, one of the following boundaries.
+// `]\s*=` identifies the closing bracket, optional whitespace, and equals sign at the end of an Angular class binding, for example the `]=` in `[class.tumaet:p-3]="condition"`.
+// `[\s"'`$]` identifies regular whitespace, a string delimiter, or a template-interpolation boundary, representing other delimiters that can follow a class.
+const runtimeUtilityPattern = /tumaet:[^\s"'`$]+?(?=]\s*=|[\s"'`$])/g;
+const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(runtimeUtilityPattern)].map((match) => match[0])));
 for (const className of runtimeClasses) {
     if (!compiledClasses.has(className)) {
         errors.push(`runtime utility .${className} is missing`);
@@ -90,6 +172,33 @@ const contrastRule = ruleFor('tumaet:text-primary-contrast');
 if (declarationValue(contrastRule, 'color') !== 'var(--tumaet-ui-primary-contrast-color)') {
     errors.push('the primary contrast selector does not use its package token');
 }
+// Button colors are a public customization axis, independent of status/validation feedback.
+for (const severity of ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast']) {
+    for (const [suffix, utility, property] of [
+        ['background', `tumaet:bg-button-${severity}`, 'background-color'],
+        ['contrast', `tumaet:text-button-${severity}-contrast`, 'color'],
+        ['foreground', `tumaet:text-button-${severity}-foreground`, 'color'],
+    ]) {
+        const token = `--tumaet-ui-button-${severity}-${suffix}`;
+        if (declarationValue(ruleFor(utility), property) !== `var(${token})`) {
+            errors.push(`button utility ${utility} does not consume ${token}`);
+        }
+        for (const theme of ['light', 'dark']) {
+            let defined = false;
+            stylesheet.walkRules((rule) => {
+                if (rule.selector.includes(`[data-theme=${theme}]`)) {
+                    rule.walkDecls(token, () => {
+                        defined = true;
+                    });
+                }
+            });
+            if (!defined) {
+                errors.push(`button token ${token} is missing from the ${theme} palette`);
+            }
+        }
+    }
+}
+
 const controlBackgroundRule = ruleFor('tumaet:bg-control-background');
 if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tumaet-ui-control-background)') {
     errors.push('the control background selector does not use its semantic package token');

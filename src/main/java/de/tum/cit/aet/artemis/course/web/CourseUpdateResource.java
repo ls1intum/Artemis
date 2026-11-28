@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -130,19 +130,16 @@ public class CourseUpdateResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      */
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseManagementDTO> updateCourse(@PathVariable Long courseId, @RequestPart("course") @Valid CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
-        User user = userRepository.getUserWithAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
-        // only allow admins or instructors of the existing course to change it
-        // this is important, otherwise someone could put themselves into the instructor group of the updated course
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
+        // Note: only admins or instructors of the existing course may change it (enforced by the annotation).
 
         // A creation that failed half-way left the course without some settings rows; every later save adds the missing ones. This
         // runs right after the authorization and before the mandatory configuration lookup below, so such a course stays editable.
@@ -209,7 +206,7 @@ public class CourseUpdateResource {
         CourseValidator.validateUnenrollmentEndDate(existingCourse);
         if (file != null) {
             Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
+            Path savePath = FileUtil.saveImageFile(file, basePath, FilePathType.COURSE_ICON);
             existingCourse.setCourseIcon(savePath.getFileName().toString());
             if (existingCourseIcon != null) {
                 // delete old course icon
@@ -219,6 +216,10 @@ public class CourseUpdateResource {
         else if (courseUpdateDTO.courseIcon() == null && existingCourseIcon != null) {
             // delete old course icon
             fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
+        }
+        else {
+            // without a new file, a request can only keep or remove the icon of the course, never name another stored file
+            existingCourse.setCourseIcon(existingCourseIcon);
         }
 
         if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
@@ -235,6 +236,13 @@ public class CourseUpdateResource {
         courseConfigurationRepository.updateEditableSettings(courseId, requestedConfiguration.isGradeRelevant(), requestedConfiguration.isPresentationAssessmentsEnabled(),
                 requestedConfiguration.isAutoOrchestratorEnabled(), requestedConfiguration.getDebounceWindowSecondsOverride(),
                 requestedConfiguration.getMaxDailyOrchestrationOverride());
+        if (courseUpdateDTO.studentWelcomeContext() != null) {
+            courseConfigurationRepository.updateStudentWelcomeContext(courseId, requestedConfiguration.getStudentWelcomeContext());
+        }
+        if (courseUpdateDTO.initialCommitAuthor() != null) {
+            courseConfigurationRepository.updateInitialCommitAuthor(courseId, requestedConfiguration.getInitialCommitAuthorMode(),
+                    requestedConfiguration.getInitialCommitAuthorName(), requestedConfiguration.getInitialCommitAuthorEmail());
+        }
         if (courseUpdateDTO.dataRetentionHold() != null) {
             courseConfigurationRepository.updateDataRetentionHold(courseId, courseUpdateDTO.dataRetentionHold());
         }
@@ -276,7 +284,7 @@ public class CourseUpdateResource {
      * @return the ResponseEntity with status 200 (OK) and the sorted time zone names
      */
     @GetMapping("time-zones")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<List<String>> getSupportedTimeZones() {
         return ResponseEntity.ok(DateUtil.SUPPORTED_TIME_ZONES);
     }

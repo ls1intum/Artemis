@@ -114,8 +114,9 @@ public class AthenaRepositoryExportService {
                     ENTITY_NAME, "invalid.student.repository.url");
         }
 
-        // Athena currently does not fully support individual due dates, therefore we use the exercise due date instead of the individual due date
-        ZonedDateTime deadline = participation.getExercise().getDueDate();
+        // Athena currently does not fully support individual due dates, therefore we use the exercise due date instead of the individual due date.
+        // A practice participation is created after the due date and has no commit before it, so its latest commit is used.
+        ZonedDateTime deadline = participation.isPracticeMode() ? null : participation.getExercise().getDueDate();
         if (deadline != null) {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repoUri, deadline);
         }

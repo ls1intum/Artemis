@@ -116,13 +116,18 @@ public class ArtemisSuccessfulLoginService {
      * </ul>
      * Because the method is async, callers cannot rely on completion before continuing — but no
      * caller actually does (all call sites are fire-and-forget post-login notifications).
+     * <p>
+     * It runs on the {@code mailTaskExecutor}: in production that is the shared task executor, so nothing changes. Under the
+     * {@code test} profile it is synchronous, so the mail is sent before the login call returns. The task ends in the shared
+     * {@code JavaMailSender} spy of the integration tests, and a task that is still running when the next test stubs or resets
+     * that spy corrupts Mockito's state (surfaces as a flaky {@code MockitoException} in a {@code @BeforeEach}).
      *
      * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
-    @Async
+    @Async("mailTaskExecutor")
     public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient;

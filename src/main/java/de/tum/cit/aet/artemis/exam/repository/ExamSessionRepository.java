@@ -25,6 +25,13 @@ public interface ExamSessionRepository extends ArtemisJpaRepository<ExamSession,
     @Query("""
             SELECT COUNT(es.id)
             FROM ExamSession es
+            WHERE es.studentExam.exam.id = :examId
+            """)
+    long countByExamId(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(es.id)
+            FROM ExamSession es
             WHERE es.studentExam.id = :studentExamId
             """)
     long findExamSessionCountByStudentExamId(@Param("studentExamId") Long studentExamId);

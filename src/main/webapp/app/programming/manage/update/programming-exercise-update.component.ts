@@ -1,15 +1,23 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
+import { isEqual } from 'lodash-es';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { ActivatedRoute, Params } from '@angular/router';
+import { AfterViewInit, Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, defer, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import type { ProgrammingExerciseImport } from 'app/programming/api/programming-exercise-extensions';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap, take, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -34,14 +42,13 @@ import {
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
-import { SharingInfo } from 'app/sharing/sharing.model';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -50,10 +57,12 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
+import { BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS, BuildTimeWindowError, getBuildTimeWindowError } from 'app/programming/shared/utils/build-time-window.utils';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
@@ -61,13 +70,11 @@ import { FileService } from 'app/foundation/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 /**
  * Reasons that already name a field rendered inside the grading form. Each of these also turns the grading
@@ -91,8 +98,12 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../shared/programming-exercise-form.css'],
+    providers: [HyperionGenerationActivityFacade, TumAetUiConfirmationService],
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        CreateVariantWithAiButtonComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
@@ -102,6 +113,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
+        ProgrammingExerciseBuildTimeWindowComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
@@ -111,8 +123,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
@@ -124,11 +135,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly router = inject(Router);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -143,14 +156,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
     private readonly maxNameLength = PROGRAMMING_EXERCISE_NAME_MAX_LENGTH;
 
+    exerciseProblemComponent = viewChild(ProgrammingExerciseProblemComponent);
     exerciseInfoComponent = viewChild(ProgrammingExerciseInformationComponent);
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
+    buildTimeWindowComponent = viewChild(ProgrammingExerciseBuildTimeWindowComponent);
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
+    private buildTimeWindowKeptVisible = false;
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
@@ -165,8 +181,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
             isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
-        // show the SHORT_NAME field when importing from the sharing platform
-        if (this.isImportFromSharing) {
+        // show the SHORT_NAME field when using an external import
+        if (this.isExternalImport) {
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
@@ -184,38 +200,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoryDuplicateNames = false;
     auxiliaryRepositoryDuplicateDirectories = false;
     auxiliaryRepositoryNamedCorrectly = false;
-    private isImportFromExistingExerciseValue = false;
-    private isImportFromFileValue = false;
-    private isImportFromSharingValue = false;
-    isImportFromExistingExerciseForAi = signal<boolean>(false);
-    isImportFromFileForAi = signal<boolean>(false);
-    isImportFromSharingForAi = signal<boolean>(false);
+    private readonly isImportFromExistingExerciseState = signal(false);
 
     get isImportFromExistingExercise(): boolean {
-        return this.isImportFromExistingExerciseValue;
+        return this.isImportFromExistingExerciseState();
     }
 
     set isImportFromExistingExercise(value: boolean) {
-        this.isImportFromExistingExerciseValue = value;
-        this.isImportFromExistingExerciseForAi.set(value);
+        this.isImportFromExistingExerciseState.set(value);
     }
+    private readonly isImportFromFileState = signal(false);
 
     get isImportFromFile(): boolean {
-        return this.isImportFromFileValue;
+        return this.isImportFromFileState();
     }
 
     set isImportFromFile(value: boolean) {
-        this.isImportFromFileValue = value;
-        this.isImportFromFileForAi.set(value);
+        this.isImportFromFileState.set(value);
     }
-
-    get isImportFromSharing(): boolean {
-        return this.isImportFromSharingValue;
-    }
-
-    set isImportFromSharing(value: boolean) {
-        this.isImportFromSharingValue = value;
-        this.isImportFromSharingForAi.set(value);
+    private readonly externalImport = signal<ProgrammingExerciseImport | undefined>(undefined);
+    get isExternalImport(): boolean {
+        return !!this.externalImport();
     }
 
     isEdit = false;
@@ -228,8 +233,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
     // synchronous reads/writes (this.programmingExercise = ... assignments, template bindings) unchanged.
     private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
-    programmingExerciseIdForAi = signal<number | undefined>(undefined);
-    programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
 
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
@@ -238,9 +241,57 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set programmingExercise(value: ProgrammingExercise) {
         value.id = value.id ?? undefined;
         this._programmingExercise.set(value);
-        this.programmingExerciseIdForAi.set(value.id);
-        this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }
+
+    private readonly settingsMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+
+    /** Compare editable metadata, not hydrated course, participation, result or presentation state. */
+    get variantSourceHasUnsavedChanges(): boolean {
+        if (this.hasUnsavedChanges || !this.backupExercise) return true;
+        return this.editableSettingsDiffer(this.programmingExercise, this.backupExercise);
+    }
+
+    private editableSettingsDiffer(current: ProgrammingExercise, baseline: ProgrammingExercise): boolean {
+        if (current.problemStatement !== baseline.problemStatement) return true;
+        if (
+            !isEqual(
+                [current.programmingLanguage, current.projectType, current.packageName, current.staticCodeAnalysisEnabled],
+                [baseline.programmingLanguage, baseline.projectType, baseline.packageName, baseline.staticCodeAnalysisEnabled],
+            )
+        )
+            return true;
+        return this.settingsMetadataFields.some((field) => {
+            const currentValue = field.getCurrentValue(current);
+            const baselineValue = field.getBaselineValue(baseline);
+            // The settings page initializes absent category/repository lists to an empty array.
+            const list = field.key === 'categories' || field.key === 'programmingData.auxiliaryRepositories';
+            return !isEqual(list ? (currentValue ?? []) : currentValue, list ? (baselineValue ?? []) : baselineValue);
+        });
+    }
+
+    protected readonly generationExerciseId = signal<number | undefined>(undefined);
+    private readonly settingsForm = viewChild<NgForm>('editForm');
+    readonly generationRefreshRequired = signal(false);
+    readonly generationRefreshPending = signal(false);
+    private readonly generationReloading = signal(false);
+    private generationRefreshSequence = 0;
+    readonly generationEditingLocked = computed(
+        () => this.generationExerciseId() !== undefined && (this.generationActivity.running() || this.generationActivity.statusLoading() || this.generationReloading()),
+    );
+    readonly generationStatementSaveBlocked = computed(
+        () =>
+            this.generationExerciseId() !== undefined &&
+            (this.generationActivity.running() ||
+                this.generationActivity.statusLoading() ||
+                this.generationActivity.statusLoadFailed() ||
+                this.generationRefreshRequired() ||
+                this.generationReloading()),
+    );
+    readonly generationSaveBlocked = computed(() => this.generationStatementSaveBlocked() || this.generationRefreshPending());
+    readonly generationFullSaveBlocked = computed(
+        () => this.generationSaveBlocked() || (this.generationExerciseId() !== undefined && !!this.exerciseProblemComponent()?.editableInstructions()?.savingInstructions()),
+    );
+    readonly beforeStatementSave = () => this.revalidateGenerationContents();
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
@@ -280,18 +331,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
-    private _hyperionEnabled = false;
-    hyperionEnabledForAi = signal<boolean>(false);
-
-    public get hyperionEnabled(): boolean {
-        return this._hyperionEnabled;
-    }
-
-    public set hyperionEnabled(value: boolean) {
-        this._hyperionEnabled = value;
-        this.hyperionEnabledForAi.set(value);
-    }
-    public isGeneratingWithAi = signal<boolean>(false);
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -301,9 +340,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     };
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
-    // Additional data for import from Sharing
-    public sharingInfo: SharingInfo = new SharingInfo();
-
     public projectTypes?: ProjectType[] = [];
     // flag describing if the template and solution projects should include a dependency
     public withDependenciesValue = false;
@@ -311,6 +347,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        this.generationActivity.connect({ exerciseId: this.generationExerciseId, refreshingEditor: this.generationReloading });
+        this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => {
+            if (event.liveExerciseChanged !== false) this.refreshAfterGeneration();
+        });
+        this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
+        this.generationActivity.exerciseContentsInvalidated.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
         const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
         this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
 
@@ -325,17 +367,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
     }
-
-    showGenerateWithAi = computed(() => {
-        return (
-            this.hyperionEnabledForAi() &&
-            this.programmingExerciseIdForAi() === undefined &&
-            !this.isImportFromExistingExerciseForAi() &&
-            !this.isImportFromFileForAi() &&
-            !this.isImportFromSharingForAi() &&
-            this.programmingExerciseLanguageForAi() === ProgrammingLanguage.JAVA
-        );
-    });
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -418,7 +449,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.modePickerOptions = this.projectTypes?.map((projectType) => ({
             value: projectType,
             labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
-            btnClass: 'btn-secondary',
         }));
 
         if (languageChanged) {
@@ -454,7 +484,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
+        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isExternalImport)) {
             this.loadProgrammingLanguageTemplate(language);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -475,7 +505,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.updateProjectTypeSettings(type);
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
+        if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isExternalImport)) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -525,7 +555,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         // The imported build options belong to the imported repositories and are locked, so they must survive setting the imported project type
-        if (!(this.isImportFromFile || this.isImportFromSharing)) {
+        if (!(this.isImportFromFile || this.isExternalImport)) {
             this.resetBuildOptionSelections();
         }
     }
@@ -563,86 +593,79 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     ngOnInit() {
         this.isSaving.set(false);
         this.notificationText = undefined;
-        this.activatedRoute.data.subscribe(({ programmingExercise }) => {
-            this.programmingExercise = programmingExercise;
-            this.backupExercise = deepClone(this.programmingExercise);
-            this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
-            if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
-                this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
-            } else if (this.programmingExercise.projectType === ProjectType.GRADLE_GRADLE) {
-                this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
-            } else {
-                this.selectedProjectTypeValue = this.programmingExercise.projectType!;
-            }
-        });
-
-        // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
-        if (this.activatedRoute && this.activatedRoute.url) {
-            this.activatedRoute.url
-                .pipe(
-                    tap((segments) => {
-                        this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                        this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
-                        this.isImportFromSharing = segments.some((segment) => segment.path === 'import-from-sharing');
-                        this.isEdit = segments.some((segment) => segment.path === 'edit');
-                        this.isCreate = segments.some((segment) => segment.path === 'new');
-                    }),
-                    switchMap(() => this.activatedRoute.params),
-                    tap((params) => {
-                        if (this.isImportFromFile) {
-                            this.createProgrammingExerciseForImportFromFile();
-                        }
-                        if (this.isImportFromSharing) {
-                            this.createProgrammingExerciseForImportFromSharing();
-                        }
-                        if (this.isImportFromExistingExercise) {
-                            this.createProgrammingExerciseForImport(params);
-                        } else {
-                            if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
-                                this.isExamMode.set(true);
-                                this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                    this.programmingExercise.exerciseGroup = res.body!;
-                                    if (
-                                        !params['exerciseId'] &&
-                                        this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage &&
-                                        !this.isImportFromFile &&
-                                        !this.isImportFromSharing
-                                    ) {
-                                        this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
-                                    }
-                                });
-                                // we need the course id  to make the request to the server if it's an import from file
-                                if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId.set(params['courseId']);
-                                    this.loadCourseExerciseCategories(params['courseId']);
+        this.activatedRoute.data
+            .pipe(
+                tap(({ programmingExercise, externalImport }) => {
+                    this.externalImport.set(externalImport);
+                    this.programmingExercise = this.externalImport()?.exercise ?? programmingExercise;
+                    this.backupExercise = deepClone(this.programmingExercise);
+                    this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
+                    if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
+                        this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                    } else if (this.programmingExercise.projectType === ProjectType.GRADLE_GRADLE) {
+                        this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                    } else {
+                        this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+                    }
+                }),
+                switchMap(() => this.activatedRoute.url),
+                tap((segments) => {
+                    this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                    this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    this.isEdit = segments.some((segment) => segment.path === 'edit');
+                    this.isCreate = segments.some((segment) => segment.path === 'new');
+                }),
+                switchMap(() => this.activatedRoute.params),
+                tap((params) => {
+                    if (this.isImportFromFile) {
+                        this.prepareImportedExercise(history.state.programmingExerciseForImportFromFile);
+                    }
+                    const externalImport = this.externalImport();
+                    if (externalImport) {
+                        this.prepareImportedExercise(externalImport.exercise);
+                    }
+                    if (this.isImportFromExistingExercise) {
+                        this.createProgrammingExerciseForImport(params);
+                    } else {
+                        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                            this.isExamMode.set(true);
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
+                                this.programmingExercise.exerciseGroup = res.body!;
+                                if (
+                                    !params['exerciseId'] &&
+                                    this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage &&
+                                    !this.isImportFromFile &&
+                                    !this.isExternalImport
+                                ) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                 }
-                            } else if (params['courseId']) {
-                                this.courseId.set(params['courseId']);
-                                this.isExamMode.set(false);
-                                this.courseService.find(this.courseId()).subscribe((res) => {
-                                    this.programmingExercise.course = res.body!;
-                                    if (
-                                        !params['exerciseId'] &&
-                                        this.programmingExercise.course?.defaultProgrammingLanguage &&
-                                        !this.isImportFromFile &&
-                                        !this.isImportFromSharing
-                                    ) {
-                                        this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
-                                    }
-                                    this.exerciseCategories = this.programmingExercise.categories || [];
-
-                                    this.loadCourseExerciseCategories(this.programmingExercise.course.id);
-                                });
+                            });
+                            // we need the course id  to make the request to the server if it's an import from file
+                            if (this.isImportFromFile || this.isExternalImport) {
+                                this.courseId.set(Number(params['courseId']));
+                                this.loadCourseExerciseCategories(params['courseId']);
                             }
+                        } else if (params['courseId']) {
+                            this.courseId.set(Number(params['courseId']));
+                            this.isExamMode.set(false);
+                            this.courseService.findForManagement(this.courseId()).subscribe((res) => {
+                                this.programmingExercise.course = res.body!;
+                                if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile && !this.isExternalImport) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                }
+                                this.exerciseCategories = this.programmingExercise.categories || [];
+
+                                this.loadCourseExerciseCategories(this.programmingExercise.course.id);
+                            });
                         }
-                    }),
-                )
-                .subscribe(() => this.setupMetadataSync());
-        }
+                    }
+                }),
+            )
+            .subscribe(() => this.setupMetadataSync());
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        if (this.programmingExercise.id || this.isImportFromFile || this.isImportFromSharing) {
+        if (this.programmingExercise.id || this.isImportFromFile || this.isExternalImport) {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
@@ -653,10 +676,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
         }
-
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
-        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -671,12 +692,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+        this.confirmationService.close('hyperionSettingsReloadConfirmation');
         this.metadataSyncService.destroy();
         this.exerciseEditorSyncService.disconnect();
     }
 
     private setupMetadataSync(): void {
-        if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
+        // Pin to the persisted configuration: changing the form's language must not turn off save protection.
+        this.generationExerciseId.set(
+            this.isEdit &&
+                !this.isImportFromExistingExercise &&
+                !this.isImportFromFile &&
+                !this.isExternalImport &&
+                usesCanonicalProblemStatementSync(this.backupExercise, this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION))
+                ? this.backupExercise.id
+                : undefined,
+        );
+        if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isExternalImport || !this.isEdit) {
             return;
         }
         this.ensureExerciseCategoriesReference();
@@ -685,6 +717,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
             getCurrentExercise: () => this.programmingExercise,
+            setCurrentExercise: (exercise) => {
+                const updated = cloneWith(new ProgrammingExercise(undefined, undefined), exercise);
+                // Re-seed the selector's linked signal and keep its separate creation-config binding in sync.
+                updated.categories = [...(exercise.categories ?? [])];
+                this.exerciseCategories = updated.categories;
+                this.programmingExercise = updated;
+            },
             getBaselineExercise: () => this.backupExercise,
             setBaselineExercise: (exercise) => (this.backupExercise = exercise),
         });
@@ -786,10 +825,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private createProgrammingExerciseForImport(params: Params) {
         this.isImportFromExistingExercise = true;
-        this.isImportFromSharing = false;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         const courseId = params['courseId'];
+        this.courseId.set(courseId);
         if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
@@ -799,7 +838,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isExamMode.set(true);
             this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
-            this.courseService.find(courseId).subscribe((res) => {
+            this.courseService.findForManagement(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;
@@ -843,25 +882,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.saveWithModalCheck(
             () => this.saveExercise(),
             (reference) => {
-                const requestOptions: { deleteFeedback?: unknown } = {};
-                requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
-                this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                const requestOptions = { deleteFeedback: reference.componentInstance.deleteFeedback() };
+                if (this.generationFullSaveBlocked()) return;
+                this.revalidateGenerationContents().subscribe((valid) => {
+                    if (valid && !this.generationFullSaveBlocked())
+                        this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                });
             },
         );
-    }
-
-    /**
-     * Saves the programming exercise with AI preparation.
-     */
-    saveWithAi() {
-        this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 
     private saveWithModalCheck(
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
-        if (this.isSaving() || this.isGeneratingWithAi()) {
+        if (this.isSaving() || this.generationFullSaveBlocked()) {
             return;
         }
         // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
@@ -872,7 +907,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
-        if (!this.modalService.hasOpenModals()) {
+        if (!this.modalService.hasOpenDialogs()) {
             onConfirmed();
             return;
         }
@@ -883,34 +918,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
     }
 
-    /**
-     * Saves the programming exercise with the provided input.
-     */
     saveExercise() {
-        this.saveExerciseWithOptions(false);
+        if (this.generationFullSaveBlocked()) return;
+        this.revalidateGenerationContents().subscribe((valid) => {
+            if (valid && !this.generationFullSaveBlocked()) this.persistExercise();
+        });
     }
 
-    /**
-     * Saves the programming exercise with cleared sources and navigates to the code editor.
-     */
-    saveExerciseWithAi() {
-        if (this.isSaving() || this.isGeneratingWithAi()) {
-            return;
-        }
-        if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
-            this.saveExercise();
-            return;
-        }
-        this.isGeneratingWithAi.set(true);
-        this.saveExerciseWithOptions(true);
-    }
-
-    /**
-     * Saves the programming exercise with optional source cleanup for AI generation.
-     *
-     * @param emptyRepositories if true, clear sources after setup
-     */
-    private saveExerciseWithOptions(emptyRepositories: boolean) {
+    private persistExercise() {
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -944,16 +959,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
+        const externalImport = this.externalImport();
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId()));
-        } else if (this.isImportFromSharing) {
-            this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId(), this.sharingInfo).subscribe({
-                next: (response: HttpResponse<ProgrammingExercise>) => {
-                    this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                    this.onSaveSuccess(response.body!);
-                },
-                error: (err) => this.onSaveError(err),
-            });
+        } else if (externalImport) {
+            this.subscribeToSaveResponse(externalImport.save(this.programmingExercise, this.courseId()));
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
@@ -962,36 +972,98 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (emptyRepositories) {
-            this.subscribeToSaveResponseWithAi(this.programmingExerciseService.automaticSetup(this.programmingExercise, true));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe({
-            next: (response: HttpResponse<ProgrammingExercise>) => {
-                this.onSaveSuccess(response.body!);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.onSaveError(error);
+    protected onCanonicalStatementSaved(content: string | undefined): void {
+        if (this.generationExerciseId() !== undefined && this.generationExerciseId() === this.programmingExercise.id) this.backupExercise.problemStatement = content;
+    }
+
+    private refreshAfterGeneration(): void {
+        if (this.generationExerciseId() === undefined) return;
+        this.generationRefreshRequired.set(true);
+        this.revalidateGenerationContents(true).subscribe();
+    }
+
+    private revalidateGenerationContents(refresh = false): Observable<boolean> {
+        return defer(() => {
+            const exerciseId = this.generationExerciseId();
+            if (exerciseId === undefined) return of(true);
+            if (!refresh && this.generationSaveBlocked()) return of(false);
+            const sequence = ++this.generationRefreshSequence;
+            this.generationRefreshPending.set(true);
+            return this.programmingExerciseService.find(exerciseId, true).pipe(
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+                map((response) => {
+                    if (sequence !== this.generationRefreshSequence || this.generationExerciseId() !== exerciseId) return false;
+                    if (!response.body) throw new Error('The saved exercise could not be loaded');
+                    this.generationRefreshPending.set(false);
+                    if (!this.editableSettingsDiffer(response.body, this.backupExercise)) {
+                        this.generationRefreshRequired.set(false);
+                        return !this.generationSaveBlocked();
+                    }
+                    this.generationRefreshRequired.set(true);
+                    if (refresh && !this.hasLocalSettingsChanges()) this.reloadSettings();
+                    return false;
+                }),
+                catchError(() => {
+                    if (sequence === this.generationRefreshSequence && this.generationExerciseId() === exerciseId) {
+                        this.generationRefreshRequired.set(true);
+                    }
+                    return of(false);
+                }),
+                finalize(() => {
+                    if (sequence === this.generationRefreshSequence) this.generationRefreshPending.set(false);
+                }),
+            );
+        });
+    }
+
+    private hasLocalSettingsChanges(): boolean {
+        return (
+            this.hasUnsavedChanges ||
+            !this.backupExercise ||
+            this.editableSettingsDiffer(this.programmingExercise, this.backupExercise) ||
+            !!this.settingsForm()?.dirty ||
+            !!this.exerciseProblemComponent()?.editableInstructions()?.unsavedChangesValue()
+        );
+    }
+
+    protected reloadSavedSettings(): void {
+        const exerciseId = this.generationExerciseId();
+        const sequence = this.generationRefreshSequence;
+        if (exerciseId === undefined || !this.generationRefreshRequired() || this.generationReloading()) return;
+        this.confirmationService.confirm({
+            key: 'hyperionSettingsReloadConfirmation',
+            header: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader'),
+            message: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage'),
+            acceptLabel: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExercise'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            accept: () => {
+                if (this.generationExerciseId() === exerciseId && this.generationRefreshSequence === sequence && this.generationRefreshRequired()) this.reloadSettings();
             },
         });
     }
 
-    /**
-     * Subscribes to the save response and navigates to the code editor on success.
-     *
-     * @param result save request observable
-     */
-    private subscribeToSaveResponseWithAi(result: Observable<HttpResponse<ProgrammingExercise>>) {
+    private reloadSettings(): void {
+        this.generationReloading.set(true);
+        this.hasUnsavedChanges = false;
+        this.settingsForm()?.form.markAsPristine();
+        window.location.reload();
+    }
+
+    private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
+        const acknowledgeCanonicalSave = this.exerciseProblemComponent()?.editableInstructions()?.createCanonicalSaveAcknowledgement();
         result.subscribe({
             next: (response: HttpResponse<ProgrammingExercise>) => {
-                this.onSaveSuccessWithAi(response.body!);
+                acknowledgeCanonicalSave?.(response.body?.problemStatement);
+                this.onSaveSuccess(response.body!);
             },
             error: (error: HttpErrorResponse) => {
-                this.isGeneratingWithAi.set(false);
                 this.onSaveError(error);
             },
         });
@@ -1010,69 +1082,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.calendarService.reloadEvents();
     }
 
-    /**
-     * Handles successful save and navigates to the template repository in the code editor.
-     *
-     * @param exercise the created exercise
-     */
-    private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
-        this.isGeneratingWithAi.set(false);
-
-        if (!exercise?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-
-        this.openCodeEditorForTemplate(exercise);
-    }
-
-    /**
-     * Navigates to the code editor for the template repository of the exercise.
-     *
-     * @param exercise the created exercise
-     */
-    private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
-        if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
-        if (!courseId) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
-        if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            void this.router.navigate(
-                [
-                    'course-management',
-                    courseId,
-                    'exams',
-                    exercise.exerciseGroup.exam.id,
-                    'exercise-groups',
-                    exercise.exerciseGroup.id,
-                    'programming-exercises',
-                    exercise.id,
-                    'code-editor',
-                    RepositoryType.TEMPLATE,
-                    exercise.templateParticipation.id,
-                ],
-                navigationExtras,
-            );
-        } else {
-            void this.router.navigate(
-                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
-                navigationExtras,
-            );
-        }
-    }
-
     private onSaveError(error: HttpErrorResponse) {
         let errorMessage;
         let disableTranslation;
         // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
-        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+        if (error.error?.errorKey === 'branchRegexNotSupported') {
+            if (this.alertService.showsHttpErrorAlert(error)) {
+                // The global HTTP error handler already shows this rejection, so it is not shown a second time.
+                this.isSaving.set(false);
+                window.scrollTo(0, 0);
+                return;
+            }
+            errorMessage = this.translationBasePath + 'buildConfig.branchRegexNotSupported';
+            disableTranslation = false;
+        } else if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
             errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
             disableTranslation = false;
         } else {
@@ -1085,7 +1108,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             disableTranslation: disableTranslation,
         });
         this.isSaving.set(false);
-        this.isGeneratingWithAi.set(false);
         window.scrollTo(0, 0);
     }
 
@@ -1097,6 +1119,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param language to switch to.
      */
     onProgrammingLanguageChange(language: ProgrammingLanguage) {
+        // Choosing the language that is already selected changes nothing. Running the setter again would reset the
+        // options that depend on the language and reload the problem statement template.
+        if (language === this.selectedProgrammingLanguage) {
+            return language;
+        }
         // If there are unsaved changes and the user does not confirm, the language doesn't get changed
         if (this.hasUnsavedChanges) {
             const confirmLanguageChangeText = this.translateService.instant(this.translationBasePath + 'unsavedChangesLanguageChange');
@@ -1107,7 +1134,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
-        this.programmingExerciseLanguageForAi.set(language);
         return language;
     }
 
@@ -1202,8 +1228,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.programmingExerciseLanguageForAi.set(language);
-        this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+        if (
+            this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) &&
+            !this.programmingExercise.id &&
+            !this.isImportFromExistingExercise &&
+            !this.isImportFromFile &&
+            !this.isExternalImport
+        ) {
+            this.programmingExercise = deepClone(this.programmingExercise);
+        }
+        this.fileService.getTemplateFile(language, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
                 this.problemStatementLoaded = true;
@@ -1261,6 +1295,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateBuildTimeWindow(validationErrorReasons);
         // Must stay after the points, bonus-point, penalty and submission-limit checks: it defers to them.
         this.validateGradingSection(validationErrorReasons);
 
@@ -1290,6 +1325,45 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
             translateValues: {},
         });
+    }
+
+    /**
+     * Whether the build time window is edited in the form. It is a setting of the advanced mode, because it is needed rarely, and the simple mode does not show it. The only
+     * exception is a window that a date change in the simple mode invalidates: that blocks saving, so the fields have to be reachable to fix it. Once shown for that reason,
+     * they stay visible for the rest of the editing session, so that clearing the last date to replace it does not remove them.
+     */
+    isBuildTimeWindowDisplayed(): boolean {
+        if (this.isExamMode()) {
+            return false;
+        }
+        if (this.programmingExercise.buildConfig?.advancedSettings?.buildTimeWindow && this.getBuildTimeWindowError() !== undefined) {
+            this.buildTimeWindowKeptVisible = true;
+        }
+        return this.isEditFieldDisplayedRecord().buildTimeWindow || this.buildTimeWindowKeptVisible;
+    }
+
+    /**
+     * The problem with the build time window, which depends on the dates of the exercise. Exam exercises have no window.
+     * The form passes this to the build time window component, which cannot observe the dates edited elsewhere in the form.
+     */
+    getBuildTimeWindowError(): BuildTimeWindowError | undefined {
+        return this.isExamMode() ? undefined : getBuildTimeWindowError(this.programmingExercise);
+    }
+
+    private validateBuildTimeWindow(validationErrorReasons: ValidationReason[]): void {
+        const error = this.getBuildTimeWindowError();
+        if (error) {
+            validationErrorReasons.push({
+                translateKey: BUILD_TIME_WINDOW_ERROR_TRANSLATION_KEYS[error],
+                translateValues: {},
+            });
+        }
+        if (this.buildTimeWindowComponent()?.isInputValid() === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildTimeWindow.invalidInput',
+                translateValues: {},
+            });
+        }
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {
@@ -1379,25 +1453,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
-        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-            if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
-                return;
-            }
-            if (this.programmingExercise.maxPoints < 0) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.points.customMin',
-                    translateValues: {},
-                });
-            } else if (this.programmingExercise.maxPoints > 9999) {
-                validationErrorReasons.push({
-                    translateKey: 'artemisApp.exercise.form.points.customMax',
-                    translateValues: {},
-                });
-            }
-            return;
-        }
-
-        if (this.programmingExercise.maxPoints === undefined) {
+        if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',
                 translateValues: {},
@@ -1460,6 +1516,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePackageName(validationErrorReasons: ValidationReason[]): void {
+        // The package name of a saved exercise is read-only. Do not let a name that was valid when the exercise was created, but is not any more, block saving other changes.
+        if (this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isExternalImport && this.programmingExercise.id !== undefined) {
+            return;
+        }
         let regex;
         switch (this.programmingExercise.programmingLanguage) {
             case ProgrammingLanguage.JAVA:
@@ -1516,7 +1576,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
-        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
+        if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
                 validationErrorReasons.push({
@@ -1609,49 +1669,23 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         return checkoutPath.every((path) => path === undefined || path.trim() === '' || this.invalidDirectoryNamePattern.test(path));
     }
 
-    private createProgrammingExerciseForImportFromFile() {
-        this.programmingExercise = deepClone(history.state.programmingExerciseForImportFromFile);
+    private prepareImportedExercise(source: ProgrammingExercise) {
+        this.programmingExercise = deepClone(source);
+        this.programmingExercise.buildConfig ??= new ProgrammingExerciseBuildConfig();
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
-        this.programmingExerciseIdForAi.set(undefined);
 
         resetProgrammingForImport(this.programmingExercise);
 
         this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!; // avoid detecting language as changed
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
-        // we need to get it from the history object as setting the programming language
-        // sets the project type of the programming exercise to the default value for the programming language.
-        const importedProjectType: ProjectType | undefined = history.state.programmingExerciseForImportFromFile.projectType;
+        // Changing the language chooses a default project type. Restore the one from the imported exercise.
+        const importedProjectType = source.projectType;
         // The project type setter derives MAVEN_MAVEN and GRADLE_GRADLE from the dependency flag, so it has to match the imported type
         this.withDependenciesValue = importedProjectType === ProjectType.MAVEN_MAVEN || importedProjectType === ProjectType.GRADLE_GRADLE;
         this.selectedProjectType = importedProjectType!;
-    }
-
-    private createProgrammingExerciseForImportFromSharing() {
-        this.activatedRoute.queryParams.pipe(take(1)).subscribe((qparams: Params) => {
-            this.sharingInfo.basketToken = qparams['basketToken'];
-            this.sharingInfo.returnURL = qparams['returnURL'];
-            this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
-            this.sharingInfo.selectedExercise = qparams['selectedExercise'];
-            this.sharingInfo.checksum = qparams['checksum'];
-            this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe({
-                next: (exerciseDetails: ProgrammingExercise) => {
-                    if (!exerciseDetails.buildConfig) {
-                        exerciseDetails.buildConfig = new ProgrammingExerciseBuildConfig();
-                    }
-                    history.state.programmingExerciseForImportFromFile = exerciseDetails;
-
-                    this.createProgrammingExerciseForImportFromFile();
-                },
-                error: (error) => {
-                    const errorMessage = error?.message || error?.error?.message || 'Unknown error occurred';
-                    this.alertService.error('Failed to load exercise details from the sharing platform: ' + errorMessage);
-                },
-            });
-        });
     }
 
     /**
@@ -1672,7 +1706,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // mode picker (NG0956), re-seeds the category selector's local working copy, and disconnects the Subject.
         const config = this.programmingExerciseCreationConfig;
         config.isImportFromFile = this.isImportFromFile;
-        config.isImportFromSharing = this.isImportFromSharing;
+        config.isExternalImport = this.isExternalImport;
         config.isImportFromExistingExercise = this.isImportFromExistingExercise;
         config.showSummary = false;
         config.isEdit = this.isEdit;

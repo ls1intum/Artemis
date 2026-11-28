@@ -96,7 +96,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportParticipationResults_containsTypedProgrammingFeedback() throws IOException {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -117,10 +117,10 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportLlmTokenUsage_containsPromptCacheColumns() throws IOException {
         Course course = courseUtilService.createCourse();
-        var request = new LLMRequest("gpt-6-luna", 1000, 0.0891f, 20, 0.4454f, "IRIS_CHAT_COURSE_MESSAGE", 900, 0.0089f, 50, 0.1114f);
+        var request = new LLMRequest("gpt-6-luna", 1000, 20, "IRIS_CHAT_COURSE_MESSAGE", 900, 50, 0.000018);
         llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
 
         List<String> errors = new ArrayList<>();
@@ -132,15 +132,15 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
         List<String> header = List.of(lines.get(0).split(","));
         List<String> values = List.of(lines.get(1).split(",", -1));
         assertThat(values).hasSameSizeAs(header);
+        assertThat(header).doesNotContain("CostPerMillionInputTokens", "CostPerMillionOutputTokens", "CostPerMillionCachedInputTokens", "CostPerMillionCacheWriteInputTokens");
         assertThat(values.get(header.indexOf("NumInputTokens"))).isEqualTo("1000");
         assertThat(values.get(header.indexOf("NumCachedInputTokens"))).isEqualTo("900");
-        assertThat(values.get(header.indexOf("CostPerMillionCachedInputTokens"))).isEqualTo("0.0089");
         assertThat(values.get(header.indexOf("NumCacheWriteInputTokens"))).isEqualTo("50");
-        assertThat(values.get(header.indexOf("CostPerMillionCacheWriteInputTokens"))).isEqualTo("0.1114");
+        assertThat(values.get(header.indexOf("TotalCostUsd"))).isEqualTo("1.8E-5");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_withExercisesAndSubmissions() throws IOException {
         // Create course with exercises and submissions (without complaints)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 2, 0, false, 0, "");
@@ -178,9 +178,9 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_withGradingScale() throws IOException {
-        // Create course with exercises and submissions (without complaints, using empty suffix to match user groups)
+        // Create course with exercises and submissions (without complaints)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Add grading scale to the course
@@ -219,7 +219,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_emptyCourse() {
         // Create empty course without exercises
         Course course = courseUtilService.createCourse();
@@ -240,9 +240,9 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportAllStudentData_createsAllExpectedFiles() throws IOException {
-        // Create course with various data (without complaints, using empty suffix to match user groups)
+        // Create course with various data (without complaints)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
@@ -261,9 +261,9 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyPerExerciseColumns() throws IOException {
-        // Create course with specific number of exercises (using empty suffix to match user groups)
+        // Create course with specific number of exercises
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
@@ -283,7 +283,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyRoundingWithDefaultAccuracy() throws IOException {
         // Create course with exercises and submissions (default accuracy is 1 decimal place)
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
@@ -315,7 +315,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyRoundingWithTwoDecimalPlaces() throws IOException {
         // Create course with exercises and submissions
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
@@ -350,7 +350,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyRoundingWithZeroDecimalPlaces() throws IOException {
         // Create course with exercises and submissions
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
@@ -385,7 +385,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseScores_verifyStatisticsRowsRounding() throws IOException {
         // Create course with exercises and submissions
         Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");

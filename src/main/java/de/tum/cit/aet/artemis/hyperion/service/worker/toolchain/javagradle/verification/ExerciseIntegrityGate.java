@@ -1,0 +1,780 @@
+package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.jspecify.annotations.Nullable;
+
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
+
+/**
+ * Pure (sandbox-free) correctness gates {@link DifferentialVerifier} applies on top of the differential build oracle, catching broken-exercise classes the build cannot
+ * see:
+ * <ul>
+ * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production, so a sandbox build can pass while production fails. The
+ * snapshot taken at seed time must survive generation unchanged, modulo only the CI checkout-placeholder substitution the pipeline itself applies.</li>
+ * <li><b>Solution leak.</b> The template ships to students, so a reference implementation copied into a non-graded template path hands them the answer while the build still
+ * passes. Shared interfaces/headers and git config legitimately identical in both repositories are not flagged; a graded-path copy makes the template pass and is left to the
+ * differential oracle.</li>
+ * <li><b>Specification contract loss.</b> The differential proves the tests distinguish solution from template, not that students still perform the work the approved
+ * specification assigned them, so the final candidate maps are checked against the immutable approved ownership decisions before persistence. Those checks live in
+ * {@link ApprovedOwnershipGate}.</li>
+ * </ul>
+ * Static and side-effect-free, so the gates are unit-testable without Docker and the residue strip can be reused by {@link GenerationWorkspace} on read-back. Everything
+ * here states a policy; the lexical machinery those policies need lives in {@link JavaSourceInspector}.
+ */
+public final class ExerciseIntegrityGate {
+
+    private static final String JAVA_SUFFIX = ".java";
+
+    private static final Pattern SEAM_ID = Pattern.compile("S[1-9][0-9]*");
+
+    private static final Pattern WEIGHT_TIER = Pattern.compile("[123]");
+
+    private static final Pattern NEGATION_PREFIX = Pattern.compile("(?is).*\\b(?:(?:does?|did|is|are|was|were|must)\\s+)?not\\s+$");
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /**
+     * The sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is one of these duplicates the CI
+     * layout inside a single repository and is orphan residue: stripped on read-back, never counted as a harness or source file.
+     */
+    private static final Set<String> CI_CHECKOUT_DIRECTORY_NAMES = Set.of("assignment", "solution", "template", "tests");
+
+    /**
+     * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them. Matched case-insensitively.
+     */
+    private static final Set<String> HARNESS_FILE_NAMES = Set.of("securitypolicy.yaml", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
+            "gradle.properties", "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "vitest.config.mjs",
+            "vitest.config.js", "vitest.config.ts", "artemis-junit-reporter.mjs", "cargo.toml", "cargo.lock", "cabal.project", "stack.yaml", "stack.yaml.lock", "dune",
+            "dune-project", "rakefile", "gemfile", "gemfile.lock", "pubspec.yaml", "pubspec.lock", "go.mod", "go.sum", "package.swift", "cmakelists.txt", "tests.py", "run.sh",
+            "build.sh", "makefile", "description", "namespace", "assignment_path.rb", "test_helper.rb", ".clang-format");
+
+    /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
+    private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
+
+    /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is not one of them. */
+    private static final List<String> NONDETERMINISM_SOURCES = List.of("Collections.shuffle", "Math.random()", "new Random()", "ThreadLocalRandom", "UUID.randomUUID()");
+
+    private ExerciseIntegrityGate() {
+    }
+
+    private static String firstComponent(String path) {
+        int slash = path.indexOf('/');
+        return slash < 0 ? path : path.substring(0, slash);
+    }
+
+    private static String basename(String path) {
+        int slash = path.lastIndexOf('/');
+        return slash < 0 ? path : path.substring(slash + 1);
+    }
+
+    static boolean isResidueOutsideCanonicalRoot(String path) {
+        return CI_CHECKOUT_DIRECTORY_NAMES.contains(firstComponent(path).toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Strips orphan residue from a TEMPLATE or SOLUTION file map, preserving canonical-root files and their order.
+     *
+     * @param files the produced files keyed by repository-relative path
+     * @return the same map without residue files
+     */
+    public static Map<String, String> stripResidueOutsideCanonicalRoots(Map<String, String> files) {
+        Map<String, String> cleaned = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            if (!isResidueOutsideCanonicalRoot(entry.getKey())) {
+                cleaned.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return cleaned;
+    }
+
+    /**
+     * Whether a path names a build/harness/manifest file, graded verbatim in production and therefore immutable to the agent.
+     *
+     * @param path the repository-relative path
+     * @return {@code true} if the file is part of the immutable harness
+     */
+    public static boolean isHarnessFile(String path) {
+        String base = basename(path).toLowerCase(Locale.ROOT);
+        if (HARNESS_FILE_NAMES.contains(base)) {
+            return true;
+        }
+        for (String suffix : HARNESS_FILE_SUFFIXES) {
+            if (base.endsWith(suffix)) {
+                return true;
+            }
+        }
+        // Only root-level YAML is a build descriptor; a nested *.yml is test data.
+        return (base.endsWith(".yml") || base.endsWith(".yaml")) && !path.contains("/");
+    }
+
+    /** Applies only the checkout-placeholder substitutions the build pipeline itself performs. */
+    static String normalizeLayoutLine(String line) {
+        return line.replace("${studentWorkingDirectory}", "/assignment/src").replace("${studentParentWorkingDirectoryName}", "assignment")
+                .replace("${solutionWorkingDirectory}", "assignment").replace("${testWorkingDirectory}", ".");
+    }
+
+    private static List<String> normalizedLines(String content) {
+        List<String> lines = new ArrayList<>();
+        for (String line : content.replace("\r\n", "\n").split("\n", -1)) {
+            lines.add(normalizeLayoutLine(line));
+        }
+        return lines;
+    }
+
+    /**
+     * Detects harness tampering (see class javadoc): seeded harness files must stay byte-equivalent after line-ending and checkout-placeholder normalization. An empty snapshot
+     * disables the gate for harness-free languages, unless {@code requireNonEmptySnapshot} marks it as a failed capture that must fail closed.
+     */
+    static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean requireNonEmptySnapshot) {
+        return harnessTamperingReasons("tests", seedTestsFiles, producedTestsFiles, requireNonEmptySnapshot);
+    }
+
+    static List<String> harnessTamperingReasons(String repository, Map<String, String> seedFiles, Map<String, String> producedFiles, boolean requireNonEmptySnapshot) {
+        if (seedFiles == null || seedFiles.isEmpty()) {
+            if (requireNonEmptySnapshot) {
+                return List.of("the seeded test-harness snapshot is empty, so harness immutability could not be verified. This language always ships a build harness "
+                        + "(e.g. build.gradle), so an empty snapshot means the tests repository was not captured — a failed read-back, not a harness-free exercise. "
+                        + "Fail closed rather than accept on that doubt; this is usually transient, so retry the generation.");
+            }
+        }
+        List<String> reasons = new ArrayList<>();
+        for (Map.Entry<String, String> seed : seedFiles == null ? Map.<String, String>of().entrySet() : seedFiles.entrySet()) {
+            String path = seed.getKey();
+            if (!isHarnessFile(path)) {
+                continue;
+            }
+            String produced = producedFiles == null ? null : producedFiles.get(path);
+            if (produced == null) {
+                reasons.add("you deleted the seeded harness file " + repository + "/" + path + "; restore it unchanged.");
+                continue;
+            }
+            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH)) {
+                continue; // Server-owned: securityPolicyReasons requires exactly the policy the server derives from this seed.
+            }
+            List<String> seedNormalized = normalizedLines(seed.getValue());
+            List<String> producedNormalized = normalizedLines(produced);
+            if (!seedNormalized.equals(producedNormalized)) {
+                reasons.add("you modified the seeded harness file " + repository + "/" + path
+                        + "; the harness is graded verbatim in production, so changing dependencies, plugins, scripts, lockfiles, or build layout can make verified results differ "
+                        + "from real grading — restore " + repository + "/" + path + " to the seed.");
+            }
+        }
+        if (producedFiles != null) {
+            for (String path : producedFiles.keySet()) {
+                if (isHarnessFile(path) && (seedFiles == null || !seedFiles.containsKey(path))) {
+                    reasons.add("you added the harness file " + repository + "/" + path + "; build manifests and scripts are fixed by the seeded exercise scaffold.");
+                }
+            }
+        }
+        return reasons;
+    }
+
+    /**
+     * Rejects an adaptation that retains none of the exercise's existing graded test names; partial test changes remain allowed. Fails open on an empty baseline (generate, or a
+     * never-graded exercise). Post-loop only: the baseline comes from the pre-adapt persisted state the agent loop does not have mid-session.
+     */
+    static List<String> adaptWipedGradedTestsReasons(Set<String> baselineGradedTestNames, List<String> producedSolutionTestNames) {
+        if (baselineGradedTestNames == null || baselineGradedTestNames.isEmpty()) {
+            return List.of();
+        }
+        Set<String> baseline = new HashSet<>();
+        for (String name : baselineGradedTestNames) {
+            if (name != null) {
+                String normalized = ProblemStatementBindingChecker.normalizeTestName(name);
+                if (!normalized.isEmpty()) {
+                    baseline.add(normalized);
+                }
+            }
+        }
+        if (baseline.isEmpty()) {
+            return List.of();
+        }
+        Set<String> produced = new HashSet<>();
+        if (producedSolutionTestNames != null) {
+            for (String name : producedSolutionTestNames) {
+                if (name != null) {
+                    produced.add(ProblemStatementBindingChecker.normalizeTestName(name));
+                }
+            }
+        }
+        for (String baselineName : baseline) {
+            if (produced.contains(baselineName)) {
+                return List.of();
+            }
+        }
+        return List.of("this adapt retained NONE of the exercise's " + baseline.size() + " previously-graded test(s) (e.g. " + sampleNames(baseline)
+                + "), so the graded coverage was wiped and rebuilt from scratch — that is a from-scratch regeneration masquerading as an adapt, not a refinement of the existing "
+                + "exercise. Keep and adjust the existing graded tests (retain at least the ones still relevant) instead of deleting them all and authoring a brand-new suite.");
+    }
+
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, true, Set.of());
+    }
+
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, hasDueDate, Set.of());
+    }
+
+    /**
+     * Ensures plan traceability, approved grading emphasis, formative visibility, and due-date-compatible hidden coverage survive into the final candidate. Structural tests are
+     * identified from the server-seeded authority rather than a forgeable name pattern.
+     */
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate,
+            Set<String> seededStructuralTestNames) {
+        return approvedTestPlanReasons(approvedSpec, testPlanJson, verifiedTestNames, hasDueDate, seededStructuralTestNames, Set.of());
+    }
+
+    static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames, boolean hasDueDate, Set<String> seededStructuralTestNames,
+            Set<String> baselineHiddenTestNames) {
+        if (testPlanJson == null || testPlanJson.isBlank()) {
+            if (approvedSpec == null || approvedSpec.isBlank()) {
+                return List.of();
+            }
+            return List.of("the approved specification has no valid test-plan.json in the final candidate. Write the grading plan with the exact verified test names, weights, "
+                    + "and visibility decisions before submitting.");
+        }
+        GeneratedTestPlan plan;
+        try {
+            plan = GeneratedTestPlan.parse(testPlanJson);
+        }
+        catch (IllegalArgumentException exception) {
+            return List.of("the final test-plan.json is invalid: " + exception.getMessage());
+        }
+        Set<String> knownNames = verifiedTestNames == null ? Set.of() : Set.copyOf(verifiedTestNames);
+        Set<String> structuralNames = seededStructuralTestNames == null ? Set.of() : Set.copyOf(seededStructuralTestNames);
+        List<String> behavioralNames = knownNames.stream().filter(name -> !structuralNames.contains(name)).sorted().toList();
+        List<String> unknownNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
+        if (!unknownNames.isEmpty()) {
+            return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Eligible agent-authored behavioral test names are "
+                    + behavioralNames + ". Replace only the unknown names; do not add server-seeded structural checks " + structuralNames
+                    + " (Artemis keeps those visible and zero-weight).");
+        }
+        List<String> plannedStructuralTests = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(structuralNames::contains).sorted().toList();
+        if (!plannedStructuralTests.isEmpty()) {
+            return List.of("the final test-plan.json includes server-seeded structural test(s) " + plannedStructuralTests
+                    + ". Remove them from the agent-authored plan; Artemis keeps structural checks ALWAYS visible and zero-weight, and they cannot stand in for a behavioral "
+                    + "witness.");
+        }
+        List<String> unplannedNames = knownNames.stream().filter(name -> !structuralNames.contains(name))
+                .filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
+        if (!unplannedNames.isEmpty()) {
+            return List.of("the final test-plan.json omits verified gradable test(s) " + unplannedNames
+                    + ". Map every agent-authored behavioral test to one approved seam so no test bypasses the approved weight, visibility, or statement traceability. "
+                    + "Server-seeded structural checks are managed separately and must not be added to the plan.");
+        }
+        if (plan.assessmentEntries().isEmpty()) {
+            return List.of("the final test-plan.json has no assessed student work. Preservation checks cover supplied behavior and cannot replace a graded task.");
+        }
+        List<StageChecks.TestingStrategyRow> declaredRows = StageChecks.testingStrategyRows(approvedSpec);
+        List<String> declaredSeams = declaredRows.stream().map(StageChecks.TestingStrategyRow::seamId).filter(id -> SEAM_ID.matcher(id).matches()).distinct().toList();
+        // Seam traceability is enforced exactly where the specification declares seams; a candidate without them (an adaptation of a hand-authored exercise) is not made to invent
+        // metadata that has nowhere to be persisted.
+        if (!declaredSeams.isEmpty()) {
+            List<String> entriesWithoutSeams = plan.assessmentEntries().stream().filter(entry -> entry.seam().isBlank()).map(GeneratedTestPlan.Entry::name).toList();
+            if (!entriesWithoutSeams.isEmpty()) {
+                return List.of("the final test-plan.json has no seam for test(s) " + entriesWithoutSeams + ". Map every generated test to one approved Testing Strategy ID: "
+                        + declaredSeams + ".");
+            }
+            List<String> undeclaredSeams = plan.assessmentEntries().stream().map(GeneratedTestPlan.Entry::seam).filter(seam -> !declaredSeams.contains(seam)).distinct().toList();
+            if (!undeclaredSeams.isEmpty()) {
+                return List.of("the final test-plan.json uses seam(s) the approved Testing Strategy never declared: " + undeclaredSeams + ". Use only " + declaredSeams + ".");
+            }
+            Map<String, Double> weightBySeam = declaredRows.stream().filter(row -> WEIGHT_TIER.matcher(row.weightTier()).matches())
+                    .collect(Collectors.toMap(StageChecks.TestingStrategyRow::seamId, row -> Double.parseDouble(row.weightTier()), (first, ignored) -> first));
+            List<String> wrongWeights = plan.assessmentEntries().stream().filter(entry -> weightBySeam.containsKey(entry.seam()))
+                    .filter(entry -> Double.compare(entry.seamWeightTier(), weightBySeam.get(entry.seam())) != 0)
+                    .map(entry -> entry.name() + "=" + entry.seamWeightTier() + " (seam " + entry.seam() + " requires " + weightBySeam.get(entry.seam()).intValue() + ")").toList();
+            if (!wrongWeights.isEmpty()) {
+                return List.of("the final test-plan.json weights do not match the approved Testing Strategy: " + wrongWeights
+                        + ". Carry each seam's approved 1/2/3 weight into every mapped test.");
+            }
+            List<String> declaredRiskPartitions = StageChecks.riskPartitionIds(approvedSpec);
+            if (!declaredRiskPartitions.isEmpty()) {
+                Map<String, List<String>> partitionsBySeam = declaredRiskPartitions.stream()
+                        .collect(Collectors.groupingBy(partition -> partition.substring(0, partition.indexOf('.')), LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
+                // Older programmatic plans can infer a seam's sole partition. Multiple partitions require explicit claims so broad test names cannot silently collapse them.
+                List<String> testsWithoutRiskPartitions = plan.assessmentEntries().stream().filter(entry -> entry.riskPartitions().isEmpty())
+                        .filter(entry -> partitionsBySeam.getOrDefault(entry.seam(), List.of()).size() != 1).map(GeneratedTestPlan.Entry::name).toList();
+                if (!testsWithoutRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json does not say which Contract Risk Inventory partitions test(s) " + testsWithoutRiskPartitions
+                            + " witness. Add non-empty riskPartitions arrays using the approved IDs for each test's seam.");
+                }
+                List<String> mappedRiskPartitions = plan.assessmentEntries().stream().flatMap(entry -> {
+                    if (!entry.riskPartitions().isEmpty()) {
+                        return entry.riskPartitions().stream();
+                    }
+                    return partitionsBySeam.getOrDefault(entry.seam(), List.of()).stream();
+                }).distinct().toList();
+                List<String> unknownRiskPartitions = mappedRiskPartitions.stream().filter(partition -> !declaredRiskPartitions.contains(partition)).toList();
+                if (!unknownRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json claims Contract Risk Inventory partition(s) the approved specification never declared: " + unknownRiskPartitions
+                            + ". Use only " + declaredRiskPartitions + ".");
+                }
+                List<String> unmappedRiskPartitions = declaredRiskPartitions.stream().filter(partition -> !mappedRiskPartitions.contains(partition)).toList();
+                if (!unmappedRiskPartitions.isEmpty()) {
+                    return List.of("the final test-plan.json leaves approved Contract Risk Inventory partition(s) without executable evidence: " + unmappedRiskPartitions
+                            + ". Map each partition to at least one verified behavioral test; do not collapse it into an untraceable seam label.");
+                }
+            }
+        }
+        Set<String> hiddenPlanSeams = plan.hiddenEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
+        Set<String> hiddenVariantSeams = StageChecks.hiddenVariantSeamIds(approvedSpec);
+        if (!plan.hiddenEntries().isEmpty() && !hasDueDate) {
+            return List.of("the final test-plan.json marks tests AFTER_DUE_DATE, but this exercise has no due date. Such tests would remain hidden indefinitely; use ALWAYS "
+                    + "visibility and declare no hidden variant in the specification.");
+        }
+        List<String> unexpectedHiddenSeams = plan.hiddenEntries().stream().filter(entry -> !baselineHiddenTestNames.contains(entry.name())).map(GeneratedTestPlan.Entry::seam)
+                .filter(seam -> !hiddenVariantSeams.contains(seam)).distinct().sorted().toList();
+        if (!unexpectedHiddenSeams.isEmpty()) {
+            return List.of("the approved Testing Strategy says no hidden variant for seam(s) " + unexpectedHiddenSeams
+                    + ", but the final test-plan.json hides tests mapped to them. Keep those tests ALWAYS visible.");
+        }
+        List<String> missingHiddenSeams = hiddenVariantSeams.stream().filter(seam -> !hiddenPlanSeams.contains(seam)).sorted().toList();
+        if (!missingHiddenSeams.isEmpty()) {
+            return List.of("the approved Testing Strategy requires AFTER_DUE_DATE variants for seam(s) " + missingHiddenSeams
+                    + ", but the final test-plan.json has no hidden test mapped to them. Add a fresh witness for every listed seam; one unrelated hidden test cannot satisfy "
+                    + "several seam-specific decisions.");
+        }
+        Set<String> visiblePlanSeams = plan.visibleEntries().stream().map(GeneratedTestPlan.Entry::seam).collect(Collectors.toSet());
+        List<String> seamsWithoutVisibleTests = declaredSeams.stream().filter(seam -> !visiblePlanSeams.contains(seam)).toList();
+        if (!seamsWithoutVisibleTests.isEmpty()) {
+            return List.of("the approved Testing Strategy seam(s) " + seamsWithoutVisibleTests
+                    + " have no ALWAYS-visible test. Every student task needs formative visible evidence; hidden coverage is additional.");
+        }
+        return List.of();
+    }
+
+    /** Ensures repairs did not split one student-work seam into test-shaped statement tasks or mix unrelated seams into one checkbox. */
+    static List<String> statementTraceabilityReasons(String testPlanJson, String problemStatement) {
+        if (testPlanJson == null || testPlanJson.isBlank() || problemStatement == null || problemStatement.isBlank()) {
+            return List.of();
+        }
+        try {
+            GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
+            return plan.tests().stream().noneMatch(entry -> !entry.seam().isBlank()) ? List.of() : ProblemStatementBindingChecker.seamTaskGroupingReasons(problemStatement, plan);
+        }
+        catch (IllegalArgumentException exception) {
+            return List.of("the final statement cannot be traced to the grading plan because test-plan.json is invalid: " + exception.getMessage());
+        }
+    }
+
+    /** Every Artemis task needs an adjacent instruction block; a checkbox-only statement is not usable teaching material. */
+    static List<String> statementTaskInstructionReasons(String problemStatement) {
+        if (problemStatement == null || problemStatement.isBlank()) {
+            return List.of();
+        }
+        List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(problemStatement);
+        return bareTasks.isEmpty() ? List.of()
+                : List.of("the final statement has task binding(s) with no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                        + ". Add concise prose naming the work to perform after the binding or in its preceding numbered task block; the binding alone is grading metadata, not an exercise instruction.");
+    }
+
+    /** Sorted and capped, so a large offending set never floods the rejection text and the message stays deterministic. */
+    private static String sampleNames(Set<String> names) {
+        return names.stream().sorted().limit(5).collect(Collectors.joining(", "));
+    }
+
+    static List<String> javaAresConventionReasons(Map<String, String> producedTestsFiles) {
+        return javaAresConventionReasons(Map.of(), producedTestsFiles, false);
+    }
+
+    /**
+     * Checks the immutable Java harness before authoring, without imposing conventions on existing test sources.
+     *
+     * @param buildTool  the build tool of the exercise's harness
+     * @param testsFiles captured tests repository
+     * @return unsupported or missing Ares 2 harness components
+     */
+    public static List<String> javaAresHarnessReasons(GenerationBuildTool buildTool, Map<String, String> testsFiles) {
+        return AresTestHarness.reasons(buildTool, testsFiles);
+    }
+
+    /**
+     * Java exercises are graded through the Ares test sandbox, and a plain JUnit suite can pass the differential oracle while bypassing its public-test and timeout conventions.
+     * When {@code preserveUnchangedTests} is set, only sources this run touched are held to the conventions; the build-harness protections always apply to the whole
+     * produced repository.
+     */
+    static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedTests) {
+        return AresConventions.reasons(seedTestsFiles, producedTestsFiles, preserveUnchangedTests);
+    }
+
+    /**
+     * Requires the tests repository's Ares policy to be exactly the one the server derives from the seeded policy and the produced instructor test sources, so any other change
+     * to it is rejected. A missing policy is reported by {@link #javaAresConventionReasons}.
+     *
+     * @param seedTestsFiles        the tests repository before authoring
+     * @param producedTestsFiles    the produced tests repository
+     * @param producedSolutionFiles the produced reference solution, whose student-written JUnit tests need their import permitted
+     * @param approvedSpec          the approved specification, which must assign those test classes to students, or {@code null} when none was approved
+     * @return rejection reasons, empty when there is no policy to check or it is exactly the derived one
+     */
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
+            @Nullable String approvedSpec) {
+        return securityPolicyReasons(seedTestsFiles, producedTestsFiles, producedSolutionFiles, approvedSpec, Set.of());
+    }
+
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
+            @Nullable String approvedSpec, Set<String> baselineStudentTests) {
+        if (producedTestsFiles == null || !producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
+            return List.of();
+        }
+        return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles, producedSolutionFiles == null ? Map.of() : producedSolutionFiles,
+                approvedSpec, baselineStudentTests);
+    }
+
+    /**
+     * Confines Java generation to exercise-package-scoped source artifacts. Files untouched since the seed stay valid, so an adaptation keeps its legacy tree; a newly added or
+     * modified file may not impersonate a dependency, alter repository infrastructure, or escape the exercise package.
+     */
+    static List<String> javaGeneratedSourceLayoutReasons(String packageName, Map<String, String> seedTestsFiles, Map<String, String> seedTemplateFiles,
+            Map<String, String> seedSolutionFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
+        boolean repositoriesChanged = !safeFiles(seedTestsFiles).equals(safeFiles(producedTestsFiles)) || !safeFiles(seedTemplateFiles).equals(safeFiles(producedTemplateFiles))
+                || !safeFiles(seedSolutionFiles).equals(safeFiles(producedSolutionFiles));
+        if (!repositoriesChanged) {
+            return List.of();
+        }
+        if (packageName == null || packageName.isBlank()) {
+            return List.of("Java exercise generation requires a package name before generated source files can be verified.");
+        }
+        String packagePath = packageName.replace('.', '/');
+        Set<String> invalidChanges = new LinkedHashSet<>();
+        collectInvalidGeneratedChanges(invalidChanges, "tests/", seedTestsFiles, producedTestsFiles,
+                List.of("test/" + packagePath + "/", "behavior/test/" + packagePath + "/", "structural/test/" + packagePath + "/"),
+                List.of("test/", "behavior/test/", "structural/test/"), true);
+        collectInvalidGeneratedChanges(invalidChanges, "template/", seedTemplateFiles, producedTemplateFiles, List.of("src/" + packagePath + "/"), List.of("src/"), false);
+        collectInvalidGeneratedChanges(invalidChanges, "solution/", seedSolutionFiles, producedSolutionFiles, List.of("src/" + packagePath + "/"), List.of("src/"), false);
+        if (invalidChanges.isEmpty()) {
+            return List.of();
+        }
+        String testPackageRoot = "tests/test/" + packagePath + "/";
+        String behaviorTestPackageRoot = "tests/behavior/test/" + packagePath + "/";
+        String structuralTestPackageRoot = "tests/structural/test/" + packagePath + "/";
+        return List.of("Generated Java files must stay inside the exercise package's canonical source roots. Use solution/src/" + packagePath + "/, template/src/" + packagePath
+                + "/, and " + testPackageRoot + " (or " + behaviorTestPackageRoot + " / " + structuralTestPackageRoot
+                + "), not tests/src/test/java/; each package declaration must match its directory. Move, remove, or restore " + sampleNames(invalidChanges) + ".");
+    }
+
+    /**
+     * Applies the canonical generated-source layout gate to one proposed workspace write, so the agent receives the same verdict immediately that final verification would
+     * otherwise report at the stage boundary.
+     *
+     * @param packageName configured base package
+     * @param path        workspace-relative path including its repository root
+     * @param content     proposed Java source
+     * @return the canonical rejection reason, or {@code null} when this is not a Java repository source or the write is valid
+     */
+    public static @Nullable String javaGeneratedSourceWriteReason(String packageName, String path, String content) {
+        if (path == null || !path.endsWith(JAVA_SUFFIX)) {
+            return null;
+        }
+        List<String> reasons;
+        if (path.startsWith("solution/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(path.substring("solution/".length()), content));
+        }
+        else if (path.startsWith("template/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(), Map.of(path.substring("template/".length()), content), Map.of());
+        }
+        else if (path.startsWith("tests/")) {
+            reasons = javaGeneratedSourceLayoutReasons(packageName, Map.of(), Map.of(), Map.of(), Map.of(path.substring("tests/".length()), content), Map.of(), Map.of());
+        }
+        else {
+            return null;
+        }
+        return reasons.isEmpty() ? null : reasons.getFirst();
+    }
+
+    private static void collectInvalidGeneratedChanges(Set<String> target, String repository, Map<String, String> seedFiles, Map<String, String> producedFiles,
+            List<String> allowedPrefixes, List<String> sourceRoots, boolean allowStructuralOracle) {
+        Map<String, String> safeSeed = safeFiles(seedFiles);
+        Map<String, String> safeProduced = safeFiles(producedFiles);
+        Set<String> paths = new LinkedHashSet<>(safeSeed.keySet());
+        paths.addAll(safeProduced.keySet());
+        paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
+            if (repository.equals("tests/") && path.equals(AresSecurityPolicy.PATH)) {
+                return false; // Server-owned; securityPolicyReasons checks it against the derived policy.
+            }
+            boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
+            boolean allowedFile = path.endsWith(JAVA_SUFFIX) || allowStructuralOracle && path.endsWith("/test.json");
+            boolean packageMatchesPath = !path.endsWith(JAVA_SUFFIX) || !safeProduced.containsKey(path)
+                    || JavaSourceInspector.declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
+            return !inSourceRoot || !allowedFile || !packageMatchesPath;
+        }).map(repository::concat).forEach(target::add);
+    }
+
+    private static Map<String, String> safeFiles(Map<String, String> files) {
+        return files == null ? Map.of() : files;
+    }
+
+    private static boolean isJavaTestSourcePath(String path) {
+        return path.endsWith(JAVA_SUFFIX) && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
+    }
+
+    /** Minimum normalized length for a body to count as a meaningful source file, so an empty .gitkeep or a one-line marker is never called a leak. */
+    private static final int MIN_LEAK_BODY_LENGTH = 40;
+
+    /**
+     * Rejects unseeded randomness in a graded test: the same submission then scores differently on re-run. The differential oracle is blind to it, building each assignment once,
+     * where a probabilistic pass looks exactly like a real one.
+     * <p>
+     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are not matched: building a value object with the current timestamp is common in a test that
+     * never asserts on it, so matching them would reject correct suites.
+     */
+    static List<String> nondeterministicGradedTestReasons(Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<String> reasons = new ArrayList<>();
+        for (Map.Entry<String, String> file : producedTestsFiles.entrySet()) {
+            if (isHarnessFile(file.getKey()) || file.getValue() == null) {
+                continue;
+            }
+            List<String> found = NONDETERMINISM_SOURCES.stream().filter(source -> file.getValue().contains(source)).toList();
+            if (!found.isEmpty()) {
+                reasons.add("the graded test file '" + file.getKey() + "' draws on unseeded randomness (" + String.join(", ", found)
+                        + "), so the same student submission can score differently on re-run. Replace it with fixed data: to prove the implementation does not depend on input "
+                        + "order, pass a list that is already deliberately out of order; if a test genuinely needs a random generator, seed it (new Random(42)).");
+            }
+        }
+        return List.copyOf(reasons);
+    }
+
+    /** Checks graded tests for reads of student source files. */
+    static List<String> sourceReadingTestReasons(Map<String, String> producedTestsFiles) {
+        return SourceReadingTestGate.reasons(producedTestsFiles);
+    }
+
+    /**
+     * Detects a solution leak the differential oracle cannot see (see class javadoc): a solution implementation copied into an extra template file at a non-graded path. Files
+     * identical at the same path are shared interfaces/headers/config rather than answers, and a copy at the same graded path makes the template pass and is the oracle's to
+     * reject. Both inputs are residue-stripped; fails open when either side is empty.
+     */
+    static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
+        if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
+            return List.of();
+        }
+        Set<String> implementationBodies = new HashSet<>();
+        for (Map.Entry<String, String> entry : solutionFiles.entrySet()) {
+            if (isLeakIgnoredFile(entry.getKey())) {
+                continue;
+            }
+            String body = JavaSourceInspector.normalizeBody(entry.getValue());
+            if (body.length() < MIN_LEAK_BODY_LENGTH) {
+                continue;
+            }
+            if (body.equals(JavaSourceInspector.normalizeBody(templateFiles.get(entry.getKey())))) {
+                continue;
+            }
+            implementationBodies.add(body);
+        }
+        List<String> leakedPaths = new ArrayList<>();
+        for (Map.Entry<String, String> entry : templateFiles.entrySet()) {
+            String path = entry.getKey();
+            if (isLeakIgnoredFile(path)) {
+                continue;
+            }
+            String body = JavaSourceInspector.normalizeBody(entry.getValue());
+            if (body.length() < MIN_LEAK_BODY_LENGTH || !implementationBodies.contains(body)) {
+                continue;
+            }
+            // Left to the oracle's "template must fail" gate rather than double-reported here.
+            if (body.equals(JavaSourceInspector.normalizeBody(solutionFiles.get(path)))) {
+                continue;
+            }
+            if (!leakedPaths.contains(path)) {
+                leakedPaths.add(path);
+            }
+        }
+        if (leakedPaths.isEmpty()) {
+            return List.of();
+        }
+        return List.of("the template leaks the reference solution: these template files copy a reference-solution implementation to a non-graded path: " + leakedPaths
+                + ". The template ships to students, so it must contain only unimplemented placeholders, never a copy of the solution. Replace these with placeholder bodies.");
+    }
+
+    /** Grading-context introspection a produced assignment source must never contain: a stub that senses its caller can fake "fails on the template" per test. */
+    private static final Pattern GRADING_CONTEXT_SNIFFING = Pattern.compile("Thread\\s*\\.\\s*currentThread\\s*\\(\\s*\\)\\s*\\.\\s*getStackTrace|StackWalker");
+
+    /** Names that can only denote a code construct, so a sentence requiring one is a technique mandate whatever else it says. */
+    private static final String CONSTRUCT_NOUN = "recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?";
+
+    /**
+     * Technique names that are ordinary domain words when required — "must use the pipeline stages", "the loopback address", "the previous iteration's estimate" — and so may be
+     * matched only under a prohibition, where the reading is unambiguous.
+     */
+    private static final String PROHIBITED_TECHNIQUE_NOUN = "recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?";
+
+    /** Keeps a hyphenated compound whose head is a domain term out of the technique nouns, such as "Self-loops are not allowed". */
+    private static final String NOT_HYPHENATED = "(?<![-\\w])";
+
+    /**
+     * A prohibition with no verb of its own ("Loops are not allowed") constrains the student's code only when the clause ends there or names the implementation; otherwise it
+     * constrains something else entirely, as in "Recursion is not allowed in the grammar of the input language".
+     */
+    private static final String SCOPED_TO_THE_IMPLEMENTATION = "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))";
+
+    /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
+    private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
+            "(?:must|should|shall)\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|implement\\w*\\s+[^.|\\n]{0,60}?\\brecursively\\b"
+                    + "|(?:teach\\w*|practi[cs]e\\w*|learn\\w*)\\s+(?:[\\w*]+\\s+){0,5}?(?:recursion|iteration|stream\\s+api|lambdas?|if\\p{Pd}?else|switch)\\b"
+                    + "|implement\\w*\\s+(?:[\\w*]+\\s+){0,4}?(?:recursive|iterative|stream-based|lambda-based)\\s+(?:methods?|functions?|solutions?)\\b"
+                    + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**(?:" + CONSTRUCT_NOUN + ")\\**\\b"
+                    + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**" + NOT_HYPHENATED
+                    + "(?:" + PROHIBITED_TECHNIQUE_NOUN + ")\\**\\b" + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}" + NOT_HYPHENATED + "(?:recursion|loops?|iteration)\\b"
+                    + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
+                    + "|must\\**\\s+be\\s+implemented\\s+as\\s+(?:a\\s+)?[^.|\\n]{0,30}\\bif\\p{Pd}?else\\b"
+                    + "|must\\s+(?:rely\\s+on|employ|use)\\s+(?:(?:only|plain|nested)\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
+                    + "|(?:use|using)\\s+only\\s+(?:plain\\s+|nested\\s+|sequential\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
+                    + "|require(?:s|d)?\\s+(?:the\\s+)?use\\s+of\\s+(?:a\\s+)?(?:if\\p{Pd}?else|ternary|switch|stream\\s+pipeline|lambda\\s+expression)\\b" + "|" + NOT_HYPHENATED
+                    + "(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed" + SCOPED_TO_THE_IMPLEMENTATION,
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Prose describing <em>how</em> an implementation is written, in a critic finding's voice ("an iterative implementation using an explicit stack") rather than a specification
+     * rule's, so unlike {@link #TECHNIQUE_MANDATE} it almost never contains "must". Requires a technique <em>contrast</em> or a named implementation shape, because on a recursion
+     * exercise nearly every finding says "recursive" somewhere and "the recursive helper's base case is untested" is an ordinary repairable gap.
+     */
+    private static final Pattern TECHNIQUE_CLAIM = Pattern
+            .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?|if\\p{Pd}?else)\\b"
+                    + "|\\b(?:iterativ\\w*|recursiv\\w*|non-recursive|loop-based|stack-based)\\s+(?:implementation|version|solution|approach|variant)"
+                    + "|(?:uses?|using|written\\s+with|replaces?\\s+\\w+\\s+with)\\s+(?:an?\\s+|the\\s+)?(?:for|while|do-while)\\s+loops?"
+                    + "|(?:is|be|being)\\s+(?:actually\\s+)?(?:implemented\\s+)?(?:recursiv\\w*|iterativ\\w*)\\b", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Implementation-technique mandates stated as {@code ## Rules} — that a method be recursive, use a stream pipeline, avoid loops. No assertion over the public API separates a
+     * recursive implementation from an iterative one returning identical values, so an agent obliged to cover every rule either leaves the mandate ungraded or reaches for the
+     * student's source text, which runtime source isolation rejects. Narrow, and scoped to {@code ## Rules}: naming a technique as guidance in the student-facing statement is
+     * fine and often desirable.
+     *
+     * @param spec the specification document
+     * @return the distinct mandates stated as rules, in encounter order
+     */
+    public static List<String> techniqueMandatesInRules(@Nullable String spec) {
+        if (spec == null || spec.isBlank()) {
+            return List.of();
+        }
+        String rules = markdownSectionBody(spec, "## Rules");
+        return techniqueMandates(rules);
+    }
+
+    /**
+     * Technique requirements from the normative Rules plus explicitly recorded pedagogical objectives; other ledger rationale remains descriptive and out of scope.
+     *
+     * @param spec the specification document
+     * @return distinct implementation-technique mandates in the recognized contract surfaces
+     */
+    public static List<String> techniqueMandatesInSpecification(@Nullable String spec) {
+        if (spec == null || spec.isBlank()) {
+            return List.of();
+        }
+        LinkedHashSet<String> mandates = new LinkedHashSet<>(techniqueMandatesInRules(spec));
+        String ledger = markdownSectionBody(spec, "## Decision Ledger");
+        for (String row : ledger.lines().filter(line -> line.contains("PEDAGOGICAL_OBJECTIVE")).toList()) {
+            String[] cells = row.split("\\|", -1);
+            for (int i = 1; i < cells.length; i++) {
+                if ("PEDAGOGICAL_OBJECTIVE".equals(cells[i].strip()) && i > 0) {
+                    mandates.addAll(techniqueMandates(cells[i - 1]));
+                }
+            }
+        }
+        return List.copyOf(mandates);
+    }
+
+    /**
+     * Finds exact implementation-shape mandates in arbitrary authoring text. Concept selection uses this before a candidate can become provenance; concepts choose a qualitative
+     * interaction, while normative implementation constructs belong either to explicit instructor guidance or to a later non-graded pedagogical objective.
+     *
+     * @param text authoring text to inspect
+     * @return distinct exact implementation-technique mandates
+     */
+    public static List<String> techniqueMandates(@Nullable String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+        String normalized = text.replace("`", "");
+        List<String> mandates = new ArrayList<>();
+        Matcher matcher = TECHNIQUE_MANDATE.matcher(normalized);
+        while (matcher.find()) {
+            String prefix = normalized.substring(Math.max(0, matcher.start() - 32), matcher.start());
+            if (NEGATION_PREFIX.matcher(prefix).matches()) {
+                continue;
+            }
+            // Markdown emphasis is presentation, not content: "must be recursive" and "must be **recursive**" state one mandate and must be reported once.
+            String mandate = WHITESPACE.matcher(matcher.group().strip().replace("*", "")).replaceAll(" ").strip();
+            if (mandates.stream().noneMatch(seen -> seen.equalsIgnoreCase(mandate))) {
+                mandates.add(mandate);
+            }
+        }
+        return List.copyOf(mandates);
+    }
+
+    /**
+     * Whether a critic finding is about implementation technique rather than observable behaviour, and so cannot be repaired by strengthening the tests. Callers must first
+     * establish that the specification really mandates a technique: a finding may contrast two implementations while still describing a behavioural difference the tests can see.
+     *
+     * @param text the finding's requirement and detail, concatenated
+     * @return true when the text makes a technique claim
+     */
+    public static boolean describesTechniqueRatherThanBehaviour(@Nullable String text) {
+        return text != null && !text.isBlank() && TECHNIQUE_CLAIM.matcher(text).find();
+    }
+
+    /** The body of one markdown section, up to the next heading at any level. */
+    static String markdownSectionBody(String document, String heading) {
+        int start = document.indexOf(heading);
+        if (start < 0) {
+            return "";
+        }
+        int bodyStart = start + heading.length();
+        int next = document.indexOf("\n## ", bodyStart);
+        int nextSubsection = document.indexOf("\n### ", bodyStart);
+        if (nextSubsection >= 0 && (next < 0 || nextSubsection < next)) {
+            next = nextSubsection;
+        }
+        return next < 0 ? document.substring(bodyStart) : document.substring(bodyStart, next);
+    }
+
+    /**
+     * Rejects template/solution sources that inspect the grading context (stack traces, stack walking) to change behaviour per caller: a stub gamed this way fails exactly the
+     * bound test while behaving implemented everywhere else, subverting the fails-on-template contract in code that ships to students. Fails open on empty input.
+     */
+    static List<String> gradingContextSniffingReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
+        List<String> offendingPaths = new ArrayList<>();
+        for (Map<String, String> files : List.of(templateFiles == null ? Map.<String, String>of() : templateFiles,
+                solutionFiles == null ? Map.<String, String>of() : solutionFiles)) {
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                if (isLeakIgnoredFile(entry.getKey()) || offendingPaths.contains(entry.getKey())) {
+                    continue;
+                }
+                if (entry.getValue() != null && GRADING_CONTEXT_SNIFFING.matcher(entry.getValue()).find()) {
+                    offendingPaths.add(entry.getKey());
+                }
+            }
+        }
+        if (offendingPaths.isEmpty()) {
+            return List.of();
+        }
+        return List.of("these template/solution files inspect the grading context (stack traces / StackWalker) to change behavior per caller: " + offendingPaths
+                + ". A starter stub must fail the same way for every caller. If a member cannot be stubbed without cascading failures (constructors, shared plumbing), implement it"
+                + " in the template and do not bind a behavioural test to it.");
+    }
+
+    /** Residue, harness files (owned by the harness gate) and dotfiles carry no answer, so the leak comparison skips them. */
+    private static boolean isLeakIgnoredFile(String path) {
+        return isResidueOutsideCanonicalRoot(path) || isHarnessFile(path) || basename(path).startsWith(".");
+    }
+}

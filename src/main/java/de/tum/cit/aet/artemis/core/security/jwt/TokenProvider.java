@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 
 import org.jspecify.annotations.NonNull;
@@ -63,6 +66,14 @@ public class TokenProvider {
      */
     public static final String PASSKEY_CREDENTIAL_ID = "passkey-credential-id";
 
+    /**
+     * Key in the details of a request authentication under which the moment the session was originally established is
+     * kept, as an {@link Instant}. It is the token's {@code iat} claim, which silent rotation preserves, so it identifies
+     * the login rather than the latest rotation. Operations that create a credential compare it to the time the account's
+     * credentials last changed, see {@code SessionFreshnessService}.
+     */
+    public static final String SESSION_STARTED_AT = "session-started-at";
+
     private static final String TOOLS_KEY = "tools";
 
     /** Whether the session was established with "remember me", which is what makes it eligible for extension at all. */
@@ -101,6 +112,24 @@ public class TokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.tokenValidityInMilliseconds = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSeconds();
         this.tokenValidityInMillisecondsForRememberMe = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
+    }
+
+    /**
+     * Derives a signing key for one other purpose from the session key, so tokens of that purpose and session tokens can
+     * never be verified with each other's key. Every node holds the same session key, so every node derives the same key.
+     *
+     * @param purpose a fixed label naming the purpose, for example {@code "artemis:iris:pyris-callback-token:v1"}
+     * @return a 512-bit HMAC key, enough for HS512
+     */
+    public SecretKey deriveSigningKey(String purpose) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA512");
+            mac.init(key);
+            return Keys.hmacShaKeyFor(mac.doFinal(purpose.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Could not derive a signing key", e);
+        }
     }
 
     /**
@@ -223,7 +252,8 @@ public class TokenProvider {
      */
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
             @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).map(TokenProvider::globalAuthority).distinct()
+                .collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
         if (authenticatedWithPasskey != null && authenticatedWithPasskey) {
@@ -264,13 +294,25 @@ public class TokenProvider {
      */
     @Nullable
     public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
+        return getAuthentication(token, parseClaims(token));
+    }
+
+    /**
+     * Same as {@link #getAuthentication(String)} for a token whose claims were already parsed and verified, so that the token is not parsed again.
+     *
+     * @param token  JWT Authorization Token
+     * @param claims the verified claims of the token
+     * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
+     */
+    @Nullable
+    Authentication getAuthentication(String token, Claims claims) {
         var authorityClaim = claims.get(AUTHORITIES_KEY);
         if (authorityClaim == null) {
             // leads to a 401 unauthorized error
             return null;
         }
-        List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
+        List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(TokenProvider::globalAuthority).distinct()
+                .map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
         var authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
@@ -284,8 +326,21 @@ public class TokenProvider {
         if (passkeyCredentialId != null) {
             details.put(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
         }
+        Date issuedAt = claims.getIssuedAt();
+        if (issuedAt != null) {
+            details.put(SESSION_STARTED_AT, issuedAt.toInstant());
+        }
         authentication.setDetails(Map.copyOf(details));
         return authentication;
+    }
+
+    private static String globalAuthority(String authority) {
+        // Older tokens may carry only a teaching authority, which previously implied ordinary user access. Teaching
+        // permissions themselves are always checked against the current course roles, including when such a token rotates.
+        return switch (authority) {
+            case "ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR" -> "ROLE_USER";
+            default -> authority;
+        };
     }
 
     /**
@@ -330,7 +385,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.debug("Invalid JWT token: {} from source {}", authToken, source);
+        log.debug("Invalid JWT token from source {}", source);
         return false;
     }
 

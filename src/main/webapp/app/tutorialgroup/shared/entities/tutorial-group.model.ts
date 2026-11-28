@@ -26,6 +26,8 @@ export class TutorialGroup implements BaseEntity {
     public isUserRegistered?: boolean;
     public isUserTutor?: boolean;
     public numberOfRegisteredUsers?: number;
+    // Server-derived availability flag that stays visible to students (unlike the exact count): true when the group is full.
+    public capacityReached?: boolean;
     public teachingAssistantName?: string;
     public teachingAssistantId?: number;
     public teachingAssistantImageUrl?: string;

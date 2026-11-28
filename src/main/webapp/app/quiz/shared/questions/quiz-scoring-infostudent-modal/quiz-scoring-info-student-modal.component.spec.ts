@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
-import { Dialog } from 'primeng/dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -69,11 +69,17 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         expect(comp.isVisible()).toBe(true);
     });
 
-    it('should configure a responsive breakpoint so the 50rem dialog stays within narrow viewports', () => {
+    it('should render the explanation in a medium dialog that closes on an outside click', () => {
         fixture.detectChanges();
 
-        const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
+        const dialog = fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
+        expect(dialog.size()).toBe('medium');
+        expect(dialog.dismissableMask()).toBe(true);
+        expect(dialog.visible()).toBe(false);
+
+        comp.open();
+        fixture.detectChanges();
+        expect(dialog.visible()).toBe(true);
     });
 
     it('check count for drag and drop exercise with singular values', () => {

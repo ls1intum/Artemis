@@ -1,16 +1,16 @@
-import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Service, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -19,7 +19,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -41,8 +41,22 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
-    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
-    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
+
+    readonly testStudentExams = signal<StudentExamOrDTO[]>([]);
+
+    constructor() {
+        this.currentlyLoadedStudentExam.pipe(filter((studentExam) => !!studentExam?.submitted && !!studentExam.exam && !isRealExam(studentExam.exam))).subscribe((latestExam) => {
+            this.testStudentExams.update((studentExams) => {
+                const index = studentExams.findIndex((se) => se?.id === latestExam?.id);
+                if (index !== -1) {
+                    const updated = [...studentExams];
+                    updated[index] = latestExam;
+                    return updated;
+                }
+                return [...studentExams, latestExam];
+            });
+        });
+    }
 
     // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
     // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
@@ -89,8 +103,14 @@ export class ExamParticipationService {
      * @param studentExamId the id of the student Exam which should be loaded
      * @returns the studentExam with Exercises for the conduction-phase
      */
-    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
+    public loadStudentExamWithExercisesForConduction(
+        courseId: number,
+        examId: number,
+        studentExamId: number,
+        purpose: 'student' | 'instructor-owner' = 'student',
+    ): Observable<StudentExam | undefined> {
+        const suffix = purpose === 'instructor-owner' ? '/for-instructor' : '';
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction' + suffix;
         return this.getStudentExamFromServer(url).pipe(
             // During the conduction, blocking the student on a failed request would be worse than letting them work on
             // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
@@ -155,17 +175,11 @@ export class ExamParticipationService {
      *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
      * @param studentExamId the id of the student exam
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
-        let params = new HttpParams();
-        if (userId) {
-            params = params.set('userId', userId.toString());
-        }
-
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExamWithGradeDTO> {
         const url = `${this.getResourceURL(courseId, examId)}/student-exams/${studentExamId}/grade-summary`;
-        return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
+        return this.httpClient.get<StudentExamWithGradeDTO>(url);
     }
 
     /**
@@ -223,16 +237,16 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server
+     * Loads {@link StudentExamDTO} objects linked to a test exam per user and per course from server and stores them in the service.
      * @param courseId the id of the course we are interested
-     * @returns a List of all StudentExams without Exercises per User and Course. Each includes a nested `exam`
-     * (id, title, testExam, workingTime, course{id, groupNames}) but no `user`, `exercises`, or `examSessions`.
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExamDTO[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<void> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
-        return this.httpClient
-            .get<StudentExamDTO[]>(url, { observe: 'response' })
-            .pipe(map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+        return this.httpClient.get<StudentExamDTO[]>(url, { observe: 'response' }).pipe(
+            map((studentExam: HttpResponse<StudentExamDTO[]>) => this.processListOfStudentExamsFromServer(studentExam)),
+            tap((studentExams) => this.testStudentExams.set(studentExams)),
+            map(() => {}),
+        );
     }
 
     /**
@@ -352,17 +366,6 @@ export class ExamParticipationService {
         this.sessionStorageService.store('ExamSessionToken', examSessionToken);
     }
 
-    /**
-     * Update a quizSubmission
-     *
-     * @param exerciseId
-     * @param quizSubmission
-     */
-    public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
-        const url = `api/quiz/exercises/${exerciseId}/submissions/exam`;
-        return this.httpClient.put<QuizSubmission>(url, quizSubmission);
-    }
-
     public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {
         const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
         this.localStorageService.store(key, saveFailed);
@@ -461,9 +464,6 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
-    }
-    setShouldUpdateTestExams(shouldUpdate: boolean) {
-        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

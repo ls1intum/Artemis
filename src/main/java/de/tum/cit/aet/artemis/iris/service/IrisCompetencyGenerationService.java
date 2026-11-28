@@ -87,7 +87,7 @@ public class IrisCompetencyGenerationService {
                 settings.variant().jsonValue(),
                 settings.supportLevel().jsonValue(),
                 Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
+                pyrisJobService.addJob(runId -> new CompetencyExtractionJob(runId, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, List.of(CompetencyTaxonomy.values()), 5),
                 (runId, runState, error) -> websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(course.getId()),
                         new IrisCompetencyGenerationStatusDTO(runState, error, null))

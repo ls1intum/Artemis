@@ -1,3 +1,6 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
@@ -15,10 +18,6 @@ import { booleanLabel } from 'app/exercise/version-history/shared/version-histor
 import dayjs from 'dayjs/esm';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonModule } from 'primeng/button';
-import { DividerModule } from 'primeng/divider';
-import { PanelModule } from 'primeng/panel';
-import { TooltipModule } from 'primeng/tooltip';
 
 /**
  * View-model for a single row in the metadata panel.
@@ -66,8 +65,8 @@ interface MetadataField {
 @Component({
     selector: 'jhi-programming-exercise-version-programming-metadata',
     templateUrl: './programming-exercise-version-programming-metadata.component.html',
-    styleUrls: ['./programming-exercise-version-programming-metadata.component.scss'],
-    imports: [PanelModule, DividerModule, ButtonModule, TooltipModule, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['./programming-exercise-version-programming-metadata.component.css'],
+    imports: [TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseVersionProgrammingMetadataComponent {
@@ -165,8 +164,16 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             this.toTextField('artemisApp.programmingExercise.checkoutSolutionRepository.title', booleanLabel(this.translateService, buildConfig.checkoutSolutionRepository)),
             this.toTextField('artemisApp.programmingExercise.allowBranching.title', booleanLabel(this.translateService, buildConfig.allowBranching)),
             this.toTextField('artemisApp.programmingExercise.branchRegex.title', buildConfig.branchRegex),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.start', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.start)),
+            this.toTextField('artemisApp.programmingExercise.buildTimeWindow.end', this.formatDate(buildConfig.advancedSettings?.buildTimeWindow?.end)),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags', buildConfig.dockerFlags),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.theiaImage', buildConfig.theiaImage),
+            this.toTextField(
+                'artemisApp.programmingExercise.versionHistory.snapshot.onlineIdeExperienceLevel',
+                buildConfig.onlineIdeExperienceLevel
+                    ? this.translateService.instant('artemisApp.programmingExercise.onlineIdeExperienceLevel.levels.' + buildConfig.onlineIdeExperienceLevel)
+                    : undefined,
+            ),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.assignmentCheckoutPath', buildConfig.assignmentCheckoutPath),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.solutionCheckoutPath', buildConfig.solutionCheckoutPath),
             this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.testsCheckoutPath', buildConfig.testCheckoutPath),
@@ -193,6 +200,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         'artemisApp.programmingExercise.versionHistory.snapshot.postDueDateHandling': 'Post Due Date Handling',
         'artemisApp.programmingExercise.versionHistory.snapshot.dockerFlags': 'Docker Flags',
         'artemisApp.programmingExercise.versionHistory.snapshot.theiaImage': 'Online IDE Image',
+        'artemisApp.programmingExercise.versionHistory.snapshot.onlineIdeExperienceLevel': 'Online IDE Experience Level',
         'artemisApp.programmingExercise.versionHistory.snapshot.assignmentCheckoutPath': 'Assignment Checkout Path',
         'artemisApp.programmingExercise.versionHistory.snapshot.solutionCheckoutPath': 'Solution Checkout Path',
         'artemisApp.programmingExercise.versionHistory.snapshot.testsCheckoutPath': 'Tests Checkout Path',
@@ -200,6 +208,11 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     };
 
     // ── View-model factory methods (called only inside computed() signals) ──
+
+    /** Formats a snapshot date string for display, or returns undefined when the date is missing. */
+    private formatDate(value?: string): string | undefined {
+        return value ? dayjs(value).format('MMM D, YYYY HH:mm') : undefined;
+    }
 
     /** Creates a plain text metadata field with pre-computed display values. */
     private toTextField(label: string, value?: string | number): MetadataField {

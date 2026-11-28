@@ -1,6 +1,7 @@
 <!-- Follow https://docs.artemis.tum.de/developer/development-process#pull-request-readiness -->
-<!-- Before review: complete applicable author Checklist tasks with [x], delete only inapplicable tasks and empty sections, and replace example text. Keep unfinished applicable work in draft. -->
-<!-- Set the PR milestone to the intended release. When ready, leave draft and verify the "ready for review" label. -->
+<!-- Check completed author Checklist tasks with [x], leave pending validation unchecked, delete only inapplicable tasks and empty sections, and replace example text. -->
+<!-- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready immediately so full CI and review bots run; do not wait for CI, reviews or test-server validation. -->
+<!-- Set the PR milestone to the intended release and verify the "ready for review" label once implementation is complete. -->
 <!-- Review Progress tasks remain open until verified. Before merge: all remaining tasks checked, required approvals obtained, threads resolved, checks passing and no conflicts; replace "ready for review" with "ready to merge". -->
 
 ### Summary 
@@ -8,13 +9,14 @@
 
 ### Checklist
 #### General
-<!-- Complete every applicable author task before requesting review; remove only tasks that do not apply. -->
+<!-- Check only completed author tasks; pending validation may remain unchecked during review. Complete every applicable task before merge and remove only tasks that do not apply. -->
 <!-- You only need to choose one of the first two check items: Generally, test on the test servers. -->
 <!-- If it's only a small change, testing it locally is acceptable, and you may remove the first checkmark. If you are unsure, please test on the test servers. -->
 - [ ] I tested **all** changes and their related features with **all** corresponding user types on a test server.
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.tum.de/developer/guidelines/language).
 - [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions).
+- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, and set `last_reviewed` of the pages I checked against the code, or none of these apply.
 
 
 #### Server
@@ -22,7 +24,8 @@
 - [ ] I **strictly** followed the principle of **data economy** for all database calls.
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
-- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course roles for all new REST Calls (security).
+- [ ] I went through the [security guideline](https://docs.artemis.tum.de/developer/guidelines/security): the ids of every request are checked against the course in the path, and tests cover a refused request.
 - [ ] I documented the Java code using JavaDoc style.
 
 
@@ -33,7 +36,7 @@
 - [ ] I **strictly** followed the [AET UI-UX guidelines](https://ls1intum.github.io/ui-ux-guidelines/).
 - [ ] Following the [theming guidelines](https://docs.artemis.tum.de/developer/guidelines/client-theming), I specified colors only in the theming variable files and checked that the changes look consistent in both the light and the dark theme.
 - [ ] I added multiple integration tests (Vitest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.tum.de/developer/guidelines/client-tests).
-- [ ] I added `authorities` to all new routes and checked the course groups for displaying navigation elements (links, buttons).
+- [ ] I added `authorities` to all new routes and checked the course roles for displaying navigation elements (links, buttons).
 - [ ] I documented the TypeScript code using JSDoc style.
 - [ ] I added multiple screenshots/screencasts of my UI changes.
 - [ ] I translated all newly inserted strings into English and German.

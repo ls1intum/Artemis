@@ -1,29 +1,34 @@
 package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
+import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
@@ -38,12 +43,13 @@ public class TelemetrySendingService {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
             String contact, String adminName, boolean isLocalLLMDeploymentEnabled, String universityName, List<String> moduleFeatures, Integer numberOfNodes,
-            Integer buildAgentCount, Boolean isMultiNode, String startupId, Instant startedAt) {
+            Integer buildAgentCount, Boolean isMultiNode, String startupId, Instant startedAt, String ciSystem, String versionControlSystem, String distributedDataProvider,
+            String websocketBroker) {
     }
 
     private final Environment env;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final ProfileService profileService;
 
@@ -51,10 +57,10 @@ public class TelemetrySendingService {
 
     private final Optional<LocalCITelemetryApi> localCITelemetryApi;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, NodeRegistryService nodeRegistryService,
+    public TelemetrySendingService(Environment env, @Qualifier("telemetryRestClient") RestClient restClient, ProfileService profileService, NodeRegistryService nodeRegistryService,
             Optional<LocalCITelemetryApi> localCITelemetryApi) {
         this.env = env;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.profileService = profileService;
         this.nodeRegistryService = nodeRegistryService;
         this.localCITelemetryApi = localCITelemetryApi;
@@ -108,14 +114,12 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest(boolean sendAdminDetails, String startupId, Instant startedAt) {
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            // Declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            var requestEntity = new HttpEntity<>(buildTelemetryData(sendAdminDetails, startupId, startedAt), headers);
+            var telemetryData = buildTelemetryData(sendAdminDetails, startupId, startedAt);
 
             log.info("Sending startup telemetry to {}", destination);
             // NOTE: there should be no module in the following URL
-            var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
+            // The content type is declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
+            var response = restClient.post().uri(destination + "/api/telemetry").contentType(MediaType.APPLICATION_JSON).body(telemetryData).retrieve().toEntity(String.class);
             log.info("Successfully sent telemetry data: {}", response.getStatusCode());
         }
         catch (RestClientResponseException e) {
@@ -137,6 +141,7 @@ public class TelemetrySendingService {
      * @return an instance of {@link TelemetryData} containing the gathered telemetry information
      */
     TelemetryData buildTelemetryData(boolean sendAdminDetails, String startupId, Instant startedAt) {
+        // REMOVE_IN_ARTEMIS_11 (MySQL): drop the mysql branch once MySQL support is removed
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
@@ -167,6 +172,49 @@ public class TelemetrySendingService {
         }
         List<String> moduleFeatures = new ArtemisConfigHelper().getEnabledFeatures(env).stream().sorted().toList();
         return new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName,
-                isLocalLLMDeploymentEnabled, universityName, moduleFeatures, nodeCount, buildAgentCount, nodeCount == null ? null : nodeCount > 1, startupId, startedAt);
+                isLocalLLMDeploymentEnabled, universityName, moduleFeatures, nodeCount, buildAgentCount, nodeCount == null ? null : nodeCount > 1, startupId, startedAt, ciSystem(),
+                versionControlSystem(), distributedDataProvider(), websocketBroker());
+    }
+
+    /**
+     * The continuous integration system the scheduling node runs, derived from its profiles.
+     *
+     * @return {@code localci}, {@code jenkins} or {@code none}
+     */
+    private String ciSystem() {
+        // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the jenkins branch once Jenkins support is removed
+        if (env.matchesProfiles(PROFILE_JENKINS)) {
+            return "jenkins";
+        }
+        return env.matchesProfiles(PROFILE_LOCALCI) ? "localci" : "none";
+    }
+
+    /**
+     * @return {@code localvc} if the scheduling node runs the integrated version control system, {@code none} otherwise
+     */
+    private String versionControlSystem() {
+        return env.matchesProfiles(PROFILE_LOCALVC) ? "localvc" : "none";
+    }
+
+    /**
+     * Reported because it is configured with a property and not with a profile, so the profiles do not show it.
+     *
+     * @return {@code hazelcast}, {@code redis} or {@code local}
+     */
+    private String distributedDataProvider() {
+        return DistributedDataProviderResolver.resolveProvider(env).toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Mirrors the decision of the websocket configuration: messages are relayed to an external broker as soon as one valid broker address is configured.
+     * The addresses are split at the comma and validated as they are, without trimming, exactly like the websocket configuration does, so an address with a
+     * surrounding space is invalid there and here.
+     *
+     * @return {@code external} for a relay to a broker such as ActiveMQ Artemis, {@code simple} for the in-memory broker
+     */
+    private String websocketBroker() {
+        String addresses = env.getProperty("spring.websocket.broker.addresses", "");
+        boolean relay = Arrays.stream(addresses.split(",")).anyMatch(address -> InetSocketAddressValidator.getValidAddress(address).isPresent());
+        return relay ? "external" : "simple";
     }
 }

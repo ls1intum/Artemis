@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -145,6 +148,23 @@ class HyperionGenerationBudgetServiceTest {
         HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, Duration.ofHours(24), 100, 200, 300);
 
         assertThatCode(() -> service.assertWithinBudgets(1L, 2L)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void everyBudgetUsesTheSameUtcRollingWindowCutoff() {
+        var window = Duration.ofHours(24);
+        var service = new HyperionGenerationBudgetService(repository, window, 100, 200, 300);
+        Instant earliestCutoff = Instant.now().minus(window);
+
+        service.assertWithinBudgets(1L, 2L);
+
+        Instant latestCutoff = Instant.now().minus(window);
+        var since = ArgumentCaptor.forClass(ZonedDateTime.class);
+        verify(repository).sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), since.capture());
+        assertThat(since.getValue().getZone()).isEqualTo(ZoneOffset.UTC);
+        assertThat(since.getValue().toInstant()).isBetween(earliestCutoff, latestCutoff);
+        verify(repository).sumTokensSinceForCourse(LLMServiceType.HYPERION, GenerationJobService.GENERATION_PIPELINE_ID, 2L, since.getValue());
+        verify(repository).sumTokensSince(LLMServiceType.HYPERION, GenerationJobService.GENERATION_PIPELINE_ID, since.getValue());
     }
 
     @Test

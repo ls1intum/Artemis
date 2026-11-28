@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,9 +9,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,13 +28,19 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -48,6 +57,7 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -84,7 +94,7 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 @Service
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
-public class BuildAgentDockerService {
+public class BuildAgentDockerService implements EnvironmentAware {
 
     /**
      * Lock to serialize Docker image pull operations.
@@ -159,6 +169,35 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-pull-stall-timeout-seconds:60}")
     private int imagePullStallTimeoutSeconds;
 
+    @Value("${artemis.continuous-integration.network-isolation-check.enabled:true}")
+    private boolean networkIsolationCheckEnabled;
+
+    @Value("${artemis.continuous-integration.network-isolation-check.image:busybox:1.37.0}")
+    private String networkIsolationCheckImage;
+
+    /** Read through the environment, so that a YAML list and a comma separated value both work. */
+    private Environment environment;
+
+    private static final String NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY = "artemis.continuous-integration.network-isolation-check.targets";
+
+    @Value("${artemis.continuous-integration.container-defaults.network:}")
+    private String defaultBuildNetwork;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
+    private List<String> allowedCustomNetworks;
+
+    @Value("${spring.data.redis.host:}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.hazelcast.interface:}")
+    private String hazelcastInterface;
+
+    @Value("${spring.hazelcast.port:5701}")
+    private int hazelcastPort;
+
     /**
      * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
      * <p>
@@ -177,6 +216,11 @@ public class BuildAgentDockerService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
+    }
+
+    @Override
+    public void setEnvironment(@NonNull Environment environment) {
+        this.environment = environment;
     }
 
     /**
@@ -206,6 +250,46 @@ public class BuildAgentDockerService {
 
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
+        if (networkIsolationCheckEnabled) {
+            taskScheduler.schedule(this::checkNetworkIsolation, Instant.now().plusSeconds(60));
+        }
+    }
+
+    /**
+     * Checks from a container on the default build network that the queue store, the cluster port and the configured services cannot be reached, and logs the outcome.
+     * A failure of the check itself never affects the agent.
+     */
+    void checkNetworkIsolation() {
+        try {
+            if (dockerClientNotAvailable("Cannot check the network isolation of build containers.")) {
+                return;
+            }
+            // Services that build containers must not reach, as host:port: the ones in the configuration, the queue store, and the cluster port of this node when it is a member
+            // of the cluster. A node without the core profile is a client of the cluster and listens on no cluster port.
+            List<String> entries = new ArrayList<>(Binder.get(environment).bind(NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of()));
+            if (redisHost != null && !redisHost.isBlank()) {
+                entries.add(redisHost + ":" + redisPort);
+            }
+            if (hazelcastInterface != null && !hazelcastInterface.isBlank() && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+                entries.add(hazelcastInterface + ":" + hazelcastPort);
+            }
+            BuildContainerIsolationProbe probe = new BuildContainerIsolationProbe(buildAgentConfiguration.getDockerClient(), networkIsolationCheckImage);
+            List<BuildContainerIsolationProbe.Target> targets = BuildContainerIsolationProbe.parseTargets(entries);
+            // Every network a build can run on: the default one and the ones instructors may select. A container without a network cannot connect anywhere.
+            Set<String> networks = new LinkedHashSet<>();
+            networks.add(defaultBuildNetwork == null ? "" : defaultBuildNetwork.trim());
+            allowedCustomNetworks.stream().filter(Objects::nonNull).map(String::trim).filter(network -> !network.isEmpty()).forEach(networks::add);
+            // A network that shares the namespace of the host or of another container is never used for a build, and "none" cannot connect anywhere
+            networks.removeIf(network -> network.equals("none") || DockerRunConfig.sharesNetworkNamespace(network));
+            log.info("Checking from build containers on the networks {} that {} cannot be reached",
+                    networks.stream().map(network -> network.isEmpty() ? "default" : network).toList(), targets);
+            for (String network : networks) {
+                probe.run(network, targets);
+            }
+        }
+        catch (Exception e) {
+            log.warn("The build container network check failed: {}", e.getMessage());
+        }
     }
 
     /**

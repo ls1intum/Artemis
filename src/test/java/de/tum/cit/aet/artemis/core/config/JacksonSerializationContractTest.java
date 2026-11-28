@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
@@ -112,6 +114,33 @@ class JacksonSerializationContractTest extends AbstractSpringIntegrationIndepend
     @MethodSource("serializationFixtures")
     void shouldSerializeToTheRecordedPayload(String description, Object fixture, String expectedJson) {
         assertThat(jsonMapper.readTree(jsonMapper.writeValueAsString(fixture))).as("payload changed for %s", description).isEqualTo(jsonMapper.readTree(expectedJson));
+    }
+
+    @Test
+    void shouldIgnoreUnknownPropertiesOfAPyrisCommand() {
+        // Pyris is deployed separately and may send a field Artemis does not know yet, at the command and in its parameters
+        String json = """
+                {"type": "point_out", "futureField": 1, "parameters": {"lectureUnitId": 4, "page": 2, "futureParameter": {"nested": true}}}""";
+
+        PyrisCommandDTO command = jsonMapper.readValue(json, PyrisCommandDTO.class);
+
+        assertThat(command.type()).isEqualTo("point_out");
+        assertThat(command.parameters().lectureUnitId()).isEqualTo(4);
+        assertThat(command.parameters().page()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldKeepUnknownPropertiesOfAnIrisMcqMessage() {
+        // the Iris client may add extension fields to an MCQ message, which have to survive saving an answer
+        String json = """
+                {"type": "mcq", "question": "Q", "extension": {"a": 1}, "options": [{"text": "A", "correct": true, "hint": "h"}], "response": {"selectedIndex": 0, "submitted": true, "at": 5}}""";
+
+        IrisMcqContentDTO content = jsonMapper.readValue(json, IrisMcqContentDTO.class);
+
+        assertThat(content.additionalProperties()).containsOnlyKeys("extension");
+        assertThat(content.options().getFirst().additionalProperties()).containsOnlyKeys("hint");
+        assertThat(content.response().additionalProperties()).containsOnlyKeys("at");
+        assertThat(jsonMapper.readTree(jsonMapper.writeValueAsString(content))).isEqualTo(jsonMapper.readTree(json));
     }
 
     @Test

@@ -1,10 +1,12 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,14 +14,14 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import dayjs from 'dayjs/esm';
 
@@ -32,24 +34,28 @@ describe('ExampleSubmissionImportComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let getSubmissionSizeSpy: ReturnType<typeof vi.spyOn>;
     let exercise: Exercise;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     beforeEach(() => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<Submission | undefined>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService);
+        vi.spyOn(translateService, 'get').mockImplementation((key) => of(key === 'entity.action.close' ? 'Close' : key.toString()));
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => (key === 'entity.action.close' ? 'Close' : key.toString()));
 
         fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
         component = fixture.componentInstance;
@@ -108,8 +114,12 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
-    it('should close the dialog on dismiss', () => {
-        component.dismiss();
+    it('renders a visible translated Close button that closes the dialog', () => {
+        const closeButton = fixture.nativeElement.querySelector('button[aria-label="Close"]') as HTMLButtonElement;
+
+        expect(closeButton.textContent?.trim()).toBe('Close');
+        expect(closeButton.dataset.testid).toBe('example-submission-import-close');
+        closeButton.click();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
@@ -118,9 +128,21 @@ describe('ExampleSubmissionImportComponent', () => {
         component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
         fixture.detectChanges();
 
-        const sortableHeaders = fixture.debugElement.queryAll(By.directive(SortByDirective));
+        const sortableHeaders = fixture.debugElement.queryAll(By.directive(TumAetUiTableSortableColumnComponent));
         expect(sortableHeaders).toHaveLength(1);
-        expect(sortableHeaders[0].injector.get(SortByDirective).jhiSortBy()).toBe('STUDENT_NAME');
+        expect(sortableHeaders[0].nativeElement.querySelector('button')).not.toBeNull();
+    });
+
+    it('searches with the student name column when its sortable header is clicked', async () => {
+        component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
+        fixture.detectChanges();
+        searchSpy.mockClear();
+
+        const sortButton = fixture.debugElement.query(By.directive(TumAetUiTableSortableColumnComponent)).nativeElement.querySelector('button') as HTMLButtonElement;
+        sortButton.click();
+
+        await vi.waitFor(() => expect(searchSpy).toHaveBeenCalledWith(expect.objectContaining({ sortedColumn: 'STUDENT_NAME' }), { exerciseId: 3 }));
+        expect(component.sortedColumn).toBe('STUDENT_NAME');
     });
 
     // The import table renders <jhi-result [result]="getLatestResult(submission)" ...>. This component is the only

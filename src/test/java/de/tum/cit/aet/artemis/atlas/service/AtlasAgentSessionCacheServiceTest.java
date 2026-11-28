@@ -176,4 +176,34 @@ class AtlasAgentSessionCacheServiceTest {
         service.clearCachedPendingCompetencyOperations(SESSION_ID);
         service.clearCachedRelationOperations(SESSION_ID);
     }
+
+    @Test
+    void configuredCachesRoundTripPendingOperationsAndExercisePreviewIndependently() {
+        var manager = new org.springframework.cache.concurrent.ConcurrentMapCacheManager(AtlasAgentSessionCacheService.ATLAS_SESSION_PENDING_OPERATIONS_CACHE,
+                AtlasAgentSessionCacheService.ATLAS_SESSION_PENDING_RELATIONS_CACHE, AtlasAgentSessionCacheService.ATLAS_SESSION_EXERCISE_PREVIEW_CACHE);
+        var cached = new AtlasAgentSessionCacheService(manager, new LocalDataProviderService());
+        var operations = List.of(new CompetencyOperation(null, "Loops", "Use loops", CompetencyTaxonomy.APPLY));
+        var relations = List.of(new CompetencyRelationDTO(1L, 2L, 3L, RelationType.EXTENDS));
+        var preview = new de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO(4L, "Exercise", List.of(), false);
+        cached.cachePendingCompetencyOperations(SESSION_ID, operations);
+        cached.cacheRelationOperations(SESSION_ID, relations);
+        cached.cacheExerciseMappingPreview(SESSION_ID, preview);
+        assertThat(cached.getCachedPendingCompetencyOperations(SESSION_ID)).containsExactlyElementsOf(operations);
+        assertThat(cached.getCachedRelationData(SESSION_ID)).containsExactlyElementsOf(relations);
+        assertThat(cached.getCachedExerciseMappingPreview(SESSION_ID)).isEqualTo(preview);
+        cached.clearCachedExerciseMappingPreview(SESSION_ID);
+        assertThat(cached.getCachedExerciseMappingPreview(SESSION_ID)).isNull();
+        assertThat(cached.getCachedPendingCompetencyOperations(SESSION_ID)).containsExactlyElementsOf(operations);
+        assertThat(cached.getCachedRelationData(SESSION_ID)).containsExactlyElementsOf(relations);
+    }
+
+    @Test
+    void absentExercisePreviewCacheReturnsNoPreviewAndAllowsPutAndClear() {
+        var preview = new de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO(4L, "Exercise", List.of(), false);
+        service.cacheExerciseMappingPreview(SESSION_ID, preview);
+        assertThat(service.getCachedExerciseMappingPreview(SESSION_ID)).isNull();
+        service.clearCachedExerciseMappingPreview(SESSION_ID);
+        org.mockito.Mockito.verifyNoInteractions(operationsCache, relationsCache, mockDistributedDataProvider);
+    }
+
 }

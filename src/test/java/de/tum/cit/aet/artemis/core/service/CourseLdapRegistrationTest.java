@@ -56,7 +56,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @ParameterizedTest(name = "{displayName} [{index}]")
     @ValueSource(strings = { "student", "tutor", "editor", "instructor" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterLDAPUsersInCourse(String user) throws Exception {
         Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String userName = TEST_PREFIX + user + "100";
@@ -94,7 +94,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterLdapEdgeCaseUserInCourse() throws Exception {
         Course course1 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 

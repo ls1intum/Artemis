@@ -10,7 +10,8 @@ import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-sta
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -18,9 +19,15 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective, FeatureActivationComponent],
+    imports: [
+        LearningPathsStateComponent,
+        LearningPathsTableComponent,
+        LearningPathsAnalyticsComponent,
+        ArtemisTranslatePipe,
+        TumAetUiProgressSpinnerComponent,
+        FeatureActivationComponent,
+    ],
     templateUrl: './learning-path-instructor-page.component.html',
-    styleUrl: './learning-path-instructor-page.component.scss',
 })
 export class LearningPathInstructorPageComponent {
     private readonly activatedRoute = inject(ActivatedRoute);
@@ -48,7 +55,7 @@ export class LearningPathInstructorPageComponent {
             this.isLoading.set(true);
             // Only the course record is read here, so the plain course endpoint is enough; the dashboard variant would
             // additionally load the instructor's exercises, participations and results for nothing.
-            const courseBody = await lastValueFrom(this.courseManagementService.find(courseId));
+            const courseBody = await lastValueFrom(this.courseManagementService.findForInstructor(courseId));
             this.course.set(courseBody.body!);
         } catch (error) {
             onError(this.alertService, error);

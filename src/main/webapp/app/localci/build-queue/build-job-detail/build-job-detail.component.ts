@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
@@ -19,17 +19,20 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-build-job-detail',
     templateUrl: './build-job-detail.component.html',
-    styleUrl: './build-job-detail.component.scss',
+    styleUrl: './build-job-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
@@ -51,6 +54,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     private buildAgentsService = inject(BuildAgentsService);
     private websocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
@@ -210,7 +214,9 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
         this.loadBuildJob();
         this.initWebsocketSubscription();
-        this.loadBuildAgents();
+        if (this.accountService.hasAdministratorAccess()) {
+            this.loadBuildAgents();
+        }
 
         // Update running build duration every second
         this.durationInterval = setInterval(() => {
@@ -311,6 +317,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         // First try to get from buildAgent object (for running jobs)
         if (job.buildAgent?.displayName || job.buildAgent?.name) {
             return job.buildAgent.displayName || job.buildAgent.name;
+        }
+        // The course view of a finished job carries the display name instead of the address
+        if (job.buildAgentDisplayName) {
+            return job.buildAgentDisplayName;
         }
         // For finished jobs, try to resolve address to displayName using online agents
         if (job.buildAgentAddress) {

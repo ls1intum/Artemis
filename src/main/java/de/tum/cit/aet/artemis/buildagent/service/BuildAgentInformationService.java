@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 import jakarta.annotation.PreDestroy;
 
@@ -114,28 +115,17 @@ public class BuildAgentInformationService {
         }
         buildRunnerAvailable = status.available();
         if (stateChanged || versionChanged) {
-            // An availability or version refresh must not clear an existing pause. Passing a hardcoded "not paused" here would force the status back to ACTIVE or IDLE
-            // and reset the consecutive failure counter, even though the agent was paused by an admin or by too many consecutive failures.
-            BuildAgentInformation currentInformation = getCurrentLocalBuildAgentInformation();
-            boolean isPausedDueToFailures = currentInformation != null && currentInformation.status() == BuildAgentStatus.SELF_PAUSED;
-            boolean isPaused = isPausedDueToFailures || (currentInformation != null && currentInformation.status() == BuildAgentStatus.PAUSED);
-            int consecutiveFailures = currentInformation != null && currentInformation.buildAgentDetails() != null
-                    ? currentInformation.buildAgentDetails().consecutiveBuildFailures()
-                    : DEFAULT_CONSECUTIVE_FAILURES;
-            updateLocalBuildAgentInformation(isPaused, isPausedDueToFailures, consecutiveFailures);
+            // Read and republish the pause state under the same key lock as pause/resume updates. Otherwise a
+            // refresh that read an active agent could overwrite a self-pause published before its later write.
+            updateLocalBuildAgentInformation(currentInformation -> {
+                boolean isPausedDueToFailures = currentInformation != null && currentInformation.status() == BuildAgentStatus.SELF_PAUSED;
+                boolean isPaused = isPausedDueToFailures || (currentInformation != null && currentInformation.status() == BuildAgentStatus.PAUSED);
+                int consecutiveFailures = currentInformation != null && currentInformation.buildAgentDetails() != null
+                        ? currentInformation.buildAgentDetails().consecutiveBuildFailures()
+                        : DEFAULT_CONSECUTIVE_FAILURES;
+                return getUpdatedLocalBuildAgentInformation(currentInformation, null, isPaused, isPausedDueToFailures, consecutiveFailures);
+            });
         }
-    }
-
-    /**
-     * Reads the build agent information this agent currently published to the distributed map.
-     *
-     * @return the current information, or null if this agent is not connected to the cluster or has not published anything yet
-     */
-    private BuildAgentInformation getCurrentLocalBuildAgentInformation() {
-        if (buildAgentShortName == null || buildAgentShortName.isBlank() || !distributedDataAccessService.isConnectedToCluster()) {
-            return null;
-        }
-        return distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
     }
 
     /**
@@ -189,6 +179,11 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        updateLocalBuildAgentInformation(agent -> getUpdatedLocalBuildAgentInformation(agent, recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures));
+    }
+
+    /** Applies an update to the current agent record while holding its distributed key lock. */
+    private void updateLocalBuildAgentInformation(UnaryOperator<BuildAgentInformation> update) {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
             log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
@@ -208,7 +203,7 @@ public class BuildAgentInformationService {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             try {
                 // Add/update
-                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+                BuildAgentInformation info = update.apply(distributedDataAccessService.getDistributedBuildAgentInformation().get(agentKey));
 
                 log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
                         info.buildAgent().memberAddress(), info.buildAgent().displayName());
@@ -231,7 +226,8 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, boolean isPaused,
+            boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
         // use ephemeral ports that can change, causing memberAddress filtering to fail
@@ -241,8 +237,6 @@ public class BuildAgentInformationService {
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentStatus status;
-        // Use buildAgentShortName as key since that's what we use to store the agent info
-        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
         if (isPaused) {
             boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
             status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;

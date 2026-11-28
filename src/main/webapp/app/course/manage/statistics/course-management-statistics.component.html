@@ -1,6 +1,6 @@
 <div>
-    <div *titleBarTitle class="row">
-        <div class="d-flex align-items-center">
+    <div *titleBarTitle class="-mx-2 flex flex-wrap">
+        <div class="flex w-full items-center px-2">
             <jhi-course-title-bar-title id="statistics-page-heading" title="statistics.course_statistics_title" />
             <jhi-documentation-button [type]="documentationType" />
         </div>
@@ -12,25 +12,9 @@
             [courseId]="courseId()!"
         />
     }
-    <div class="row mb-5">
-        <div class="col-md-2"></div>
-        <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.DAY">
-                <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
-            </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.WEEK">
-                <input type="radio" name="options" id="option2" checked (click)="onTabChanged(SpanType.WEEK)" />{{ 'statistics.span.week' | artemisTranslate }}
-            </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.MONTH">
-                <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | artemisTranslate }}
-            </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.QUARTER">
-                <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | artemisTranslate }}
-            </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.YEAR">
-                <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | artemisTranslate }}
-            </label>
-        </div>
+    <div class="-mx-2 mb-12 flex flex-wrap">
+        <div class="w-full shrink-0 px-2 md:w-1/6"></div>
+        <div jhi-statistics-span-selector [currentSpan]="currentSpan()" (spanChange)="onTabChanged($event)" class="w-full shrink-0 px-2 md:w-3/4"></div>
     </div>
     @for (graph of graphTypes(); track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">

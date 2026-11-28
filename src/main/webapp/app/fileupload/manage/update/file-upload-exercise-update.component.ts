@@ -1,3 +1,6 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -13,11 +16,9 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
@@ -30,9 +31,8 @@ import { firstValueFrom } from 'rxjs';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
@@ -53,11 +53,12 @@ import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MIN_FILE_PATTERN_LENGTH = 2;
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html',
-    styleUrl: './file-upload-exercise-update.component.scss',
+    styleUrl: '../../../exercise/shared/exercise-update-grading-layout.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
@@ -66,26 +67,27 @@ const MIN_FILE_PATTERN_LENGTH = 2;
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
-        FaIconComponent,
-        NgbTooltip,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseService = inject(CourseManagementService);
@@ -96,7 +98,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     private readonly calendarService = inject(CalendarService);
     private readonly destroyRef = inject(DestroyRef);
 
-    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'FileUpload';
 
@@ -251,7 +252,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 this.exerciseState.patch('course', undefined);
             } else {
                 const targetCourseId = params['courseId'];
-                this.courseService.find(targetCourseId).subscribe((res) => this.exerciseState.patch('course', res.body ?? undefined));
+                this.courseService.findForManagement(targetCourseId).subscribe((res) => this.exerciseState.patch('course', res.body ?? undefined));
                 this.exerciseState.patch('exerciseGroup', undefined);
             }
             this.exerciseState.update(resetForImport);

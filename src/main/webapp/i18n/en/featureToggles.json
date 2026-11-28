@@ -54,8 +54,12 @@
                     "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
                 },
                 "hyperion": {
-                    "name": "Hyperion (Exercise Creation)",
-                    "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
+                    "name": "Hyperion (AI Authoring)",
+                    "description": "Enables AI assistance for problem statements, quizzes, FAQs, and quiz variants."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion (Programming Exercise Generation)",
+                    "description": "Enables AI-assisted generation of complete programming exercises and variants with an AI Worker."
                 },
                 "deimos": {
                     "name": "Deimos (Malicious Participation Analysis)",
@@ -162,20 +166,10 @@
                     "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
                     "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Uses machine learning to automatically generate competency recommendations based on course content, predict student performance, and provide intelligent suggestions for learning path optimization.",
-                    "disableWarning": "Automatic competency generation, performance predictions, and ML-based learning recommendations will not be available."
-                },
                 "AtlasAgent": {
                     "name": "Atlas Agent",
-                    "description": "Enables an AI agent that helps students understand and master competencies by providing personalized explanations, answering questions about learning objectives, and guiding them through their competency-based learning journey.",
-                    "disableWarning": "Students will not have access to the AI-powered competency assistant."
-                },
-                "Memiris": {
-                    "name": "Iris Memory System",
-                    "description": "Enables long-term memory for Iris AI assistants, allowing them to remember context from previous conversations and provide more personalized, contextually aware responses over time.",
-                    "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
+                    "description": "Lets instructors build and maintain course competencies with AI. The AI Competency Assistant in Competency Management proposes competencies, relations and exercise links and saves them after the instructor approves. Atlas can also change competencies and their exercise and lecture-unit links without asking first: when an instructor clicks \"Suggest competencies\", or automatically in courses where an administrator turned on Atlas auto-orchestration. Course content, including example solutions, is sent to the configured language model. Requires the Atlas AI (LLM) module.",
+                    "disableWarning": "Instructors can no longer use the AI Competency Assistant or the \"Suggest competencies\" button, and automatic competency updates stop in all courses. Existing competencies are not changed."
                 },
                 "LectureContentProcessing": {
                     "name": "Lecture Unit Indexing",
@@ -221,6 +215,11 @@
                     "name": "Global Search Reconcile: Remove Orphaned Entries",
                     "description": "Scans the global search index for entries whose entity no longer exists and removes them, inferred from the index alone rather than confirmed per entity against the database. Switch on Global Search Reconcile first and observe it before enabling this.",
                     "disableWarning": "Search results may include entries for entities that were deleted, until this is switched back on."
+                },
+                "SmartQuizzes": {
+                    "name": "Smart Quizzes",
+                    "description": "Lets course staff manage quiz question pools and start manual or scheduled builds. Requires Hyperion and Atlas.",
+                    "disableWarning": "Course staff lose access to Smart Quizzes, and new builds stop. Builds already underway can finish. Existing questions and course settings are kept."
                 }
             }
         }

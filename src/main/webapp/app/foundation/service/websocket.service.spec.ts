@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { COMPRESSION_HEADER, COMPRESSION_HEADER_KEY, ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
+import { COMPRESSION_HEADER, COMPRESSION_HEADER_KEY, ConnectionState, WebsocketService, buildWebsocketUrl } from 'app/foundation/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { RxStompState } from '@stomp/rx-stomp';
-import { BehaviorSubject, EMPTY, Subject, filter, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -45,7 +45,7 @@ vi.mock('@stomp/rx-stomp', async () => {
     };
 });
 
-vi.mock('@sentry/angular', () => ({
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: (...args: any[]) => captureExceptionMock(...args),
 }));
 
@@ -88,6 +88,24 @@ describe('WebsocketService', () => {
         rxStomp.connectionState$.next(RxStompState.OPEN);
         rxStomp.stompClient.onConnect?.();
         expect(await openStatePromise).toEqual(new ConnectionState(true, false));
+    });
+
+    it('connects to an absolute ws URL matching the protocol of the page', () => {
+        websocketService.connect();
+
+        const config = constructedRxStompClients[0].configure.mock.calls[0][0];
+        expect(config.brokerURL).toBe(`ws://${window.location.host}/websocket/websocket`);
+    });
+
+    it.each([
+        ['https:', 'wss://artemis.example.org/websocket/websocket'],
+        ['http:', 'ws://artemis.example.org/websocket/websocket'],
+    ])('builds the websocket URL for a page served over %s', (protocol, expected) => {
+        expect(buildWebsocketUrl({ protocol, host: 'artemis.example.org' })).toBe(expected);
+    });
+
+    it('keeps the port in the websocket URL', () => {
+        expect(buildWebsocketUrl({ protocol: 'https:', host: 'localhost:9000' })).toBe('wss://localhost:9000/websocket/websocket');
     });
 
     it('disconnects gracefully and updates connection state', () => {
@@ -252,27 +270,99 @@ describe('WebsocketService', () => {
         // can resubscribe, and a concurrent fresh subscribe() must not open a second watch for the destination.
         const received: unknown[] = [];
         const later = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
-        expect(watchMock).toHaveBeenCalledOnce();
+        const concurrent = websocketService.subscribe('/topic/shared').subscribe();
+        // one watch per period in which the destination has consumers
+        expect(watchMock).toHaveBeenCalledTimes(2);
 
         messages.next({ ...baseMessage, body: JSON.stringify({ data: 'still flowing' }) });
         expect(received).toEqual([{ data: 'still flowing' }]);
 
         later.unsubscribe();
+        concurrent.unsubscribe();
     });
 
-    it('does not open a second watch when a retained observable is resubscribed', () => {
-        watchMock.mockReturnValue(new Subject<IMessage>());
+    it('does not open a second live watch when a retained observable is resubscribed', () => {
+        let liveWatches = 0;
+        watchMock.mockImplementation(
+            () =>
+                new Observable<IMessage>(() => {
+                    liveWatches++;
+                    return () => liveWatches--;
+                }),
+        );
 
         // A service holding the observable as a field, resubscribing after its refcount dropped to zero.
         const retained = websocketService.subscribe('/topic/shared');
         retained.subscribe().unsubscribe();
+        expect(liveWatches).toBe(0);
         const viaRetained = retained.subscribe();
         const viaFresh = websocketService.subscribe('/topic/shared').subscribe();
 
-        expect(watchMock).toHaveBeenCalledOnce();
+        expect(liveWatches).toBe(1);
 
         viaRetained.unsubscribe();
         viaFresh.unsubscribe();
+        expect(liveWatches).toBe(0);
+    });
+
+    describe('STOMP subscription ids', () => {
+        const subscriptionIds = () => watchMock.mock.calls.map(([params]) => params.subHeaders.id as string);
+
+        beforeEach(() => {
+            watchMock.mockReturnValue(new Subject<IMessage>());
+        });
+
+        it('uses a fresh id when a destination is subscribed again after its last caller left', () => {
+            // The server handles the frames of one session concurrently, so the UNSUBSCRIBE of the first subscription can overtake the
+            // SUBSCRIBE of the second one. With one id for both, the broker rejects the second as a duplicate and closes the connection.
+            websocketService.subscribe('/topic/room').subscribe().unsubscribe();
+            websocketService.subscribe('/topic/room').subscribe().unsubscribe();
+            websocketService.subscribe('/topic/room').subscribe();
+
+            const ids = subscriptionIds();
+            expect(ids).toHaveLength(3);
+            expect(new Set(ids).size).toBe(3);
+        });
+
+        it('uses a fresh id when a retained observable is resubscribed', () => {
+            const retained = websocketService.subscribe('/topic/room');
+            retained.subscribe().unsubscribe();
+            retained.subscribe();
+
+            const ids = subscriptionIds();
+            expect(ids).toHaveLength(2);
+            expect(ids[0]).not.toBe(ids[1]);
+        });
+
+        it('does not repeat an id across destinations or after a reconnect', () => {
+            websocketService.subscribe('/topic/a').subscribe();
+            websocketService.subscribe('/topic/b').subscribe();
+            websocketService.connect();
+            websocketService.subscribe('/topic/a').subscribe();
+            websocketService.subscribe('/topic/b').subscribe();
+
+            const ids = subscriptionIds();
+            expect(ids).toHaveLength(4);
+            expect(new Set(ids).size).toBe(4);
+        });
+
+        it('opens no watch before the first caller subscribes', () => {
+            websocketService.subscribe('/topic/room');
+
+            expect(watchMock).not.toHaveBeenCalled();
+        });
+
+        it('subscribes again with a fresh id after a disconnect and a new connection', () => {
+            const beforeDisconnect = websocketService.subscribe('/topic/room').subscribe();
+            websocketService.disconnect();
+            beforeDisconnect.unsubscribe();
+            websocketService.subscribe('/topic/room').subscribe();
+
+            const ids = subscriptionIds();
+            expect(ids).toHaveLength(2);
+            expect(ids[0]).not.toBe(ids[1]);
+            expect(constructedRxStompClients).toHaveLength(2);
+        });
     });
 
     it('subscribes and parses compressed messages', async () => {
@@ -302,7 +392,7 @@ describe('WebsocketService', () => {
         // now share a single subscription, so one bad frame would disconnect all of them. It is reported and dropped.
         expect(decodeSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
-            mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } },
+            extra: { mechanism: 'websocket-decompression', message: 'Failed to decompress message' },
         });
         expect(errored).toBeUndefined();
         expect(received).toHaveLength(0);
@@ -353,7 +443,7 @@ describe('WebsocketService', () => {
         websocketService.send('/test', { data: 'x'.repeat(2000) });
         expect(errorSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
-            mechanism: { handled: true, type: 'websocket-compression', data: { message: 'Failed to compress message' } },
+            extra: { mechanism: 'websocket-compression', message: 'Failed to compress message' },
         });
         expect(rxStomp.publish).toHaveBeenCalledWith({
             destination: '/test',

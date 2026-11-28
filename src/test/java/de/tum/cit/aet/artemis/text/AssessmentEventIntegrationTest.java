@@ -69,7 +69,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
      * Tests adding multiple different combinations of events
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAddMultipleCompleteAssessmentEvents() throws Exception {
         List<TextAssessmentEvent> events = TextExerciseFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
@@ -82,7 +82,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
      * Tests addition of a single assessment event
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAddSingleCompleteAssessmentEvent() throws Exception {
         expectEventAddedWithResponse(HttpStatus.CREATED, tutor.getId());
     }
@@ -91,7 +91,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
      * Tests addition of a single event with a tutor that is not part of the course
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() throws Exception {
         // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
@@ -111,7 +111,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
         textSubmission.setExampleSubmission(true);
         textSubmissionTestRepository.saveAndFlush(textSubmission);
@@ -152,7 +152,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
      * Tests the get events endpoint with admin role
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
         TextAssessmentEvent event1 = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());

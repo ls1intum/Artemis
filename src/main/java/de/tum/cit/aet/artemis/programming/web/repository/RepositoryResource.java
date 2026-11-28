@@ -34,14 +34,16 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
@@ -71,18 +73,18 @@ public abstract class RepositoryResource {
 
     protected final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
-    private final Optional<LocalVCServletService> localVCServletService;
+    private final Optional<LocalVCPushProcessingService> localVCPushProcessingService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.localVCServletService = localVCServletService;
+        this.localVCPushProcessingService = localVCPushProcessingService;
         this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
@@ -310,7 +312,13 @@ public abstract class RepositoryResource {
         var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
         // Trigger a build, and process the result. Jenkins webhooks perform the equivalent notification for remote repositories.
-        localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        try {
+            localVCPushProcessingService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        }
+        catch (BuildOutsideTimeWindowException e) {
+            // The commit is saved, it is only not built. The client knows the build time window and tells the student, so this is no error.
+            log.debug("Commit {} of the online editor was not built: {}", createdCommitHash, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -375,7 +383,9 @@ public abstract class RepositoryResource {
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            log.error("CheckoutConflictException | WrongRepositoryStateException during repository operation", ex);
+            // The user's own changes conflict with the repository, or it is in a state the operation cannot start from. That is answered with a 409 that the user resolves,
+            // and is no error of the server, so there is no stack trace to analyse.
+            log.warn("The repository operation ended in a conflict: {}", ex.getMessage());
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {
@@ -427,7 +437,12 @@ public abstract class RepositoryResource {
             throw new IOException("File could not be found.");
         }
 
-        try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
+        byte[] content = submission.getFileContent().getBytes(StandardCharsets.UTF_8);
+        if (content.length > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+            throw new IOException("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes.");
+        }
+
+        try (var inputStream = new ByteArrayInputStream(content)) {
             FileUtils.copyToFile(inputStream, file.get());
         }
     }

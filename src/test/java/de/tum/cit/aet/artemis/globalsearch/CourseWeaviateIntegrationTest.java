@@ -62,7 +62,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsertCourse_indexesInWeaviate() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
@@ -70,7 +70,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsertCourse_updatesPropertiesInWeaviate() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
         assertCourseExistsInWeaviate(weaviateService, course);
@@ -88,7 +88,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsertCourse_storesShortNameAndDescription() throws Exception {
         course.setShortName("TST");
         course.setDescription("A test course description");

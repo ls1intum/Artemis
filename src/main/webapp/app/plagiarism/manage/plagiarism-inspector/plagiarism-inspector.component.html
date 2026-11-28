@@ -3,7 +3,7 @@
         <div class="plagiarism-header-top">
             <div class="plagiarism-header-top-left">
                 <h4
-                    class="plagiarism-page-title fw-medium"
+                    class="plagiarism-page-title font-medium"
                     (click)="showOptions = !showOptions"
                     [class.active]="showOptions"
                     [attr.aria-expanded]="showOptions"
@@ -24,108 +24,99 @@
             </div>
             <div class="plagiarism-header-top-right">
                 @if (chartFilterApplied()) {
-                    <button type="button" class="check-plagiarism btn btn-info" (click)="resetFilter()">
+                    <button type="button" tumAetUiButton severity="info" class="check-plagiarism" (click)="resetFilter()">
                         <span jhiTranslate="artemisApp.plagiarism.resetFilter"></span>
                     </button>
                 }
                 <button
                     type="button"
+                    tumAetUiButton
                     [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
-                    class="check-plagiarism btn btn-primary"
+                    class="check-plagiarism"
                     (click)="checkPlagiarism()"
-                    [overwriteDisabled]="detectionInProgress()"
+                    [forceDisabled]="detectionInProgress()"
                 >
                     <span jhiTranslate="{{ plagiarismResult() ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
-                <p-dialog
-                    [(visible)]="cleanUpModalVisible"
-                    [modal]="true"
-                    [closable]="true"
-                    [dismissableMask]="true"
-                    [draggable]="false"
-                    [appendTo]="'body'"
-                    [header]="'artemisApp.plagiarism.cleanUp.confirmDialog.title' | artemisTranslate"
-                    [style]="{ width: '35rem' }"
-                >
+                <tumaet-ui-dialog [(visible)]="cleanUpModalVisible" dismissableMask size="small" [header]="'artemisApp.plagiarism.cleanUp.confirmDialog.title' | artemisTranslate">
                     <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question"></p>
-                    <div class="form-check flex-grow-0">
-                        <input
-                            id="deleteAllPlagiarismComparisons"
-                            class="form-check-input"
-                            type="checkbox"
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox
+                            inputId="deleteAllPlagiarismComparisons"
                             [checked]="deleteAllPlagiarismComparisons()"
-                            (change)="toggleDeleteAllPlagiarismComparisons()"
+                            (changed)="toggleDeleteAllPlagiarismComparisons()"
                         />
-                        <label for="deleteAllPlagiarismComparisons" class="form-check-label" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
+                        <label for="deleteAllPlagiarismComparisons" class="cursor-pointer" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
                     </div>
                     @if (deleteAllPlagiarismComparisons()) {
-                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
+                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-state-warning"></p>
                     }
                     <ng-template #footer>
-                        <button type="button" class="btn btn-danger" (click)="confirmCleanUp()">
+                        <button type="button" tumAetUiButton severity="danger" (click)="confirmCleanUp()">
                             <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
                         </button>
                     </ng-template>
-                </p-dialog>
+                </tumaet-ui-dialog>
                 @if (exercise().isAtLeastInstructor && plagiarismResult()) {
                     <button
                         type="button"
+                        tumAetUiButton
+                        severity="danger"
                         [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
-                        class="check-plagiarism btn btn-danger"
+                        class="check-plagiarism"
                         (click)="openCleanUpModal()"
-                        [overwriteDisabled]="detectionInProgress()"
+                        [forceDisabled]="detectionInProgress()"
                     >
                         <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit"></span>
                     </button>
                 }
                 @if (plagiarismResult()) {
-                    <div ngbDropdown>
-                        <button type="button" class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
-                            <span>Download</span>
-                        </button>
-                        <div ngbDropdownMenu aria-labelledby="download-plagiarism">
-                            <button type="button" (click)="downloadPlagiarismResultsJson()" ngbDropdownItem>JSON</button>
-                            <button type="button" (click)="downloadPlagiarismResultsCsv()" ngbDropdownItem>CSV</button>
-                        </div>
-                    </div>
+                    <button type="button" tumAetUiButton severity="secondary" id="download-plagiarism" [tumAetUiMenuTrigger]="downloadMenu">
+                        <span>Download</span>
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                    <ng-template #downloadMenu>
+                        <tumaet-ui-menu aria-labelledby="download-plagiarism">
+                            <button type="button" tumAetUiMenuItem (triggered)="downloadPlagiarismResultsJson()">JSON</button>
+                            <button type="button" tumAetUiMenuItem (triggered)="downloadPlagiarismResultsCsv()">CSV</button>
+                        </tumaet-ui-menu>
+                    </ng-template>
                 }
             </div>
         </div>
         <div class="plagiarism-header-options" [hidden]="!showOptions">
             <div class="plagiarism-option">
-                <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
-                <input
-                    [attr.aria-label]="'artemisApp.plagiarism.similarityThreshold' | artemisTranslate"
-                    type="number"
-                    required
-                    class="form-control"
-                    min="0"
-                    max="100"
-                    step="5"
-                    id="plagiarism-similarity-threshold"
-                    [(ngModel)]="similarityThreshold"
-                />
+                <label class="plagiarism-option-label" for="plagiarism-similarity-threshold" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></label>
+                <span
+                    class="plagiarism-option-help"
+                    tabindex="0"
+                    [tumAetUiTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate"
+                    tumAetUiTooltipPlacement="bottom"
+                >
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
+                <input tumAetUiInput type="number" required class="w-2/5!" min="0" max="100" step="5" id="plagiarism-similarity-threshold" [(ngModel)]="similarityThreshold" />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumScore">
-                <div class="plagiarism-checkbox form-check" for="enableMinimumScore">
-                    <input
-                        [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
-                        type="checkbox"
-                        id="enableMinimumScore"
-                        class="plagiarism-option-checkbox form-check-input"
-                        [(ngModel)]="enableMinimumScore"
-                        checked
-                    />
-                    <div class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></div>
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="enableMinimumScore" [(ngModel)]="enableMinimumScore" />
+                    <label for="enableMinimumScore" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></label>
                 </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
+                <span
+                    class="plagiarism-option-help"
+                    tabindex="0"
+                    [tumAetUiTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate"
+                    tumAetUiTooltipPlacement="bottom"
+                >
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
                 <input
+                    tumAetUiInput
                     [attr.aria-label]="'artemisApp.plagiarism.minimumScore' | artemisTranslate"
                     required
                     type="number"
                     [disabled]="!enableMinimumScore"
-                    class="form-control"
+                    class="w-2/5!"
                     min="0"
                     max="100"
                     id="plagiarism-minimum-score"
@@ -133,17 +124,20 @@
                 />
             </div>
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
-                <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
-                    <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
-                    <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="enableMinimumSize" [(ngModel)]="enableMinimumSize" />
+                    <label for="enableMinimumSize" class="plagiarism-option-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
                 </div>
-                <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
+                <span class="plagiarism-option-help" tabindex="0" [tumAetUiTooltip]="getMinimumSizeTooltip() | artemisTranslate" tumAetUiTooltipPlacement="bottom">
+                    <fa-icon [icon]="faQuestionCircle" />
+                </span>
                 <input
+                    tumAetUiInput
                     [attr.aria-label]="getMinimumSizeLabel() | artemisTranslate"
                     required
                     type="number"
                     [disabled]="!enableMinimumSize"
-                    class="form-control"
+                    class="w-2/5!"
                     min="0"
                     max="100"
                     id="plagiarism-minimum-size"
@@ -151,8 +145,8 @@
                 />
             </div>
             @if (isProgrammingExercise()) {
-                <div class="plagiarism-checkbox form-check" for="generateJPlagReport">
-                    <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
+                <div class="plagiarism-checkbox">
+                    <tumaet-ui-checkbox inputId="generateJPlagReport" [(ngModel)]="generateJPlagReport" />
                     <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport"></label>
                 </div>
             }
@@ -183,10 +177,8 @@
     @if (!plagiarismResult() || detectionInProgress()) {
         <div class="plagiarism-empty">
             @if (detectionInProgress()) {
-                <div class="d-flex flex-column">
-                    <div class="spinner-border text-primary align-self-center mb-1" role="status">
-                        <span class="visually-hidden" jhiTranslate="loading"></span>
-                    </div>
+                <div class="flex flex-col">
+                    <tumaet-ui-progress-spinner class="mb-1 self-center" [ariaLabel]="'loading' | artemisTranslate" />
                     <p>{{ detectionInProgressMessage() }}</p>
                 </div>
             }

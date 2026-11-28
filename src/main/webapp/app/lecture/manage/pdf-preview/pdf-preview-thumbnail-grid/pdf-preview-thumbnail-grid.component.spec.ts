@@ -1,3 +1,5 @@
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,6 +43,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: PdfEngineService, useValue: engineService },
+                { provide: CourseExerciseService, useValue: { findAllExercisesWithDueDatesForCourse: () => of({ body: [] }) } },
             ],
         }).compileComponents();
 
@@ -86,6 +89,36 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         preview.click();
         expect(enlarge).toHaveBeenCalledExactlyOnceWith(1, 'slide1');
         expect(component.originalCanvas()).toBe(preview.querySelector('canvas'));
+    });
+
+    it('hides the selected page through its popover and clears the open state after saving', async () => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        await setPages();
+        const emitted = vi.fn();
+        component.hiddenPagesOutput.subscribe(emitted);
+        expect(document.querySelector('#date-box-checkbox')).toBeNull();
+
+        const visibilityButton = fixture.nativeElement.querySelector('#hide-show-button-slide1') as HTMLButtonElement;
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.dateBox.hidePage');
+        visibilityButton.click();
+        await fixture.whenStable();
+        expect(component.isPopoverOpen()).toBe(true);
+        expect(component.activeButtonPage()?.slideId).toBe('slide1');
+        const forever = document.querySelector<HTMLInputElement>('#date-box-checkbox');
+        expect(forever).not.toBeNull();
+        forever!.click();
+        await fixture.whenStable();
+        const save = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).find((button) => button.textContent?.trim() === 'entity.action.save');
+        expect(save).toBeDefined();
+        save!.click();
+        await fixture.whenStable();
+
+        expect(emitted).toHaveBeenCalledWith(expect.objectContaining({ slide1: expect.objectContaining({ date: expect.anything() }) }));
+        expect(component.isPopoverOpen()).toBe(false);
+        expect(component.activeButtonPage()).toBeUndefined();
+        fixture.componentRef.setInput('hiddenPages', emitted.mock.calls[0][0]);
+        await fixture.whenStable();
+        expect(visibilityButton.getAttribute('aria-label')).toBe('artemisApp.attachment.pdfPreview.thumbnailGrid.showPage');
     });
 
     it('should render every ordered page through the engine', async () => {
@@ -199,6 +232,74 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         expect(removeChildSpy).toHaveBeenCalledTimes(3);
         // After re-rendering there are still exactly three canvases (no leftovers).
         expect(container.querySelectorAll('.pdf-canvas-container canvas')).toHaveLength(3);
+    });
+
+    it('should preserve newer thumbnails when an older engine request resolves late', async () => {
+        await setPages();
+        const pending = Promise.withResolvers<typeof engineService.engine>();
+        engineService.getEngine.mockReturnValueOnce(pending.promise);
+        const olderRender = component.renderPages();
+
+        await setPages();
+        const currentCanvas = component.pdfContainer().nativeElement.querySelector('#pdf-page-slide1 canvas');
+        expect(currentCanvas).not.toBeNull();
+        pending.resolve(engineService.engine);
+        await olderRender;
+
+        expect(component.pdfContainer().nativeElement.querySelector('#pdf-page-slide1 canvas')).toBe(currentCanvas);
+        expect([...component.loadedPages()].sort()).toEqual([1, 2, 3]);
+    });
+
+    it('should discard an older render when pages change while a thumbnail is pending', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+
+        // Keep the slide identities but replace the source pages, as when the input is refreshed.
+        await setPages(makePages().map((page) => ({ ...page, sourceIndex: 2 - page.sourceIndex })));
+        pending.resolve(await task.toPromise());
+        await olderRender;
+
+        for (const slideId of ['slide1', 'slide2', 'slide3']) {
+            expect(component.pdfContainer().nativeElement.querySelectorAll(`#pdf-page-${slideId} canvas`)).toHaveLength(1);
+        }
+        expect([...component.loadedPages()].sort()).toEqual([1, 2, 3]);
+    });
+
+    it('should ignore a failed render that was superseded by a newer page list', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+
+        await setPages();
+        pending.reject(new Error('stale document closed'));
+        await olderRender;
+
+        expect(alertServiceMock.addAlert).not.toHaveBeenCalled();
+        expect(component.pdfContainer().nativeElement.querySelectorAll('canvas')).toHaveLength(3);
+    });
+
+    it('should stop rendering when the preview is destroyed with a thumbnail pending', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+        const container = component.pdfContainer().nativeElement;
+
+        fixture.destroy();
+        pending.resolve(await task.toPromise());
+        await olderRender;
+
+        expect(container.querySelectorAll('canvas')).toHaveLength(0);
+        expect(alertServiceMock.addAlert).not.toHaveBeenCalled();
     });
 
     it('should scroll to the bottom after rendering when appending a file', async () => {

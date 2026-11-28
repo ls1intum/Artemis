@@ -3,10 +3,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { finalize } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.component';
@@ -19,19 +20,19 @@ import { OnlineUnitFormComponent } from '../online-unit-form/online-unit-form.co
 export class CreateOnlineUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private onlineUnitService = inject(OnlineUnitService);
+    private onlineUnitApi = inject(OnlineUnitApi);
     private alertService = inject(AlertService);
 
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();
     readonly isLoading = signal<boolean>(undefined!);
     lectureId!: number; // set in ngOnInit() from route params
-    courseId!: number; // set in ngOnInit() from route params
+    readonly courseId = signal<number>(undefined!); // set in ngOnInit() from route params
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
-            this.courseId = Number(parentParams.get('courseId'));
+            this.courseId.set(Number(parentParams.get('courseId')));
         });
         this.onlineUnitToCreate = new OnlineUnit();
     }
@@ -51,9 +52,10 @@ export class CreateOnlineUnitComponent implements OnInit {
 
         this.isLoading.set(true);
 
-        this.onlineUnitService
-            .create(this.onlineUnitToCreate, this.lectureId)
+        this.onlineUnitApi
+            .createOnlineUnit(this.lectureId, toLectureUnitRequest(this.onlineUnitToCreate))
             .pipe(
+                map((unit) => toLectureUnit<OnlineUnit>(unit)),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),

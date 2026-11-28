@@ -10,12 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-
-import org.springframework.data.domain.Persistable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 @Table(name = "course_notification_parameter")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @IdClass(CourseNotificationParameter.CourseNotificationParameterId.class)
-public class CourseNotificationParameter implements Serializable, Persistable<CourseNotificationParameter.CourseNotificationParameterId> {
+public class CourseNotificationParameter extends AssignedIdNotificationEntity<CourseNotificationParameter.CourseNotificationParameterId> {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,13 +38,6 @@ public class CourseNotificationParameter implements Serializable, Persistable<Co
 
     @Column(name = "param_value", length = 100, nullable = false)
     private String paramValue;
-
-    /**
-     * Whether this instance has not been written to the database yet. The identifier is assigned by the application, so Spring Data cannot tell a new row from an
-     * existing one and would load every row it is asked to save before inserting it, one select per row. Reporting new rows as new lets it insert them directly.
-     */
-    @Transient
-    private boolean isNew = true;
 
     /**
      * Default constructor.
@@ -128,18 +116,6 @@ public class CourseNotificationParameter implements Serializable, Persistable<Co
     @JsonIgnore
     public CourseNotificationParameterId getId() {
         return new CourseNotificationParameterId(courseNotification.getId(), paramKey);
-    }
-
-    @Override
-    @JsonIgnore
-    public boolean isNew() {
-        return isNew;
-    }
-
-    @PostLoad
-    @PostPersist
-    void markNotNew() {
-        isNew = false;
     }
 
     /**

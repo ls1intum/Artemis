@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -21,14 +22,14 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
-    testExam: false,
+    examMode: ExamMode.REAL,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamGeneralInformationComponent', () => {
     beforeEach(() => {
-        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
@@ -42,6 +43,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.resetAllMocks();
     });
 
@@ -64,8 +66,8 @@ describe('ExamGeneralInformationComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const title = (fixture.nativeElement as HTMLElement).querySelector('#general-information-title')!;
-        expect(title.classList).toContain('text-base!');
-        expect(title.classList).toContain('font-semibold!');
+        expect(title.classList).toContain('text-base');
+        expect(title.classList).toContain('font-semibold');
         expect(title.getAttribute('data-testid')).toBe('exam-summary-heading');
     });
 
@@ -106,17 +108,17 @@ describe('ExamGeneralInformationComponent', () => {
         expect(component.isExamOverMultipleDays()).toBe(false);
     });
 
-    it('should detect an TestExam and set the currentDate correctly', () => {
-        const testExam = { ...exam, testExam: true } as Exam;
-        const minimumNowRange = dayjs();
+    // These distinct instants share 02:30 in Europe/Berlin when the clocks move back.
+    it.each(['2026-10-25T00:30:00Z', '2026-10-25T01:30:00Z'])('should detect a TestExam and set the currentDate at %s', (instant) => {
+        const currentInstant = new Date(instant);
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(currentInstant);
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        const maximumNowRange = dayjs();
         expect(component.isTestExam()).toBe(true);
-        expect(component.currentDate()).toBeDefined();
-        // test execution could slow down the check
-        expect(component.currentDate()!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
+        expect(component.currentDate()?.valueOf()).toBe(currentInstant.getTime());
     });
 
     it('should detect an RealExam and not set the currentDate', () => {

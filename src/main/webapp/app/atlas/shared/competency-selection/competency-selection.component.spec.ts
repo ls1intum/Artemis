@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { Subject, of, throwError } from 'rxjs';
-import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import {} from '@angular/core';
@@ -20,14 +20,14 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
-    let httpClient: HttpClient;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -59,7 +59,6 @@ describe('CompetencySelection', () => {
         component = fixture.componentInstance;
         courseStorageService = TestBed.inject(CourseStorageService);
         courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        httpClient = TestBed.inject(HttpClient);
         const profileService = TestBed.inject(ProfileService);
 
         const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
@@ -83,9 +82,19 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(selector).not.toBeNull();
+    });
+
+    it('should give the focusable help icon the localized tooltip as its accessible name', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'Programming Basics' } as Competency] });
+        fixture.componentRef.setInput('labelTooltip', 'Select the competencies linked to this exercise');
+
+        fixture.detectChanges();
+
+        const helpIcon = fixture.nativeElement.querySelector('legend fa-icon[tabindex="0"]') as HTMLElement;
+        expect(helpIcon.getAttribute('role')).toBe('img');
+        expect(helpIcon.getAttribute('aria-label')).toBe('Select the competencies linked to this exercise');
     });
 
     it('should get competencies from service', () => {
@@ -98,7 +107,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(2);
         expect(component.competencyLinks()?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks()?.first()?.competency?.userProgress).toBeUndefined();
@@ -112,7 +120,6 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.disabled()).toBeTruthy();
     });
 
@@ -125,7 +132,6 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading()).toBeFalsy();
         expect(component.competencyLinks()).toHaveLength(0);
         expect(select).toBeNull();
     });
@@ -203,9 +209,57 @@ describe('CompetencySelection', () => {
         expect(component.disabled()).toBeFalsy();
     });
 
+    it('should report the number of available competencies to consuming forms', () => {
+        const counts: number[] = [];
+        component.availableCount.subscribe((count) => counts.push(count));
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1 }, { id: 2 }] });
+        fixture.detectChanges();
+        expect(counts).toEqual([2]);
+    });
+
+    it('should keep selection, disabled controls and touched state connected to the form', async () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'Test' }] });
+        const onTouched = vi.fn();
+        const onChange = vi.fn();
+        component.registerOnTouched(onTouched);
+        component.registerOnChange(onChange);
+        fixture.detectChanges();
+        component.writeValue([new CompetencyLearningObjectLink({ id: 1 }, 0.5)]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.debugElement.query(By.directive(TumAetUiCheckboxComponent)).componentInstance.checked()).toBe(true);
+        const weightSelect = fixture.debugElement.query(By.directive(TumAetUiSelectComponent));
+        expect(weightSelect).not.toBeNull();
+        const checkbox = fixture.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        checkbox.click();
+        fixture.detectChanges();
+        expect(onChange).toHaveBeenCalledWith(undefined);
+        expect(onTouched).toHaveBeenCalled();
+
+        component.writeValue([new CompetencyLearningObjectLink({ id: 1 }, 0.5)]);
+        component.setDisabledState?.(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(checkbox.disabled).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumAetUiSelectComponent)).componentInstance.disabled()).toBe(true);
+    });
+
     describe('refreshWithLinks', () => {
         const competency1 = { id: 1, title: 'first' } as Competency;
         const competency2 = { id: 2, title: 'second' } as Competency;
+
+        it('should reveal a consuming form section when a refresh adds the first available competency', () => {
+            const counts: number[] = [];
+            component.availableCount.subscribe((count) => counts.push(count));
+            fixture.detectChanges();
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5)]);
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 1)]);
+
+            expect(counts).toEqual([0, 1]);
+            expect(component.competencyLinks()).toHaveLength(1);
+        });
 
         it('should not emit valueChange (regression: infinite valueChange loop with a parent that refreshes on valueChange)', () => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
@@ -275,204 +329,8 @@ describe('CompetencySelection', () => {
         });
     });
 
-    describe('AtlasML Competency Suggestions', () => {
-        beforeEach(() => {
-            const competency1 = { id: 1, title: 'Programming Basics', optional: false } as Competency;
-            const competency2 = { id: 2, title: 'Data Structures', optional: false } as Competency;
-            const competency3 = { id: 3, title: 'Algorithms', optional: false } as Competency;
-            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
-
-            fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a sorting algorithm');
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should show lightbulb button for competency suggestions', () => {
-            fixture.changeDetectorRef.detectChanges();
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            expect(btnDe).not.toBeNull();
-            // Disabled state is controlled by input binding
-            const cmp = btnDe.componentInstance;
-            expect(cmp.disabled()).toBeFalsy();
-        });
-
-        it('should disable lightbulb button when no exercise description', () => {
-            fixture.componentRef.setInput('exerciseDescription', '');
-            fixture.changeDetectorRef.detectChanges();
-
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const cmp = btnDe.componentInstance;
-            expect(cmp.disabled()).toBeTruthy();
-        });
-
-        it('should call API and show suggestions when lightbulb button is clicked', () => {
-            const mockSuggestionResponse = {
-                competencies: [
-                    { id: 1, title: 'Programming Basics' },
-                    { id: 3, title: 'Algorithms' },
-                ],
-            };
-
-            const httpPostSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
-
-            component.suggestCompetencies();
-
-            expect(httpPostSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
-                description: 'Create a Java program that implements a sorting algorithm',
-                course_id: '1',
-            });
-            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
-            expect(component.isSuggesting()).toBeFalsy();
-        });
-
-        it('should show spinner while suggesting competencies', () => {
-            component.isSuggesting.set(true);
-            fixture.changeDetectorRef.detectChanges();
-
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const spinnerIcon = btnDe?.query(By.css('.jhi-btn__loading'));
-            const lightbulbIcon = btnDe?.query(By.css('.jhi-btn__icon'));
-
-            expect(spinnerIcon).not.toBeNull();
-            expect(lightbulbIcon).toBeNull(); // Should not show lightbulb icon when showing spinner
-        });
-
-        it('should display lightbulb icon next to suggested competencies', () => {
-            const mockSuggestionResponse = {
-                competencies: [{ id: 1, title: 'Programming Basics' }],
-            };
-
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
-
-            component.suggestCompetencies();
-            fixture.changeDetectorRef.detectChanges();
-
-            expect(component.isSuggested(1)).toBeTruthy();
-            expect(component.isSuggested(2)).toBeFalsy();
-
-            // Check for lightbulb icons with warning color next to competencies
-            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
-            expect(suggestedLightbulbs.length).toBeGreaterThan(0);
-        });
-
-        it('should sort suggested competencies to the top', () => {
-            const mockSuggestionResponse = {
-                competencies: [{ id: 3, title: 'Algorithms' }],
-            };
-
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
-
-            component.suggestCompetencies();
-
-            const firstCompetency = component.competencyLinks()?.[0];
-            expect(firstCompetency?.competency?.id).toBe(3);
-            expect(component.isSuggested(3)).toBeTruthy();
-        });
-
-        it('should handle API error gracefully', () => {
-            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500 })));
-
-            component.suggestCompetencies();
-
-            expect(component.isSuggesting()).toBeFalsy();
-            expect(component.suggestedCompetencyIds.size).toBe(0);
-        });
-
-        it('should not call API if description is empty or whitespace only', () => {
-            const httpPostSpy = vi.spyOn(httpClient, 'post');
-
-            fixture.componentRef.setInput('exerciseDescription', '');
-            component.suggestCompetencies();
-            expect(httpPostSpy).not.toHaveBeenCalled();
-
-            fixture.componentRef.setInput('exerciseDescription', '   ');
-            component.suggestCompetencies();
-            expect(httpPostSpy).not.toHaveBeenCalled();
-        });
-
-        it('should clear previous suggestions when making new request', () => {
-            // First suggestion
-            component.suggestedCompetencyIds.add(1);
-            component.suggestedCompetencyIds.add(2);
-
-            const mockResponse = { competencies: [{ id: 3, title: 'New Suggestion' }] };
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
-
-            component.suggestCompetencies();
-
-            expect(component.suggestedCompetencyIds.has(1)).toBeFalsy();
-            expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
-            expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
-        });
-
-        it('should handle empty response from API', () => {
-            const mockResponse = { competencies: [] };
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
-
-            component.suggestCompetencies();
-
-            expect(component.suggestedCompetencyIds.size).toBe(0);
-            expect(component.isSuggesting()).toBeFalsy();
-        });
-
-        it('should disable lightbulb button while suggesting', () => {
-            component.isSuggesting.set(true);
-            fixture.changeDetectorRef.detectChanges();
-
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const cmp = btnDe.componentInstance;
-            expect(cmp.disabled()).toBeTruthy();
-        });
-
-        it('should show lightbulb tooltip', () => {
-            fixture.changeDetectorRef.detectChanges();
-            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
-            const cmp = btnDe.componentInstance;
-            expect(cmp.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-        });
-
-        it('should show AI suggested competency tooltip', () => {
-            const mockSuggestionResponse = {
-                competencies: [{ id: 1, title: 'Programming Basics' }],
-            };
-
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
-
-            component.suggestCompetencies();
-            fixture.changeDetectorRef.detectChanges();
-
-            const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
-            expect(suggestedIcon).toBeTruthy();
-            const tooltip = suggestedIcon.injector.get(NgbTooltip, null);
-            expect(tooltip).toBeTruthy();
-            expect(tooltip?.ngbTooltip).toBe('artemisApp.competency.suggestion.tooltip');
-        });
-
-        it('should match competencies by ID when processing suggestions', () => {
-            const mockResponse = {
-                competencies: [
-                    { id: 1, title: 'Different Title' }, // ID matches but title is different
-                    { id: 999, title: 'Non-existent' }, // ID doesn't match any competency
-                ],
-            };
-            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
-
-            component.suggestCompetencies();
-
-            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy(); // Should match by ID
-            expect(component.suggestedCompetencyIds.has(999)).toBeFalsy(); // Should not match non-existent ID
-        });
-    });
-
     // Additional test suite for exercise creation integration
     describe('Exercise Creation Integration', () => {
-        it('should accept exercise description as input', () => {
-            const testDescription = 'Test exercise description for suggestions';
-            fixture.componentRef.setInput('exerciseDescription', testDescription);
-            expect(component.exerciseDescription()).toBe(testDescription);
-        });
-
         it('should emit value changes when competency is toggled', () => {
             const competency = { id: 1, title: 'Test Competency', optional: false } as Competency;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency] });
@@ -484,27 +342,6 @@ describe('CompetencySelection', () => {
             component.toggleCompetency(new CompetencyLearningObjectLink(competency, 1));
 
             expect(emitSpy).toHaveBeenCalled();
-        });
-
-        it('should work with different exercise types', () => {
-            // Test that the component works regardless of the exercise type
-            // by testing with different descriptions
-            const descriptions = [
-                'Programming exercise: implement bubble sort',
-                'Text exercise: write an essay about algorithms',
-                'Modeling exercise: create UML diagrams',
-                'Quiz exercise: multiple choice questions',
-            ];
-
-            descriptions.forEach((desc) => {
-                fixture.componentRef.setInput('exerciseDescription', desc);
-                expect(component.exerciseDescription()?.trim()).toBeTruthy();
-
-                // Button should be enabled for non-empty descriptions
-                fixture.changeDetectorRef.detectChanges();
-                const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-                expect(lightbulbButton?.nativeElement.disabled).toBeFalsy();
-            });
         });
     });
 });

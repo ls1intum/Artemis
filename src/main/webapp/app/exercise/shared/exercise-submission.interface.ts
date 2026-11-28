@@ -1,5 +1,8 @@
 import { Signal } from '@angular/core';
 
+/** The purpose of an editor read, chosen by its route or container. */
+export type EditorViewingPurpose = 'owner' | 'staff-preview';
+
 /**
  * Common contract for exercise participation components rendered inside ExerciseSplitPanelComponent.
  * Implementing this interface lets the parent shell trigger submission without a static import

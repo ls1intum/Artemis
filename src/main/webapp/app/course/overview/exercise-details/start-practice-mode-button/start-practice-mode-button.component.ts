@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
@@ -8,27 +8,35 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 let nextTeamHintId = 0;
 
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
-    styleUrls: ['./start-practice-mode-button.component.scss'],
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective],
+    styleUrls: ['./start-practice-mode-button.component.css'],
+    imports: [
+        ExerciseActionButtonComponent,
+        FeatureToggleDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiTooltipDirective,
+    ],
 })
 export class StartPracticeModeButtonComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private participationService = inject(ParticipationService);
-    private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private destroyRef = inject(DestroyRef);
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -65,28 +73,28 @@ export class StartPracticeModeButtonComponent {
         });
     }
 
-    /**
-     * The popover points `aria-describedby` of its trigger to itself while it is open and removes the attribute when it closes,
-     * which would drop the permanent description of a team exercise for good, so it is set again once the popover is hidden.
-     */
-    restoreTeamHintDescription(): void {
-        if (this.isTeamExercise()) {
-            this.host.nativeElement.querySelector('button[jhi-exercise-action-button]')?.setAttribute('aria-describedby', this.teamHintId);
-        }
-    }
-
     startPractice(useGradedParticipation: boolean): void {
         // The buttons are only disabled after the next render, so ignore a second click that arrives before that
         if (this._startingPracticeMode()) {
             return;
         }
+        const exercise = this.exercise();
         this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise().id!, useGradedParticipation, this.exercise())
-            .pipe(finalize(() => this._startingPracticeMode.set(false)))
+            .startPractice(exercise.id!, useGradedParticipation, exercise)
+            .pipe(
+                finalize(() => {
+                    if (!this.destroyRef.destroyed) {
+                        this._startingPracticeMode.set(false);
+                    }
+                }),
+            )
             .subscribe({
                 next: (participation) => {
-                    const exercise = this.exercise();
+                    // The service completes the start even if the details-to-editor redirect destroyed this button.
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         if (participation?.initializationState === InitializationState.INITIALIZED) {
                             if ((exercise as ProgrammingExercise).allowOfflineIde) {
@@ -103,6 +111,9 @@ export class StartPracticeModeButtonComponent {
                     }
                 },
                 error: () => {
+                    if (this.destroyRef.destroyed || this.exercise().id !== exercise.id) {
+                        return;
+                    }
                     this.alertService.error('artemisApp.exercise.startError');
                 },
             });

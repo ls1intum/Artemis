@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -25,8 +26,7 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
@@ -34,8 +34,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
     selector: 'jhi-text-exercise-detail',
     templateUrl: './text-exercise-detail.component.html',
     imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
+        ExerciseDetailHeaderComponent,
         NonProgrammingExerciseDetailCommonActionsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
@@ -72,7 +71,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Loads the text exercise and subscribes to changes of it on component initialization.
      */
     ngOnInit() {
-        // TODO: route determines whether the component is in exam mode
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
@@ -84,17 +82,18 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exerciseId of the text exercise of type {number}
      */
     load(exerciseId: number) {
-        // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
-        this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-            this.textExercise.set(textExerciseResponse.body!);
-            this.isExamExercise.set(!!this.textExercise().exerciseGroup);
-            this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
+        (isExamExerciseRoute(this.route.snapshot) ? this.textExerciseService.findForExam(exerciseId) : this.textExerciseService.find(exerciseId)).subscribe(
+            (textExerciseResponse: HttpResponse<TextExercise>) => {
+                this.textExercise.set(textExerciseResponse.body!);
+                this.isExamExercise.set(!!this.textExercise().exerciseGroup);
+                this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
 
-            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
-            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
-            this.detailOverviewSections.set(this.getExerciseDetailSections());
-        });
+                this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
+                this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
+                this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
+                this.detailOverviewSections.set(this.getExerciseDetailSections());
+            },
+        );
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
         });

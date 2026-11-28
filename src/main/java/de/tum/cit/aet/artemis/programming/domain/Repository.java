@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -17,7 +19,12 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
 
+    /** The hooks directory of every repository: below the null device no hook can exist, so that git finds none. This relies on a POSIX file system. */
+    private static final String NO_HOOKS_PATH = "/dev/null";
+
     private ProgrammingExerciseParticipation participation;
+
+    private volatile boolean configOverrideUnsaved;
 
     @Nullable
     private Path localPath;
@@ -52,7 +59,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
             return false;
         }
 
-        if (file.isDirectory() && file.getName().equals(".git")) {
+        // Compare the name only, ignoring its case.
+        if (".git".equalsIgnoreCase(file.getName())) {
             return false;
         }
 
@@ -61,6 +69,47 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         }
 
         return isValidFile(file.getParentFile());
+    }
+
+    /**
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them, and without symbolic links.
+     * The hooks directory and the symbolic link setting are set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * As they are part of the configuration, a configuration file that is saved contains them as well.
+     *
+     * @return the configuration of this repository
+     */
+    @Override
+    public FileBasedConfig getConfig() {
+        FileBasedConfig config = super.getConfig();
+        if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
+            config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+            configOverrideUnsaved = true;
+        }
+        // Symbolic links are never created in a working copy: an entry that is a link is written as a plain file holding the target, and a link is not followed
+        if (!"false".equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS))) {
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            configOverrideUnsaved = true;
+        }
+        for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
+            config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
+            configOverrideUnsaved = true;
+        }
+        return config;
+    }
+
+    /**
+     * Whether {@link #getConfig()} changed a value that the configuration file on disk still holds differently. The code that writes the configuration of a repository uses this,
+     * as it does not see such a value as a change.
+     *
+     * @return true if the configuration in memory differs from the file because of the settings that are always applied
+     */
+    public boolean hasUnsavedConfigOverride() {
+        return configOverrideUnsaved;
+    }
+
+    /** Records that the configuration was written to the file, including the settings that are always applied. */
+    public void markConfigOverrideSaved() {
+        configOverrideUnsaved = false;
     }
 
     public ProgrammingExerciseParticipation getParticipation() {

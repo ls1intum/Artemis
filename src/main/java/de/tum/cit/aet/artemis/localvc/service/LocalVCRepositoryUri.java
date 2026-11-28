@@ -24,6 +24,9 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * Compiled once. A {@code LocalVCRepositoryUri} is constructed on every git request, and {@code String#matches}
      * compiles its pattern on every call.
      */
+    /** Project keys are built from short names, which consist of ASCII letters and digits only. */
+    private static final Pattern PROJECT_KEY_PATTERN = Pattern.compile("[A-Za-z0-9]+");
+
     private static final Pattern REPOSITORY_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9]+-[a-zA-Z0-9-]+");
 
     /** The project key under which the repository is categorized in the local VC system. */
@@ -109,6 +112,16 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = isPracticeRepository(repositorySlug, projectKey);
+    }
+
+    /**
+     * The folder of the repository consists of its project key and its slug, whatever else the path of the URI holds.
+     *
+     * @return the project key and the repository slug, separated by a slash
+     */
+    @Override
+    public String folderNameForRepositoryUri() {
+        return projectKey + "/" + repositorySlug;
     }
 
     /**
@@ -263,9 +276,13 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      *
      * @param projectKey     The project key that should prefix the repository slug.
      * @param repositorySlug The slug or name of the repository to be validated.
-     * @throws LocalVCInternalException If the repository slug does not start with the project key, indicating an incorrect or malformed slug.
+     * @throws LocalVCInternalException If the project key does not consist of ASCII letters and digits only (which also excludes the path segments {@code .} and {@code ..}),
+     *                                      or if the repository slug does not start with the project key, indicating an incorrect or malformed slug.
      */
     private void validateProjectKeyAndRepositorySlug(String projectKey, String repositorySlug) {
+        if (!PROJECT_KEY_PATTERN.matcher(projectKey).matches()) {
+            throw new LocalVCInternalException("Invalid project key: " + projectKey);
+        }
         if (!repositorySlug.toLowerCase(Locale.ROOT).startsWith(projectKey.toLowerCase(Locale.ROOT))) {
             throw new LocalVCInternalException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
         }
@@ -300,6 +317,16 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      */
     public boolean isPracticeRepository() {
         return isPracticeRepository;
+    }
+
+    /**
+     * Whether the slug is exactly the project key, a hyphen and {@link #getRepositoryTypeOrUserName()}. The type or user name is derived from the slug by dropping a
+     * "practice-" marker and a run of digits after the project key, so for a slug that is not of this form it names another repository than the one the slug locates.
+     *
+     * @return true if the slug has no marker or digits that the derived name leaves out
+     */
+    public boolean isSlugCanonical() {
+        return repositorySlug.toLowerCase(Locale.ROOT).equals(projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryTypeOrUserName);
     }
 
     /**

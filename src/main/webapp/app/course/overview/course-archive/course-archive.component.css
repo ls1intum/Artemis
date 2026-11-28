@@ -1,0 +1,13 @@
+.course-grid {
+    display: grid;
+
+    /* cards can shrink to 325px */
+    grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
+    gap: 1rem;
+    justify-items: center;
+}
+
+.course-card-wrapper {
+    width: 100%;
+    max-width: 400px;
+}

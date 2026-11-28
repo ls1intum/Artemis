@@ -1,0 +1,245 @@
+# SPEC.md (the specification)
+
+Role: the ONE planning artifact. Written before any code, from the instructor's brief; every later stage
+implements THIS and is checked against it. It answers the questions the brief usually leaves open: what will
+the student actually compute, which types exist and which of them the student writes, and how the work is
+graded. A spec whose graded work is copying literals produces a hollow exercise no matter how well the later
+stages execute. Skipped entirely when the instructor already provided a real problem statement — that
+statement is the spec. Before approval it receives one focused semantic review against the brief. After approval
+it is read-only: later stages repair executable artifacts against the contract instead of weakening the contract
+to fit a downstream mistake.
+
+## Numbered rules
+
+State every graded behaviour as a numbered rule (R1, R2, ...) precise enough to test: inputs, computation,
+boundaries, error behaviour. Each rule must be one a plausible wrong implementation would get wrong. Rules
+carry the computation; do not hide it in the examples.
+
+Mentally execute every loop, repeated policy, and state transition on the smallest permitted input and at a
+boundary where the next operation cannot proceed. Define progress, finite termination, minimum cardinality,
+and stop-versus-skip behaviour whenever the permitted input domain does not already make them unambiguous.
+For randomized behaviour, either expose a controllable randomness source or state complete deterministic
+invariants that meaningful non-flaky tests can assert. Do not add a seed or preferred boundary policy by habit;
+choose only what the exercise's domain and learning objective need.
+
+## Worked-examples table
+
+A markdown table under `## Worked Examples` with at least these columns: the rule(s) exercised, the input,
+the expected result. Include at least two rows total, chosen together to expose the central interaction and an
+important alternative or boundary instead of repeating the same witness. State every initial value needed to
+derive the outcome inside the example; neither the reviewer nor the student may infer hidden starting state.
+Different policies may legitimately share an aggregate final value when another observable column (such as
+order, trace, or chosen action) demonstrates their difference. Verify every row's arithmetic by actually computing it in the
+sandbox (a throwaway script under /tmp) before writing it down — a wrong number here poisons every later
+stage. An example meant to demonstrate a branch, strategy change, or state transition must use a witness for
+which the competing behaviours produce observably different outcomes. When variants exist, name the concrete
+policy in the input and replay its decisions, not only the final invariant. The executable builder will replay
+these rows against the real implementation.
+
+## Design table
+
+A markdown table under `## Design` with one row per type: its name, its role, and a `Template status` that is
+EXACTLY one of `given`, `stubbed`, `student-creates` — the gates enforce these tokens literally. `given`
+ships complete; `stubbed` normally ships with signatures, Javadoc, and TODO bodies; `student-creates` is ABSENT from
+the template (students design the file themselves; it is graded through seeded structural checks and
+reflection-based tests, and the template gate rejects a template that still contains it). A brief that asks
+students to design or create a type normally demands `student-creates`, but Java must still have enough
+declarations for a provided scaffold to compile. `student-creates` is not a difficulty lever. When the exercise fixes a type and API and asks students only to implement its
+behavior, prefer a documented `stubbed` scaffold; reserve omission for whole-type creation genuinely assigned by
+the brief. An exact approved API can grade creation of that type, but it is not open-ended API design. Choose
+ownership from the brief and compile-safe dependency graph rather than applying one mandatory Strategy layout.
+When a provided collaborator refers to an omitted type, omit only the dependent members necessary for the starter
+to compile and anchor their insertion point in the statement and reflective tests. Put a separate seam on the
+collaborator only when students implement independently actionable collaborator work; do not anchor an absent
+type's work with a class-body TODO in that collaborator. An empty interface declaration still pre-creates the type, so it is not
+faithful when the brief explicitly assigns creating that interface to students.
+A type marked `given` must ship complete, so none of its Public API signatures may name a `student-creates` type
+that is absent from the template, and neither may its bodies, imports, or private members: a type whose code constructs,
+calls, or imports a student-created type is `stubbed` (its dependent bodies are TODOs), never `given`. Resolve that
+ownership dependency in the specification; never make a given type empty or silently reassign it to students later
+merely to make the starter compile.
+For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
+replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
+## Public API
+
+After the Design table, add `## Public API` with the exact contract-visible constructors and methods that the
+solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API.
+List signatures only, grouped by owner type. Write each annotation the code must carry on a type, constructor, method or
+field into its declaration, for example `@Test` on every test method of a test class that students write: the
+structural checks compare annotations exactly, so one missing here fails a correct solution. Do not turn private
+state into public/reflection API merely because the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
+alternate signatures after the specification freezes.
+
+Describe the completed solution's API, not an intermediate starter or an earlier task's API. Include all final
+enum constants and signatures required by later tasks. A rule that asks students to add a constant or member
+must agree with this final API; describe the earlier state in the task progression, not as the frozen final
+contract. Compare every numbered rule and seam against the final declarations before submitting the spec.
+
+The design table also carries the requested difficulty and learning objective. Judge difficulty by the work
+left to the student, not by the number of files or formulas. When the brief teaches a collaboration or design
+pattern, leave students meaningful work in that collaboration (defining an abstraction when appropriate,
+wiring it, or making the context delegate); do not hand them the complete design and call formula transcription
+an intermediate pattern exercise. Judge difficulty relative to the requested objective: subtract copied
+declarations, literals, and supplied holders, not learner-owned reasoning intrinsic to the concept being taught.
+A meaningful abstraction, interchangeable policies, context selection or replacement, and delegation can
+themselves carry intermediate reasoning when students own and tests observe the collaboration. Conversely,
+provide incidental holders, accessors, and build plumbing unless those are explicitly part of the objective.
+Do not add an unrelated mathematical, collection, or state algorithm merely to make a pattern exercise harder.
+
+State one end-to-end observable path through the requested abstraction. For Strategy, say how a context or
+client holds or selects the strategy, calls it through the abstraction, and uses its result. Concrete strategies
+tested only in isolation do not teach that collaboration. A context may be `given`, but its supplied delegation
+does not count as learner-owned collaboration: another `stubbed` or `student-creates` owner must then make
+selection, injection, replacement, or delegation consequential student work, and the tests must observe that
+work through the end-to-end path. Strategy alternatives must satisfy the same responsibility for overlapping valid inputs and be
+meaningfully substitutable through the abstraction. A fixed tag that dispatches mutually exclusive operations
+to their only valid handlers is not enough by itself. Each alternative needs a distinct observable policy with
+deterministic tie and boundary behavior. Use one coherent oracle model: property-based outcomes with separately
+testable policy identity, or a fully deterministic algorithm with exact examples. Do not combine "any valid
+result" with a vague heuristic, and do not require global impossibility detection from an incomplete heuristic.
+For a brief explicitly teaching a pattern, leave at least one learner-owned collaboration seam—selection,
+injection, replacement, or delegation—in addition to concrete policy bodies.
+
+When the brief requests a non-standard or unusual theme, make that choice before naming the public API. Reject
+the first familiar textbook example and choose a domain whose constraints genuinely cause the variants'
+different computations or interactions. Erase the domain nouns as a check: if the unchanged rules reveal a
+familiar example, redesign the behaviour rather than adding themed vocabulary, another trivial variant, or an
+arbitrary selector policy. For an intermediate exercise, subtract bare declarations, fixed one-line forwarding,
+literal copying, and one-operation formula transcription, but not learner-owned reasoning about the requested
+collaboration. A clearly specified multi-step collection or state algorithm still carries implementation
+reasoning through its control flow, data-structure operations, progress, termination, and state tracking;
+clarity does not make it trivial. Every difficulty contributor must strengthen the requested objective and have
+a causal domain rationale. Complexity that would remain essentially unchanged without the requested abstraction
+is not evidence of fit. If no meaningful reasoning remains, redesign one central interaction rather than
+increasing the number of types or tasks.
+
+Reconcile that ownership with compilation before approving the design. Every testing-strategy seam described
+as student work must map to a `stubbed` or `student-creates` row. A given or stubbed type cannot expose an
+omitted `student-creates` type in a template signature: the template would not compile. Make the dependent type
+student-created too, or omit only the student-owned dependent members. Given types and all non-student-owned members of stubbed types stay identical in both
+repositories. Only types marked `student-creates` and members explicitly marked `@studentCreates` in the Public API
+are absent from the template. Never make a shared API accept the real interface in the solution and `Object` in
+the template.
+
+Before approval, compare every Design ownership row against every later Public API and template sentence. A
+`student-creates` row is contradicted by prose saying that the template supplies that declaration, signature, or
+method body even when the table itself is correct.
+
+Before accepting the rules, perform a scope subtraction pass: remove validation, exception, state, purity,
+immutability, thread-safety, and architecture obligations that the brief did not request and that are not strictly
+necessary to define the chosen strategies. Choosing the theme and the strategies' contrasting computations is
+necessary when the brief leaves them open; adding unrelated defensive policy is not.
+Preserve each stated boundary's trigger and timing. Do not turn a call-time rejection into a constructor
+precondition, or approve any error path that has no legal setup through the public API.
+
+## Testing strategy
+
+A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
+Give the first column stable IDs `S1`, `S2`, ...; the grading plan carries these IDs through the rest of generation, while
+template TODOs and statement tasks use the seam's wording and never show the ID to students. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
+The third column, `Observable responsibility`, states the student-owned behavior, collaboration, or state transition the seam grades and groups the input partitions its tests
+need. Keep it an owner-controlled responsibility: do not make a concrete policy's seam responsible for state changes owned by the context that calls it. Each visible seam test
+must be independently diagnosable using given support or a tiny fake/recording collaborator; it must not fail first in another independently actionable student seam. When work is
+genuinely cumulative, group it into one task rather than giving a later task feedback that an earlier task controls. Use this exact header so the ownership-to-behavior link remains
+machine-readable:
+
+`| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`
+
+A `stubbed` owner carries the seam's TODO inside its own source, with the exact Observable responsibility on the first TODO line; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
+its TODO on an unrelated collaborator. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
+Each seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep throwing. An ordinary
+abstract interface method has no student-owned body: mark the interface `given` when students only implement it, or `student-creates` when the brief assigns its design; do not
+label that declaration `stubbed` merely to create a structural seam.
+Never one seam per test; never one seam for the whole exercise unless it genuinely is one. Each row has a numeric weight tier (`3` for core learning objectives, `2` for supporting
+behaviour, `1` for edge polish; every planned test for the seam carries that tier), and LAST the hidden-variant decision, written as `yes` or
+`no` — that cell is read mechanically. Every seam needs at least one `ALWAYS`-visible test. A `yes` adds an
+`AFTER_DUE_DATE` variant with fresh witness values because students overfit to visible tests; a `no` must not hide one. The hidden variant
+grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
+optional enrichment outside this table, the test plan, and the Artemis tasks.
+
+Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism
+together with its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is
+API use. Supplied runtime observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the
+supplied API alone do not grade the student's integration. When students write tests, checks of the supplied implementation are preservation checks with zero
+student credit. A weighted seam must observe the learner-written tests and distinguish effective assertions from wrong or ineffective ones. Do not assign
+learner credit to a teacher test that never executes learner work. Hidden variants need a declared way to observe that learner work; changing inputs to supplied
+code alone does not qualify. For an operation sequence, execute the learner scenario once per test and obtain all related observations from that same execution.
+Reset supplied observation state before that execution, not inside each accessor. Record immutable values at each required transition, not references to mutable
+objects that later actions change. A final snapshot cannot establish an earlier state erased by a later operation. Observation support must record student
+actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax
+restrictions merely to help a test. Source and bytecode inspection are not supported grading mechanisms.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
+
+Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+
+For a beginner entry point that creates local objects, supplied constructors and methods can record the
+created instances and snapshots at the relevant operation boundaries. Tests reset that supplied recorder,
+invoke the student entry point, then inspect its observations. Recording must not establish the association,
+mutation, or other operation the learner is meant to perform. A final-state accessor alone loses evidence
+when a later operation undoes the earlier state; replaying the sequence inside the test supplies no evidence
+that the student entry point did it.
+
+For modification exercises, separate the pre-change behavior from the assigned extension before freezing.
+Describe unchanged successful cases and retained guards as supplied behavior outside the seam and risk
+inventory tables. They get preservation checks, not a seam, a weight tier, a student-work partition, or a
+"keep this working" task. Only behavior the old implementation lacks belongs to the modification seam.
+A row cannot simultaneously say "zero-credit preservation, not student work" and carry a graded tier.
+
+
+## Off-limits at spec time
+
+No `[task]` bindings, no test names, no PlantUML — those belong to later stages. Artemis decides from the Design table and
+Public API whether the statement needs a class diagram. No grading/verifier
+internals.
+
+## What may vary
+
+Section granularity follows the exercise; a compact exercise may have three rules, a rich one ten. Extra
+table columns (state before/after, notes) are free. Do not inflate a one-class exercise into a pattern, and
+do not collapse a pattern exercise into one class.
+
+Follow the section contracts above directly. Do not infer requirements, APIs, or a design from another
+exercise.
+
+## Member-level ownership and prerequisite fit
+
+When the brief teaches adding operations to an existing class, mark just those constructor/method declarations
+in the Public API with `/** @studentCreates */`. Keep the owner `stubbed`, preserve its finished members, and
+assign the added members to that owner's Testing Strategy seam. They are absent from the compiling starter
+and graded reflectively. Never apply this tag to a `given` owner or copy it into exercise source. A marked
+constructor may leave the starter with Java's implicit no-argument constructor. Do not omit unmarked members.
+The tag is a Javadoc block immediately before the complete final declaration, never a trailing line comment.
+It removes the entire member from the starter, not just a return type, parameter, or `throws` clause. Keep
+checked exceptions in the final signature; if an omitted exception makes a supplied signature uncompilable,
+resolve the ownership graph rather than erasing the exception from the contract.
+Keep the Design role consistent: a supplied constructor or a method whose body students complete must retain
+its declaration and must not carry `@studentCreates`. Supplied callers must compile without invoking members
+that this marker removes from the starter.
+
+For API use, control flow, or implementation-only tasks, provide the class and method declarations instead.
+Supply incidental enums, initialized collections, exception classes, and domain holders when declaring them
+is outside the prerequisites. A request to create generic types requires learner-owned type parameters, not
+merely a generic library field. A request to create subclasses requires a learner-authored type/relationship,
+not merely method bodies in a supplied hierarchy. The smallest student diff must still exercise every requested
+competency; keep unrelated plumbing provided. Where the brief asks for breadth, choose complementary operations
+rather than near-identical repetitions. Do not infer teaching sequence from sheet numbers; use the brief's
+explicit prerequisites and learning objectives.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
+Declare how the supplied implementation selects faulty behavior before the specification freezes. The same calls compiled into the learner tests must reach that selection.
+For a static API, use ordinary Java dispatch inside the supplied implementation, such as an instructor-controlled delegate that defaults to correct behavior; restore it in a finally block.
+A reflection wrapper or a changed Method object does not redirect direct static calls. Do not depend on private JDK fields, class redefinition, attached agents, new dependencies,
+extra JVM opens, or new sandbox permissions. If the approved design has no working selection seam, redesign the contract rather than inventing interception during artifact repair.
+Only an assertion failure from the learner test against an activated fault demonstrates detection. Failed fault activation, linkage, discovery, or instructor support is a grader defect,
+not a detected fault. First establish that the same learner suite passes with correct behavior, and keep selection and failure classification out of the learner's responsibilities.
+
+For operation sequences, `reference/style/runtime-observation.md` shows supplied automatic recording from one learner execution.
+A claimed input variant must change a declared stimulus that reaches learner work. Hidden tests may add compatible assertions on the same execution; they cannot require contradictory outputs from identical deterministic invocations.

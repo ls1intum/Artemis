@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.ZonedDateTime;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -16,6 +19,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
@@ -30,6 +34,9 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     private static final String TEST_PREFIX = "participationlocalvclocalci";
 
     private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private Optional<VcsAccessLogService> vcsAccessLogService;
 
     @BeforeEach
     void initTestCase() {
@@ -169,7 +176,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLog() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
         var user = userTestRepository.getUser();
@@ -186,7 +193,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
      * round trip through the DTO that used to dereference the user unconditionally.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLogOfBuildAgentWithoutUser() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
@@ -198,36 +205,46 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(accessLogs.getFirst().userId()).as("a build agent clone is attributed to the agent and job, not to a user").isNull();
         assertThat(accessLogs.getFirst().name()).contains("artemis-build-agent-1").contains("42");
         assertThat(accessLogs.getFirst().authenticationMechanism()).isEqualTo(AuthenticationMechanism.BUILD_JOB_TOKEN.name());
+        assertThat(accessLogs.getFirst().buildAgent()).isTrue();
     }
 
     /**
-     * The amend-the-newest-entry lookups have to skip build agent rows.
-     * <p>
-     * A push writes its entry, queues the build, and only then fills in the commit hash on the newest entry of the
-     * participation; a clone does the same for its clone-or-pull label. The agent's own clone of that repository lands
-     * between the two, so without the exclusion the person's amendment would be written onto the agent's row - the
-     * agent would appear to have pushed the commit, and the person's row would keep no hash at all.
-     * <p>
-     * Executing both queries here is also what validates them: an invalid {@code @Query} is only rejected when it is
-     * first used, so one that no test calls would reach production intact.
+     * The client hides the access of build agents by default, so what is a build agent must be exact: the agent over SSH has no token to tell it by, and an account that was
+     * deleted afterwards has no user either but is a person.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNewestAccessLogLookupsSkipBuildAgentEntries() {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetVcsAccessLogMarksOnlyBuildAgentsAsBuildAgents() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var user = userTestRepository.getUser();
-        var userEntry = vcsAccessLogRepository
-                .save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.PUSH, AuthenticationMechanism.PASSWORD, "", "10.0.0.1"));
-        // Saved after the person's entry, so it is the newest one and would win a lookup that did not exclude it
-        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
-                AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
+        var student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        vcsAccessLogRepository.save(new VcsAccessLog(student, participation, "student", "student@mail.de", RepositoryActionType.PUSH, AuthenticationMechanism.PASSWORD, "a1", ""));
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, VcsAccessLog.BUILD_AGENT_ACCESSOR_PREFIX + "agent-ssh (build job 7)", "", RepositoryActionType.PULL,
+                AuthenticationMechanism.SSH, "a2", "10.0.0.5"));
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Deleted Student", "gone@mail.de", RepositoryActionType.PULL, AuthenticationMechanism.SSH, "a3", ""));
 
-        assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
-        assertThat(vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(participation.getRepositoryUri())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+        var accessLogs = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/vcs-access-log", HttpStatus.OK, VcsAccessLogDTO.class);
+
+        assertThat(accessLogs).extracting(VcsAccessLogDTO::commitHash, VcsAccessLogDTO::buildAgent).containsExactly(tuple("a1", false), tuple("a2", true), tuple("a3", false));
+    }
+
+    private VcsAccessLog reload(VcsAccessLog accessLog) {
+        return vcsAccessLogRepository.findById(accessLog.getId()).orElseThrow();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreatingAnEntryStoresItBeforeReturning() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+
+        var created = vcsAccessLogService.orElseThrow().createAccessLog(user, participation.getId(), RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "hash", "10.0.0.1");
+
+        assertThat(created.getId()).isNotNull();
+        assertThat(reload(created).getRepositoryActionType()).isEqualTo(RepositoryActionType.PUSH);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetVcsAccessLogOfTemplateParticipation() throws Exception {
         var user = userTestRepository.getUser();
         vcsAccessLogRepository.save(new VcsAccessLog(user, programmingExercise.getTemplateParticipation(), "instructor", "instructorMail@mail.de", RepositoryActionType.READ,

@@ -1,3 +1,11 @@
+import { AccountService } from 'app/core/auth/account.service';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -8,31 +16,44 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subscription, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
-import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-list',
     templateUrl: './list-of-complaints.component.html',
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, SortDirective, SortByDirective],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+    ],
     providers: [ArtemisDatePipe],
 })
 export class ListOfComplaintsComponent implements OnInit {
     complaintService = inject(ComplaintService);
+    private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -53,8 +74,22 @@ export class ListOfComplaintsComponent implements OnInit {
     private examId?: number;
     readonly course = signal<Course>(undefined!);
     correctionRound?: number;
-    complaintsSortingPredicate = 'id';
-    complaintsReverseOrder = false;
+    private readonly sortingPredicateState = signal('id');
+    private readonly reverseOrderState = signal(false);
+
+    get complaintsSortingPredicate(): string {
+        return this.sortingPredicateState();
+    }
+    set complaintsSortingPredicate(value: string) {
+        this.sortingPredicateState.set(value);
+    }
+
+    get complaintsReverseOrder(): boolean {
+        return this.reverseOrderState();
+    }
+    set complaintsReverseOrder(value: boolean) {
+        this.reverseOrderState.set(value);
+    }
     readonly complaintsToShow = signal<Complaint[]>([]);
     readonly showAddressedComplaints = signal(false);
     readonly allComplaintsForTutorLoaded = signal(false);
@@ -73,6 +108,16 @@ export class ListOfComplaintsComponent implements OnInit {
     private selectedComplaintScope: 'mine' | 'all' = 'mine';
 
     /** Distinct assessors among the currently loaded complaints, for the "all" scope's assessor filter. */
+    assessorFilterOptions(): { key: string | undefined; label: string }[] {
+        return [
+            { key: undefined, label: this.translateService.instant('artemisApp.complaint.listOfComplaints.allAssessors') },
+            ...this.assessorOptions().map((assessor) => ({
+                key: assessor.key,
+                label: assessor.label || this.translateService.instant('artemisApp.complaint.listOfComplaints.unknownAssessor'),
+            })),
+        ];
+    }
+
     readonly assessorOptions = computed(() => {
         const byKey = new Map<string, string>();
         for (const complaint of this.complaints()) {
@@ -86,7 +131,6 @@ export class ListOfComplaintsComponent implements OnInit {
         this.complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.list' : 'artemisApp.complaint.listOfComplaints',
     );
     // Icons
-    faSort = faSort;
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -147,7 +191,11 @@ export class ListOfComplaintsComponent implements OnInit {
     loadComplaints() {
         let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
 
-        if (this.tutorId) {
+        if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
+            complaintResponse = this.exerciseId
+                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
+                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
+        } else if (this.tutorId) {
             if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
             } else if (this.examId) {
@@ -167,7 +215,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.mineScopeSubscription?.unsubscribe();
         this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
-        this.courseManagementService.find(this.courseId).subscribe((response) => {
+        this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
         });
@@ -276,6 +324,12 @@ export class ListOfComplaintsComponent implements OnInit {
             complaint.result.id,
         );
         void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+    }
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.complaintsSortingPredicate = event.field;
+        this.complaintsReverseOrder = event.order === 1;
+        this.sortRows();
     }
 
     sortRows() {

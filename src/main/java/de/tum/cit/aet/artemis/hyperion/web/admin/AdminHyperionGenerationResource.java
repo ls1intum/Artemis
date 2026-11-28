@@ -55,7 +55,7 @@ public class AdminHyperionGenerationResource {
      * @param exerciseId exercise whose Hyperion reservation should be inspected
      * @return administrator-only reservation details, or 404
      */
-    @GetMapping("{exerciseId}/hyperion-wedged-slot")
+    @GetMapping("{exerciseId}/wedged-slot")
     public ResponseEntity<ExerciseGenerationWedgedSlotDTO> getWedgedSlot(@PathVariable long exerciseId) {
         return slotInfo(exerciseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -69,7 +69,7 @@ public class AdminHyperionGenerationResource {
      * @param reason     incident reason recorded before attempting recovery
      * @return 204 on recovery, 400 for an invalid reason, or 404 if the reservation no longer matches
      */
-    @DeleteMapping("{exerciseId}/hyperion-wedged-slots/{token}")
+    @DeleteMapping("{exerciseId}/wedged-slot/{token}")
     public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
         String boundedReason = CONTROL_CHARACTERS.matcher(reason).replaceAll(" ").trim();
         if (boundedReason.isBlank() || boundedReason.length() > 500) {

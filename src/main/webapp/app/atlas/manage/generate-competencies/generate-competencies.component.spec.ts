@@ -10,11 +10,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -26,7 +26,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -36,11 +36,9 @@ describe('GenerateCompetenciesComponent', () => {
     let comp: GenerateCompetenciesComponent;
     type GenerationUpdate = { runState: IrisRunState; result?: CompetencyRecommendation[] };
     let mockWebSocketSubject: Subject<GenerationUpdate>;
-    let dialogClose: Subject<{ confirmed: boolean } | undefined>;
 
     beforeEach(() => {
         mockWebSocketSubject = new Subject<GenerationUpdate>();
-        dialogClose = new Subject<{ confirmed: boolean } | undefined>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -70,7 +68,6 @@ describe('GenerateCompetenciesComponent', () => {
                 AlertService,
                 ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
             ],
         })
             .compileComponents()
@@ -86,7 +83,7 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should initialize the form with the course description', async () => {
         const courseDescription = 'Course Description';
-        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
         fixture.detectChanges();
         await fixture.whenStable();
         expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe(courseDescription);
@@ -120,8 +117,8 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should open modal to remove competency recommendations', () => {
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
@@ -155,8 +152,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should not submit for unviewed recommendations', async () => {
         fixture.detectChanges();
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         const saveSpy = vi.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
@@ -169,16 +166,21 @@ describe('GenerateCompetenciesComponent', () => {
         await fixture.whenStable();
         expect(openSpy).toHaveBeenCalledOnce();
         expect(saveSpy).not.toHaveBeenCalled();
+
+        // saving only happens once the confirmation is accepted
+        saveSpy.mockImplementation(() => undefined);
+        openSpy.mock.calls[0][0].accept?.();
+        expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should submit', async () => {
         fixture.detectChanges();
         const router = TestBed.inject(Router);
-        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const competencyService = TestBed.inject(CompetencyService);
 
         const navigateSpy = vi.spyOn(router, 'navigate');
-        const openSpy = vi.spyOn(dialogService, 'open');
+        const openSpy = vi.spyOn(confirmationService, 'confirm');
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [],
             status: 200,
@@ -244,7 +246,7 @@ describe('GenerateCompetenciesComponent', () => {
             b = new Subject<GenerationUpdate>();
             const streams: Record<string, Subject<GenerationUpdate>> = { '/user/topic/iris/competencies/1': a, '/user/topic/iris/competencies/2': b };
             vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockImplementation((destination) => streams[destination]);
-            vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
+            vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
             vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(of(new HttpResponse<void>()));
         });
@@ -291,7 +293,7 @@ describe('GenerateCompetenciesComponent', () => {
         it('ignores a stale description response after navigation', async () => {
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             fixture.detectChanges();
             route.setParameters({ courseId: 2 });
             newDescription.next(new HttpResponse({ body: { description: 'B' } }));
@@ -306,7 +308,7 @@ describe('GenerateCompetenciesComponent', () => {
             const descriptionB = 'B'.repeat(150);
             const oldDescription = new Subject<HttpResponse<Course>>();
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
             fixture.detectChanges();
             expect(generateButton().disabled).toBe(true);
@@ -330,7 +332,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         it('clears a loaded description as soon as the component is reused for another course', async () => {
             const newDescription = new Subject<HttpResponse<Course>>();
-            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) =>
+            vi.mocked(TestBed.inject(CourseManagementService).findForInstructor).mockImplementation((id) =>
                 id === 1 ? of(new HttpResponse({ body: { description: 'A'.repeat(150) } })) : newDescription,
             );
             const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
@@ -379,4 +381,28 @@ describe('GenerateCompetenciesComponent', () => {
             viewed: new FormControl(viewed, { nonNullable: true }),
         });
     }
+    it('reports a current generation request failure and permits retry without stale recommendations', async () => {
+        vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(of(new HttpResponse({ body: { description: 'Current course' } })));
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        comp.getCompetencyRecommendations('Current course');
+        expect(error).toHaveBeenCalledWith('error.http.403');
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.competencies.length).toBe(0);
+    });
+
+    it('removes a recommendation only after the delete dialog is confirmed', () => {
+        comp.competencies.push(createCompetencyFormGroup('First', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        comp.competencies.push(createCompetencyFormGroup('Second', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        const confirmSpy = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+        comp.onDelete(0);
+        const request = confirmSpy.mock.calls[0][0];
+        request.reject?.();
+        expect(comp.competencies.length).toBe(2);
+        request.accept();
+        expect(comp.competencies.getRawValue().map((entry) => entry.competency.title)).toEqual(['Second']);
+    });
 });

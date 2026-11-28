@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Tabelle in der Aufgabenstellung",
+            "repositoryBuildOverview": {
+                "title": "Repositories und Builds",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Zusätzliches Repository",
+                "templateDescription": "Der Ausgangspunkt für Studierende.",
+                "solutionDescription": "Die Referenzimplementierung.",
+                "templateExpectedScore": "Erwartete Bewertung: 0%, bevor Studierende die Lösung implementieren.",
+                "solutionExpectedScore": "Erwartete Bewertung: 100% für die Referenzimplementierung.",
+                "result": "Build-Ergebnis",
+                "resultsLoading": "Build-Ergebnis wird geladen…",
+                "checkoutLoading": "Checkout-Verzeichnisse werden geladen…",
+                "checkoutUnavailable": "Checkout-Verzeichnisse konnten nicht geladen werden."
+            },
             "home": {
                 "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
@@ -25,10 +41,10 @@
                 "invalidReason": "Der Bewertungsbereich enthält ungültige Werte."
             },
             "delete": {
-                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
+                "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {
-                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
-                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
+                    "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",
+                    "multiple": "Sollen die ausgewählten Aufgaben des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!"
                 },
                 "studentRepos": "Alle Studierenden-Repositories löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
                 "studentReposBuildPlans": "Alle Studierenden-Repositories und Studierenden-Build-Pläne löschen (Achtung: Dies kann NICHT rückgängig gemacht werden! Es wird empfohlen, die Übung zuerst zu archivieren!",
@@ -62,6 +78,7 @@
                     "branch": "Branch",
                     "dockerFlags": "Docker-Flags",
                     "theiaImage": "Online-IDE-Image",
+                    "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
                     "postDueDateHandling": "Verhalten nach Abgabefrist",
                     "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
                     "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
@@ -140,7 +157,10 @@
             "script": "Build Script",
             "buildConfig": {
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
-                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB.",
+                "branchRegexTooLong": "Der Branch-Regex ist zu lang. Die maximal zulässige Länge beträgt 128 Zeichen.",
+                "branchRegexInvalid": "Der Branch-Regex ist kein gültiger regulärer Ausdruck.",
+                "branchRegexNotSupported": "Der Branch-Regex verwendet nicht unterstützte Syntax. Erlaubt sind Zeichen, Klassen wie [a-z0-9-], Gruppen mit Alternativen, die Anker ^ und $ sowie die Quantifizierer * + ? und gezählte Wiederholungen mit Werten bis 1000. Eine wiederholte Gruppe darf keine Alternativen, Quantifizierer oder Anker enthalten. Jede Alternative innerhalb einer Gruppe muss mindestens ein Zeichen erfordern."
             },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
@@ -225,6 +245,25 @@
                 "title": "Regex für den Branchnamen",
                 "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
             },
+            "buildTimeWindow": {
+                "title": "Build-Zeitfenster",
+                "message": "Begrenze optional, wann Pushes in die Repositories von Studierenden gebaut werden. Pushes außerhalb des Zeitfensters werden gespeichert, aber nicht gebaut und erzeugen keine Abgabe. Lasse beide Felder leer, um jeden Push zu bauen.",
+                "description": "Pushes von Studierenden außerhalb dieses Zeitfensters werden im Repository gespeichert, aber nicht gebaut, getestet oder bewertet. Jede Grenze kann leer bleiben: Mit nur einem Start beginnen die Builds zu diesem Zeitpunkt, mit nur einem Ende enden sie zu diesem Zeitpunkt. Beide Grenzen sind inklusive. Editoren und Instruktoren, der Übungsmodus und von Instruktoren ausgelöste Builds sind nicht betroffen. Das Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen. Bei Studierenden mit individueller Fristverlängerung verschiebt sich das Ende des Zeitfensters um dieselbe Verlängerung.",
+                "collapsedMessage": "Standardmäßig wird jeder Push gebaut. Lege ein Zeitfenster fest, wenn Pushes nur innerhalb eines Zeitraums gebaut werden sollen, zum Beispiel ab einem Startdatum eine Woche nach der Veröffentlichung.",
+                "addButton": "Zeitfenster für Builds festlegen",
+                "removeButton": "Zeitfenster für Builds entfernen",
+                "start": "Beginn des Build-Zeitfensters",
+                "end": "Ende des Build-Zeitfensters",
+                "endNotAfterStart": "Das Ende des Build-Zeitfensters muss nach dessen Beginn liegen.",
+                "outsideExerciseDates": "Das Build-Zeitfenster muss zwischen dem Startdatum (oder Veröffentlichungsdatum) und der Einreichungsfrist der Übung liegen.",
+                "invalidInput": "Das Build-Zeitfenster enthält ein Datum, das nicht gelesen werden kann.",
+                "triggerDisabled": "Außerhalb des Build-Zeitfensters können keine Builds ausgelöst werden.",
+                "notice": {
+                    "before": "Builds starten am {{ start }}. Pushes davor werden gespeichert, aber nicht gebaut oder bewertet.",
+                    "during": "Builds sind bis {{ end }} aktiv.",
+                    "after": "Das Build-Zeitfenster endete am {{ end }}. Pushes werden gespeichert, aber nicht gebaut."
+                }
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -253,11 +292,6 @@
             },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
-                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON-Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip-Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
-                "uploadForImport": "Programmieraufgabe für den Import hochladen",
-                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
-                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine JSON-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
                 "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
                 "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
             },
@@ -273,6 +307,16 @@
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
                 "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
+            },
+            "onlineIdeExperienceLevel": {
+                "title": "Anfängliche Erfahrungsstufe in der Online IDE",
+                "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",
+                "description": "Studierende starten mit dieser Erfahrungsstufe, wenn sie die Aufgabe in der Online IDE öffnen. Artemis schreibt sie in die Datei .vscode/eduide.json jedes Repositorys, das es für Studierende aus der Vorlage erstellt, und ersetzt dabei eine gleichnamige Datei der Vorlage. Ohne Festlegung fügt Artemis keine Datei hinzu: Studierende starten mit der Stufe aus der .vscode/eduide.json der Vorlage, falls diese eine enthält, sonst mit der Standardstufe der Online IDE. Studierende können weiterhin eine andere Stufe wählen, und bereits bestehende Repositorys werden nicht verändert.",
+                "levels": {
+                    "BEGINNER": "Anfänger",
+                    "ADVANCED": "Fortgeschritten",
+                    "EXPERT": "Experte"
+                }
             },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
@@ -305,7 +349,7 @@
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
-                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte füge zuerst Inhalt hinzu.",
                 "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
                 "tooLong": "Die Aufgabenstellung darf {{max}} Zeichen nicht überschreiten.",
                 "reviewChanges": "KI-Vorschläge prüfen",
@@ -334,66 +378,9 @@
                 },
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
-            "codeGeneration": {
-                "creationAssistance": "Erstellungsassistenz",
-                "generateCode": "Code generieren",
-                "generateWithAi": "Mit KI generieren",
-                "generating": "Generiere...",
-                "runningTitle": "Code-Generierung läuft",
-                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
-                "description": "Generiere Lösung, Template und Test-Code mit KI",
-                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
-                "confirmTitle": "Code-Generierung bestätigen",
-                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
-                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
-                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
-                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
-                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
-                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
-                "settingsTitle": "Generierungs-Einstellungen",
-                "settingsTooltip": "Repositories für die Generierung auswählen",
-                "statusTitle": "Generierungsstatus",
-                "statusTooltip": "Live-Status der Generierung anzeigen",
-                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Lösung, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Ausgewählte Feedback-Threads",
-                    "description": "Diese ausgewählten Threads werden der Code-Generierung als Feedback-Kontext mitgegeben.",
-                    "count": "{{count}} ausgewählt",
-                    "empty": "Aktuell sind keine Threads als Feedback ausgewählt.",
-                    "showThreads": "Threads anzeigen",
-                    "hideThreads": "Threads ausblenden",
-                    "viewThread": "Thread anzeigen",
-                    "line": "Zeile {{line}}",
-                    "unknownLocation": "Unbekannte Position"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "Dateiaktivität",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
-                "attempts": "Versuche: {{attempts}}",
-                "status": {
-                    "idle": "Nicht gestartet",
-                    "queued": "In Warteschlange",
-                    "running": "Läuft",
-                    "success": "Abgeschlossen",
-                    "warning": "Mit Problemen abgeschlossen",
-                    "error": "Fehlgeschlagen",
-                    "skipped": "Übersprungen",
-                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
-                    "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert",
-                    "fileDeleted": "entfernt"
-                }
-            },
             "status": {
-                "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
-                "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
+                "solutionFailsTest": "Die Musterlösung sollte 100% erreichen und alle Tests bestehen. Prüfe das Solution-Repository und die Testfälle.",
+                "templateFulfillsTest": "Die Vorlage sollte 0% erreichen. Prüfe bei einer abweichenden Bewertung das Template-Repository und die Testfälle."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
@@ -496,7 +483,6 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Element(e)",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",
@@ -824,8 +810,8 @@
                     "renamed": "Umbenannt"
                 },
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
-                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
-                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-state-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-state-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
@@ -836,7 +822,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
@@ -911,13 +899,6 @@
                     "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
             },
-            "sharing": {
-                "import": "Programmieraufgabe aus der Austauschplattform importieren",
-                "export": "Exportieren in die Austauschplattform",
-                "error": {
-                    "export": "Kann Aufgabe nicht exportieren: {{ message }}"
-                }
-            },
             "instructorChecklist": {
                 "title": "Checkliste für Lehrende",
                 "analyze": "Problemstellung analysieren",
@@ -985,6 +966,13 @@
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
+            },
+            "buildNotifications": {
+                "enable": "Browser-Benachrichtigungen für Build-Ergebnisse aktivieren",
+                "disable": "Browser-Benachrichtigungen für Build-Ergebnisse deaktivieren",
+                "blocked": "Benachrichtigungen sind blockiert. Erlaube sie in deinen Browser-Einstellungen.",
+                "error": "Browser-Benachrichtigungen sind nicht verfügbar. Das Tab-Symbol zeigt weiterhin Build-Ergebnisse an.",
+                "resultReceived": "Build-Ergebnis erhalten"
             }
         },
         "checklistAnalysisRequest": {

@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -71,6 +69,8 @@ public class PyrisPipelineService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final PyrisCallbackTokenService callbackTokenService;
+
     private final IrisLectureMaterialVersionService materialVersionService;
 
     private final PyrisDTOService pyrisDTOService;
@@ -85,33 +85,31 @@ public class PyrisPipelineService {
 
     private final UserRepository userRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     @Value("${artemis.iris.response-streaming-enabled:true}")
     private boolean responseStreamingEnabled;
 
-    public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService,
+    public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisCallbackTokenService callbackTokenService,
+            PyrisDTOService pyrisDTOService, IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository,
+            UserRepository userRepository, CourseLoadService courseLoadService, UserAiPreferenceService userAiPreferenceService,
             IrisLectureMaterialVersionService materialVersionService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
+        this.callbackTokenService = callbackTokenService;
         this.materialVersionService = materialVersionService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.courseLoadService = courseLoadService;
-        this.featureToggleService = featureToggleService;
     }
 
     /**
      * Executes a pipeline on Pyris, identified by the given name and variant.
-     * The pipeline execution is tracked by a unique job token, which must be provided by the caller.
+     * The pipeline execution is tracked by the run id of a job the caller registered; this method issues the token Pyris authenticates its callbacks with.
      * The caller must additionally provide a mapper function to create the concrete DTO type for this pipeline from the base DTO.
      * The status of the pipeline execution is updated via a consumer that accepts run-state frames. This method will
      * call the consumer with the initial running frame of the pipeline execution. Later states will be sent back from Pyris,
@@ -123,17 +121,19 @@ public class PyrisPipelineService {
      * @param variant       the variant of the pipeline
      * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
      * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
-     * @param jobToken      a unique job token for tracking the pipeline execution
+     * @param runId         the run id of the registered job
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
+    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String runId,
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, PipelineStatusUpdater statusUpdater) {
-        statusUpdater.accept(jobToken, PyrisRunState.RUNNING, null);
+        statusUpdater.accept(runId, PyrisRunState.RUNNING, null);
 
         try {
             Boolean streamResponse = responseStreamingEnabled && "chat".equals(name) ? Boolean.TRUE : null;
-            var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel, streamResponse));
+            var callbackToken = callbackTokenService.issue(pyrisJobService.getJob(runId));
+            var baseDto = new PyrisPipelineExecutionDTO(
+                    new PyrisPipelineExecutionSettingsDTO(runId, callbackToken, aiSelection, artemisBaseUrl, variant, supportLevel, streamResponse));
             long dtoBuildStart = System.nanoTime();
             var pipelineDto = dtoMapper.apply(baseDto);
             log.info("Pyris {} pipeline DTO built in {} ms", name, (System.nanoTime() - dtoBuildStart) / 1_000_000);
@@ -146,12 +146,12 @@ public class PyrisPipelineService {
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
-                statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
+                statusUpdater.accept(runId, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
-            statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
+            statusUpdater.accept(runId, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
         }
     }
 
@@ -170,17 +170,17 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        // The run's user message, which gets the memories the run reports. Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so
-        // they carry no user message id. The last row of a session can be a stored conversation summary, which must not get memories, because that would push it to the client.
+        // The run's user message, whose client origin decides where the response notification goes. Event-triggered runs (e.g. build failure, stalled progress) are not
+        // caused by a user message, so they carry no user message id. The last row of a session can be a stored conversation summary, which is not a user message.
         var userMessageId = eventVariant.isPresent() ? null
                 : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
-        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
-        materialVersionService.capture(jobToken, session.getCourseId());
+        var runId = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
+        materialVersionService.capture(runId, session.getCourseId());
         // @formatter:off
         executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
-            jobToken,
+            runId,
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
-            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
+            (statusRunId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, statusRunId, runState, error));
         // @formatter:on
     }
 
@@ -240,13 +240,13 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Fires the proactive struggle-intervention pipeline with a pre-minted job token and pre-built data DTOs, which
+     * Fires the proactive struggle-intervention pipeline with a pre-registered run id and pre-built data DTOs, which
      * the caller loaded off-thread by id. The status consumer releases the single-flight slot on an error, since no
      * callback will then arrive.
      *
      * @param variant         resolved Iris variant (e.g. "default")
      * @param supportLevel    the instructional support level ("low" / "moderate" / "high")
-     * @param jobToken        the token already registered in the job map (StruggleInterventionJob)
+     * @param runId           the run id already registered in the job map (StruggleInterventionJob)
      * @param user            the student (for the AI selection + user DTO)
      * @param signal          the struggle signal from the client engine
      * @param exerciseDTO     the exercise DTO (problem statement + repos)
@@ -258,39 +258,39 @@ public class PyrisPipelineService {
      * @param episode         the client-allocated episode block (null when not sent)
      * @param proactivityMode the presence level ({@code pull} | {@code push}), passed to Pyris as prompt tone context
      */
-    public void executeStruggleInterventionPipeline(String variant, String supportLevel, String jobToken, User user, PyrisStruggleSignalDTO signal,
+    public void executeStruggleInterventionPipeline(String variant, String supportLevel, String runId, User user, PyrisStruggleSignalDTO signal,
             PyrisProgrammingExerciseDTO exerciseDTO, @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId,
             @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String proactivityMode) {
         var pyrisUser = toPyrisUserDTO(user);
-        executePipeline("struggle-intervention", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, Optional.empty(), jobToken,
+        executePipeline("struggle-intervention", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, Optional.empty(), runId,
                 executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
                         intent, episode, proactivityMode),
-                (runId, runState, error) -> {
+                (statusRunId, runState, error) -> {
                     if (runState == PyrisRunState.FAILED) {
                         // A preparation failure never reached Pyris, but a connector failure is ambiguous and the
                         // exception carries nothing that tells the two apart. Releasing either way makes the
                         // guarantee "at most one deliverable result" rather than "at most one Pyris run": the job
-                        // entry goes with it, so a late callback for this token fails authentication. Holding the
+                        // entry goes with it, so a late callback for this run fails authentication. Holding the
                         // marker instead would suppress every further intervention for this student for the whole
                         // job timeout, precisely when Pyris is struggling and so is the student. The frame is sent
                         // from here rather than through IrisStruggleTriggerService to avoid a bean cycle.
                         try {
-                            if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
+                            if (pyrisJobService.getJob(runId) instanceof StruggleInterventionJob failedJob) {
                                 irisChatWebsocketService.sendStruggleEvent(user,
                                         StruggleInterventionEventDTO.terminalCompletion(failedJob.intent(), failedJob.exerciseId(), failedJob.episodeId()));
                             }
                         }
                         catch (Exception e) {
                             // A missing frame degrades to a client timeout; the slot release matters more.
-                            log.warn("Could not emit terminal completion for failed struggle pipeline job {} exercise {} user {}", jobToken, exerciseId, user.getId(), e);
+                            log.warn("Could not emit terminal completion for failed struggle pipeline job {} exercise {} user {}", runId, exerciseId, user.getId(), e);
                         }
-                        pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);
+                        pyrisJobService.releaseStruggleInFlightJob(runId, user.getId(), exerciseId);
                     }
                 });
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
+        return new PyrisUserDTO(user);
     }
 
     /**

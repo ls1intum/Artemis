@@ -1,17 +1,15 @@
 import { expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,10 +26,10 @@ import {
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 // Preliminary mock before import to prevent errors
-vi.mock('@sentry/angular', async () => {
-    const originalModule = await vi.importActual('@sentry/angular');
+vi.mock('app/core/error-reporting/capture-exception', async () => {
+    const originalModule = await vi.importActual('app/core/error-reporting/capture-exception');
     return {
         ...originalModule,
         captureException: vi.fn(),
@@ -41,7 +39,6 @@ vi.mock('@sentry/angular', async () => {
 describe('ResultService', () => {
     let resultService: ResultService;
     let translateService: TranslateService;
-    let http: HttpClient;
 
     const programmingExercise: ProgrammingExercise = {
         id: 34,
@@ -157,43 +154,6 @@ describe('ResultService', () => {
 
         resultService = TestBed.inject(ResultService);
         translateService = TestBed.inject(TranslateService);
-        http = TestBed.inject(HttpClient);
-    });
-
-    it('should convert the dates and points map when receiving a result with points from the server', () => {
-        const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
-        resultWithPoints1.result = result1;
-        resultWithPoints1.totalPoints = 100;
-        resultWithPoints1.pointsPerCriterion = new Map();
-        const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
-        resultWithPoints2.result = result2;
-        resultWithPoints2.totalPoints = 50;
-        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
-
-        const results = [resultWithPoints1, resultWithPoints2];
-
-        const httpStub = vi.spyOn(http, 'get').mockReturnValue(of({ body: results }));
-
-        resultService.getResultsWithPointsPerGradingCriterion(programmingExercise).subscribe((res) => {
-            const resultsWithScores: ResultWithPointsPerGradingCriterion[] = res.body!;
-            expect(resultsWithScores).toHaveLength(2);
-
-            const receivedResult1 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 1);
-            expect(receivedResult1!.result.completionDate).toEqual(result1.completionDate);
-            expect(receivedResult1!.result.submission!.participation!.initializationDate).toEqual(participation1.initializationDate);
-            expect(receivedResult1!.result.submission!.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
-            expect(receivedResult1!.result.submission!.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
-            expect(receivedResult1!.result.durationInMinutes).toBe(300);
-
-            const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);
-            expect(receivedResult2!.result.completionDate).toBe(result2.completionDate);
-            const expectedPointsMap = new Map();
-            expectedPointsMap.set(1, 20);
-            expectedPointsMap.set(2, 30);
-            expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
-        });
-
-        expect(httpStub).toHaveBeenCalledExactlyOnceWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     });
 
     it('should convert Result Response from Server', () => {
@@ -362,8 +322,8 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
-        it('builds the string for a result without a participation and does not report it to Sentry', () => {
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+        it('builds the string for a result without a participation and does not report it as an error', () => {
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
             captureExceptionSpy.mockClear();
 
             expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
@@ -371,9 +331,43 @@ describe('ResultService', () => {
             expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
 
-        it('reports to Sentry if result or exercise is undefined', () => {
+        describe('rounding of the score', () => {
+            // an exercise of the course overview carries no course
+            const exerciseWithoutCourse = { id: 77, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+            const result: Result = { id: 7, score: 42.4567, completionDate: dayjs() };
+            const missingCourseMessage = 'The course object used for determining the rounding of scores was undefined';
+
+            beforeEach(() => {
+                vi.spyOn(ErrorReporting, 'captureException').mockClear();
+            });
+
+            it('rounds to the accuracy of the course that is passed for an exercise without a course, and does not report it', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('uses the course of the exercise before the passed course', () => {
+                const exerciseWithCourse = { id: 78, type: ExerciseType.TEXT, maxPoints: 10, course: { id: 1, accuracyOfScores: 0 } } as Exercise;
+
+                resultService.getResultString(result, exerciseWithCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('reports a missing course and rounds to the default accuracy when there is neither a course of the exercise nor a passed course', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true);
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.5 });
+                expect(ErrorReporting.captureException).toHaveBeenCalledWith(expect.objectContaining({ message: missingCourseMessage }));
+            });
+        });
+
+        it('reports an error if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
             captureExceptionSpy.mockClear();
             expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledExactlyOnceWith('Tried to generate a result string, but either the result or exercise was undefined');

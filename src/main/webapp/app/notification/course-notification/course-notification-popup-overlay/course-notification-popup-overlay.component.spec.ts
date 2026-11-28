@@ -33,7 +33,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let componentAsAny: any;
     let routerEvents: Subject<NavigationEnd>;
     let authenticationState: BehaviorSubject<User | undefined>;
-    type RouteNode = { outlet?: string; paramMap: ParamMap; children: RouteNode[] };
+    type RouteNode = { outlet?: string; routeConfig?: { path: string }; paramMap: ParamMap; children: RouteNode[] };
     let mockRouter: { events: Subject<NavigationEnd>; routerState: { snapshot: { root: RouteNode } } };
 
     function navigate(courseId?: number) {
@@ -46,6 +46,18 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         };
         routerEvents.next(new NavigationEnd(1, courseId ? `/courses/${courseId}` : '/', courseId ? `/courses/${courseId}` : '/'));
         fixture?.changeDetectorRef.detectChanges();
+    }
+
+    function setPrimaryRoute(paths: readonly string[], notify = true) {
+        let children: RouteNode[] = [];
+        for (const path of [...paths].reverse()) {
+            children = [{ outlet: 'primary', routeConfig: { path }, paramMap: convertToParamMap(path === ':courseId' ? { courseId: '101' } : {}), children }];
+        }
+        mockRouter.routerState.snapshot.root = { paramMap: convertToParamMap({}), children };
+        if (notify) {
+            routerEvents.next(new NavigationEnd(1, '/current-route', '/current-route'));
+            fixture.detectChanges();
+        }
     }
 
     const createMockNotification = (id: number, courseId: number, channelId: number | undefined): CourseNotification => {
@@ -153,6 +165,72 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         componentAsAny = component as any;
+    });
+
+    it.each([
+        ['student', ['courses', ':courseId', 'communication']],
+        ['management', ['course-management', ':courseId', '', 'communication']],
+    ] as const)('moves queued popups above the composer on the %s communication route without marking them seen', (_, paths) => {
+        websocketNotificationSubject.next(createMockNotification(1, 101, 30));
+        websocketNotificationSubject.next(createMockNotification(2, 101, 40));
+        fixture.detectChanges();
+        const overlay = fixture.nativeElement.firstElementChild as HTMLElement;
+        const cards = Array.from(overlay.querySelectorAll('jhi-course-notification'));
+
+        setPrimaryRoute(paths);
+        expect(overlay.classList.contains('is-communication')).toBe(true);
+        const toggle = overlay.querySelector<HTMLButtonElement>('[data-testid="notification-popup-toggle"]')!;
+        toggle.click();
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        // A top-anchored expanded stack must flow downwards, without the old upward height/offset arithmetic.
+        expect(overlay.style.height).toBe('');
+        expect(cards.map((card) => card.parentElement!.parentElement!.style.bottom)).toEqual(['', '']);
+        expect(Array.from(overlay.querySelectorAll('jhi-course-notification'))).toEqual(cards);
+
+        setPrimaryRoute(['courses', ':courseId', 'exercises']);
+        expect(overlay.classList.contains('is-communication')).toBe(false);
+        expect(overlay.style.height).not.toBe('');
+        expect(cards.every((card) => card.parentElement!.parentElement!.style.bottom !== '')).toBe(true);
+        expect(Array.from(overlay.querySelectorAll('jhi-course-notification'))).toEqual(cards);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
+        expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it('uses communication placement on initial load and delivers another conversation notification unread', () => {
+        fixture.destroy();
+        setPrimaryRoute(['courses', ':courseId', 'communication'], false);
+        fixture = TestBed.createComponent(CourseNotificationPopupOverlayComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        websocketNotificationSubject.next(createMockNotification(1, 101, 30));
+        fixture.detectChanges();
+
+        const overlay = fixture.nativeElement.firstElementChild as HTMLElement;
+        expect(overlay.classList.contains('is-communication')).toBe(true);
+        const rendered = fixture.debugElement.queryAll(By.directive(CourseNotificationComponent));
+        expect(rendered.map((element) => element.componentInstance.courseNotification().notificationId)).toEqual([1]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
+        expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it('ignores communication in a secondary outlet when the primary route is another course page', () => {
+        setPrimaryRoute(['courses', ':courseId', 'exercises'], false);
+        mockRouter.routerState.snapshot.root.children.unshift({
+            outlet: 'sidebar',
+            routeConfig: { path: 'communication' },
+            paramMap: convertToParamMap({}),
+            children: [],
+        });
+        routerEvents.next(new NavigationEnd(1, '/courses/101/exercises', '/courses/101/exercises'));
+        websocketNotificationSubject.next(createMockNotification(1, 101, 30));
+        fixture.detectChanges();
+
+        const overlay = fixture.nativeElement.firstElementChild as HTMLElement;
+        expect(overlay.classList.contains('is-communication')).toBe(false);
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(1);
     });
 
     it('renders only the active course without marking other courses seen', () => {

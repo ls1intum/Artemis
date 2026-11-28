@@ -11,9 +11,8 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { PanelModule } from 'primeng/panel';
-import { DividerModule } from 'primeng/divider';
-import { TagModule } from 'primeng/tag';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 /** A label/value pair for a plain-text or numeric metadata field. */
 interface MetadataField {
@@ -40,8 +39,8 @@ interface MetadataDateField {
 @Component({
     selector: 'jhi-exercise-version-shared-snapshot-metadata',
     templateUrl: './exercise-version-shared-snapshot-metadata.component.html',
-    styleUrls: ['./exercise-version-shared-snapshot-metadata.component.scss'],
-    imports: [PanelModule, DividerModule, TagModule, TranslateDirective, ArtemisDatePipe],
+    styleUrls: ['./exercise-version-shared-snapshot-metadata.component.css'],
+    imports: [TumAetUiPanelComponent, TumAetUiTagComponent, TranslateDirective, ArtemisDatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy {

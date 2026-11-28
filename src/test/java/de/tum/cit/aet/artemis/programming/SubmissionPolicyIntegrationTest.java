@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -37,7 +38,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -72,13 +75,13 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_forbidden_foreignInstructor() throws Exception {
         test_getSubmissionPolicyOfProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_ok() throws Exception {
         int submissionLimitIdentifier = 531267835;
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(submissionLimitIdentifier).active(true).policy());
@@ -87,7 +90,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicyWireShape() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(10).active(false).policy());
 
@@ -100,7 +103,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicyWireShape() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().limit(7).penalty(3.5).active(false).policy());
 
@@ -111,7 +114,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_ok_noPolicy_emptyBody() throws Exception {
         // the client maps an empty body to undefined; an empty JSON object would break its no-policy branch
         String body = request.get(requestUrl(), HttpStatus.OK, String.class);
@@ -119,7 +122,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSubmissionPolicyToProgrammingExercise_ok_queryCount() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(10).active(true).policy());
 
@@ -136,76 +139,76 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_forbidden_tutor() throws Exception {
         test_addSubmissionPolicyToProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_forbidden_editor() throws Exception {
         test_addSubmissionPolicyToProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_forbidden_foreignInstructor() throws Exception {
         test_addSubmissionPolicyToProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_addSubmissionPolicyToProgrammingExercise_notFound_exerciseNotPresent() throws Exception {
-        request.post(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.NOT_FOUND);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_addSubmissionPolicyToProgrammingExercise_forbidden_exerciseNotPresent() throws Exception {
+        request.post(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_exerciseHasPolicy() throws Exception {
         addAnySubmissionPolicyToExercise();
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.any());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_policyHasId() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().id(12L).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionLimitNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(null).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionLimitSmallerOne() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(0).policy());
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.lockRepo().active(true).limit(-1000).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionPenaltyNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(null).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_submissionPenaltySmallerEqualZero() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(0.0).policy());
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(-12.0).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_badRequest_activeNull() throws Exception {
         addSubmissionPolicy_badRequest(SubmissionPolicyBuilder.submissionPenalty().active(null).limit(10).penalty(10.0).policy());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicy() throws Exception {
         request.post(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(false).limit(10).policy(), HttpStatus.CREATED);
         assertThat(updatedExercise().getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
@@ -214,7 +217,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicy() throws Exception {
         request.post(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(false).limit(15).penalty(14.0).policy(), HttpStatus.CREATED);
         assertThat(updatedExercise().getSubmissionPolicy().getClass()).isEqualTo(SubmissionPenaltyPolicy.class);
@@ -224,7 +227,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_ok_lockRepositoryPolicyWireShapeAndSingleRow() throws Exception {
         // the client posts exactly these four properties for a new lock repository policy
         String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "lock_repository", 10, null, false), HttpStatus.CREATED);
@@ -240,7 +243,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_addSubmissionPolicyToProgrammingExercise_ok_submissionPenaltyPolicyWireShape() throws Exception {
         String response = request.postWithResponseBodyString(requestUrl(), new SubmissionPolicyDTO(null, "submission_penalty", 15, 14.0, false), HttpStatus.CREATED);
         Map<String, Object> body = asJsonMap(response);
@@ -260,37 +263,37 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void test_updateSubmissionPolicy_forbidden_tutor() throws Exception {
         test_updateSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void test_updateSubmissionPolicy_forbidden_editor() throws Exception {
         test_updateSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void test_updateSubmissionPolicy_forbidden_foreignInstructor() throws Exception {
         test_updateSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_updateSubmissionPolicy_notFound_exerciseNotPresent() throws Exception {
-        request.patch(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.NOT_FOUND);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_updateSubmissionPolicy_forbidden_exerciseNotPresent() throws Exception {
+        request.patch(requestUrlWrongId(), SubmissionPolicyBuilder.any(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_badRequest_policyNotPresent() throws Exception {
         request.patch(requestUrl(), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_lockRepositoryPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(15).policy(), HttpStatus.OK);
@@ -298,7 +301,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitGreater() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy());
         ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -312,7 +315,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_lockRepositoryPolicy_newLimitSmaller() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy());
         ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
@@ -326,7 +329,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_submissionPenaltyPolicy() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(10.0).policy());
         request.patch(requestUrl(), SubmissionPolicyBuilder.submissionPenalty().active(true).limit(15).penalty(10.0).policy(), HttpStatus.OK);
@@ -335,7 +338,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_sameType_keepsPolicyRow() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         Long policyId = updatedExercise().getSubmissionPolicy().getId();
@@ -356,7 +359,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_typeChange_replacesPolicyRow() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
@@ -376,7 +379,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_typeChangeWithPreviousId_replacesPolicyRow() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
@@ -398,7 +401,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_updateSubmissionPolicy_ok_typeChangeWithPreviousId_penaltyToLockRepository() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(5.0).policy());
         Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
@@ -428,38 +431,38 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void test_toggleSubmissionPolicy_forbidden_tutor() throws Exception {
         test_toggleSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void test_toggleSubmissionPolicy_forbidden_editor() throws Exception {
         test_toggleSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void test_toggleSubmissionPolicy_forbidden_foreignInstructor() throws Exception {
         test_toggleSubmissionPolicy_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_toggleSubmissionPolicy_notFound_exerciseNotPresent() throws Exception {
-        request.put(requestUrlWrongId() + activate(true), SubmissionPolicyBuilder.any(), HttpStatus.NOT_FOUND);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_toggleSubmissionPolicy_forbidden_exerciseNotPresent() throws Exception {
+        request.put(requestUrlWrongId() + activate(true), SubmissionPolicyBuilder.any(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_toggleSubmissionPolicy_badRequest_policyNotPresent() throws Exception {
         request.put(requestUrl() + activate(true), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_toggleSubmissionPolicy_badRequest_policyActiveStatusMatchesRequest(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(activate).limit(10).policy());
         request.put(requestUrl() + activate(activate), SubmissionPolicyBuilder.any(), HttpStatus.BAD_REQUEST);
@@ -467,7 +470,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_toggleSubmissionPolicy_ok_lockRepositoryPolicy(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(activate).limit(10).policy());
         request.put(requestUrl() + activate(!activate), SubmissionPolicyBuilder.any(), HttpStatus.OK);
@@ -476,7 +479,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_toggleSubmissionPolicy_ok_submissionPenaltyPolicy(boolean activate) throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(activate).penalty(10.0).limit(10).policy());
         request.put(requestUrl() + activate(!activate), SubmissionPolicyBuilder.any(), HttpStatus.OK);
@@ -492,37 +495,37 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void test_removeSubmissionPolicyFromProgrammingExercise_forbidden_tutor() throws Exception {
         test_removeSubmissionPolicyFromProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void test_removeSubmissionPolicyFromProgrammingExercise_forbidden_editor() throws Exception {
         test_removeSubmissionPolicyFromProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void test_removeSubmissionPolicyFromProgrammingExercise_forbidden_foreignInstructor() throws Exception {
         test_removeSubmissionPolicyFromProgrammingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_removeSubmissionPolicyFromProgrammingExercise_badRequest_noPolicyPresent() throws Exception {
         request.delete(requestUrl(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_removeSubmissionPolicyFromProgrammingExercise_notFound_exerciseNotPresent() throws Exception {
-        request.delete(requestUrlWrongId(), HttpStatus.NOT_FOUND);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_removeSubmissionPolicyFromProgrammingExercise_forbidden_exerciseNotPresent() throws Exception {
+        request.delete(requestUrlWrongId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_removeSubmissionPolicyFromProgrammingExercise_ok() throws Exception {
         addAnySubmissionPolicyToExercise();
         request.delete(requestUrl(), HttpStatus.OK);
@@ -537,7 +540,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @Disabled // TODO re-enable (or delete) after for localvc when test configuration issues are resolved
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_enforceLockRepositoryPolicyOnStudentParticipation(EnforcePolicyTestType type) {
         if (type != EnforcePolicyTestType.POLICY_NULL) {
             addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(1).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
@@ -567,7 +570,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) {
         programmingExercise.setMaxPoints(10.0);
         programmingExerciseRepository.save(programmingExercise);
@@ -604,7 +607,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @Disabled // TODO enable
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_getSameScoreForSameCommitHash() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -651,7 +654,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_processCompileOnlyResult_doesNotMarkSubmissionAsBuildFailed_whenBuildScriptSucceeds() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -667,7 +670,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_processResultWithTests_doesNotMarkSubmissionAsBuildFailed() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -687,7 +690,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_processResultWithOnlyUnknownTests_doesNotMarkSubmissionAsBuildFailed() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -708,7 +711,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void test_processCompileOnlyResult_marksSubmissionAsBuildFailed_whenBuildScriptFails() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
@@ -770,6 +773,38 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     private void addSubmissionPolicyToExercise(SubmissionPolicy policy) {
         programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_updateProgrammingExercise_keepsPolicyWhenRequestOmitsIt() throws Exception {
+        addAnySubmissionPolicyToExercise();
+        ObjectNode body = updateRequestBody();
+        body.putNull("submissionPolicy");
+
+        request.putWithResponseBody("/api/programming/programming-exercises", body, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedExercise().getSubmissionPolicy()).as("the update does not remove the policy").isNotNull();
+        assertThat(request.get(requestUrl(), HttpStatus.OK, SubmissionPolicyDTO.class).submissionLimit()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_updateProgrammingExercise_keepsPolicyValuesWhenRequestChangesThem() throws Exception {
+        addAnySubmissionPolicyToExercise();
+        ObjectNode body = updateRequestBody();
+        ((ObjectNode) body.get("submissionPolicy")).put("submissionLimit", 1).put("active", false);
+
+        request.putWithResponseBody("/api/programming/programming-exercises", body, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        SubmissionPolicyDTO policy = request.get(requestUrl(), HttpStatus.OK, SubmissionPolicyDTO.class);
+        assertThat(policy.submissionLimit()).as("the update does not change the policy").isEqualTo(5);
+        assertThat(policy.active()).isTrue();
+    }
+
+    private ObjectNode updateRequestBody() {
+        ProgrammingExercise loaded = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExerciseId);
+        return objectMapper.valueToTree(UpdateProgrammingExerciseDTO.of(loaded, programmingExerciseUtilService.buildConfigOf(loaded)));
     }
 
     private void addAnySubmissionPolicyToExercise() {

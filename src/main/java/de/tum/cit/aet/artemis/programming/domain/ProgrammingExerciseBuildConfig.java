@@ -5,12 +5,16 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,12 +79,22 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "theia_image")
     private String theiaImage;
 
-    @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
-    private boolean allowBranching = false; // default value
-
-    @Column(name = "branch_regex", columnDefinition = "varchar(128)")
     @Nullable
-    private String branchRegex = ".*"; // default value
+    @Enumerated(EnumType.STRING)
+    @Column(name = "online_ide_experience_level", length = 16)
+    private OnlineIdeExperienceLevel onlineIdeExperienceLevel;
+
+    /**
+     * Rarely used settings (branching, build time window) as one JSON document, NULL if none deviates from the default.
+     * The legacy columns {@code allow_branching} and {@code branch_regex} are no longer mapped, see the changelog that introduced this column.
+     * <p>
+     * TODO: Drop the columns {@code allow_branching} and {@code branch_regex} from the database with a changelog (contract step) in a later release, once no application
+     * version that maps them can be rolled back to anymore, and then remove this note. They are not mapped in Java anymore, so there is nothing to remove in this class.
+     */
+    @Nullable
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "advanced_settings", columnDefinition = "json")
+    private BuildConfigAdvancedSettings advancedSettings;
 
     @Size(max = 36)
     @Nullable
@@ -102,8 +116,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setBuildScript(originalBuildConfig.getBuildScript());
         this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
         this.setTheiaImage(originalBuildConfig.getTheiaImage());
-        this.setAllowBranching(originalBuildConfig.isAllowBranching());
-        this.setBranchRegex(originalBuildConfig.getBranchRegex());
+        this.setOnlineIdeExperienceLevel(originalBuildConfig.getOnlineIdeExperienceLevel());
+        // the settings are an immutable record, so sharing the instance is safe
+        this.setAdvancedSettings(originalBuildConfig.getAdvancedSettings());
         this.setProgrammingExercise(null);
         this.buildPlanAccessSecret = null;
     }
@@ -206,6 +221,15 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.theiaImage = theiaImage;
     }
 
+    @Nullable
+    public OnlineIdeExperienceLevel getOnlineIdeExperienceLevel() {
+        return onlineIdeExperienceLevel;
+    }
+
+    public void setOnlineIdeExperienceLevel(@Nullable OnlineIdeExperienceLevel onlineIdeExperienceLevel) {
+        this.onlineIdeExperienceLevel = onlineIdeExperienceLevel;
+    }
+
     /**
      * A regex defining which branches are allowed to be created.
      *
@@ -217,19 +241,72 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      */
     @Nullable
     public String getBranchRegex() {
-        return branchRegex;
+        BranchingSettings branching = getBranchingSettings();
+        return branching != null && branching.regex() != null ? branching.regex() : BranchingSettings.DEFAULT_REGEX;
     }
 
-    public void setBranchRegex(String branchRegex) {
-        this.branchRegex = Objects.requireNonNullElse(branchRegex, ".*");
+    public void setBranchRegex(@Nullable String branchRegex) {
+        setBranchingSettings(new BranchingSettings(isAllowBranching(), Objects.requireNonNullElse(branchRegex, BranchingSettings.DEFAULT_REGEX)));
     }
 
     public boolean isAllowBranching() {
-        return allowBranching;
+        BranchingSettings branching = getBranchingSettings();
+        return branching != null && branching.allowed();
     }
 
     public void setAllowBranching(boolean allowBranching) {
-        this.allowBranching = allowBranching;
+        setBranchingSettings(new BranchingSettings(allowBranching, getBranchRegex()));
+    }
+
+    /**
+     * The rarely used settings of this build configuration. Not part of the entity's JSON representation: the DTOs carry the individual settings.
+     *
+     * @return the settings, or null if all of them have their default value
+     */
+    @Nullable
+    @JsonIgnore
+    public BuildConfigAdvancedSettings getAdvancedSettings() {
+        return advancedSettings;
+    }
+
+    /**
+     * Replaces the rarely used settings, bringing them into their canonical form (defaults are stored as NULL).
+     *
+     * @param advancedSettings the new settings, may be null
+     */
+    @JsonIgnore
+    public void setAdvancedSettings(@Nullable BuildConfigAdvancedSettings advancedSettings) {
+        this.advancedSettings = BuildConfigAdvancedSettings.normalized(advancedSettings);
+    }
+
+    /**
+     * The period in which pushes to student repositories are built.
+     *
+     * @return the window, or null if pushes are always built
+     */
+    @Nullable
+    @JsonIgnore
+    public BuildTimeWindow getBuildTimeWindow() {
+        return advancedSettings != null ? advancedSettings.buildTimeWindow() : null;
+    }
+
+    /**
+     * Sets or removes the period in which pushes to student repositories are built, keeping the other advanced settings.
+     *
+     * @param buildTimeWindow the window, or null if pushes should always be built
+     */
+    @JsonIgnore
+    public void setBuildTimeWindow(@Nullable BuildTimeWindow buildTimeWindow) {
+        setAdvancedSettings(new BuildConfigAdvancedSettings(getBranchingSettings(), buildTimeWindow));
+    }
+
+    @Nullable
+    private BranchingSettings getBranchingSettings() {
+        return advancedSettings != null ? advancedSettings.branching() : null;
+    }
+
+    private void setBranchingSettings(@Nullable BranchingSettings branching) {
+        setAdvancedSettings(new BuildConfigAdvancedSettings(branching, getBuildTimeWindow()));
     }
 
     public ProgrammingExercise getProgrammingExercise() {
@@ -244,6 +321,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 
+    /**
+     * The value is only used by the server to build and check build plan access addresses, so it is not part of the JSON representation.
+     *
+     * @return the build plan access value, null if none was generated
+     */
+    @JsonIgnore
     @Nullable
     public String getBuildPlanAccessSecret() {
         return buildPlanAccessSecret;
@@ -274,6 +357,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
                 + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\''
-                + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
+                + ", onlineIdeExperienceLevel=" + onlineIdeExperienceLevel + ", advancedSettings=" + advancedSettings + '}';
     }
 }

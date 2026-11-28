@@ -11,7 +11,7 @@ import type { TumAetUiEmptyStateVariant } from './tumaet-ui-empty-state.variants
 @Component({
     selector: 'tumaet-ui-empty-state',
     templateUrl: './tumaet-ui-empty-state.component.html',
-    styleUrl: './tumaet-ui-empty-state.component.scss',
+    styleUrl: './tumaet-ui-empty-state.component.css',
     imports: [FaIconComponent],
     host: {
         class: 'tumaet-ui-empty-state tumaet:flex tumaet:flex-col tumaet:items-center tumaet:text-center',
@@ -21,7 +21,7 @@ import type { TumAetUiEmptyStateVariant } from './tumaet-ui-empty-state.variants
 })
 export class TumAetUiEmptyStateComponent {
     /** Decorative icon shown above the empty state content. */
-    readonly icon = input.required<IconProp>();
+    readonly icon = input<IconProp>();
 
     /** Visual treatment of the decorative icon container. */
     readonly variant = input<TumAetUiEmptyStateVariant>('outlined');

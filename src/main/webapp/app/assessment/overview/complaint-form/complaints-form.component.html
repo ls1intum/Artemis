@@ -1,6 +1,6 @@
 @if (isCurrentUserSubmissionAuthor()) {
-    <div class="mt-6! rounded-lg border border-(--border-color) bg-(--module-bg) p-4!" data-testid="complaint-form-card">
-        <h3 class="text-base! font-semibold!" [jhiTranslate]="complaintType() === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
+    <div class="mt-6 rounded-lg border border-(--border-color) bg-(--module-bg) p-4" data-testid="complaint-form-card">
+        <h3 class="text-base font-semibold" [jhiTranslate]="complaintType() === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
         @if (complaintType() !== ComplaintType.COMPLAINT) {
             <p>
                 {{ (exercise().teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}
@@ -24,10 +24,11 @@
             <textarea
                 [attr.aria-label]="'artemisApp.complaint.title' | artemisTranslate"
                 id="complainTextArea"
-                class="w-full px-1"
+                class="w-full px-1!"
                 rows="4"
                 [maxLength]="this.maxComplaintTextLimit"
                 [(ngModel)]="complaintText"
+                tumAetUiInput
             >
             </textarea>
             <jhi-textarea-counter [maxLength]="this.maxComplaintTextLimit" [content]="complaintText" [visible]="true" />

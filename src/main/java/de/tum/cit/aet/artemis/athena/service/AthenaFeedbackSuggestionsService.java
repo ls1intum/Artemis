@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -14,7 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -98,7 +99,7 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
-     * @param athenaRestTemplate        REST template used for the communication with Athena
+     * @param athenaRestClient          REST client used for the communication with Athena
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
      * @param athenaDTOConverterService Service to convert exercises and submissions to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
@@ -106,14 +107,14 @@ public class AthenaFeedbackSuggestionsService {
      * @param courseCompetencyApi       API for course competency operations
      * @param featureUsageCollector     counts feedback suggestion requests for the feature usage analysis
      */
-    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
+    public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestClient") RestClient athenaRestClient, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
             Optional<FeatureUsageCollector> featureUsageCollector) {
-        textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
+        textAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOText.class);
         this.userAiPreferenceService = userAiPreferenceService;
-        programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
-        modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
+        programmingAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOProgramming.class);
+        modelingAthenaConnector = new AthenaConnector<>(athenaRestClient, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -422,18 +423,20 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Returns whether the submission has any Athena-generated result. Scans every result on the submission, not just
+     * Returns whether the submission has a successful or still-pending Athena-generated result. Scans every result on the submission, not just
      * the latest, to also catch the case where a later non-Athena result was added on top of an existing Athena result.
      *
      * @param submission the student's submission to inspect
      * @return {@code true} if any Athena result is present for the submission
      */
     public boolean submissionHasAthenaResult(Submission submission) {
-        return submission.getResults().stream().filter(Objects::nonNull).anyMatch(Result::isAthenaBased);
+        var now = ZonedDateTime.now();
+        return submission.getResults().stream().filter(Objects::nonNull).filter(Result::isAthenaBased).anyMatch(result -> Boolean.TRUE.equals(result.isSuccessful())
+                || (result.isSuccessful() == null && result.getCompletionDate() != null && result.getCompletionDate().isAfter(now)));
     }
 
     /**
-     * Ensures that the submission does not have any Athena-generated result. Scans every result on the submission,
+     * Ensures that the submission does not have a successful or still-pending Athena-generated result. Scans every result on the submission,
      * not just the latest, to also catch the case where a later non-Athena result was added on top of an existing
      * Athena result.
      *

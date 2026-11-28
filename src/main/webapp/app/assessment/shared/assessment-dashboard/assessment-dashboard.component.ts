@@ -1,3 +1,11 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,7 +25,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faArrowUpRightFromSquare, faCircleInfo, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faClipboard, faHeartBroken, faShieldAlt, faTable, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -42,17 +50,6 @@ import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import dayjs from 'dayjs/esm';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiPanelComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -86,6 +83,7 @@ import {
         TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -149,7 +147,6 @@ export class AssessmentDashboardComponent implements OnInit {
     protected deimosSubmitting = signal(false);
 
     // Icons
-    faCircleInfo = faCircleInfo;
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;

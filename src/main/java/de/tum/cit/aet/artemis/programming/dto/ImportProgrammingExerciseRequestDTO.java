@@ -77,8 +77,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param testRepositoryUri                          the URI of the test repository being imported
  * @param buildConfig                                the build configuration
  * @param gradingCriteria                            the structured grading criteria
- * @param competencyLinks                            the linked competencies; honoured by the from-file and sharing
- *                                                       imports, ignored by the plain import
+ * @param competencyLinks                            the competencies of the target course the new exercise is linked to, which the author picks in
+ *                                                       the import form; the competencies of the source exercise are not carried over
  * @param auxiliaryRepositories                      the auxiliary repositories
  * @param submissionPolicy                           the submission policy
  * @param plagiarismDetectionConfig                  the plagiarism detection configuration
@@ -113,9 +113,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
      */
     public static ImportProgrammingExerciseRequestDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig) {
         // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
-        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria())
-                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList()
-                : null;
+        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria()) ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;
@@ -143,6 +141,20 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
     }
 
     /**
+     * Copies the exercise details without their id: the record is immutable, and the exported id belongs to the source instance.
+     *
+     * @return the same details with a {@code null} id
+     */
+    public ImportProgrammingExerciseRequestDTO withoutId() {
+        return new ImportProgrammingExerciseRequestDTO(null, title, shortName, channelName, packageName, problemStatement, gradingInstructions, categories, difficulty, mode,
+                teamAssignmentConfig, maxPoints, bonusPoints, includedInOverallScore, releaseDate, startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate,
+                buildAndTestStudentSubmissionsAfterDueDate, assessmentType, allowComplaintsForAutomaticAssessments, presentationScoreEnabled, secondCorrectionEnabled,
+                allowOnlineEditor, allowOfflineIde, allowOnlineIde, staticCodeAnalysisEnabled, maxStaticCodeAnalysisPenalty, showTestNamesToStudents,
+                releaseTestsWithExampleSolution, programmingLanguage, projectType, projectKey, testRepositoryUri, buildConfig, gradingCriteria, competencyLinks,
+                auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig, course, exerciseGroup, templateParticipation, solutionParticipation);
+    }
+
+    /**
      * Reference to a source template or solution participation. The from-file import reads the repository URI off the
      * JSON part to rewrite legacy project names; the plain import ignores it. The wire property name comes from the
      * enclosing record's component, so both slots share one record.
@@ -163,10 +175,8 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
      * ones because the client's {@code NON_EMPTY} serialization drops empty lists.
      * <p>
      * Competency links are deliberately not bound here, because a link needs a managed competency and only
-     * {@code CompetencyExerciseLinkService} can resolve one. The three import handlers then differ: the from-file and
-     * the sharing import call that service, so the competencies the author picked in the create form are created with
-     * the exercise; the plain import calls it not at all, because it copies an exercise of another course and
-     * competencies are course-specific.
+     * {@code CompetencyExerciseLinkService} can resolve one. All three import handlers call that service, so the
+     * competencies the author picked in the form are created with the exercise.
      *
      * @return the transient exercise described by this request
      */
@@ -179,8 +189,7 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         // A list, not a set, on the wire: the export nulls the criterion and instruction ids, and GradingCriterionDTO
         // is a record with value equality, so a set would merge two criteria that only differ by id and drop a rubric
         // row. The entities are distinct even without ids, so they only go into a set once they are built.
-        exercise.setGradingCriteria(
-                gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
+        exercise.setGradingCriteria(GradingCriterionDTO.toEntities(gradingCriteria));
         exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();

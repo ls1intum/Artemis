@@ -26,6 +26,7 @@ public interface GradingCriterionRepository extends ArtemisJpaRepository<Grading
             FROM GradingCriterion criterion
                 LEFT JOIN FETCH criterion.structuredGradingInstructions
             WHERE criterion.exercise.id = :exerciseId
+            ORDER BY criterion.sortOrder, criterion.id
             """)
     Set<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
 }

@@ -8,7 +8,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -24,8 +23,10 @@ export interface IComplaintService {
     isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
     isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
     isComplaintLocked: (complaint: Complaint) => boolean | undefined;
-    create: (complaintRequest: ComplaintRequestDTO) => Observable<EntityResponseType>;
-    findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
+    findBySubmissionIdForAssessment: (submissionId: number) => Observable<EntityResponseType>;
+    findForTutorByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findForTutorByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findBySubmissionId: (submissionId: number) => Observable<EntityResponseType>;
     getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
     findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
@@ -84,19 +85,26 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Create a new complaint.
-     * @param complaintRequest
-     */
-    create(complaintRequest: ComplaintRequestDTO): Observable<EntityResponseType> {
-        return this.http.post<ComplaintDTO>(this.resourceUrl, complaintRequest, { observe: 'response' });
-    }
-
-    /**
      * Find complaint by Submission id.
      * @param submissionId
      */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http.get<ComplaintDTO>(`${this.resourceUrl}?submissionId=${submissionId}`, { observe: 'response' });
+    }
+
+    /** Find complaint detail for assessment rather than the participation owner. */
+    findBySubmissionIdForAssessment(submissionId: number): Observable<EntityResponseType> {
+        return this.http.get<ComplaintDTO>(`${this.resourceUrl}/for-assessment?submissionId=${submissionId}`, { observe: 'response' });
+    }
+
+    /** Find the current tutor's complaints in a course without student identities. */
+    findForTutorByCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}`);
+    }
+
+    /** Find the current tutor's complaints in precisely one exercise without student identities. */
+    findForTutorByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
+        return this.requestComplaintsFromUrl(`${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}`);
     }
 
     /**
@@ -124,7 +132,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType - the type of complaint
      */
     findAllWithoutStudentInformationForCourseId(courseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        const url = `${this.resourceUrl}/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 
@@ -135,7 +143,7 @@ export class ComplaintService implements IComplaintService {
      * @param complaintType - the type of complaint
      */
     findAllWithoutStudentInformationForExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
-        const url = `${this.resourceUrl}?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
+        const url = `${this.resourceUrl}/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`;
         return this.requestComplaintsFromUrl(url);
     }
 

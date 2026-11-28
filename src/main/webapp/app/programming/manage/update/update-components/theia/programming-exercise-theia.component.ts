@@ -1,26 +1,49 @@
-import { KeyValuePipe } from '@angular/common';
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, KeyValuePipe, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, TumAetUiSelectComponent],
 })
 export class ProgrammingExerciseTheiaComponent {
     private theiaService = inject(TheiaService);
+    private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly programmingExercise = input.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
 
     programmingLanguage?: ProgrammingLanguage;
     readonly theiaImages = signal<object>({});
+    readonly experienceLevels = Object.values(OnlineIdeExperienceLevel);
+
+    /** The entries of the image select: the name of each image the server offers for the language. */
+    readonly theiaImageOptions = computed(() => Object.entries(this.theiaImages()).map(([label, value]) => ({ label, value: value as string })));
+
+    /** The entries of the experience level select: "not set" first, then every level. */
+    readonly experienceLevelOptions = computed(() => {
+        this.currentLocale();
+        const prefix = 'artemisApp.programmingExercise.onlineIdeExperienceLevel.';
+        return [
+            { value: undefined as OnlineIdeExperienceLevel | undefined, label: this.translateService.instant(prefix + 'notSet') as string },
+            ...this.experienceLevels.map((level): { value: OnlineIdeExperienceLevel | undefined; label: string } => ({
+                value: level,
+                label: this.translateService.instant(prefix + 'levels.' + level) as string,
+            })),
+        ];
+    });
 
     constructor() {
         // Replicates the previous ngOnChanges behavior: whenever either input changes, reload the
@@ -38,6 +61,12 @@ export class ProgrammingExerciseTheiaComponent {
     onTheiaImageChange(theiaImage: string) {
         if (this.programmingExercise().buildConfig) {
             this.programmingExercise().buildConfig!.theiaImage = theiaImage;
+        }
+    }
+
+    onExperienceLevelChange(experienceLevel: OnlineIdeExperienceLevel | undefined) {
+        if (this.programmingExercise().buildConfig) {
+            this.programmingExercise().buildConfig!.onlineIdeExperienceLevel = experienceLevel;
         }
     }
 

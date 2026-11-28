@@ -1,12 +1,12 @@
-import { Component, inject, input, output, viewChild } from '@angular/core';
-import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { Component, DestroyRef, inject, input, output, signal, viewChild } from '@angular/core';
+import { Observable, combineLatest, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TypeaheadScrollActiveOptionDirective } from 'app/shared-ui/directives/typeahead-scroll-active-option.directive';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
+import { createTeamSearch } from 'app/exercise/team/team-search.util';
 import { orderBy } from 'lodash-es';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
@@ -15,15 +15,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
-    imports: [FormsModule, NgbTypeahead, TypeaheadScrollActiveOptionDirective, ArtemisTranslatePipe],
+    imports: [FormsModule, TumAetUiAutoCompleteComponent, ArtemisTranslatePipe],
 })
 export class TeamExerciseSearchComponent {
     private courseService = inject(CourseManagementService);
     private translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    readonly ngbTypeahead = viewChild.required<NgbTypeahead>('instance');
-    focus$ = new Subject<string>();
-    click$ = new Subject<string>();
+    readonly autocomplete = viewChild<TumAetUiAutoCompleteComponent>('autocomplete');
 
     readonly course = input.required<Course>();
     readonly ignoreExercises = input<Exercise[]>([]);
@@ -38,7 +37,13 @@ export class TeamExerciseSearchComponent {
     exerciseOptions: Exercise[] = [];
     exerciseOptionsLoaded = false;
 
-    inputDisplayValue = '';
+    private readonly displayValue = signal('');
+    get inputDisplayValue(): string {
+        return this.displayValue();
+    }
+    set inputDisplayValue(value: string) {
+        this.displayValue.set(value);
+    }
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);
@@ -65,10 +70,7 @@ export class TeamExerciseSearchComponent {
     }
 
     onSearch = (text$: Observable<string>) => {
-        const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.ngbTypeahead().isPopupOpen()));
-        const inputFocus$ = this.focus$;
-
-        return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
+        return text$.pipe(
             tap(() => {
                 this.searchNoResults.emit(undefined);
             }),
@@ -94,6 +96,16 @@ export class TeamExerciseSearchComponent {
             map((exerciseOptions) => orderBy(exerciseOptions, ['releaseDate', 'id'])),
         );
     };
+
+    private readonly search = createTeamSearch(
+        this.destroyRef,
+        (queries) => this.onSearch(queries),
+        (value) => this.searchResultFormatter(value),
+        (value) => this.onAutocompleteSelect(value),
+    );
+    readonly suggestions = this.search.suggestions;
+    readonly requestSearch = this.search.requestSearch;
+    readonly selectOption = this.search.selectOption;
 
     /**
      * Load options of team exercise

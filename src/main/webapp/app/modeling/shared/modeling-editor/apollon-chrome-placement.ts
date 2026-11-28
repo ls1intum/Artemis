@@ -23,6 +23,34 @@ export interface BottomCenterPlacement {
 export const RAIL_DISCLOSURE_MIN_HEIGHT = 224;
 export const RAIL_DISCLOSURE_MAX_HEIGHT = 720;
 
+/** Measures the common Apollon controls before calculating their available bottom-center space. */
+export function measureBottomCenterPlacement(elements: {
+    root: HTMLElement;
+    zoom: HTMLElement;
+    minimap: HTMLElement;
+    surface: HTMLElement;
+    positionedElement: HTMLElement;
+    chromeContainer: HTMLElement;
+    shiftProperty: string;
+    palette?: HTMLElement | null;
+    obstruction?: Rectangle;
+}): BottomCenterPlacement {
+    const styles = getComputedStyle(elements.chromeContainer);
+    return calculateBottomCenterPlacement({
+        root: elements.root.getBoundingClientRect(),
+        zoom: elements.zoom.getBoundingClientRect(),
+        minimap: elements.minimap.getBoundingClientRect(),
+        surface: elements.surface.getBoundingClientRect(),
+        palette: elements.palette?.getBoundingClientRect(),
+        paletteRegion: elements.palette?.closest<HTMLElement>('[data-apollon-region]')?.dataset.apollonRegion,
+        obstruction: elements.obstruction,
+        chromeGap: Number.parseFloat(styles.getPropertyValue('--apollon-chrome-gap')) || 0,
+        chromeEdge: Number.parseFloat(styles.getPropertyValue('--apollon-chrome-edge')) || 0,
+        rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+        previousShift: Number.parseFloat(getComputedStyle(elements.positionedElement).getPropertyValue(elements.shiftProperty)) || 0,
+    });
+}
+
 const MAXIMUM_SURFACE_WIDTH_REM = 44;
 const MINIMUM_INLINE_SURFACE_WIDTH_REM = 12;
 

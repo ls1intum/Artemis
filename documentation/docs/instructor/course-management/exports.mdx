@@ -2,6 +2,7 @@
 id: exports
 title: Exports and archives
 sidebar_label: Exports
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -30,19 +31,20 @@ have extra conditions that are explained in their section.
 |---------------------------------------------------------------------------------------|----------------------------------|---------------------------------------------------------|------------------------------------------------------|
 | [Archive a course](#archive-a-course)                                                   | Instructor                       | Course settings page                                      | ZIP with every exercise and student submission        |
 | [Archive an exam](#archive-an-exam)                                                     | Instructor                       | Exam checklist                                            | ZIP with every exam exercise and student submission   |
+| [Export an exercise](#export-an-exercise)                                               | Instructor                       | Course exercises page, **Export**                         | ZIP that can be imported into another course          |
 | [Export programming exercise material](#export-programming-exercise-material)            | Instructor                       | Exercise detail page                                      | ZIP that can be imported into another course          |
-| [Export student repositories in bulk](#export-student-repositories-in-bulk)               | Tutor (anonymized), Instructor   | Scores page, or the course exercises overview             | ZIP with one entry per participation                  |
+| [Export student repositories in bulk](#export-student-repositories-in-bulk)               | Tutor (anonymized), Instructor   | Participations page, or the course exercises overview     | ZIP with one entry per participation                  |
 | [Download a template, solution or test repository](#download-a-template-solution-or-test-repository) | Tutor                | Exercise detail page                                      | ZIP including the Git history                         |
 | [Download an auxiliary repository](#download-an-auxiliary-repository)                     | Tutor                            | Exercise detail page                                      | ZIP including the Git history                         |
-| [Download a single student repository](#download-a-single-student-repository)             | Owner of the participation, otherwise Tutor | Scores page, assessment view, exercise page    | ZIP of the code without the Git history               |
+| [Download a single student repository](#download-a-single-student-repository)             | Owner of the participation, otherwise Tutor | Participations page, assessment view, exercise page | ZIP of the code without the Git history               |
 | [Download the example solution](#download-the-example-solution)                           | Student after publication, otherwise Tutor | Exercise page                                  | ZIP of the code without the Git history               |
-| [Export exercise submissions](#export-exercise-submissions)                               | Instructor                       | Scores page                                               | ZIP of text, modeling or uploaded files               |
-| [Export exercise results](#export-exercise-results)                                       | Instructor                       | Scores page                                               | CSV                                                   |
-| [Export participant names](#export-participant-names)                                     | Instructor                       | Scores page                                               | CSV of the participants                               |
+| [Export exercise submissions](#export-exercise-submissions)                               | Instructor                       | Participations page                                       | ZIP of text, modeling or uploaded files               |
+| [Export exercise results](#export-exercise-results)                                       | Instructor                       | Participations page                                       | CSV                                                   |
+| [Export participant names](#export-participant-names)                                     | Instructor                       | Participations page                                       | CSV of the participants                               |
 | [Export course scores](#export-course-scores)                                             | Instructor                       | Course management, Scores page                            | Excel or CSV                                          |
 | [Export exam scores](#export-exam-scores)                                                 | Instructor                       | Exam scores page                                          | Excel or CSV                                          |
 | [Export the exam student list](#export-the-exam-student-list)                             | Instructor                       | Exam students page                                        | CSV                                                   |
-| [Export quiz questions](#export-quiz-questions)                                           | Editor                           | Quiz exercise detail page, or the quiz question list      | JSON                                                  |
+| [Export quiz questions](#export-quiz-questions)                                           | Editor                           | Quiz exercise detail page                                 | JSON                                                  |
 | [Export tutorial groups](#export-tutorial-groups)                                         | Instructor                       | Tutorial groups management                                | CSV or JSON                                           |
 | [Export an exercise to the Sharing Platform](#export-an-exercise-to-the-sharing-platform)  | Instructor                       | Exercise detail page                                      | Exercise pushed to the connected platform             |
 | [Request your own data export](#request-your-own-data-export)                             | Any user                         | Privacy statement, in the page footer                     | ZIP with everything Artemis stores about you          |
@@ -53,7 +55,8 @@ have extra conditions that are explained in their section.
   The **Exports** feature toggle, under Server Administration, Feature Toggles, governs the heavy exports: the course
   and exam archives, the programming repository downloads, and the submission exports. With it off those buttons stay
   visible but are disabled. The score, results, participant, quiz, tutorial group and personal data exports are not
-  behind it and keep working.
+  behind it and keep working. **Export** on the exercise page of a course, which
+  [exports whole exercises](#export-an-exercise), is hidden while the toggle is off.
 
 </Callout>
 
@@ -97,6 +100,23 @@ The same as a course archive, limited to a single exam, and likewise only possib
 
 <Image src={examArchiveChecklist} alt="Archive Exam on the exam checklist page" size={ImageSize.large} caption="Archiving from the exam checklist" />
 
+## Exercises
+
+### Export an exercise
+
+**Export**, on the exercise page of a course, opens the **Export** tab of the **Manage Exercises** dialog. Pick the
+exercise type, then **Export** next to the exercise. The ZIP file is what **Import**, **From file** reads, for every
+exercise type, so it is the way to move an exercise to another course or another Artemis instance. It contains:
+
+- `Exercise-Details-<title>.json` with the exercise settings, its categories and its grading criteria.
+- `Problem-Statement-<title>.md` and, in `files/`, the images the problem statement embeds.
+- For a quiz, the questions with their solutions and, in one folder per drag-and-drop question, its images.
+- For a programming exercise, the same content as
+  [Export programming exercise material](#export-programming-exercise-material).
+
+Student submissions and results are not included; the [course archive](#archive-a-course) holds those. Images that
+are embedded anywhere other than the problem statement keep pointing at the Artemis instance they came from.
+
 ## Programming exercise repositories
 
 Every repository export is an ordinary ZIP file. Whether it carries the Git history differs per export and is stated
@@ -115,13 +135,13 @@ below, because that is what decides if the extracted folder is a usable reposito
 solution, test and auxiliary repositories, the problem statement, and the exercise configuration. This is the format
 the exercise import reads, so it is the way to move an exercise to another course or another Artemis instance.
 
-<Image src={exerciseExportButtons} alt="Export actions on a programming exercise detail page" size={ImageSize.large} caption="The export actions on a programming exercise" />
+<Image src={exerciseExportButtons} alt="The More actions menu of a programming exercise detail page, with Download Exercise" size={ImageSize.large} caption="The export actions on a programming exercise" />
 
 ### Export student repositories in bulk
 
 Exports the repositories of many participations at once, for graded and practice participations alike.
 
-Open the **Scores** page of the exercise, click **Export**, and choose **Download Repos**. The same action is
+Open the **Participations** page of the exercise, click **Export**, and choose **Download Repos**. The same action is
 available on the course exercises overview, where it exports the selected programming exercises together.
 
 The **Export Repositories** dialog takes either a comma-separated list of logins or team short names, or
@@ -166,13 +186,12 @@ if the exercise defines any.
 directory, so it contains the submitted code but no history.
 
 Students see this button on their own exercise page and can only download their own participation. Instructors can
-open student repositories from the participation and score lists. Tutors can open them through **Code** while support
+open student repositories from the participations page. Tutors can open them through **Code** while support
 access is available: before the exercise due date when manual or semi-automatic assessment is enabled, or at any time
 for automatically assessed course programming exercises and exercises without a due date.
 
 After the manual-assessment deadline, tutors use the **Assessment Dashboard** to view and download anonymized
-submissions selected by participation ID. Names and direct repository access are hidden on the participation and
-score pages. See [Access Rights](/admin/access-rights#general-functionality).
+submissions selected by participation ID. Names and direct repository access are hidden on the participations page. See [Access Rights](/admin/access-rights#general-functionality).
 
 ### Download the example solution
 
@@ -183,10 +202,10 @@ configured to release the tests together with the solution.
 
 ## Submissions, results and scores
 
-The exercise **Scores** page collects the per-exercise exports behind one **Export** button. Which entries the
+The exercise **Participations** page collects the per-exercise exports behind one **Export** button. Which entries the
 resulting **Export Options** list offers depends on the exercise type and on your role.
 
-<Image src={scoresExportOptions} alt="Export Options list on the exercise scores page" size={ImageSize.large} caption="The export options of a text exercise" />
+<Image src={scoresExportOptions} alt="Export Options list on the exercise participations page" size={ImageSize.large} caption="The export options of a text exercise" />
 
 ### Export exercise submissions
 
@@ -203,8 +222,10 @@ For programming exercises, use [Export student repositories in bulk](#export-stu
 levels of detail — **Without test cases**, **With test cases**, and **With test cases and feedback**, which adds a copy
 of the feedback given for each failed test. Every other exercise type produces the plain file directly.
 
-The file is assembled in your browser from the data already on the page, so it contains exactly the participations the
-page shows.
+The export always covers the whole exercise, whatever page, search or filter the table shows. It contains the latest
+grade-relevant result of each participation. Unrated results, for example of late submissions, are not exported, and
+participations without a grade-relevant result are left out. A programming participation is also left out while the
+result of its newest submission from before the due date is still pending.
 
 ### Export participant names
 
@@ -219,7 +240,7 @@ that table into a file. The table, its statistics (average, median and standard 
 only: users who currently hold the tutor, editor or instructor role in the course are left out, even if they took part
 in exercises.
 
-<Image src={courseScoresExport} alt="Course scores page with the Export action in its title bar" size={ImageSize.large} caption="The course scores page" />
+<Image src={courseScoresExport} alt="Course scores page with the score distribution and the table of points that Export turns into a file" size={ImageSize.large} caption="The course scores page" />
 
 **Export** opens the **Export Options** dialog with a tab per format. **Excel** writes an `.xlsx` workbook and has
 nothing to configure. **CSV** takes the three settings that decide whether another program reads the result correctly:
@@ -242,8 +263,8 @@ list to another system, for example for seat planning.
 ### Export quiz questions
 
 Exports the questions of a quiz, including their sample solutions, as a JSON file. **Export** on the detail page of the
-quiz writes the whole quiz; the quiz question list of the course lets you pick individual questions across quizzes and
-export only those.
+quiz writes all of its questions. To move the whole quiz with its settings, [export the exercise](#export-an-exercise)
+instead.
 
 The file is written by your browser from the quiz that is already loaded, and it can be imported into another quiz.
 

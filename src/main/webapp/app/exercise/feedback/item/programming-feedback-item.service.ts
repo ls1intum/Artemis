@@ -1,4 +1,4 @@
-import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
+import { FeedbackItemService, gradingInstructionFeedbackItem } from 'app/exercise/feedback/item/feedback-item-service';
 import { Service, inject } from '@angular/core';
 import {
     Feedback,
@@ -52,7 +52,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
             return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
-            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
+            return gradingInstructionFeedbackItem(feedback, this.translateService.instant(showTestDetails ? 'artemisApp.course.reviewer' : 'artemisApp.result.detail.feedback'));
         } else {
             return this.createReviewerFeedbackItem(feedback, showTestDetails);
         }
@@ -169,25 +169,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     /**
-     * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
-     * @param feedback The manual feedback where a grading instruction was used.
-     * @param showTestDetails
-     */
-    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        const gradingInstruction = feedback.gradingInstruction!;
-
-        return {
-            type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
-            name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text,
-            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
-            positive: feedback.positive,
-            credits: feedback.credits,
-            feedbackReference: feedback,
-        };
-    }
-
-    /**
      * Creates a feedback item for a regular reviewer feedback not using a grading instruction.
      * @param feedback The manual feedback from which the feedback item should be created.
      * @param showTestDetails
@@ -232,15 +213,20 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
         const filePath = Feedback.getReferenceFilePath(feedback);
         const lineRange = Feedback.getReferenceLineRange(feedback);
-        // AI feedback numbers its lines from 1 (the server and the Athena service only create references with a line above 0),
-        // unlike the 0-based inline feedback of the code editor, so line 0 is no line of an AI feedback
-        if (!filePath || !lineRange || lineRange.start < 1) {
+        // A non-graded suggestion keeps Athena's 0-based lines, like the inline feedback of the code editor, so line 0 is its first line.
+        // Graded AI feedback numbers its lines from 1 (the Athena service only creates references with a line above 0).
+        // The panel counts from 1.
+        const isNonGraded = Feedback.isNonGradedFeedbackSuggestion(feedback);
+        const firstLine = isNonGraded ? 0 : 1;
+        if (!filePath || !lineRange || lineRange.start < firstLine) {
             return undefined;
         }
-        const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
-        const lineEnd = legacyLineEnd ?? lineRange.end;
-        const codeReference: FeedbackItemCodeReference = { filePath, line: lineRange.start };
-        if (lineEnd !== lineRange.start) {
+        const legacyLineEnd = isNonGraded ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
+        const offset = 1 - firstLine;
+        const line = lineRange.start + offset;
+        const lineEnd = (legacyLineEnd ?? lineRange.end) + offset;
+        const codeReference: FeedbackItemCodeReference = { filePath, line };
+        if (lineEnd !== line) {
             codeReference.lineEnd = lineEnd;
         }
         return codeReference;

@@ -1,4 +1,7 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
@@ -18,13 +21,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             }
         `,
     ],
-    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective],
+    imports: [TextBlockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective, TumAetUiTagComponent],
 })
 export class TextAssessmentAreaComponent {
+    private readonly document = inject(DOCUMENT);
     private stringCountService = inject(StringCountService);
 
     // inputs
     submission = input.required<TextSubmission>();
+    allFeedbacks = input<Feedback[]>([]);
     textBlockRefs = model.required<TextBlockRef[]>();
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
@@ -73,16 +78,57 @@ export class TextAssessmentAreaComponent {
     }
 
     @HostListener('document:keydown.alt', ['$event', 'false'])
-    @HostListener('document:keyup.alt', ['$event', 'true'])
+    @HostListener('document:keyup', ['$event', 'true'])
     onAltToggle(event: Event, toggleValue: boolean) {
-        if (!this.allowManualBlockSelection()) {
+        // Restore even if focus or the other held modifiers changed after Alt entered manual selection.
+        if (toggleValue) {
+            if (event instanceof KeyboardEvent && event.key === 'Alt') {
+                this.autoTextBlockAssessment.set(true);
+            }
             return;
         }
-        if (!toggleValue && this.autoTextBlockAssessment()) {
+        if (!this.allowManualBlockSelection() || event.composedPath().some((target) => this.isEditableElement(target)) || this.isEditableElement(this.document.activeElement)) {
+            return;
+        }
+        if (this.autoTextBlockAssessment()) {
             // a new manual selection starts, so the previous one must not claim the focus when the cards are rendered again
             this.blockToFocus.set(undefined);
         }
-        this.autoTextBlockAssessment.set(toggleValue);
+        this.autoTextBlockAssessment.set(false);
+    }
+
+    /**
+     * The release of Alt can be lost, for example when the operating system consumes it for a keyboard layout switch (Alt+Shift) or a window shortcut. The area would
+     * then stay in manual selection, where unassessed text has no drop targets, so a criterion dropped onto it silently links to nothing until the page is reloaded.
+     * Any key press, pointer press or drag start without Alt proves that Alt is up, so it brings the area back to the automatic selection.
+     * @param event the interaction that was observed on the document
+     */
+    @HostListener('document:pointerdown', ['$event'])
+    @HostListener('document:dragstart', ['$event'])
+    @HostListener('document:keydown', ['$event'])
+    onInteractionWithoutAlt(event: MouseEvent | KeyboardEvent): void {
+        if (this.autoTextBlockAssessment() || event.altKey || (event instanceof KeyboardEvent && event.key === 'Alt')) {
+            return;
+        }
+        this.blockToFocus.set(undefined);
+        this.autoTextBlockAssessment.set(true);
+    }
+
+    @HostListener('window:blur')
+    onWindowBlur(): void {
+        this.blockToFocus.set(undefined);
+        this.autoTextBlockAssessment.set(true);
+    }
+
+    private isEditableElement(target: EventTarget | null): boolean {
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+        if (target.closest('input, textarea, select') || target.isContentEditable) {
+            return true;
+        }
+        const editable = target.closest('[contenteditable]');
+        return !!editable && editable.getAttribute('contenteditable')?.toLowerCase() !== 'false';
     }
 
     /**

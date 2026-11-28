@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -24,9 +25,11 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -35,6 +38,9 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 
 class ParticipationLiveSaveCoordinationTest {
+
+    /** The template copy in these tests carries no online IDE configuration. */
+    private static final Supplier<Map<String, byte[]>> NO_ADDITIONAL_FILES = Map::of;
 
     @Test
     void studentCannotCopyATemplateThatALaterSaveFailureCompensates() throws Exception {
@@ -46,7 +52,8 @@ class ParticipationLiveSaveCoordinationTest {
         var vcs = mock(VersionControlService.class);
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
-        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, Optional.of(api));
+        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
+                Optional.of(api), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -67,7 +74,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var templateHead = new AtomicReference<>("baseline");
         var copiedHead = new AtomicReference<String>();
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenAnswer(invocation -> {
             copiedHead.set(templateHead.get());
             return destination;
         });
@@ -93,7 +100,7 @@ class ParticipationLiveSaveCoordinationTest {
             try {
                 assertThat(templatePushed.await(10, TimeUnit.SECONDS)).isTrue();
                 assertThatExceptionOfType(ConflictException.class)
-                        .isThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, participation));
+                        .isThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, NO_ADDITIONAL_FILES, participation));
                 verifyNoInteractions(vcs);
                 assertThat(copiedHead.get()).isNull();
             }
@@ -103,7 +110,7 @@ class ParticipationLiveSaveCoordinationTest {
             save.get(10, TimeUnit.SECONDS);
         }
 
-        var result = ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, participation);
+        var result = ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, NO_ADDITIONAL_FILES, participation);
         assertThat(result).isSameAs(participation);
         assertThat(copiedHead.get()).isEqualTo("baseline");
         assertThat(participation.getInitializationState()).isEqualTo(InitializationState.REPO_COPIED);
@@ -119,8 +126,8 @@ class ParticipationLiveSaveCoordinationTest {
         var vcs = mock(VersionControlService.class);
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
-        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)));
+        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
         var course = new Course();
@@ -134,7 +141,7 @@ class ParticipationLiveSaveCoordinationTest {
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var bothCopying = new CountDownLatch(2);
         var finishCopies = new CountDownLatch(1);
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt())).thenAnswer(invocation -> {
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenAnswer(invocation -> {
             bothCopying.countDown();
             assertThat(finishCopies.await(10, TimeUnit.SECONDS)).isTrue();
             return destination;
@@ -145,8 +152,8 @@ class ParticipationLiveSaveCoordinationTest {
         var second = participation(exercise, "student2");
 
         try (var executor = Executors.newFixedThreadPool(2)) {
-            var firstCopy = executor.submit(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, first));
-            var secondCopy = executor.submit(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, second));
+            var firstCopy = executor.submit(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, NO_ADDITIONAL_FILES, first));
+            var secondCopy = executor.submit(() -> ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, NO_ADDITIONAL_FILES, second));
             try {
                 assertThat(bothCopying.await(10, TimeUnit.SECONDS)).as("both students must reach actual VCS copying before either finishes").isTrue();
                 assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> liveSave.claim(exerciseId));
@@ -173,8 +180,8 @@ class ParticipationLiveSaveCoordinationTest {
         var vcs = mock(VersionControlService.class);
         var uriService = mock(UriService.class);
         var participations = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
-        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null,
-                Optional.of(new HyperionExerciseMutationApi(liveSave)));
+        var service = new ParticipationService(Optional.empty(), Optional.of(vcs), null, null, participations, null, null, null, uriService, null, null, null, null,
+                Optional.of(new HyperionExerciseMutationApi(liveSave)), mock(CourseConfigurationRepository.class), mock(GitService.class));
         var course = new Course();
         course.setShortName("te");
         var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
@@ -191,11 +198,11 @@ class ParticipationLiveSaveCoordinationTest {
         var destination = new LocalVCRepositoryUri("https://artemis.example.org/git/TEST/test-examstudent.git");
         when(uriService.getRepositorySlugFromRepositoryUri(source)).thenReturn("test-template");
         when(participations.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt())).thenReturn(destination);
+        when(vcs.copyRepositoryWithoutHistory(anyString(), anyString(), anyString(), anyString(), anyString(), anyInt(), any())).thenReturn(destination);
         Supplier<LocalVCRepositoryUri> sourceUri = () -> source;
         Supplier<String> branch = () -> "main";
 
-        Object copied = ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, participation);
+        Object copied = ReflectionTestUtils.invokeMethod(service, "copyRepository", exercise, sourceUri, branch, NO_ADDITIONAL_FILES, participation);
         assertThat(copied).isSameAs(participation);
         assertThat(participation.getInitializationState()).isEqualTo(InitializationState.REPO_COPIED);
         verifyNoInteractions(map);

@@ -14,13 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.service.TutorEffortService;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -44,17 +40,10 @@ public class TutorEffortResource {
 
     private final CourseRepository courseRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final UserRepository userRepository;
-
     private final TutorEffortService tutorEffortService;
 
-    public TutorEffortResource(AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            TutorEffortService tutorEffortService, CourseRepository courseRepository) {
+    public TutorEffortResource(ExerciseRepository exerciseRepository, TutorEffortService tutorEffortService, CourseRepository courseRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.authorizationCheckService = authorizationCheckService;
-        this.userRepository = userRepository;
         this.tutorEffortService = tutorEffortService;
         this.courseRepository = courseRepository;
     }
@@ -67,7 +56,7 @@ public class TutorEffortResource {
      * @return list of TutorEffort objects or no content if no results found
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/tutor-effort")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<TutorEffortDTO>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
 
@@ -77,8 +66,6 @@ public class TutorEffortResource {
         if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
             return ResponseEntity.noContent().build();
         }
-        User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         List<TutorEffortDTO> tutorEffortList = tutorEffortService.buildTutorEffortList(courseId, exerciseId);
         if (tutorEffortList.isEmpty()) {

@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
-import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,14 +19,14 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
-    styleUrls: ['./text-exam-submission.component.scss'],
+    styleUrls: ['./text-exam-submission.component.css'],
     imports: [
         TranslateDirective,
         ExamExerciseHeaderComponent,
@@ -59,7 +58,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     // answer represents the view state
     readonly answer = signal('');
     readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
-    private textEditorInput = new Subject<string>();
 
     // Icons
     protected readonly faListAlt = faListAlt;
@@ -111,10 +109,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     onTextEditorInput(event: Event) {
+        // Keep the shared submission current while a previous save may still be in flight. The parent also uses this
+        // object for autosave and hand-in, and an older response must not make it lose the text visible in the editor.
+        this.studentSubmission().text = (event.target as HTMLTextAreaElement).value;
         this.studentSubmission().isSynced = false;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
         this.examParticipationService.notifySubmissionSyncStateChanged();
-        this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 
     private updateViewFromSubmissionVersion() {

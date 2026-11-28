@@ -19,17 +19,37 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 
 @Conditional(ExamEnabled.class)
 @Lazy
 @Repository
 public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>, JpaSpecificationExecutor<ExamUser> {
+
+    /**
+     * Counts every registration, so a student registered for several exams is counted once per exam. Which exams are real is defined like in
+     * {@link ExamRepository#countRealExamsInCourses}.
+     *
+     * @param courseIds the courses
+     * @return the number of registrations for the real exams of these courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(eu.id)
+            FROM ExamUser eu
+            WHERE eu.exam.course.id IN :courseIds
+                AND eu.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
+                AND LOWER(eu.exam.title) NOT LIKE 'test%'
+                AND LOWER(eu.exam.title) NOT LIKE 'mock%'
+                AND eu.user.deleted = FALSE
+                AND eu.user.isTestUser = FALSE
+            """)
+    long countRegistrationsForRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
             SELECT eu
@@ -71,34 +91,39 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
                 examUser.user.registrationNumber,
                 examUser.signingImagePath,
                 studentExams.started,
-                studentExams.submitted
+                studentExams.submitted,
+                examUser.didCheckImage,
+                examUser.didCheckName,
+                examUser.didCheckLogin,
+                examUser.didCheckRegistrationNumber,
+                CASE WHEN examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                    AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                        OR exam.endDate <= CURRENT_TIMESTAMP)
+                    THEN TRUE ELSE FALSE END
             )
             FROM ExamUser examUser
                 LEFT JOIN examUser.exam exam
                 LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
+                    AND (studentExams.testRun IS NULL OR studentExams.testRun = FALSE)
             WHERE exam.id = :examId
-                AND studentExams.started = TRUE
-                AND (examUser.signingImagePath IS NULL
-                    OR examUser.signingImagePath = ''
-                    OR examUser.didCheckImage = FALSE
-                    OR examUser.didCheckLogin = FALSE
-                    OR examUser.didCheckRegistrationNumber = FALSE
-                    OR examUser.didCheckName = FALSE
-                )
+                AND (:includeAll = TRUE OR (studentExams.started = TRUE
+                    AND NOT (examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                        AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                        AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                            OR exam.endDate <= CURRENT_TIMESTAMP))))
             """)
-    Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
+    Set<ExamUserAttendanceCheckDTO> findForAttendanceCheck(@Param("examId") long examId, @Param("includeAll") boolean includeAll);
 
     @Query("""
             SELECT COUNT(examUser) > 0
             FROM ExamUser examUser
             WHERE examUser.exam.id = :examId
                 AND examUser.user.login = :login
-                AND examUser.signingImagePath IS NOT NULL
-                AND examUser.signingImagePath != ''
-                AND examUser.didCheckImage = TRUE
-                AND examUser.didCheckLogin = TRUE
-                AND examUser.didCheckRegistrationNumber = TRUE
-                AND examUser.didCheckName = TRUE
+                AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                    OR examUser.exam.endDate <= CURRENT_TIMESTAMP)
             """)
     boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 
@@ -111,6 +136,21 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
 
     @EntityGraph(type = LOAD, attributePaths = { "exam", "exam.examUsers" })
     Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
+
+    /**
+     * Finds the course of the exam an exam user is registered for, without loading the exam user or the exam.
+     *
+     * @param examUserId the id of the exam user
+     * @return the course of the exam, or empty if the exam user does not exist
+     */
+    @Query("""
+            SELECT c
+            FROM ExamUser eu
+                JOIN eu.exam e
+                JOIN e.course c
+            WHERE eu.id = :examUserId
+            """)
+    Optional<Course> findCourseByExamUserId(@Param("examUserId") long examUserId);
 
     /**
      * Returns the IDs of users who are already registered as exam users for the given exam, filtered to the provided user IDs.
@@ -129,7 +169,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     Set<Long> findRegisteredUserIdsByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     /**
-     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link ExamStudentSearchDTO}.
+     * Returns a page of {@link ExamUser} IDs for the given exam, filtered and searched according to {@link PagedSearchDTO}.
      * Sorting is applied via {@code query.orderBy} inside the specification rather than through {@link Pageable#getSort()}
      * because the working-time sort requires a correlated subquery that {@link Sort} cannot express.
      *
@@ -137,7 +177,9 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
      * @param search search term, page index, page size, sort column, sort direction, and an optional filter value
      * @return a page of {@link ExamUser} IDs in the requested order
      */
-    default Page<Long> findExamUserIdsForExam(long examId, ExamStudentSearchDTO search) {
+    // Reviewed false positive (Sonar S7186): the page index, page size and sort are part of the search DTO, and the Pageable is built inside because the sort needs a
+    // specification.
+    default Page<Long> findExamUserIdsForExam(long examId, PagedSearchDTO search) { // NOSONAR
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Specification<ExamUser> spec = Specification.where(ExamUserSpecs.forExam(examId)).and(ExamUserSpecs.searchByUserFields(search.searchTerm()))
                 .and(ExamUserSpecs.filteredBy(search.filterProp())).and(ExamUserSpecs.ordered(search.sortedColumn(), sortOrder));

@@ -83,7 +83,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void textAssessmentRejectsFeedbackIdOfAnotherResult() throws Exception {
         Fixture fixture = setUpTextFixture("FeedbackX", "FeedbackY");
 
@@ -99,7 +99,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void textAssessmentRejectsTextBlockOfAnotherSubmission() throws Exception {
         Fixture fixture = setUpTextFixture("BlockX", "BlockY");
         TextBlock otherBlock = TextExerciseFactory.generateTextBlock(0, OTHER_SUBMISSION_TEXT.length(), OTHER_SUBMISSION_TEXT);
@@ -118,7 +118,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
     void textAssessmentAfterComplaintRejectsFeedbackIdOfAnotherResult() throws Exception {
         Fixture fixture = setUpTextFixture("ComplaintX", "ComplaintY");
         Result assessedResult = resultRepository.findByIdElseThrow(fixture.resultId());
@@ -145,7 +145,7 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void modelingAssessmentRejectsFeedbackIdOfAnotherResult() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise("ModelX");
         ModelingExercise exercise = (ModelingExercise) course.getExercises().iterator().next();
@@ -234,4 +234,29 @@ class AssessmentIdValidationTest extends AbstractSpringIntegrationIndependentBat
         return new Fixture(url, submission.getParticipation().getId(), submission.getId(), submission.getLatestResult().getId(), otherResult.getId(), otherFeedback.getId(),
                 otherSubmission);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "USER")
+    void textAssessmentAfterComplaintRejectsResponseOfAnotherResult() throws Exception {
+        Fixture f = setUpTextFixture("ComplaintBindingX", "ComplaintBindingY");
+        var own = complaintUtilService.createComplaintAndResponse(resultRepository.findByIdElseThrow(f.resultId()), TEST_PREFIX + "tutor3").complaintResponse();
+        var foreign = complaintUtilService.createComplaintAndResponse(resultRepository.findByIdElseThrow(f.otherResultId()), TEST_PREFIX + "tutor2").complaintResponse();
+        var responses = List.of(own, foreign);
+        var accepted = responses.stream().map(r -> scalar("SELECT c.accepted FROM Complaint c WHERE c.id = :id", r.getComplaint().getId())).toList();
+        var submitted = responses.stream().map(r -> scalar("SELECT r.submittedTime FROM ComplaintResponse r WHERE r.id = :id", r.getId())).toList();
+        var texts = responses.stream().map(r -> scalar("SELECT r.responseText FROM ComplaintResponse r WHERE r.id = :id", r.getId())).toList();
+        Object resultCount = scalar("SELECT COUNT(r) FROM Result r WHERE r.submission.id = :id", f.submissionId());
+        Object score = scalar("SELECT r.score FROM Result r WHERE r.id = :id", f.resultId());
+        var body = new TextAssessmentUpdateDTO(List.of(),
+                new ComplaintResponseRequestDTO(foreign.getId(), "rejected", new ComplaintResponseRequestDTO.ComplaintRequestDTO(foreign.getComplaint().getId(), false)), null,
+                Set.of());
+        request.putAndExpectError("/api/text/participations/" + f.participationId() + "/submissions/" + f.submissionId() + "/text-assessment-after-complaint", body,
+                HttpStatus.BAD_REQUEST, "complaintResultMismatch");
+        assertThat(responses.stream().map(r -> scalar("SELECT c.accepted FROM Complaint c WHERE c.id = :id", r.getComplaint().getId())).toList()).isEqualTo(accepted);
+        assertThat(responses.stream().map(r -> scalar("SELECT r.submittedTime FROM ComplaintResponse r WHERE r.id = :id", r.getId())).toList()).isEqualTo(submitted);
+        assertThat(responses.stream().map(r -> scalar("SELECT r.responseText FROM ComplaintResponse r WHERE r.id = :id", r.getId())).toList()).isEqualTo(texts);
+        assertThat(scalar("SELECT COUNT(r) FROM Result r WHERE r.submission.id = :id", f.submissionId())).isEqualTo(resultCount);
+        assertThat(scalar("SELECT r.score FROM Result r WHERE r.id = :id", f.resultId())).isEqualTo(score);
+    }
+
 }

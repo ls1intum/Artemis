@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -100,49 +99,6 @@ class ElevatedAccessServiceTest {
         when(userRepository.isAdmin("admin")).thenReturn(true);
 
         assertThat(new ElevatedAccessService(userRepository, false).isAdminElevationActive()).isTrue();
-    }
-
-    @Test
-    void shouldPreserveExplicitInstructorRoleWithoutAdminElevation() {
-        authenticate("admin", Role.ADMIN, Role.INSTRUCTOR);
-
-        assertThat(serviceRequiringPasskey().hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isTrue();
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void shouldNotTreatAdminAuthorityAsInstructorWithoutElevation() {
-        authenticate("admin", Role.ADMIN);
-
-        assertThat(serviceRequiringPasskey().hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isFalse();
-    }
-
-    @Test
-    void shouldKeepAdminAsAuthenticatedStudentWithoutElevation() {
-        authenticate("admin", Role.ADMIN);
-
-        assertThat(serviceRequiringPasskey().hasAtLeastRoleOrAdminAccess(Role.STUDENT)).isTrue();
-        verify(userRepository, never()).isAdmin("admin");
-    }
-
-    @Test
-    void shouldApplyExplicitTeachingRoleHierarchyWithoutAdminElevation() {
-        authenticate("editor", Role.EDITOR);
-
-        var elevatedAccessService = serviceRequiringPasskey();
-        assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.TEACHING_ASSISTANT)).isTrue();
-        assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.EDITOR)).isTrue();
-        assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isFalse();
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void shouldRequirePersistedSuperAdminStatusForSuperAdminRole() {
-        authenticateWithApprovedPasskey("superadmin", Role.SUPER_ADMIN);
-        when(userRepository.isAdmin("superadmin")).thenReturn(true);
-
-        assertThat(serviceRequiringPasskey().hasAtLeastRoleOrAdminAccess(Role.SUPER_ADMIN)).isFalse();
-        verify(userRepository).isSuperAdmin("superadmin");
     }
 
     /**

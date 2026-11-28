@@ -1,12 +1,16 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChildren } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -31,15 +35,17 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./quiz-re-evaluate.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
     imports: [
         TranslateDirective,
         FaIconComponent,
         FormsModule,
-        NgbTooltip,
         TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
         TumAetUiTooltipDirective,
         TumAetUiDatePickerComponent,
         IncludedInOverallScorePickerComponent,
@@ -71,12 +77,14 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
-            this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
-                this.quizExercise.set(response.body!);
-                this.prepareEntity(this.quizExercise());
-                this.savedEntity = deepClone(this.quizExercise());
-                this.updateDuration();
-            });
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(params['exerciseId']) : this.quizExerciseService.find(params['exerciseId'])).subscribe(
+                (quizExercise) => {
+                    this.quizExercise.set(quizExercise);
+                    this.prepareEntity(this.quizExercise());
+                    this.savedEntity = deepClone(this.quizExercise());
+                    this.updateDuration();
+                },
+            );
         });
         this.quizIsValid.set(true);
         this.popupService = this.quizExercisePopupService;

@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -18,18 +17,28 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 
-import { MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_ATLASLLM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
+    PROFILE_PROD,
+} from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
@@ -47,7 +56,7 @@ import { CourseAccessStorageService } from 'app/course/shared/services/course-ac
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
+import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -127,6 +136,13 @@ describe('CourseManagementContainerComponent', () => {
     } as Course;
 
     beforeEach(async () => {
+        const storageMap = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn((key: string) => storageMap.get(key) ?? null),
+            setItem: vi.fn((key: string, value: string) => storageMap.set(key, value)),
+            removeItem: vi.fn((key: string) => storageMap.delete(key)),
+            clear: vi.fn(() => storageMap.clear()),
+        });
         route = {
             firstChild: {
                 params: of({ courseId: course1.id }) as Params,
@@ -135,7 +151,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),
@@ -149,6 +165,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
@@ -158,10 +175,6 @@ describe('CourseManagementContainerComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CourseManagementContainerComponent);
-        component = fixture.componentInstance;
-
-        component.isShownViaLti.set(false);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         courseAdminService = TestBed.inject(CourseAdminService);
@@ -174,10 +187,8 @@ describe('CourseManagementContainerComponent', () => {
         router = TestBed.inject(Router);
         websocketService = TestBed.inject(WebsocketService);
 
-        // Mock WebsocketService.subscribe to return an empty observable
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
-
-        findSpy = vi.spyOn(courseService, 'find').mockReturnValue(
+        findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -185,16 +196,11 @@ describe('CourseManagementContainerComponent', () => {
                 }),
             ),
         );
+        findCourseSpy = findSpy;
+        fixture = TestBed.createComponent(CourseManagementContainerComponent);
+        component = fixture.componentInstance;
+        component.isShownViaLti.set(false);
         courseConversationsService = fixture.debugElement.injector.get(CourseConversationsService);
-
-        findCourseSpy = vi.spyOn(courseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
 
         getCourseSummarySpy = vi.spyOn(courseAdminService, 'getCourseSummary').mockReturnValue(
             of(
@@ -233,10 +239,13 @@ describe('CourseManagementContainerComponent', () => {
         );
 
         deleteSpy = vi.spyOn(courseAdminService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        // No operation is running by default
+        vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(of(new HttpResponse<CourseOperationProgressDTO | null>({ body: null, status: 204 })));
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
             activeProfiles: [PROFILE_PROD],
+            gocastEnabled: true,
         } as unknown as ProfileInfo);
 
         vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
@@ -248,6 +257,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.restoreAllMocks();
         localStorageService?.clear();
         TestBed.inject(SessionStorageService).clear();
+        vi.unstubAllGlobals();
     });
 
     it('should call necessary methods on init', async () => {
@@ -259,7 +269,7 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(getCourseStub).toHaveBeenCalledWith(1);
-        expect(getSidebarItems).toHaveBeenCalledTimes(2);
+        expect(getSidebarItems).toHaveBeenCalledTimes(3);
         expect(subscribeToCourseUpdates).toHaveBeenCalledWith(1);
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             1,
@@ -273,7 +283,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
             feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
         );
-        vi.spyOn(courseService, 'find').mockReturnValue(
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: { ...course1, presentationAssessmentsEnabled: true },
@@ -304,6 +314,20 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.some((item) => item.title === 'Presentations')).toBe(shown);
     });
 
+    it('should update the Smart Quizzes sidebar item when the feature is toggled', async () => {
+        const smartQuizzesToggle = new Subject<boolean>();
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) => (feature === FeatureToggle.SmartQuizzes ? smartQuizzesToggle : of(true)));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course1, isAtLeastEditor: true } })));
+
+        await component['initializeCourseManagementContainerComponent']();
+
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
+        smartQuizzesToggle.next(true);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(true);
+        smartQuizzesToggle.next(false);
+        expect(component.sidebarItems().some((item) => item.testId === 'smart-quizzes')).toBe(false);
+    });
+
     it('should keep the transparent presentation layout for a selected exercise-linked presentation', () => {
         route.snapshot.firstChild!.data = { transparentCourseBody: true };
         (router as unknown as MockRouter).setUrl('/course-management/1/presentations/17/exercises/7');
@@ -318,6 +342,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isTestServer).toBe(false);
         expect(component.atlasEnabled).toBe(true);
         expect(component.irisEnabled).toBe(true);
+        expect(component.hyperionEnabled).toBe(true);
         expect(component.ltiEnabled).toBe(true);
         expect(component.localCIActive).toBe(false);
     });
@@ -352,7 +377,10 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.hyperionEnabled = true;
+        component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
+        component.gocastEnabled = true;
         const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
@@ -365,11 +393,22 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Athena Settings')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Assessment Dashboard')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
+    });
+
+    it('should not include the TUM.Live sidebar item when the integration is unavailable', () => {
+        component.course.set(course1);
+        component.gocastEnabled = false;
+
+        const sidebarItems = component.getSidebarItems();
+
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
     });
     it('should not include Tutorials sidebar item when tutorial group module feature is disabled', () => {
         component.course.set({
@@ -397,6 +436,7 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'TUM.Live')).toBeUndefined();
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 
@@ -489,18 +529,16 @@ describe('CourseManagementContainerComponent', () => {
         });
     });
 
-    it('should delete course and broadcast event', () => {
+    it('should only end the confirmation dialog when the server accepted the deletion', () => {
         const eventManagerSpy = vi.spyOn(eventManager, 'broadcast');
         const dialogErrorSourceSpy = vi.spyOn(component.dialogErrorSource, 'next');
 
         component.deleteCourse(1);
 
         expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({
-            name: 'courseListModification',
-            content: 'artemisApp.course.deleted',
-        });
         expect(dialogErrorSourceSpy).toHaveBeenCalledExactlyOnceWith('');
+        // The course is deleted in the background: the lists are told when the deletion is completed, not when it was accepted
+        expect(eventManagerSpy).not.toHaveBeenCalled();
         // Navigation happens when progress overlay is closed, not immediately after delete
         expect(router.navigate).not.toHaveBeenCalled();
     });
@@ -513,6 +551,102 @@ describe('CourseManagementContainerComponent', () => {
         component.deleteCourse(1);
 
         expect(dialogErrorSourceSpy).toHaveBeenCalledWith(error.message);
+    });
+
+    describe('background deletion progress', () => {
+        const progress = (operationType: CourseOperationType, status: CourseOperationStatus): CourseOperationProgressDTO => ({
+            operationType,
+            status,
+            stepsCompleted: 1,
+            totalSteps: 14,
+            itemsProcessed: 0,
+            totalItems: 0,
+            failed: 0,
+            weightedProgressPercent: status === CourseOperationStatus.COMPLETED ? 100 : 10,
+        });
+
+        let progressTopic: Subject<CourseOperationProgressDTO>;
+
+        beforeEach(() => {
+            progressTopic = new Subject<CourseOperationProgressDTO>();
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(progressTopic as Observable<unknown>);
+            vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(of(new HttpResponse<CourseOperationProgressDTO | null>({ body: null, status: 204 })));
+            component.courseId.set(1);
+        });
+
+        it('should show the progress of the deletion and tell the course lists once when it is completed', () => {
+            const eventManagerSpy = vi.spyOn(eventManager, 'broadcast');
+            component['subscribeToOperationProgress'](1);
+
+            progressTopic.next(progress(CourseOperationType.DELETE, CourseOperationStatus.IN_PROGRESS));
+            expect(component.operationProgress()?.status).toBe(CourseOperationStatus.IN_PROGRESS);
+            expect(eventManagerSpy).not.toHaveBeenCalled();
+
+            progressTopic.next(progress(CourseOperationType.DELETE, CourseOperationStatus.COMPLETED));
+            progressTopic.next(progress(CourseOperationType.DELETE, CourseOperationStatus.COMPLETED));
+
+            expect(component.operationProgress()?.status).toBe(CourseOperationStatus.COMPLETED);
+            expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({ name: 'courseListModification', content: 'artemisApp.course.deleted' });
+            // The user is taken to the courses when the overlay is closed
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('should not announce a deleted course for a failed deletion or another operation', () => {
+            const eventManagerSpy = vi.spyOn(eventManager, 'broadcast');
+            component['subscribeToOperationProgress'](1);
+
+            progressTopic.next(progress(CourseOperationType.DELETE, CourseOperationStatus.FAILED));
+            progressTopic.next(progress(CourseOperationType.RESET, CourseOperationStatus.COMPLETED));
+            progressTopic.next(progress(CourseOperationType.ARCHIVE, CourseOperationStatus.COMPLETED));
+
+            expect(eventManagerSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show a running deletion after the page was reloaded', () => {
+            const running = progress(CourseOperationType.DELETE, CourseOperationStatus.IN_PROGRESS);
+            vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(of(new HttpResponse({ body: running })));
+
+            component['subscribeToOperationProgress'](1);
+
+            expect(courseAdminService.getOperationProgress).toHaveBeenCalledExactlyOnceWith(1);
+            expect(component.operationProgress()).toEqual(running);
+        });
+
+        it('should not replace a newer progress message by the status that was read after the reload', () => {
+            const newer = progress(CourseOperationType.DELETE, CourseOperationStatus.COMPLETED);
+            const read = new Subject<HttpResponse<CourseOperationProgressDTO | null>>();
+            vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(read);
+
+            component['subscribeToOperationProgress'](1);
+            progressTopic.next(newer);
+            read.next(new HttpResponse({ body: progress(CourseOperationType.DELETE, CourseOperationStatus.IN_PROGRESS) }));
+
+            expect(component.operationProgress()).toEqual(newer);
+        });
+
+        it.each([
+            ['no operation is known', of(new HttpResponse<CourseOperationProgressDTO | null>({ body: null, status: 204 }))],
+            ['the operation is not a deletion', of(new HttpResponse({ body: progress(CourseOperationType.RESET, CourseOperationStatus.IN_PROGRESS) }))],
+            ['the deletion already ended', of(new HttpResponse({ body: progress(CourseOperationType.DELETE, CourseOperationStatus.COMPLETED) }))],
+            ['the course is gone', throwError(() => new HttpErrorResponse({ status: 404 }))],
+            ['the status is not readable', throwError(() => new HttpErrorResponse({ status: 403 }))],
+        ])('should show nothing after the reload when %s', (_description, response) => {
+            vi.spyOn(courseAdminService, 'getOperationProgress').mockReturnValue(response as Observable<HttpResponse<CourseOperationProgressDTO | null>>);
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+
+            component['subscribeToOperationProgress'](1);
+
+            expect(component.operationProgress()).toBeUndefined();
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not read the status of the operation for a user who is no administrator', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'hasAdministratorAccess').mockReturnValue(false);
+
+            component['subscribeToOperationProgress'](1);
+
+            expect(courseAdminService.getOperationProgress).not.toHaveBeenCalled();
+        });
     });
 
     it('should navigate to course management when closing delete progress', () => {
@@ -861,5 +995,23 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).toHaveBeenCalled();
+    });
+    it('broadcasts a successful course reset and clears the dialog error', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(courseAdminService.reset).toHaveBeenCalledExactlyOnceWith(1);
+        expect(broadcast).toHaveBeenCalledExactlyOnceWith({ name: 'courseModification', content: 'artemisApp.course.reset' });
+        expect(message).toHaveBeenCalledExactlyOnceWith('');
+    });
+
+    it('keeps the reset dialog open with the failed reset message', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' })));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(message).toHaveBeenCalledWith(expect.stringContaining('403'));
+        expect(broadcast).not.toHaveBeenCalled();
     });
 });

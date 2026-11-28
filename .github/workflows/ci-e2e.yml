@@ -19,6 +19,11 @@ on:
         description: 'True when the umbrella was triggered by pull_request.'
         required: true
         type: boolean
+      run_full_suite:
+        description: 'Run the full suite; false permits audited affected-module and consumer workflows plus smoke tests.'
+        required: false
+        type: boolean
+        default: true
       pr_number:
         description: 'PR number (0 when not a PR).'
         required: false
@@ -35,12 +40,15 @@ on:
         required: false
     outputs:
       e2e_result:
-        description: 'Raw aggregated E2E test outcome (success|failure|error), for the CI Summary
+        description: 'Raw aggregated E2E outcome (success|failure|error|superseded), for the CI Summary
           table. This is the unexonerated signal — `failure` here includes known-flaky-only runs
           that report-results exonerates. The caller `e2e` job conclusion is the exonerated verdict
           (failures without history also remain blocking). `e2e` is part of the required
           `all-required-ci-passed` gate; only failures with known-flaky history are exonerated.'
         value: ${{ jobs.report-results.outputs.status }}
+      e2e_scope:
+        description: 'Requested E2E coverage: full suite or selected relevant and smoke specs.'
+        value: ${{ jobs.report-results.outputs.scope }}
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -87,6 +95,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           git fetch origin "$BASE_BRANCH:base_branch"
+      - name: Setup Node.js for dependency selection
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
       - name: Determine relevant tests
         id: determine
         run: supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh base_branch
@@ -106,14 +118,30 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     env:
       PLAYWRIGHT_REPORT_PHASE: phase1
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     outputs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-phase1.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase1.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -123,6 +151,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
@@ -145,7 +174,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -157,11 +186,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 1
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -171,13 +200,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase1.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase1-test-results/results.xml
@@ -217,6 +246,7 @@ jobs:
           HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
           INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
           INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_RUN_FULL_SUITE: ${{ inputs.run_full_suite }}
           INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
           INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
           INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
@@ -235,6 +265,7 @@ jobs:
 
             const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
             const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
+            const runFullSuite = process.env.INPUT_RUN_FULL_SUITE === 'true';
             const emoji = process.env.INPUT_STATUS_EMOJI || '';
             const status = process.env.INPUT_STATUS_TEXT || '';
             const details = process.env.INPUT_DETAILS || '';
@@ -250,7 +281,9 @@ jobs:
             body += `| Phase | Status | Details |\n`;
             body += `|-------|--------|---------|\n`;
             body += `| **Phase 1** (Relevant) | ${emoji} ${status} | ${details} |\n`;
-            if (remainingTests) {
+            if (!runFullSuite) {
+              body += `| **Phase 2** (Remaining) | ⏭ Intentionally skipped | Selective PR coverage |\n`;
+            } else if (remainingTests) {
               body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
             } else {
               body += `| **Phase 2** (Remaining) | ⏭ Skipped | No remaining tests |\n`;
@@ -259,9 +292,11 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
-            body += `\n\n**Test Strategy:** Two-phase execution\n`;
+            body += runFullSuite
+              ? `\n\n**Requested scope:** Full suite (two-phase execution)\n`
+              : `\n\n**Requested scope:** Selected relevant + smoke specs. The full suite was not requested; Phase 2 is intentionally omitted.\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
-            body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            body += `- **Phase 2 (${runFullSuite ? 'remaining' : 'not selected'}):** \`${remainingTests || 'None'}\`\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
             if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
@@ -288,10 +323,12 @@ jobs:
     if: |
       !cancelled() &&
       inputs.is_pr &&
+      inputs.run_full_suite &&
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
       ((needs.run-e2e-relevant.result == 'success' &&
+        needs.run-e2e-relevant.outputs.infrastructure_failed == 'false' &&
         contains(fromJSON('["clean","flaky"]'), needs.run-e2e-relevant.outputs.phase_result)) || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
@@ -300,15 +337,31 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
       tests: ${{ steps.run-tests-phase2.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-phase2.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -318,6 +371,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
@@ -337,7 +391,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -349,11 +403,11 @@ jobs:
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 2
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) && 'error' || 'warn' }}
 
       - name: E2E Test Report
         id: e2e-report
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: ./.github/actions/e2e-test-report
         with:
           artifact-name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -363,13 +417,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-phase2.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: phase2-test-results/results.xml
@@ -493,14 +547,30 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-all-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -510,8 +580,9 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          test-notice: 'Running all tests (infrastructure/config changes detected)'
+          test-notice: 'Running all tests (global, infrastructure, or unclassified changes detected)'
 
       - name: Record test start time
         id: test-timer
@@ -528,7 +599,7 @@ jobs:
 
       - name: Calculate wall-clock duration
         id: wall-clock
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.test-timer.outputs.start != '' }}
         shell: bash
         env:
           START: ${{ steps.test-timer.outputs.start }}
@@ -539,10 +610,10 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
@@ -550,8 +621,8 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
-        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (PR)'
@@ -564,13 +635,13 @@ jobs:
 
       - name: Extract failed tests
         id: failed-tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         shell: bash
         run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
@@ -661,21 +732,69 @@ jobs:
               });
             }
 
+  # The caller has acquired the develop concurrency slot before this job runs. Compare the
+  # immutable build SHA before requesting a self-hosted runner for the full suite.
+  develop-e2e-tip:
+    name: Check develop tip for E2E
+    if: ${{ !inputs.is_pr && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      current: ${{ steps.tip.outputs.current }}
+    steps:
+      - name: Compare built revision with develop
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -Eeuo pipefail
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/develop" --jq '.object.sha')
+          [[ "$tip" =~ ^[a-f0-9]{40}$ && "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          if [[ "$tip" == "$COMMIT_SHA" ]]; then
+            echo 'current=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'current=false' >> "$GITHUB_OUTPUT"
+            echo "Develop advanced to \`$tip\`. Full E2E for \`$COMMIT_SHA\` was superseded." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
-    if: ${{ !inputs.is_pr }}
+    needs: develop-e2e-tip
+    if: >-
+      !cancelled() && !inputs.is_pr &&
+      ((needs.develop-e2e-tip.result == 'skipped' && (github.event_name != 'push' || github.ref != 'refs/heads/develop')) ||
+       (needs.develop-e2e-tip.result == 'success' && needs.develop-e2e-tip.outputs.current == 'true'))
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
     permissions:
       contents: read
       actions: read
+      checks: write  # JUnit report creates a check run
     outputs:
       tests: ${{ steps.run-tests-all-non-pr.outcome }}
+      infrastructure_failed: ${{ steps.run-tests-all-non-pr.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              # Through the registry proxy, never Docker Hub: it limits anonymous pulls per IP address.
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -685,6 +804,7 @@ jobs:
         uses: ./.github/actions/e2e-setup
         with:
           workflow-run-id: ${{ github.run_id }}
+          commit-sha: ${{ inputs.commit_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Redis (Valkey) is the distributed data provider of this run, not the embedded Hazelcast cluster, so no Hazelcast
@@ -703,18 +823,18 @@ jobs:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
         with:
-          require-tests: error
+          require-tests: ${{ contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) && 'error' || 'warn' }}
 
       - name: Download all tests results
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ steps.teardown.outputs.junit-artifact-name }}
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
-        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         with:
           commit: ${{ inputs.commit_sha }}
           check_name: 'All E2E Tests Report (Multi-Node)'
@@ -727,7 +847,7 @@ jobs:
 
       - name: Classify E2E failures
         id: classify
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && contains(fromJSON('["success","failure"]'), steps.run-tests-all-non-pr.outcome) }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           INPUT_RESULTS_FILE: all-test-results/results.xml
@@ -744,7 +864,7 @@ jobs:
   # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
   report-results:
     name: Report E2E Overall Status
-    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
+    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr, develop-e2e-tip]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -753,16 +873,30 @@ jobs:
       pull-requests: write
     outputs:
       status: ${{ steps.overall-status.outputs.status }}
+      scope: ${{ steps.overall-status.outputs.scope }}
     steps:
       - name: Determine overall status
         id: overall-status
         env:
+          IS_PR: ${{ inputs.is_pr }}
+          DEVELOP_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+          DEVELOP_TIP_JOB: ${{ needs.develop-e2e-tip.result }}
+          DEVELOP_TIP_CURRENT: ${{ needs.develop-e2e-tip.outputs.current }}
+          RUN_FULL_SUITE: ${{ inputs.run_full_suite }}
+          RUN_ALL_TESTS: ${{ needs.determine-tests.outputs.run_all_tests }}
+          RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
           # Raw per-phase test outcome (steps.<id>.outcome, not job `result`: test steps are
           # continue-on-error, so a failed test still leaves the job `success`). Empty when skipped.
           RELEVANT_RESULT: ${{ needs.run-e2e-relevant.outputs.tests }}
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
+          # Positive completion proof is separate from the optional classification of surviving JUnit failures.
+          RELEVANT_INFRA: ${{ needs.run-e2e-relevant.outputs.infrastructure_failed }}
+          REMAINING_INFRA: ${{ needs.run-e2e-remaining.outputs.infrastructure_failed }}
+          ALL_PR_INFRA: ${{ needs.run-e2e-all-pr.outputs.infrastructure_failed }}
+          ALL_NON_PR_INFRA: ${{ needs.run-e2e-all-non-pr.outputs.infrastructure_failed }}
           # Per-phase classification: real | flaky | unknown | clean (empty
           # when skipped). `real` = a non-flaky test failed; `flaky` = failures, all known-flaky.
           RELEVANT_CLASS: ${{ needs.run-e2e-relevant.outputs.phase_result }}
@@ -778,6 +912,18 @@ jobs:
           ALL_NON_PR_JOB: ${{ needs.run-e2e-all-non-pr.result }}
         run: |
           set -Eeuo pipefail
+          develop_tip="${DEVELOP_TIP_JOB:-}:${DEVELOP_TIP_CURRENT:-}"
+          if [ "${DEVELOP_PUSH:-false}" = true ] && [ "$IS_PR" = false ] &&
+            [ "$develop_tip" = success:false ] && [ "$ALL_NON_PR_JOB" = skipped ]; then
+            {
+              echo 'status=superseded'
+              echo 'scope=Superseded develop E2E'
+              echo 'conclusion=skipped'
+              echo 'description=A newer develop revision superseded this E2E suite'
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # `status` is the raw honest outcome (any `failure` wins; else the first `success`; else
           # `error`). It feeds the `status` output that CI Summary renders and never hides a failure.
           status=error
@@ -789,7 +935,6 @@ jobs:
               *)       status=error ;;
             esac
           done
-          echo "status=$status" >> "$GITHUB_OUTPUT"
 
           any_real=false; any_flaky=false
           for c in "$RELEVANT_CLASS" "$REMAINING_CLASS" "$ALL_PR_CLASS" "$ALL_NON_PR_CLASS"; do
@@ -813,12 +958,82 @@ jobs:
           # `skipped` is the normal not-selected-path result (e.g. run-all on a phased run) and must pass;
           # an empty/unknown result is treated as blocking (fail closed).
           any_job_failed=false
+          if [ "${DEVELOP_PUSH:-false}" = true ] && [ "$develop_tip" != success:true ]; then
+            any_job_failed=true
+          fi
           for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB"; do
             case "$r" in
               success|skipped) ;;
               *) any_job_failed=true ;;
             esac
           done
+
+          # A skipped job is valid only when its scope was not requested. Explicitly require
+          # the selected path, so a skipped full-suite job or missing Phase 2 cannot look green
+          # merely because a surviving Phase 1 succeeded.
+          scope="Full suite"
+          phase2_intentionally_skipped=false
+          expected_phases=()
+          if [ "$IS_PR" = false ]; then
+            expected_phases+=(ALL_NON_PR)
+          elif [ "$IS_PR" != true ] || [ "$DETERMINE_JOB" != success ]; then
+            any_job_failed=true
+          elif [ "$RUN_ALL_TESTS" = true ] || { [ -z "$RELEVANT_TESTS" ] && [ -z "$REMAINING_TESTS" ]; }; then
+            expected_phases+=(ALL_PR)
+          elif [ "$RUN_ALL_TESTS" != false ] || [ -z "$RELEVANT_TESTS" ]; then
+            any_job_failed=true
+          else
+            expected_phases+=(RELEVANT)
+            if [ "$RUN_FULL_SUITE" = true ]; then
+              # Preserve the fail-fast skip when Phase 1 already has a blocking verdict.
+              if [ -n "$REMAINING_TESTS" ] && { [ "$RELEVANT_RESULT" = success ] || [ "$RELEVANT_CLASS" = flaky ]; }; then
+                expected_phases+=(REMAINING)
+              fi
+            elif [ "$RUN_FULL_SUITE" = false ]; then
+              scope="Selected relevant + smoke specs"
+              phase2_intentionally_skipped=true
+            else
+              any_job_failed=true
+            fi
+          fi
+          for phase in "${expected_phases[@]}"; do
+            job_var="${phase}_JOB"; result_var="${phase}_RESULT"; infra_var="${phase}_INFRA"
+            [ "${!job_var}" = success ] || any_job_failed=true
+            case "${!result_var}" in
+              success|failure) ;;
+              *) any_job_failed=true ;;
+            esac
+            [ "${!infra_var}" = false ] || any_job_failed=true
+          done
+          {
+            echo "scope=$scope"
+            echo "phase2_intentionally_skipped=$phase2_intentionally_skipped"
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo "### Requested E2E scope: $scope"
+              if [ "$phase2_intentionally_skipped" = true ]; then
+                echo "Phase 2 was intentionally omitted for selective PR coverage; this run does not establish full-suite coverage."
+                printf '\nSelected paths: `%s`\n' "$RELEVANT_TESTS"
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Every attempted phase must positively establish complete runner execution. Missing outputs
+          # (including a pull/setup/container crash) cannot be exonerated by surviving known-flaky JUnit cases.
+          for phase in RELEVANT REMAINING ALL_PR ALL_NON_PR; do
+            result_var="${phase}_RESULT"; infra_var="${phase}_INFRA"
+            case "${!result_var}" in
+              success|failure) [ "${!infra_var}" = false ] || any_job_failed=true ;;
+            esac
+          done
+
+          # Do not render a surviving phase's success as green when requested coverage
+          # did not complete. Preserve any actual test failure as the raw failure signal.
+          if [ "$any_job_failed" = true ] && [ "$status" != failure ]; then
+            status=error
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
           # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
           # classified `flaky`, none `real`/`unknown`/unclassified, and no job broke).
@@ -841,7 +1056,11 @@ jobs:
             description="E2E failed and could not be classified"
           elif [ "$status" = success ] && [ "$any_job_failed" = false ]; then
             conclusion=success
-            description="E2E tests passed"
+            if [ "$phase2_intentionally_skipped" = true ]; then
+              description="Selected E2E tests passed"
+            else
+              description="E2E tests passed"
+            fi
           elif [ "$any_flaky" = true ] && [ "$any_job_failed" = false ] && [ "$status" != error ]; then
             conclusion=neutral
             description="E2E: only known-flaky tests failed (exonerated)"
@@ -857,7 +1076,7 @@ jobs:
       # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
       # composite must be on disk before its `uses:` resolves.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: always()
+        if: always() && inputs.is_pr
         with:
           sparse-checkout: .github/actions
           fetch-depth: 1
@@ -876,6 +1095,8 @@ jobs:
         continue-on-error: true
         env:
           INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
+          INPUT_SCOPE: ${{ steps.overall-status.outputs.scope }}
+          INPUT_PHASE2_INTENTIONALLY_SKIPPED: ${{ steps.overall-status.outputs.phase2_intentionally_skipped }}
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
           INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
           INPUT_CONCLUSION: ${{ steps.overall-status.outputs.conclusion }}
@@ -890,10 +1111,13 @@ jobs:
 
             const conclusion = process.env.INPUT_CONCLUSION;
             const description = process.env.INPUT_DESCRIPTION;
+            const scope = process.env.INPUT_SCOPE || 'Unknown';
+            const phase2IntentionallySkipped = process.env.INPUT_PHASE2_INTENTIONALLY_SKIPPED === 'true';
+            const scopeLine = `\n**Requested scope:** ${scope}${phase2IntentionallySkipped ? '. Phase 2 intentionally omitted; full-suite coverage was not requested.' : ''}\n`;
             // The comment carries the full three-state nuance the run conclusion can't: a known-flaky,
             // exonerated run reds nothing (the run passes) but reads as ⚪ here, distinct from a ✅ pass.
             const overallEmoji = conclusion === 'success' ? '✅' : conclusion === 'neutral' ? '⚪' : '❌';
-            const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
+            const overallLine = `\n**Overall: ${overallEmoji} ${description}**${scopeLine}`;
 
             const phase1Result = process.env.INPUT_PHASE1_RESULT;
             const phase2Result = process.env.INPUT_PHASE2_RESULT;
@@ -907,10 +1131,12 @@ jobs:
 
               if (body.includes('<!-- PHASE2 -->')) {
                 let phase2Reason = 'Skipped';
-                if (phase1Result === 'failure') {
+                if (phase2IntentionallySkipped) {
+                  phase2Reason = 'Intentionally skipped (selective PR coverage)';
+                } else if (phase1Result === 'failure') {
                   phase2Reason = 'Skipped (Phase 1 failed)';
                 } else if (phase2Result === 'skipped') {
-                  phase2Reason = 'Skipped (no remaining tests)';
+                  phase2Reason = 'Skipped (Phase 1 blocked further execution, or no remaining tests)';
                 }
                 body = body.replace(
                   /<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s,
@@ -927,7 +1153,7 @@ jobs:
               });
             } else {
               let body = `## End-to-End Test Results\n\n`;
-              body += `**Overall: ${overallEmoji} ${description}**\n\n`;
+              body += `**Overall: ${overallEmoji} ${description}**\n${scopeLine}\n`;
               body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
               if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
                 body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${context.runId}-phase1)`;
@@ -942,7 +1168,7 @@ jobs:
 
       # Fail the job (reds the run) on a real/infra/unclassified verdict; pass on success or an
       # exonerated flaky-only run. Runs last, after the PR comment finalises, and always. Fail-safe:
-      # any verdict other than success/neutral — including an empty one — reds the run.
+      # only success, neutral or a verified superseded skip passes.
       - name: Gate the run (and the required merge check) on the E2E verdict
         if: always()
         env:
@@ -950,6 +1176,10 @@ jobs:
           DESCRIPTION: ${{ steps.overall-status.outputs.description }}
         run: |
           set -Eeuo pipefail
+          if [ "$CONCLUSION" = skipped ]; then
+            echo "::notice::$DESCRIPTION"
+            exit 0
+          fi
           if [ "$CONCLUSION" = success ] || [ "$CONCLUSION" = neutral ]; then
             echo "E2E verdict: ${DESCRIPTION:-passed} — not a real regression, run stays green."
             exit 0

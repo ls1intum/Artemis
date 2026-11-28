@@ -4,9 +4,27 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ConnectedPosition } from '@angular/cdk/overlay';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import {
+    TumAetUiMenuComponent,
+    TumAetUiMenuGroupComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuSeparatorComponent,
+    TumAetUiMenuTriggerDirective,
+} from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { User } from 'app/account/user/user.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_LTI,
+    PROFILE_LOCALCI,
+    VERSION,
+} from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -19,7 +37,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -33,7 +51,6 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
-import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -42,30 +59,32 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['navbar.scss'],
+    styleUrls: ['navbar.css'],
     imports: [
         NgOptimizedImage,
         NgClass,
         ThemeSwitchComponent,
-        NgbDropdown,
+        TumAetUiMenuTriggerDirective,
         RouterLinkActive,
-        NgbDropdownToggle,
+        TumAetUiMenuComponent,
+        TumAetUiMenuGroupComponent,
+        TumAetUiMenuSeparatorComponent,
         FaIconComponent,
         TranslateDirective,
-        NgbDropdownMenu,
+        TumAetUiMenuItemDirective,
         RouterLink,
         ActiveMenuDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         JhiConnectionWarningComponent,
         LoadingNotificationComponent,
         NgTemplateOutlet,
-        NgbCollapse,
         SystemNotificationComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
@@ -74,8 +93,8 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
-        VariantGenerationTrayComponent,
         CourseNotificationOverviewComponent,
+        HyperionActivityTrayComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -94,12 +113,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly courseStorageService = inject(CourseStorageService);
-    protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
+    private readonly breakpointObserver = inject(BreakpointObserver);
+
+    /** Below this width the course overview hides its own enrollment button, so the account menu offers it. */
+    readonly isNarrowScreen = toSignal(this.breakpointObserver.observe('(max-width: 767.98px)').pipe(map((state) => state.matches)), { initialValue: false });
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;
     protected readonly faCog = faCog;
-    protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
     protected readonly faFlag = faFlag;
     protected readonly faSignOutAlt = faSignOutAlt;
@@ -107,6 +128,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faUserShield = faUserShield;
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    /** The account menu hangs from the right edge of its trigger, which sits at the right edge of the window. */
+    protected readonly accountMenuPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
+        { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' },
+    ];
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);
@@ -119,7 +145,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     languages = LANGUAGES;
     readonly version = signal<string>(undefined!);
     readonly currAccount = signal<User | undefined>(undefined);
-    isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
     breadcrumbSubscriptions: Subscription[] = [];
@@ -134,9 +159,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
+    readonly hyperionEnabled = signal(false);
+    readonly hyperionExerciseGenerationEnabled = signal(false);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.courseStorageService.currentCourse;
     readonly currentRoute = getCurrentRouteSignal(this.router);
+    readonly navigationContextIndicatorData = computed(() => this.computeNavigationContextIndicatorData());
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
     readonly perspectiveSwitchLinks = computed(() => this.computePerspectiveSwitchLinks());
@@ -204,6 +232,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
+        this.hyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.hyperionExerciseGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
@@ -255,6 +285,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     breadcrumbTranslation: { [key: string]: string } = {
+        generation: 'artemisApp.hyperion.generation.run.breadcrumb',
         admin: 'global.menu.admin.main',
         new: 'global.generic.create',
         process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
@@ -299,6 +330,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
+        smart_quizzes: 'artemisApp.hyperion.quizQuestionPool.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -363,6 +395,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title',
+        athena_settings: 'artemisApp.course.athenaConfig.settingsPage.title',
         generate: 'entity.action.generate',
         build_queue: 'global.menu.admin.sidebar.buildQueue',
         build_overview: 'artemisApp.buildQueue.title',
@@ -384,6 +417,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tests_repository: 'artemisApp.repository.testsRepository.title',
         auxiliary_repository: 'artemisApp.repository.auxiliaryRepository.title',
         vcs_access_log: 'artemisApp.repository.vcsAccessLog.title',
+        gocast_binding: 'artemisApp.gocast.title',
     };
 
     /**
@@ -399,7 +433,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const path = fullURI.split('?')[0].replace(/\/+$/, '');
+        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
         if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
@@ -413,13 +447,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.lastRouteUrlSegment = 'course-management';
 
             // The course management segment is represented by the course overview breadcrumb above.
-            let uri = fullURI.substring(currentPath.length);
-
-            // Remove any query parameters
-            const questionMark = uri.indexOf('?');
-            if (questionMark >= 0) {
-                uri = uri.substring(0, questionMark);
-            }
+            const uri = fullURI.substring(currentPath.length);
 
             // Go through all segments of the route starting from the root
             for (const segment of uri.split('/')) {
@@ -572,8 +600,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 }
                 break;
             case 'submissions':
-                // only a scores list exists, no special one for submissions
-                const updatedLink = currentPath.replace('/submissions/', '/scores/');
+                // Link submission breadcrumbs to the exercise's participation page.
+                const updatedLink = currentPath.replace(/\/(?:participations\/\d+\/)?submissions\/$/, '/participations/');
                 this.addTranslationAsCrumb(updatedLink, 'submissions');
                 break;
             case 'tutorial-lectures':
@@ -676,7 +704,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-        this.exerciseService.find(exerciseId).subscribe({
+        const exerciseSource = currentPath.startsWith('/course-management/')
+            ? currentPath.includes('/exams/')
+                ? this.exerciseService.findForExamManagement(exerciseId)
+                : this.exerciseService.findForStaff(exerciseId)
+            : this.exerciseService.find(exerciseId);
+        exerciseSource.subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
                 if (!response?.body?.title || !response?.body?.type) {
@@ -766,6 +799,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private isCourseManagementViewRoute(url: string): boolean {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private computeNavigationContextIndicatorData(): NavigationContextIndicatorData | undefined {
+        const course = this.currentCourse();
+        if (course) {
+            return {
+                type: 'course',
+                routerLink: this.getCourseLink(course.id),
+                title: course.title,
+                imagePath: course.courseIconPath,
+            };
+        }
+
+        const path = this.currentRoute().split(/[?#]/)[0];
+        if (/^\/admin(?:\/|$)/.test(path)) {
+            return { type: 'administration', routerLink: '/admin', translationKey: 'global.menu.admin.main' };
+        }
+        if (/^\/user-settings(?:\/|$)/.test(path)) {
+            return { type: 'userSettings', routerLink: '/user-settings', translationKey: 'artemisApp.userSettings.userSettings' };
+        }
+        return undefined;
     }
 
     private computePerspectiveSwitchLinks(): PerspectiveSwitchLinks | undefined {
@@ -927,7 +981,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            !this.studentExam.exam.testExam &&
+            this.studentExam.exam.examMode === ExamMode.REAL &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&
@@ -1053,3 +1107,16 @@ interface PerspectiveRouteMapping {
     urlParts: string[];
     targetPath: string[];
 }
+
+type NavigationContextIndicatorData =
+    | {
+          type: 'course';
+          routerLink: (string | number)[] | undefined;
+          title: string | undefined;
+          imagePath: string | undefined;
+      }
+    | {
+          type: 'administration' | 'userSettings';
+          routerLink: string;
+          translationKey: string;
+      };

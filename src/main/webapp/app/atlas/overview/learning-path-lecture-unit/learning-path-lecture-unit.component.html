@@ -1,13 +1,11 @@
 @if (isLoading()) {
-    <div class="row justify-content-center m-4">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="m-6 flex justify-center">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 }
 @if (lectureUnit(); as lectureUnit) {
-    <div class="row m-0">
-        <div class="col p-0">
+    <div class="flex flex-wrap">
+        <div class="min-w-0 flex-1">
             @switch (lectureUnit.type) {
                 @case (LectureUnitType.TEXT) {
                     <jhi-text-unit [courseId]="courseId()" [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
@@ -27,7 +25,7 @@
             }
         </div>
         @if (isCommunicationEnabled()) {
-            <div class="col-md-auto p-0 ms-2">
+            <div class="w-full md:w-auto">
                 <jhi-discussion-section [lecture]="this.lecture()" />
             </div>
         }

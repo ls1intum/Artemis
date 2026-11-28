@@ -70,15 +70,8 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
          * @return a new GradeStep entity
          */
         public GradeStep toEntity(GradingScale gradingScale) {
-            GradeStep gradeStep = new GradeStep();
-            gradeStep.setGradingScale(gradingScale);
-            gradeStep.setLowerBoundPercentage(lowerBoundPercentage);
-            gradeStep.setLowerBoundInclusive(lowerBoundInclusive);
-            gradeStep.setUpperBoundPercentage(upperBoundPercentage);
-            gradeStep.setUpperBoundInclusive(upperBoundInclusive);
-            gradeStep.setGradeName(gradeName);
-            gradeStep.setIsPassingGrade(isPassingGrade);
-            return gradeStep;
+            return new de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO(null, lowerBoundPercentage, lowerBoundInclusive, upperBoundPercentage, upperBoundInclusive, gradeName,
+                    isPassingGrade).toEntity(gradingScale);
         }
     }
 

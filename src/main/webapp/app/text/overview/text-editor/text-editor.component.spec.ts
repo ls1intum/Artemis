@@ -489,6 +489,86 @@ describe('TextEditorComponent', () => {
         expect(comp.result()?.score).toBe(85);
     });
 
+    describe('assessment selection after reloading Athena requests', () => {
+        const loadedParticipation = (results: Result[]) => {
+            const loaded = new StudentParticipation();
+            loaded.id = 42;
+            loaded.exercise = { id: 1, type: ExerciseType.TEXT, course: { id: 3 } } as TextExercise;
+            const submission = new TextSubmission();
+            submission.id = 7;
+            submission.text = 'answer';
+            submission.submitted = true;
+            submission.results = results;
+            loaded.submissions = [submission];
+            return loaded;
+        };
+
+        const releasedManual = () =>
+            ({
+                id: 20,
+                assessmentType: AssessmentType.MANUAL,
+                score: 80,
+                completionDate: dayjs().subtract(1, 'hour'),
+                feedbacks: [{ detailText: 'Released manual feedback' }],
+            }) as Result;
+
+        it.each([
+            { state: 'pending', successful: undefined, completionDate: dayjs().add(5, 'minutes') },
+            { state: 'failed', successful: false, completionDate: dayjs().subtract(5, 'minutes') },
+            { state: 'expired', successful: undefined, completionDate: dayjs().subtract(5, 'minutes') },
+        ])('keeps released manual feedback visible with a newer $state request', ({ successful, completionDate }) => {
+            const manual = releasedManual();
+            const request = { id: 30, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful, completionDate } as Result;
+            const loaded = loadedParticipation([request, manual]);
+
+            comp['updateParticipation'](loaded);
+
+            expect(comp.result()).toBe(manual);
+            expect(comp.result().feedbacks?.[0].detailText).toBe('Released manual feedback');
+            expect(comp.sortedHistoryResults().map((result) => result.id)).toEqual([20]);
+            expect(comp.submission().latestResult).toBe(request);
+            expect(comp.submission().results).toEqual([request, manual]);
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(false);
+        });
+
+        it('keeps successful Athena history available while a newer request is pending', () => {
+            const successful = { id: 10, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, completionDate: dayjs().subtract(2, 'hours') } as Result;
+            const manual = releasedManual();
+            const pending = { id: 30, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result;
+
+            comp['updateParticipation'](loadedParticipation([pending, successful, manual]));
+
+            expect(comp.result()).toBe(manual);
+            expect(comp.sortedHistoryResults().map((result) => result.id)).toEqual([10, 20]);
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(true);
+            expect(comp.submission().results).toHaveLength(3);
+        });
+
+        it('keeps a pending-only submission without displaying the request as an assessment', () => {
+            const pending = { id: 30, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result;
+
+            comp['updateParticipation'](loadedParticipation([pending]));
+
+            expect(comp.result()).toBeUndefined();
+            expect(comp.sortedHistoryResults()).toEqual([]);
+            expect(comp.submission().latestResult).toBe(pending);
+            expect(comp.submission().results).toEqual([pending]);
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(false);
+        });
+
+        it('preserves explicit manual result selection alongside successful and pending Athena requests', () => {
+            const manual = releasedManual();
+            const successful = { id: 25, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, completionDate: dayjs().subtract(30, 'minutes') } as Result;
+            const pending = { id: 30, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result;
+
+            comp['updateParticipation'](loadedParticipation([successful, pending, manual]), 7, 20);
+
+            expect(comp.result()).toBe(manual);
+            expect(comp.submission().latestResult).toBe(pending);
+            expect(comp.submission().results).toHaveLength(3);
+        });
+    });
+
     it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
         const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType: AssessmentType.MANUAL }] }];
 
@@ -621,21 +701,21 @@ describe('TextEditorComponent', () => {
             // The rating is a quiet reaction to the feedback, so the page no longer wraps it in a coloured alert.
             expect(rating.classList).not.toContain('alert');
             expect(rating.classList).not.toContain('alert-info');
-            expect(rating.classList).not.toContain('col-xl-8');
+            expect(rating.classList).not.toContain('xl:w-8/12');
             const column = rating.parentElement!;
-            expect(column.classList).toContain('col-xl-8');
-            expect(column.classList).toContain('col-lg-10');
+            expect(column.classList).toContain('xl:w-8/12');
+            expect(column.classList).toContain('lg:w-10/12');
             expect(column.classList).not.toContain('alert');
-            expect(column.parentElement!.classList).toContain('row');
+            expect(column.parentElement!.classList).toContain('flex');
         });
 
         it('should render the assessed submission label with the section heading style', () => {
             renderAssessedSubmission();
 
-            const label: HTMLElement = fixture.nativeElement.querySelector('.col-xl-8 > b');
+            const label: HTMLElement = fixture.nativeElement.querySelector('[data-testid="assessed-submission-label"]');
             expect(label).toBeTruthy();
             expect(label.classList).toContain('text-base');
-            expect(label.classList).toContain('font-semibold!');
+            expect(label.classList).toContain('font-semibold');
         });
     });
 
@@ -758,7 +838,7 @@ describe('TextEditorComponent', () => {
 
             fixture.detectChanges();
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
             expect(comp.participation()).toBe(loaded);
             expect(comp.submission().id).toBe(7);
             expect(comp.answer()).toBe('saved text');
@@ -791,7 +871,7 @@ describe('TextEditorComponent', () => {
             fixture.detectChanges();
 
             routeParams.next({ participationId: '42' });
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
             expect(comp.participation().id).toBe(42);
             expect(comp.isReadOnlyWithShowResult()).toBe(false);
 
@@ -801,7 +881,7 @@ describe('TextEditorComponent', () => {
 
             // another participation
             routeParams.next({ participationId: '43' });
-            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, undefined);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, undefined, 'owner');
             expect(comp.participation().id).toBe(43);
 
             // a selected submission
@@ -813,7 +893,7 @@ describe('TextEditorComponent', () => {
             // a selected result
             setRouteParams({ participationId: '43', submissionId: '7', resultId: '5' });
             routeParams.next({ participationId: '43' });
-            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, 5);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, 5, 'owner');
         });
 
         it('should reload the loaded participation when the route changes the submission without a participation id', () => {
@@ -826,7 +906,7 @@ describe('TextEditorComponent', () => {
             setRouteParams({ submissionId: '7' });
             routeParams.next({});
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
         });
 
         it('should load nothing when the route changes the submission but no participation is known', () => {
@@ -900,8 +980,9 @@ describe('TextEditorComponent', () => {
             participationSubject.next(withResults([athenaResult(false)]));
 
             expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
-            expect(comp.result().id).toBe(5);
-            expect(comp.hasAthenaResultForLatestSubmission).toBe(true);
+            expect(comp.result()).toBeUndefined();
+            expect(comp.submission().results?.[0].id).toBe(5);
+            expect(comp.hasAthenaResultForLatestSubmission).toBe(false);
         });
 
         it('should alert a successful Athena feedback request and remember that the latest submission has feedback', () => {
@@ -916,6 +997,45 @@ describe('TextEditorComponent', () => {
             expect(comp.result().id).toBe(5);
         });
 
+        it('should alert the Athena feedback even when a newer result of another kind arrives with it', () => {
+            const participationSubject = openWithParticipation(withResults([athenaResult(undefined)]));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            const manualResult = { id: 9, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() } as Result;
+
+            participationSubject.next(withResults([athenaResult(true), manualResult]));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+        });
+
+        it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
+            const participationSubject = openWithParticipation(withResults([athenaResult(true)]));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
+        it.each([true, false])('reports a same-id persisted pending completion once (successful=%s)', (successful) => {
+            const pending = athenaResult(undefined);
+            pending.completionDate = dayjs().add(5, 'minutes');
+            const participationSubject = openWithParticipation(withResults([pending]));
+            const alert = TestBed.inject(AlertService);
+            const successSpy = vi.spyOn(alert, 'success');
+            const errorSpy = vi.spyOn(alert, 'error');
+
+            participationSubject.next(withResults([athenaResult(successful)]));
+            participationSubject.next(withResults([athenaResult(successful)]));
+
+            if (successful) {
+                expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+                expect(errorSpy).not.toHaveBeenCalled();
+            } else {
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackFailed');
+                expect(successSpy).not.toHaveBeenCalled();
+            }
+        });
+
         it('should reload the participation with the Athena result in the exam summary', () => {
             const participationSubject = openWithParticipation(withResults([]), true);
             const reloaded = withResults([athenaResult(true)]);
@@ -923,8 +1043,78 @@ describe('TextEditorComponent', () => {
 
             participationSubject.next(withResults([athenaResult(true)]));
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 5);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 5, 'owner');
             expect(comp.participation()).toBe(reloaded);
+        });
+
+        it('should alert every new Athena result of one update and reload the exam summary once', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([athenaResult(true)]);
+            getTextForParticipationStub.mockReturnValue(of(reloaded));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            const update = withResults([athenaResult(true)]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [{ ...athenaResult(true), id: 6 }] } as TextSubmission);
+
+            participationSubject.next(update);
+
+            expect(successSpy).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+            expect(comp.participation()).toBe(reloaded);
+        });
+
+        it('should reload the exam summary with the newest Athena result when the submissions hold them in reverse order', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            getTextForParticipationStub.mockReturnValue(of(withResults([athenaResult(true)])));
+            const update = withResults([{ ...athenaResult(true), id: 6 }]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+
+            participationSubject.next(update);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+        });
+
+        it('should keep reloading the exam summary with the newest Athena result when an older one completes later', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const newerReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(newerReload.asObservable());
+            const olderCompleted = withResults([{ ...athenaResult(true), id: 6 }]);
+            olderCompleted.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            participationSubject.next(olderCompleted);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+            expect(newerReload.observed).toBe(true);
+        });
+
+        it('should drop the answer of an exam summary reload that a newer one replaced', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const firstReload = new Subject<StudentParticipation>();
+            const secondReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(firstReload.asObservable()).mockReturnValueOnce(secondReload.asObservable());
+            const update = withResults([athenaResult(true)]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [{ ...athenaResult(true), id: 6 }] } as TextSubmission);
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            participationSubject.next(update);
+            const newest = withResults([athenaResult(true)]);
+            secondReload.next(newest);
+            firstReload.next(withResults([]));
+
+            expect(comp.participation()).toBe(newest);
+        });
+
+        it('should stop an exam summary reload when the component is destroyed', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValue(reload.asObservable());
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            expect(reload.observed).toBe(true);
+
+            fixture.destroy();
+
+            expect(reload.observed).toBe(false);
         });
 
         it('should alert when the participation with the Athena result cannot be reloaded in the exam summary', () => {
@@ -935,6 +1125,60 @@ describe('TextEditorComponent', () => {
             participationSubject.next(withResults([athenaResult(true)]));
 
             expect(errorSpy).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('should apply the update and retry a failed exam summary reload when the same result is emitted again', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([athenaResult(true)]);
+            getTextForParticipationStub.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValueOnce(of(reloaded));
+            const update = withResults([athenaResult(true)]);
+
+            participationSubject.next(update);
+            expect(comp.participation()).toBe(update);
+
+            participationSubject.next(withResults([athenaResult(true)]));
+
+            expect(getTextForParticipationStub).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(42, 5, 'owner');
+            expect(comp.participation()).toBe(reloaded);
+        });
+
+        it('should not let a later update retry a failed exam summary reload that a newer reload superseded', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const newerReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValueOnce(newerReload.asObservable());
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+
+            expect(getTextForParticipationStub).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(42, 6, 'owner');
+            expect(newerReload.observed).toBe(true);
+            const newest = withResults([{ ...athenaResult(true), id: 6 }]);
+            newerReload.next(newest);
+            expect(comp.participation()).toBe(newest);
+        });
+
+        it('should keep the reloaded exam summary when a later update brings no newer result', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([{ ...athenaResult(true), id: 6 }]);
+            getTextForParticipationStub.mockReturnValue(of(reloaded));
+
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            expect(comp.participation()).toBe(reloaded);
+
+            const olderUpdate = withResults([{ ...athenaResult(true), id: 6 }]);
+            olderUpdate.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+            participationSubject.next(olderUpdate);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledOnce();
+            expect(comp.participation()).toBe(reloaded);
+
+            const newerUpdate = withResults([{ id: 9, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() } as Result]);
+            participationSubject.next(newerUpdate);
+
+            expect(comp.participation()).toBe(newerUpdate);
         });
 
         it('should not treat an unfinished Athena request as new feedback', () => {
@@ -1030,5 +1274,12 @@ describe('TextEditorComponent', () => {
             expect(emitted[0].language).toBe(Language.ENGLISH);
             subscription.unsubscribe();
         });
+    });
+    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s editor purpose', (purpose) => {
+        fixture.componentRef.setInput('participationId', 42);
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        getTextForParticipationStub.mockReturnValue(of({ id: 42, exercise: textExercise, submissions: [{ id: 1, results: [{ id: 1 }] }] }));
+        fixture.detectChanges();
+        expect(getTextForParticipationStub).toHaveBeenCalledWith(42, undefined, purpose);
     });
 });

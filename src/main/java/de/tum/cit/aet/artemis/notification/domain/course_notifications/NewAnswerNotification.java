@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.notification.domain.course_notifications;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewAnswerPayloadDTO;
 import de.tum.cit.aet.artemis.notification.util.CourseNotificationPayloads;
 
@@ -40,18 +37,8 @@ public class NewAnswerNotification extends CourseNotification {
     }
 
     @Override
-    public CourseNotificationCategory getCourseNotificationCategory() {
-        return CourseNotificationCategory.COMMUNICATION;
-    }
-
-    @Override
-    public Duration getCleanupDuration() {
-        return Duration.ofDays(7);
-    }
-
-    @Override
-    public List<NotificationChannelOption> getSupportedChannels() {
-        return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+    protected CourseNotificationDeliveryPolicy getDeliveryPolicy() {
+        return CourseNotificationDeliveryPolicy.COMMUNICATION;
     }
 
     @Override

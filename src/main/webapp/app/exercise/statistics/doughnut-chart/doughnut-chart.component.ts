@@ -7,18 +7,19 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 
 @Component({
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
-    styleUrls: ['./doughnut-chart.component.scss'],
+    styleUrls: ['./doughnut-chart.component.css'],
     imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {
@@ -30,6 +31,7 @@ export class DoughnutChartComponent implements OnInit {
     readonly contentType = input<DoughnutChartType>(undefined!);
     readonly exerciseId = input<number>(undefined!);
     readonly exerciseType = input<ExerciseType>(undefined!);
+    readonly exerciseGroup = input<ExerciseGroup>();
     readonly currentPercentage = input<number>();
     readonly currentAbsolute = input<number>();
     readonly currentMax = input<number>();
@@ -78,13 +80,13 @@ export class DoughnutChartComponent implements OnInit {
     ngOnInit(): void {
         switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
-                this.doughnutChartTitle.set('averageScore');
-                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`]);
+            case DoughnutChartType.PARTICIPATIONS: {
+                this.doughnutChartTitle.set(this.contentType() === DoughnutChartType.AVERAGE_EXERCISE_SCORE ? 'averageScore' : 'participationRate');
+                const group = this.exerciseGroup();
+                const examPath = group?.exam ? `/exams/${group.exam.id}/exercise-groups/${group.id}` : '';
+                this.titleLink.set([`/course-management/${this.course().id}${examPath}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
                 break;
-            case DoughnutChartType.PARTICIPATIONS:
-                this.doughnutChartTitle.set('participationRate');
-                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
-                break;
+            }
             case DoughnutChartType.QUESTIONS:
                 this.doughnutChartTitle.set('resolved_posts');
                 this.titleLink.set([`/courses/${this.course().id}/exercises/${this.exerciseId()}`]);

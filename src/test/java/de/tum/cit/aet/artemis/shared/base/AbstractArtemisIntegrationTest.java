@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.service.llm.MockChatModelLlmConfiguration;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
+import de.tum.cit.aet.artemis.core.util.junit_extensions.AsyncWorkDrainExtension;
+import de.tum.cit.aet.artemis.core.util.junit_extensions.AsyncWorkTrackingConfiguration;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -79,9 +82,9 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(SpringExtension.class)
+@ExtendWith({ SpringExtension.class, AsyncWorkDrainExtension.class })
 @Execution(ExecutionMode.CONCURRENT)
-@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class })
+@Import({ TestRepositoryConfiguration.class, JacksonDeserializerInitializationConfig.class, AsyncWorkTrackingConfiguration.class, MockChatModelLlmConfiguration.class })
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 

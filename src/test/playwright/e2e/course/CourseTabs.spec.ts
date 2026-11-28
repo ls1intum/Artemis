@@ -21,7 +21,11 @@ import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_ch
 function recordRequests(page: Page, pattern: RegExp): string[] {
     const seen: string[] = [];
     page.on('request', (request) => {
-        if (pattern.test(request.url())) {
+        // The shared goto fixture can reload a cold app before returning. Count the
+        // final document's loads; SPA navigation and duplicate calls still accumulate.
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+            seen.length = 0;
+        } else if (pattern.test(request.url())) {
             seen.push(request.url());
         }
     });
@@ -36,7 +40,7 @@ function recordRequests(page: Page, pattern: RegExp): string[] {
  * @param waitFor how long to give the modal to appear; 0 to only dismiss one that is already up.
  */
 async function dismissLlmSelectionIfAsked(page: Page, waitFor: number): Promise<void> {
-    const cloudOption = page.locator('jhi-llm-selection-modal .option-card.cloud-card');
+    const cloudOption = page.getByTestId('llm-selection-cloud-option');
     if (waitFor > 0) {
         await cloudOption.waitFor({ state: 'visible', timeout: waitFor }).catch(() => undefined);
     }
@@ -82,7 +86,27 @@ function sidebarCard(page: Page, title: string) {
     return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
 
+test('request counting retains duplicate calls within a document and resets after a full reload', async ({ page }) => {
+    await page.route('**/__request-counter-page', (route) => route.fulfill({ contentType: 'text/html', body: '<main id="account-menu">Request counter</main>' }));
+    await page.route('**/__request-counter-api', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }));
+    const requests = recordRequests(page, /__request-counter-api$/);
+    await page.goto('/__request-counter-page');
+    await page.evaluate(async () => {
+        await fetch('/__request-counter-api');
+        await fetch('/__request-counter-api');
+    });
+    expect(requests).toHaveLength(2);
+    await page.reload();
+    await page.evaluate(async () => {
+        await fetch('/__request-counter-api');
+    });
+    expect(requests).toHaveLength(1);
+});
+
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
+    // Count the tab's requests from one navigation; an automatic fixture reload would add a cancelled request.
+    test.use({ recoverNavigation: false });
+
     let course: Course;
 
     test.beforeEach('Create a course the student is enrolled in', async ({ login, courseManagementAPIRequests }) => {
@@ -212,7 +236,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
 
         await expect(page.getByText(competencyTitle).first()).toBeVisible();
         // Prerequisites live behind their own collapsed section, so the count in its header is what proves they arrived
-        const prerequisiteSection = page.locator('.control-label').filter({ hasText: '1' }).first();
+        const prerequisiteSection = page.getByTestId('prerequisites-toggle').filter({ hasText: '1' });
         await expect(prerequisiteSection).toBeVisible();
         await prerequisiteSection.click();
         await expect(page.getByText(prerequisiteTitle).first()).toBeVisible();
@@ -313,7 +337,7 @@ test.describe('Course overview tabs', { tag: '@fast' }, () => {
         if (await confirmButton.isVisible()) {
             await confirmButton.click();
         }
-        await expect(page.getByTestId('quiz-training-dialog-mask')).toHaveCount(0);
+        await expect(page.getByTestId('quiz-training-dialog')).toHaveCount(0);
         await expect(leagueBadge).toBeVisible({ timeout: 20_000 });
 
         await expect.poll(() => leaderboardRequests.length, { timeout: 20_000 }).toBeGreaterThan(0);

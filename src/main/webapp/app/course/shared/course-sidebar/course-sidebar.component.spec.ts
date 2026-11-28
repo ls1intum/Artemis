@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,6 +13,7 @@ import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fo
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
@@ -20,6 +21,8 @@ import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
 import { BehaviorSubject } from 'rxjs';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -87,11 +90,9 @@ describe('CourseSidebarComponent', () => {
             imports: [
                 NgClass,
                 NgTemplateOutlet,
-                MockModule(NgbTooltipModule),
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
-                MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
                 FaIconComponent,
                 MockDirective(FeatureToggleHideDirective),
@@ -102,7 +103,7 @@ describe('CourseSidebarComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                MockProvider(ScienceService),
+                { provide: ScienceService, useClass: MockScienceService },
             ],
         }).compileComponents();
 
@@ -153,6 +154,24 @@ describe('CourseSidebarComponent', () => {
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
+    it('should draw an image icon in the text colour instead of a font icon', () => {
+        const imageItem: SidebarItem = {
+            routerLink: 'athena-settings',
+            iconImage: 'public/images/athena/athena-logo.png',
+            title: 'Athena Settings',
+            translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+            testId: 'athena-settings',
+            hidden: false,
+        };
+        fixture.componentRef.setInput('sidebarItems', [imageItem]);
+        fixture.detectChanges();
+
+        const imageIcon: HTMLElement = fixture.nativeElement.querySelector('.sidebar-icon-image');
+        expect(imageIcon).toBeTruthy();
+        expect(imageIcon.style.maskImage).toContain('public/images/athena/athena-logo.png');
+        expect(imageIcon.parentElement?.querySelector('fa-icon')).toBeNull();
+    });
+
     it('should call updateVisibleNavbarItems on window resize', () => {
         const updateVisibleNavbarItemsSpy = vi.spyOn(component, 'updateVisibleNavbarItems');
 
@@ -167,7 +186,7 @@ describe('CourseSidebarComponent', () => {
             close: vi.fn(),
         };
         // itemsDrop is a viewChild signal, so we need to spy on it to return our mock
-        vi.spyOn(component, 'itemsDrop').mockReturnValue(mockDropdown as unknown as NgbDropdown);
+        vi.spyOn(component, 'itemsDrop').mockReturnValue(mockDropdown as unknown as TumAetUiMenuTriggerDirective);
 
         vi.spyOn(component, 'applyThreshold').mockImplementation(() => {
             component.anyItemHidden.set(false);
@@ -215,6 +234,30 @@ describe('CourseSidebarComponent', () => {
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBe(true);
     });
 
+    it('should leave an entry out of the more menu while its feature is switched off', () => {
+        const featureToggleService = TestBed.inject(FeatureToggleService);
+        const toggled = { ...mockSidebarItems[0], title: 'Toggled', featureToggle: FeatureToggle.Science };
+        component.hiddenItems.set([toggled, mockSidebarItems[1]]);
+        component.anyItemHidden.set(true);
+        const entries = () => {
+            fixture.detectChanges();
+            fixture.nativeElement.querySelector('.three-dots').click();
+            fixture.detectChanges();
+            const titles = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).map((entry) => entry.getAttribute('title'));
+            component.itemsDrop().close();
+            fixture.detectChanges();
+            return titles;
+        };
+
+        featureToggleService.initializeFeatureToggles([FeatureToggle.Science]);
+        expect(entries()).toContain('Toggled');
+
+        featureToggleService.initializeFeatureToggles([]);
+        const withoutFeature = entries();
+        expect(withoutFeature).not.toContain('Toggled');
+        expect(withoutFeature).toContain(mockSidebarItems[1].title);
+    });
+
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
         const toggleCollapseStateSpy = vi.spyOn(component.toggleCollapseState, 'emit');
         // Set up layoutService to return true for sidebarExpandable breakpoint to make canExpand() return true
@@ -246,5 +289,34 @@ describe('CourseSidebarComponent', () => {
         for (const item of items) {
             expect(['UL', 'OL', 'MENU']).toContain(item.parentElement?.tagName);
         }
+    });
+
+    it('should log an Iris selection in the course overview', () => {
+        const logEventSpy = vi.spyOn(TestBed.inject(ScienceService), 'logEvent');
+
+        component.onSidebarItemClick(mockSidebarItems[0]);
+
+        expect(logEventSpy).toHaveBeenCalledWith(ScienceEventType.IRIS__OPENED_SIDEBAR, course1.id, course1.id);
+    });
+
+    it('should work without a ScienceService, as in course management', () => {
+        // Only the course overview provides the ScienceService; course management collects no science data.
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            imports: [CourseSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
+        });
+        const sidebarFixture = TestBed.createComponent(CourseSidebarComponent);
+        sidebarFixture.componentRef.setInput('course', course1);
+        sidebarFixture.componentRef.setInput('sidebarItems', mockSidebarItems);
+        sidebarFixture.componentRef.setInput('courseActionItems', mockActionItems);
+
+        expect(() => {
+            sidebarFixture.detectChanges();
+            sidebarFixture.componentInstance.onSidebarItemClick(mockSidebarItems[0]);
+        }).not.toThrow();
     });
 });

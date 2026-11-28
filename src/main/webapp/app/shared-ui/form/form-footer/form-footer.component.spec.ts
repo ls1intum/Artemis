@@ -8,7 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('FormFooterComponent', () => {
@@ -75,7 +75,7 @@ describe('FormFooterComponent', () => {
     it('should display saving badge when isSaving is true', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
-        const savingBadge = fixture.debugElement.query(By.css('.badge.bg-secondary'));
+        const savingBadge = fixture.debugElement.query(By.css('[data-testid="form-footer-saving"]'));
         expect(savingBadge).toBeTruthy();
     });
 
@@ -91,7 +91,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.badge.bg-danger'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('tumaet-ui-tag'))).toBeNull();
     });
 
     it('should render every invalid reason as its own list item', () => {
@@ -210,18 +210,6 @@ describe('FormFooterComponent', () => {
             expect(saveSpy).not.toHaveBeenCalled();
         });
 
-        it('should emit generateWithAi when the form is valid on a fresh check', () => {
-            fixture.componentRef.setInput('invalidReasons', staleReasons);
-            fixture.componentRef.setInput('revalidate', () => []);
-            fixture.detectChanges();
-            const generateSpy = vi.fn();
-            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
-
-            fixture.componentInstance.onGenerateWithAi();
-
-            expect(generateSpy).toHaveBeenCalledOnce();
-        });
-
         it('should block save when there are reasons and no way to check them again', () => {
             // the text, modeling and file upload update pages pass no revalidate, so their displayed reasons stay authoritative
             fixture.componentRef.setInput('invalidReasons', staleReasons);
@@ -269,7 +257,6 @@ describe('FormFooterComponent', () => {
         it.each([
             { name: 'the footer is disabled', input: 'isDisabled' },
             { name: 'a save is running', input: 'isSaving' },
-            { name: 'the exercise is being generated with AI', input: 'isGeneratingWithAi' },
         ])('should neither emit nor check the form again when $name', ({ input }) => {
             const revalidate = vi.fn(() => []);
             fixture.componentRef.setInput('invalidReasons', staleReasons);
@@ -277,43 +264,12 @@ describe('FormFooterComponent', () => {
             fixture.componentRef.setInput(input, true);
             fixture.detectChanges();
             const saveSpy = vi.fn();
-            const generateSpy = vi.fn();
             fixture.componentInstance.save.subscribe(saveSpy);
-            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
 
             clickSave();
-            fixture.componentInstance.onGenerateWithAi();
 
             expect(saveSpy).not.toHaveBeenCalled();
-            expect(generateSpy).not.toHaveBeenCalled();
             expect(revalidate).not.toHaveBeenCalled();
-        });
-
-        it('should not emit generateWithAi when the fresh check still finds reasons', () => {
-            fixture.componentRef.setInput('invalidReasons', staleReasons);
-            fixture.componentRef.setInput('revalidate', () => staleReasons);
-            fixture.detectChanges();
-            const generateSpy = vi.fn();
-            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
-
-            fixture.componentInstance.onGenerateWithAi();
-
-            expect(generateSpy).not.toHaveBeenCalled();
-        });
-
-        it('should emit generateWithAi from a click on its button when the form is valid on a fresh check', () => {
-            fixture.componentRef.setInput('invalidReasons', staleReasons);
-            fixture.componentRef.setInput('revalidate', () => []);
-            fixture.componentRef.setInput('showGenerateWithAi', true);
-            fixture.detectChanges();
-            const generateSpy = vi.fn();
-            fixture.componentInstance.generateWithAi.subscribe(generateSpy);
-            const generateButton = fixture.debugElement.query(By.css('#generate-with-ai'));
-            expect(generateButton).not.toBeNull();
-
-            (generateButton.nativeElement as HTMLButtonElement).click();
-
-            expect(generateSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -321,7 +277,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.componentRef.setInput('isSaving', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveSpy = vi.fn();
         fixture.componentInstance.save.subscribe(saveSpy);
@@ -335,7 +290,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.componentRef.setInput('isSaving', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.getAttribute('aria-disabled')).toBe('false');
@@ -351,12 +305,11 @@ describe('FormFooterComponent', () => {
         expect(saveButton.getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('should disable save button while generating with AI', () => {
-        fixture.componentRef.setInput('invalidReasons', []);
-        fixture.componentRef.setInput('isDisabled', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', true);
+    it('offers normal save and cancel without an AI-generation entry point', () => {
+        fixture.componentRef.setInput('isCreation', true);
         fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#save-entity')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#cancel-save')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#generate-with-ai')).toBeNull();
     });
 });

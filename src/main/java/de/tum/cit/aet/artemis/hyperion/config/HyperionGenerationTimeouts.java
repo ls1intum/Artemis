@@ -3,10 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.config;
 import java.time.Duration;
 
 /**
- * The two timeout invariants that relate {@code artemis.hyperion.agent.max-job-duration} to the values around it.
- * <p>
- * They live here, as pure functions, so the beans that need them at construction time and the eager {@link HyperionGenerationConfigurationValidator} enforce the same rule rather
- * than two drifting copies. Both are startup errors, so a deployment with a contradictory pair never reaches an instructor.
+ * Timeout invariants for exercise generation.
  */
 public final class HyperionGenerationTimeouts {
 
@@ -39,6 +36,20 @@ public final class HyperionGenerationTimeouts {
             throw new IllegalArgumentException("artemis.hyperion.agent.stale-job-timeout (" + staleJobTimeout
                     + ") must be greater than the longest configured max-job-duration (the deployment default or any effort profile under artemis.hyperion.agent.profiles, "
                     + "whichever is larger: " + longestMaxJobDuration + "), or another node would reclaim a slot while its owner is still legitimately running");
+        }
+    }
+
+    /**
+     * Requires retained run identity to outlast every configured run deadline. A run whose identity expires before it completes cannot be saved or shown in the activity history.
+     *
+     * @param terminalReplayTtl  the retained identity lifetime
+     * @param longestJobDuration the largest configured run deadline
+     * @throws IllegalArgumentException if retained identity can expire while a run is active
+     */
+    public static void validateTerminalReplayTtl(Duration terminalReplayTtl, Duration longestJobDuration) {
+        validateMaxJobDuration(longestJobDuration);
+        if (terminalReplayTtl == null || terminalReplayTtl.compareTo(longestJobDuration) <= 0) {
+            throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be greater than the longest configured max-job-duration");
         }
     }
 

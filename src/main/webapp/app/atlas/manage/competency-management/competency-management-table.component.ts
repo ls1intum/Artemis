@@ -1,3 +1,9 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -8,14 +14,12 @@ import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faFileImport, faMagnifyingGlass, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     ImportAllCompetenciesComponent,
     ImportAllCompetenciesDialogData,
     ImportAllFromCourseResult,
 } from 'app/atlas/manage/competency-management/import-all-competencies.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -25,20 +29,15 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
-    styleUrl: './competency-management-table.component.scss',
     imports: [
-        NgbDropdown,
-        NgbDropdownMenu,
-        NgbDropdownToggle,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
@@ -46,18 +45,17 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
         ArtemisTranslatePipe,
         RouterModule,
         ArtemisDatePipe,
-        InputTextModule,
-        IconFieldModule,
-        InputIconModule,
-        SortDirective,
-        SortByDirective,
+        TumAetUiInputDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class CompetencyManagementTableComponent {
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     private readonly alertService: AlertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
 
     courseId = input.required<number>();
@@ -73,11 +71,9 @@ export class CompetencyManagementTableComponent {
     dialogError = this.dialogErrorSource.asObservable();
 
     readonly faFileImport = faFileImport;
-    readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faPlus = faPlus;
     readonly faPencilAlt = faPencilAlt;
     readonly faTrash = faTrash;
-    readonly faSort = faSort;
 
     readonly getIcon = getIcon;
 
@@ -86,7 +82,7 @@ export class CompetencyManagementTableComponent {
     private readonly _sortPredicate = signal<string>('title');
     private readonly _sortAscending = signal<boolean>(true);
 
-    // Getter and setter pairs for jhiSort
+    // Getter and setter pairs backed by signals
     get sortPredicate(): string {
         return this._sortPredicate();
     }
@@ -162,8 +158,10 @@ export class CompetencyManagementTableComponent {
         });
     }
 
-    // Required by jhiSort (sortChange) event. Sorting is handled reactively via signals.
-    sortRows(): void {}
+    onSortChange(event: TumAetUiTableSortEvent): void {
+        this._sortPredicate.set(event.field);
+        this._sortAscending.set(event.order === 1);
+    }
 
     /**
      * Opens a modal for selecting a course to import all competencies from.
@@ -172,21 +170,17 @@ export class CompetencyManagementTableComponent {
         const dialogData: ImportAllCompetenciesDialogData = {
             //unary operator is necessary as otherwise courseId is seen as a string and will not match.
             disabledIds: [this.courseId()],
-            competencyType: this.competencyType(),
         };
-        const dialogRef = this.dialogService.open(ImportAllCompetenciesComponent, {
+        const dialogRef = this.dialogService.open<ImportAllCompetenciesComponent, ImportAllFromCourseResult, ImportAllCompetenciesDialogData>(ImportAllCompetenciesComponent, {
             header: this.translateService.instant(`artemisApp.${this.competencyType()}.importAll.title`),
-            style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
-            contentStyle: { height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
         });
 
-        dialogRef?.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
+        dialogRef.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
             if (result) {
                 const courseTitle = result.courseForImportDTO.title ?? '';
 

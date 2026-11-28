@@ -544,10 +544,6 @@
   padding-left: 2em;
 }
 
-.markdown-body li {
-  word-wrap: break-all;
-}
-
 .markdown-body li > p {
   margin-top: 16px;
 }
@@ -645,7 +641,7 @@
 
 .markdown-body pre code {
   display: inline;
-  max-width: auto;
+  max-width: none;
   padding: 0;
   margin: 0;
   overflow: visible;

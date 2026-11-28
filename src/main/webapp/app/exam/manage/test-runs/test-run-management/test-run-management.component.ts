@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
@@ -18,18 +19,16 @@ import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-de
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -50,6 +49,7 @@ import {
         TumAetUiTableSortableColumnComponent,
         TumAetUiTooltipDirective,
         CreateTestRunModalComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class TestRunManagementComponent implements OnInit {
@@ -176,4 +176,7 @@ export class TestRunManagementComponent implements OnInit {
     sortRows() {
         this.testRuns.set([...this.sortService.sortByProperty(this.testRuns(), this.predicate(), this.ascending())]);
     }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
 }

@@ -86,15 +86,22 @@ public class AsyncConfiguration implements AsyncConfigurer {
 
     /**
      * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}: the batch then runs on the calling thread, so a test
+     * can assert on the outcome right after the HTTP response instead of racing the queued task, and the database is not
+     * torn down while a background batch is still reading from it.
      *
      * @param corePoolSize  minimum number of threads kept in the Deimos executor
      * @param maxPoolSize   maximum number of threads used by the Deimos executor
      * @param queueCapacity maximum number of queued Deimos batch tasks
-     * @return async executor dedicated to Deimos workloads
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated bounded thread pool
      */
     @Bean(name = "deimosTaskExecutor")
     public Executor deimosTaskExecutor(@Value("${artemis.deimos.executor.core-pool-size:2}") int corePoolSize, @Value("${artemis.deimos.executor.max-pool-size:4}") int maxPoolSize,
             @Value("${artemis.deimos.executor.queue-capacity:25}") int queueCapacity) {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
         log.debug("Creating Deimos Async Task Executor (core={}, max={}, queue={})", corePoolSize, maxPoolSize, queueCapacity);
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
@@ -215,6 +222,53 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for the background deletion of exercises, exams and exercise groups (see {@code EntityDeletionProgressService}).
+     * <p>
+     * A deletion is started by an instructor who then watches a progress dialog, so it must not wait behind a course archive on {@code longRunningJobExecutor}. It also
+     * must not run on the shared {@code taskExecutor}: deleting the participations of a programming exercise removes repositories and build plans and can take minutes.
+     * <p>
+     * Four threads let a few instructors delete at the same time without a bulk delete of many exercises taking every thread of the node for itself. The queue is long
+     * enough that the rejection handler is unreachable in practice. If it were reached, the request would fail with an error instead of the request thread running a
+     * deletion itself.
+     *
+     * @return a dedicated pool for background deletions
+     */
+    @Bean("entityDeletionExecutor")
+    public Executor entityDeletionExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("entity-deletion-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for an instructor's bulk build runs: the build of all participations of an exercise and the rebuild of
+     * selected participations (see {@code ProgrammingTriggerService}).
+     * <p>
+     * A run waits for room in the build queue before it queues the next build and may do so for hours. On the shared
+     * {@code taskExecutor} a handful of such runs would occupy every core worker, and unrelated work such as websocket
+     * sends and mail would queue behind them. The runs have a pool of their own instead.
+     * <p>
+     * Four threads are enough because a run mostly sleeps and every run looks at the same build queue, so more runs at
+     * once would not queue builds faster. A run that finds all threads busy waits in the queue, which is long enough that
+     * the rejection handler is unreachable in practice. Rejecting would be the right answer if it were reached, since
+     * the caller is a request thread that must not run a bulk run itself.
+     *
+     * @return a dedicated pool for bulk build runs
+     */
+    @Bean("bulkBuildTriggerExecutor")
+    public Executor bulkBuildTriggerExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("bulk-build-trigger-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for the version control access log writes (see {@code VcsAccessLogService}).
      * <p>
      * These run on their own pool because of how the writes are reached. A git push submits the log write from the
@@ -222,31 +276,22 @@ public class AsyncConfiguration implements AsyncConfigurer {
      * produced 399 failed pushes this way, each one a student's commit lost to a rejected bookkeeping task. Access
      * logging must never be able to do that, so saturation runs the task on the calling thread instead of rejecting it.
      * <p>
-     * Neither may it drop one. A git operation writes its log entry in two steps: {@code /info/refs} creates the entry,
-     * and the data transfer request that follows updates it, locating it as the newest entry for that repository. A
-     * dropped create therefore does not merely lose a record, it points the update at the previous operation's entry and
-     * overwrites that one with this operation's commit hash. Discarding is the wrong answer for a sequence whose later
-     * steps depend on the earlier ones having happened.
+     * Neither may it drop one, which is why a full queue runs the task on the caller and never discards it.
      * <p>
-     * Single threaded for the same reason: with one worker the queue drains in submission order, so the create is
-     * always applied before the update that depends on it. The work is a handful of small inserts per git operation, far
-     * below what one thread sustains, and the bounded queue in front of it is the buffer for a burst.
+     * Only entries that nothing depends on being stored by a certain moment are written here, such as the record of a
+     * rejected request. The entry of a clone, pull or push is stored on the thread of the request, when the operation is
+     * over, so that it exists as soon as the client has its answer. An entry that was written in the background gives
+     * no such guarantee, because a task that falls back to the caller overtakes the queue.
+     * <p>
+     * Single threaded because the work is a handful of small inserts per git operation, far below what one thread
+     * sustains, and the bounded queue in front of it is the buffer for a burst.
      *
      * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool that
      *         falls back to the caller when saturated
      */
     @Bean("vcsAccessLogExecutor")
     public Executor vcsAccessLogExecutor() {
-        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return new SyncTaskExecutor();
-        }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(1000);
-        executor.setThreadNamePrefix("vcs-access-log-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return new ExceptionHandlingAsyncTaskExecutor(executor);
+        return callerRunsExecutor(1, 1, 1000, "vcs-access-log-");
     }
 
     /**
@@ -265,16 +310,7 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     @Bean("submissionVersionExecutor")
     public Executor submissionVersionExecutor() {
-        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return new SyncTaskExecutor();
-        }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("submission-version-");
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        return new ExceptionHandlingAsyncTaskExecutor(executor);
+        return callerRunsExecutor(4, 8, 500, "submission-version-");
     }
 
     /**
@@ -295,18 +331,19 @@ public class AsyncConfiguration implements AsyncConfigurer {
      */
     @Bean("buildTriggerExecutor")
     public Executor buildTriggerExecutor() {
+        return callerRunsExecutor(2, 4, 2000, "build-trigger-");
+    }
+
+    /** Small bounded pools preserve work by applying backpressure on the producing thread when saturated. */
+    private Executor callerRunsExecutor(int corePoolSize, int maxPoolSize, int queueCapacity, String threadNamePrefix) {
         if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return new SyncTaskExecutor();
         }
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Deliberately small. Queueing a build competes with request handling for database connections and processor
-        // time, and a pool wide enough to absorb an exam's worth of pushes at once starves the endpoints students are
-        // waiting on. Kept narrow, the caller-runs fallback pushes the work back onto the git thread that produced it,
-        // which is where the natural backpressure was before this became asynchronous.
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(2000);
-        executor.setThreadNamePrefix("build-trigger-");
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setThreadNamePrefix(threadNamePrefix);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }

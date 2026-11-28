@@ -2,7 +2,11 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -11,7 +15,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
@@ -20,7 +23,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
@@ -29,29 +31,32 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
 @Component({
     selector: 'jhi-onboarding-general-settings',
     templateUrl: './onboarding-general-settings.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     imports: [
         FormsModule,
         ColorSelectorComponent,
         TumAetUiDatePickerComponent,
         TranslateDirective,
-        KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
         DocumentationButtonComponent,
         IrisLogoComponent,
         EnabledToggleComponent,
         AthenaLogoComponent,
+        TumAetUiMessageComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        AboutIrisModalComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
 
     protected readonly IrisLogoSize = IrisLogoSize;
-    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+    protected readonly aboutIrisModalVisible = signal(false);
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
@@ -71,6 +76,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly athenaConfig = computed(() => this.athenaState()?.config());
     readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
     readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the Athena toggles cannot be switched yet. */
+    readonly isAthenaLoaded = computed(() => this.athenaState()?.loaded() ?? false);
+    readonly isAthenaLoadFailed = computed(() => this.athenaState()?.loadFailed() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [
@@ -78,7 +86,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         { key: 'gradingFeedbackEnabled' as const, testId: 'onboarding-athena-grading-feedback', enabled: this.isAthenaGradingEnabled },
     ];
 
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort((a, b) => a.localeCompare(b));
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly semesters = computed(() => getSemesters(this.course().semester));
     readonly semesterMissing = computed(() => !this.course().semester?.trim());
@@ -185,18 +193,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     openAboutIrisModal(): void {
-        this.aboutIrisDialogRef?.close();
-        this.aboutIrisDialogRef =
-            this.dialogService.open(AboutIrisModalComponent, {
-                modal: true,
-                closable: false,
-                dismissableMask: true,
-                showHeader: false,
-                styleClass: 'about-iris-dialog',
-                maskStyleClass: 'about-iris-dialog',
-                width: '40rem',
-                breakpoints: { '640px': '95vw' },
-                data: { hideTryButton: true },
-            }) ?? undefined;
+        this.aboutIrisModalVisible.set(true);
     }
 }

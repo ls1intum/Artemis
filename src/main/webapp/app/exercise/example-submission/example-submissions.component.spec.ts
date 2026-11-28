@@ -1,9 +1,10 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+
 import { Subject, of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -23,11 +25,12 @@ describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;
-    let dialogService: DialogService;
+    let exampleSubmissionApi: ExampleSubmissionApi;
+    let dialogService: TumAetUiDialogService;
     let alertService: AlertService;
     let exercise: Exercise;
     let dialogCloseSubject: Subject<Submission | undefined>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     const createExercise = (): Exercise => ({
         id: 1,
@@ -45,14 +48,14 @@ describe('Example Submission Component', () => {
         dialogRef = {
             close: vi.fn(),
             onClose: dialogCloseSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -64,7 +67,8 @@ describe('Example Submission Component', () => {
         fixture = TestBed.createComponent(ExampleSubmissionsComponent);
         component = fixture.componentInstance;
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-        dialogService = TestBed.inject(DialogService);
+        exampleSubmissionApi = TestBed.inject(ExampleSubmissionApi);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         alertService = TestBed.inject(AlertService);
     });
 
@@ -82,7 +86,7 @@ describe('Example Submission Component', () => {
     it('should delete an example submission', () => {
         component.exercise.set(exercise);
         component.createdExampleAssessment.set([false, false]);
-        const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteStub = vi.spyOn(exampleSubmissionApi, 'deleteExampleSubmission').mockReturnValue(of(undefined));
 
         component.deleteExampleSubmission(0);
 
@@ -93,7 +97,7 @@ describe('Example Submission Component', () => {
     it('should catch an error on delete', () => {
         component.exercise.set(exercise);
         component.createdExampleAssessment.set([false, false]);
-        vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
+        vi.spyOn(exampleSubmissionApi, 'deleteExampleSubmission').mockReturnValue(throwError(() => ({ status: 500 })));
 
         const alertServiceSpy = vi.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
@@ -123,7 +127,7 @@ describe('Example Submission Component', () => {
 
     it('should not import when the import dialog closes without a submission', () => {
         component.exercise.set(exercise);
-        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
+        const importStub = vi.spyOn(exampleSubmissionApi, 'importExampleSubmission').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
         dialogCloseSubject.next(undefined);
@@ -139,5 +143,72 @@ describe('Example Submission Component', () => {
         component.ngOnDestroy();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
+    it('should report an error when importing the selected submission fails', () => {
+        component.exercise.set(exercise);
+        const importStub = vi.spyOn(exampleSubmissionApi, 'importExampleSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.openImportModal();
+        dialogCloseSubject.next({ id: 42 } as Submission);
+
+        expect(importStub).toHaveBeenCalledWith(exercise.id, 42);
+        expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+    });
+});
+
+describe('Example Submission Component toolbar', () => {
+    let fixture: ComponentFixture<ExampleSubmissionsComponent>;
+    let dialogService: TumAetUiDialogService;
+
+    function setup(isAtLeastEditor: boolean) {
+        const exercise = {
+            id: 1,
+            type: ExerciseType.TEXT,
+            course: { id: 5, isAtLeastEditor },
+            exampleSubmissions: [],
+        } as unknown as Exercise;
+        const route = { data: of({ exercise }), children: [] } as any as ActivatedRoute;
+        const dialogRef = { close: vi.fn(), onClose: new Subject<Submission | undefined>().asObservable() } as unknown as TumAetUiDialogRef;
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        });
+        fixture = TestBed.createComponent(ExampleSubmissionsComponent);
+        dialogService = TestBed.inject(TumAetUiDialogService);
+        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should label the icon-only toolbar actions and open the import dialog for editors', () => {
+        setup(true);
+        const toolbar = fixture.nativeElement.querySelector('[tumAetUiTableToolbar]') as HTMLElement;
+
+        expect(toolbar.querySelector('a[aria-label="artemisApp.modelingExercise.createExampleSubmission"]')).not.toBeNull();
+        const importButton = toolbar.querySelector('[data-testid="import-example-submission"]') as HTMLButtonElement;
+        expect(importButton.getAttribute('aria-label')).toBe('artemisApp.exampleSubmission.useAsExampleSubmission');
+
+        importButton.click();
+
+        expect(dialogService.open).toHaveBeenCalledOnce();
+    });
+
+    it('should not offer creating or importing example submissions to non-editors', () => {
+        setup(false);
+
+        expect(fixture.nativeElement.querySelector('[data-testid="import-example-submission"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('a[tumAetUiButton]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
     });
 });

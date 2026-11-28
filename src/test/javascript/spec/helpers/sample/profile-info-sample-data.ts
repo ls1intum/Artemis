@@ -80,6 +80,7 @@ const buildInformation = {
 
 export const expectedProfileInfo: ProfileInfo = {
     localLLMDeploymentEnabled: false,
+    mailConfigured: true,
     activeModuleFeatures: [MODULE_FEATURE_ATHENA, MODULE_FEATURE_APOLLON],
     activeProfiles: [PROFILE_PROD, PROFILE_JENKINS],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
@@ -98,6 +99,7 @@ export const expectedProfileInfo: ProfileInfo = {
     externalCredentialProvider: '',
     externalPasswordResetLinkMap: { en: '', de: '' },
     features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
+    gocastEnabled: false,
     git: gitInformation,
     java: {},
     needsToAcceptTerms: false,
@@ -107,7 +109,6 @@ export const expectedProfileInfo: ProfileInfo = {
     programmingLanguageFeatures: programmingLanguageFeatures,
     registrationEnabled: true,
     repositoryAuthenticationMechanisms: ['token', 'ssh', 'password'],
-    sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2' },
     sshCloneURLTemplate: 'ssh://git@artemistest2.aet.cit.tum.de:2222/',
     studentExamStoreSessionData: false,
     testServer: true,

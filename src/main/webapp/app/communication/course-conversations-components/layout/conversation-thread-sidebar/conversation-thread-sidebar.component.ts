@@ -1,12 +1,13 @@
 import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faCompress, faExpand, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
@@ -19,11 +20,11 @@ import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directiv
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
-    styleUrls: ['./conversation-thread-sidebar.component.scss'],
+    styleUrls: ['./conversation-thread-sidebar.component.css'],
     imports: [
         FaIconComponent,
         TranslateDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         PostComponent,
         MessageReplyInlineInputComponent,
         ArtemisTranslatePipe,
@@ -36,7 +37,6 @@ export class ConversationThreadSidebarComponent {
     private readonly conversationSelectionState = inject(ConversationSelectionState);
 
     readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
-    expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
 
     readonly readOnlyMode = input(false);
@@ -46,6 +46,7 @@ export class ConversationThreadSidebarComponent {
     course = input<Course>();
 
     readonly closePostThread = output<void>();
+    readonly onNavigateToPost = output<Posting>();
 
     constructor() {
         effect(() => {
@@ -87,7 +88,6 @@ export class ConversationThreadSidebarComponent {
     // Icons
     faXmark = faXmark;
     faChevronLeft = faChevronLeft;
-    faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
     readonly faExpand = faExpand;
     readonly faCompress = faCompress;
@@ -109,7 +109,6 @@ export class ConversationThreadSidebarComponent {
      * Toggles the expanded state of the thread view.
      * If expanded, resets the container width and collapses it;
      * if collapsed, expands the thread view to allow resizing.
-     * Also ensures that the tooltip is closed to prevent UI clutter.
      */
     toggleExpand(): void {
         const el = this.threadContainer()?.nativeElement;
@@ -117,7 +116,6 @@ export class ConversationThreadSidebarComponent {
             el.style.width = '';
         }
         this.isExpanded.update((expanded) => !expanded);
-        this.expandTooltip()?.close();
         if (!this.isExpanded()) {
             // After collapsing, re-pin the sidebar width once the DOM has settled.
             setTimeout(() => this.lockWidth(), 0);

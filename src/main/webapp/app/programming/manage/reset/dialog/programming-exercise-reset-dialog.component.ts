@@ -1,5 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -18,19 +21,18 @@ interface ProgrammingExerciseResetDialogData {
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
     templateUrl: './programming-exercise-reset-dialog.component.html',
-    styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective],
 })
 export class ProgrammingExerciseResetDialogComponent implements OnInit {
     private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<ProgrammingExerciseResetDialogData>>(TumAetUiDialogConfig);
 
     readonly FeatureToggle = FeatureToggle;
 
-    programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
+    programmingExercise: ProgrammingExercise = this.dialogConfig.data!.programmingExercise;
 
     programmingExerciseResetOptions: ProgrammingExerciseResetOptions = {
         deleteParticipationsSubmissionsAndResults: false,
@@ -81,7 +83,10 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         }
 
         this.resetInProgress.set(true);
-        this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
+        const reset = this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults
+            ? this.programmingExerciseService.resetParticipations(this.programmingExercise.id, this.programmingExerciseResetOptions)
+            : this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions);
+        reset.subscribe({
             next: this.handleResetResponse,
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');

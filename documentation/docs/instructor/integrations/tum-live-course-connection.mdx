@@ -1,0 +1,40 @@
+---
+id: tum-live-course-connection
+title: Connect a TUM.Live Course
+sidebar_label: TUM.Live Course Connection
+last_reviewed: 2026-11-26
+---
+
+# Connect a TUM.Live course
+
+Open **Course Management → TUM.Live**. Only course instructors can manage this connection.
+
+Select **Connect**. Artemis opens TUM.Live, where a TUM.Live course administrator selects a course and approves the request. The approver does not need an Artemis account. After approval, return to the TUM.Live page in Artemis and refresh the status.
+
+The page shows the connected TUM.Live course, its visibility, and whether the saved grant is still active.
+
+To remove access, select **Disconnect** and confirm. Artemis first revokes its exact grant in TUM.Live. If TUM.Live is temporarily unavailable, the saved connection remains visible so you can retry safely.
+
+## Recordings of a connected course
+
+When a lecture unit links a recording of the connected TUM.Live course, Artemis plays it in its own video player and can transcribe it for Iris, even if the TUM.Live course is not public. Students do not need a TUM.Live account for this; Artemis checks that they may see the unit. Lectures that are private in TUM.Live stay unavailable to Artemis.
+
+The video address that Artemis gets is valid for seven hours. If a video stops playing after a page was open that long, reload the page.
+
+## Upload a video to TUM.Live
+
+In a connected course, editors can upload an MP4 to TUM.Live when creating a single lecture or an attachment video unit.
+
+1. On the new lecture form, select an MP4 under **TUM.Live recording (optional)**. On the new unit form, choose **TUM.Live upload** as the video source and select an MP4.
+2. Select **Save and upload**. Artemis saves the content and starts uploading. When you create a lecture, Artemis also creates a recording unit for the video.
+3. Follow the upload percentage and keep the page open until Artemis confirms the transfer. You can leave and reopen the page while TUM.Live converts the video. Artemis shows the confirmed upload or conversion progress and adds the video to the unit when it is ready.
+
+To upload a video to an existing unit, open the unit for editing, choose an MP4 under **TUM.Live recording**, and select **Upload to TUM.Live**.
+
+If Artemis cannot confirm a save, select **Check save status**. If your content appears in the list, open it and select the video again. You can check the list again while the original form stays locked.
+
+The upload creates a new lecture in the TUM.Live course. Until it is converted, students can see it in TUM.Live as a planned lecture. To replace the video, upload another one: the unit keeps the old video until the new one is ready, and the old lecture is then deleted in TUM.Live. If you change the unit's video link by hand while an upload converts, your link is kept and the upload is deleted.
+
+Artemis schedules a failed or cancelled transfer for deletion in TUM.Live. If a proxy rejects the transfer before Artemis receives it, choose **Discard upload** to clear the reservation and try again. Artemis gives up an upload after six hours. Proxies can apply their own size limits and Artemis shows their error.
+
+When you delete a unit or a lecture with a video uploaded from Artemis, Artemis asks whether to delete the video in TUM.Live too. The next background cleanup can delete the recording once no other lecture unit links to it. Deleting a course keeps its videos in TUM.Live.

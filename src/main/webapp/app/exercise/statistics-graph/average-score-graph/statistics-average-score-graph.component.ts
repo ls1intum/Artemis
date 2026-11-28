@@ -1,3 +1,7 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
@@ -12,10 +16,9 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface ExerciseStatisticsEntry extends ChartSeriesEntry {
     exerciseType: ExerciseType;
@@ -31,8 +34,17 @@ export enum PerformanceInterval {
 @Component({
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
-    styleUrls: ['./statistics-average-score-graph.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, TumAetUiBarChartComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
+    styleUrls: ['./statistics-average-score-graph.component.css'],
+    imports: [
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiButtonDirective,
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiBarChartComponent,
+        NgClass,
+        ArtemisTranslatePipe,
+    ],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);

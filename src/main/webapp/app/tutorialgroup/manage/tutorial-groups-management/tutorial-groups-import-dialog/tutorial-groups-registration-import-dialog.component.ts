@@ -11,7 +11,14 @@ import { CsvDownloadService } from 'app/foundation/util/CsvDownloadService';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
@@ -35,15 +42,29 @@ const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
-const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'istonline'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
 @Component({
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
-    styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, ArtemisTranslatePipe, DialogModule],
+    styleUrls: ['./tutorial-groups-registration-import-dialog.component.css'],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+    ],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
@@ -229,6 +250,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         const fixedPlaceValue = cleanString(this.fixedPlaceValueControl?.value);
 
         const csvFixedPlaceRows = csvRows.filter((row) => !statusColumn || !fixedPlaceValue || cleanString(row[statusColumn]) === fixedPlaceValue);
+        const invalidIsOnlineRows: number[] = [];
         // convert the 'raw' csv rows into a list of TutorialGroupImportData
         const registrations = csvFixedPlaceRows
             .map((csvRow) => {
@@ -245,12 +267,20 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined;
+                const isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase();
+                if (isOnline && isOnline !== 'true' && isOnline !== 'false') {
+                    invalidIsOnlineRows.push(csvRows.indexOf(csvRow) + 2);
+                }
+                registration.isOnline = isOnline ? isOnline === 'true' : undefined;
 
                 return registration;
             })
             .sort((a, b) => this.compareTitle(a, b));
 
+        if (invalidIsOnlineRows.length > 0) {
+            const message = this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.invalidIsOnline') + invalidIsOnlineRows.join(', ');
+            this.validationErrors.update((errors) => [...errors, message]);
+        }
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors().length > 0) {
             this.resetFileUpload();

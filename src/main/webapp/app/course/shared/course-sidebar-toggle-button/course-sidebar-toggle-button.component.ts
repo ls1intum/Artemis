@@ -1,16 +1,16 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { facSidebar } from 'app/foundation/icons/icons';
-import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-sidebar-toggle-button',
-    imports: [FaIconComponent, TooltipModule, ButtonModule, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-sidebar-toggle-button.component.html',
-    styleUrl: './course-sidebar-toggle-button.component.scss',
+    styleUrl: './course-sidebar-toggle-button.component.css',
 })
 export class CourseSidebarToggleButtonComponent {
     readonly isCollapsed = input<boolean>(false);

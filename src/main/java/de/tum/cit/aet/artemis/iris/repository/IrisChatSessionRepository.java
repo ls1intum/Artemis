@@ -28,6 +28,52 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 @Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
+    interface HomeSession {
+
+        long getId();
+
+        String getTitle();
+
+        IrisChatMode getMode();
+
+        long getEntityId();
+
+        String getEntityName();
+
+        java.time.ZonedDateTime getLastActivity();
+    }
+
+    /**
+     * Bounded metadata only; the latest assistant response counts as activity, but an empty chat never does.
+     *
+     * @param courseId the authorized course identifier
+     * @param userId   the student identifier
+     * @param asOf     the single server timestamp for this snapshot
+     * @param pageable the fixed-size result boundary
+     * @return bounded own session metadata without message contents
+     */
+    @Query("""
+            SELECT s.id AS id, SUBSTRING(s.title, 1, 160) AS title, s.chatMode AS mode, s.entityId AS entityId,
+                CASE s.chatMode
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT THEN l.title
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT THEN e.title
+                    WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT THEN e.title
+                    ELSE NULL END AS entityName,
+                MAX(m.sentAt) AS lastActivity
+            FROM IrisChatSession s JOIN s.messages m
+                LEFT JOIN Exercise e ON e.id = s.entityId AND e.course.id = :courseId AND s.chatMode IN (
+                    de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
+                    de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT)
+                LEFT JOIN Lecture l ON l.id = s.entityId AND l.course.id = :courseId
+                    AND s.chatMode = de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT
+            WHERE s.userId = :userId AND s.courseId = :courseId AND m.sentAt <= :asOf
+                AND EXISTS (SELECT authored.id FROM IrisMessage authored WHERE authored.session = s
+                    AND authored.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER AND authored.sentAt <= :asOf)
+            GROUP BY s.id, s.title, s.chatMode, s.entityId, e.title, l.title
+            ORDER BY MAX(m.sentAt) DESC, s.id DESC
+            """)
+    List<HomeSession> findForCourseHome(@Param("courseId") long courseId, @Param("userId") long userId, @Param("asOf") java.time.ZonedDateTime asOf, Pageable pageable);
+
     // -------------------------------------------------------------------------
     // Sidebar overview query (course-scoped, all modes)
     // -------------------------------------------------------------------------
@@ -112,9 +158,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     /**
      * Find all chat sessions with messages for a given course.
      * <p>
-     * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
-     * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
-     * The return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
+     * Note: This query does not use DISTINCT; the return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
      * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
      *
      * @param courseId the id of the course
@@ -130,8 +174,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
 
     /**
      * Find all chat sessions with messages for a given course, sorted by creation date ascending.
-     * Sorting is done in Java because the query returns a {@code Set} to avoid issues with
-     * DISTINCT and PostgreSQL's json columns.
+     * Sorting is done in Java because the query returns a {@code Set}.
      *
      * @param courseId the id of the course
      * @return list of chat sessions with their messages, sorted by creation date ascending

@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, Injector, Signal, afterNextRender, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -24,7 +25,7 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faCode } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -34,6 +35,11 @@ import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
  */
 interface ExerciseDetailsRef {
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void;
+    /**
+     * Set while the page wants the list out of the way, for example during a running quiz. It is undefined while the page
+     * does not know yet, and the list keeps its state until it does. Pages that never ask for focus omit it.
+     */
+    readonly focusMode?: Signal<boolean | undefined>;
 }
 
 function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
@@ -71,7 +77,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.css'],
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumAetUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {
@@ -85,9 +91,14 @@ export class CourseExercisesComponent implements SidebarView {
     private sessionStorageService = inject(SessionStorageService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
+    private injector = inject(Injector);
+    private document = inject(DOCUMENT);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
+
+    private readonly listWrapper = viewChild<ElementRef<HTMLElement>>('listWrapper');
+    private readonly contentArea = viewChild<ElementRef<HTMLElement>>('contentArea');
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -102,6 +113,8 @@ export class CourseExercisesComponent implements SidebarView {
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
     private readonly _activeExerciseDetails = signal<ExerciseDetailsRef | undefined>(undefined);
     readonly pageTitle = signal<string>('');
+    /** Whether the active page has collapsed the list for focus, so that leaving it restores the stored preference. */
+    private sidebarFocused = false;
     private courseUpdateSubscription?: Subscription;
     private exercisesLoadSubscription?: Subscription;
 
@@ -157,6 +170,26 @@ export class CourseExercisesComponent implements SidebarView {
 
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
+        });
+
+        // A focused page collapses the list without touching the stored preference of the student, who can still open it
+        // by hand. When the page ends or is left, the list goes back to the stored preference.
+        effect(() => {
+            const details = this._activeExerciseDetails();
+            // Opening a quiz swaps the page for a new instance within one tick, before it has loaded. Such a page has no
+            // answer yet and must not restore the list, which the loaded page would collapse again one round trip later.
+            const focused = details ? (details.focusMode ? details.focusMode() : false) : false;
+            if (focused === undefined) {
+                return;
+            }
+            untracked(() => {
+                if (focused) {
+                    this.collapseForFocus();
+                } else if (this.sidebarFocused) {
+                    this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
+                }
+                this.sidebarFocused = focused;
+            });
         });
 
         this.destroyRef.onDestroy(() => {
@@ -247,6 +280,15 @@ export class CourseExercisesComponent implements SidebarView {
         }
     }
 
+    /** Collapses the list for a focused page. Focus inside the list, which is no longer reachable then, moves to the toggle in the page header. */
+    private collapseForFocus(): void {
+        const hadFocus = !!this.listWrapper()?.nativeElement.contains(this.document.activeElement);
+        this._isCollapsed.set(true);
+        if (hadFocus) {
+            afterNextRender(() => this.contentArea()?.nativeElement.querySelector<HTMLElement>('[data-testid="course-sidebar-toggle"]')?.focus(), { injector: this.injector });
+        }
+    }
+
     toggleSidebar() {
         this._isCollapsed.update((value) => !value);
         this.courseOverviewService.setSidebarCollapseState('exercise', this._isCollapsed());
@@ -286,7 +328,10 @@ export class CourseExercisesComponent implements SidebarView {
     processExercises(exercises: Exercise[]): void {
         const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
-        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises);
+        // The exercises of the overview carry no course, so the cards get the accuracy of the scores of the course, which their results are rounded to.
+        // Not the course itself: the sidebar clones its cards, and the course holds all exercises.
+        const accuracyOfScores = this._course()?.accuracyOfScores;
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._course() ? { accuracyOfScores } : undefined);
         this._sidebarExercises.set(ungroupedData);
         this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();

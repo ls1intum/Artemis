@@ -127,6 +127,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
         conversationService.setIsFavorite(conversationId, requestingUser, isFavorite);
         return ResponseEntity.ok().build();
     }
@@ -145,6 +146,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
         conversationService.setIsHidden(conversationId, requestingUser, isHidden);
         return ResponseEntity.ok().build();
     }
@@ -163,6 +165,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkEntityIdMatchesPathIds(conversationService.getConversationById(conversationId), Optional.of(courseId), Optional.of(conversationId));
         conversationService.setIsMuted(conversationId, requestingUser, isMuted);
         return ResponseEntity.ok().build();
     }
@@ -313,6 +316,7 @@ public class ConversationResource extends ConversationManagementResource {
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithAuthorities();
+        conversationService.checkConversationVisibilityElseThrow(conversationFromDatabase, requestingUser);
         var isAllowedToSearchForMembers = (conversationFromDatabase instanceof Channel channel && channel.getIsCourseWide())
                 || conversationService.isMember(conversationId, requestingUser.getId());
         if (!isAllowedToSearchForMembers) {
@@ -357,6 +361,7 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     private void checkConversationMembership(Conversation conversation, @NonNull User user) {
+        conversationService.checkConversationVisibilityElseThrow(conversation, user);
         if (conversationService.isMember(conversation.getId(), user.getId())) {
             return;
         }

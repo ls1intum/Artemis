@@ -1,9 +1,10 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
-import { DialogModule } from 'primeng/dialog';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/dto/competency-orchestration-dto';
@@ -14,8 +15,17 @@ const WEIGHT_BANDS_KEY_PREFIX = 'artemisApp.atlasOrchestrator.resultDialog.weigh
 @Component({
     selector: 'jhi-orchestration-result-dialog',
     templateUrl: './orchestration-result-dialog.component.html',
-    styleUrl: './orchestration-result-dialog.component.scss',
-    imports: [DialogModule, TableModule, TagModule, ButtonModule, DecimalPipe, ArtemisTranslatePipe, TranslateDirective],
+    styleUrl: './orchestration-result-dialog.component.css',
+    imports: [
+        TumAetUiDialogComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTagComponent,
+        TumAetUiButtonDirective,
+        DecimalPipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
 })
 export class OrchestrationResultDialogComponent {
     readonly visible = model<boolean>(false);

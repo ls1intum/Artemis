@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { asyncScheduler, of } from 'rxjs';
+import { Subject, asyncScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -22,8 +22,10 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 describe('QuizExercise Re-evaluate Component', () => {
     let comp: QuizReEvaluateComponent;
@@ -36,7 +38,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     quizExercise.id = 456;
     quizExercise.title = 'MyQuiz';
 
-    const route = { params: of({ exerciseId: 123 }) } as any as ActivatedRoute;
+    const route = { params: of({ exerciseId: 123 }), snapshot: { pathFromRoot: [{ params: {} }] } } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -77,10 +79,14 @@ describe('QuizExercise Re-evaluate Component', () => {
     };
 
     beforeEach(() => {
+        const courseSnapshot = new ActivatedRouteSnapshot();
+        courseSnapshot.params = {};
+        vi.spyOn(courseSnapshot, 'pathFromRoot', 'get').mockReturnValue([courseSnapshot]);
+        route.snapshot = courseSnapshot;
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -99,12 +105,27 @@ describe('QuizExercise Re-evaluate Component', () => {
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
         // Use asyncScheduler to ensure ngOnInit initializes duration before the subscription callback runs
-        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })).pipe(observeOn(asyncScheduler)));
+        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise).pipe(observeOn(asyncScheduler)));
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('loads exam re-evaluation details from route context', () => {
+        const previousSnapshot = route.snapshot;
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(quizExercise).pipe(observeOn(asyncScheduler)));
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(examFind).toHaveBeenCalledWith(123);
+        expect(quizServiceFindStub).not.toHaveBeenCalled();
+        expect(comp.quizExercise()).toEqual(quizExercise);
+        route.snapshot = previousSnapshot;
     });
 
     it('should initialize quiz exercise', () => {
@@ -240,8 +261,8 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if quiz explanation is too long', () => {
-                mcQuestion.explanation = new Array(501 + 1).join('x');
-                expect(mcQuestion.explanation).toHaveLength(501);
+                mcQuestion.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                expect(mcQuestion.explanation).toHaveLength(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
@@ -257,7 +278,7 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if answer option explanation is too long', () => {
-                answerOption1.explanation = new Array(501 + 1).join('x');
+                answerOption1.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
@@ -281,8 +302,8 @@ describe('QuizExercise Re-evaluate Component', () => {
             });
 
             it('should be invalid if question explanation is invalid', () => {
-                dndQuestion.explanation = new Array(501 + 1).join('x');
-                expect(dndQuestion.explanation).toHaveLength(501);
+                dndQuestion.explanation = 'x'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                expect(dndQuestion.explanation).toHaveLength(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
 
                 comp.onQuestionUpdated();
 
@@ -318,5 +339,32 @@ describe('QuizExercise Re-evaluate Component', () => {
         // @ts-ignore
         comp.invalidFlaggedQuestions = [question];
         expect(comp.isValidQuiz()).toBe(true);
+    });
+    it.each([false, true])('merges files into the warning dialog and commits only a confirmed change=%s', async (confirmed) => {
+        const fresh = new QuizExercise(course, undefined);
+        fresh.id = 456;
+        fresh.title = 'Fresh quiz';
+        fresh.duration = 60;
+        fresh.quizQuestions = [createValidMCQuestion().question];
+        quizServiceFindStub.mockReturnValue(of(fresh).pipe(observeOn(asyncScheduler)));
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        const child = TestBed.runInInjectionContext(() => new ReEvaluateDragAndDropQuestionComponent());
+        const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+        child.handleAddFile({ fileName: 'diagram.png', file });
+        vi.spyOn(comp, 'reEvaluateDragAndDropQuestionComponents').mockReturnValue([child]);
+        const close = new Subject<boolean>();
+        const dialog = Object.assign(new TumAetUiDialogRef(vi.fn(), vi.fn()), { onClose: close });
+        const open = vi.spyOn(comp.popupService, 'open').mockResolvedValue(dialog);
+        comp.quizExercise().title = 'Changed title';
+        comp.cacheValidation();
+        expect(comp.pendingChanges()).toBe(true);
+        comp.save();
+        await Promise.resolve();
+        expect(open).toHaveBeenCalledWith(expect.anything(), comp.quizExercise(), new Map([['diagram.png', file]]));
+        close.next(confirmed);
+        expect(comp.pendingChanges()).toBe(!confirmed);
+        expect(comp.savedEntity.title).toBe(confirmed ? 'Changed title' : 'Fresh quiz');
+        expect(comp.quizIsValid()).toBe(comp.isValidQuiz());
     });
 });

@@ -1,12 +1,16 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -16,14 +20,25 @@ import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 @Component({
     selector: 'jhi-assessment-locks',
     templateUrl: './assessment-locks.component.html',
-    imports: [TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        RouterLink,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+    ],
 })
 export class AssessmentLocksComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -34,8 +49,6 @@ export class AssessmentLocksComponent implements OnInit {
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
-
-    readonly ExerciseType = ExerciseType;
 
     course?: Course;
     readonly courseId = signal<number>(undefined!);
@@ -88,6 +101,11 @@ export class AssessmentLocksComponent implements OnInit {
             },
             error: (response: string) => this.onError(response),
         });
+    }
+
+    getAssessmentLink(submission: Submission): string[] {
+        const exercise = submission.participation!.exercise!;
+        return getLinkToSubmissionAssessment(exercise.type!, this.courseId(), exercise.id!, submission.participation?.id, submission.id!, this.examId, exercise.exerciseGroup?.id);
     }
 
     /**

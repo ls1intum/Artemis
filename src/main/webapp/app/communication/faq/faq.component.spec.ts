@@ -18,7 +18,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -77,6 +76,7 @@ describe('FaqComponent', () => {
                 },
 
                 MockProvider(FaqService, {
+                    findAllForManagement: vi.fn(() => of(new HttpResponse({ body: [faq1, faq2, faq3] }))),
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
@@ -88,7 +88,8 @@ describe('FaqComponent', () => {
                     delete: () => {
                         return of(new HttpResponse<void>({ status: 200 }));
                     },
-                    findAllCategoriesByCourseId: () => {
+                    findAllCategoriesByCourseId: () => of(new HttpResponse({ body: [] })),
+                    findAllCategoriesForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: [],
@@ -105,7 +106,6 @@ describe('FaqComponent', () => {
                     },
                 }),
                 provideHttpClient(),
-                DialogService,
             ],
         });
 
@@ -117,8 +117,17 @@ describe('FaqComponent', () => {
         sortService = TestBed.inject(SortService);
     });
 
+    it.each([true, false])('chooses the FAQ audience from known course membership: staff=%s', (staff) => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourse').mockReturnValue(staff);
+        const student = vi.spyOn(faqService, 'findAllByCourseId');
+        const management = vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(of(new HttpResponse({ body: [faq1] })));
+        faqComponent.ngOnInit();
+        expect(staff ? management : student).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(staff ? student : management).not.toHaveBeenCalled();
+    });
+
     it('should fetch faqs when initialized', () => {
-        const findAllSpy = vi.spyOn(faqService, 'findAllByCourseId');
+        const findAllSpy = vi.spyOn(faqService, 'findAllForManagement');
 
         faqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
@@ -128,7 +137,7 @@ describe('FaqComponent', () => {
 
     it('should catch error if loading fails', () => {
         const error = { status: 404 };
-        const findSpy = vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const findSpy = vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(findSpy).toHaveBeenCalled();
         expect(faqComponent.faqs).toBeUndefined();
@@ -165,7 +174,7 @@ describe('FaqComponent', () => {
     });
 
     it('should refresh the filtered faqs immediately after deletion', () => {
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(NEVER);
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(NEVER);
         faqComponentFixture.detectChanges();
         faqComponent.filteredFaqs.set([faq1, faq2, faq3]);
 
@@ -177,7 +186,7 @@ describe('FaqComponent', () => {
     it('should catch error if no categories are found', () => {
         alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
@@ -200,6 +209,22 @@ describe('FaqComponent', () => {
         vi.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
         faqComponent.sortRows();
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    });
+
+    it('should apply the column header sort and re-sort the filtered faqs', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+
+        faqComponent.onSort({ field: 'questionTitle', order: 1 });
+
+        expect(faqComponent.predicate()).toBe('questionTitle');
+        expect(faqComponent.ascending()).toBe(true);
+        expect(sortSpy).toHaveBeenCalledWith(faqComponent.filteredFaqs(), 'questionTitle', true);
+
+        faqComponent.onSort({ field: 'faqState', order: -1 });
+
+        expect(faqComponent.predicate()).toBe('faqState');
+        expect(faqComponent.ascending()).toBe(false);
+        expect(sortSpy).toHaveBeenLastCalledWith(faqComponent.filteredFaqs(), 'faqState', false);
     });
 
     it('should reject faq properly', () => {
@@ -262,11 +287,11 @@ describe('FaqComponent', () => {
 
     it('reloads FAQs and categories after import', () => {
         faqComponentFixture.detectChanges();
-        const faqsSpy = vi.spyOn(faqService, 'findAllByCourseId');
-        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesByCourseId');
+        const faqsSpy = vi.spyOn(faqService, 'findAllForManagement').mockClear();
+        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesForManagement');
         faqComponent.onFaqsImported(2);
         expect(faqsSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1, undefined);
         expect(faqComponent.faqs).toHaveLength(3);
     });
 
@@ -280,8 +305,8 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs()).toEqual([faq2]);
         const faqsResponse = new Subject<HttpResponse<Faq[]>>();
         const categoriesResponse = new Subject<HttpResponse<string[]>>();
-        vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(faqsResponse);
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(categoriesResponse);
+        vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(faqsResponse);
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(categoriesResponse);
 
         faqComponent.onFaqsImported(1);
         const reloadFaqs = () => faqsResponse.next(new HttpResponse({ body: [faq1, faq2, faq3] }));
@@ -293,6 +318,91 @@ describe('FaqComponent', () => {
         expect(faqComponent.searchInput.getValue()).toBe('matching');
         faqsResponse.complete();
         categoriesResponse.complete();
+    });
+
+    it('keeps the edit and delete actions of an FAQ row inline in one group', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+
+        const row = faqComponentFixture.nativeElement.querySelector('#faq-2') as HTMLElement;
+        const actions = row.querySelector('[data-testid="faq-row-actions"]') as HTMLElement;
+        const edit = actions.querySelector('a[tumAetUiButton]') as HTMLElement;
+        const deleteButton = actions.querySelector('#delete-faq-2') as HTMLElement;
+
+        expect(edit).not.toBeNull();
+        expect(deleteButton).not.toBeNull();
+        // Both buttons are direct children of the same wrapping row, so they share a line when there is room.
+        expect(edit.parentElement).toBe(actions);
+        expect(deleteButton.parentElement).toBe(actions);
+        expect(actions.classList).toContain('flex-wrap');
+        expect(actions.querySelector('.flex-col')).toBeNull();
+    });
+
+    it('has no empty actions column when a tutor can act on none of the FAQs', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(false);
+        const accepted = createFaq(4, 'category4', '#0ab84f');
+        accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponentFixture.detectChanges();
+
+        const element = faqComponentFixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('thead th')).toHaveLength(5);
+        expect(element.querySelectorAll('#faq-4 td')).toHaveLength(5);
+        expect(element.querySelector('[data-testid="faq-row-actions"]')).toBeNull();
+
+        faqComponent['allFaqs'].set([accepted, faq1]);
+        faqComponent.filteredFaqs.set([accepted, faq1]);
+        faqComponentFixture.detectChanges();
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+
+        faqComponent['allFaqs'].set([accepted]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+    });
+
+    it('keeps the actions column while a search shows only FAQs without an action', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(false);
+        const accepted = createFaq(4, 'category4', '#0ab84f');
+        accepted.faqState = FaqState.ACCEPTED;
+        faqComponent['allFaqs'].set([accepted, faq1]);
+        faqComponent.filteredFaqs.set([accepted]);
+        faqComponentFixture.detectChanges();
+
+        const element = faqComponentFixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('thead th')).toHaveLength(6);
+        expect(element.querySelector('thead th:last-child .sr-only')).not.toBeNull();
+    });
+
+    it('lists the categories in a popover that is only available when categories exist', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.existingCategories.set([new FaqCategory('category1', '#94a11c'), new FaqCategory('category2', '#0ab84f')]);
+        faqComponent.hasCategories.set(false);
+        faqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const trigger = (view.rootNodes[0] as HTMLElement).querySelector('#filter-dropdown-button') as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
+
+        faqComponent.hasCategories.set(true);
+        faqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(trigger.disabled).toBe(false);
+        const toggleFilters = vi.spyOn(faqComponent, 'toggleFilters').mockImplementation(() => {});
+        trigger.click();
+        view.detectChanges();
+
+        const checkboxes = document.querySelectorAll<HTMLInputElement>('.cdk-overlay-container input[type="checkbox"]');
+        expect(Array.from(checkboxes).map((checkbox) => checkbox.id)).toEqual(['category-category1', 'category-category2']);
+        checkboxes[1].click();
+        expect(toggleFilters).toHaveBeenCalledExactlyOnceWith('category2');
+        view.destroy();
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
     });
 
     it('offers FAQ import to instructors and hides it from tutors', () => {

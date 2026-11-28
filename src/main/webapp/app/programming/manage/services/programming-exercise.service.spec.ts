@@ -1,3 +1,4 @@
+import { convertProgrammingExerciseResponseDatesFromServer, toProgrammingExerciseSetupPayload } from 'app/programming/api/programming-exercise-payload';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -19,7 +20,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -362,7 +363,7 @@ describe('ProgrammingExercise Service', () => {
     it('should reset Exercise', () => {
         const exerciseId = 1;
         const options = {
-            deleteParticipationsSubmissionsAndResults: true,
+            deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: true,
         };
         const expectedResult = 'success';
@@ -370,6 +371,29 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exerciseId}/reset`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expectedResult);
+    });
+
+    it('sends destructive reset options unchanged to the instructor operation', () => {
+        const options = { deleteParticipationsSubmissionsAndResults: true, recreateBuildPlans: false };
+        service.resetParticipations(1, options).subscribe();
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/reset-participations` });
+        expect(req.request.body).toEqual(options);
+        req.flush('');
+    });
+
+    it('uses the staff snapshot URL with the original includeTests option', () => {
+        service.exportSolutionSnapshotForStaff(1, true).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-requested-repository/for-staff?includeTests=true` });
+        req.flush(new Blob());
+    });
+
+    it.each([
+        [false, 'for-staff'],
+        [true, 'for-instructor'],
+    ])('uses the selected staff archive audience %s', (identified, audience) => {
+        service.exportStudentRepositoryForStaff(1, 5, identified as boolean).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/export-student-repository/${audience}?participationId=5` });
+        req.flush(new Blob());
     });
 
     it('export instructor repository', () => {
@@ -522,13 +546,40 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expectedDirectories);
     });
 
-    it('should test convertDataFromClient method', () => {
+    it('should convert the build time window dates of a response to dayjs objects', () => {
+        const returnedFromService = new ProgrammingExercise(undefined, undefined);
+        returnedFromService.buildConfig!.advancedSettings = {
+            buildTimeWindow: { start: '2026-10-01T10:00:00Z' as unknown as dayjs.Dayjs, end: '2026-10-01T12:00:00Z' as unknown as dayjs.Dayjs },
+        };
+        const response = new HttpResponse<ProgrammingExercise>({ body: returnedFromService });
+
+        const converted = convertProgrammingExerciseResponseDatesFromServer(response);
+
+        const window = converted.body!.buildConfig!.advancedSettings!.buildTimeWindow!;
+        expect(dayjs.isDayjs(window.start)).toBe(true);
+        expect(window.start!.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window.end!.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
+    });
+
+    it('should send the build time window of an update nested in the build config', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs('2026-10-01T10:00:00Z') } };
+
+        service.update(exercise).subscribe();
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body.buildConfig.advancedSettings).toEqual({ buildTimeWindow: { start: '2026-10-01T10:00:00.000Z' } });
+        req.flush(exercise);
+    });
+
+    it('should preserve template and solution participations in the setup payload', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs();
         exercise.templateParticipation = new TemplateProgrammingExerciseParticipation();
         exercise.solutionParticipation = new SolutionProgrammingExerciseParticipation();
 
-        const convertedExercise = service.convertDataFromClient(exercise);
+        const convertedExercise = toProgrammingExerciseSetupPayload(exercise);
 
         expect(convertedExercise).toBeDefined();
         expect(convertedExercise.templateParticipation).toBeDefined();
@@ -546,11 +597,11 @@ describe('ProgrammingExercise Service', () => {
         // A circular structure would make JSON.stringify throw before the request is even sent.
         expect(() => JSON.stringify(exercise.competencyLinks)).toThrow(/circular/i);
 
-        const convertedExercise = service.convertDataFromClient(exercise);
+        const convertedExercise = toProgrammingExerciseSetupPayload(exercise);
 
         expect(convertedExercise.competencyLinks).toHaveLength(1);
         const convertedLink = convertedExercise.competencyLinks![0];
-        // convertDataFromClient deep-clones the exercise, so the competency is an equal copy, not the same reference.
+        // The setup payload deep-clones the exercise, so the competency is an equal copy, not the same reference.
         expect(convertedLink.competency).toEqual(competency);
         expect(convertedLink.weight).toBe(42);
         expect(convertedLink).not.toHaveProperty('exercise');
@@ -626,5 +677,11 @@ describe('ProgrammingExercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/programming/programming-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
     });
 });

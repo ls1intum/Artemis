@@ -8,8 +8,16 @@ import org.springframework.mock.env.MockEnvironment;
 /** The filter must agree with {@link ArtemisConfigHelper#isHyperionEnabled}: a Hyperion flag inherited by a standalone build agent must not load Spring AI. */
 class SpringAIAutoConfigurationFilterTest {
 
-    private static final String[] CANDIDATES = { "org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration",
+    private static final String[] CANDIDATES = { "org.springframework.ai.model.session.autoconfigure.SessionServiceAutoConfiguration",
             "org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration" };
+
+    @Test
+    void openAiModelAutoConfigurationIsAlwaysExcluded() {
+        // Artemis builds its OpenAI clients from artemis.llm, so Spring AI must not create a model of its own, whatever the flags say
+        var filter = new SpringAIAutoConfigurationFilter();
+        filter.setEnvironment(environment(true, true));
+        assertThat(filter.match(new String[] { "org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration" }, null)).containsExactly(false);
+    }
 
     @Test
     void hyperionFlagWithoutCoreProfileExcludesSpringAi() {
@@ -24,6 +32,18 @@ class SpringAIAutoConfigurationFilterTest {
     @Test
     void atlasFlagIncludesSpringAiRegardlessOfProfile() {
         assertThat(match(environment(false, true), null)).containsExactly(true, true);
+    }
+
+    @Test
+    void hyperionWorkerLoadsItsChatModelWithoutCore() {
+        assertThat(match(environment(false, false).withProperty("artemis.aiworker.workload", "hyperion-generation"), "aiworker")).containsExactly(true, true);
+        assertThat(match(environment(false, false).withProperty("artemis.aiworker.workload", "other"), "aiworker")).containsExactly(false, true);
+    }
+
+    @Test
+    void genericWorkerIgnoresInheritedServerAiFlags() {
+        assertThat(match(environment(true, true).withProperty("artemis.aiworker.workload", "document-check"), "aiworker")).containsExactly(false, true);
+        assertThat(match(environment(true, true).withProperty("artemis.aiworker.workload", "hyperion-generation"), "aiworker")).containsExactly(true, true);
     }
 
     @Test

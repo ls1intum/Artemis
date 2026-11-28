@@ -4,27 +4,28 @@ import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -49,15 +50,15 @@ public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private static final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
 
     public static final int JWT_LIFETIME_SECONDS = 60;
 
-    public Lti13TokenRetriever(OAuth2JWKSService keyPairService, RestTemplate restTemplate) {
+    public Lti13TokenRetriever(OAuth2JWKSService keyPairService, @Qualifier("ltiRestClient") RestClient restClient) {
         this.oAuth2JWKSService = keyPairService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     /**
@@ -66,8 +67,10 @@ public class Lti13TokenRetriever {
      *
      * @param clientRegistration to query a token for
      * @param scopes             to ask access for
-     * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform.
+     * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform, or {@code null} if no token could be obtained: the JWT could not be
+     *         signed, the platform rejected the request or answered without a body or with a missing or blank {@code access_token}, or its answer was not a valid token response
      */
+    @Nullable
     public String getToken(@NonNull ClientRegistration clientRegistration, String... scopes) {
         log.info("Trying to retrieve access token for client");
 
@@ -81,23 +84,31 @@ public class Lti13TokenRetriever {
         }
 
         MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         try {
             URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
-            RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
-            ResponseEntity<String> exchange = restTemplate.exchange(requestEntity, String.class);
+            ResponseEntity<String> exchange = restClient.post().uri(url).accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(formData)
+                    .retrieve().toEntity(String.class);
             if (exchange.getBody() == null) {
                 return null;
             }
-            // asString(null): the token response comes from the platform, and Jackson 3 throws on a non-string node
-            // where Jackson 2's asText() returned "".
-            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asString(null);
+            TokenResponse tokenResponse = JsonObjectMapper.get().readValue(exchange.getBody(), TokenResponse.class);
+            String accessToken = tokenResponse == null ? null : tokenResponse.accessToken();
+            return accessToken == null || accessToken.isBlank() ? null : accessToken;
         }
         catch (HttpClientErrorException | JacksonException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * The part of the OAuth 2.0 token response of an LTI 1.3 platform that is used here.
+     *
+     * @param accessToken the access token for further requests to the platform, absent when the platform did not issue one
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record TokenResponse(@Nullable @JsonProperty("access_token") String accessToken) {
     }
 
     /**
@@ -107,9 +118,10 @@ public class Lti13TokenRetriever {
      * @param clientRegistrationId The client registration ID associated with the JWK to be used for signing the JWT.
      * @param customClaims         A map of custom claims to be included in the JWT. These claims are additional data
      *                                 that the consuming service may require.
-     * @return A serialized signed JWT as a String.
+     * @return A serialized signed JWT as a String, or {@code null} if the JWT could not be signed.
      * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
      */
+    @Nullable
     public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
 
@@ -142,6 +154,7 @@ public class Lti13TokenRetriever {
         }
     }
 
+    @Nullable
     private SignedJWT createJWT(ClientRegistration clientRegistration) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistration.getRegistrationId());
 

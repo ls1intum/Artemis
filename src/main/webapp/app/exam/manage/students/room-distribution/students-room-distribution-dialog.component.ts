@@ -11,16 +11,14 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import {
-    TumAetUiAutoCompleteComponent,
-    type TumAetUiAutoCompleteOptionEvent,
-    TumAetUiButtonDirective,
-    TumAetUiDialogComponent,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiToggleSwitchComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, type TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { RouterLink } from '@angular/router';
 
 /** A room as listed by the search field; the field shows `label` and hands the suggestion back on selection. */
@@ -46,6 +44,7 @@ export interface RoomSuggestion {
         TumAetUiMessageComponent,
         TumAetUiTableDirective,
         TumAetUiToggleSwitchComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
@@ -90,12 +89,12 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     constructor() {
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
-            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor());
+            this.studentsRoomDistributionService.updateCapacityData(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor());
         });
     }
 
     ngOnInit(): void {
-        this.studentsRoomDistributionService.loadRoomData();
+        this.studentsRoomDistributionService.loadRoomData(this.courseId(), this.exam().id!);
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {

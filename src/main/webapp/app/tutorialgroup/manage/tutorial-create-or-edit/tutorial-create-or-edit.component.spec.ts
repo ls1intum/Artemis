@@ -3,9 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -120,7 +122,7 @@ describe('TutorialCreateOrEditComponent', () => {
         component.firstSessionStart.set(dayjs('2026-04-20T10:15'));
         component.firstSessionEnd.set(dayjs('2026-04-20T11:45'));
         component.repetitionFrequency.set(2);
-        component.tutorialPeriodEnd.set(dayjs('2026-07-20T00:00'));
+        component.tutorialPeriodEnd.set(dayjs('2026-07-20'));
         component.location.set('Room 101');
     }
 
@@ -338,13 +340,13 @@ describe('TutorialCreateOrEditComponent', () => {
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodNotAfterFirstSessionEnd',
         });
 
-        component.tutorialPeriodEnd.set(dayjs('2028-04-21T00:00'));
+        component.tutorialPeriodEnd.set(dayjs('2028-04-21'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodMoreThanTwoYearsAfterFirstSessionStart',
         });
 
-        component.tutorialPeriodEnd.set(dayjs('2028-04-20T00:00'));
+        component.tutorialPeriodEnd.set(dayjs('2028-04-20'));
         expect(component.tutorialPeriodEndValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
@@ -372,19 +374,60 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
-    it('should disable the save button in create mode until all required active inputs are valid', async () => {
+    it('should keep the save button enabled with a valid group while the schedule toggle is off', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
         expect(component.saveButtonDisabled()).toBe(true);
 
         setValidGeneralInputs();
+        expect(component.configureSessionPlan()).toBe(false);
         expect(component.saveButtonDisabled()).toBe(false);
+    });
 
+    it('should require the schedule fields once the schedule toggle is on', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        setValidGeneralInputs();
+
+        // Toggle on but no schedule fields filled -> save is blocked and says which fields are missing.
         component.configureSessionPlan.set(true);
         expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionEndRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.teachingPeriodRequired');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.locationRequired');
 
         setValidScheduleInputs();
         expect(component.saveButtonDisabled()).toBe(false);
+        expect(component.saveDisabledReasons()).toEqual([]);
+    });
+
+    it('should block saving when a schedule date is edited into invalid text and unblock once corrected', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+        setValidGeneralInputs();
+        setValidScheduleInputs();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.saveButtonDisabled()).toBe(false);
+
+        // The first picker keeps its last committed date but reports the unparseable text through inputValidityChange.
+        const startPicker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+        startPicker.componentInstance.inputValidityChange.emit(false);
+        fixture.detectChanges();
+
+        expect(component.firstSessionStart()).toEqual(dayjs('2026-04-20T10:15'));
+        expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.firstSessionStartInvalid');
+
+        startPicker.componentInstance.inputValidityChange.emit(true);
+        fixture.detectChanges();
+        expect(component.saveButtonDisabled()).toBe(false);
+    });
+
+    it('should list the missing general-information fields as reasons the save button is disabled', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.titleContent');
+        expect(component.saveDisabledReasons()).toContain('artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired');
     });
 
     it('should disable the save button in edit mode until something changes', async () => {
@@ -400,6 +443,7 @@ describe('TutorialCreateOrEditComponent', () => {
 
         expect(component.isEditMode()).toBe(true);
         expect(component.saveButtonDisabled()).toBe(true);
+        expect(component.saveDisabledReasons()).toEqual(['artemisApp.pages.createOrEditTutorialGroup.validationError.noChanges']);
 
         component.additionalInformation.set('Updated info');
         expect(component.saveButtonDisabled()).toBe(false);
@@ -472,6 +516,59 @@ describe('TutorialCreateOrEditComponent', () => {
         });
     });
 
+    it('should emit onUpdate directly without the overwrite warning when only a non-schedule field of a scheduled group changes', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute schedule times without seconds (10:15, not 10:15:00).
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should send the original server schedule strings for fields the user did not change', async () => {
+        await createComponentWithLanguageValues(of(['English', 'German']));
+
+        const tutorialGroup = createTutorialGroupDetailData();
+        // The server serializes whole-minute times without seconds; an unchanged field must be sent back verbatim rather than reformatted.
+        const schedule = createTutorialGroupSchedule({ firstSessionStart: '2026-04-20T10:15', firstSessionEnd: '2026-04-20T11:45' });
+        const onUpdateSpy = vi.fn<(event: UpdateTutorialGroupEvent) => void>();
+        component.onUpdate.subscribe(onUpdateSpy);
+
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('schedule', schedule);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.title.set('TG Updated');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.nativeElement.querySelector('[data-testid="save-button"]').click();
+
+        expect(onUpdateSpy).toHaveBeenCalledOnce();
+        const emittedSchedule = onUpdateSpy.mock.calls[0][0].updateTutorialGroupDTO.tutorialGroupSchedule;
+        expect(emittedSchedule?.firstSessionStart).toBe('2026-04-20T10:15');
+        expect(emittedSchedule?.firstSessionEnd).toBe('2026-04-20T11:45');
+    });
+
     it('should confirm schedule-overwriting update and emit on accept', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
@@ -529,6 +626,10 @@ describe('TutorialCreateOrEditComponent', () => {
             fixture.detectChanges();
         }
 
+        function errorOf(id: string): HTMLElement {
+            return field(id).closest('tumaet-ui-form-field')!.querySelector('.tumaet-ui-form-field-error')!;
+        }
+
         function blur(input: HTMLInputElement) {
             input.dispatchEvent(new Event('blur'));
             fixture.detectChanges();
@@ -578,13 +679,14 @@ describe('TutorialCreateOrEditComponent', () => {
 
         it('should explain a missing first session start once the field was touched', async () => {
             await createWithSessionPlan();
-            expect(fixture.nativeElement.querySelector('[data-testid="first-session-start-error"]')).toBeNull();
+            expect(errorOf('first-session-start-input').hidden).toBe(true);
 
             blur(field('first-session-start-input'));
 
-            const error: HTMLElement = fixture.nativeElement.querySelector('[data-testid="first-session-start-error"]');
-            expect(error).not.toBeNull();
-            expect(field('first-session-start-input').getAttribute('aria-describedby')).toBe('first-session-start-error');
+            const error = errorOf('first-session-start-input');
+            expect(error.hidden).toBe(false);
+            expect(error.textContent).toContain('firstSessionStartRequired');
+            expect(field('first-session-start-input').getAttribute('aria-describedby')).toBe(error.id);
         });
 
         it('should explain an end that is not on the start day', async () => {
@@ -594,23 +696,9 @@ describe('TutorialCreateOrEditComponent', () => {
             type(field('first-session-end-input'), '21.04.2026 11:45');
             blur(field('first-session-end-input'));
 
-            const error: HTMLElement = fixture.nativeElement.querySelector('[data-testid="first-session-end-error"]');
+            const error = errorOf('first-session-end-input');
+            expect(error.hidden).toBe(false);
             expect(error.textContent).toContain('firstSessionEndNotOnSameDayAsStart');
-        });
-
-        it('should keep saving disabled while a typed date does not parse', async () => {
-            await createWithSessionPlan();
-            setValidGeneralInputs();
-            setValidScheduleInputs();
-            fixture.detectChanges();
-            await fixture.whenStable();
-            fixture.detectChanges();
-            expect(component.saveButtonDisabled()).toBe(false);
-
-            type(field('tutorial-period-end-input'), '20.07.');
-
-            expect(component.tutorialPeriodEndTextValid()).toBe(false);
-            expect(component.saveButtonDisabled()).toBe(true);
         });
     });
 });

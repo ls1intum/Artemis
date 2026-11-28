@@ -1,5 +1,5 @@
 import { omit, sum } from 'lodash-es';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -76,12 +76,18 @@ export const round = (value: number, exp?: number) => {
 };
 
 /**
+ * What of a course the rounding of scores needs. The exercises of the course overview carry no course, so the places that show their scores are handed this instead of
+ * the whole course, which they could not copy cheaply.
+ */
+export type CourseScoreAccuracy = Pick<Course, 'accuracyOfScores'>;
+
+/**
  * Rounds the score to the specified amount in the course object.
  * @param relativeScore The score of the student in the value range [0;1]
  * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
  * @returns The rounded percent of the score in the range [0;100]
  */
-export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number, course: Course | undefined) => {
+export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number, course: CourseScoreAccuracy | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
@@ -94,7 +100,7 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number
  * @param course The course which defines the accuracy to which the value should be rounded.
  * @returns The rounded value.
  */
-export const roundValueSpecifiedByCourseSettings = (value: number | undefined, course: Course | undefined) => {
+export const roundValueSpecifiedByCourseSettings = (value: number | undefined, course: CourseScoreAccuracy | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }

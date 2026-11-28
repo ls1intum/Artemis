@@ -72,16 +72,29 @@ describe('ProgrammingExerciseLanguageComponent', () => {
     });
 
     it('should not load TheiaComponent when online IDE is not allowed', () => {
-        comp.programmingExercise().allowOnlineIde = false;
+        fixture.componentRef.setInput('allowOnlineIde', false);
         fixture.detectChanges();
         expect(comp.programmingExerciseTheiaComponent()).toBeUndefined();
     });
 
     it('should load TheiaComponent when online IDE is allowed', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
-        comp.programmingExercise().allowOnlineIde = true;
+        fixture.componentRef.setInput('allowOnlineIde', true);
         fixture.detectChanges();
         expect(comp.programmingExerciseTheiaComponent()).toBeDefined();
+    });
+
+    it('should show the online IDE settings as soon as the online IDE is allowed', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
+        fixture.componentRef.setInput('allowOnlineIde', false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_onlineIdeExperienceLevel')).toBeNull();
+
+        // The checkbox in the mode section only changes the exercise in place; the parent passes the new value on.
+        comp.programmingExercise().allowOnlineIde = true;
+        fixture.componentRef.setInput('allowOnlineIde', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#field_onlineIdeExperienceLevel')).not.toBeNull();
     });
 
     it('should mark package name as invalid when it exceeds the maximum length', () => {
@@ -138,8 +151,8 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
         });
 
-        it('should be disabled when importing from the sharing platform', async () => {
-            await setUp({ isImportFromSharing: true });
+        it('should be disabled when using an external import', async () => {
+            await setUp({ isExternalImport: true });
             expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
         });
     });
@@ -175,7 +188,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         it.each([
             ['importing an existing exercise', { isImportFromExistingExercise: true }],
             ['importing from a file', { isImportFromFile: true }],
-            ['importing from the sharing platform', { isImportFromSharing: true }],
+            ['using an external import', { isExternalImport: true }],
         ])('should be disabled when %s', async (_description, configOverrides) => {
             await setUp(configOverrides);
             expect(getLanguageSelect().disabled).toBe(true);
@@ -217,19 +230,19 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         it.each([
             ['importing an existing exercise', { isImportFromExistingExercise: true }],
             ['importing from a file', { isImportFromFile: true }],
-            ['importing from the sharing platform', { isImportFromSharing: true }],
+            ['using an external import', { isExternalImport: true }],
         ])('should be disabled when %s', (_description, configOverrides) => {
             setUp(configOverrides);
             expect(getProjectTypeButtons()).toHaveLength(2);
             expect(getProjectTypeButtons().every((button) => button.disabled)).toBe(true);
         });
 
-        it('should not offer the with dependencies option when importing from the sharing platform', () => {
+        it('should not offer the with dependencies option when using an external import', () => {
             const isEditFieldDisplayedRecord = { programmingLanguage: true, projectType: true, withExemplaryDependency: true, packageName: true };
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', isEditFieldDisplayedRecord);
             setUp({});
             expect(fixture.nativeElement.querySelector('#field_with_dependencies')).not.toBeNull();
-            setUp({ isImportFromSharing: true });
+            setUp({ isExternalImport: true });
             expect(fixture.nativeElement.querySelector('#field_with_dependencies')).toBeNull();
         });
     });

@@ -44,6 +44,33 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             await courseOverview.shouldShowExerciseTitleInHeader(quizExercise.title!);
         });
 
+        test('Submitted quiz confirmation is dismissible and permits browser back and forward navigation', async ({
+            login,
+            exerciseAPIRequests,
+            quizExerciseMultipleChoice,
+            page,
+        }) => {
+            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
+            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+            await login(studentOne, '/courses');
+            await page.goto(`/courses/${course.id}/exercises/${quizExercise.id!}`);
+            await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
+            await quizExerciseMultipleChoice.submit();
+
+            const confirmation = page.getByTestId('quiz-submission-confirmation');
+            await expect(confirmation).toBeVisible();
+            await page.screenshot({ path: test.info().outputPath('quiz-confirmation-visible.png'), fullPage: true });
+            await page.getByTestId('dismiss-quiz-submission-confirmation').click();
+            await expect(confirmation).not.toBeVisible();
+            await page.screenshot({ path: test.info().outputPath('quiz-confirmation-dismissed.png'), fullPage: true });
+            const submittedUrl = page.url();
+            await page.goBack();
+            await expect(page).toHaveURL(/\/courses$/);
+            await page.goForward();
+            await expect(page).toHaveURL(submittedUrl);
+            await expect(confirmation).toBeVisible();
+        });
+
         test('Student can participate in MC quiz', async ({ login, exerciseAPIRequests, courseOverview, quizExerciseMultipleChoice }) => {
             await login(admin);
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);

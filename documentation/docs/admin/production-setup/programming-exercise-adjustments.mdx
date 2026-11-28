@@ -2,6 +2,7 @@
 id: programming-exercise-adjustments
 title: Programming Exercise Adjustments
 sidebar_label: Programming Exercise Adjustments
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -51,15 +52,16 @@ There are variables for several paths:
 Templates are shipped with Artemis (they can be found within the `src/main/resources/templates` folder in GitHub).
 These templates should fit well for many deployments, but one might want to change some of them for special deployments.
 
-As of now, you can overwrite the `jenkins` folders that is present within the `src/main/resources/templates` folder
+You can overwrite files below the `src/main/resources/templates` folder, for example the build phases in
+`templates/phases` that LocalCI uses to build programming exercises, or the `jenkins` folder,
 by placing a `templates/` directory with the same structure next to the Artemis `.war` archive.
 Files that are present in the file system will be used, if a file is not present in the file system,
 it is loaded from the classpath (e.g. the `.war` archive).
 
-We plan to make other folders configurable as well, but this is not supported yet.
-
 
 ### Jenkins Template
+
+This section only applies to [Jenkins with LocalVC](/admin/jenkins-localvc), which is deprecated and removed in Artemis 11.
 
 The build process in Jenkins is stored in a `config.xml`-file (in `src/main/resources/templates/jenkins/`).
 It is extended by a `Jenkinsfile` in the same directory that will be placed inside the `config.xml` file.
@@ -196,7 +198,7 @@ repositories {
 
 ## Caching with Docker Volumes {/* #caching-docker-volumes */}
 
-With Docker volumes you can cache Maven dependencies.
+With Docker volumes you can cache Maven dependencies. The `pipeline.groovy` examples below apply to Jenkins only; LocalCI runs the build phases of the exercise instead.
 An alternative approach for caching is with Sonatype Nexus, see [this section](#caching-sonatype-nexus).
 
 

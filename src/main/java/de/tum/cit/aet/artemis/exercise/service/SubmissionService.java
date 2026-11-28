@@ -127,7 +127,7 @@ public class SubmissionService {
      *
      * @param exercise    the exercise for which a submission should be saved
      * @param submission  the submission that should be saved
-     * @param currentUser the current user with groups and authorities
+     * @param currentUser the current user
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
@@ -425,7 +425,7 @@ public class SubmissionService {
      * @param newResult the result to copy the typed feedback to
      * @param oldResult the result to copy the typed feedback from
      */
-    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
@@ -896,17 +896,17 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
-     * @param isAtLeastInstructor if the user is an instructor
+     * @param exerciseId      the exerciseId of the exercise of which the complaints are fetched
+     * @param instructorQueue whether the endpoint selects the instructor queue
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean instructorQueue) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
-        if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
-        }
+        User caller = userRepository.getUser();
+        complaints = complaints.stream().filter(complaint -> complaint.getStudent() == null || !complaint.getStudent().equals(complaint.getResult().getAssessor()))
+                .filter(complaint -> instructorQueue || !caller.equals(complaint.getResult().getAssessor())).toList();
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
     }

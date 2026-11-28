@@ -18,12 +18,14 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.exception.IrisVideoSourceUnavailableException;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -39,14 +41,15 @@ import de.tum.cit.aet.artemis.videosource.service.TumLivePlaylistLookup;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
+@ResourceLock("FilePathConverter")
 class PyrisWebhookServiceResolveVideoUrlTest {
 
     private final YouTubeUrlService youTubeUrlService = new YouTubeUrlService();
 
     private PyrisWebhookService withTumLive(TumLiveApi tumLiveApi) {
-        VideoSourceResolverService resolver = new VideoSourceResolverService(Optional.ofNullable(tumLiveApi), youTubeUrlService);
-        return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(IrisSettingsService.class), Optional.empty(), Optional.empty(),
-                resolver);
+        VideoSourceResolverService resolver = new VideoSourceResolverService(Optional.ofNullable(tumLiveApi), Optional.empty(), youTubeUrlService);
+        return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(PyrisCallbackTokenService.class), mock(IrisSettingsService.class),
+                Optional.empty(), Optional.empty(), resolver);
     }
 
     @Test
@@ -54,7 +57,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
         var api = mock(TumLiveApi.class);
         when(api.lookUpPlaylist(any())).thenReturn(new TumLivePlaylistLookup("https://live.rbg.tum.de/pl.m3u8", TumLivePlaylistLookup.Outcome.RESOLVED));
         var svc = withTumLive(api);
-        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/?course=foo&streamId=1");
+        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/?course=foo&streamId=1", 1L);
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/pl.m3u8");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
     }
@@ -62,7 +65,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     @Test
     void youTubeUrlReturnsYouTubeType() {
         var svc = withTumLive(null);
-        var resolved = svc.resolveVideoUrl("https://youtu.be/dQw4w9WgXcQ");
+        var resolved = svc.resolveVideoUrl("https://youtu.be/dQw4w9WgXcQ", 1L);
         assertThat(resolved.url()).isEqualTo("https://youtu.be/dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
     }
@@ -70,7 +73,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     @Test
     void unknownSourceReturnsNullType() {
         var svc = withTumLive(null);
-        var resolved = svc.resolveVideoUrl("https://vimeo.com/123");
+        var resolved = svc.resolveVideoUrl("https://vimeo.com/123", 1L);
         assertThat(resolved.url()).isEqualTo("https://vimeo.com/123");
         assertThat(resolved.type()).isNull();
     }
@@ -78,7 +81,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     @Test
     void nullUrlReturnsNullResolution() {
         var svc = withTumLive(null);
-        var resolved = svc.resolveVideoUrl(null);
+        var resolved = svc.resolveVideoUrl(null, 1L);
         assertThat(resolved.url()).isNull();
         assertThat(resolved.type()).isNull();
     }
@@ -86,7 +89,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     @Test
     void blankUrlReturnsBlankResolution() {
         var svc = withTumLive(null);
-        var resolved = svc.resolveVideoUrl("   ");
+        var resolved = svc.resolveVideoUrl("   ", 1L);
         assertThat(resolved.url()).isEqualTo("   ");
         assertThat(resolved.type()).isNull();
     }
@@ -96,7 +99,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
         var api = mock(TumLiveApi.class);
         when(api.lookUpPlaylist(any())).thenThrow(new RuntimeException("boom"));
         var svc = withTumLive(api);
-        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/?x=1");
+        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/?x=1", 1L);
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/?x=1");
         assertThat(resolved.type()).isNull();
     }
@@ -106,14 +109,14 @@ class PyrisWebhookServiceResolveVideoUrlTest {
         var api = mock(TumLiveApi.class);
         when(api.lookUpPlaylist(any())).thenReturn(new TumLivePlaylistLookup("https://live.rbg.tum.de/resolved.m3u8", TumLivePlaylistLookup.Outcome.RESOLVED));
         var svc = withTumLive(api);
-        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/foo");
+        var resolved = svc.resolveVideoUrl("https://live.rbg.tum.de/foo", 1L);
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
     }
 
     @Test
     void absentTumLiveApiYouTubeStillResolves() {
         var svc = withTumLive(null);
-        var resolved = svc.resolveVideoUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        var resolved = svc.resolveVideoUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", 1L);
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
     }
 
@@ -138,8 +141,9 @@ class PyrisWebhookServiceResolveVideoUrlTest {
         IrisSettingsService settings = mock(IrisSettingsService.class);
         when(settings.getSettingsForCourse(any(Course.class))).thenReturn(IrisCourseSettings.defaultSettings());
         when(jobService.addLectureIngestionWebhookJob(anyLong(), anyLong(), anyLong())).thenReturn("job-token");
-        return new PyrisWebhookService(mock(PyrisConnectorService.class), jobService, settings, Optional.empty(), Optional.of(transcriptions),
-                new VideoSourceResolverService(Optional.of(api), youTubeUrlService));
+        when(jobService.getJob("job-token")).thenReturn(new LectureIngestionWebhookJob("job-token", 1L, 2L, 3L));
+        return new PyrisWebhookService(mock(PyrisConnectorService.class), jobService, PyrisCallbackTokenTestUtil.tokenService(), settings, Optional.empty(),
+                Optional.of(transcriptions), new VideoSourceResolverService(Optional.of(api), Optional.empty(), youTubeUrlService));
     }
 
     private static AttachmentVideoUnit tumLiveUnit() {

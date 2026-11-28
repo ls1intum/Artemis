@@ -53,17 +53,6 @@ public class TumLiveService {
     }
 
     /**
-     * Given a TUM Live public video URL, extracts courseSlug and streamId,
-     * then fetches the playlist URL from the TUM Live API.
-     *
-     * @param videoUrl the public TUM Live video URL to resolve
-     * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
-     */
-    public Optional<String> getTumLivePlaylistLink(String videoUrl) {
-        return Optional.ofNullable(lookUpPlaylist(videoUrl).playlistUrl());
-    }
-
-    /**
      * Fetch the playlist URL of a TUM Live watch page and keep the reason when there is none, so a caller can tell a stream that is not public or has no
      * recording yet from a TUM Live that is down.
      *
@@ -122,6 +111,16 @@ public class TumLiveService {
     }
 
     /**
+     * The TUM Live lecture a watch page URL names, without calling the TUM Live API.
+     *
+     * @param videoUrl the video URL
+     * @return the course slug and lecture ID, or empty if the URL is not a TUM Live watch page
+     */
+    public Optional<StreamInfo> findWatchPage(String videoUrl) {
+        return Optional.ofNullable(extractCourseSlugAndStreamId(videoUrl));
+    }
+
+    /**
      * Extracts courseSlug and streamId from TUM Live public video URLs. A watch page path on any other host is not a TUM Live video.
      */
     private StreamInfo extractCourseSlugAndStreamId(String videoUrl) {
@@ -162,8 +161,11 @@ public class TumLiveService {
     }
 
     /**
-     * Internal helper class to hold extracted stream info.
+     * The course slug and lecture ID of a TUM Live watch page.
+     *
+     * @param courseSlug the TUM Live course slug
+     * @param streamId   the TUM Live lecture ID, digits only
      */
-    private record StreamInfo(String courseSlug, String streamId) {
+    public record StreamInfo(String courseSlug, String streamId) {
     }
 }

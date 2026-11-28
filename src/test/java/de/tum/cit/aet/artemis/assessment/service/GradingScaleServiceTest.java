@@ -76,7 +76,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(doubles = { -60, -1.3, -0.0002 })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
         // A grading scale grades a course or an exam, and the row has to name one of the two.
         gradingScale.setCourse(course);
@@ -92,7 +92,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test saving of an invalid grading scale
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testMatchPercentageToGradeStepNoValidMapping() {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
@@ -110,7 +110,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test mapping of a valid grade percentage to a grade step
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testMatchPercentageToGradeStepValidMappingExists() {
         GradeStep expectedGradeStep = createCustomGradeStep("Pass", 60, 90);
         gradingScale = gradingScaleRepository.save(gradingScale);
@@ -124,7 +124,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(doubles = { 125, 160 })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testMatchPercentageToGradeStepWithBonusPoints(double bonusPercentage) {
         GradeStep expectedGradeStep = createCustomGradeStep("🐧", 100, 150);
         gradingScale = gradingScaleRepository.save(gradingScale);
@@ -138,7 +138,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test saving of an invalid grading scale - missing grade names
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
         createCustomGradeStep("", 70, 95);
 
@@ -151,7 +151,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test saving of an invalid grading scale - non-matching percentage bounds
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
         createCustomGradeStep("Name", 90, 80);
 
@@ -176,7 +176,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test saving of an invalid grading scale - no valid grade step mapping
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testSaveGradingScaleInvalidGradeStepSet() {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, false);
         gradingScale.setGradeSteps(gradeSteps);
@@ -191,7 +191,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationIndependentBatchT
      * Test saving of a valid grading scale
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testSaveGradingScaleValidGradeStepSet() {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(gradingScale, true);
         gradingScale.setGradeSteps(gradeSteps);

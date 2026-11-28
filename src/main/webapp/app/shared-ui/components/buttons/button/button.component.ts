@@ -1,9 +1,9 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiButtonVariantOptions } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,17 +14,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  * @enum {string}
  */
 export enum ButtonType {
-    DEFAULT = 'btn-default',
-    PRIMARY = 'btn-primary',
-    SECONDARY = 'btn-secondary',
-    SUCCESS = 'btn-success',
-    WARNING = 'btn-warning',
-    ERROR = 'btn-danger',
-    INFO = 'btn-info',
+    DEFAULT = 'default',
+    PRIMARY = 'primary',
+    SECONDARY = 'secondary',
+    SUCCESS = 'success',
+    WARNING = 'warning',
+    ERROR = 'danger',
+    INFO = 'info',
 
-    PRIMARY_OUTLINE = 'btn-outline-primary',
-    SUCCESS_OUTLINE = 'btn-outline-success',
-    ERROR_OUTLINE = 'btn-outline-danger',
+    PRIMARY_OUTLINE = 'primary-outline',
+    SUCCESS_OUTLINE = 'success-outline',
+    ERROR_OUTLINE = 'danger-outline',
 }
 
 /**
@@ -32,9 +32,9 @@ export enum ButtonType {
  * @enum {string}
  */
 export enum ButtonSize {
-    SMALL = 'btn-sm',
-    MEDIUM = 'btn-md',
-    LARGE = 'btn-lg',
+    SMALL = 'small',
+    MEDIUM = 'medium',
+    LARGE = 'large',
 }
 
 export enum TooltipPlacement {
@@ -42,6 +42,27 @@ export enum TooltipPlacement {
     BOTTOM = 'bottom',
     LEFT = 'left',
     RIGHT = 'right',
+}
+
+/** Maps the application button API to the design-system variants without rendering legacy class names. */
+export function getTumAetUiButtonOptions(type: ButtonType, size: ButtonSize): TumAetUiButtonVariantOptions {
+    const severities: Record<ButtonType, TumAetUiButtonSeverity> = {
+        [ButtonType.DEFAULT]: 'secondary',
+        [ButtonType.PRIMARY]: 'primary',
+        [ButtonType.SECONDARY]: 'secondary',
+        [ButtonType.SUCCESS]: 'success',
+        [ButtonType.WARNING]: 'warn',
+        [ButtonType.ERROR]: 'danger',
+        [ButtonType.INFO]: 'info',
+        [ButtonType.PRIMARY_OUTLINE]: 'primary',
+        [ButtonType.SUCCESS_OUTLINE]: 'success',
+        [ButtonType.ERROR_OUTLINE]: 'danger',
+    };
+    return {
+        severity: severities[type],
+        size: size === ButtonSize.SMALL ? 'small' : size === ButtonSize.LARGE ? 'large' : 'default',
+        variant: [ButtonType.PRIMARY_OUTLINE, ButtonType.SUCCESS_OUTLINE, ButtonType.ERROR_OUTLINE].includes(type) ? 'outlined' : 'solid',
+    };
 }
 
 /**
@@ -53,7 +74,7 @@ export enum TooltipPlacement {
 @Component({
     selector: 'jhi-button',
     templateUrl: './button.component.html',
-    imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     // `title` is a translation key. A static `title="..."` in a parent template is also written to this host element,
     // where the browser would show the untranslated key as a native tooltip on hover.
     host: { '[attr.title]': 'null' },
@@ -63,8 +84,9 @@ export class ButtonComponent {
 
     btnType = input(ButtonType.PRIMARY);
     btnSize = input(ButtonSize.MEDIUM);
+    protected readonly buttonOptions = computed(() => getTumAetUiButtonOptions(this.btnType(), this.btnSize()));
 
-    /** You might need to set d-flex as well when using the button */
+    /** Fills the width available to the native button. */
     fullWidth = input<boolean>(false);
     // Fa-icon name.
     icon = input<IconProp | undefined>(undefined);

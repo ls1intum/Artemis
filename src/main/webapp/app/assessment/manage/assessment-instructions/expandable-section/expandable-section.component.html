@@ -34,6 +34,6 @@
         <ng-content select="[expandableSectionHeaderActions]" />
     </div>
 }
-<div data-testid="expandable-section-content" [ngbCollapse]="isCollapsed()">
+<div data-testid="expandable-section-content" [hidden]="isCollapsed()">
     <ng-content />
 </div>

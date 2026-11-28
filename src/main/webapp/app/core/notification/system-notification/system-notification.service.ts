@@ -17,7 +17,7 @@ type SystemNotificationQueryOptions = { sort?: string[] } & Record<string, strin
 export class SystemNotificationService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/notification/system-notifications';
+    public resourceUrl = 'api/notification/admin/system-notifications';
     public publicResourceUrl = 'api/notification/public/system-notifications';
 
     /**

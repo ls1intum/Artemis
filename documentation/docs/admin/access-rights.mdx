@@ -2,28 +2,40 @@
 id: access-rights
 title: Access Rights
 sidebar_label: Access Rights
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import globalAndCourseRoles from "./assets/access-rights/global-and-course-roles.jpg";
 
-Artemis distinguishes between seven different roles: **SUPER_ADMIN**, **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** (Student) and **ANONYMOUS**.
-The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
-A SUPER_ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
+Artemis separates three global authorities — **USER**, **ADMIN**, and **SUPER_ADMIN** — from the roles assigned within each course: **Student**, **Teaching Assistant**, **Editor**, and **Instructor**. A course role grants access only in that course; it does not make the user an administrator.
+
+Minimum course-role checks follow the order Student, Teaching Assistant, Editor, Instructor. A higher role satisfies a lower-role check within the same course. **Anonymous** describes a visitor who has not signed in, rather than a global authority.
 
 ## Roles Overview
 
-- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
-- **ADMIN:** can access all features that Artemis provides (includes features regarding the server administration, e.g. server health checks, user management and creating new courses)
-- **INSTRUCTOR:** can access all features related to the content of a course (includes creating and deleting exercises/exams/lectures and monitoring scores and submissions)
-- **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
-- **TEACHING ASSISTANT:** can assess student submissions and view course content before the release date
-- **USER:** participates as a Student in courses, can view course content after the release date
-- **ANONYMOUS:** role before login
+Global authorities apply across Artemis:
 
-<Callout variant={CalloutVariant.warning}>
-    When changing the access rights of a user, the respective user must logoff and then logon again for the changes to take effect.
+- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
+- **ADMIN:** can administer the server, manage non-admin accounts, and create courses; the additional security privileges of Super Admin remain separate
+- **USER:** identifies a regular signed-in account; access to a particular course depends on its course roles
+
+Course roles describe what a user can do in a particular course:
+
+- **Instructor:** can manage course content and participants, including creating and deleting exercises, exams, and lectures, and monitoring scores and submissions
+- **Editor:** can create and edit course content but cannot delete it; access to other participants' information is limited
+- **Teaching Assistant:** can assess student submissions and view course content before its release date
+- **Student:** can participate in the course and view its released content
+
+<Callout variant={CalloutVariant.info}>
+    Adding or removing a course role changes the user's access on subsequent requests without signing out and back in. Reload an already open page if its controls still show the previous access.
 </Callout>
+
+In the user editor, **Global Roles** offers **Student** (the **USER** authority), **Admin**, and **Super Admin** to a Super Admin. A regular Admin can assign only **Student**. The separate **Course Roles** panel lists memberships by course and saves changes immediately.
+
+<Image src={globalAndCourseRoles} alt="Global Roles offers Super Admin, Admin, and Student above a separate Course Roles panel listing Editor and Tutor memberships in Systems Programming" size={ImageSize.large} caption="Global authorities and course memberships are managed separately." />
 
 In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
 
@@ -39,7 +51,7 @@ Only Super Admins can manage administrator accounts (both Admin and Super Admin 
 - **Activating/Deactivating** admin or super admin users
 - **Deleting** admin or super admin users
 
-Regular Admins can only manage users with roles below Admin (Instructor, Editor, Teaching Assistant, Student).
+Regular Admins can manage accounts without an Admin or Super Admin global authority. Holding an Instructor, Editor, or Teaching Assistant role in a course does not make an account an administrator.
 
 ### Passkey Approval
 
@@ -61,8 +73,8 @@ For detailed information about passkey authentication, configuration, and the ap
 
 <Callout variant={CalloutVariant.info}>
   **Course membership terminology:**
-  - **"if in course"**: User must be assigned to the course as staff (member of the course's TA, Editor, or Instructor group)
-  - **"if enrolled"**: User must be enrolled as a student (member of the course's Student group)
+  - **"if in course"**: User must be staff of the course, with the Teaching Assistant, Editor or Instructor role in it
+  - **"if enrolled"**: User must be enrolled as a student, with the Student role in the course
   - **"if visible"**: User can view the resource according to its release date or visibility settings (typically based on `releaseDate`). See [Lectures > Visibility Rules](#visibility-rules) for detailed definitions.
 
   Both "if in course" and "if enrolled" require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
@@ -70,8 +82,8 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ## Navigation
 
-[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
-[//]: # (Refers to CourseOverviewResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseOverviewResource.java)
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseManagementResource.java)
+[//]: # (Refers to CourseOverviewResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseOverviewResource.java)
 [//]: # (Refers to AdminUserResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/account/web/admin/AdminUserResource.java)
 [//]: # (Refers to PasskeyResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/account/web/PasskeyResource.java)
 
@@ -89,7 +101,7 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ## Course
 
-[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/course/web/CourseManagementResource.java)
 [//]: # (Refers to ExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseResource.java)
 [//]: # (Refers to ExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java)
 
@@ -132,6 +144,7 @@ The following visibility rules apply to **all exercise types**:
 **Assessment Results:**
 - Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
 - Assessor information is hidden from students until assessment is finalized
+- Long feedback texts follow the visibility of the result they belong to: students can open them once the assessment is completed and its due date has passed. Feedback configured as hidden, or as visible only after the due date, keeps that visibility. Exam results and their feedback are visible to students only after the results are published
 
 **Example Solution:**
 - Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
@@ -179,8 +192,8 @@ The following permissions apply to all exercise types. Exercise-type-specific se
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
 </Callout>
 
-For **course programming exercises**, tutors and editors can see student names and team identities in the
-participation and score lists to help students with questions. The **Code** button opens a read-only repository view
+For **course programming exercises**, tutors and editors can see student names and team identities on the
+participations page to help students with questions. The **Code** button opens a read-only repository view
 and provides clone URLs. Tutors can clone and pull student repositories, but cannot push or reset them.
 
 When **manual or semi-automatic assessment** is enabled, this support access ends at the **exercise due date**:
@@ -192,12 +205,17 @@ with individual extensions and practice participations, so that those cannot exp
 
 For automatically assessed course programming exercises, support access remains available after the due date.
 A manually assessed course programming exercise without a due date also keeps support access; anonymity starts if
-a due date is subsequently set and reached. The participation and score pages explain the current access and any
+a due date is subsequently set and reached. The participations page explains the current access and any
 upcoming restriction.
 
-Other exercise types and exam exercises retain anonymous participation views for non-instructors. Instructors retain
-named views, and participation owners retain access to their own details. Exports selected by student login or team
-name and identity exports continue to require instructor access.
+**Course quizzes** are always assessed automatically, so there is no tutor assessment to keep anonymous. Tutors and
+editors see student names next to the quiz scores on the participations page.
+
+Other exercise types and exam exercises, including exam quizzes, retain anonymous participation views for
+non-instructors. The participations list of an exam exercise is only available to instructors, and the direct
+participation lookups of other staff stay anonymous. Instructors retain named views, and participation owners retain
+access to their own details. Exports
+selected by student login or team name and identity exports continue to require instructor access.
 
 ### Shared Submission and Assessment Features
 
@@ -299,6 +317,10 @@ is unaffected; anonymous assessment snapshots remain available.
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 </Callout>
 
+**Test and auxiliary repositories:** Teaching Assistants can read and pull. Creating, renaming and deleting files, committing and resetting require the Editor role.
+
+**Resetting a repository:** Students can reset their own repository while it is not locked, and their practice repository after the due date. Editors and Instructors can also reset locked repositories and the repositories of other users. Teaching Assistants can reset their own repositories as listed above, but not those of other users. A reset to the graded participation requires a graded participation of the same exercise.
+
 #### Additional Visibility Rules for Programming Exercises
 
 **Test Case Visibility:**
@@ -315,7 +337,8 @@ is unaffected; anonymous assessment snapshots remain available.
 In addition to the [General Functionality](#general-functionality) above, Quiz Exercises have these specific features:
 
 [//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
-[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizSubmissionResource.java)
+[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizSubmissionResource.java)
+[//]: # (Refers to QuizAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizAssessmentResource.java)
 
 <Callout variant={CalloutVariant.info}>
   Quiz exercises use a different submission and assessment model from other exercise types.
@@ -333,6 +356,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 | Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
 | Evaluate Quiz               | ✔                   |                     |                     |                     |
 | Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Delete Result               | ✔                   |                     |                     |                     |
 | Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
 | Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
 | Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
@@ -354,7 +378,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 
 Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVIDUAL**.
 
-[//]: # (Refers to QuizExerciseBatchResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizExerciseBatchResource.java)
+[//]: # (Refers to QuizExerciseBatchResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseBatchResource.java)
 
 | Operation    | Mode         | Teaching Assistant                     | Student             |
 |--------------|--------------|----------------------------------------|---------------------|
@@ -374,7 +398,9 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 
 **Practice Mode:**
 - All users can submit in practice mode only after the quiz has ended
-- For exam exercises, practice mode is only available for test exams
+- For exam exercises, practice mode is only available for practice exams
+- Quiz training offers the questions of a quiz only after the quiz due date has passed
+- Quiz exercises of an exam are started as part of the exam, not individually
 
 ### File Upload Exercises
 
@@ -490,6 +516,9 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
 **Lecture Units and Attachments:**
 - Visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
 - Teaching Assistants and above can see all units/attachments regardless of release date
+- The details, transcript, slides and files of a unit follow this rule: the unit is visible to students after its own release date, and its attachment after the release date of the attachment
+- Students receive the student version of an attachment, which leaves out hidden slides. If an attachment has hidden slides but no student version, it is not available to students
+- Teaching Assistants and above receive the full version, including hidden slides
 
 **Search Lectures:**
 - Non-admin users only see lectures from courses where they have at least Editor role
@@ -499,6 +528,35 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
   All visibility control is managed at the lecture unit and attachment level via their `releaseDate` fields.
 </Callout>
 
+
+## Teams
+
+[//]: # (Refers to TeamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/TeamResource.java)
+
+| Feature                        | Instructor | Editor | Teaching Assistant |
+|--------------------------------|------------|--------|--------------------|
+| View Teams of an Exercise      | ✔          | ✔      | ✔                  |
+| Create Team                    | ✔          | ✔      | ✔                  |
+| Update Team                    | ✔          | ✔      | ✔                  |
+| Import Teams from a List       | ✔          | ✔      |                    |
+| Import Teams from an Exercise  | ✔          | ✔      |                    |
+| Delete Team                    | ✔          |        |                    |
+
+- The students of a team must be students of the course. Members that already belong to a team stay valid when the team is updated.
+- The owner of a team can be any member of the course.
+- Teams can be imported only from another exercise of the same course.
+
+## Communication
+
+All communication features are scoped to a course.
+
+- Users that are added to a channel, a one-to-one chat or a group chat must be members of the course. When several users are added at once, logins that do not belong to a course member are ignored.
+- The channel moderator role can be granted only to members of the course.
+- Saved posts can be listed and changed only for courses the user is a member of.
+
+## Plagiarism Cases
+
+Answers to the posts of a plagiarism case can be written by the Instructors of the course and by the student affected by the case. Only the author of an answer can edit or delete it, and Instructors can additionally change whether an answer resolves the post. Other roles, including Teaching Assistants and Editors, cannot answer. The plagiarism case must belong to the course of the request.
 
 ## Exam
 
@@ -523,3 +581,8 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
 | Test Run              | ✔          |        |                    |
 | Student Exams         | ✔          |        |                    |
 | Students              | ✔          |        |                    |
+
+**Participation:**
+- A student starts an exam exercise only through their own student exam: the exercise must be part of the student exam that the student has started and not yet handed in.
+- Instructors take part in exam exercises through test runs. A test run keeps its manual feedback visible to the instructor.
+- Students can see the results and the manual feedback of an exam exercise only after the results are published.

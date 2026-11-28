@@ -25,8 +25,9 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { PanelModule } from 'primeng/panel';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -59,10 +60,11 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
-        PanelModule,
+        TumAetUiPanelComponent,
         TeamPracticeHintComponent,
     ],
 })
@@ -129,6 +131,13 @@ export class ExerciseSplitPanelComponent {
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
     readonly titleBarShowsPills = input<boolean>(false);
+    /**
+     * Keeps the side panels collapsed while it is true, for example while a quiz runs, and opens them when it ends. The student
+     * can still open them by hand. A manual collapse or expand of the right panel of this split panel, also before the quiz
+     * starts, ends the automatic behaviour for this instance: a student's own choice is never overridden, so the panels then
+     * neither collapse for the quiz nor open again afterwards.
+     */
+    readonly collapseSidePanels = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
@@ -264,6 +273,9 @@ export class ExerciseSplitPanelComponent {
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    // The bare exercise URL is only an entry point. Keeping it in history makes Back reopen it and
+                    // immediately redirect to the quiz again. A switch from an active mode remains a user navigation.
+                    const replaceUrl = currentSegment === undefined;
                     if (mode === 'practice') {
                         // Already on a practice route — either viewing a result or a fresh attempt is in progress.
                         // Do not re-navigate, so an in-progress attempt is never disrupted.
@@ -274,12 +286,12 @@ export class ExerciseSplitPanelComponent {
                         // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
                         const practiceParticipationId = participation?.testRun ? participation.id : undefined;
                         if (practiceParticipationId) {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent, replaceUrl });
                         } else {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent, replaceUrl });
                         }
                     } else if (currentSegment !== 'live') {
-                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent, replaceUrl });
                     }
                     return;
                 }

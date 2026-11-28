@@ -6,19 +6,19 @@
         </div>
     </ng-template>
 
-    <div class="flex flex-col gap-4 py-1">
+    <div class="flex flex-col gap-6 py-1">
         <div class="flex items-center gap-3.5 px-1">
             <div class="flex items-center justify-center w-14 h-14 bg-primary/10 text-primary rounded-2xl shrink-0 text-2xl">
                 <fa-icon [icon]="faFingerprint" />
             </div>
             <div class="min-w-0 flex-1">
-                <h2 class="!text-lg sm:!text-xl font-bold text-color m-0 tracking-tight leading-snug" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"></h2>
+                <h2 class="!text-lg sm:!text-xl m-0 tracking-tight" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"></h2>
             </div>
         </div>
 
-        <div class="flex flex-col gap-3 bg-surface-card p-4 rounded-2xl border border-surface">
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+        <div class="flex flex-col gap-4 bg-(--module-bg) p-6 rounded-2xl border border-(--border-color)">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-(--border-color) text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faBolt" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
@@ -27,8 +27,8 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-(--border-color) text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faLock" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
@@ -37,8 +37,8 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-(--module-bg) border border-(--border-color) text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faShieldHalved" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">

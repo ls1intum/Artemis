@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
 /**
- * The "Export Repos" dialog reached from the exercise scores page and from the course exercises overview.
+ * The "Export Repos" dialog reached from the participation page and from the course exercises overview.
  *
  * The checkboxes are addressed by their form control name rather than their label, because the labels are translated
  * and a test that matches on translated text breaks as soon as the wording is improved.
@@ -14,11 +14,11 @@ export class ProgrammingExerciseExportDialog {
     }
 
     /**
-     * Opens the export dialog from the scores page. The export actions live in a popover behind the page's Export
+     * Opens the export dialog from the participation page. The export actions live in a popover behind the page's Export
      * button, and the popover is rendered into the document body, so the dialog trigger only exists once it is open.
      */
     async open() {
-        await this.page.locator('button[jhi-exercise-action-button]').filter({ hasText: 'Export' }).first().click();
+        await this.page.getByTestId('participation-export-button').click();
         const repositoryExportButton = this.page.locator('jhi-programming-assessment-repo-export button');
         await repositoryExportButton.waitFor({ state: 'visible' });
         await repositoryExportButton.click();
@@ -26,7 +26,7 @@ export class ProgrammingExerciseExportDialog {
     }
 
     dialog() {
-        return this.page.getByRole('dialog');
+        return this.page.getByRole('dialog', { name: 'Export Repositories', exact: true });
     }
 
     /**

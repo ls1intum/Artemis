@@ -3,20 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY } from 'rxjs';
-import { LeaderboardService } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/service/leaderboard-service';
-import { LeaderboardEntry, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
+import { EMPTY, firstValueFrom } from 'rxjs';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
+import { LeaderboardEntry } from 'app/openapi/model/leaderboard-entry';
 import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
 import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -29,23 +25,19 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         ButtonComponent,
         LeaderboardComponent,
         TranslateDirective,
-        DialogModule,
-        FormsModule,
         FontAwesomeModule,
-        ToggleSwitchModule,
         LeagueBadgeComponent,
-        ButtonModule,
-        TooltipModule,
+        TumAetUiButtonDirective,
         QuizTrainingDialogComponent,
     ],
     templateUrl: './course-training.component.html',
-    styleUrl: './course-training.component.scss',
+    styleUrl: './course-training.component.css',
 })
 export class CourseTrainingComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly courseTabRefreshService = inject(CourseTabRefreshService);
-    private readonly leaderboardService = inject(LeaderboardService);
+    private readonly quizTrainingApi = inject(QuizTrainingApi);
     private readonly alertService = inject(AlertService);
 
     protected readonly faClock = faClock;
@@ -174,7 +166,7 @@ export class CourseTrainingComponent {
     async loadLeaderboard(courseId: number): Promise<void> {
         this.isLoading.set(true);
         try {
-            const leaderboard = await this.leaderboardService.getQuizTrainingLeaderboard(courseId);
+            const leaderboard = await firstValueFrom(this.quizTrainingApi.getQuizTrainingLeaderboard(courseId));
             this.leaderboardEntries.set(leaderboard.leaderboardEntries);
             this.currentUserEntry.set(leaderboard.currentUserEntry);
             this.currentTime.set(leaderboard.currentTime);
@@ -201,9 +193,7 @@ export class CourseTrainingComponent {
     async onSaveDialog(): Promise<void> {
         this.isLoading.set(true);
         try {
-            const leaderboardSettings = new LeaderboardSettingsDTO();
-            leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
-            await this.leaderboardService.updateSettings(leaderboardSettings);
+            await firstValueFrom(this.quizTrainingApi.updateLeaderboardSettings({ showInLeaderboard: this.showInLeaderboard }));
             this.isFirstVisit.set(false);
             this.isLoading.set(false);
             const courseId = this.courseId();
@@ -218,7 +208,7 @@ export class CourseTrainingComponent {
 
     async showInfoDialog(): Promise<void> {
         try {
-            const settings = await this.leaderboardService.getSettings();
+            const settings = await firstValueFrom(this.quizTrainingApi.getLeaderboardSettings());
             if (settings) {
                 this.showInLeaderboard = settings.showInLeaderboard ?? true;
                 this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
@@ -232,10 +222,8 @@ export class CourseTrainingComponent {
     }
 
     async onSaveInfoDialog(): Promise<void> {
-        const leaderboardSettings = new LeaderboardSettingsDTO();
-        leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
         try {
-            await this.leaderboardService.updateSettings(leaderboardSettings);
+            await firstValueFrom(this.quizTrainingApi.updateLeaderboardSettings({ showInLeaderboard: this.showInLeaderboard }));
             this.initialShowInLeaderboard.set(this.showInLeaderboard);
             this.displayInfoDialog = false;
             const courseId = this.courseId();

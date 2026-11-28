@@ -1,61 +1,39 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-
 /**
  * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
+ *
+ * @param lineItem the URL of the line item that scores are published to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record Lti13AgsClaim(List<String> scope, String lineItem) {
+public record Lti13AgsClaim(String lineItem) {
 
     /**
      * Returns an Ags-Claim representation if the provided idToken contains any.
      *
      * @param idToken to be parsed
      * @return an Ags-Claim if one was present in idToken.
-     * @throws IllegalStateException if the AGS claim is present but malformed or cannot be processed.
      */
     public static Optional<Lti13AgsClaim> from(OidcIdToken idToken) {
-        if (idToken.getClaim(Claims.AGS_CLAIM) == null) {
+        Object agsClaim = idToken.getClaim(Claims.AGS_CLAIM);
+        if (agsClaim == null) {
             return Optional.empty();
         }
 
-        try {
-            JsonMapper objectMapper = JsonObjectMapper.get();
-            JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
-
-            JsonNode scopes = agsClaimJson.get("scope");
-            List<String> scopeList = null;
-            if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
-                scopeList = List.of(Scopes.AGS_SCORE);
-            }
-
-            // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
-            JsonNode lineItemNode;
-            if (agsClaimJson.get("lineitem") == null) {
-                lineItemNode = agsClaimJson.get("lineitems");
-            }
-            else {
-                lineItemNode = agsClaimJson.get("lineitem");
-            }
-
-            // asString(null) rather than asString(): Jackson 2's asText() yielded "" for a non-string node, Jackson 3
-            // throws, and this claim comes from a third-party LMS rather than from Artemis.
-            String lineItem = lineItemNode != null ? lineItemNode.asString(null) : null;
-            return Optional.of(new Lti13AgsClaim(scopeList, lineItem));
+        // The claim comes from a third-party LMS: a claim or a line item of an unexpected shape means no line item, not a failed launch.
+        if (!(agsClaim instanceof Map<?, ?> endpoint)) {
+            return Optional.of(new Lti13AgsClaim(null));
         }
-        catch (IllegalStateException | ClassCastException ex) {
-            throw new IllegalStateException("Failed to parse LTI 1.3 ags claim.", ex);
-        }
+
+        // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems
+        Object lineItem = endpoint.get("lineitem") != null ? endpoint.get("lineitem") : endpoint.get("lineitems");
+        return Optional.of(new Lti13AgsClaim(lineItem instanceof String url ? url : null));
     }
 }

@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationExcepti
 /**
  * Abstract service for managing entities related to continuous integration.
  */
+// REMOVE_IN_ARTEMIS_11 (Jenkins): the methods marked TODO below exist only for Jenkins and go away with it
 public interface ContinuousIntegrationService {
 
     // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
@@ -19,6 +20,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissettingsresource";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private IrisCourseSettingsRepository irisCourseSettingsRepository;
@@ -46,7 +50,36 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetCourseSettings_belowInstructorSeesReducedConfiguration() throws Exception {
+        enableIrisFor(course1);
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+        String url = "/api/iris/courses/" + course1.getId() + "/iris-settings";
+
+        var instructorResponse = request.get(url, HttpStatus.OK, IrisCourseSettingsWithRateLimitDTO.class);
+        assertThat(instructorResponse.settings().customInstructions()).isEqualTo("Custom instructions for this course");
+        assertThat(instructorResponse.effectiveRateLimit()).isNotNull();
+        assertThat(instructorResponse.applicationRateLimitDefaults()).isNotNull();
+
+        for (String login : new String[] { TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", TEST_PREFIX + "editor1" }) {
+            userUtilService.changeUser(login);
+            var response = request.get(url, HttpStatus.OK, IrisCourseSettingsWithRateLimitDTO.class);
+            assertThat(response.courseId()).isEqualTo(course1.getId());
+            assertThat(response.settings().enabled()).isTrue();
+            assertThat(response.settings().customInstructions()).isNull();
+            assertThat(response.settings().rateLimit()).isNull();
+            assertThat(response.settings().variant()).isNotNull();
+            assertThat(response.settings().proactiveStruggleEnabled()).isEqualTo(instructorResponse.settings().proactiveStruggleEnabled());
+            assertThat(response.effectiveRateLimit()).isNotNull();
+            assertThat(response.applicationRateLimitDefaults()).isNotNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseSettings_asInstructor() throws Exception {
         enableIrisFor(course1);
 
@@ -85,7 +118,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     // ==================== PUT /api/iris/courses/{courseId}/iris-settings ====================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_toggleEnabled() throws Exception {
         enableIrisFor(course1);
 
@@ -103,7 +136,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_updateCustomInstructions() throws Exception {
         enableIrisFor(course1);
 
@@ -164,7 +197,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_cannotChangeVariant() throws Exception {
         enableIrisFor(course1);
 
@@ -190,7 +223,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_enablesProactiveStruggle() throws Exception {
         enableIrisFor(course1);
 
@@ -203,7 +236,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_asInstructor_cannotChangeRateLimits() throws Exception {
         enableIrisFor(course1);
 
@@ -227,7 +260,7 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateCourseSettings_nonExistentCourse() throws Exception {
         var update = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
         // Security annotation checks enrollment first, so we get 403 instead of 404
@@ -343,7 +376,8 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(settingsBefore).isPresent();
 
         // Delete the course
-        request.delete("/api/admin/courses/" + course1.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course1.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course1.getId());
 
         // Verify Iris settings were also deleted via cascade
         var settingsAfter = irisCourseSettingsRepository.findByCourseId(course1.getId());

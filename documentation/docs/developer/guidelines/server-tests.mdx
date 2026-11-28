@@ -2,6 +2,7 @@
 id: server-tests
 title: Server Tests
 sidebar_label: Server Tests
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -23,7 +24,7 @@ You can execute server tests with the following commands:
 
 The code coverage thresholds are defined in [jacoco.gradle](https://github.com/ls1intum/Artemis/blob/develop/gradle/jacoco.gradle).
 
-To run the server tests against MySQL in a Docker test container, use:
+To run the server tests against MySQL in a Docker test container, use the following task. MySQL support is deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)), together with this task:
 
 * Execute tests with MySQL container: `./gradlew testMysql -x webapp`
 
@@ -151,6 +152,12 @@ If you cannot find the correct helper function, add a new one to the most fittin
 Make sure to always use the ids returned by the database and to not assume the existence or non-existence of specific values.
 </Callout>
 
+A user takes part in a course only through a course role, stored in `user_course_role`. A test user without one is not a member of the course, so requests that need a course role are refused with `403 Forbidden`. Give the users their roles when you set up the course:
+
+* `userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT)` gives one user one role.
+* `userUtilService.enrollPrefixedUsersInCourse(course, userPrefix)` gives all test users of a prefix the role that their login names: student, tutor, editor or instructor.
+* `courseUtilService.addEnrolledEmptyCourse(userPrefix)` creates an empty course and enrolls these users.
+
 
 ## Test performance tips
 
@@ -217,9 +224,9 @@ Only the following abstract base test classes are permitted to define context-af
 | `AbstractSpringIntegrationIndependentTestBase` | N/A | Shared mocks and setup for independent test buckets |
 | `AbstractSpringIntegrationIndependentTest` | `Artemis_independent` | Independent tests without CI/CD integration |
 | `AbstractSpringIntegrationIndependentBatchTest` | `Artemis_independent_batch` | Second independent bucket for balanced parallel execution |
-| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins` | Jenkins + LocalVC integration |
-| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_template` | Jenkins template tests |
-| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_batch` | Jenkins batch tests |
+| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins_localvc` | Jenkins + LocalVC integration (deprecated, removed in Artemis 11) |
+| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_localvc_template` | Jenkins template tests |
+| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_localvc_batch` | Jenkins batch tests |
 | `AbstractSpringIntegrationLocalCILocalVCTestBase` | N/A | Shared mocks and setup for the two local CI + LocalVC buckets |
 | `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci_localvc` | Local CI + LocalVC integration |
 | `AbstractSpringIntegrationLocalCILocalVCBatchTest` | `Artemis_localci_localvc_batch` | Second local CI + LocalVC bucket for balanced parallel execution |
@@ -243,9 +250,22 @@ Only the following abstract base test classes are permitted to define context-af
    class that never touches the bean — it inherits a stub from a class that ran earlier. `LocalVCFetchAndPushIntegrationTest`
    left `doReturn(true).when(ldapTemplate).compare(...)` behind, which had LDAP accepting every password for the rest
    of the run.
+   A spy that scheduled or build threads of the application call while tests run, such as `BuildAgentConfiguration`,
+   must not be stubbed or reset by a test at all: Mockito keeps the pending stubbing in the mock, so a call from
+   another thread between `doReturn(...)` and `.when(spy).method()` fails the test's `@BeforeEach` with
+   `WrongTypeOfReturnValue` or stubs the wrong method. Declare it with `@MockitoSpyBean(reset = MockReset.NONE)`, stub it
+   once when the context is built with answers that read an `AtomicReference`, and let tests change that holder
+   (`BuildAgentConfigurationOverrides`).
+   Install the answers in a bean post-processor after Mockito creates the spy, before it reaches consumers.
+   `SmartInitializingSingleton` is too late when a consumer schedules work in `@PostConstruct`.
 9. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically, including
    the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
-   named `resetSpyBeans`.
+   named `resetSpyBeans`. A spy declared with `reset = MockReset.NONE` is exempt.
+
+Scheduled tasks that replace shared fixture state need the same isolation. The LocalCI test contexts
+defer the Docker image cleanup-info refresh using its interval and initial-delay properties. Tests
+call `pushDockerImageCleanupInfo()` directly when verifying it, so a background refresh cannot erase
+a cleanup-map fixture between setup and its assertions.
 
 ### Why This Matters
 
@@ -289,7 +309,7 @@ By annotating `abstract` base classes with it, we group tests into parallel runn
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 @AutoConfigureEmbeddedDatabase
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_SCHEDULING })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
 ```

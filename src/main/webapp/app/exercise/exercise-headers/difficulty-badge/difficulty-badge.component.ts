@@ -38,14 +38,14 @@ export class DifficultyBadgeComponent {
     readonly badgeClass = computed<string | undefined>(() => {
         switch (this.exercise().difficulty) {
             case DifficultyLevel.EASY:
-                return 'bg-success';
+                return 'bg-state-success';
             case DifficultyLevel.MEDIUM:
-                return 'bg-warning';
+                return 'bg-state-warning';
             case DifficultyLevel.HARD:
-                return 'bg-danger';
+                return 'bg-state-danger';
             default:
                 if (this.showNoLevel()) {
-                    return 'bg-info';
+                    return 'bg-state-info';
                 }
                 return undefined;
         }

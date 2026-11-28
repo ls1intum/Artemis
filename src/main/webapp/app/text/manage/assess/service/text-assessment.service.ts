@@ -180,8 +180,8 @@ export class TextAssessmentService {
      * @param exerciseId id of the exercise for which the example result should be retrieved of type {number}
      * @param submissionId id of the submission for which the example result should be retrieved of type {number}
      */
-    public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.RESOURCE_URL}/exercises/${exerciseId}/submissions/${submissionId}/example-result`);
+    public getExampleResult(exerciseId: number, submissionId: number, purpose: 'training' | 'instructor' = 'training'): Observable<Result> {
+        return this.http.get<Result>(`${this.RESOURCE_URL}/exercises/${exerciseId}/submissions/${submissionId}/example-result${purpose === 'instructor' ? '/for-instructor' : ''}`);
     }
 
     /**

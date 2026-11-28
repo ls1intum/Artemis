@@ -6,6 +6,8 @@ export class StudentParticipation extends Participation {
     public student?: User;
     public team?: Team;
     public testRun?: boolean;
+    /** Own submission status from the overview, including submissions withheld until assessment. */
+    public hasSubmitted?: boolean;
 
     constructor(type?: ParticipationType) {
         super(type ?? ParticipationType.STUDENT);

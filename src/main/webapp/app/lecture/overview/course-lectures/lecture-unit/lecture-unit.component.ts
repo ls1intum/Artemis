@@ -1,8 +1,10 @@
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,9 +16,19 @@ import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-de
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule, CompetencyContributionComponent],
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FontAwesomeModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        CommonModule,
+        CompetencyContributionComponent,
+    ],
     templateUrl: './lecture-unit.component.html',
-    styleUrl: './lecture-unit.component.scss',
+    styleUrl: './lecture-unit.component.css',
 })
 export class LectureUnitComponent implements OnDestroy {
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
@@ -39,6 +51,7 @@ export class LectureUnitComponent implements OnDestroy {
 
     showViewIsolatedButton = input<boolean>(false);
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
+    viewIsolatedButtonSeverity = input<TumAetUiButtonSeverity>('secondary');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);

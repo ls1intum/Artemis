@@ -13,7 +13,6 @@ import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/res
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
@@ -48,12 +47,6 @@ describe('ComplaintService', () => {
     clientComplaint2.complaintText = 'Test text';
 
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
-
-    const clientComplaintReq = new ComplaintRequestDTO();
-    clientComplaintReq.examId = 1337;
-    clientComplaintReq.complaintText = 'Test text';
-    clientComplaintReq.resultId = 1;
-    clientComplaintReq.complaintType = ComplaintType.MORE_FEEDBACK;
 
     let exercise: Exercise;
     let emptyResult: Result;
@@ -200,33 +193,6 @@ describe('ComplaintService', () => {
         });
     });
 
-    describe('create', () => {
-        it('For course', () => {
-            clientComplaintReq.examId = undefined;
-            complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
-            });
-
-            const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe('api/assessment/complaints');
-            expect(res.request.body).toEqual(clientComplaintReq);
-
-            res.flush(clone(serverComplaint1));
-        });
-
-        it('For exam', () => {
-            complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
-            });
-
-            const res = httpMock.expectOne({ method: 'POST' });
-            expect(res.request.url).toBe(`api/assessment/complaints`);
-            expect(res.request.body).toEqual(clientComplaintReq);
-
-            res.flush(clone(serverComplaint1));
-        });
-    });
-
     describe('shouldHighlightComplaint', () => {
         it('should not highlight handled complaints', () => {
             const complaint = {
@@ -347,6 +313,24 @@ describe('ComplaintService', () => {
             const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
+    });
+
+    it('uses explicit assessment detail URL', () => {
+        complaintService.findBySubmissionIdForAssessment(42).subscribe();
+        const req = httpMock.expectOne('api/assessment/complaints/for-assessment?submissionId=42');
+        expect(req.request.method).toBe('GET');
+        req.flush(clientComplaint1);
+    });
+
+    it.each(['course', 'exercise'] as const)('uses current-tutor %s scope without an arbitrary tutor ID', (scope) => {
+        if (scope === 'course') {
+            complaintService.findForTutorByCourseId(42, ComplaintType.COMPLAINT).subscribe();
+        } else {
+            complaintService.findForTutorByExerciseId(42, ComplaintType.COMPLAINT).subscribe();
+        }
+        const req = httpMock.expectOne(`api/assessment/complaints/for-tutor?${scope}Id=42&complaintType=COMPLAINT`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
     });
 
     it('findBySubmissionId', () => {
@@ -472,7 +456,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
@@ -486,7 +470,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });

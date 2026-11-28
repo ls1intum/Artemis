@@ -1,30 +1,33 @@
 import { ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
+import { expect } from '@playwright/test';
 
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise assessment page.
  */
 export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
+        // Adding feedback requires an empty line. Use fillInlineFeedback to select an existing card explicitly.
+        await expect(this.getInlineFeedback(lineIndex)).toHaveCount(0);
         // Monaco renders the code lines, and its decoration API takes a class name and nothing else, so the
         // hover button cannot carry a test id either. These two selectors name Monaco's DOM out of necessity.
         await this.page.locator('.view-line').nth(lineIndex).hover();
         await this.page.locator('.monaco-add-feedback-button').click();
-        // Manual inline feedback has no save button - typing the description and points commits it immediately.
-        await this.typeIntoFeedbackEditor(feedback, lineIndex);
-        await this.typePointsIntoFeedbackEditor(points, lineIndex);
+        await this.fillInlineFeedback(lineIndex, 0, points, feedback);
     }
 
-    private async typeIntoFeedbackEditor(text: string, index: number) {
-        await this.getInlineFeedback(index).locator('.unified-feedback-detail-input').fill(text);
+    /**
+     * Fills the explicitly selected card (0-based) among the feedback entries on a code line (also 0-based).
+     * Manual feedback commits while typing; nonmanual automatic feedback requires its save button.
+     */
+    async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
+        const card = this.getInlineFeedback(lineIndex).nth(feedbackIndex);
+        await card.getByRole('textbox', { name: 'Feedback', exact: true }).fill(feedback);
+        await this.setPoints(card, points);
     }
 
-    private async typePointsIntoFeedbackEditor(points: number, index: number) {
-        await this.setPointsViaStepper(this.getInlineFeedback(index), points);
-    }
-
-    private getInlineFeedback(line: number) {
-        return this.page.locator(`#code-editor-inline-feedback-${line}`);
+    private getInlineFeedback(lineIndex: number) {
+        return this.page.getByTestId('code-editor-inline-feedback').and(this.page.locator(`[data-code-line="${lineIndex}"]`));
     }
 
     override async rejectComplaint(response: string, examMode: boolean) {

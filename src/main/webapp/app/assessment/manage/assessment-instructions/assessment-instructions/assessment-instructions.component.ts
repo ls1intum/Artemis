@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
@@ -18,13 +19,12 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
-    styleUrl: './assessment-instructions.component.scss',
+    styleUrl: './assessment-instructions.component.css',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,

@@ -1,3 +1,6 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
@@ -57,8 +60,11 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.css'],
     imports: [
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
         TranslateDirective,
         ExerciseUnitComponent,
         AttachmentVideoUnitComponent,
@@ -190,7 +196,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     this.irisSettingsSubscription?.unsubscribe();
                     this.isLoading.set(true);
                     return this.lectureService.findWithDetails(lectureId).pipe(
-                        tap((findLectureResult) => this.handleLectureDetails(findLectureResult.body!)),
+                        tap((lecture) => this.handleLectureDetails(lecture)),
                         catchError((errorResponse: HttpErrorResponse) => {
                             onError(this.alertService, errorResponse);
                             return EMPTY;
@@ -226,7 +232,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
             this.lectureId = lectureId;
             if (this.lectureId) {
-                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
+                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId, this.courseId());
                 this.loadData();
             }
         });
@@ -355,6 +361,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     tap((blob) => {
                         downloadStream(blob.body, 'application/pdf', this.lecture()?.title ?? 'Lecture');
                         this.loadData();
+                    }),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.courseOverview.lectureDetails.downloadMergedPdfError');
+                        return EMPTY;
                     }),
                 )
                 .subscribe();

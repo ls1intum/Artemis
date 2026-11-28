@@ -19,7 +19,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 describe('TextExercise Service', () => {
@@ -120,23 +119,6 @@ describe('TextExercise Service', () => {
             expect(requestResult.status).toBe(200);
         });
 
-        it('should calculate and return tutor efforts', () => {
-            const exerciseId = 1;
-            const courseId = 1;
-            service.calculateTutorEffort(exerciseId, courseId).subscribe((resp) => (requestResult = resp));
-            const req = httpMock.expectOne({ method: 'GET' });
-            const returnedFromService: TutorEffort[] = [
-                {
-                    courseId,
-                    exerciseId,
-                    numberOfSubmissionsAssessed: 1,
-                    totalTimeSpentMinutes: 1,
-                },
-            ];
-            req.flush(returnedFromService);
-            expect(requestResult).toEqual(returnedFromService);
-        });
-
         it('should import a text exercise', () => {
             const textExerciseReturned = { ...elemDefault };
             textExerciseReturned.id = 123;
@@ -190,5 +172,11 @@ describe('TextExercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+    it('should load exam details from the exam route with the same options', () => {
+        service.findForExam(123, true).subscribe((response) => expect(response.body?.id).toBe(123));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/text/text-exercises/123/for-exam');
+        expect(req.request.params.get('withPlagiarismDetectionConfig')).toBe('true');
+        req.flush({ id: 123 });
     });
 });

@@ -23,10 +23,11 @@ import org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcesso
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisCallbackTokenService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 class FaqServiceTest {
 
-    private final FaqRepository repository = mock(FaqRepository.class);
+    private final FaqTestRepository repository = mock(FaqTestRepository.class);
 
     private final PyrisConnectorService connector = mock(PyrisConnectorService.class);
 
@@ -67,7 +68,8 @@ class FaqServiceTest {
         when(repository.findById(42L)).thenReturn(Optional.of(faq));
         var settings = mock(IrisSettingsService.class);
         when(settings.isEnabledForCourse(any())).thenReturn(true);
-        var webhook = new PyrisWebhookService(connector, mock(PyrisJobService.class), settings, Optional.empty(), Optional.empty(), mock(VideoSourceResolverService.class));
+        var webhook = new PyrisWebhookService(connector, mock(PyrisJobService.class), mock(PyrisCallbackTokenService.class), settings, Optional.empty(), Optional.empty(),
+                mock(VideoSourceResolverService.class));
         var api = new PyrisFaqApi(webhook, connector);
         target = new FaqService(repository, Optional.of(api));
         var factory = new DefaultListableBeanFactory();

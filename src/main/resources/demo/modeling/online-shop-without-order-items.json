@@ -1,0 +1,246 @@
+{
+    "version": "4.0.0",
+    "id": "c06ddfbd-c8b3-56aa-a5fd-b88aa9867074",
+    "title": "Online Shop",
+    "type": "ClassDiagram",
+    "nodes": [
+        {
+            "id": "d3558f47-bd53-5f50-bf59-44a0ec096379",
+            "width": 220,
+            "height": 100,
+            "type": "class",
+            "position": {
+                "x": 40,
+                "y": 40
+            },
+            "data": {
+                "name": "Customer",
+                "attributes": [
+                    {
+                        "id": "286d7f3a-2933-5251-b319-ef8a54570a92",
+                        "name": "- name: String"
+                    },
+                    {
+                        "id": "7e02e3d5-7a31-58f2-9a13-8f5bde4c4edd",
+                        "name": "- email: String"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 220,
+                "height": 100
+            }
+        },
+        {
+            "id": "dfdef936-6427-5a71-90c1-a9e29723a308",
+            "width": 240,
+            "height": 130,
+            "type": "class",
+            "position": {
+                "x": 420,
+                "y": 40
+            },
+            "data": {
+                "name": "Order",
+                "attributes": [
+                    {
+                        "id": "971ae4f8-39a5-55dc-a005-6c39d35b652a",
+                        "name": "- orderNumber: int"
+                    },
+                    {
+                        "id": "36e78ed7-feac-51c3-bdae-97689f91a81b",
+                        "name": "- date: Date"
+                    },
+                    {
+                        "id": "ad703c27-fd14-5767-8618-0ef48d75ce69",
+                        "name": "- status: String"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 240,
+                "height": 130
+            }
+        },
+        {
+            "id": "6c86056c-f6ba-5a7e-a8e7-1c1b5120a597",
+            "width": 220,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 40,
+                "y": 280
+            },
+            "data": {
+                "name": "ShoppingCart",
+                "attributes": [],
+                "methods": [
+                    {
+                        "id": "66cb70ff-8ac2-5a88-9491-f809419b1243",
+                        "name": "+ checkout(): Order"
+                    }
+                ]
+            },
+            "measured": {
+                "width": 220,
+                "height": 70
+            }
+        },
+        {
+            "id": "022dd157-0071-5a5f-89df-6c535f8b1cec",
+            "width": 240,
+            "height": 100,
+            "type": "class",
+            "position": {
+                "x": 420,
+                "y": 280
+            },
+            "data": {
+                "name": "Product",
+                "attributes": [
+                    {
+                        "id": "09d785a9-8dcf-5c7b-8589-ecef1f41068b",
+                        "name": "- name: String"
+                    },
+                    {
+                        "id": "c9d41755-7cc3-5294-a533-0f69cd4bbfa1",
+                        "name": "- price: double"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 240,
+                "height": 100
+            }
+        },
+        {
+            "id": "9fb4c965-2795-5e9f-80d6-99255810eb79",
+            "width": 200,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 300,
+                "y": 480
+            },
+            "data": {
+                "name": "Book",
+                "attributes": [
+                    {
+                        "id": "fbb4d89d-5d92-575c-a9e8-26acb113fbec",
+                        "name": "- weight: double"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 200,
+                "height": 70
+            }
+        },
+        {
+            "id": "a23e7308-14af-5d2e-ac75-a522ac2b2d59",
+            "width": 200,
+            "height": 70,
+            "type": "class",
+            "position": {
+                "x": 560,
+                "y": 480
+            },
+            "data": {
+                "name": "EBook",
+                "attributes": [
+                    {
+                        "id": "c3cd397c-5c61-5981-8308-9cc98567aad1",
+                        "name": "- downloadLink: String"
+                    }
+                ],
+                "methods": []
+            },
+            "measured": {
+                "width": 200,
+                "height": 70
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "1e472a22-2335-5496-b65a-76781b935931",
+            "source": "d3558f47-bd53-5f50-bf59-44a0ec096379",
+            "target": "dfdef936-6427-5a71-90c1-a9e29723a308",
+            "type": "ClassBidirectional",
+            "sourceHandle": "right",
+            "targetHandle": "left",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "1",
+                "targetRole": "",
+                "targetMultiplicity": "*",
+                "points": []
+            }
+        },
+        {
+            "id": "07fb4e0d-08d1-57fb-a1be-2c9fca597489",
+            "source": "dfdef936-6427-5a71-90c1-a9e29723a308",
+            "target": "022dd157-0071-5a5f-89df-6c535f8b1cec",
+            "type": "ClassBidirectional",
+            "sourceHandle": "bottom",
+            "targetHandle": "top",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "*",
+                "targetRole": "",
+                "targetMultiplicity": "1..*",
+                "points": []
+            }
+        },
+        {
+            "id": "6cad8b31-ce02-5e78-9b43-eb417c234fcf",
+            "source": "6c86056c-f6ba-5a7e-a8e7-1c1b5120a597",
+            "target": "d3558f47-bd53-5f50-bf59-44a0ec096379",
+            "type": "ClassAggregation",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        },
+        {
+            "id": "c4e5e0b3-cc2d-5c4c-b6d3-4da8d64ca95e",
+            "source": "9fb4c965-2795-5e9f-80d6-99255810eb79",
+            "target": "022dd157-0071-5a5f-89df-6c535f8b1cec",
+            "type": "ClassInheritance",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        },
+        {
+            "id": "27b79f9b-b50d-5d86-b4ea-15dc27306e67",
+            "source": "a23e7308-14af-5d2e-ac75-a522ac2b2d59",
+            "target": "022dd157-0071-5a5f-89df-6c535f8b1cec",
+            "type": "ClassInheritance",
+            "sourceHandle": "top",
+            "targetHandle": "bottom",
+            "data": {
+                "sourceRole": "",
+                "sourceMultiplicity": "",
+                "targetRole": "",
+                "targetMultiplicity": "",
+                "points": []
+            }
+        }
+    ],
+    "assessments": {}
+}

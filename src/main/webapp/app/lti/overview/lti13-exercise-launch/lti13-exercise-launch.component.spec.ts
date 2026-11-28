@@ -65,6 +65,8 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit fail without state', () => {
         const httpStub = vi.spyOn(http, 'post');
+        const pending = { url: '/courses/1/exercises/2', ltiIdToken: 'pending-launch', clientRegistrationId: 'moodle' };
+        sessionStorageService.store('ltiPendingLaunch', pending);
 
         route.snapshot = { queryParamMap: convertToParamMap({ id_token: 'id_token' }) } as ActivatedRouteSnapshot;
 
@@ -72,10 +74,13 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         expect(comp.isLaunching()).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
+        expect(sessionStorageService.retrieve('ltiPendingLaunch')).toEqual(pending);
     });
 
     it('onInit fail without token', () => {
         const httpStub = vi.spyOn(http, 'post');
+        const pending = { url: '/courses/1/exercises/2', ltiIdToken: 'pending-launch', clientRegistrationId: 'moodle' };
+        sessionStorageService.store('ltiPendingLaunch', pending);
 
         route.snapshot = { queryParamMap: convertToParamMap({ state: 'state' }) } as ActivatedRouteSnapshot;
 
@@ -83,6 +88,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         expect(comp.isLaunching()).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
+        expect(sessionStorageService.retrieve('ltiPendingLaunch')).toEqual(pending);
     });
 
     it('onInit no targetLinkUri', () => {
@@ -109,6 +115,19 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
+    });
+
+    it('supersedes an abandoned interactive continuation when a new launch succeeds directly', () => {
+        sessionStorageService.store('ltiPendingLaunch', { url: '/courses/1/exercises/2', ltiIdToken: 'old-launch', clientRegistrationId: 'old-platform' });
+        vi.spyOn(http, 'post').mockReturnValue(
+            of({ targetLinkUri: `${window.location.origin}/courses/3/exercises/4`, ltiIdToken: 'new-launch', clientRegistrationId: 'new-platform' }),
+        );
+
+        comp.ngOnInit();
+
+        expect(sessionStorageService.retrieve('ltiPendingLaunch')).toBeUndefined();
+        expect(sessionStorageService.retrieve('ltiIdToken')).toBe('new-launch');
+        expect(sessionStorageService.retrieve('clientRegistrationId')).toBe('new-platform');
     });
 
     it('onInit launch fails on error', () => {
@@ -139,7 +158,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(identitySpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
         expect(navigateSpy).toHaveBeenCalledWith(['/sign-in']);
-        expect(authStateSpy).toHaveBeenCalled();
+        expect(authStateSpy).not.toHaveBeenCalled();
     });
 
     it('should redirect user to target link when user is already logged in', async () => {
@@ -180,7 +199,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         await fixture.whenStable();
 
         expect(identitySpy).toHaveBeenCalled();
-        expect(authStateSpy).toHaveBeenCalled();
+        expect(authStateSpy).not.toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(navigateSpy).toHaveBeenCalled();
@@ -192,7 +211,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
             throwError(() => ({
                 status,
                 headers: { get: () => 'lti_user', ...headers },
-                error: { targetLinkUri: 'https://example.com/lti/course/1', ...error },
+                error: { targetLinkUri: `${window.location.origin}/lti/course/1`, ltiIdToken: 'launch-token', clientRegistrationId: 'moodle', ...error },
             })),
         );
     }

@@ -5,15 +5,16 @@
 Read the checked-in skill for the task at hand. Installation is optional for reading these files;
 see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native skill discovery.
 
-| Task                                                        | Guidance                                                   |
-| ----------------------------------------------------------- | ---------------------------------------------------------- |
-| Run, write, or debug Playwright E2E tests                   | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
-| Diagnose failed, stuck, or missing CI checks                | [ci-triage](skills/ci-triage/SKILL.md)                     |
-| Change server Java or investigate an architecture violation | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
-| Change a database schema or fix a failing changeset         | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
-| Change Angular application or TUM AET UI code               | [client-conventions](skills/client-conventions/SKILL.md)   |
-| Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
-| Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
+| Task                                                          | Guidance                                                   |
+| ------------------------------------------------------------- | ---------------------------------------------------------- |
+| Run, write, or debug Playwright E2E tests                     | [e2e-pr-check](skills/e2e-pr-check/SKILL.md)               |
+| Diagnose failed, stuck, or missing CI checks                  | [ci-triage](skills/ci-triage/SKILL.md)                     |
+| Change server Java or investigate an architecture violation   | [server-arch-gates](skills/server-arch-gates/SKILL.md)     |
+| Change a database schema or fix a failing changeset           | [liquibase-migration](skills/liquibase-migration/SKILL.md) |
+| Change Angular application or TUM AET UI code                 | [client-conventions](skills/client-conventions/SKILL.md)   |
+| Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
+| Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
+| Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
@@ -43,10 +44,17 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Jackson 3 uses `tools.jackson`; annotations remain `com.fasterxml.jackson.annotation`. Inject
   the configured `JsonMapper` in Spring beans; see the [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx)
   for other contexts.
+- Read and write JSON through records, never through the Jackson tree model (`JsonNode`, `ObjectNode`,
+  `ArrayNode`, `readTree`, `valueToTree`, `createObjectNode`) in production code, without exceptions.
+  [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx#use-records-not-the-tree-model)
 - Every websocket destination is a declared topic: a `WebsocketTopic` with its `WebsocketTopicAccess`
   rule, or a `WebsocketUserTopic`, as a constant of the module's `web/<Module>WebsocketTopics` class.
   Send only through `WebsocketMessagingService` with `TOPIC.at(...)`. Clients send only to `/app/...`
   `@MessageMapping` handlers, which check the sender; no `@SubscribeMapping`. [websocket](documentation/docs/developer/guidelines/websocket.mdx)
+- Every call to a language model, for chat or embeddings, uses a preset of `artemis.llm` and a client from
+  `LlmClientService`, without exceptions. A module adds only `llm-preset` keys and registers them as
+  `LlmPresetAssignments`; no own URL, API key, model or option keys, no own provider client or HTTP call. A missing
+  kind of call goes into `LlmClientService`. [AI pipelines](documentation/docs/developer/ai-pipelines.mdx#connect-a-feature-to-a-language-model)
 
 ### Client
 
@@ -66,26 +74,29 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use TUM AET UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM AET UI lacks a reusable
-  feature, extend it on native HTML, Angular Aria or stable Angular CDK primitives; use PrimeNG
-  only if that cannot reasonably be done in the same change, and explain the fallback in the PR.
-  [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
-- Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
-  root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
+- Use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the client; do
+  not add them again. If TUM AET UI lacks a reusable feature, extend it on native HTML, Angular
+  Aria or stable Angular CDK primitives. [TUM AET UI](documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx)
+- Use semantic colour tokens, not primitive colours or the class names of the removed libraries.
+  [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
 ### Everywhere
 
 - Remove unreachable code, even when its only user is its own test. Required checks run on every
   PR: `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`.
   [dead code](documentation/docs/developer/guidelines/dead-code.mdx)
+- Write new scripts for builds, CI and repository tooling in TypeScript or JavaScript (`.mjs`, run by Node) with a test
+  beside them, not in Python; a workflow step calls a few commands directly and otherwise calls a script. Port an existing
+  Python script when you change it substantially.
+  [builds and dependencies](documentation/docs/developer/builds-and-dependencies.mdx#scripts)
 - Use **client** and **server**, not "frontend" or "backend". <!-- terminology-check: allow -->
   Use **provider** for a swappable distributed-data implementation and **adapter** for its glue.
   This also applies to commit messages and PR text. [terminology](documentation/docs/developer/guidelines/terminology.mdx)
 
 ## Repository boundaries
 
-- The server uses Spring Boot 4.1 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
-  Node 24, and the pnpm version pinned in `package.json` (`corepack enable`). Exact versions live
+- The server uses Spring Boot 4.2 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
+  Node 26, and the pnpm version pinned in `package.json` (`npm install --global corepack`, then `corepack enable`). Exact versions live
   in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is
   under `src/main/webapp/app/`. Keep reusable TUM AET UI components in `packages/tum-aet-ui`, with no
@@ -103,6 +114,11 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
 - When writing documentation, follow the [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx).
   Register new pages in the matching sidebar and link them from related pages.
+- Add documentation and screenshots only when they help users complete a task or understand a decision.
+  Do not document cosmetic layout details merely to satisfy a checklist.
+- Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
+  and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
+  screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
@@ -121,8 +137,12 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   the problem and solution, linked issue when applicable, checks run, screenshots for UI changes
   and documentation updates when relevant.
 - Before creating or updating a PR, follow [PR readiness](documentation/docs/developer/development-process.mdx#pull-request-readiness).
-  Complete applicable author tasks with `[x]`, remove only inapplicable tasks and empty sections, and
-  leave applicable review tasks open until verified. Never claim tests or reviews that were not performed.
+  Check completed author tasks with `[x]`, leave pending validation unchecked, and remove only inapplicable
+  tasks and empty sections. Leave applicable review tasks open until verified. Never claim tests or reviews
+  that were not performed.
+- Use drafts only for unfinished implementations. Open completed work as non-draft or mark it ready for
+  review immediately so full CI and review bots run. Pending CI, reviews or test-server validation do not
+  require draft status; required checks and applicable reviews must still pass before merge.
 - Set the PR milestone to the intended release. Keep draft state and the `ready for review` / `ready to merge`
   labels aligned with the documented stage; recheck them after updates. Add `ready to merge` only after
   all remaining tasks, required approvals, resolved threads, passing checks and mergeability are verified.

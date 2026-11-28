@@ -1,3 +1,6 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Component, OnInit, input, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -6,8 +9,7 @@ import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feed
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
+
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -16,8 +18,8 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 @Component({
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
-    styleUrls: ['./feedback-node.scss'],
-    imports: [FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['./feedback-node.css'],
+    imports: [TumAetUiTooltipDirective, TumAetUiMessageComponent, FaIconComponent, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -58,8 +60,8 @@ export class FeedbackNodeComponent implements OnInit {
     }
 
     /**
-     * Maps the legacy Bootstrap alert color of a feedback item (`success` / `info` / `warning` / `danger`)
-     * to the corresponding PrimeNG message severity used by `p-message`.
+     * Maps the color name of a feedback item (`success` / `info` / `warning` / `danger`)
+     * to the corresponding TUM AET UI message severity.
      */
     messageSeverity(color: string | undefined): 'success' | 'info' | 'warn' | 'error' | 'secondary' {
         switch (color) {

@@ -12,7 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular/chart';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -33,7 +34,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent, TranslateDirective],
             },
         });
         await TestBed.compileComponents();
@@ -43,6 +44,18 @@ describe('CourseDetailDoughnutChartComponent', () => {
     });
 
     beforeEach(() => {
+        // JSDOM has no layout; the real chart only renders slices after measuring a positive size.
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+            width: 300,
+            height: 300,
+            top: 0,
+            left: 0,
+            right: 300,
+            bottom: 300,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
         componentRef.setInput('course', course);
         componentRef.setInput('contentType', DoughnutChartType.ASSESSMENT);
         componentRef.setInput('currentPercentage', percentage);
@@ -124,6 +137,42 @@ describe('CourseDetailDoughnutChartComponent', () => {
         fixture.detectChanges();
         expect(component.doughnutChartTitle()).toBe('');
         expect(component.titleLink()).toBeUndefined();
+    });
+
+    it.each([0, 82.3])('keeps the LLM cost visible without a placeholder tooltip (cost: %s)', async (cost) => {
+        componentRef.setInput('contentType', DoughnutChartType.CURRENT_LLM_COST);
+        componentRef.setInput('currentAbsolute', undefined);
+        componentRef.setInput('currentPercentage', undefined);
+        componentRef.setInput('currentMax', 0);
+        componentRef.setInput('showText', `${cost} USD`);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="course-chart-values"]').textContent).toContain(`${cost} USD`);
+        const placeholder = fixture.nativeElement.querySelectorAll('tumaet-ui-doughnut-chart svg path')[2] as SVGPathElement;
+        placeholder.dispatchEvent(new MouseEvent('mouseenter', { clientX: 40, clientY: 40 }));
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('tumaet-ui-chart-tooltip')).toBeNull();
+    });
+
+    it.each([
+        { absolute: 80, max: 100, slice: 0, expected: '80' },
+        { absolute: 0, max: 0, slice: 2, expected: '0' },
+    ])('retains assessment tooltips when the maximum is $max', async ({ absolute, max, slice, expected }) => {
+        componentRef.setInput('currentAbsolute', absolute);
+        componentRef.setInput('currentMax', max);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const path = fixture.nativeElement.querySelectorAll('tumaet-ui-doughnut-chart svg path')[slice] as SVGPathElement;
+        path.dispatchEvent(new MouseEvent('mouseenter', { clientX: 40, clientY: 40 }));
+        fixture.detectChanges();
+
+        const tooltip = fixture.nativeElement.querySelector('tumaet-ui-chart-tooltip') as HTMLElement;
+        expect(tooltip.lastElementChild!.textContent!.trim()).toBe(expected);
     });
 
     it('should show only the value in the tooltip body', () => {

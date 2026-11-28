@@ -9,11 +9,11 @@ export class FeatureToggleLinkDirective {
     private featureToggleService = inject(FeatureToggleService);
 
     feature = input<FeatureToggle | undefined>(undefined, { alias: 'jhiFeatureToggleLink' });
-    overwriteDisabled = input<boolean | null>(null);
+    forceDisabled = input<boolean | null>(null);
     skipFeatureToggle = input<boolean>(false);
 
     private featureActive = signal(true);
-    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
+    disabled = computed(() => this.forceDisabled() === true || !this.featureActive());
     constructor() {
         effect((onCleanup) => {
             const featureInput = this.feature();

@@ -146,7 +146,7 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             // Profile and module features load independently and must still be populated despite the toggle failure.
             expect(comp.profileFeatures()).toHaveLength(3);
-            expect(comp.moduleFeatures()).toHaveLength(21);
+            expect(comp.moduleFeatures()).toHaveLength(22);
         });
 
         it('should set documentation links for features that have them', () => {
@@ -165,8 +165,16 @@ describe('AdminFeatureToggleComponentTest', () => {
             comp.ngOnInit();
             const toggles = comp.featureToggles();
 
-            const science = toggles.find((t) => t.feature === FeatureToggle.Science);
-            expect(science?.documentationLink).toBeUndefined();
+            const autonomousTutor = toggles.find((t) => t.feature === FeatureToggle.AutonomousTutor);
+            expect(autonomousTutor).toBeDefined();
+            expect(autonomousTutor?.documentationLink).toBeUndefined();
+        });
+
+        it('should link the science toggle to its administration documentation', () => {
+            comp.ngOnInit();
+
+            const science = comp.featureToggles().find((t) => t.feature === FeatureToggle.Science);
+            expect(science?.documentationLink).toBe('https://docs.artemis.tum.de/admin/science-data-collection');
         });
     });
 
@@ -204,7 +212,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(21);
+            expect(comp.moduleFeatures()).toHaveLength(22);
         });
 
         it('should set isActive based on active module features', () => {

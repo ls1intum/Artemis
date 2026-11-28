@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -170,6 +169,7 @@ public class ProgrammingExerciseImportBasicService {
         }
         // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
         programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+        programmingExerciseValidationService.validateDockerImageRegistry(buildConfig);
         if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
             try {
                 newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, buildConfig));
@@ -179,6 +179,11 @@ public class ProgrammingExerciseImportBasicService {
             }
         }
         newExercise.validateDates();
+
+        // Resolve every selected competency before the first write, including the submission policy. A selection may
+        // have been deleted while the import form was open; discovering that after saving would leave an incomplete import.
+        var competencyLinks = competencyExerciseLinkService.resolveCompetencyLinksForCreation(newExercise,
+                competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise));
 
         // Persist the submission policy (as a fresh entity) up front for the same reason.
         importSubmissionPolicy(newExercise);
@@ -190,7 +195,6 @@ public class ProgrammingExerciseImportBasicService {
         // Persist the exercise once (cascading the grading criteria) so that the template and solution participations,
         // the test cases and the tasks created below can reference it. Competency links are added afterwards because they
         // must point at the persisted exercise.
-        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         // An exam exercise is always individual: whatever team settings the request brought along are ignored, and its permanent
         // row keeps the defaults.
         final var desiredTeamAssignmentConfig = newExercise.isExamExercise() ? null : newExercise.getTeamAssignmentConfig();
@@ -204,7 +208,10 @@ public class ProgrammingExerciseImportBasicService {
         final var storedTeamAssignmentConfig = teamAssignmentConfigRepository.initializeFor(newExercise, desiredTeamAssignmentConfig);
         final var storedPlagiarismDetectionConfig = plagiarismDetectionConfigRepository.initializeFor(newExercise, desiredPlagiarismDetectionConfig);
         if (!competencyLinks.isEmpty()) {
-            competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
+            for (var link : competencyLinks) {
+                link.setExercise(newExercise);
+            }
+            newExercise.setCompetencyLinks(competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
         }
 
@@ -280,6 +287,7 @@ public class ProgrammingExerciseImportBasicService {
             GradingCriterion criterionCopy = new GradingCriterion();
             criterionCopy.setId(null);
             criterionCopy.setTitle(sourceCriterion.getTitle());
+            criterionCopy.setSortOrder(sourceCriterion.getSortOrder());
             criterionCopy.setExercise(newExercise);
             for (GradingInstruction sourceInstruction : sourceCriterion.getStructuredGradingInstructions()) {
                 GradingInstruction instructionCopy = new GradingInstruction();
@@ -289,6 +297,7 @@ public class ProgrammingExerciseImportBasicService {
                 instructionCopy.setInstructionDescription(sourceInstruction.getInstructionDescription());
                 instructionCopy.setFeedback(sourceInstruction.getFeedback());
                 instructionCopy.setUsageCount(sourceInstruction.getUsageCount());
+                instructionCopy.setSortOrder(sourceInstruction.getSortOrder());
                 criterionCopy.addStructuredGradingInstruction(instructionCopy);
             }
             newExercise.getGradingCriteria().add(criterionCopy);
@@ -343,7 +352,10 @@ public class ProgrammingExerciseImportBasicService {
             newBuildConfig.setId(null);
             return newBuildConfig;
         }
-        return new ProgrammingExerciseBuildConfig(sourceBuildConfig);
+        var copiedBuildConfig = new ProgrammingExerciseBuildConfig(sourceBuildConfig);
+        // the dates of an imported exercise differ from the source, so the window of the source would no longer fit them
+        copiedBuildConfig.setBuildTimeWindow(null);
+        return copiedBuildConfig;
     }
 
     /**
@@ -371,13 +383,18 @@ public class ProgrammingExerciseImportBasicService {
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
-        newExercise.setTestCases(sourceExercise.getTestCases().stream().map(testCase -> {
+        if (newExercise.getTestCases() == null) {
+            newExercise.setTestCases(new LinkedHashSet<>());
+        }
+        newExercise.getTestCases().clear();
+        sourceExercise.getTestCases().forEach(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
 
             // Copy everything except for the referenced exercise
             copy.setActive(testCase.isActive());
             copy.setVisibility(testCase.getVisibility());
             copy.setTestName(testCase.getTestName());
+            copy.setTestClass(testCase.getTestClass());
             copy.setWeight(testCase.getWeight());
             copy.setBonusMultiplier(testCase.getBonusMultiplier());
             copy.setBonusPoints(testCase.getBonusPoints());
@@ -385,8 +402,8 @@ public class ProgrammingExerciseImportBasicService {
             copy.setType(testCase.getType());
             programmingExerciseTestCaseRepository.save(copy);
             newIdByOldId.put(testCase.getId(), copy.getId());
-            return copy;
-        }).collect(Collectors.toSet()));
+            newExercise.getTestCases().add(copy);
+        });
 
         return newIdByOldId;
     }
@@ -400,8 +417,11 @@ public class ProgrammingExerciseImportBasicService {
      * @param testCaseIdMapping a map from each source test case id to the id of its copy (see {@link #importTestCases})
      */
     private void importTasks(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise, Map<Long, Long> testCaseIdMapping) {
-        List<ProgrammingExerciseTask> newTasks = sourceExercise.getTasks().stream().map(sourceTask -> createTaskCopy(sourceTask, newExercise, testCaseIdMapping)).toList();
-        newExercise.setTasks(new ArrayList<>(newTasks));
+        if (newExercise.getTasks() == null) {
+            newExercise.setTasks(new ArrayList<>());
+        }
+        newExercise.getTasks().clear();
+        sourceExercise.getTasks().forEach(sourceTask -> newExercise.getTasks().add(createTaskCopy(sourceTask, newExercise, testCaseIdMapping)));
     }
 
     /**

@@ -1,5 +1,5 @@
-import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
@@ -7,24 +7,39 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+
+type CourseRole = 'STUDENT' | 'TEACHING_ASSISTANT' | 'EDITOR' | 'INSTRUCTOR';
+
+const COURSE_ROLE_LEVEL: Record<CourseRole, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+
+/** The course role that stands for each of the authorities that are not global; the users with a higher role are covered by the authority lists. */
+const COURSE_ROLE_OF_AUTHORITY: Partial<Record<Authority, CourseRole>> = {
+    [Authority.TUTOR]: 'TEACHING_ASSISTANT',
+    [Authority.EDITOR]: 'EDITOR',
+    [Authority.INSTRUCTOR]: 'INSTRUCTOR',
+};
+
+function isAtLeastCourseRole(role: string, minimum: CourseRole): boolean {
+    return (COURSE_ROLE_LEVEL[role as CourseRole] ?? -1) >= COURSE_ROLE_LEVEL[minimum];
+}
 
 export interface IAccountService {
-    save: (account: User) => Observable<HttpResponse<User>>;
+    save: (account: User) => Observable<UpdateBasicInformationResponseDTO>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
-    hasAuthority: (authority: string) => Promise<boolean>;
+    hasAdministratorAccess: () => boolean;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
@@ -35,6 +50,9 @@ export interface IAccountService {
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
+    isAdmin: Signal<boolean>;
+    isSuperAdmin: Signal<boolean>;
+    isAtLeastTutor: Signal<boolean>;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
@@ -55,6 +73,9 @@ export class AccountService implements IAccountService {
     private prefilledUsernameValue?: string;
 
     readonly authenticated = computed(() => !!this.userIdentity());
+    readonly isAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN));
+    readonly isSuperAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
+    readonly isAtLeastTutor = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
 
     readonly askToSetupPasskey = computed(() => this.userIdentity()?.askToSetupPasskey ?? false);
     readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.loggedInWithPasskey ?? false);
@@ -91,8 +112,35 @@ export class AccountService implements IAccountService {
         return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<User>> {
-        return this.http.put<User>('api/account/basic-information', user, { observe: 'response' });
+    /**
+     * Saves the basic account information (name, language and the requested email address).
+     * A changed email address of an internal user is not applied here: the server creates a pending request,
+     * returns it and mails a confirmation link to the current and to the new address.
+     * The caller shows failures inline, so no global error alert is raised.
+     */
+    save(user: User): Observable<UpdateBasicInformationResponseDTO> {
+        return this.http.put<UpdateBasicInformationResponseDTO>('api/account/basic-information', user, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+    }
+
+    /**
+     * Loads the pending email change request of the signed-in account.
+     * @returns the pending request, or undefined when there is none (the server answers 204)
+     */
+    getPendingEmailChange(): Observable<PendingEmailChangeDTO | undefined> {
+        return this.http.get<PendingEmailChangeDTO | null>('api/account/pending-email-change').pipe(map((pendingEmailChange) => pendingEmailChange ?? undefined));
+    }
+
+    /** Cancels the pending email change request. Cancelling when nothing is pending is not an error. */
+    cancelPendingEmailChange(): Observable<void> {
+        return this.http.delete<void>('api/account/pending-email-change');
+    }
+
+    /**
+     * Mails new confirmation links to both addresses of the pending email change request.
+     * Earlier confirmations are reset and the validity restarts. The caller shows failures inline.
+     */
+    resendPendingEmailChange(): Observable<PendingEmailChangeDTO> {
+        return this.http.post<PendingEmailChangeDTO>('api/account/pending-email-change/resend', undefined, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
     }
 
     authenticate(identity?: User) {
@@ -103,34 +151,21 @@ export class AccountService implements IAccountService {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
 
+    /**
+     * Whether the user has one of the authorities. Only the student, administrator and super administrator authorities are global. The tutor, editor and
+     * instructor authorities stand for a role in at least one course, so they are answered from the course roles of the user, and an authority that an
+     * older server still sends for them is ignored.
+     */
     hasAnyAuthorityDirect(authorities: readonly Authority[]): boolean {
-        if (!this.authenticated() || !this.userIdentity()?.authorities) {
+        const identity = this.userIdentity();
+        if (!this.authenticated() || !identity?.authorities) {
             return false;
         }
 
-        for (let i = 0; i < authorities.length; i++) {
-            if (this.userIdentity()?.authorities?.includes(authorities[i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    hasAuthority(authority: string): Promise<boolean> {
-        if (!this.authenticated()) {
-            return Promise.resolve(false);
-        }
-
-        return this.identity().then(
-            (id) => {
-                const authorities = id!.authorities!;
-                return Promise.resolve(authorities && authorities.includes(authority));
-            },
-            () => {
-                return Promise.resolve(false);
-            },
-        );
+        return authorities.some((authority) => {
+            const courseRole = COURSE_ROLE_OF_AUTHORITY[authority];
+            return courseRole ? this.hasCourseRoleAtLeastInAnyCourse(courseRole) : identity.authorities!.includes(authority);
+        });
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -151,9 +186,6 @@ export class AccountService implements IAccountService {
                     const user = response.body!;
                     if (user) {
                         this.userIdentity.set(user);
-
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
@@ -183,7 +215,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastTutorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'TEACHING_ASSISTANT');
@@ -198,7 +230,7 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastEditorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'EDITOR');
@@ -213,27 +245,22 @@ export class AccountService implements IAccountService {
     }
 
     isAtLeastInstructorInCourseWithId(courseId?: number): boolean {
-        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+        if (this.hasAdministratorAccess()) {
             return true;
         }
         return this.hasCourseRoleAtLeast(courseId, 'INSTRUCTOR');
     }
 
-    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: CourseRole): boolean {
         if (!courseId || !this.authenticated()) {
             return false;
         }
-        const courseRoles = this.userIdentity()?.courseRoles;
-        if (!courseRoles) {
-            return false;
-        }
-        const entry = courseRoles.find((r) => r.courseId === courseId);
-        if (!entry) {
-            return false;
-        }
-        const roleHierarchy: Record<string, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
-        const minLevel = roleHierarchy[minimumRole] ?? 0;
-        return entry.roles.some((role) => (roleHierarchy[role] ?? -1) >= minLevel);
+        const entry = this.userIdentity()?.courseRoles?.find((r) => r.courseId === courseId);
+        return !!entry && entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole));
+    }
+
+    private hasCourseRoleAtLeastInAnyCourse(minimumRole: CourseRole): boolean {
+        return !!this.userIdentity()?.courseRoles?.some((entry) => entry.roles.some((role) => isAtLeastCourseRole(role, minimumRole)));
     }
 
     /**
@@ -260,24 +287,20 @@ export class AccountService implements IAccountService {
         return this.isAtLeastInstructorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
     }
 
-    isAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
-    }
-
-    isSuperAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN);
-    }
-
-    isAtLeastTutor(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
-    }
-
     /**
      * Whether the user may use editor features that are not bound to a course, as the server decides for editor endpoints:
      * an editor or instructor, or an administrator whose session grants the administrator rights.
      */
     hasEditorAccess(): boolean {
         return this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]) || this.hasAdministratorAccess();
+    }
+
+    /**
+     * Whether the user may create personal access tokens for agent access, as the server decides: an editor or instructor of at least one course who is not
+     * an administrator.
+     */
+    mayCreateAgentTokens(): boolean {
+        return !this.isAdmin() && this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]);
     }
 
     /**
@@ -292,7 +315,7 @@ export class AccountService implements IAccountService {
      * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
      * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
      */
-    private hasAdministratorAccess(): boolean {
+    hasAdministratorAccess(): boolean {
         return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     }
 
@@ -402,20 +425,10 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends a request to the server to delete the user's current vcsAccessToken
+     * Sends a request to the server to revoke the user's deprecated personal VCS access token
      */
     deleteUserVcsAccessToken(): Observable<void> {
         return this.http.delete<void>('api/account/user-vcs-access-token');
-    }
-
-    /**
-     * Sends a request to the server to create a new vcsAccessToken for the user
-     *
-     * @param expiryDate The expiry date which should get set for the vcsAccessToken
-     */
-    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
-        const params = new HttpParams().set('expiryDate', expiryDate);
-        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**
@@ -479,26 +492,6 @@ export class AccountService implements IAccountService {
             updatedUserIdentity.selectedLLMUsage = accepted;
             updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
             return updatedUserIdentity;
-        });
-    }
-
-    setUserEnabledMemiris(memirisEnabled: boolean): void {
-        this.http.put('api/account/enable-memiris', memirisEnabled).subscribe({
-            next: () => {
-                this.userIdentity.update((currentUserIdentity) => {
-                    if (!currentUserIdentity) {
-                        return currentUserIdentity;
-                    }
-
-                    // Return a NEW object rather than mutating in place: a signal compares with Object.is, so
-                    // returning the same reference emits no notification and (under zoneless change detection) any
-                    // dependent view would not react to the toggled setting. Mirrors setImageUrl.
-                    const updatedUserIdentity = deepClone(currentUserIdentity);
-                    updatedUserIdentity.memirisEnabled = memirisEnabled;
-                    return updatedUserIdentity;
-                });
-            },
-            error: (_) => {},
         });
     }
 

@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -84,6 +87,20 @@ public class ExamAccessService {
      * @throws EntityNotFoundException if the course of the exam exercise cannot be resolved
      */
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, user, true);
+    }
+
+    /**
+     * Applies exam result timing to an owner view, including when the owner teaches the course.
+     *
+     * @param examExercise         the owning exam exercise
+     * @param studentParticipation the participation used for individual working time
+     */
+    public void checkIfOwnerAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, null, false);
+    }
+
+    private void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, @Nullable User user, boolean staffView) {
         if (!examExercise.isExamExercise()) {
             throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
         }
@@ -92,7 +109,7 @@ public class ExamAccessService {
         if (course == null) {
             throw new EntityNotFoundException("Course", "of exam exercise " + examExercise.getId());
         }
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (staffView && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return;
         }
         Exam exam = examExercise.getExam();
@@ -101,7 +118,7 @@ public class ExamAccessService {
             // students can always see their results during the exam.
             return;
         }
-        if (exam.isTestExam()) {
+        if (!exam.getExamMode().isReal()) {
             // results for test exams are always visible
             return;
         }
@@ -136,15 +153,17 @@ public class ExamAccessService {
         }
 
         StudentExam studentExam;
-        if (exam.isTestExam()) {
-            studentExam = getOrCreateTestExam(exam, course, currentUser);
+
+        final ZonedDateTime now = ZonedDateTime.now();
+        if (exam.isTestOrPractice(now)) {
+            studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Instructors or administrators cannot participate in exams.", ENTITY_NAME,
                     "cannotParticipateInExams", true);
         }
         else {
-            studentExam = getOrCreateNormalExam(exam, currentUser);
+            studentExam = getOrCreateNormalExam(exam, currentUser, now);
         }
 
         if (!examId.equals(studentExam.getExam().getId())) {
@@ -154,7 +173,7 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser) {
+    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser, final ZonedDateTime now) {
         // Check that the student exam exists
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
 
@@ -165,7 +184,6 @@ public class ExamAccessService {
         }
         else {
 
-            ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
@@ -196,24 +214,23 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
+    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser, final ZonedDateTime now) {
         StudentExam studentExam;
 
-        if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
+        if (exam.getEndDate().isBefore(now)) {
+            throw new AccessForbiddenAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
-        List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId()).stream()
-                .filter(attempt -> !attempt.isFinished()).toList();
+        List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
+        List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
 
         if (unfinishedStudentExams.isEmpty()) {
-            ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
             boolean canExamBeStarted = now.isAfter(unlockDate);
             if (!canExamBeStarted) {
-                throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
+                throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
             }
 
             studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
@@ -337,6 +354,59 @@ public class ExamAccessService {
     }
 
     /**
+     * Checks that the current user may read the content of an exam exercise that is shown during the exam, for example the pictures of a quiz question.
+     * Teaching assistants and above always may. Students need the exercise in their own student exam and the exam content must already be available to them,
+     * which is the case from {@code EXAM_START_WAIT_TIME_MINUTES} minutes before the exam start. After handing in, the summary must be published.
+     *
+     * @param exercise the exam exercise
+     * @param user     the current user, loaded with its course roles so that the role checks need no query
+     */
+    public void checkExamContentAvailableForStudentElseThrow(Exercise exercise, User user) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), user)) {
+            return;
+        }
+        if (!authorizationCheckService.isAtLeastStudentInCourse(exam.getCourse(), user)) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        // only the exercises of the own student exam are readable, other variants of the same exercise group are not
+        List<Boolean> submittedFlags = studentExamRepository.findSubmittedFlagsOfAttemptsContainingExercise(exam.getId(), user.getId(), exercise.getId());
+        if (submittedFlags.isEmpty()) {
+            throw new AccessForbiddenException("You are not allowed to access this exercise of the exam!");
+        }
+        // like the conduction, the content of a handed in attempt is only available once the summary is published
+        if (!exam.isExamSummaryPublished() && submittedFlags.stream().allMatch(Boolean.TRUE::equals)) {
+            throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+        }
+        if (exam.getStartDate() == null || ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(exam.getStartDate())) {
+            throw new AccessForbiddenException("The exam content is not available yet");
+        }
+    }
+
+    /**
+     * Checks the fixed student example-solution audience without a staff enrollment exemption.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkStudentExampleSolutionAccessElseThrow(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, exam.getCourse(), user);
+        if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        if (!exercise.isExampleSolutionPublished()) {
+            throw new AccessForbiddenException("Example solution for exam is not published yet!");
+        }
+    }
+
+    /**
      * Checks if the current user is eligible to access the example solutions for the given exercise and
      * if the example solution is published.
      * Eligibility conditions vary based on user roles.
@@ -356,7 +426,13 @@ public class ExamAccessService {
         }
     }
 
-    private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
+    /**
+     * Checks that the exam exists and belongs to the given course. This check does not verify any role.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
         // TODO: move this check directly into the database for performance reasons
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
@@ -416,11 +492,8 @@ public class ExamAccessService {
      * @param examId        The id of the exam
      */
     public void checkStudentExamExistsAndBelongsToExamElseThrow(Long studentExamId, Long examId) {
-        Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
-        if (studentExam.isEmpty()) {
-            throw new EntityNotFoundException(ENTITY_NAME, examId);
-        }
-        if (!studentExam.get().getExam().getId().equals(examId)) {
+        Long examIdOfStudentExam = studentExamRepository.findExamIdById(studentExamId).orElseThrow(() -> new EntityNotFoundException("StudentExam", studentExamId));
+        if (!examIdOfStudentExam.equals(examId)) {
             throw new ConflictException("Invalid exam id", ENTITY_NAME, "noIdMatch");
         }
     }

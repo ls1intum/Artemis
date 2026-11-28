@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20261025200844_changelog.xml">
+
+    <changeSet id="20261025200844-01-persist-grading-order" author="krusche">
+        <comment>
+            Persist the instructor's order of rubric categories and instructions. Legacy rows have no recoverable
+            instructor order, so keep them in stable id order within each owner. BIGINT also accommodates existing
+            ids beyond the integer range. Keep the zero default so a previous WAR can still insert rows after an
+            application rollback; the id is the deterministic tie-breaker for those rows.
+        </comment>
+        <addColumn tableName="grading_criterion">
+            <column name="sort_order" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="grading_instruction">
+            <column name="sort_order" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <update tableName="grading_criterion">
+            <column name="sort_order" valueComputed="id"/>
+        </update>
+        <update tableName="grading_instruction">
+            <column name="sort_order" valueComputed="id"/>
+        </update>
+        <rollback>
+            <dropColumn tableName="grading_instruction" columnName="sort_order"/>
+            <dropColumn tableName="grading_criterion" columnName="sort_order"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

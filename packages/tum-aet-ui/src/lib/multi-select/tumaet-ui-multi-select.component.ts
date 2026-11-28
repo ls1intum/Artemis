@@ -1,3 +1,4 @@
+import { OptionControl } from '../internal/option-control';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -6,7 +7,6 @@ import {
     Injector,
     TemplateRef,
     ViewContainerRef,
-    booleanAttribute,
     computed,
     contentChild,
     effect,
@@ -46,7 +46,8 @@ let nextMultiSelectId = 0;
 
 /**
  * ControlValueAccessor that chooses any number of values from a listbox overlay. The value is an array of the chosen
- * options (or of their `optionValue` property); the panel stays open while options are toggled.
+ * options (or of their `optionValue` property); the panel stays open while options are toggled, and a backdrop closes
+ * it on outside clicks.
  *
  * The trigger is a `div` with `role="combobox"` rather than a `button`, so that a projected `#selectedItems` template
  * may hold interactive content of its own (a chip with a remove button, say).
@@ -58,7 +59,7 @@ let nextMultiSelectId = 0;
 @Component({
     selector: 'tumaet-ui-multi-select',
     templateUrl: './tumaet-ui-multi-select.component.html',
-    styleUrl: './tumaet-ui-multi-select.component.scss',
+    styleUrl: './tumaet-ui-multi-select.component.css',
     imports: [FaIconComponent, NgTemplateOutlet, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-multi-select',
@@ -66,28 +67,13 @@ let nextMultiSelectId = 0;
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiMultiSelectComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
+export class TumAetUiMultiSelectComponent extends OptionControl implements ControlValueAccessor {
     private readonly overlayService = inject(TumAetUiOverlayService);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
     private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
-
-    readonly options = input<readonly unknown[]>([]);
-
-    /** Property name used as the visible label for object options. */
-    readonly optionLabel = input<string>();
-
-    /** Property name written to the form value; omit it to write the option itself. */
-    readonly optionValue = input<string>();
-
-    readonly placeholder = input<string>();
-
-    readonly disabled = input(false, { transform: booleanAttribute });
-
-    /** Reports the control as required to assistive technology. Validation stays with the form control. */
-    readonly required = input(false, { transform: booleanAttribute });
 
     readonly size = input<TumAetUiMultiSelectSize>();
 
@@ -150,6 +136,7 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd();
 
     constructor() {
+        super();
         // Tell an enclosing field which id to label whenever this control was given one of its own.
         effect(() => {
             const ownId = this.inputId();
@@ -188,29 +175,6 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
         this.disabledByForm.set(isDisabled);
     }
 
-    protected label(option: unknown): string {
-        const key = this.optionLabel();
-        const raw = key && option !== null && typeof option === 'object' ? (option as Record<string, unknown>)[key] : option;
-        switch (typeof raw) {
-            case 'string':
-                return raw;
-            case 'number':
-            case 'boolean':
-            case 'bigint':
-                return String(raw);
-            default:
-                return '';
-        }
-    }
-
-    private resolveValue(option: unknown): unknown {
-        const key = this.optionValue();
-        if (key && option !== null && typeof option === 'object') {
-            return (option as Record<string, unknown>)[key];
-        }
-        return option;
-    }
-
     protected isSelected(option: unknown): boolean {
         const value = this.resolveValue(option);
         return this.selectedValues().some((selected) => Object.is(selected, value));
@@ -239,8 +203,11 @@ export class TumAetUiMultiSelectComponent implements ControlValueAccessor {
         const initialIndex = firstSelected >= 0 ? firstSelected : this.options().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true });
-        this.overlayRef.updateSize({ minWidth: Math.max(origin.nativeElement.getBoundingClientRect().width, MIN_PANEL_WIDTH_PX) });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', {
+            hasBackdrop: true,
+            minWidthFromOrigin: true,
+            minWidth: MIN_PANEL_WIDTH_PX,
+        });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
         this.overlayRef.backdropClick().subscribe(() => this.close());

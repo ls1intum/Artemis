@@ -1,3 +1,4 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -196,10 +197,10 @@ export class TextEditorService {
      * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
      * @returns Observable of the student participation with exercise data
      */
-    get(participationId: number, resultId?: number): Observable<StudentParticipation> {
+    get(participationId: number, resultId?: number, purpose: EditorViewingPurpose = 'owner'): Observable<StudentParticipation> {
         const params = resultId ? { resultId: resultId.toString() } : undefined;
         return this.http
-            .get<StudentParticipation>(`api/text/participations/${participationId}/text-editor`, { params })
+            .get<StudentParticipation>(`api/text/participations/${participationId}/text-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`, { params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 

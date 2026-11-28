@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -77,7 +78,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
                 new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseProjectNameService, programmingExerciseImportRepositoryService, fileService,
-                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService));
+                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService), JsonObjectMapper.get());
     }
 
     @Test
@@ -110,6 +111,10 @@ class ProgrammingExerciseImportFromFileServiceTest {
      * @return the exercise the creation service returned
      */
     private ProgrammingExercise importFixture(String fixtureName) throws Exception {
+        return importFixture(fixtureName, java.util.Map.of(), false);
+    }
+
+    private ProgrammingExercise importFixture(String fixtureName, java.util.Map<String, String> additionalEntries, boolean staticAnalysis) throws Exception {
         Path importExerciseDir = tempDir.resolve("imported-exercise-dir");
         Path zipPath = importExerciseDir.resolve("exercise-for-import.zip");
         Files.createDirectories(importExerciseDir);
@@ -118,6 +123,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
         when(tempFileUtilService.createTempFile(importExerciseDir, "exercise-for-import", ".zip")).thenReturn(zipPath);
 
         var originalExercise = new ProgrammingExercise();
+        originalExercise.setStaticCodeAnalysisEnabled(staticAnalysis);
         var importedExercise = new ProgrammingExercise();
         importedExercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
         importedExercise.setSolutionParticipation(new SolutionProgrammingExerciseParticipation());
@@ -129,9 +135,55 @@ class ProgrammingExerciseImportFromFileServiceTest {
         when(programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(importedExercise)).thenReturn(importedExercise);
 
         var importZip = new ClassPathResource("test-data/import-from-file/" + fixtureName);
-        MockMultipartFile zipFile = new MockMultipartFile("file", fixtureName, "application/zip", importZip.getInputStream());
+        byte[] bytes;
+        try (var input = importZip.getInputStream()) {
+            bytes = input.readAllBytes();
+        }
+        if (!additionalEntries.isEmpty()) {
+            var buffer = new java.io.ByteArrayOutputStream();
+            try (var original = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes)); var output = new java.util.zip.ZipOutputStream(buffer)) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = original.getNextEntry()) != null) {
+                    output.putNextEntry(new java.util.zip.ZipEntry(entry.getName()));
+                    original.transferTo(output);
+                    output.closeEntry();
+                }
+                for (var addition : additionalEntries.entrySet()) {
+                    output.putNextEntry(new java.util.zip.ZipEntry(addition.getKey()));
+                    output.write(addition.getValue().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    output.closeEntry();
+                }
+            }
+            bytes = buffer.toByteArray();
+        }
+        MockMultipartFile zipFile = new MockMultipartFile("file", fixtureName, "application/zip", bytes);
 
         programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, new ProgrammingExerciseBuildConfig(), zipFile, new Course(), new User());
         return importedExercise;
+    }
+
+    @Test
+    void jenkinsImportRestoresBuildPlanAndAllowedEmbeddedFilesWithoutOverwritingExistingAssets() throws Exception {
+        when(profileService.isJenkinsActive()).thenReturn(true);
+        Path markdown = Files.createDirectories(tempDir.resolve("markdown"));
+        org.apache.commons.io.FileUtils.writeStringToFile((markdown.resolve("existing.png")).toFile(), "Existing asset must remain", java.nio.charset.StandardCharsets.UTF_8);
+        try (var locations = org.mockito.Mockito.mockStatic(de.tum.cit.aet.artemis.core.util.FilePathConverter.class)) {
+            locations.when(de.tum.cit.aet.artemis.core.util.FilePathConverter::getMarkdownFilePath).thenReturn(markdown);
+            String plan = "pipeline { agent any }";
+            var imported = importFixture("valid-import.zip",
+                    java.util.Map.of("buildPlan.txt", plan, "files/new.png", "Imported asset", "files/existing.png", "Replacement", "files/page.html", "<html></html>"), true);
+            verify(buildPlanRepository).setBuildPlanForExercise(plan, imported);
+            verify(staticCodeAnalysisService).createDefaultCategories(imported);
+            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("new.png"))).isEqualTo("Imported asset");
+            org.assertj.core.api.Assertions.assertThat(Files.readString(markdown.resolve("existing.png"))).isEqualTo("Existing asset must remain");
+        }
+    }
+
+    @Test
+    void jenkinsImportWithoutBuildPlanRetainsDefaultBuildSetup() throws Exception {
+        when(profileService.isJenkinsActive()).thenReturn(true);
+        var imported = importFixture("valid-import.zip");
+        org.mockito.Mockito.verifyNoInteractions(buildPlanRepository);
+        verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(imported);
     }
 }

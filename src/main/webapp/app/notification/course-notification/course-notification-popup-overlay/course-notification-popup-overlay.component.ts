@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronUp, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-course-notification-popup-overlay',
     imports: [CourseNotificationComponent, CommonModule, FaIconComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-notification-popup-overlay.component.html',
-    styleUrls: ['./course-notification-popup-overlay.component.scss'],
+    styleUrls: ['./course-notification-popup-overlay.component.css'],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
@@ -42,6 +42,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     protected readonly notifications = signal<CourseNotification[]>([]);
     protected readonly isExpanded = signal(false);
+    protected readonly isCommunicationView = signal(false);
 
     private courseNotificationWebsocketSubscription?: Subscription;
     /** Pending auto-dismiss timers by notification id, so they can be cancelled when the popups are discarded. */
@@ -53,6 +54,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     protected readonly faChevronUp = faChevronUp;
 
     ngOnInit(): void {
+        this.updatePopupPlacement();
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
             const courseId = this.getActiveCourseId();
             // Hidden other-course notifications remain unread in the all-course history.
@@ -92,6 +94,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe(() => {
+                this.updatePopupPlacement();
                 const courseId = this.getActiveCourseId();
                 if (courseId !== undefined) {
                     this.notifications.update((notifications) => notifications.filter((notification) => notification.courseId === courseId));
@@ -210,6 +213,19 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
             route = route.children.find((child) => child.outlet === PRIMARY_OUTLET);
         }
         return courseId !== undefined && Number.isSafeInteger(courseId) && courseId > 0 ? courseId : undefined;
+    }
+
+    /** Keep transient popups above communication composers, including management and saved-message views. */
+    private updatePopupPlacement(): void {
+        let route: ActivatedRouteSnapshot | undefined = this.router.routerState.snapshot.root;
+        while (route) {
+            if (route.routeConfig?.path === 'communication') {
+                this.isCommunicationView.set(true);
+                return;
+            }
+            route = route.children.find((child) => child.outlet === PRIMARY_OUTLET);
+        }
+        this.isCommunicationView.set(false);
     }
 
     /**

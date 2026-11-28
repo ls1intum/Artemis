@@ -184,37 +184,38 @@ public class ResultService {
     }
 
     /**
-     * Handle the manual creation of a new result potentially including feedback
+     * Handles the manual creation of a new result potentially including feedback.
+     * <p>
+     * <b>Precondition:</b> {@code result} is non-{@code null}.
+     * <p>
+     * <b>Postcondition:</b> the result is stored as a manual result and the corresponding notifications have been sent.
      *
      * @param result      newly created Result
      * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
+     * @throws IllegalArgumentException                                       if {@code result} is {@code null}
+     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException if a feedback references a grading instruction of another exercise
      */
-    public Result createNewManualResult(Result result, boolean ratedResult) {
+    public Result createNewManualResult(final Result result, final boolean ratedResult) {
+        if (result == null) {
+            throw new IllegalArgumentException("The manual result must not be null");
+        }
         validateGradingInstructions(result.getFeedbacks(), result.getExerciseId());
-        User user = userRepository.getUserWithAuthorities();
-
+        final User assessor = userRepository.getUserWithAuthorities();
         result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
+        result.setAssessor(assessor);
         result.setCompletionDate(ZonedDateTime.now());
-
-        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        // Manual feedback is always rated, but can be overwritten for an external submission.
         result.setRated(ratedResult);
-
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
-        // this call should cascade all feedback relevant changed and save them accordingly
         resultRepository.save(result);
-        // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
-
-        // if it is an example result we do not have any participation (isExampleResult can be also null)
+        final Result savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
+        // If it is an example result we do not have any participation (isExampleResult can also be null).
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
-
             if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
                 ltiApi.get().onNewResult((StudentParticipation) savedResult.getSubmission().getParticipation());
             }
-
             resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
         return savedResult;
@@ -237,6 +238,21 @@ public class ResultService {
                 && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
             throw new BadRequestAlertException("Every grading instruction must belong to the assessed exercise.", "feedback", "invalidGradingInstruction");
         }
+    }
+
+    /**
+     * Reads the stored credits of the grading instructions the feedback links to, since the credits of an instruction sent by the client are not trusted.
+     *
+     * @param feedbacks the feedback whose instructions are read
+     * @return the stored credits by instruction id; an instruction that does not exist is missing
+     */
+    public Map<Long, Double> getGradingInstructionCredits(Collection<Feedback> feedbacks) {
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (instructionIds.isEmpty()) {
+            return Map.of();
+        }
+        return gradingInstructionRepository.findAllById(instructionIds).stream().collect(Collectors.toMap(GradingInstruction::getId, GradingInstruction::getCredits));
     }
 
     /**
@@ -305,6 +321,19 @@ public class ResultService {
             assessmentNoteRepository.deleteByResultId(resultId);
             resultRepository.deleteResultById(resultId);
         }
+    }
+
+    /**
+     * Deletes a result from an already loaded participation graph using Hibernate's cascade lifecycle. Participant
+     * scores are removed by the caller. Bulk SQL deletion would leave managed children in the parent's orphan-removal
+     * collection and cause another deletion when the submission is removed in the same transaction.
+     *
+     * @param result the result belonging to the participation being deleted
+     */
+    public void deleteResultWithCascade(Result result) {
+        deleteNonCascadedResultReferences(result.getId(), false);
+        result.getSubmission().getResults().remove(result);
+        resultRepository.deleteById(result.getId());
     }
 
     /**
@@ -500,9 +529,12 @@ public class ResultService {
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
         boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
+        // Feedback of the assessment is shown together with the published results only. A test run is the exception: its summary shows what a student sees after publication.
+        boolean holdBackAssessment = !shouldResultsBePublished && !(participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun());
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+                result.getFeedbacks().removeIf(feedback -> holdBackAssessment && feedback.getType() != null && feedback.getType() != FeedbackType.AUTOMATIC);
             }
         }
     }
@@ -513,7 +545,7 @@ public class ResultService {
         if (exam.resultsPublished()) {
             return true;
         }
-        if (exam.isTestExam() && participation instanceof StudentParticipation) {
+        if (!exam.getExamMode().isReal() && participation instanceof StudentParticipation) {
             return api.findByExamIdAndParticipationId(exam.getId(), participation.getId()).map(StudentExam::areResultsPublishedYet).orElse(false);
         }
         return false;
@@ -539,7 +571,7 @@ public class ResultService {
     }
 
     /**
-     * Get the successful results for an exercise, ordered ascending by build completion date.
+     * Get the latest grade-relevant results for an exercise.
      * <p>
      * The returned results carry their feedback, including the synthesized views of the automatic feedback of programming results.
      *
@@ -549,7 +581,7 @@ public class ResultService {
      */
     public List<Result> resultsForExercise(Set<StudentParticipation> participations, boolean withSubmissions) {
         // First pass: pick the single relevant submission per participation. Note that the relevance filter may replace a submission's results
-        // (see SubmissionFilterService for programming submissions), so getLatestResult() must only be read after filtering.
+        // (see SubmissionFilterService for programming submissions), so getLatestGradingResult() must only be read after filtering.
         final List<Submission> relevantSubmissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
@@ -558,7 +590,7 @@ public class ResultService {
             }
 
             Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
-            if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() == null) {
+            if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestGradingResult() == null) {
                 continue;
             }
             participation.setSubmissionCount(participation.getSubmissions().size());
@@ -569,7 +601,7 @@ public class ResultService {
         // fetch-joining them for every result of the exercise multiplies the row count by the feedback fan-out and then discards most of it.
         // The load has to select Result rather than Feedback: a @OneToMany collection is only marked initialized when the owning entity is fetched with the collection, and
         // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
-        final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
+        final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestGradingResult().getId()).collect(Collectors.toSet());
         final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
                 : resultRepository.findResultsWithFeedbacksAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
 
@@ -577,7 +609,7 @@ public class ResultService {
         for (Submission submission : relevantSubmissions) {
             // Skip results that disappeared between the two queries (e.g. a concurrent assessment deletion). The first-pass result must not be used as a fallback: it comes from
             // a closed session with an uninitialized feedbacks collection, so reading it would throw a LazyInitializationException in the callers that sum up the feedbacks.
-            Result result = resultsWithFeedbacks.get(submission.getLatestResult().getId());
+            Result result = resultsWithFeedbacks.get(submission.getLatestGradingResult().getId());
             if (result == null) {
                 continue;
             }
@@ -675,7 +707,8 @@ public class ResultService {
     private Result shouldSaveResult(@NonNull Result result, boolean shouldSave) {
         if (shouldSave) {
             // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
-            deleteLongFeedback(result.getFeedbacks(), result);
+            // the copy is never null, so the null tolerance of deleteLongFeedback cannot leak into the lookups below
+            deleteLongFeedback(new ArrayList<>(result.getFeedbacks()), result);
 
             // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
             result.getFeedbacks().forEach(feedback -> feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null)));

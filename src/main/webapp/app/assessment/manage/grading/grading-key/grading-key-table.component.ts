@@ -1,10 +1,12 @@
-import { Component, OnInit, inject, model, signal } from '@angular/core';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
-import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
+import { toBonus } from 'app/assessment/shared/util/bonus-response.util';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
@@ -20,14 +22,16 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
-    styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+    styleUrls: ['../grading-key-overview/grading-key-overview.css'],
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
 })
 export class GradingKeyTableComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private gradingService = inject(GradingService);
-    private bonusService = inject(BonusService);
+    private bonusApi = inject(BonusApi);
     private scoresStorageService = inject(ScoresStorageService);
+
+    readonly purpose = input<'student' | 'management'>('student');
 
     readonly faChevronLeft = faChevronLeft;
 
@@ -87,12 +91,12 @@ export class GradingKeyTableComponent implements OnInit {
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
         if (!this.forBonus()) {
-            return this.gradingService.findGradeSteps(courseId, examId);
+            return this.gradingService.findGradeSteps(courseId, examId, this.purpose());
         } else {
             // examId must be present if forBonus is true.
-            return this.bonusService.findBonusForExam(courseId, examId!, true).pipe(
+            return this.bonusApi.getBonusForExam(courseId, examId!, true).pipe(
                 map((bonusResponse) => {
-                    const source = bonusResponse.body?.sourceGradingScale;
+                    const source = toBonus(bonusResponse).sourceGradingScale;
                     if (!source) {
                         return undefined;
                     }

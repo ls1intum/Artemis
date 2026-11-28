@@ -1,3 +1,4 @@
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, input } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -9,6 +10,7 @@ import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.c
     imports: [TextEditorComponent],
 })
 export class TextExamSummaryComponent {
+    readonly viewingPurpose = input<EditorViewingPurpose>('owner');
     readonly exercise = input<Exercise>(undefined!);
     readonly submission = input<TextSubmission>(undefined!);
     readonly expandProblemStatement = input(false);

@@ -10,11 +10,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
@@ -34,10 +37,10 @@ public final class SecurityUtils {
     private static final Pattern SIMPLE_EMAIL_PATTERN = Pattern.compile(SIMPLE_EMAIL_REGEX);
 
     /**
-     * Roles in descending order of precedence, for reporting which role a request acted with. This is a ranking, not the
-     * role hierarchy: {@code SecurityConfiguration} no longer lets an administrator authority imply a teaching role.
+     * The global roles in descending order of precedence, for reporting which role a request acted with. Teaching roles are
+     * not global, they belong to a course, so they cannot appear here.
      */
-    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT };
+    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.STUDENT };
 
     private SecurityUtils() {
     }
@@ -172,6 +175,46 @@ public final class SecurityUtils {
     }
 
     /**
+     * Runs work as the given user and restores the previous security context afterwards.
+     *
+     * <p>
+     * For work a specific user would trigger but that runs outside of their request, like the demo data seeded on startup:
+     * the production paths it reuses resolve the acting user from the security context. The user acts with their own
+     * authorities, so they have to be loaded. Like {@link #runAsSystem(Runnable)}, this installs a fresh context instead of
+     * modifying the current one, so the caller's context is left untouched.
+     *
+     * @param user the user to act as, with their authorities loaded
+     * @param work the work to run
+     * @param <T>  the type of the result of the work
+     * @return the result of the work
+     */
+    public static <T> T runAs(User user, Supplier<T> work) {
+        SecurityContext previousContext = SecurityContextHolder.getContext();
+        SecurityContext userContext = SecurityContextHolder.createEmptyContext();
+        userContext.setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), null, user.getGrantedAuthorities()));
+        SecurityContextHolder.setContext(userContext);
+        try {
+            return work.get();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
+
+    /**
+     * Runs work without a result as the given user, see {@link #runAs(User, Supplier)}.
+     *
+     * @param user the user to act as, with their authorities loaded
+     * @param work the work to run
+     */
+    public static void runAs(User user, Runnable work) {
+        runAs(user, () -> {
+            work.run();
+            return null;
+        });
+    }
+
+    /**
      * Installs the system principal on the current thread, discarding whatever was there.
      *
      * <p>
@@ -269,11 +312,11 @@ public final class SecurityUtils {
     /**
      * Returns the highest global role of the current user.
      * <p>
-     * This is a <i>global</i> authority, not a role within a particular course: a user who instructs any course carries
-     * {@code ROLE_INSTRUCTOR} everywhere. Reads only the security context, so it costs no database access.
+     * Only the global roles count: a super administrator, an administrator or a signed-in user. A role within a course, such as
+     * instructor, is not global and is not reported. Reads only the security context, so it costs no database access.
      * <p>
      * Written as a single pass over the authorities because the feature usage interceptor calls this on every API request.
-     * Asking "does the user hold this role" once per role walked the authority collection up to six times and built a stream
+     * Asking "does the user hold this role" once per role walked the authority collection several times and built a stream
      * for each, which is a lot of garbage to produce per request for a counter.
      *
      * @return the highest role held by the current user, or {@link Role#ANONYMOUS} if there is no authenticated user

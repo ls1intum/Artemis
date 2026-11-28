@@ -1,10 +1,13 @@
-import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
-import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
@@ -12,7 +15,7 @@ import {
     getExerciseDifficultyFilterOptions,
     getExerciseTypeFilterOptions,
 } from 'app/course/sidebar/sidebar.helper';
-import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterModalComponent, ExerciseFilterModalData } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -29,7 +32,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
-    styleUrls: ['./sidebar.component.scss'],
+    styleUrls: ['./sidebar.component.css'],
     host: {
         '[class.fit-container-height]': 'fitContainerHeight()',
     },
@@ -38,23 +41,24 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         SidebarAccordionComponent,
         SidebarCardComponent,
         SearchFilterPipe,
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiCheckboxComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private sidebarEventService = inject(SidebarEventService);
-    private modalService = inject(NgbModal);
+    private modalService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
     private sessionStorageService = inject(SessionStorageService);
 
     readonly onSelectConversation = output<number | string>();
@@ -65,7 +69,6 @@ export class SidebarComponent implements OnDestroy {
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
     readonly searchFieldEnabled = input<boolean>(true);
-    readonly searchFieldSize = input<TumAetUiInputSize | undefined>(undefined);
     /** Size the scrollable list from the available container height instead of the viewport. */
     readonly fitContainerHeight = input(false);
     readonly sidebarData = input.required<SidebarData>();
@@ -75,6 +78,9 @@ export class SidebarComponent implements OnDestroy {
     readonly collapseState = input.required<CollapseState>();
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     readonly showFilter = input<boolean>(false);
+    /** Translation key for an optional toggle shown below the search; the host owns what it filters. */
+    readonly inlineFilterLabel = input<string>();
+    readonly inlineFilterActive = model<boolean>(false);
     inCommunication = input<boolean>(false);
     readonly searchValue = signal<string>('');
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
@@ -94,7 +100,7 @@ export class SidebarComponent implements OnDestroy {
     sidebarEventSubscription?: Subscription;
 
     readonly routeParams = signal<Params>({});
-    private modalRef?: NgbModalRef;
+    private modalRef?: TumAetUiDialogRef<unknown, ExerciseFilterModalComponent>;
 
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
@@ -207,9 +213,6 @@ export class SidebarComponent implements OnDestroy {
         return sidebarType ? size[sidebarType] : 'M';
     }
 
-    // NOTE: This dialog still uses NgbModal because it opens ExerciseFilterModalComponent, which lives in the
-    // exercise/** carve-out (NgbActiveModal + componentInstance contract). Migrating it to PrimeNG DialogService
-    // would require changing that carve-out component, so it is deferred until the carve-out is migrated.
     openFilterExercisesDialog() {
         this.initializeFilterOptions();
 
@@ -217,14 +220,16 @@ export class SidebarComponent implements OnDestroy {
             this.sidebarDataBeforeFiltering.set(deepClone(this.sidebarDataInternal()));
         }
 
-        this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: true,
+        this.modalRef = this.modalService.open<ExerciseFilterModalComponent, unknown, ExerciseFilterModalData>(ExerciseFilterModalComponent, {
+            size: 'large',
+            showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.courseOverview.exerciseFilter.modalTitle'),
+            dismissableMask: false,
+            data: {
+                sidebarData: deepClone(this.sidebarDataBeforeFiltering()),
+                exerciseFilters: deepClone(this.exerciseFilters()),
+            },
         });
-
-        this.modalRef.componentInstance.sidebarData = deepClone(this.sidebarDataBeforeFiltering());
-        this.modalRef.componentInstance.exerciseFilters = deepClone(this.exerciseFilters());
 
         this.modalRef.componentInstance.filterApplied.subscribe((exerciseFilterResults: ExerciseFilterResults) => {
             this.sidebarDataInternal.set(exerciseFilterResults.filteredSidebarData!);

@@ -13,6 +13,7 @@ import jakarta.persistence.LockModeType;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -191,6 +192,23 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     Optional<QuizSubmission> findWithEagerSubmittedAnswersByResultId(@Param("resultId") long resultId);
 
     /**
+     * Get the submissions of a quiz exercise that have no result, with their submitted answers. Re-evaluation reaches submissions through their results, so it
+     * loads these separately, for example a submission whose only result an instructor deleted.
+     *
+     * @param exerciseId the id of the quiz exercise
+     * @return the submissions of the exercise without a result
+     */
+    @Query("""
+            SELECT DISTINCT submission
+            FROM QuizSubmission submission
+                JOIN submission.participation participation
+                LEFT JOIN FETCH submission.submittedAnswers
+            WHERE participation.exercise.id = :exerciseId
+                AND submission.results IS EMPTY
+            """)
+    List<QuizSubmission> findWithEagerSubmittedAnswersWithoutResultsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
      * Retrieve QuizSubmission for given quiz batch and studentLogin
      *
      * @param quizBatchId  the id of the quiz batch for which QuizSubmission is to be retrieved
@@ -207,14 +225,43 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
             """)
     Set<QuizSubmission> findAllByQuizBatchAndStudentLogin(@Param("quizBatchId") Long quizBatchId, @Param("studentLogin") String studentLogin);
 
+    /**
+     * All submissions a student has for a quiz in the participation that is graded, the oldest first. Practice submissions are not among them: they belong to a
+     * participation of their own that is marked as a test run. A student has exactly one, which {@link #findByExerciseIdAndStudentLogin} relies on;
+     * this reads all of them so that a student with more can be told apart from one without.
+     *
+     * @param exerciseId   the id of the quiz exercise
+     * @param studentLogin the login of the student
+     * @return the submissions of the student for the quiz, ordered by id
+     */
     @Query("""
             SELECT submission
             FROM QuizSubmission submission
                 LEFT JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :studentLogin
+                AND participation.testRun = FALSE
+            ORDER BY submission.id ASC
             """)
-    Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
+    List<QuizSubmission> findAllByExerciseIdAndStudentLoginOrderById(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
+
+    /**
+     * The submission a student works on in a quiz. This is the oldest one, so every request of the student, and the quiz the client received when it started,
+     * agree on it. A student is meant to have exactly one submission per quiz. If there are more, they are still resolved here to the oldest instead of failing
+     * every request of the student with a non-unique result, and they are reported so that they can be looked at.
+     *
+     * @param exerciseId   the id of the quiz exercise
+     * @param studentLogin the login of the student
+     * @return the oldest submission of the student for the quiz, empty if there is none
+     */
+    default Optional<QuizSubmission> findByExerciseIdAndStudentLogin(Long exerciseId, String studentLogin) {
+        List<QuizSubmission> submissions = findAllByExerciseIdAndStudentLoginOrderById(exerciseId, studentLogin);
+        if (submissions.size() > 1) {
+            LoggerFactory.getLogger(QuizSubmissionRepository.class).warn("Student {} has {} submissions for quiz {}; using the oldest, {}", studentLogin, submissions.size(),
+                    exerciseId, submissions.getFirst().getId());
+        }
+        return submissions.stream().findFirst();
+    }
 
     /**
      * Check whether the submission with the given id belongs to the given participation. The exam quiz save uses it before a

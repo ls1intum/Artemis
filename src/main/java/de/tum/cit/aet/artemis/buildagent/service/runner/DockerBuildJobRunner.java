@@ -7,12 +7,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.concurrent.CancellationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -31,8 +33,12 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 /**
  * LocalCI runner that preserves the existing Docker container execution flow.
  */
+// Exactly one build job runner exists at runtime, because the Docker runner is conditioned on artemis.continuous-integration.build-runner
+// being docker (or unset) and the Kubernetes runner on it being kubernetes. Static analysis cannot evaluate the conditions and reports every
+// injection of BuildJobRunner as ambiguous (Sonar java:S9352); @Primary names the default runner for it and changes nothing at runtime.
 @Lazy(false)
 @Component
+@Primary
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
 public class DockerBuildJobRunner implements BuildJobRunner {
@@ -125,6 +131,11 @@ public class DockerBuildJobRunner implements BuildJobRunner {
             return result;
         }
         catch (LocalCIException e) {
+            throw e;
+        }
+        catch (CancellationException e) {
+            // The build was cancelled, for example because it timed out, and its container is being stopped. That is the expected end of the execution, not a failure of Docker.
+            log.info("Docker execution {} was cancelled: {}", containerName, e.getMessage());
             throw e;
         }
         catch (Exception e) {

@@ -39,6 +39,10 @@ A single class while iterating:
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                     |
 | A websocket topic or message handler   | Websocket topics                                    |
+| Anything that calls a language model   | Language models                                     |
+| An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
+| A quiz endpoint or a DTO it uses       | Quiz OpenAPI specification                          |
+| A dependency in `build.gradle`         | Runtime classpath                                   |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -82,11 +86,9 @@ with `nativeQuery = true` where there is no entity to name. Enforced by
 `shouldNotUseEntityManagerDirectly` and `shouldNotUseRawJdbcDirectly` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
 
-Three classes sit on that rule's exception list, carrying a TODO to refactor them away. One of them
-is `TitleCacheEvictionService`, which holds an `EntityManagerFactory` purely to reach the Hibernate
-`EventListenerRegistry` and register itself as a listener. So when the caching section below calls
-it the canonical eviction pattern, copy its eviction logic, not its constructor: a new class doing
-the same thing fails the rule, because the list is grandfathering rather than permission. Raw JDBC
+Two classes, `RepositoryImpl` and `CustomPostRepositoryImpl`, sit on that rule's exception list,
+carrying a TODO to refactor them away. A new class doing the same thing fails the rule, because the
+list is grandfathering rather than permission. Raw JDBC
 has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 
 **Never touch Hazelcast or Redis directly.** All cross-node state goes through
@@ -122,6 +124,29 @@ is rejected, so a topic that is sent but not declared silently reaches nobody. C
 `/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
 Enforced by `WebsocketTopicArchitectureTest` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
+
+**JSON through records, never the tree model.** Production code does not use `JsonNode`, `ObjectNode`, `ArrayNode` or the
+other classes of `tools.jackson.databind.node`, and does not call `readTree`, `valueToTree`, `treeToValue`, `createObjectNode`,
+`createArrayNode` or `readValueAsTree`. Model the JSON as a record and use `readValue` and `writeValueAsString`; there are no
+exceptions. Enforced by `JacksonTreeModelArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`, over production classes only.
+
+**Endpoints opted in to access tokens.** Opting an endpoint in with `@AllowedScopes` makes it reachable by a coding agent that
+holds a personal access token, so it needs an `@EnforceAtLeast...` annotation, DTOs only in its request body and response, an
+`@Operation` summary, and an entry in the committed agent specification
+(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). Exercise and lecture-unit endpoints with the
+draft-date contract also call `AgentDraftRules`; announcements, competencies and lecture metadata are immediately visible.
+No architecture test checks the draft guard, so add an endpoint test that a token cannot publish through a draft-capable endpoint.
+The other rules are enforced by `AllowedScopesArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
+[agent access](../../documentation/docs/developer/agent-access.mdx).
+
+**Quiz OpenAPI specification.** The generated Angular client is built from the committed `config/openapi/openapi.yaml`, so a
+quiz endpoint or DTO change must regenerate it (`./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp`, then
+`./gradlew openApiGenerate -x webapp`) and commit the specification with `src/main/webapp/app/openapi`. Enforced by
+`QuizOpenApiSpecificationArchitectureTest` in `src/test/java/de/tum/cit/aet/artemis/quiz/architecture/`, which compares the
+operations under `/api/quiz/`, their parameters and every DTO schema they use with the committed file. See
+[OpenAPI](../../documentation/docs/developer/openapi.mdx).
 
 ## Before adding a cache
 

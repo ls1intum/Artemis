@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  * Minimal projection of a submission whose assessment is currently locked by a tutor, used by the exam assessment-locks
  * table ({@code assessment-locks.component}). It carries exactly what that table renders and what the cancel action needs:
  * the submission id/date and its polymorphic type discriminator, the participation id, the exercise id/type/title (for the
- * icon and the "open assessment" routing), and the latest result's score/completion date (the client derives
+ * icon and the "open assessment" routing, including the exam exercise group), and the latest result's score/completion date/correction round (the client derives
  * {@code latestResult} from {@code results} via {@code reconnectSubmissions}, so the results are carried as a list).
  * <p>
  * The wire shape deliberately mirrors the subset of the entity {@link Submission} that the table reads, because the same
@@ -35,7 +35,7 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
      * Slim participation of a locked submission: the id, the exercise, and the submission count the assessment-locks
      * table reads.
      *
-     * @param id              the id of the participation (used for text-assessment routing)
+     * @param id              the id of the participation (used when cancelling a text assessment)
      * @param exercise        the exercise the participation belongs to
      * @param submissionCount the number of submissions of this participation, rendered by the table's submissions column
      */
@@ -46,24 +46,35 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
     /**
      * Slim exercise of a locked submission: the id/type/title the assessment-locks table renders and routes on.
      *
-     * @param id    the id of the exercise
-     * @param type  the exercise type; serializes to the discriminator ("programming", "text", ...) via {@code @JsonValue},
-     *                  which the client uses for the icon and the assessment route
-     * @param title the title of the exercise
+     * @param id            the id of the exercise
+     * @param type          the exercise type; serializes to the discriminator ("programming", "text", ...) via {@code @JsonValue},
+     *                          which the client uses for the icon and the assessment route
+     * @param title         the title of the exercise
+     * @param exerciseGroup the exercise group, needed to resume the assessment within its exam
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LockedSubmissionExerciseDTO(Long id, ExerciseType type, String title) {
+    public record LockedSubmissionExerciseDTO(Long id, ExerciseType type, String title, LockedSubmissionExerciseGroupDTO exerciseGroup) {
     }
 
     /**
-     * Slim result of a locked submission: only the score and completion date the assessment-locks table reads.
+     * Exam exercise group required by the assessment route.
      *
-     * @param id             the id of the result
-     * @param score          the achieved score
-     * @param completionDate the completion date (null while the assessment is still locked/in progress)
+     * @param id the id of the exercise group
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LockedSubmissionResultDTO(Long id, Double score, ZonedDateTime completionDate) {
+    public record LockedSubmissionExerciseGroupDTO(Long id) {
+    }
+
+    /**
+     * Slim result of a locked submission: the score and completion date the table reads, and the correction round to resume.
+     *
+     * @param id              the id of the result
+     * @param score           the achieved score
+     * @param completionDate  the completion date (null while the assessment is still locked/in progress)
+     * @param correctionRound the correction round of this assessment
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LockedSubmissionResultDTO(Long id, Double score, ZonedDateTime completionDate, Integer correctionRound) {
     }
 
     /**
@@ -78,12 +89,13 @@ public record LockedExamSubmissionDTO(Long id, ZonedDateTime submissionDate, Str
         // without guards lets a future query change fail loudly instead of emitting a DTO the client cannot render.
         Participation participation = submission.getParticipation();
         var exercise = participation.getExercise();
-        var exerciseDTO = new LockedSubmissionExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle());
+        var exerciseDTO = new LockedSubmissionExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(),
+                new LockedSubmissionExerciseGroupDTO(exercise.getExerciseGroup().getId()));
         var participationDTO = new LockedSubmissionParticipationDTO(participation.getId(), exerciseDTO, submissionCountByParticipationId.getOrDefault(participation.getId(), 0));
 
         // results can contain null padding slots (correction rounds), so they are filtered defensively
         List<LockedSubmissionResultDTO> resultDTOs = submission.getResults().stream().filter(Objects::nonNull)
-                .map(result -> new LockedSubmissionResultDTO(result.getId(), result.getScore(), result.getCompletionDate())).toList();
+                .map(result -> new LockedSubmissionResultDTO(result.getId(), result.getScore(), result.getCompletionDate(), result.getCorrectionRound())).toList();
 
         return new LockedExamSubmissionDTO(submission.getId(), submission.getSubmissionDate(), submission.getSubmissionExerciseType(), participationDTO, resultDTOs);
     }

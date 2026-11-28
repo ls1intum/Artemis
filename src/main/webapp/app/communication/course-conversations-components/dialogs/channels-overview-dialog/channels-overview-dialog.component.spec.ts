@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -11,7 +13,6 @@ import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExamp
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -22,7 +23,7 @@ import {
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelItemComponent } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channel-item/channel-item.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 const examples: ChannelDTO[] = [
     generateExampleChannelDTO({} as ChannelDTO),
@@ -55,15 +56,41 @@ examples.forEach((exampleChannel) => {
                 imports: [ChannelsOverviewDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
-                    MockProvider(ChannelService),
+                    MockProvider(ChannelService, {
+                        getChannelsOfCourseForStaff: vi.fn(() => of(new HttpResponse({ body: [] }))),
+                        getChannelsOfCourseForInstructor: vi.fn(() => of(new HttpResponse({ body: [] }))),
+                    }),
+                    { provide: AccountService, useClass: MockAccountService },
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
-                    MockProvider(DialogService),
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                    { provide: DynamicDialogConfig, useValue: { data: {} } },
+                    { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                    { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             });
+        });
+
+        it.each(['student', 'tutor', 'instructor'])('chooses %s channel audience before requesting', (role) => {
+            const account = TestBed.inject(AccountService);
+            vi.spyOn(account, 'isAtLeastInstructorInCourse').mockReturnValue(role === 'instructor');
+            vi.spyOn(account, 'isAtLeastTutorInCourse').mockReturnValue(role !== 'student');
+            const student = vi.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const staff = vi.spyOn(channelService, 'getChannelsOfCourseForStaff').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const instructor = vi.spyOn(channelService, 'getChannelsOfCourseForInstructor').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.clearAllMocks();
+            component.course.set(course);
+            component.loadChannelsOfCourse();
+            for (const [audience, spy] of [
+                ['student', student],
+                ['tutor', staff],
+                ['instructor', instructor],
+            ] as const) {
+                if (role === audience) {
+                    expect(spy).toHaveBeenCalledExactlyOnceWith(course.id);
+                } else {
+                    expect(spy).not.toHaveBeenCalled();
+                }
+            }
         });
 
         afterEach(() => {
@@ -78,7 +105,7 @@ examples.forEach((exampleChannel) => {
             channelOne = generateExampleChannelDTO({ id: 1, name: 'one', subType: exampleChannel.subType } as ChannelDTO);
             channelTwo = generateExampleChannelDTO({ id: 2, name: 'two', subType: exampleChannel.subType } as ChannelDTO);
             channelService = TestBed.inject(ChannelService);
-            getChannelsOfCourseSpy = vi.spyOn(channelService, 'getChannelsOfCourse').mockReturnValue(
+            getChannelsOfCourseSpy = vi.spyOn(channelService, 'getChannelsOfCourseForInstructor').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: [channelOne, channelTwo, ...examples],
@@ -109,6 +136,26 @@ examples.forEach((exampleChannel) => {
             expect(channelItems).toHaveLength(6);
             expect(channelItems[0].channel()).toEqual(channelOne);
             expect(channelItems[1].channel()).toEqual(channelTwo);
+        });
+
+        it('should dismiss the dialog from the close button as long as no channel was joined or left', () => {
+            const dismissSpy = vi.spyOn(component.dialogRef!, 'dismiss');
+            (fixture.nativeElement.querySelector('[data-testid="dialog-close-button"]') as HTMLButtonElement).click();
+            expect(dismissSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should tell the opener about a changed membership when the close button is clicked', () => {
+            component.channelModificationPerformed = true;
+            (fixture.nativeElement.querySelector('[data-testid="dialog-close-button"]') as HTMLButtonElement).click();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith([undefined, true]);
+        });
+
+        it('should list every channel as an overview item that carries its id', () => {
+            const items = fixture.nativeElement.querySelectorAll('[data-testid="channel-overview-item"]') as NodeListOf<HTMLElement>;
+            expect(items).toHaveLength(6);
+            expect(items[0].getAttribute('data-channel-id')).toBe(String(channelOne.id));
+            expect(items[1].getAttribute('data-channel-id')).toBe(String(channelTwo.id));
         });
 
         it('should call register user when channel action is register', () => {

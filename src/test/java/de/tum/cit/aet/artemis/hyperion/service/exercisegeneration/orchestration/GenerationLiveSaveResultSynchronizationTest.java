@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -110,6 +111,68 @@ class GenerationLiveSaveResultSynchronizationTest {
         finally {
             writer.release(EXERCISE_ID, token);
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void lostReservationDoesNotHideDiscoveryFailure(boolean discoveryFails) {
+        var provider = new LocalDataProviderService();
+        var writer = new GenerationLiveSaveService(provider, true);
+        var resultProcessor = new GenerationLiveSaveService(provider, true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+        var discoveryFailure = new IllegalArgumentException("discovery failed");
+        try {
+            var failure = catchThrowable(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+                assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+                if (discoveryFails) {
+                    throw discoveryFailure;
+                }
+                return true;
+            }));
+            if (discoveryFails) {
+                assertThat(failure).isSameAs(discoveryFailure);
+                assertThat(failure.getSuppressed()).singleElement()
+                        .satisfies(cleanup -> assertThat(cleanup).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation"));
+            }
+            else {
+                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation");
+            }
+            assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
+        }
+        finally {
+            writer.retain(EXERCISE_ID, token);
+        }
+    }
+
+    @Test
+    void lostReservationAfterSuccessfulDiscoveryIsReported() {
+        var writer = new GenerationLiveSaveService(new LocalDataProviderService(), true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+
+        assertThatThrownBy(() -> writer.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+            assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+            return true;
+        })).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void discoveryFailureSurvivesALostReservation(boolean fatalFailure) {
+        var writer = new GenerationLiveSaveService(new LocalDataProviderService(), true);
+        String token = writer.claim(EXERCISE_ID);
+        writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
+        Throwable failure = fatalFailure ? new AssertionError("discovery failed") : new IllegalArgumentException("discovery failed");
+
+        assertThatThrownBy(() -> writer.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
+            assertThat(writer.recoverSlot(EXERCISE_ID, token)).isTrue();
+            if (failure instanceof Error error) {
+                throw error;
+            }
+            throw (RuntimeException) failure;
+        })).isSameAs(failure).satisfies(thrown -> assertThat(thrown.getSuppressed()).singleElement()
+                .satisfies(suppressed -> assertThat(suppressed).isInstanceOf(IllegalStateException.class).hasMessage("Test synchronization lost its save reservation")));
     }
 
     @Test

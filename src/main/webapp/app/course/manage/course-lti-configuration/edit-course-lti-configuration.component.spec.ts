@@ -3,7 +3,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -11,6 +10,7 @@ import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lt
 import { Course } from 'app/course/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -25,7 +25,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -69,7 +68,6 @@ describe('Edit Course LTI Configuration Component', () => {
             .overrideComponent(EditCourseLtiConfigurationComponent, {
                 set: {
                     imports: [
-                        NgbNavModule,
                         MockModule(ReactiveFormsModule),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
@@ -138,6 +136,27 @@ describe('Edit Course LTI Configuration Component', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'lti-configuration']);
     });
 
+    describe('loading the LTI platforms', () => {
+        it('should load the platforms for administrators', () => {
+            const querySpy = vi
+                .spyOn(TestBed.inject(LtiConfigurationService), 'query')
+                .mockReturnValue(of(new HttpResponse<LtiPlatformConfiguration[]>({ body: [], status: 200 })));
+
+            fixture.detectChanges();
+
+            expect(querySpy).toHaveBeenCalled();
+        });
+
+        it('should not request the platforms for users who are not administrators', () => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(false);
+            const querySpy = vi.spyOn(TestBed.inject(LtiConfigurationService), 'query');
+
+            fixture.detectChanges();
+
+            expect(querySpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('LTI Platform Methods', () => {
         it('should set platform correctly', () => {
             fixture.detectChanges();
@@ -203,7 +222,7 @@ describe('Edit Course LTI Configuration Component', () => {
             fixture.detectChanges();
             const transitionSpy = vi.spyOn(comp, 'transition').mockImplementation(() => {});
 
-            comp.onPageChange({ page: 2 } as PaginatorState);
+            comp.onPageChange(2);
 
             expect(comp.page()).toBe(3);
             expect(transitionSpy).toHaveBeenCalledOnce();

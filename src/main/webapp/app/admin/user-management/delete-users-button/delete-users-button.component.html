@@ -1,4 +1,12 @@
-<tumaet-ui-button size="small" severity="danger" variant="outlined" (clicked)="loadUserList()" data-testid="delete-users-button">
+<tumaet-ui-button
+    [ariaLabel]="'artemisApp.userManagement.notEnrolled.delete.caption' | artemisTranslate"
+    size="small"
+    severity="danger"
+    variant="outlined"
+    (clicked)="loadUserList()"
+    data-testid="delete-users-button"
+    [tumAetUiTooltip]="'artemisApp.userManagement.notEnrolled.delete.caption' | artemisTranslate"
+>
     <fa-icon [icon]="faEraser" />
-    <span jhiTranslate="artemisApp.userManagement.notEnrolled.delete.caption"></span>
+    <span class="hidden lg:inline" jhiTranslate="artemisApp.userManagement.notEnrolled.delete.caption"></span>
 </tumaet-ui-button>

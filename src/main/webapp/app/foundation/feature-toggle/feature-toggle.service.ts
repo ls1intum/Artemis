@@ -18,9 +18,7 @@ export enum FeatureToggle {
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
     TutorSuggestions = 'TutorSuggestions',
-    AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',
-    Memiris = 'Memiris',
     LectureContentProcessing = 'LectureContentProcessing',
     RateLimit = 'RateLimit',
     AutonomousTutor = 'AutonomousTutor',
@@ -30,6 +28,7 @@ export enum FeatureToggle {
     PresentationAssessments = 'PresentationAssessments',
     GlobalSearchReconcile = 'GlobalSearchReconcile',
     GlobalSearchReconcileOrphan = 'GlobalSearchReconcileOrphan',
+    SmartQuizzes = 'SmartQuizzes',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

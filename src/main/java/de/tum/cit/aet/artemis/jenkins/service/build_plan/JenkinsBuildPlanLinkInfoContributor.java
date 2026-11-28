@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Component
 @Lazy
 @Profile(PROFILE_JENKINS)

@@ -83,10 +83,10 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      * produced: a directory per participation whose working tree, index and history agree.
      */
     test('Exports selected participations with their history', async ({ page, login, programmingExerciseExportDialog }) => {
-        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/scores`);
+        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/participations`);
         await programmingExerciseExportDialog.open();
         await programmingExerciseExportDialog.disableAllRewritingOptions();
-        // Opened from the scores page nothing is preselected, so the export covers everyone who participated.
+        // Opened from the participation page nothing is preselected, so the export covers everyone who participated.
         await programmingExerciseExportDialog.setOption('allStudents', true);
 
         const { filePath, suggestedFilename } = await downloadArchive(page, () => programmingExerciseExportDialog.export());
@@ -128,7 +128,7 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      * still goes through a checkout, and the result has to keep the layout and the rewriting the options promise.
      */
     test('Exports by participant login with the default rewriting options', async ({ page, login, programmingExerciseExportDialog }) => {
-        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/scores`);
+        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/participations`);
         await programmingExerciseExportDialog.open();
         await programmingExerciseExportDialog.setParticipantIdentifiers(studentOne.username);
         await programmingExerciseExportDialog.setOption('addParticipantName', true);
@@ -151,11 +151,11 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
     });
 
     /**
-     * The dialog can be opened from the scores page with nothing preselected. Exporting then used to send an empty
+     * The dialog can be opened from the participation page with nothing preselected. Exporting then used to send an empty
      * participant list, which produced a request URL with an empty path segment that the server answered with 404.
      */
     test('Refuses to export when nothing is selected', async ({ page, login, programmingExerciseExportDialog }) => {
-        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/scores`);
+        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}/participations`);
         await programmingExerciseExportDialog.open();
         await programmingExerciseExportDialog.setOption('allStudents', false);
         await programmingExerciseExportDialog.setParticipantIdentifiers('  ,  , ');
@@ -169,7 +169,7 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
 
         await programmingExerciseExportDialog.export();
 
-        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"] .message'), 'the dialog has to say what is missing').toContainText(
+        await expect(page.locator('[data-testid="alert"][data-alert-type="danger"]').getByTestId('alert-message'), 'the dialog has to say what is missing').toContainText(
             /select at least one participant/i,
         );
         expect(exportRequests, 'nothing may be requested from the server').toEqual([]);
@@ -270,8 +270,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Exports the exercise material for re-import', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);
@@ -316,8 +317,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Stores nested archives but still deflates plain files', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);
@@ -362,7 +364,7 @@ test.describe('Programming exercise example solution export', { tag: '@slow' }, 
     test('Lets a student download the published example solution', async ({ page, login }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         // The example solution lives in a panel that starts collapsed, so its download button is not reachable yet.
-        await page.getByTestId('example-solution-toggle').first().click();
+        await page.getByTestId('example-solution-panel').first().getByRole('button').first().click();
         const downloadButton = page.locator('jhi-programming-exercise-example-solution-repo-download button').first();
         await downloadButton.waitFor({ state: 'visible' });
         const { filePath, suggestedFilename } = await downloadArchive(page, () => downloadButton.click());

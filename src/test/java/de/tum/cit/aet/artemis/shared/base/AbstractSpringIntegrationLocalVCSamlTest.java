@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
         ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false", PASSKEY_ENABLED_PROPERTY_NAME + "=true",
         "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true",
         "artemis.user-management.oidc.enabled=true",
+        // A bulk trigger waits while the build queue is full, which tests that leave jobs in a paused queue would wait on for hours.
+        // This has to be set here: application-localci.yml is a profile file and wins over the default test application.yml.
+        "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot=0",
         // OIDC test properties for sharing the Spring Context
         "spring.security.oauth2.client.registration.oidc.client-id=mock-client-id", "spring.security.oauth2.client.registration.oidc.client-secret=mock-secret",
         "spring.security.oauth2.client.provider.oidc.issuer-uri=http://mock-issuer", "spring.security.oauth2.client.provider.oidc.authorization-uri=http://mock-auth",

@@ -5,8 +5,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import { onError } from 'app/foundation/util/global.utils';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { AttachmentVideoUnitApi } from 'app/openapi/api/attachment-video-unit-api';
+import type { LectureUnitSplit } from 'app/openapi/model/lecture-unit-split';
+import type { LectureUnitSplitInformation } from 'app/openapi/model/lecture-unit-split-information';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,29 +20,23 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-export type LectureUnitDTOS = {
+/** A proposed section of the PDF, with the release date as the date picker works with it. */
+export type SplitUnit = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
-};
-
-export type LectureUnitInformationDTO = {
-    units: LectureUnitDTOS[];
-    numberOfPages: number;
-    removeSlidesCommaSeparatedKeyPhrases: string;
 };
 
 /** The PDF item whose file is split, when the lecture editor opened this page for one of its items. */
@@ -70,6 +67,7 @@ interface SplitNavigationState {
         TumAetUiInputDirective,
         TumAetUiMessageComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
@@ -77,8 +75,8 @@ interface SplitNavigationState {
 export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly attachmentVideoUnitApi = inject(AttachmentVideoUnitApi);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
@@ -88,7 +86,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     courseId!: number; // set in constructor from route params
     readonly isLoading = signal(false);
     isProcessingMode = false;
-    readonly units = signal<LectureUnitDTOS[]>([]);
+    readonly units = signal<SplitUnit[]>([]);
     readonly numberOfPages = signal<number>(undefined!);
     /** How many sections Artemis found in the PDF, before the user changed the proposal. */
     readonly foundSections = signal(0);
@@ -168,12 +166,12 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         // Regularly re-upload the file when it gets deleted on the server, as long as the page is open.
         const reUpload = setTimeout(
             () => {
-                this.attachmentVideoUnitService
+                this.attachmentVideoUnitApi
                     .uploadSlidesForProcessing(this.lectureId, file)
                     .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }), takeUntilDestroyed(this.destroyRef))
                     .subscribe({
-                        next: (res) => {
-                            this.filename = res.body!;
+                        next: (filename) => {
+                            this.filename = filename;
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
@@ -185,28 +183,21 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         );
         this.destroyRef.onDestroy(() => clearTimeout(reUpload));
 
-        this.attachmentVideoUnitService
+        this.attachmentVideoUnitApi
             .uploadSlidesForProcessing(this.lectureId, file)
             .pipe(
-                switchMap((res) => {
-                    if (res instanceof HttpErrorResponse) {
-                        throw new Error(res.message);
-                    } else {
-                        this.filename = res.body!;
-                        return this.attachmentVideoUnitService.getSplitUnitsData(this.lectureId, this.filename);
-                    }
+                switchMap((filename) => {
+                    this.filename = filename;
+                    return this.attachmentVideoUnitApi.getAttachmentVideoUnitsData(this.lectureId, filename);
                 }),
             )
             .subscribe({
                 next: (res) => {
-                    const proposedUnits = res.body!.units ?? [];
                     // The server sends the release dates as text, but the date picker works with dates.
-                    for (const unit of proposedUnits) {
-                        unit.releaseDate = unit.releaseDate ? dayjs(unit.releaseDate) : undefined;
-                    }
-                    this.units.set(res.body!.units ? proposedUnits : this.units());
+                    const proposedUnits = res.units?.map((unit) => this.toSplitUnit(unit)) ?? [];
+                    this.units.set(res.units ? proposedUnits : this.units());
                     this.foundSections.set(proposedUnits.length);
-                    this.numberOfPages.set(res.body!.numberOfPages);
+                    this.numberOfPages.set(res.numberOfPages!);
                     this.isLoading.set(false);
                 },
                 error: (res: HttpErrorResponse) => {
@@ -219,14 +210,12 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             .pipe(
                 debounceTime(500),
                 switchMap(() => {
-                    return this.attachmentVideoUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
+                    return this.attachmentVideoUnitApi.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
                 }),
             )
             .subscribe({
                 next: (res) => {
-                    if (res.body) {
-                        this.removedSlidesNumbers.set(res.body.map((n) => n + 1));
-                    }
+                    this.removedSlidesNumbers.set(res.map((n) => n + 1));
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
@@ -240,13 +229,18 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     createAttachmentVideoUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading.set(true);
-            const lectureUnitInformation: LectureUnitInformationDTO = {
-                units: this.units(),
+            const lectureUnitInformation: LectureUnitSplitInformation = {
+                units: this.units().map((unit) => ({
+                    unitName: unit.unitName,
+                    releaseDate: convertDateFromClient(unit.releaseDate),
+                    startPage: unit.startPage,
+                    endPage: unit.endPage,
+                })),
                 numberOfPages: this.numberOfPages(),
                 removeSlidesCommaSeparatedKeyPhrases: this.keyphrases,
             };
 
-            this.attachmentVideoUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
+            this.attachmentVideoUnitApi.createAttachmentVideoUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
                     if (this.isRemovingSourceUnit()) {
                         this.deleteSourceUnitAndLeave(this.sourceUnit!.id);
@@ -262,8 +256,12 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         }
     }
 
+    private toSplitUnit(unit: LectureUnitSplit): SplitUnit {
+        return { unitName: unit.unitName!, releaseDate: convertDateStringFromServer(unit.releaseDate), startPage: unit.startPage!, endPage: unit.endPage! };
+    }
+
     private deleteSourceUnitAndLeave(sourceUnitId: number): void {
-        this.lectureUnitService.delete(sourceUnitId, this.lectureId).subscribe({
+        this.lectureUnitApi.deleteLectureUnit(sourceUnitId, this.lectureId).subscribe({
             next: () => this.leaveAfterCreation(),
             error: (res: HttpErrorResponse) => {
                 // The new items exist, so the page is left anyway; the alert tells that the PDF item is still there.

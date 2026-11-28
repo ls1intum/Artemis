@@ -2,14 +2,36 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
 class FeedbackTest {
+
+    @Test
+    void removingGradingInstructionKeepsFeedbackContentAndDetachesEveryReference() {
+        var instruction = new GradingInstruction();
+        var first = new Feedback();
+        first.setDetailText("First assessment comment");
+        first.setGradingInstruction(instruction);
+        var second = new Feedback();
+        second.setDetailText("Second assessment comment");
+        second.setGradingInstruction(instruction);
+        instruction.setFeedbacks(Set.of(first, second));
+
+        instruction.preRemove();
+
+        assertThat(first.getGradingInstruction()).isNull();
+        assertThat(second.getGradingInstruction()).isNull();
+        assertThat(first.getDetailText()).isEqualTo("First assessment comment");
+        assertThat(second.getDetailText()).isEqualTo("Second assessment comment");
+    }
 
     @Test
     void setTruncatedFeedbackDetailText() {

@@ -8,7 +8,6 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { toImportTextExerciseDTO, toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -66,8 +65,20 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(exerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}${exam ? '/for-exam' : ''}`, {
+                observe: 'response',
+                params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -130,16 +141,5 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         return this.http
             .put<TextExercise>(`${this.resourceUrl}/${textExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Retrieves the tutor effort in assessing a specific text exercise
-     * @param exerciseId the id of the exercise to check for
-     * @param courseId the id of the course to check for
-     */
-    public calculateTutorEffort(exerciseId: number, courseId: number): Observable<TutorEffort[]> {
-        return this.http
-            .get<TutorEffort[]>(`api/assessment/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<TutorEffort[]>) => res.body!));
     }
 }

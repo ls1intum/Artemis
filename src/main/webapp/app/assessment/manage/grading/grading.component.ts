@@ -1,10 +1,19 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormField, applyEach, form, required, validate, validateTree } from '@angular/forms/signals';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -20,7 +29,6 @@ import { GradingPresentationsComponent, PresentationType, PresentationsConfig } 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -34,7 +42,7 @@ import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } fr
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -84,13 +92,14 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
 @Component({
     selector: 'jhi-grading',
     templateUrl: './grading.component.html',
-    styleUrls: ['./grading.component.scss'],
+    styleUrls: ['./grading.component.css'],
     imports: [
         TranslateDirective,
         GradingInfoModalComponent,
         FaIconComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         FormsModule,
+        NgTemplateOutlet,
         FormField,
         GradingPresentationsComponent,
         ArtemisTranslatePipe,
@@ -103,10 +112,17 @@ type GradingScaleMeta = Pick<GradingScale, 'id' | 'bonusStrategy' | 'GradeStep' 
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         TumAetUiButtonDirective,
+        PointsInputComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class GradingComponent implements OnInit {
     private readonly gradingService = inject(GradingService);
+    private readonly gradingScaleApi = inject(GradingScaleApi);
     private readonly route = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly courseService = inject(CourseManagementService);
@@ -130,6 +146,18 @@ export class GradingComponent implements OnInit {
 
     /** The non-editable {@link GradingScale} fields, recombined with {@link gradeStepsModel} in the {@link gradingScale} accessor. */
     private gradingScaleMeta: GradingScaleMeta = {};
+
+    /** Keep presentation input identity stable across grade-step edits and child configuration echoes. */
+    readonly presentationGradingScale = computed(
+        () => {
+            this.course();
+            return this.gradingScale;
+        },
+        {
+            equal: (previous, current) =>
+                previous.course === current.course && previous.presentationsNumber === current.presentationsNumber && previous.presentationsWeight === current.presentationsWeight,
+        },
+    );
 
     /**
      * Signal form over {@link gradeStepsModel}. Drives the grade-step rows reactively (so they render under zoneless) and
@@ -258,12 +286,10 @@ export class GradingComponent implements OnInit {
         {
             value: GradeEditMode.PERCENTAGE,
             labelKey: 'artemisApp.gradingSystem.intervalTab.percentageMode',
-            btnClass: 'btn-secondary',
         },
         {
             value: GradeEditMode.POINTS,
             labelKey: 'artemisApp.gradingSystem.intervalTab.pointsMode',
-            btnClass: 'btn-info',
         },
     ];
 
@@ -322,6 +348,8 @@ export class GradingComponent implements OnInit {
      * Handles updates to the presentations configuration emitted by the child component.
      */
     onPresentationsConfigChange(config: PresentationsConfig): void {
+        this.gradingScaleMeta.presentationsNumber = config.presentationsNumber;
+        this.gradingScaleMeta.presentationsWeight = config.presentationsWeight;
         this.presentationsConfig.set(config);
     }
 
@@ -347,7 +375,7 @@ export class GradingComponent implements OnInit {
                         this.onChangeMaxPoints(this.exam()?.examMaxPoints);
                     });
                 } else {
-                    this.courseService.find(this.courseId!).subscribe((courseResponse) => {
+                    this.courseService.findForInstructor(this.courseId!).subscribe((courseResponse) => {
                         this.course.set(courseResponse.body!);
                         this.gradingScaleMeta.course = this.course();
                         this.maxPoints.set(this.course()?.maxPoints);
@@ -452,13 +480,13 @@ export class GradingComponent implements OnInit {
         }
         this.isLoading.set(true);
         if (this.isExam()) {
-            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForExam(this.courseId!, this.examId!));
+            this.handleDeleteObservable(this.gradingScaleApi.deleteGradingScaleForExam(this.courseId!, this.examId!));
         } else {
-            this.handleDeleteObservable(this.gradingService.deleteGradingScaleForCourse(this.courseId!));
+            this.handleDeleteObservable(this.gradingScaleApi.deleteGradingScaleForCourse(this.courseId!));
         }
     }
 
-    handleDeleteObservable(deleteObservable: Observable<HttpResponse<void>>) {
+    handleDeleteObservable(deleteObservable: Observable<void>) {
         deleteObservable.subscribe({
             next: () => {
                 // Reset state only on successful delete
@@ -683,13 +711,17 @@ export class GradingComponent implements OnInit {
     }
 
     /**
-     * Detailed view: a points bound was edited. Points are optional (undefined when no max points are set), so they are
-     * not bound via the signal-form `[formField]` directive (which requires a definite field) but written here directly.
+     * Detailed view: a points bound was left or confirmed with Enter. Points are optional (undefined when no max points are
+     * set or the field is emptied), so they are not bound via the signal-form `[formField]` directive (which requires a
+     * definite field) but written here directly. An unchanged value is ignored, so passing through the field does not
+     * recompute the percentage from the points.
      */
-    onDetailedPointsInput(index: number, lowerBound: boolean, value: number): void {
-        // valueAsNumber is NaN for an emptied input; coerce to undefined like the previous ngModel number accessor did,
-        // so validation treats the field as missing instead of letting NaN slip through the bound checks.
-        const points = Number.isNaN(value) ? undefined : value;
+    onDetailedPointsInput(index: number, lowerBound: boolean, value: number | null | undefined): void {
+        const points = value ?? undefined;
+        const current = this.gradeStepsModel().gradeSteps[index];
+        if (points === (lowerBound ? current.lowerBoundPoints : current.upperBoundPoints)) {
+            return;
+        }
         this.updateGradeSteps((gradeSteps) => {
             const gradeStep = gradeSteps[index];
             if (lowerBound) {
@@ -941,6 +973,17 @@ export class GradingComponent implements OnInit {
             this.setPercentage(gradeStep, false);
             this.cascadePercentageInterval(gradeSteps, selectedIndex);
         });
+    }
+
+    /**
+     * Points interval view: the interval of a grade step was left or confirmed with Enter. An emptied field or a value that
+     * the field already shows is ignored.
+     */
+    onPointsIntervalInput(index: number, value: number | null | undefined): void {
+        if (value == undefined || value === this.getPointsInterval(this.gradeStepsModel().gradeSteps[index])) {
+            return;
+        }
+        this.setPointsInterval(index, value);
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {

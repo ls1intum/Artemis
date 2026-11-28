@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, input, output, signal } fro
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
@@ -15,7 +17,16 @@ import { map } from 'rxjs/operators';
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, DialogModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        TumAetUiDialogComponent,
+        TumAetUiCheckboxComponent,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class TutorialGroupsExportButtonComponent {
     private tutorialGroupApiService = inject(TutorialGroupApi);

@@ -2,14 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 import { OrderedPage, PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
@@ -20,26 +19,23 @@ describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let engineService: MockPdfEngineService;
-    let attachmentVideoUnitService: { update: ReturnType<typeof vi.fn>; updateStudentVersion: ReturnType<typeof vi.fn>; getAttachmentFile: ReturnType<typeof vi.fn> };
-    let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
+    let attachmentVideoUnitService: {
+        update: ReturnType<typeof vi.fn>;
+        getAttachmentFile: ReturnType<typeof vi.fn>;
+        findById: ReturnType<typeof vi.fn>;
+    };
+    let lectureUnitApi: { deleteLectureUnit: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let navigationUtilService: { navigateBack: ReturnType<typeof vi.fn> };
-    let dialogService: { open: ReturnType<typeof vi.fn> };
     // Mutable route data so ngOnInit-driven tests can inject an attachmentVideoUnit resolver payload.
     let routeData: any;
 
-    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
-        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
-        return JSON.parse(await attachmentVideoUnitPart.text());
-    };
-
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
-        attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())) };
-        lectureUnitService = { delete: vi.fn(() => of({})) };
+        attachmentVideoUnitService = { update: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())), findById: vi.fn() };
+        lectureUnitApi = { deleteLectureUnit: vi.fn(() => of(undefined)) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
         navigationUtilService = { navigateBack: vi.fn() };
-        dialogService = { open: vi.fn() };
         routeData = {};
         // `data` is read lazily inside ngOnInit, so wrapping the current `routeData` in a getter lets each
         // test set the resolver payload before it manually calls ngOnInit().
@@ -59,9 +55,8 @@ describe('PdfPreviewComponent', () => {
                 { provide: ArtemisNavigationUtilService, useValue: navigationUtilService },
                 { provide: AlertService, useValue: alertService },
                 { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitService },
-                { provide: LectureUnitService, useValue: lectureUnitService },
+                { provide: LectureUnitApi, useValue: lectureUnitApi },
                 { provide: PdfEngineService, useValue: engineService },
-                { provide: DialogService, useValue: dialogService },
             ],
         }).compileComponents();
 
@@ -69,7 +64,10 @@ describe('PdfPreviewComponent', () => {
         component = fixture.componentInstance;
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
 
     /** Loads the original 3-page document into the component via the engine. */
     async function loadOriginal(pageCount = 3): Promise<void> {
@@ -80,6 +78,11 @@ describe('PdfPreviewComponent', () => {
             abort: () => {},
         } as any);
         await component.loadPdf('blob:original', new ArrayBuffer(8), 'original');
+    }
+
+    /** Replaces temporary preview IDs with persisted slide entity IDs, as returned for an already-split attachment video unit. */
+    function usePersistedSlideIds(): void {
+        component.pageOrder.update((pages) => pages.map((page, index) => ({ ...page, slideId: String(100 + index) })));
     }
 
     /** Makes the next `openDocumentBuffer` call resolve to a document with the given id and page count. */
@@ -211,15 +214,14 @@ describe('PdfPreviewComponent', () => {
         await component.updateAttachmentWithFile();
 
         expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
-        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
-        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+        const [, , sentUnit, sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+        expect(sentUnit).toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
-        expect(updateFormData.has('file')).toBe(false);
-        expect(updateFormData.has('pageOrder')).toBe(false);
-        expect(updateFormData.has('hiddenPages')).toBe(true);
+        expect(sentUpdate.file).toBeUndefined();
+        expect(sentUpdate.pageOrder).toBeUndefined();
+        expect(sentUpdate.hiddenPages).toHaveLength(1);
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
-        expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
         expect(alertService.success).toHaveBeenCalled();
         // Saving goes back to where the user came from, such as the lecture editor.
         expect(navigationUtilService.navigateBack).toHaveBeenCalledOnce();
@@ -234,12 +236,13 @@ describe('PdfPreviewComponent', () => {
 
         await component.updateAttachmentWithFile();
 
-        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
-        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+        const [, , sentUnit, sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+        expect(sentUnit).toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
         });
-        expect(updateFormData.has('file')).toBe(true);
-        expect(updateFormData.has('pageOrder')).toBe(true);
+        expect(sentUpdate.file).toBeInstanceOf(File);
+        expect(sentUpdate.pageOrder).toHaveLength(2);
+        expect(sentUpdate.hiddenPages).toHaveLength(1);
     });
 
     it('should replace the instructor PDF when its page content changes', async () => {
@@ -250,12 +253,102 @@ describe('PdfPreviewComponent', () => {
 
         await component.updateAttachmentWithFile();
 
-        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
-        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+        const [, , sentUnit, sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+        expect(sentUnit).toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
         });
-        expect(updateFormData.has('file')).toBe(true);
-        expect(updateFormData.has('pageOrder')).toBe(true);
+        expect(sentUpdate.file).toBeInstanceOf(File);
+        expect(sentUpdate.pageOrder).toHaveLength(1);
+    });
+
+    it('should save hidden-page-only attachment video unit changes without uploading PDF files', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const attachmentVideoUnit = { id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any;
+        component.attachmentVideoUnit.set(attachmentVideoUnit);
+        const hidden = component.pageOrder()[0];
+        component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const [, , sentUnit, sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+        expect(sentUpdate.file).toBeUndefined();
+        expect(sentUpdate.studentVersion).toBeUndefined();
+        expect(sentUpdate.hiddenPages).toHaveLength(1);
+        expect(sentUnit).toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(component.attachmentVideoUnit()).toBe(attachmentVideoUnit);
+        expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should reject hidden-page-only saves when every page is hidden', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', {
+            error: 'Cannot create a student version with no visible pages',
+        });
+        expect(component.isSaving()).toBe(false);
+    });
+
+    it('should clear hidden pages without uploading PDF files', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const hiddenDate = dayjs().add(1, 'day');
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set({
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        });
+        component.hiddenPages.set({});
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const [, , sentUnit, sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+        expect(sentUpdate.file).toBeUndefined();
+        expect(sentUpdate.studentVersion).toBeUndefined();
+        expect(sentUpdate.hiddenPages).toEqual([]);
+        expect(sentUnit).toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+    });
+
+    it('should not save no-net hidden-page operation history', async () => {
+        await loadOriginal(2);
+        usePersistedSlideIds();
+        const hiddenDate = dayjs().add(1, 'day');
+        const hiddenPages = {
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        };
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set(hiddenPages);
+        component.hiddenPages.set(hiddenPages);
+        component.operations.set([
+            { type: 'SHOW', timestamp: dayjs(), data: { slideIds: [component.pageOrder()[0].slideId] } },
+            { type: 'HIDE', timestamp: dayjs().add(1, 'millisecond'), data: { pages: [{ slideId: component.pageOrder()[0].slideId, date: hiddenDate, exerciseId: undefined }] } },
+        ] as any);
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(component.hasChanges()).toBe(false);
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(alertService.success).toHaveBeenCalled();
     });
 
     it('should abort saving when a hidden page has a past release date', async () => {
@@ -320,15 +413,17 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[1].sourceIndex).toBe(1);
         });
 
-        it('should open a video unit that carries no slides at all', async () => {
+        it.each([3, 34])('should show all %i PDF pages while slide metadata is unavailable', async (pageCount) => {
             // The response omits empty collections, so a unit whose slides were never extracted arrives without a
             // `slides` key. An attachment video unit created for an attachment that used to hang off a lecture
             // directly is permanently in that state, and the preview is where its file gets saved and its slides get
             // produced, so it has to open rather than throw.
             routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 } } };
-            mockNextOpen('original', 3);
+            mockNextOpen('original', pageCount);
 
-            component.ngOnInit();
+            fixture.detectChanges();
+            // Blob conversion completes outside Angular's stability tracking.
+            await vi.waitFor(() => expect(component.pageOrder()).toHaveLength(pageCount));
             await fixture.whenStable();
 
             expect(component.attachmentVideoUnit()!.id).toBe(9);
@@ -336,8 +431,86 @@ describe('PdfPreviewComponent', () => {
             expect(component.isPdfLoading()).toBe(false);
             expect(component.initialHiddenPages()).toEqual({});
             // Without persisted slides the order is built from the document itself, so every page is a fresh one.
-            expect(component.pageOrder()).toHaveLength(3);
+            expect(component.pageOrder()).toHaveLength(pageCount);
             expect(component.pageOrder().every((page) => page.slideId.startsWith('temp_'))).toBe(true);
+        });
+
+        it('waits for current metadata before enabling edits and preserves hidden exercise links', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(routeData.attachmentVideoUnit));
+            mockNextOpen('original', 3);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(component.isPdfLoading()).toBe(true);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(component.pageOrder()).toEqual([]);
+
+            const hiddenDate = new Date('2099-01-01');
+            attachmentVideoUnitService.findById.mockReturnValue(
+                of({
+                    id: 9,
+                    lecture: { id: 4 },
+                    slideMetadataPending: false,
+                    slides: [
+                        { id: 11, slideNumber: 1 },
+                        { id: 12, slideNumber: 2, hidden: hiddenDate, exercise: { id: 77 } },
+                        { id: 13, slideNumber: 3 },
+                    ],
+                }),
+            );
+            await vi.advanceTimersByTimeAsync(1000);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder().map((page) => page.slideId)).toEqual(['11', '12', '13']);
+            expect(component.hiddenPages()['12'].date.toISOString()).toBe(hiddenDate.toISOString());
+            expect(component.hiddenPages()['12'].exerciseId).toBe(77);
+            expect(attachmentVideoUnitService.getAttachmentFile).toHaveBeenCalledOnce();
+        });
+
+        it('stops refreshing pending metadata when the preview is destroyed', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(routeData.attachmentVideoUnit));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledOnce();
+
+            fixture.destroy();
+            await vi.advanceTimersByTimeAsync(5000);
+
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledOnce();
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+        });
+
+        it('reports metadata refresh errors without opening an editable stale deck', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder()).toEqual([]);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(alertService.error).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('bounds metadata polling if processing never completes', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(routeData.attachmentVideoUnit));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(60_000);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder()).toEqual([]);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(alertService.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Timeout has occurred' }));
+            const calls = attachmentVideoUnitService.findById.mock.calls.length;
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledTimes(calls);
         });
 
         it('should stop loading when the route resolves no video unit', async () => {
@@ -527,11 +700,11 @@ describe('PdfPreviewComponent', () => {
         it('should finish saving a video unit without a student version when no pages are hidden', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
             expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
-            expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
             expect(alertService.success).toHaveBeenCalled();
             expect(component.isFileChanged()).toBe(false);
             expect(component.hasOperations()).toBe(false);
@@ -555,6 +728,7 @@ describe('PdfPreviewComponent', () => {
         it('should surface an error when the video unit update service call fails', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
             attachmentVideoUnitService.update.mockReturnValueOnce(throwError(() => new Error('unit update failed')));
 
             await component.updateAttachmentWithFile();
@@ -563,30 +737,30 @@ describe('PdfPreviewComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should surface an error when the student version update fails', async () => {
+        it('should upload the matching student version in the attachment update request', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.hidePages({ slideId: component.pageOrder()[0].slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
-            attachmentVideoUnitService.updateStudentVersion.mockReturnValueOnce(throwError(() => new Error('student failed')));
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
-            expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: 'student failed' });
-            expect(component.isSaving()).toBe(false);
+            expect(attachmentVideoUnitService.update.mock.calls[0][3].studentVersion).toBeInstanceOf(File);
+            expect(alertService.success).toHaveBeenCalled();
         });
 
         it('should send the final page order (with slideId/order) to the video unit update endpoint', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.onPageOrderChange([...component.pageOrder()].reverse().map((page, index) => ({ ...page, order: index + 1 })));
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
-            const formData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
-            expect(attachmentVideoUnitService.update).toHaveBeenCalledWith(4, 9, expect.any(FormData));
-            expect(formData.get('file')).toBeInstanceOf(File);
-            expect(formData.get('pageOrder')).toBeInstanceOf(Blob);
+            const [lectureId, unitId, , sentUpdate] = attachmentVideoUnitService.update.mock.calls[0];
+            expect([lectureId, unitId]).toEqual([4, 9]);
+            expect(sentUpdate.file).toBeInstanceOf(File);
+            expect(sentUpdate.pageOrder.map((page: { order: number }) => page.order)).toEqual([1, 2]);
         });
     });
 
@@ -602,14 +776,12 @@ describe('PdfPreviewComponent', () => {
             fixture.detectChanges();
 
             expect(footerButton('pdf-preview-cancel')).toBeNull();
-            footerButton('pdf-preview-back').querySelector('button').click();
+            footerButton('pdf-preview-back').click();
 
             expect(navigationUtilService.navigateBack).toHaveBeenCalledExactlyOnceWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
-        it('should offer Cancel once something changed, which goes back only after the user confirms', () => {
-            const decision = new Subject<{ confirmed: boolean } | undefined>();
-            dialogService.open.mockReturnValue({ onClose: decision });
+        it('should offer Cancel once something changed, which goes back only after the user confirms', async () => {
             fixture.detectChanges();
             component.isFileChanged.set(true);
             fixture.detectChanges();
@@ -617,9 +789,13 @@ describe('PdfPreviewComponent', () => {
             expect(footerButton('pdf-preview-back')).toBeNull();
             footerButton('pdf-preview-cancel').querySelector('button').click();
 
-            expect(dialogService.open).toHaveBeenCalledOnce();
+            await fixture.whenStable();
             expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
-            decision.next({ confirmed: true });
+            const confirm = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')).find(
+                (button) => button.textContent?.trim() === 'global.form.confirm',
+            );
+            expect(confirm).toBeDefined();
+            confirm!.click();
             expect(navigationUtilService.navigateBack).toHaveBeenCalledExactlyOnceWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
@@ -639,7 +815,21 @@ describe('PdfPreviewComponent', () => {
             component.isSaving.set(true);
             fixture.detectChanges();
 
-            expect(footerButton('pdf-preview-back').querySelector('button').disabled).toBe(true);
+            expect(footerButton('pdf-preview-back').disabled).toBe(true);
+        });
+
+        it('should show an icon-sized spinner in the save button while the changes are saved', () => {
+            fixture.detectChanges();
+            const saveSpinner = () => fixture.nativeElement.querySelector('button[type="submit"] tumaet-ui-progress-spinner');
+            expect(saveSpinner()).toBeNull();
+
+            component.isSaving.set(true);
+            fixture.detectChanges();
+
+            // The kit spinner is 100px wide by default and would stretch the button. A utility class cannot shrink it, as the kit sets its size in unlayered styles.
+            expect(saveSpinner()).not.toBeNull();
+            expect(saveSpinner().style.width).toBe('1rem');
+            expect(saveSpinner().style.height).toBe('1rem');
         });
 
         it('should not go back once more when a deletion completes after the user left the page', async () => {
@@ -647,7 +837,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.deleteAttachmentFile();
 
-            expect(lectureUnitService.delete).toHaveBeenCalledOnce();
+            expect(lectureUnitApi.deleteLectureUnit).toHaveBeenCalledOnce();
             expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
         });
     });
@@ -659,14 +849,14 @@ describe('PdfPreviewComponent', () => {
 
             await component.deleteAttachmentFile();
 
-            expect(lectureUnitService.delete).toHaveBeenCalledWith(9, 4);
+            expect(lectureUnitApi.deleteLectureUnit).toHaveBeenCalledWith(9, 4);
             // Back to where the user came from, such as the lecture editor, else to the content page of the lecture.
             expect(navigationUtilService.navigateBack).toHaveBeenCalledWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
         it('should surface an error when deleting an attachment video unit fails', async () => {
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 } } as any);
-            lectureUnitService.delete.mockReturnValueOnce(throwError(() => new Error('unit delete failed')));
+            lectureUnitApi.deleteLectureUnit.mockReturnValueOnce(throwError(() => new Error('unit delete failed')));
 
             await component.deleteAttachmentFile();
 

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
@@ -96,19 +97,19 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAsTutor() throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAsEditor() throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAsInstructor() throws Exception {
         request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
     }
@@ -120,12 +121,12 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsTooFewSeats() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
         request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
@@ -159,12 +160,12 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsEnoughSeats() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
@@ -173,7 +174,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAllowAlternativeLayouts() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
@@ -188,7 +189,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAllowAlternativeLayoutsButStillTooFewSeats() throws Exception {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
@@ -214,21 +215,21 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationAsTutor() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
                 AttendanceCheckerAppExamInformationDTO.class);
     }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationAsEditor() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
                 AttendanceCheckerAppExamInformationDTO.class);
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationAsInstructor() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -242,7 +243,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationRegisteredStudentsButNotDistributed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1);
 
@@ -255,13 +256,13 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attendanceCheckerInformation.examTitle()).isEqualTo(exam1.getTitle());
         assertThat(attendanceCheckerInformation.startDate()).isCloseTo(exam1.getStartDate(), byLessThan(1, ChronoUnit.SECONDS));
         assertThat(attendanceCheckerInformation.endDate()).isCloseTo(exam1.getEndDate(), byLessThan(1, ChronoUnit.SECONDS));
-        assertThat(attendanceCheckerInformation.isTestExam()).isFalse();
+        assertThat(!attendanceCheckerInformation.examMode().isReal()).isFalse();
         assertThat(attendanceCheckerInformation.courseId()).isEqualTo(course1.getId());
         assertThat(attendanceCheckerInformation.courseTitle()).isEqualTo(course1.getTitle());
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
@@ -274,6 +275,28 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
         assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).hasSize(1);
         assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
+    void testGetAttendanceCheckerInformationOmitsEmail() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 3);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        for (ExamUser examUser : examUserRepository.findAllByExamId(exam1.getId())) {
+            examUser.setSigningImagePath("/api/core/files/exam/signature.png");
+            examUserRepository.save(examUser);
+        }
+
+        var information = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK, Map.class);
+
+        var students = (List<Map<String, Object>>) information.get("examUsersWithExamRoomAndSeat");
+        assertThat(students).hasSize(3).allSatisfy(student -> {
+            assertThat(student).doesNotContainKey("email");
+            assertThat(student).containsEntry("signingImagePath", "/api/core/files/exam/signature.png");
+            assertThat(student).containsKeys("login", "firstName", "plannedLocation");
+        });
     }
 
     void distributeStudentsLegacyWay(int numberOfStudents) {
@@ -289,7 +312,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
 
@@ -304,7 +327,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistributionNotAllDistributed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
 
@@ -319,7 +342,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationWithStudentsAssignedReturnAllRegisteredRooms() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
@@ -335,7 +358,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "USER")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistributionNotAllDistributed() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(10);
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 5);
@@ -360,13 +383,13 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms-used endpoint */
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void testGetUsedRoomsAsEditorShouldBeForbidden() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testGetUsedRoomsAsInstructorShouldBeAllowed() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.OK, Set.class);
     }
@@ -383,7 +406,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testGetUsedRoomsOfExam() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
 
@@ -396,33 +419,100 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(usedRooms).isEqualTo(expectedRooms);
     }
 
-    /* Tests for the GET /api/exam/rooms/{examRoomId}/seats endpoint */
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms/distribution-data endpoint */
+
+    private String roomsUrl(Course course, Exam exam) {
+        return "/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/rooms";
+    }
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
+    void testGetRoomDataForDistributionAsEditorShouldBeForbidden() throws Exception {
+        request.get(roomsUrl(course1, exam1) + "/distribution-data", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void testGetRoomDataForDistributionAsInstructorShouldBeAllowed() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+
+        request.get(roomsUrl(course1, exam1) + "/distribution-data", HttpStatus.OK, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void testGetRoomDataForDistributionExamOfAnotherCourseShouldBeRejected() throws Exception {
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        Exam otherExam = examUtilService.addExam(otherCourse);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + otherExam.getId() + "/rooms/distribution-data", HttpStatus.CONFLICT, Set.class);
+    }
+
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms/distribution-capacities endpoint */
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
+    void testGetDistributionCapacitiesAsEditorShouldBeForbidden() throws Exception {
+        request.get(roomsUrl(course1, exam1) + "/distribution-capacities?reserveFactor=0.1&examRoomIds=1", HttpStatus.FORBIDDEN, ExamDistributionCapacityDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void testGetDistributionCapacitiesAsInstructorShouldBeAllowed() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
+
+        request.get(roomsUrl(course1, exam1) + "/distribution-capacities?reserveFactor=0.1&examRoomIds=" + room.getId(), HttpStatus.OK, ExamDistributionCapacityDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void testGetDistributionCapacitiesExamOfAnotherCourseShouldBeRejected() throws Exception {
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        Exam otherExam = examUtilService.addExam(otherCourse);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + otherExam.getId() + "/rooms/distribution-capacities?reserveFactor=0.1&examRoomIds=1", HttpStatus.CONFLICT,
+                ExamDistributionCapacityDTO.class);
+    }
+
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms/{examRoomId}/seats endpoint */
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void testGetSeatsInRoomAsEditorShouldBeForbidden() throws Exception {
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
 
-        request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.FORBIDDEN, SeatsOfExamRoomDTO.class);
+        request.get(roomsUrl(course1, exam1) + "/" + room.getId() + "/seats", HttpStatus.FORBIDDEN, SeatsOfExamRoomDTO.class);
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testGetSeatsInRoomAsInstructorShouldBeAllowed() throws Exception {
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
 
-        request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
+        request.get(roomsUrl(course1, exam1) + "/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void testGetSeatsInRoomExamOfAnotherCourseShouldBeRejected() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        Exam otherExam = examUtilService.addExam(otherCourse);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + otherExam.getId() + "/rooms/" + room.getId() + "/seats", HttpStatus.CONFLICT, SeatsOfExamRoomDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testGetSeatsInRoom() throws Exception {
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileRealisticScenario);
 
         for (ExamRoom room : examRoomRepository.findAllNewestExamRoomVersions()) {
-            SeatsOfExamRoomDTO seatsOfRoom = request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
+            SeatsOfExamRoomDTO seatsOfRoom = request.get(roomsUrl(course1, exam1) + "/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
             var expectedSeatNames = room.getSeats().stream().map(ExamSeatDTO::name).toList();
 
             assertThat(seatsOfRoom.seats()).hasSize(expectedSeatNames.size());
@@ -433,7 +523,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     /* Tests for the POST /api/exam/courses/{courseId}/exams/{examId}/reseat-student endpoint */
 
     @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_LOGIN, roles = "USER")
     void testReseatStudentAsEditorShouldBeForbidden() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
@@ -444,7 +534,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testReseatStudentAsInstructorShouldBeAllowed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
@@ -455,7 +545,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testReseatStudentAsInstructorFixedSeat() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
@@ -472,7 +562,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
     void testReseatStudentAsInstructorDynamicSeat() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(NUMBER_OF_STUDENTS);
         reloadExam1WithExamUsers();
@@ -490,4 +580,19 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(anyExamUser.getPlannedRoom()).isEqualTo(roomToDistributeTo.getRoomNumber());
         assertThat(anyExamUser.getPlannedSeat()).isNotBlank();
     }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+    void distributionCapacityRejectsInvalidReserveAndEmptySelection() throws Exception {
+        long roomCount = examRoomRepository.count();
+        String url = roomsUrl(course1, exam1) + "/distribution-capacities";
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(url).param("reserveFactor", "1.01").param("examRoomIds", "1"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("reserveFactorOutOfRange"));
+        request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(url).param("reserveFactor", "0.0").param("examRoomIds", ""))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("noRoomIDs"));
+        assertThat(examRoomRepository.count()).isEqualTo(roomCount);
+    }
+
 }

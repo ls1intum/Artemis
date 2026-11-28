@@ -1,3 +1,7 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -26,8 +30,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -46,13 +48,14 @@ import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,
         FaIconComponent,
-        NgbTooltip,
-        NgClass,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         RouterLink,
         ExerciseUnitComponent,
         AttachmentVideoUnitComponent,
@@ -103,7 +106,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     this.loadData();
                 }
 
-                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId, this.courseId());
             });
         }
     }

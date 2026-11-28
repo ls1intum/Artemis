@@ -54,8 +54,12 @@
                     "description": "Aktiviert den Atlas-Kurs-Chat-Agenten und den autonomen Kompetenz-Orchestrator. Erfordert ein konfiguriertes Sprachmodell. Kompetenzen, Lernpfade und Analysen funktionieren auch ohne."
                 },
                 "hyperion": {
-                    "name": "Hyperion (Aufgabenerstellung)",
-                    "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
+                    "name": "Hyperion (KI-Autorenhilfe)",
+                    "description": "Aktiviert KI-Unterstützung für Aufgabenstellungen, Quizfragen, FAQs und Quizvarianten."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion (Programmieraufgaben-Generierung)",
+                    "description": "Aktiviert die KI-gestützte Generierung vollständiger Programmieraufgaben und Varianten mit einem AI Worker."
                 },
                 "deimos": {
                     "name": "Deimos (Analyse bösartiger Teilnahmen)",
@@ -162,20 +166,10 @@
                     "description": "Nutzt Iris, um Tutor:innen Antwortvorschläge zu machen, wenn sie im Kommunikationsmodul auf Studierendenfragen antworten.",
                     "disableWarning": "Tutor:innen erhalten keine KI-gestützten Antwortvorschläge von Iris im Kommunikationsmodul."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Nutzt maschinelles Lernen zur automatischen Generierung von Kompetenzempfehlungen basierend auf Kursinhalten, zur Vorhersage von Studierendenleistungen und für intelligente Vorschläge zur Lernpfad-Optimierung.",
-                    "disableWarning": "Automatische Kompetenzgenerierung, Leistungsvorhersagen und ML-basierte Lernempfehlungen sind nicht verfügbar."
-                },
                 "AtlasAgent": {
                     "name": "Atlas-Agent",
-                    "description": "Aktiviert einen KI-Agenten, der Studierenden hilft, Kompetenzen zu verstehen und zu meistern, indem er personalisierte Erklärungen gibt, Fragen zu Lernzielen beantwortet und sie auf ihrem kompetenzbasierten Lernweg begleitet.",
-                    "disableWarning": "Studierende haben keinen Zugriff auf den KI-gestützten Kompetenz-Assistenten."
-                },
-                "Memiris": {
-                    "name": "Iris-Gedächtnissystem",
-                    "description": "Aktiviert das Langzeitgedächtnis für Iris-KI-Assistenten, sodass sie sich an den Kontext früherer Gespräche erinnern und im Laufe der Zeit personalisiertere, kontextbezogene Antworten geben können.",
-                    "disableWarning": "Iris speichert keinen Gesprächsverlauf zwischen Sitzungen, was zu weniger personalisierter KI-Unterstützung führt."
+                    "description": "Ermöglicht Lehrenden, die Kompetenzen ihres Kurses mit KI aufzubauen und zu pflegen. Der KI-Kompetenz-Assistent im Kompetenzmanagement schlägt Kompetenzen, Beziehungen und Aufgabenverknüpfungen vor und speichert sie nach Freigabe durch die Lehrenden. Atlas kann Kompetenzen und ihre Verknüpfungen mit Aufgaben und Vorlesungseinheiten auch ohne Rückfrage ändern: wenn Lehrende „Kompetenzen vorschlagen“ anklicken oder automatisch in Kursen, in denen Administrator:innen die Atlas-Auto-Orchestrierung eingeschaltet haben. Dabei werden Kursinhalte einschließlich Beispiellösungen an das konfigurierte Sprachmodell gesendet. Erfordert das Modul Atlas KI (LLM).",
+                    "disableWarning": "Lehrende können den KI-Kompetenz-Assistenten und die Schaltfläche „Kompetenzen vorschlagen“ nicht mehr nutzen, und automatische Kompetenzaktualisierungen finden in keinem Kurs mehr statt. Bestehende Kompetenzen bleiben unverändert."
                 },
                 "LectureContentProcessing": {
                     "name": "Indexierung von Vorlesungseinheiten",
@@ -221,6 +215,11 @@
                     "name": "Globale Suche: Abgleich – verwaiste Einträge entfernen",
                     "description": "Durchsucht den Suchindex der globalen Suche nach Einträgen, deren zugehöriges Objekt nicht mehr existiert, und entfernt sie – abgeleitet allein aus dem Index, nicht für jedes Objekt einzeln anhand der Datenbank bestätigt. Zuerst „Globale Suche: Abgleich“ einschalten und beobachten, bevor dies aktiviert wird.",
                     "disableWarning": "Suchergebnisse können Einträge für bereits gelöschte Objekte enthalten, bis dies wieder eingeschaltet wird."
+                },
+                "SmartQuizzes": {
+                    "name": "Smart Quizzes",
+                    "description": "Ermöglicht es Lehrenden, Quizfragenpools zu verwalten und sie manuell oder zeitgesteuert aufzubauen. Erfordert Hyperion und Atlas.",
+                    "disableWarning": "Lehrende verlieren den Zugriff auf Smart Quizzes, und es werden keine neuen Pool-Aufbauten gestartet. Laufende Aufbauten können abgeschlossen werden. Bestehende Fragen und Kurseinstellungen bleiben erhalten."
                 }
             }
         }

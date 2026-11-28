@@ -4,27 +4,24 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
@@ -47,18 +44,19 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.CoreLegacyFileRestPaths;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.dto.FileUploadResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastTutorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -70,6 +68,7 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -87,8 +86,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -106,6 +103,8 @@ public class FileResource {
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private static final int DAYS_TO_CACHE = 1;
+
+    private static final CacheControl CONVERSATION_FILE_CACHE_CONTROL = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePrivate();
 
     private enum AttachmentCachePolicy {
 
@@ -130,8 +129,6 @@ public class FileResource {
 
     private final FileUploadService fileUploadService;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Optional<FileUploadApi> fileUploadApi;
@@ -144,6 +141,8 @@ public class FileResource {
 
     private final Optional<ExamUserApi> examUserApi;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -153,19 +152,19 @@ public class FileResource {
     private final Optional<LectureUnitApi> lectureUnitApi;
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService, FileDownloadService fileDownloadService,
-            ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
-            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
-            QuizQuestionRepository quizQuestionRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi, Optional<LectureAttachmentApi> lectureAttachmentApi,
+            Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository,
+            CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi, Optional<ExamAccessApi> examAccessApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.fileDownloadService = fileDownloadService;
-        this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
         this.slideApi = slideApi;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;
+        this.examAccessApi = examAccessApi;
         this.quizQuestionRepository = quizQuestionRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitApi = lectureUnitApi;
@@ -177,22 +176,21 @@ public class FileResource {
      *
      * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
+     * @param courseId     The id of the course in which the file is used, the user needs at least the tutor role there
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
     @FeatureUsage(UserFeature.MARKDOWN_UPLOADS)
-    @PostMapping("markdown-file-upload")
-    @EnforceAtLeastTutor
-    public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
-            throws URISyntaxException {
+    @PostMapping(value = "markdown-file-upload", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<FileUploadResponseDTO> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
+            @RequestParam Long courseId) throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
         String publicPath = FileUtil.handleSaveFile(file, keepFileName, true).toString();
-        String responsePath = getResponsePathFromPublicPathString(publicPath);
+        String responsePath = ARTEMIS_FILE_PATH_PREFIX + publicPath;
 
         // return path for getting the file
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+        return ResponseEntity.created(new URI(responsePath)).body(new FileUploadResponseDTO(responsePath));
     }
 
     /**
@@ -205,14 +203,15 @@ public class FileResource {
      * @throws URISyntaxException If the response path can't be converted into a URI.
      */
     @FeatureUsage(UserFeature.MESSAGING)
-    @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
+    @PostMapping(value = "files/courses/{courseId}/conversations/{conversationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
-            throws URISyntaxException {
+    public ResponseEntity<FileUploadResponseDTO> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId,
+            @PathVariable Long conversationId) throws URISyntaxException {
         log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
+        fileUploadService.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userRepository.getUser().getId());
         var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
@@ -220,10 +219,8 @@ public class FileResource {
                 FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
-        String responsePath = getResponsePathFromPublicPathString(publicPath);
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+        String responsePath = ARTEMIS_FILE_PATH_PREFIX + publicPath;
+        return ResponseEntity.created(new URI(responsePath)).body(new FileUploadResponseDTO(responsePath));
     }
 
     /**
@@ -232,26 +229,26 @@ public class FileResource {
      * @param courseId       The ID of the course the conversation belongs to.
      * @param conversationId The ID of the conversation the file is used in.
      * @param filename       The filename of the file to get.
-     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     * @return The requested file, or 404 if the file doesn't exist. Only the browser of the user may cache the response.
      */
     @FeatureUsage(UserFeature.MESSAGING)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
-        // TODO: Improve the access check
-        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
+        fileUploadService.checkCanReadConversationFileElseThrow(courseId, conversationId, filename, userRepository.getUser());
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
 
         var serverFilePath = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
         var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), CONVERSATION_FILE_CACHE_CONTROL, true);
         }
 
-        return buildFileResponse(serverFilePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, Optional.empty(), CONVERSATION_FILE_CACHE_CONTROL, true);
     }
 
     /**
@@ -271,46 +268,23 @@ public class FileResource {
     }
 
     /**
-     * GET /files/templates/:language/:projectType : Get the template file with the given filename<br/>
-     * GET /files/templates/:language : Get the template file with the given filename
-     * <p>
-     * The readme file contains the default problem statement for new programming exercises.
+     * Pictures of a course quiz are only available for students once the quiz is released, those of an exam quiz once the exam content is available to them.
      *
-     * @param language    The programming language for which the template file should be returned
-     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @return The requested file, or 404 if the file doesn't exist
+     * @param question the drag and drop question the picture belongs to
+     * @param course   the course of the quiz
+     * @param user     the current user, loaded with its course roles
+     * @throws AccessForbiddenException if the pictures are not available yet for the user
      */
-    @FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
-    @GetMapping({ "files/templates/{language}/{projectType}", "files/templates/{language}" })
-    @EnforceAtLeastEditor
-    public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
-        log.debug("REST request to get readme file for programming language {} and project type {}", language, projectType);
-
-        String languagePrefix = language.name().toLowerCase(Locale.ROOT);
-        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase(Locale.ROOT)).orElse("");
-
-        return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
-    }
-
-    private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
-        try {
-            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, "readme"));
-            if (!fileResource.exists() && !projectTypePrefix.isEmpty()) {
-                // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
-            }
-            byte[] fileContent;
-            try (InputStream inputStream = fileResource.getInputStream()) {
-                fileContent = inputStream.readAllBytes();
-            }
-            HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
+    private void checkQuizPicturesAvailableElseThrow(DragAndDropQuestion question, Course course, User user) {
+        var exercise = question.getExercise();
+        if (exercise.isExamExercise()) {
+            examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class)).checkExamContentAvailableForStudentElseThrow(exercise, user);
         }
-        catch (IOException ex) {
-            log.debug("Error when retrieving template file : {}", ex.getMessage());
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
+        else if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this quiz");
+        }
+        else if (!exercise.isVisibleToStudents() && !authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("The quiz is not released yet");
         }
     }
 
@@ -328,7 +302,7 @@ public class FileResource {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         String backgroundFilePath = question.getBackgroundFilePath();
         if (backgroundFilePath == null) {
             throw new EntityNotFoundException("Drag and drop question " + questionId + " has no background file");
@@ -357,7 +331,7 @@ public class FileResource {
         log.debug("REST request to get file for drag item {} of question {}", dragItemId, questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        checkQuizPicturesAvailableElseThrow(question, course, userRepository.getUserWithCourseRolesAndAuthorities());
         DragItem dragItem = question.findDragItemById(dragItemId);
         String pictureFilePath = dragItem == null ? null : dragItem.getPictureFilePath();
         if (pictureFilePath == null) {
@@ -432,23 +406,11 @@ public class FileResource {
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
         log.debug("REST request to get profile picture for user : {}", userId);
         User user = userRepository.findByIdElseThrow(userId);
+        // A client can still hold the URL of a picture the user has removed since
+        if (user.getImageUrl() == null) {
+            throw new EntityNotFoundException("ProfilePicture", userId);
+        }
         return responseEntityForFilePath(new FileSystemLocation.ProfilePicture(user.getImageUrl()).path());
-    }
-
-    /**
-     * GET /files/templates/code-of-conduct : Get the Code of Conduct template
-     *
-     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
-     */
-    @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
-    @GetMapping("files/templates/code-of-conduct")
-    @EnforceAtLeastStudent
-    public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
-        // TODO: store a Constant
-        var templatePath = Path.of("templates", "codeofconduct", "README.md");
-        log.debug("REST request to get template : {}", templatePath);
-        var resource = resourceLoaderService.getResource(templatePath);
-        return ResponseEntity.ok(new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /**
@@ -459,13 +421,14 @@ public class FileResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/signatures/*", CoreLegacyFileRestPaths.EXAM_USER_SIGNATURE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
-        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
+        ExamUser examUser = api.findByIdElseThrow(examUserId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, api.findCourseByExamUserIdElseThrow(examUserId), null);
 
         return buildFileResponse(new FileSystemLocation.ExamUserSignature(examUser.getSigningImagePath()).path(), 30);
     }
@@ -478,13 +441,14 @@ public class FileResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/*", CoreLegacyFileRestPaths.EXAM_USER_IMAGE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
-        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
+        ExamUser examUser = api.findByIdElseThrow(examUserId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, api.findCourseByExamUserIdElseThrow(examUserId), null);
 
         return buildFileResponse(new FileSystemLocation.ExamUserImage(examUserId, examUser.getStudentImagePath()).path(), 30);
     }
@@ -521,10 +485,23 @@ public class FileResource {
         // The attachment reaches its lecture through the unit that owns it; the query fetched both with the course.
         Course course = attachment.getAttachmentVideoUnit().getLecture().getCourse();
 
-        // check if the user is authorized to access the requested attachment
-        checkAttachmentAuthorizationOrThrow(course, attachment);
+        // check if the user is authorized to access the requested attachment and the unit it belongs to. The user is loaded once for all checks.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
+        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, user);
 
-        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), retrieveDownloadFilename(attachment), AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+        Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
+        // Users below teaching assistant receive the version without hidden slides, like on the route of the unit
+        String studentVersion = attachment.getStudentVersion();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            if (studentVersion != null) {
+                return buildAttachmentFileResponse(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnit.getId(), studentVersion).path(), downloadFilename,
+                        AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
+            }
+            api.ensureStudentVersionAvailable(attachmentVideoUnit.getId());
+        }
+
+        return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
     }
 
     /**
@@ -535,7 +512,7 @@ public class FileResource {
      * @return The merged PDF file, 403 if the logged-in user is not allowed to
      *         access it, or 404 if the files to be merged do not exist
      */
-    @GetMapping({ "files/attachments/lectures/{lectureId}/merge-pdf", CoreLegacyFileRestPaths.LECTURE_ATTACHMENTS_MERGED })
+    @GetMapping("files/attachments/lectures/{lectureId}/merge-pdf")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
@@ -548,23 +525,29 @@ public class FileResource {
 
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream().filter(
-                unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .toList();
+        // Below teaching assistant, a unit contributes only if its attachment is available as well, as on the routes that serve a single attachment
+        boolean staff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(lecture.getCourse(), user);
+        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
+                .filter(unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && (staff || unit.getAttachment().isVisibleToStudents())
+                        && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+                // External PDF links contribute no stored file and must not be marked complete by downloading the lecture's own PDFs.
+                .filter(unit -> unit.getAttachment().getStudentVersion() != null || unit.getAttachment().fileLocation().isPresent()).toList();
 
-        unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
+        attachmentApi.ensureStudentVersionsAvailable(lectureAttachments);
 
         // Modified to use studentVersion if available
-        List<Path> attachmentLinks = lectureAttachments.stream().flatMap(unit -> {
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
             // The attachment says where its own file is: a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory.
             if (attachment.getStudentVersion() != null) {
-                return Stream.of(new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path());
+                return new FileSystemLocation.StudentVersionSlides(unit.getId(), attachment.getStudentVersion()).path();
             }
-            // An attachment linking to a document hosted elsewhere contributes nothing: there is no file of ours to merge, and the `.pdf` its URL ends in is enough to pass the
-            // extension filter above. Dropping it merges the lecture's own PDFs rather than failing the whole download over one external link.
-            return attachment.fileLocation().map(FileSystemLocation::path).stream();
+            return attachment.fileLocation().orElseThrow().path();
         }).toList();
+
+        if (attachmentLinks.isEmpty() || attachmentLinks.stream().anyMatch(path -> !Files.isRegularFile(path))) {
+            return ResponseEntity.notFound().build();
+        }
 
         Optional<byte[]> file = FileUtil.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -572,6 +555,7 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
+        unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 
@@ -585,7 +569,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/attachments/attachment-video-units/{attachmentVideoUnitId}/*", CoreLegacyFileRestPaths.ATTACHMENT_VIDEO_UNIT_FILE })
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {
         log.debug("REST request to get the file for attachment video unit {} for tutors", attachmentVideoUnitId);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
@@ -640,10 +624,7 @@ public class FileResource {
 
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
 
-        Attachment attachment = attachmentVideoUnit.getAttachment();
-        Course course = attachmentVideoUnit.getLecture().getCourse();
-
-        checkAttachmentAuthorizationOrThrow(course, attachment);
+        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
 
         int sNumber = Integer.parseInt(slideNumber);
 
@@ -665,6 +646,11 @@ public class FileResource {
         SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
         Slide slide = api.findSlideByIdElseThrow(slideId);
+
+        // The slide is requested on its own, so the attachment and the unit it belongs to decide whether it is available for this request, as for the lecture attachment
+        LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
+        AttachmentVideoUnit attachmentVideoUnit = attachmentApi.findAttachmentVideoUnitByIdElseThrow(slide.getAttachmentVideoUnit().getId());
+        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
 
         return getSlideResponse(slide, slideId);
     }
@@ -705,13 +691,13 @@ public class FileResource {
 
         AttachmentVideoUnit attachmentVideoUnit = api.findAttachmentVideoUnitByIdElseThrow(attachmentVideoUnitId);
         Attachment attachment = attachmentVideoUnit.getAttachment();
-        Course course = attachmentVideoUnit.getLecture().getCourse();
-        checkAttachmentAuthorizationOrThrow(course, attachment);
+        checkAttachmentAndUnitAvailableOrThrow(attachmentVideoUnit, userRepository.getUserWithCourseRolesAndAuthorities());
 
         Optional<String> downloadFilename = retrieveDownloadFilename(attachment);
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
+            api.ensureStudentVersionAvailable(attachmentVideoUnitId);
             return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
@@ -789,7 +775,8 @@ public class FileResource {
         Path actualPath = path.resolve(filename);
         long lastModified = FileHttpRequestValidator.getLastModified(actualPath);
         if (lastModified >= 0 && FileHttpRequestValidator.isNotModified(requestHeaders, lastModified)) {
-            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
+            // The container sends no content type with a 304, but the security headers are chosen by it, and browsers copy them onto the cached file
+            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified).contentType(fileDownloadService.getMediaTypeFromFilename(filename));
             Optional<CacheControl> cacheControl = cachePolicy.cacheControl();
             if (cacheControl.isPresent()) {
                 response = response.cacheControl(cacheControl.orElseThrow()).varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
@@ -843,18 +830,6 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
-     * @param path     to the file including the file name
-     * @param filename the name of the file
-     * @param cache    true if the response should contain a header that allows caching; false otherwise
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
-        return buildFileResponse(path, filename, Optional.empty(), cache);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path containing the file name
-     *
      * @param path      to the file including the file name
      * @param filename  the name of the file
      * @param cacheDays the number of days to cache the response
@@ -862,17 +837,6 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, int cacheDays) {
         return buildFileResponse(path, filename, Optional.empty(), cacheDays);
-    }
-
-    /**
-     * Builds the response with headers, body and content type for specified path and file name
-     *
-     * @param path            to the file
-     * @param replaceFilename replaces the downloaded file's name, if provided
-     * @return response entity
-     */
-    private ResponseEntity<byte[]> buildFileResponse(Path path, Optional<String> replaceFilename) {
-        return buildFileResponse(path.getParent(), path.getFileName().toString(), replaceFilename, false);
     }
 
     /**
@@ -898,6 +862,20 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays) {
+        return buildFileResponse(path, filename, replaceFilename, cacheDays > 0 ? CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic() : null, false);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path                to the file
+     * @param filename            the name of the file
+     * @param replaceFilename     replaces the downloaded file's name, if provided
+     * @param cacheControl        the caching policy of the response, or null for none
+     * @param varyByAuthorization true if a cached response depends on who asks, which is the case when the access to the file is checked per user
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, CacheControl cacheControl, boolean varyByAuthorization) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -908,9 +886,11 @@ public class FileResource {
             HttpHeaders headers = fileDownloadService.createFileHeaders(filename, replaceFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(fileDownloadService.getMediaTypeFromFilename(filename)).header("filename", filename);
-            if (cacheDays > 0) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
+            if (cacheControl != null) {
                 response = response.cacheControl(cacheControl);
+            }
+            if (varyByAuthorization) {
+                response = response.varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);
             }
             return response.body(file);
         }
@@ -920,14 +900,6 @@ public class FileResource {
         }
     }
 
-    private String getResponsePathFromPublicPathString(@NonNull String publicPath) {
-        // fail-safe to raise awareness if the public path is not correct (should not happen)
-        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
-            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
-        }
-        return ARTEMIS_FILE_PATH_PREFIX + publicPath;
-    }
-
     /**
      * Checks if the user is authorized to access an attachment
      *
@@ -935,12 +907,47 @@ public class FileResource {
      * @param attachment the attachment for which the authentication should be checked
      */
     private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment) {
+        checkAttachmentAuthorizationOrThrow(course, attachment, null);
+    }
+
+    /**
+     * Checks that the user may access the attachment, for a caller that already loaded the user.
+     *
+     * @param course     the course of the attachment
+     * @param attachment the attachment to access
+     * @param user       the user to check, or null for the logged-in user
+     */
+    private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment, @Nullable User user) {
         if (attachment.isVisibleToStudents()) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
         else {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
+    }
+
+    /**
+     * Checks that the lecture unit is available for the user, i.e. that students only reach the content of a unit that is released.
+     *
+     * @param attachmentVideoUnit the unit that holds the requested content
+     * @param user                the user to check
+     */
+    private void checkLectureUnitAvailableOrThrow(AttachmentVideoUnit attachmentVideoUnit, User user) {
+        if (!authorizationCheckService.isAllowedToSeeLectureUnit(attachmentVideoUnit, user)) {
+            throw new AccessForbiddenException("AttachmentVideoUnit", attachmentVideoUnit.getId());
+        }
+    }
+
+    /**
+     * Checks that the user may access the content of the attachment of a unit: the attachment has to be available for the user, and so does the unit that holds it.
+     * Every route that serves content of a unit to students applies this one check, so that the release dates of the attachment and of the unit decide alike on all of them.
+     *
+     * @param attachmentVideoUnit the unit that holds the requested content, with its attachment and its lecture's course
+     * @param user                the user to check
+     */
+    private void checkAttachmentAndUnitAvailableOrThrow(AttachmentVideoUnit attachmentVideoUnit, User user) {
+        checkAttachmentAuthorizationOrThrow(attachmentVideoUnit.getLecture().getCourse(), attachmentVideoUnit.getAttachment(), user);
+        checkLectureUnitAvailableOrThrow(attachmentVideoUnit, user);
     }
 
     /**

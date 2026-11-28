@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 @Component({
     selector: 'tumaet-ui-input-group-addon',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-input-group-addon.component.scss',
+    styleUrl: './tumaet-ui-input-group-addon.component.css',
     host: {
         class:
             'tumaet-ui-input-group-addon tumaet:bg-control-background tumaet:text-muted tumaet:border-y ' +

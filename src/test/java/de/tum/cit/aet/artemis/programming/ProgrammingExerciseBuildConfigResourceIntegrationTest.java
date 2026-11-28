@@ -21,8 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -110,13 +113,13 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateBuildConfigAsEditor() throws Exception {
         assertConfigurationPersisted();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateBuildConfigAsInstructor() throws Exception {
         assertConfigurationPersisted();
     }
@@ -128,38 +131,38 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateBuildConfigForbiddenForTutor() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 0), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsDuplicatePhaseNames() throws Exception {
         // different casing must still be rejected, so this also guards the case-insensitive comparison
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("Compile")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsReservedPhaseName() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("main")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBlankPhaseName() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsEmptyPhases() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsNullPhaseElement() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -173,7 +176,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBuildPlanConfigurationExceedingParsingLimit() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -189,19 +192,19 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsMalformedDockerFlags() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsDisallowedDockerNetwork() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"host\",\"cpuCount\":2,\"memory\":1024}");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsInvalidDockerMemory() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("{\"network\":\"none\",\"cpuCount\":2,\"memory\":1}");
     }
@@ -224,7 +227,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBlankDockerImage() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -240,7 +243,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @ParameterizedTest(name = "[{index}] script=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAcceptsBlankBuildPhaseScript(String blankScript) throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
@@ -257,7 +260,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAcceptsNullDockerImageAsDefault() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
@@ -271,7 +274,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAddingAfterDueDatePhaseSchedulesTheRebuild() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
@@ -287,7 +290,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRemovingAfterDueDatePhaseClearsTheRebuildDate() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
@@ -303,7 +306,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDoesNotRescheduleWhenTheBuildAndTestDateIsUnchanged() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         programmingExercise.setDueDate(null);
@@ -324,8 +327,61 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
     }
 
+    private void releaseTheExercise() {
+        // the fixture exercise is not released yet, and students may not see it before
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    private void setBuildTimeWindow(BuildTimeWindow window) {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testEditingTheBuildPlanKeepsTheBuildTimeWindow() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        var response = request.putWithResponseBody(buildConfigEndpoint(), configurationWith(List.of(phase("compile")), 240), UpdateProgrammingExerciseBuildConfigDTO.class,
+                HttpStatus.OK);
+
+        assertThat(response.advancedSettings().buildTimeWindow()).isEqualTo(window);
+        assertThat(programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow().getBuildTimeWindow()).isEqualTo(window);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsSeeOnlyTheBuildTimeWindowOfTheBuildConfig() throws Exception {
+        releaseTheExercise();
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        setBuildTimeWindow(window);
+
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        var buildConfig = JsonMapper.builder().build().readTree(body).get("exercise").get("buildConfig");
+        assertThat(buildConfig).as("the details of an exercise with a window carry it").isNotNull();
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("start").asString()).toInstant()).isEqualTo(window.start().toInstant());
+        assertThat(ZonedDateTime.parse(buildConfig.get("advancedSettings").get("buildTimeWindow").get("end").asString()).toInstant()).isEqualTo(window.end().toInstant());
+        // nothing else of the build configuration is for students: not the build plan, not the Docker flags, not the images
+        assertThat(buildConfig.propertyNames()).doesNotContain("buildPlanConfiguration", "dockerFlags", "theiaImage", "testCheckoutPath", "assignmentCheckoutPath",
+                "solutionCheckoutPath");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentsGetNoBuildConfigWithoutABuildTimeWindow() throws Exception {
+        releaseTheExercise();
+        String body = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/details", HttpStatus.OK, String.class);
+
+        assertThat(JsonMapper.builder().build().readTree(body).get("exercise").has("buildConfig")).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateBuildConfigForExamExercise() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
         var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();

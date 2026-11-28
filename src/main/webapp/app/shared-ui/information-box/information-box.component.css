@@ -1,0 +1,11 @@
+.information-box {
+    background-color: var(--tumaet-ui-content-background);
+}
+
+.information-box-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: var(--title-bar-content-height);
+    padding-block: 0;
+}

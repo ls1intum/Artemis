@@ -1,4 +1,3 @@
-import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { IrisActivityItem } from 'app/iris/shared/entities/iris-activity.model';
 
 /**
@@ -27,8 +26,6 @@ export interface IrisMessageResponseDTO {
     helpful?: boolean;
     sender: string;
     content: IrisMessageContentResponseDTO[];
-    accessedMemories?: MemirisMemory[];
-    createdMemories?: MemirisMemory[];
     activities?: IrisActivityItem[];
     messageDifferentiator?: number;
     final?: boolean;

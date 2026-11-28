@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -11,17 +11,18 @@ import { Course, Language } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
@@ -71,17 +72,22 @@ describe('OnboardingGeneralSettingsComponent', () => {
                         updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
                     },
                 },
-                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
             .overrideComponent(OnboardingGeneralSettingsComponent, {
                 remove: {
-                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent],
+                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent, AboutIrisModalComponent],
                 },
                 add: {
-                    imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ColorSelectorComponent), MockComponent(TumAetUiDatePickerComponent)],
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(ColorSelectorComponent),
+                        MockComponent(TumAetUiDatePickerComponent),
+                        MockComponent(AboutIrisModalComponent),
+                    ],
                 },
             })
             .compileComponents();
@@ -96,6 +102,60 @@ describe('OnboardingGeneralSettingsComponent', () => {
     it('should initialize with the provided course', () => {
         expect(comp).toBeTruthy();
         expect(comp.course()).toEqual(course);
+    });
+
+    it('should open the about Iris modal', () => {
+        expect(comp['aboutIrisModalVisible']()).toBe(false);
+        comp.openAboutIrisModal();
+        expect(comp['aboutIrisModalVisible']()).toBe(true);
+    });
+
+    describe('Iris settings', () => {
+        it('loads the course settings when Iris is active', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            const load = vi.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettingsWithRateLimit');
+            createComponent();
+
+            expect(load).toHaveBeenCalledWith(course.id);
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('keeps the optimistic choice separate from the original settings and adopts the saved response', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const response = new Subject<HttpResponse<IrisCourseSettingsWithRateLimitDTO>>();
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(response);
+
+            comp.setIrisEnabled(false);
+            expect(comp.isIrisEnabled()).toBe(false);
+            expect(original?.enabled).toBe(true);
+            expect(update).toHaveBeenCalledWith(course.id, expect.objectContaining({ enabled: false }));
+
+            response.next(new HttpResponse({ body: { courseId: 1, settings: { enabled: true, variant: 'default' }, effectiveRateLimit: {}, applicationRateLimitDefaults: {} } }));
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('restores the original setting and reports a failed save', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const error = new HttpErrorResponse({ status: 403 });
+            vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(throwError(() => error));
+            const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.setIrisEnabled(false);
+
+            expect(comp.irisSettings()).toBe(original);
+            expect(comp.isIrisEnabled()).toBe(true);
+            expect(alert).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('does not save before settings have loaded', () => {
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings');
+            comp.setIrisEnabled(true);
+            expect(update).not.toHaveBeenCalled();
+        });
     });
 
     it('should have language options for English and German', () => {
@@ -290,6 +350,32 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(getSpy).toHaveBeenCalledExactlyOnceWith(1);
             expect(comp.isAthenaGradingEnabled()).toBe(true);
             expect(comp.isAthenaFormativeEnabled()).toBe(false);
+        });
+
+        it('should show an error instead of the athena toggles after a failed load', () => {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+            fixture.componentRef.setInput('course', course);
+            comp = fixture.componentInstance;
+            vi.spyOn(TestBed.inject(AthenaCourseConfigService), 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            fixture.detectChanges();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(comp.isAthenaLoadFailed()).toBe(true);
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"] [jhiTranslate]')?.getAttribute('jhiTranslate')).toBe(
+                'artemisApp.course.athenaConfig.loadFailed',
+            );
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeNull();
+        });
+
+        it('should show the athena toggles once the configuration has loaded', () => {
+            createWithAthenaActive();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeTruthy();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeTruthy();
         });
 
         it('should save a switched feature right away without touching the other one', () => {

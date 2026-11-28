@@ -9,12 +9,11 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingTasksTableComponent>;
@@ -28,7 +27,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
+            imports: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         });
         fixture = TestBed.createComponent(ProgrammingExerciseGradingTasksTableComponent);
@@ -216,5 +215,83 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
         comp.changeSort('name');
 
         expect(comp.tasks()).toEqual(expected);
+    });
+    describe('rendered points', () => {
+        const renderedPoints = (testName: string): string => {
+            const rows = Array.from(fixture.nativeElement.querySelectorAll('.task__row')) as HTMLElement[];
+            const row = rows.find((candidate) => candidate.querySelector('.task__field')?.textContent?.trim() === testName)!;
+            return (row.querySelectorAll('.task__field')[1] as HTMLElement).textContent!.trim();
+        };
+
+        it('should update the points of all test cases when the weight of one test case changes', async () => {
+            TestBed.inject(ProgrammingExerciseTaskService);
+            fixture.componentRef.setInput('exercise', { id: 1, maxPoints: 10 } as ProgrammingExercise);
+            const httpMock = TestBed.inject(HttpTestingController);
+            fixture.detectChanges();
+            httpMock.expectOne('api/programming/programming-exercises/1/tasks-with-unassigned-test-cases').flush([
+                { taskName: 'Task 1', testCases: [{ id: 1, testName: 'testOne', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true }] },
+                { taskName: 'Task 2', testCases: [{ id: 2, testName: 'testTwo', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true }] },
+            ]);
+            fixture.detectChanges();
+            // both tasks are collapsed initially: expand them so that the test case rows are rendered
+            comp.toggleAllTasksExpanded(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(renderedPoints('testOne')).toBe('5P (50%)');
+            expect(renderedPoints('testTwo')).toBe('5P (50%)');
+
+            const weightInputs = fixture.nativeElement.querySelectorAll('.task__body input[type="number"]') as NodeListOf<HTMLInputElement>;
+            weightInputs[0].value = '3';
+            weightInputs[0].dispatchEvent(new Event('input'));
+            weightInputs[0].dispatchEvent(new Event('change'));
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(renderedPoints('testOne')).toBe('7.5P (75%)');
+            expect(renderedPoints('testTwo')).toBe('2.5P (25%)');
+        });
+
+        it('should render the test cases of every task in the new order after sorting', async () => {
+            fixture.componentRef.setInput('exercise', { id: 1, maxPoints: 10 } as ProgrammingExercise);
+            const httpMock = TestBed.inject(HttpTestingController);
+            fixture.detectChanges();
+            httpMock.expectOne('api/programming/programming-exercises/1/tasks-with-unassigned-test-cases').flush([
+                {
+                    taskName: 'Task 1',
+                    testCases: [
+                        { id: 1, testName: 'testHeavy', weight: 3, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                        { id: 2, testName: 'testLight', weight: 1, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                    ],
+                },
+                {
+                    taskName: 'Task 2',
+                    testCases: [
+                        { id: 3, testName: 'testBig', weight: 5, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                        { id: 4, testName: 'testSmall', weight: 2, bonusMultiplier: 1, bonusPoints: 0, active: true },
+                    ],
+                },
+            ]);
+            fixture.detectChanges();
+            comp.toggleAllTasksExpanded(true);
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const renderedTestNames = (): string[][] =>
+                (Array.from(fixture.nativeElement.querySelectorAll('.task__body')) as HTMLElement[]).map((body) =>
+                    (Array.from(body.querySelectorAll('.task__row')) as HTMLElement[]).map((row) => row.querySelector('.task__field')!.textContent!.trim()),
+                );
+            expect(renderedTestNames()).toEqual([
+                ['testHeavy', 'testLight'],
+                ['testBig', 'testSmall'],
+            ]);
+
+            comp.changeSort('weight');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(renderedTestNames()).toEqual([
+                ['testLight', 'testHeavy'],
+                ['testSmall', 'testBig'],
+            ]);
+        });
     });
 });

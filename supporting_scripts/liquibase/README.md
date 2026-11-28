@@ -24,6 +24,39 @@ Containers bind ports from 15400 upwards; use `--base-port` or `LIQUIBASE_VERIFY
 something else already has them. Each check starts its own containers and removes them afterwards,
 including when it fails.
 
+The Memiris contract migration also has a populated-data regression test:
+
+```bash
+python3 test_memiris_cleanup_migration.py
+python3 test_memiris_cleanup_migration.py --database postgres
+```
+
+It uses disposable containers on ports 16280 and 16281. It checks that legacy memory columns and preference rows without
+a decision are removed and that the decision column now refuses a row without one, while AI consent decisions and
+timestamps, users, and chat messages and contents survive.
+It also verifies that a rollback stops with the backup recovery instructions.
+The Liquibase workflow runs it on both supported databases.
+
+The course authorities migration has a populated-data regression test as well:
+
+```bash
+python3 test_course_authorities_migration.py
+```
+
+It uses disposable containers on ports 16380 and 16381. It verifies that removing teaching
+authorities preserves ordinary user access, administrator authorities, and course roles, including
+accounts without an explicit `ROLE_USER`. The Liquibase workflow runs it on both supported databases.
+
+The copy of the Atlas chat history to the Spring AI session tables has a populated-data regression test too:
+
+```bash
+python3 test_spring_ai_session_migration.py
+```
+
+It uses disposable containers on ports 15900 and 15901. It verifies that every conversation of a user and the assistant becomes
+one session, that the messages keep the order of the old sequence and their text, that system and tool rows are left behind and that
+the old table is not touched. The Liquibase workflow runs it on both supported databases.
+
 ## Cutting a baseline
 
 ```bash

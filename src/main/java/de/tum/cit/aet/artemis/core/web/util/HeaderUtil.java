@@ -52,7 +52,8 @@ public final class HeaderUtil {
      * @return {@link HttpHeaders} containing the failure alert
      */
     public static HttpHeaders createFailureAlert(String applicationName, boolean enableTranslation, String entityName, String errorKey, String defaultMessage) {
-        log.error("Entity processing failed, {}", defaultMessage);
+        // The alert is answered to the client as a bad request, which is a client error and not a failure of the server
+        log.warn("Entity processing failed, {}", defaultMessage);
         String message = enableTranslation ? "error." + errorKey : defaultMessage;
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-" + applicationName + "-error", message);

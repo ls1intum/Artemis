@@ -105,4 +105,51 @@ class IrisDashboardEmailServiceTest {
         initService();
         assertThat(emailService.canSendAlert()).isTrue();
     }
+
+    @Test
+    void invalidAndEmptyRecipientsAreDroppedBeforeCaseInsensitiveDeduplication() {
+        properties.getDigest().setRecipients(java.util.Arrays.asList(null, " ", "not an address", " Admin <admin@example.org> ", " admin@example.org ", "ADMIN@EXAMPLE.ORG"));
+        initService();
+        var digest = mock(IrisDashboardDigestDTO.class);
+        assertThat(emailService.sendDigest(digest)).isEqualTo(1);
+        var recipient = org.mockito.ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService).sendIrisDashboardDigestEmail(recipient.capture(), org.mockito.ArgumentMatchers.eq(digest));
+        assertThat(recipient.getValue().email()).isEqualTo("admin@example.org");
+    }
+
+    @Test
+    void alertRecipientsOverrideDigestFallbackAndFailureDoesNotStopRemainingDelivery() {
+        properties.getDigest().setRecipients(List.of("digest@example.org"));
+        properties.getAlert().setRecipients(List.of("first@example.org", "second@example.org"));
+        initService();
+        var alert = mock(de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO.class);
+        org.mockito.Mockito.doThrow(new IllegalStateException("queue failed")).doNothing().when(mailService).sendIrisDashboardAlertEmail(any(), any());
+        assertThat(emailService.sendAlert(alert)).isEqualTo(1);
+        var recipient = org.mockito.ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailService, times(2)).sendIrisDashboardAlertEmail(recipient.capture(), org.mockito.ArgumentMatchers.eq(alert));
+        assertThat(recipient.getAllValues()).extracting(MailRecipientDTO::email).containsExactly("first@example.org", "second@example.org");
+    }
+
+    @Test
+    void digestFailureDoesNotStopRemainingDelivery() {
+        properties.getDigest().setRecipients(List.of("first@example.org", "second@example.org"));
+        initService();
+        org.mockito.Mockito.doThrow(new IllegalStateException("queue failed")).doNothing().when(mailService).sendIrisDashboardDigestEmail(any(), any());
+        assertThat(emailService.sendDigest(mock(IrisDashboardDigestDTO.class))).isEqualTo(1);
+        verify(mailService, times(2)).sendIrisDashboardDigestEmail(any(), any());
+    }
+
+    @Test
+    void repeatedCapabilityChecksRemainFalseWhenMailOrRecipientsAreUnavailable() {
+        properties.getDigest().setRecipients(null);
+        properties.getAlert().setRecipients(null);
+        initService();
+        assertThat(emailService.canSendDigest()).isFalse();
+        assertThat(emailService.canSendDigest()).isFalse();
+        assertThat(emailService.canSendAlert()).isFalse();
+        assertThat(emailService.canSendAlert()).isFalse();
+        when(mailSendingService.isMailConfigured()).thenReturn(false);
+        assertThat(emailService.canSendAlert()).isFalse();
+        assertThat(emailService.canSendAlert()).isFalse();
+    }
 }

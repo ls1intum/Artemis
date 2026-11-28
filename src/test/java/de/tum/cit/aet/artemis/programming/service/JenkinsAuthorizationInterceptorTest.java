@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
@@ -25,12 +26,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.connector.MockRestClientServers;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 
 class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsauthintercept";
+
+    @Autowired
+    private MockRestClientServers mockRestClientServers;
 
     private MockRestServiceServer mockRestServiceServer;
 
@@ -40,7 +45,8 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     @BeforeEach
     void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        mockRestServiceServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
+        // The interceptor fetches the crumb with its own client, which is mocked like the clients of the other requests.
+        mockRestServiceServer = mockRestClientServers.serverOf("jenkinsCrumbRestClient");
     }
 
     @AfterEach
@@ -50,7 +56,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorSetCrumbCorrectly() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -74,7 +80,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbNotSet() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -92,7 +98,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbException() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();

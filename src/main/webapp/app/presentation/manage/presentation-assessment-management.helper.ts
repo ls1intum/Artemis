@@ -20,6 +20,12 @@ export interface PresentationStudentRow {
     instance: PresentationAssessmentInstance;
 }
 
+export interface PresentationStudentTableRow extends PresentationStudentRow {
+    rowKey: string;
+    displayName: string;
+    assessed: boolean;
+}
+
 export function createPresentationSidebarData(
     presentationAssessments: PresentationAssessment[],
     courseId: number,
@@ -58,10 +64,6 @@ export function createPresentationSidebarData(
             },
         },
     };
-}
-
-export function hasResultPoints(resultPoints: number | null | undefined): resultPoints is number {
-    return resultPoints !== undefined && resultPoints !== null;
 }
 
 function toSidebarItem(assessment: PresentationAssessment, courseId: number, linkIcon?: IconDefinition): SidebarCardElement {

@@ -50,9 +50,15 @@ describe('ChannelService', () => {
             )
             .subscribe((body) => expect(body).toContainEqual(expected));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/communication/courses/1/channels/overview' });
         req.flush([returnedFromService]);
         vi.advanceTimersByTime(0);
+    });
+
+    it.each(['for-staff', 'for-instructor'] as const)('uses explicit %s overview URL', (audience) => {
+        const result = audience === 'for-staff' ? service.getChannelsOfCourseForStaff(1) : service.getChannelsOfCourseForInstructor(1);
+        result.subscribe((response) => expect(response.body).toEqual([elemDefault]));
+        httpMock.expectOne({ method: 'GET', url: `/api/communication/courses/1/channels/overview/${audience}` }).flush([elemDefault]);
     });
 
     it('getPublicChannelsOfCourse', () => {

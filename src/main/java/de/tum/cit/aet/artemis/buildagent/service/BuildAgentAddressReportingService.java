@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -17,13 +16,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.client.RestClient;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 
 /**
  * Publishes the address a core node sees this build agent at, so that its clones can be bound to it.
@@ -67,11 +70,17 @@ public class BuildAgentAddressReportingService {
 
     private static final String OBSERVED_ADDRESS_PATH = "api/localvc/public/observed-client-address";
 
+    private static JdkClientHttpRequestFactory requestFactory() {
+        var requestFactory = new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).followRedirects(HttpClient.Redirect.NORMAL).build());
+        requestFactory.setReadTimeout(REQUEST_TIMEOUT);
+        return requestFactory;
+    }
+
     private final DistributedDataAccessService distributedDataAccessService;
 
     private final JsonMapper objectMapper;
 
-    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(REQUEST_TIMEOUT).followRedirects(HttpClient.Redirect.NORMAL).build();
+    private final RestClient restClient = RestClient.builder().requestFactory(requestFactory()).build();
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
@@ -126,13 +135,15 @@ public class BuildAgentAddressReportingService {
      */
     private String measureObservedAddress() throws Exception {
         URI uri = localVCBaseUri.resolve("/" + OBSERVED_ADDRESS_PATH);
-        HttpRequest request = HttpRequest.newBuilder(uri).timeout(REQUEST_TIMEOUT).GET().build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            log.warn("Asking {} for the address it sees this build agent at returned {}", uri, response.statusCode());
-            return null;
-        }
-        return objectMapper.readTree(response.body()).path("address").asString(null);
+        // The exchange is used, not retrieve(), because every status other than 200 is no address here and not an exception
+        return restClient.get().uri(uri).exchange((request, response) -> {
+            if (response.getStatusCode().value() != 200) {
+                log.warn("Asking {} for the address it sees this build agent at returned {}", uri, response.getStatusCode().value());
+                return null;
+            }
+            ObservedClientAddressDTO observed = objectMapper.readValue(StreamUtils.copyToString(response.getBody(), StandardCharsets.UTF_8), ObservedClientAddressDTO.class);
+            return observed == null ? null : observed.address();
+        });
     }
 
     /**

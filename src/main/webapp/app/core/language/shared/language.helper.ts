@@ -6,7 +6,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 
 @Service()
@@ -43,7 +43,7 @@ export class JhiLanguageHelper {
      * Update the window title using a value from the following order:
      * 1. The function's titleKey parameter
      * 2. The return value of {@link getPageTitle}, extracting it from the router state or a fallback value
-     * If the translation doesn't exist, a Sentry exception is thrown.
+     * If the translation doesn't exist, an error is reported.
      */
     updateTitle(titleKey?: string) {
         if (!titleKey) {
@@ -68,6 +68,9 @@ export class JhiLanguageHelper {
             this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.getCurrentLang() ?? 'en');
             this.updateTitle();
         });
+        // A page can start from a part of the translation catalog (the landing and the sign-in page do) and receive the rest later: a
+        // title that was translated from the part is translated again when the catalog changes.
+        this.translateService.onTranslationChange.subscribe(() => this.updateTitle());
     }
 
     /**

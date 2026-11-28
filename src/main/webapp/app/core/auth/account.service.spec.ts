@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
@@ -11,9 +12,11 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Authority } from 'app/foundation/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -21,6 +24,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -38,7 +42,15 @@ describe('AccountService', () => {
     const user2 = { id: 2 } as User;
     const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
 
-    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
+    const pendingEmailChange: PendingEmailChangeDTO = {
+        newEmail: 'new@example.org',
+        requestedAt: '2026-10-13T10:00:00Z',
+        expiresAt: '2026-10-14T10:00:00Z',
+        currentAddressConfirmed: false,
+        newAddressConfirmed: true,
+    };
+
+    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN];
     const course = { id: 1 } as Course;
     const exercise = { course } as Exercise;
     const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
@@ -54,6 +66,8 @@ describe('AccountService', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
+                { provide: AlertService, useValue: MockService(AlertService) },
             ],
         });
         accountService = TestBed.inject(AccountService);
@@ -120,6 +134,28 @@ describe('AccountService', () => {
         expect(accountService.isAuthenticated()).toBe(true);
     });
 
+    it('should update management access after course roles are granted and revoked without logging in again', async () => {
+        const guard = TestBed.inject(UserRouteAccessService);
+        const showsTutorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
+        const showsInstructorControls = computed(() => accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR));
+
+        for (const roles of [[], ['TEACHING_ASSISTANT'], ['INSTRUCTOR'], []]) {
+            const refreshedAccount = accountService.identity(true);
+            httpMock.expectOne({ method: 'GET', url: getUserUrl }).flush({
+                id: 1,
+                authorities: [Authority.STUDENT],
+                courseRoles: [{ courseId: 1, roles }],
+            });
+            await refreshedAccount;
+
+            expect(accountService.isAuthenticated()).toBe(true);
+            expect(showsTutorControls()).toBe(roles.length > 0);
+            expect(showsInstructorControls()).toBe(roles.includes('INSTRUCTOR'));
+            await expect(guard.checkLogin(IS_AT_LEAST_TUTOR, '/course-management/1')).resolves.toBe(roles.length > 0);
+            await expect(guard.checkLogin(IS_AT_LEAST_INSTRUCTOR, '/course-management/1/edit')).resolves.toBe(roles.includes('INSTRUCTOR'));
+        }
+    });
+
     it('should authenticate a user', () => {
         expect(accountService.userIdentity()).toBeUndefined();
         expect(accountService.isAuthenticated()).toBe(false);
@@ -159,13 +195,56 @@ describe('AccountService', () => {
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
-            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % 5]] } as User);
+            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % authorities.length]] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
-            await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+        });
+
+        describe('of the teaching roles', () => {
+            const inCourse = (...roles: string[]) => ({ id: 7, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles }] }) as unknown as User;
+
+            it.each([
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_TUTOR, true],
+                ['TEACHING_ASSISTANT', IS_AT_LEAST_EDITOR, false],
+                ['EDITOR', IS_AT_LEAST_EDITOR, true],
+                ['EDITOR', IS_AT_LEAST_INSTRUCTOR, false],
+                ['INSTRUCTOR', IS_AT_LEAST_INSTRUCTOR, true],
+                ['STUDENT', IS_AT_LEAST_TUTOR, false],
+            ])('should answer a user with the course role %s for the authority list of %s as %s', (role, list, expected) => {
+                accountService.userIdentity.set(inCourse(role));
+
+                expect(accountService.hasAnyAuthorityDirect(list as readonly Authority[])).toBe(expected);
+            });
+
+            it('should count a role in any of the courses', () => {
+                accountService.userIdentity.set({
+                    id: 7,
+                    authorities: [Authority.STUDENT],
+                    courseRoles: [
+                        { courseId: 1, roles: ['STUDENT'] },
+                        { courseId: 2, roles: ['INSTRUCTOR'] },
+                    ],
+                } as unknown as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
+
+            it('should ignore a teaching authority that the server sends without a course role', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.INSTRUCTOR, Authority.TUTOR, Authority.EDITOR] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR)).toBe(false);
+            });
+
+            it('should leave the global authorities to the authority list of the user', () => {
+                accountService.userIdentity.set({ id: 7, authorities: [Authority.STUDENT, Authority.ADMIN] } as User);
+
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)).toBe(true);
+                expect(accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR)).toBe(true);
+            });
         });
     });
 
@@ -244,6 +323,94 @@ describe('AccountService', () => {
             result = accountService.isAtLeastInstructorInCourse(course);
 
             expect(result).toBe(true);
+        });
+    });
+
+    describe.each([Authority.ADMIN, Authority.SUPER_ADMIN])('course administrator access for %s', (authority) => {
+        const helpers = ['isAtLeastTutorInCourseWithId', 'isAtLeastEditorInCourseWithId', 'isAtLeastInstructorInCourseWithId'] as const;
+
+        function expectCourseAccess(expected: readonly boolean[]) {
+            helpers.forEach((helper, index) => expect(accountService[helper](1)).toBe(expected[index]));
+            expect(accountService.isAdmin()).toBe(true);
+        }
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        });
+
+        it.each([
+            { session: 'password only', loggedInWithPasskey: false, passkeySuperAdminApproved: true },
+            { session: 'unapproved passkey', loggedInWithPasskey: true, passkeySuperAdminApproved: false },
+        ])('should deny course overrides for $session without target membership', ({ loggedInWithPasskey, passkeySuperAdminApproved }) => {
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey, passkeySuperAdminApproved } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it.each([
+            { role: 'TEACHING_ASSISTANT', expected: [true, false, false] },
+            { role: 'EDITOR', expected: [true, true, false] },
+            { role: 'INSTRUCTOR', expected: [true, true, true] },
+        ])('should retain the explicit $role course role without elevation', ({ role, expected }) => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 1, roles: [role] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess(expected);
+        });
+
+        it('should not reuse an instructor role from another course', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [{ courseId: 2, roles: ['INSTRUCTOR'] }],
+                loggedInWithPasskey: false,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([false, false, false]);
+        });
+
+        it('should grant all overrides with an approved passkey', () => {
+            accountService.userIdentity.set({
+                id: 10,
+                internal: true,
+                authorities: [authority],
+                courseRoles: [],
+                loggedInWithPasskey: true,
+                passkeySuperAdminApproved: true,
+            } as User);
+            expectCourseAccess([true, true, true]);
+        });
+
+        it('should grant all overrides when a passkey is not required', () => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(false);
+            accountService.userIdentity.set({ id: 10, internal: true, authorities: [authority], courseRoles: [], loggedInWithPasskey: false } as User);
+            expectCourseAccess([true, true, true]);
+        });
+    });
+
+    describe('hasAdministratorAccess', () => {
+        it.each([
+            { authority: Authority.ADMIN, required: false, loggedInWithPasskey: false, passkeySuperAdminApproved: false, expected: true },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: false, passkeySuperAdminApproved: true, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: false, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.SUPER_ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.INSTRUCTOR, required: false, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: false },
+        ])('checks effective administrator rights for $authority (required=$required, passkey=$loggedInWithPasskey, approved=$passkeySuperAdminApproved)', (session) => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(session.required);
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [session.authority],
+                loggedInWithPasskey: session.loggedInWithPasskey,
+                passkeySuperAdminApproved: session.passkeySuperAdminApproved,
+            } as User);
+
+            expect(accountService.hasAdministratorAccess()).toBe(session.expected);
         });
     });
 
@@ -379,6 +546,26 @@ describe('AccountService', () => {
         });
     });
 
+    it('should update authority signals when the user identity changes', () => {
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(false);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: ['TEACHING_ASSISTANT'] }] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.SUPER_ADMIN] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(true);
+        expect(accountService.isSuperAdmin()).toBe(true);
+    });
+
     it('should set access rights for referenced course', () => {
         accountService.userIdentity.set({ id: 10, authorities } as User);
 
@@ -446,13 +633,13 @@ describe('AccountService', () => {
             expect(accountService.hasEditorAccess()).toBe(false);
         });
 
-        it.each([[Authority.STUDENT], [Authority.TUTOR]])('should deny editor access to a user with the authority %s', (authority) => {
-            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny editor access to a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
             expect(accountService.hasEditorAccess()).toBe(false);
         });
 
-        it.each([[Authority.EDITOR], [Authority.INSTRUCTOR]])('should grant editor access to a user with the authority %s without a passkey', (authority) => {
-            accountService.userIdentity.set({ id: 1, authorities: [authority] } as User);
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant editor access to a user with the course role %s without a passkey', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
             expect(accountService.hasEditorAccess()).toBe(true);
         });
 
@@ -475,6 +662,28 @@ describe('AccountService', () => {
             passkeyRequired = false;
             accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
             expect(accountService.hasEditorAccess()).toBe(true);
+        });
+    });
+
+    describe('test mayCreateAgentTokens', () => {
+        it('should deny a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(true);
+        });
+
+        it('should deny an administrator even if they teach a course', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
         });
     });
 
@@ -604,31 +813,6 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test token related user retrieval logic', () => {
-        let fetchStub: ReturnType<typeof vi.spyOn>;
-
-        beforeEach(() => {
-            // @ts-ignore spying on private method
-            fetchStub = vi.spyOn(accountService, 'fetch');
-        });
-
-        it('should not retrieve user if vcs token is missing but not required', () => {
-            user.vcsAccessToken = undefined;
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-
-        it('should not retrieve user if vcs token is present', () => {
-            user.vcsAccessToken = 'iAmAToken';
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-    });
-
     describe('test vcs token related logic', () => {
         afterEach(() => {
             httpMock.verify();
@@ -639,17 +823,6 @@ describe('AccountService', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
             req.flush(null);
-        });
-
-        it('should add a new VCS access token', () => {
-            const expiryDate = '2024-10-10';
-
-            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
-                expect(response.status).toBe(200);
-            });
-
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
-            req.flush({ status: 200 });
         });
 
         it('should get VCS access token for a participation', () => {
@@ -841,15 +1014,63 @@ describe('AccountService', () => {
     });
 
     describe('test save', () => {
-        it('should save user data', () => {
+        it('should save user data and return the pending email change', () => {
             const userToSave = { id: 1, login: 'testuser' } as User;
+            let result: UpdateBasicInformationResponseDTO | undefined;
 
-            accountService.save(userToSave).subscribe((response) => {
-                expect(response.body).toEqual(userToSave);
-            });
+            accountService.save(userToSave).subscribe((response) => (result = response));
 
             const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
-            req.flush(userToSave);
+            expect(req.request.body).toEqual(userToSave);
+            req.flush({ pendingEmailChange: pendingEmailChange });
+            expect(result).toEqual({ pendingEmailChange });
+        });
+
+        it('should return no pending email change when the server has none', () => {
+            let result: UpdateBasicInformationResponseDTO | undefined;
+
+            accountService.save({ id: 1 } as User).subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' }).flush({ pendingEmailChange: null });
+            expect(result).toEqual({ pendingEmailChange: null });
+        });
+    });
+
+    describe('pending email change', () => {
+        it('should load the pending email change', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
+        });
+
+        it('should return undefined when no email change is pending', () => {
+            let result: PendingEmailChangeDTO | undefined = pendingEmailChange;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(null, { status: 204, statusText: 'No Content' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should cancel the pending email change', () => {
+            let completed = false;
+
+            accountService.cancelPendingEmailChange().subscribe(() => (completed = true));
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/account/pending-email-change' }).flush(null);
+            expect(completed).toBe(true);
+        });
+
+        it('should resend the confirmation mails', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.resendPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'POST', url: 'api/account/pending-email-change/resend' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
         });
     });
 
@@ -901,24 +1122,6 @@ describe('AccountService', () => {
 
             expect(authState$).toBeDefined();
             expect(authState$).toHaveProperty('subscribe');
-        });
-    });
-
-    describe('test hasAuthority with identity', () => {
-        it('should resolve true when user has the authority', async () => {
-            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
-
-            const result = await accountService.hasAuthority(Authority.ADMIN);
-
-            expect(result).toBe(true);
-        });
-
-        it('should resolve false when user does not have the authority', async () => {
-            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT] } as User);
-
-            const result = await accountService.hasAuthority(Authority.ADMIN);
-
-            expect(result).toBe(false);
         });
     });
 
@@ -1017,57 +1220,6 @@ describe('AccountService', () => {
         it('should return isUserLoggedInWithApprovedPasskey as true when both conditions are true', () => {
             accountService.userIdentity.set({ id: 1, loggedInWithPasskey: true, passkeySuperAdminApproved: true } as User);
             expect(accountService.isUserLoggedInWithApprovedPasskey()).toBe(true);
-        });
-    });
-
-    describe('test setUserEnabledMemiris', () => {
-        it('should update user memiris setting on success', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            expect(accountService.userIdentity()?.memirisEnabled).toBe(true);
-        });
-
-        it('should emit a NEW identity reference so the signal notifies', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-            const before = accountService.userIdentity();
-
-            accountService.setUserEnabledMemiris(true);
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            const after = accountService.userIdentity();
-            // A new reference is what makes the signal notify (Object.is); mutating in place would not refresh the UI.
-            expect(after).not.toBe(before);
-            expect(after?.memirisEnabled).toBe(true);
-            expect(after?.id).toBe(1);
-        });
-
-        it('should not update user when user identity is undefined', () => {
-            accountService.userIdentity.set(undefined);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.flush({});
-
-            expect(accountService.userIdentity()).toBeUndefined();
-        });
-
-        it('should handle error gracefully', () => {
-            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
-
-            accountService.setUserEnabledMemiris(true);
-
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/enable-memiris' });
-            req.error(new ProgressEvent('error'));
-
-            // User should remain unchanged
-            expect(accountService.userIdentity()?.memirisEnabled).toBe(false);
         });
     });
 

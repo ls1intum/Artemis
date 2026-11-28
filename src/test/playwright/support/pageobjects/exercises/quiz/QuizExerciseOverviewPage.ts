@@ -55,11 +55,12 @@ export class QuizExerciseOverviewPage {
     }
 
     /**
-     * Exports a quiz exercise.
+     * Exports the questions of a quiz exercise.
      *
      * @Note Assumes to be on the details page of a quiz.
      */
-    async exportQuizExercise() {
-        await this.page.locator('button', { hasText: 'Export' }).click();
+    async exportQuizQuestions() {
+        await this.page.getByTestId('exercise-more-actions').click();
+        await this.page.getByTestId('quiz-export-questions').click();
     }
 }

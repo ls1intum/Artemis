@@ -1,16 +1,15 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { AccountService } from 'app/core/auth/account.service';
-import { signal } from '@angular/core';
-import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -19,21 +18,14 @@ describe('LLMSelectionModalComponent', () => {
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
     let router: Router;
-    let accountService: AccountService;
     let openModalSubject: Subject<LLMSelectionDecision | undefined>;
-    let userIdentitySignal: ReturnType<typeof signal<User | undefined>>;
 
     beforeEach(async () => {
         openModalSubject = new Subject<LLMSelectionDecision | undefined>();
-        userIdentitySignal = signal<User | undefined>(undefined);
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
             emitChoice: vi.fn(),
-        };
-
-        const themeServiceMock = {
-            currentTheme: signal(Theme.LIGHT),
         };
 
         const routerMock = {
@@ -44,19 +36,12 @@ describe('LLMSelectionModalComponent', () => {
             isLLMDeploymentEnabled: vi.fn().mockReturnValue(false),
         };
 
-        const accountServiceMock = {
-            userIdentity: userIdentitySignal,
-            setUserEnabledMemiris: vi.fn(),
-        };
-
         await TestBed.configureTestingModule({
             imports: [LLMSelectionModalComponent, TranslateDirective],
             providers: [
                 { provide: LLMSelectionModalService, useValue: modalServiceMock },
-                { provide: ThemeService, useValue: themeServiceMock },
                 { provide: Router, useValue: routerMock },
                 { provide: ProfileService, useValue: profileServiceMock },
-                { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -65,7 +50,6 @@ describe('LLMSelectionModalComponent', () => {
         component = fixture.componentInstance;
         modalService = TestBed.inject(LLMSelectionModalService);
         router = TestBed.inject(Router);
-        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -192,76 +176,38 @@ describe('LLMSelectionModalComponent', () => {
         });
     });
 
-    describe('onBackdropClick', () => {
-        it('should emit NONE choice when backdrop is clicked', () => {
+    describe('onVisibleChange', () => {
+        it('should resolve the choice as dismissed and close when the dialog is closed by Escape or the backdrop', () => {
             const choiceSpy = vi.spyOn(component.choice, 'emit');
-            const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
-            event.target = event.currentTarget;
+            const closeSpy = vi.spyOn(component, 'close');
+            component.open();
 
-            component.onBackdropClick(event);
+            component.onVisibleChange(false);
 
             expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
-        });
-
-        it('should call modalService.emitChoice with NONE', () => {
-            const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
-            event.target = event.currentTarget;
-
-            component.onBackdropClick(event);
-
             expect(modalService.emitChoice).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
-        });
-
-        it('should close modal when target equals currentTarget', () => {
-            const closeSpy = vi.spyOn(component, 'close');
-            const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
-            event.target = event.currentTarget;
-
-            component.onBackdropClick(event);
-
             expect(closeSpy).toHaveBeenCalled();
         });
 
-        it('should not close modal when target does not equal currentTarget', () => {
-            const closeSpy = vi.spyOn(component, 'close');
-            const target = document.createElement('div');
-            const currentTarget = document.createElement('div');
-            const event = { target, currentTarget } as any;
-
-            component.onBackdropClick(event);
-
-            expect(closeSpy).not.toHaveBeenCalled();
-        });
-
-        it('should NOT emit choice when clicking inside modal content (target !== currentTarget)', () => {
+        it('should not resolve a second time when the popup was already closed by a choice', () => {
             const choiceSpy = vi.spyOn(component.choice, 'emit');
-            const emitChoiceSpy = vi.spyOn(modalService, 'emitChoice');
-            const closeSpy = vi.spyOn(component, 'close');
+            component.open();
+            component.selectCloud();
+            choiceSpy.mockClear();
+            vi.mocked(modalService.emitChoice).mockClear();
 
-            const target = document.createElement('div');
-            const currentTarget = document.createElement('div');
-            const event = { target, currentTarget } as any;
-
-            component.onBackdropClick(event);
+            component.onVisibleChange(false);
 
             expect(choiceSpy).not.toHaveBeenCalled();
-            expect(emitChoiceSpy).not.toHaveBeenCalled();
-            expect(closeSpy).not.toHaveBeenCalled();
+            expect(modalService.emitChoice).not.toHaveBeenCalled();
         });
 
-        it('should emit choice and close when clicking backdrop (target === currentTarget)', () => {
+        it('should ignore the dialog opening', () => {
             const choiceSpy = vi.spyOn(component.choice, 'emit');
-            const emitChoiceSpy = vi.spyOn(modalService, 'emitChoice');
-            const closeSpy = vi.spyOn(component, 'close');
 
-            const backdrop = document.createElement('div');
-            const event = { target: backdrop, currentTarget: backdrop } as any;
+            component.onVisibleChange(true);
 
-            component.onBackdropClick(event);
-
-            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
-            expect(emitChoiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
-            expect(closeSpy).toHaveBeenCalled();
+            expect(choiceSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -301,11 +247,22 @@ describe('LLMSelectionModalComponent', () => {
         });
     });
 
-    describe('Theme constant', () => {
-        it('should expose Theme enum', () => {
-            expect(component['Theme']).toBe(Theme);
-        });
-    });
+    it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+        'should resolve the shared selector choice %s through the AET dialog',
+        (selection) => {
+            fixture.detectChanges();
+            component.open();
+            fixture.detectChanges();
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
+            const selector = fixture.debugElement.query(By.directive(AiModeSelectorComponent)).componentInstance as AiModeSelectorComponent;
+
+            selector.choice.emit(selection);
+
+            expect(choiceSpy).toHaveBeenCalledWith(selection);
+            expect(modalService.emitChoice).toHaveBeenCalledWith(selection);
+            expect(component.isVisible()).toBe(false);
+        },
+    );
 
     describe('currentSelection', () => {
         it('should set currentSelection when modal is opened with a selection', () => {
@@ -336,65 +293,31 @@ describe('LLMSelectionModalComponent', () => {
             expect(component.currentSelection()).toBeUndefined();
         });
     });
+});
 
-    describe('memirisEnabled', () => {
-        it('should default to true when userIdentity is undefined', () => {
-            userIdentitySignal.set(undefined);
-            fixture.detectChanges();
-            openModalSubject.next(undefined);
+describe('LLM selection dismissal', () => {
+    it('clears the shared open state and resolves the choice when the dialog is dismissed', async () => {
+        const modalService = new LLMSelectionModalService();
+        await TestBed.configureTestingModule({
+            imports: [LLMSelectionModalComponent],
+            providers: [
+                { provide: LLMSelectionModalService, useValue: modalService },
+                { provide: ProfileService, useValue: { isLLMDeploymentEnabled: () => false } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        const popup = TestBed.createComponent(LLMSelectionModalComponent);
+        popup.detectChanges();
+        const result = modalService.open();
+        popup.detectChanges();
+        expect(modalService.isOpen()).toBe(true);
 
-            expect(component.memirisEnabled()).toBe(true);
-        });
+        // The dialog closes itself on Escape and on a click on its backdrop; closing it is what both do.
+        popup.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance.close();
 
-        it('should read memirisEnabled=true from userIdentity when modal opens', () => {
-            userIdentitySignal.set({ memirisEnabled: true } as User);
-            fixture.detectChanges();
-            openModalSubject.next(undefined);
-
-            expect(component.memirisEnabled()).toBe(true);
-        });
-
-        it('should read memirisEnabled=false from userIdentity when modal opens', () => {
-            userIdentitySignal.set({ memirisEnabled: false } as User);
-            fixture.detectChanges();
-            openModalSubject.next(undefined);
-
-            expect(component.memirisEnabled()).toBe(false);
-        });
-
-        it('should update memirisEnabled each time the modal is opened', () => {
-            fixture.detectChanges();
-
-            userIdentitySignal.set({ memirisEnabled: false } as User);
-            openModalSubject.next(undefined);
-            expect(component.memirisEnabled()).toBe(false);
-
-            userIdentitySignal.set({ memirisEnabled: true } as User);
-            openModalSubject.next(undefined);
-            expect(component.memirisEnabled()).toBe(true);
-        });
-    });
-
-    describe('onMemirisToggle', () => {
-        it('should call setUserEnabledMemiris with true when memirisEnabled is true', () => {
-            component.memirisEnabled.set(true);
-            component.onMemirisToggle();
-
-            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
-        });
-
-        it('should call setUserEnabledMemiris with false when memirisEnabled is false', () => {
-            component.memirisEnabled.set(false);
-            component.onMemirisToggle();
-
-            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(false);
-        });
-
-        it('should call setUserEnabledMemiris exactly once per toggle', () => {
-            component.memirisEnabled.set(true);
-            component.onMemirisToggle();
-
-            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledOnce();
-        });
+        expect(await result).toBe(LLM_MODAL_DISMISSED);
+        expect(modalService.isOpen()).toBe(false);
+        expect(popup.componentInstance.isVisible()).toBe(false);
     });
 });

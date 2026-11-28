@@ -30,6 +30,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 /** Deterministic tests for the agent loop's context-window management: no LLM and no Docker. */
 class AgentLoopCompactionTest {
@@ -69,10 +70,11 @@ class AgentLoopCompactionTest {
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(assistantToolCall("write", "write", "{}")))), textResponse(closingResponse),
                 textResponse("The exercise files are ready."), textResponse("continued"));
         List<Message> prior = conversationWithTurns(6, 6_000);
-        int window = Math.toIntExact(
-                AgentConversationContext.estimateTokens(prior, 0, prior.size()) + AgentConversationContext.estimateMessageTokens(new UserMessage("first stage")) + 20_608);
-        AgentLoopRunner runner = newTestRunner(List.of(model), window);
         var tools = new AgentLoopRunnerTest.RecordingTools();
+        long toolTokens = AgentConversationContext.estimateToolDefinitionTokens(MethodToolCallbackProvider.builder().toolObjects(tools).build().getToolCallbacks());
+        int window = Math.toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size())
+                + AgentConversationContext.estimateMessageTokens(new UserMessage("first stage")) + toolTokens + 20_608);
+        AgentLoopRunner runner = newTestRunner(List.of(model), window);
         var completed = runner.runSession("system prompt", prior.subList(1, prior.size()), "first stage", tools, 4, () -> false, null, null);
         assertThat(completed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(completed.conversation().getLast().getText()).isEqualTo(closingResponse);
@@ -270,11 +272,13 @@ class AgentLoopCompactionTest {
             prior.add(new AssistantMessage("previous turn"));
             prior.add(new UserMessage("x".repeat(24_000)));
         }
-        int contextWindow = Math
-                .toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size()) + AgentConversationContext.estimateMessageTokens(new UserMessage("continue")) + 20_481);
+        var tools = new AgentLoopRunnerTest.RecordingTools();
+        long toolTokens = AgentConversationContext.estimateToolDefinitionTokens(MethodToolCallbackProvider.builder().toolObjects(tools).build().getToolCallbacks());
+        int contextWindow = Math.toIntExact(AgentConversationContext.estimateTokens(prior, 0, prior.size())
+                + AgentConversationContext.estimateMessageTokens(new UserMessage("continue")) + toolTokens + 20_481);
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), contextWindow);
 
-        assertThatThrownBy(() -> runner.runSession("system", prior.subList(1, prior.size()), "continue", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usageSink, null))
+        assertThatThrownBy(() -> runner.runSession("system", prior.subList(1, prior.size()), "continue", tools, 4, () -> false, usageSink, null))
                 .hasMessage("Provider usage could not be determined");
         verify(usageSink).markUncertain();
         verify(chatModel, times(2)).call(any(Prompt.class));

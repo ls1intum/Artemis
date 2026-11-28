@@ -25,7 +25,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
@@ -42,7 +42,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
@@ -54,7 +53,6 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
 import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
@@ -109,18 +107,13 @@ describe('CourseLectureDetailsComponent', () => {
 
         lecture.lectureUnits = [lectureUnit1, lectureUnit2, lectureUnit3];
 
-        let headers = new HttpHeaders();
-        headers = headers.set('Content-Type', 'application/json; charset=utf-8');
-        const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
+        const response = of(lecture);
 
         routerEvents = new Subject<NavigationEnd>();
         currentNavigation = signal({ id: 1 } as Navigation);
 
         await TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbPopover),
                 FaIconComponent,
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentVideoUnitComponent),
@@ -155,14 +148,9 @@ describe('CourseLectureDetailsComponent', () => {
                     },
                 }),
                 MockProvider(LectureUnitService, {
-                    setCompletion: (_lectureUnitId: number, _lectureId: number, _completed: boolean) => EMPTY,
                     completeLectureUnit: vi.fn(),
                 }),
                 MockProvider(AlertService),
-                // The component opens the lecture's Iris session for the chat panel; the real service reads the
-                // router URL in its constructor, which this test bed does not have. The chat panel itself pulls in
-                // PrimeNG's DialogService for the "About Iris" dialog.
-                MockProvider(DialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 /*
                  * `DiscussionSectionComponent` declares `providers: [CommunicationService]`, and ng-mocks carries a mocked
@@ -248,6 +236,14 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(true);
+    });
+
+    it('should space the download PDF button from the lecture units heading', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton')).nativeElement as HTMLElement;
+        expect(downloadButton.parentElement!.classList).toContain('gap-4');
     });
 
     it('should not display download PDF button', async () => {
@@ -375,7 +371,7 @@ describe('CourseLectureDetailsComponent', () => {
             ...lectureUnit3.lecture,
             course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
         };
-        const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
+        const response = of({ ...lecture } as Lecture);
         vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
 
         fixture.changeDetectorRef.detectChanges();
@@ -412,6 +408,21 @@ describe('CourseLectureDetailsComponent', () => {
         await fixture.whenStable();
         expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
         expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
+    });
+
+    it.each([404, 500])('should show a localized alert when the merged PDF download fails with %s', (status) => {
+        courseLecturesDetailsComponent.lectureId = 1;
+        const fileService = TestBed.inject(FileService);
+        vi.spyOn(fileService, 'downloadMergedFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const downloadSpy = vi.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
+        const reloadSpy = vi.spyOn(courseLecturesDetailsComponent, 'loadData');
+
+        courseLecturesDetailsComponent.downloadMergedFiles();
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.courseOverview.lectureDetails.downloadMergedPdfError');
+        expect(downloadSpy).not.toHaveBeenCalled();
+        expect(reloadSpy).not.toHaveBeenCalled();
     });
 
     it('should set lecture unit as completed and publish a new unit reference so the card reacts', async () => {
@@ -510,7 +521,7 @@ describe('CourseLectureDetailsComponent', () => {
     describe('loadData branches', () => {
         it('should build information boxes only for the dates that are present', async () => {
             const lectureStartOnly = cloneWith(lecture, { startDate: dayjs(), endDate: undefined, lectureUnits: [] });
-            const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
+            const startOnlyResponse = of(lectureStartOnly);
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
 
             courseLecturesDetailsComponent.ngOnInit();
@@ -557,8 +568,8 @@ describe('CourseLectureDetailsComponent', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.queryParams = { unit: '7', page: '2' };
 
-            const firstResponse = new Subject<HttpResponse<Lecture>>();
-            const secondResponse = new Subject<HttpResponse<Lecture>>();
+            const firstResponse = new Subject<Lecture>();
+            const secondResponse = new Subject<Lecture>();
             const staleLecture = cloneWith(lecture, { title: 'Stale lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 7, dayjs())] });
             const currentLecture = cloneWith(lecture, { title: 'Current lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 8, dayjs())] });
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(firstResponse).mockReturnValueOnce(secondResponse);
@@ -566,14 +577,14 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
             courseLecturesDetailsComponent.loadData();
 
-            firstResponse.next(new HttpResponse({ body: staleLecture, status: 200 }));
+            firstResponse.next(staleLecture);
             firstResponse.complete();
 
             expect(courseLecturesDetailsComponent.lecture()).toBeUndefined();
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
             expect(courseLecturesDetailsComponent.isLoading()).toBe(true);
 
-            secondResponse.next(new HttpResponse({ body: currentLecture, status: 200 }));
+            secondResponse.next(currentLecture);
             secondResponse.complete();
 
             expect(courseLecturesDetailsComponent.lecture()).toBe(currentLecture);
@@ -596,14 +607,14 @@ describe('CourseLectureDetailsComponent', () => {
             return unit;
         };
 
-        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: cloneWith(lecture, { id, lectureUnits: units, attachments: [] }), status: 200 });
+        const lectureWith = (units: AttachmentVideoUnit[], id = 1) => cloneWith(lecture, { id, lectureUnits: units, attachments: [] });
 
         const respondWith = (units: AttachmentVideoUnit[], id = 1) => {
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureWith(units, id)));
         };
 
         const respondLater = (units: AttachmentVideoUnit[], id = 1) => {
-            const response = new Subject<HttpResponse<Lecture>>();
+            const response = new Subject<Lecture>();
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
             return () => response.next(lectureWith(units, id));
         };

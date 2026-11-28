@@ -10,7 +10,6 @@ import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -26,8 +25,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -98,6 +100,7 @@ const result = {
 describe('ProgrammingExamSummaryComponent', () => {
     let component: ProgrammingExamSummaryComponent;
     let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
+    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -117,6 +120,7 @@ describe('ProgrammingExamSummaryComponent', () => {
             .compileComponents();
         fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
         component = fixture.componentInstance;
+        accountService = TestBed.inject(AccountService);
 
         fixture.componentRef.setInput('exercise', programmingExercise);
         programmingSubmission.participation = programmingParticipation;
@@ -159,8 +163,32 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should display code button', () => {
+        fixture.detectChanges();
+
         const codeButtonComponent = fixture.debugElement.query(By.directive(CodeButtonComponent))?.componentInstance;
         expect(codeButtonComponent).toBeTruthy();
+    });
+
+    it("should request a participation token for the current user's participation", () => {
+        programmingParticipation.student!.login = 'student1';
+        accountService.userIdentity.set({ login: 'student1' } as User);
+        fixture.detectChanges();
+
+        const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: programmingParticipation.id });
+    });
+
+    it("should request a repository token when inspecting another user's participation", () => {
+        programmingParticipation.student!.login = 'student1';
+        accountService.userIdentity.set({ login: 'instructor1' } as User);
+        fixture.detectChanges();
+
+        const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+        expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({
+            returnedTokenType: 'repository-token',
+            repositoryType: RepositoryType.USER,
+            participationId: programmingParticipation.id,
+        });
     });
 
     describe('layout', () => {
@@ -194,11 +222,11 @@ describe('ProgrammingExamSummaryComponent', () => {
             // 'Your Submission', 'Assessment' and 'Problem Statement'
             expect(headings).toHaveLength(3);
             headings.forEach((heading) => {
-                expect(heading.classList).toContain('text-base!');
-                expect(heading.classList).toContain('font-semibold!');
+                expect(heading.classList).toContain('text-base');
+                expect(heading.classList).toContain('font-semibold');
             });
             // the first heading sits in a flex column that already provides the gap to the code button
-            expect(headings[0].classList).toContain('m-0!');
+            expect(headings[0].classList).toContain('m-0');
             expect(headings[0].parentElement!.classList).toContain('flex-col');
             expect(headings[0].parentElement!.classList).toContain('gap-2');
         });
@@ -225,5 +253,17 @@ describe('ProgrammingExamSummaryComponent', () => {
             expect(complaintView.classList).not.toContain('mb-2');
             expect(complaintView.classList).not.toContain('ml-4');
         });
+    });
+
+    it.each([false, true])('should let the complaint section read the complaint as staff only in the instructor view (%s)', (instructorView) => {
+        fixture.componentRef.setInput('exercise', { ...programmingExercise, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+        fixture.componentRef.setInput('isAfterStudentReviewStart', true);
+        fixture.componentRef.setInput('instructorView', instructorView);
+        programmingSubmission.results = [result];
+        fixture.detectChanges();
+
+        const complaintView = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
+        expect(complaintView).not.toBeNull();
+        expect(complaintView.componentInstance.forStaff()).toBe(instructorView);
     });
 });

@@ -2,13 +2,14 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-confirm-icon',
     templateUrl: './confirm-icon.component.html',
-    styleUrl: './confirm-icon.component.scss',
+    styleUrl: './confirm-icon.component.css',
     imports: [FaIconComponent, TumAetUiTooltipDirective],
+    host: { '[class.confirm-icon-fill-parent]': 'fillParent()' },
 })
 export class ConfirmIconComponent {
     initialIcon = input<IconProp>(faTrash);
@@ -16,6 +17,11 @@ export class ConfirmIconComponent {
     confirmIcon = input<IconProp>(faCheck);
     confirmTooltip = input<string>();
     iconSize = input<SizeProp>('1x');
+    /**
+     * let the button fill the host, with the horizontal padding on the button, so a surrounding
+     * container that is sized by its content (e.g. a pill-shaped toolbar button) is clickable as a whole
+     */
+    fillParent = input(false);
     confirmEvent = output<boolean>();
     showConfirm = signal(false);
 

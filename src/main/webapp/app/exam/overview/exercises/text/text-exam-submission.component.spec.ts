@@ -89,6 +89,25 @@ describe('TextExamSubmissionComponent', () => {
         expect(component.studentSubmission().text).toBe('Text');
     });
 
+    it('should keep the shared submission current when editing after continuing an exam', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        textSubmission.text = 'The original long answer';
+        textSubmission.isSynced = true;
+        fixture.componentRef.setInput('studentSubmission', textSubmission);
+        fixture.detectChanges();
+
+        const textarea = fixture.debugElement.query(By.css('#text-editor')).nativeElement as HTMLTextAreaElement;
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        expect(textSubmission.text).toBe('');
+
+        textarea.value = 'Short answer';
+        textarea.dispatchEvent(new Event('input'));
+        expect(component.answer()).toBe('Short answer');
+        expect(textSubmission.text).toBe('Short answer');
+        expect(textSubmission.isSynced).toBe(false);
+    });
+
     it('should update problem statement of the exercise', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('studentSubmission', textSubmission);

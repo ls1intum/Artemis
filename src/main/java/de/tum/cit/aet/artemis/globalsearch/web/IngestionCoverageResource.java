@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
@@ -45,10 +46,12 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
  * coverage projection (cross-course views), a live-per-page coverage view (default matrix view), and a manual refresh.
- * Only available when Weaviate is enabled; every endpoint requires admin.
+ * Only available when Weaviate is enabled; every endpoint requires admin. Left out while the OpenAPI specification is
+ * generated: the {@link WeaviateHealthIndicator} it needs does not exist then.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
+@ConditionalOnProperty(name = "artemis.openapi-docs-generation", havingValue = "false", matchIfMissing = true)
 @EnforceAdmin
 @Lazy
 @RestController

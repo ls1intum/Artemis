@@ -233,7 +233,7 @@ class GenerationSavePartitionTest {
         config.setProperty("hazelcast.max.no.master.confirmation.seconds", "5");
         config.setProperty("hazelcast.merge.first.run.delay.seconds", "300");
         config.setProperty("hazelcast.merge.next.run.delay.seconds", "300");
-        config.getNetworkConfig().setPortAutoIncrement(true).getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
+        config.getNetworkConfig().setPort(0).setPortAutoIncrement(false).getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
         var join = config.getNetworkConfig().getJoin();
         join.getAutoDetectionConfig().setEnabled(false);
         join.getMulticastConfig().setEnabled(false);

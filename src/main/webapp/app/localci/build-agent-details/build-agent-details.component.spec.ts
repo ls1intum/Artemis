@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { FinishedBuildsToolbarComponent } from 'app/localci/shared/finished-builds-toolbar.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -176,7 +178,6 @@ describe('BuildAgentDetailsComponent', () => {
         getFinishedBuildJobs: vi.fn(),
         getRunningBuildJobs: vi.fn(),
         cancelBuildJob: vi.fn(),
-        cancelAllRunningBuildJobsForAgent: vi.fn(),
     };
 
     let agentTopicSubject: Subject<BuildAgentInformation>;
@@ -222,7 +223,6 @@ describe('BuildAgentDetailsComponent', () => {
 
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs1));
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
-        mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
     });
 
@@ -271,6 +271,21 @@ describe('BuildAgentDetailsComponent', () => {
         expect(runningUnsubscribeSpy).toHaveBeenCalled();
     });
 
+    it('does not issue a pending search request after the page is destroyed', () => {
+        vi.useFakeTimers();
+        try {
+            fixture.changeDetectorRef.detectChanges();
+            vi.clearAllMocks();
+            component.searchTerm = 'pending search';
+            component.triggerLoadFinishedJobs();
+            component.ngOnDestroy();
+            vi.advanceTimersByTime(150);
+            expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('should cancel a build job', () => {
         const buildJob = mockRunningJobs1[0];
         const spy = vi.spyOn(component, 'cancelBuildJob');
@@ -281,16 +296,6 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(buildJob.id!);
-    });
-
-    it('should cancel all build jobs of a build agent', () => {
-        const spy = vi.spyOn(component, 'cancelAllBuildJobs');
-
-        component.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
-        component.cancelAllBuildJobs();
-
-        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should show an alert when pausing build agent without a name', () => {
@@ -575,7 +580,7 @@ describe('BuildAgentDetailsComponent', () => {
 
         component.onPageChange({ page: 2, pageSize: 50, direction: 'next' });
 
-        expect(component.currentPage).toBe(2);
+        expect(component.currentPage()).toBe(2);
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
     });
 
@@ -584,19 +589,11 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
 
-        const initialPage = component.currentPage;
+        const initialPage = component.currentPage();
 
         component.onPageChange({} as any);
 
-        expect(component.currentPage).toBe(initialPage);
-    });
-
-    it('should not cancel all build jobs if agent name is missing', () => {
-        component.buildAgent.set({ ...mockBuildAgent, buildAgent: undefined });
-
-        component.cancelAllBuildJobs();
-
-        expect(mockBuildQueueService.cancelAllRunningBuildJobsForAgent).not.toHaveBeenCalled();
+        expect(component.currentPage()).toBe(initialPage);
     });
 
     it('should update running jobs when websocket receives jobs for this agent', () => {
@@ -769,5 +766,47 @@ describe('BuildAgentDetailsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasMore()).toBe(false);
+    });
+});
+
+describe('BuildAgentDetailsComponent shared finished-build toolbar', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('binds the agent search, loading and filter actions while the agent is offline', () => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(WebsocketService),
+                MockProvider(BuildAgentsService),
+                MockProvider(BuildOverviewService),
+                MockProvider(AlertService),
+            ],
+        });
+        vi.spyOn(BuildAgentDetailsComponent.prototype, 'ngOnInit').mockImplementation(() => {});
+        const fixture = TestBed.createComponent(BuildAgentDetailsComponent);
+        const component = fixture.componentInstance;
+        component.agentNotFound.set(true);
+        component.searchTerm = 'offline agent';
+        component.isLoading.set(true);
+        const search = vi.spyOn(component, 'triggerLoadFinishedJobs').mockImplementation(() => {});
+        const refresh = vi.spyOn(component, 'loadFinishedBuildJobs').mockImplementation(() => {});
+        const filter = vi.spyOn(component, 'openFilterModal');
+        fixture.detectChanges();
+        const toolbar = fixture.debugElement.query(By.directive(FinishedBuildsToolbarComponent)).componentInstance as FinishedBuildsToolbarComponent;
+        expect(toolbar.searchTerm()).toBe('offline agent');
+        expect(toolbar.loading()).toBe(true);
+        expect(toolbar.appliedFilterCount()).toBe(0);
+        toolbar.searchTerm.set('updated agent search');
+        expect(component.searchTerm).toBe('updated agent search');
+        toolbar.searchRequested.emit();
+        expect(search).toHaveBeenCalledOnce();
+        expect(refresh).not.toHaveBeenCalled();
+        toolbar.refreshRequested.emit();
+        expect(refresh).toHaveBeenCalledOnce();
+        toolbar.filterRequested.emit();
+        expect(filter).toHaveBeenCalledOnce();
+        expect(component.filterModalVisible()).toBe(true);
     });
 });

@@ -1,0 +1,65 @@
+name: Nightly Exercise Images
+
+# Builds the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell exercise templates in the images of application.yml (the default one of each language, the project type image where a project type has its own, as for C) in a container without
+# network access, so that a dependency the image does not hold fails the build instead of being downloaded from
+# the network. This is the expensive counterpart of the pull request check (ci-exercise-images.yml): it pulls the
+# images and runs the real build phases, but catches what a version comparison cannot (a transitive dependency, a plugin
+# prefix lookup, a changed build phase).
+#
+# The workflow runs on a fixed schedule against the default branch and on manual dispatch. It does not consume any
+# untrusted GitHub event inputs (issue/PR titles, commit messages, etc.), so command injection vectors from such
+# inputs are not applicable here.
+
+on:
+  schedule:
+    - cron: '0 5 * * *'        # 05:00 UTC daily (after the Iris, LTI and Hyperion nightlies at 02:00, 03:00 and 04:00)
+  workflow_dispatch:           # manual ad-hoc runs
+
+concurrency:
+  group: nightly-exercise-images
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  offline-build:
+    name: nightly-exercise-images / ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java, kotlin, rust, javascript, typescript, swift, ruby, dart, c_sharp, python, r, c, c_plus_plus, go, ocaml, bash, vhdl, assembler, haskell]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Build the ${{ matrix.language }} templates offline in their image
+        env:
+          LANGUAGE: ${{ matrix.language }}
+          WORK_DIR: ${{ runner.temp }}/exercise-images
+        run: python supporting_scripts/verify_exercise_images_offline.py --language "$LANGUAGE" --work-dir "$WORK_DIR"
+      - name: Upload the build logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nightly-exercise-images-logs-${{ matrix.language }}
+          path: ${{ runner.temp }}/exercise-images/*/build.log
+      - name: Open a tracking issue on failure
+        # Runs on any failed run. On the nightly schedule this is the primary signal (nobody is watching);
+        # on a manual workflow_dispatch it also lets us verify the notification works. Deduplicated by title,
+        # so repeated failures update one open issue instead of piling up.
+        if: failure()
+        uses: ./.github/actions/open-failure-issue
+        with:
+          title: Nightly exercise image check failed (${{ matrix.language }})
+          assignee: krusche
+          github-token: ${{ github.token }}
+          body: >-
+            Building the ${{ matrix.language }} exercise templates without network access failed in the default image of
+            application.yml on develop, so exercise builds download dependencies again. The log of the run lists what
+            was missing. Update the template project in the image repository (see "Keeping the images in sync with the
+            templates" in the developer documentation), publish a new tag and set it in application.yml.

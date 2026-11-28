@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.core.connector;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +18,6 @@ import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -22,12 +25,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.client.MockClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -53,9 +56,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInter
 @Lazy
 public class IrisRequestMockProvider {
 
-    private final RestTemplate restTemplate;
-
-    private final RestTemplate shortTimeoutRestTemplate;
+    private final MockRestClientServers mockRestClientServers;
 
     private MockRestServiceServer mockServer;
 
@@ -72,12 +73,6 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
-
-    @Value("${artemis.iris.url}/api/v1/memiris")
-    private URL memirisApiURL;
-
-    @Value("${artemis.iris.url}/api/v2/memiris")
-    private URL memirisApiV2URL;
 
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
@@ -96,16 +91,18 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public IrisRequestMockProvider(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public IrisRequestMockProvider(MockRestClientServers mockRestClientServers) {
+        this.mockRestClientServers = mockRestClientServers;
     }
 
     public void enableMockingOfRequests() {
-        // Use unordered mode so tests don't fail due to request ordering
+        // The servers of MockRestClientServers are unordered, so tests don't fail due to request ordering
         // (e.g., when cleanup sends DELETE before processing sends INGEST)
-        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
-        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).build();
+        mockServer = mockRestClientServers.serverOf("pyrisRestClient");
+        shortTimeoutMockServer = mockRestClientServers.serverOf("shortTimeoutPyrisRestClient");
+        // The servers live as long as the context, so a test starts from a clean one, like the fresh server that it replaces.
+        mockServer.reset();
+        shortTimeoutMockServer.reset();
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -433,6 +430,14 @@ public class IrisRequestMockProvider {
         });
     }
 
+    /**
+     * Mocks a Pyris that does not answer the lecture search, as when the request times out.
+     */
+    public void mockSearchLecturesUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
+    }
+
     public void mockSearchLecturesError(HttpStatus status) {
         // @formatter:off
         mockServer
@@ -456,82 +461,56 @@ public class IrisRequestMockProvider {
         });
     }
 
+    /**
+     * Mocks a Pyris that does not take the global search request, as when the request times out.
+     */
+    public void mockGlobalSearchIrisAnswerUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
+    }
+
+    /**
+     * Mocks a Pyris that sends the headers of the lecture search answer and then stops sending its body, so that the read times out.
+     */
+    public void mockSearchLecturesBodyTimesOut() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var response = new MockClientHttpResponse(new InputStream() {
+
+                @Override
+                public int read() throws IOException {
+                    throw new SocketTimeoutException("Read timed out");
+                }
+            }, HttpStatus.OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response;
+        });
+    }
+
+    /**
+     * Mocks a Pyris that answers the lecture search with a body that cannot be read.
+     */
+    public void mockSearchLecturesUnreadableAnswer() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("this is not json", MediaType.APPLICATION_JSON));
+    }
+
     public void mockGlobalSearchIrisAnswerError(HttpStatus status) {
         mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
-    // -------------------- Memiris endpoints --------------------
-
-    public void mockListMemories(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoriesError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockListMemoryData(long userId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockListMemoryDataError(long userId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelations(long userId, String memoryId, Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
-    public void mockGetMemoryWithRelationsError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemory(long userId, String memoryId) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(HttpStatus.NO_CONTENT.value()));
-        // @formatter:on
-    }
-
-    public void mockDeleteMemoryError(long userId, String memoryId, HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
-            .andExpect(method(HttpMethod.DELETE))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
+    /**
+     * Answers the global search request with an error whose body repeats the whole request, as a validation error that quotes its input does.
+     *
+     * @param status          the error status
+     * @param requestConsumer receives the request Artemis sent
+     */
+    public void mockGlobalSearchIrisAnswerErrorEchoingTheRequest(HttpStatus status, Consumer<PyrisGlobalSearchAnswerRequestDTO> requestConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            String body = ((MockClientHttpRequest) request).getBodyAsString();
+            requestConsumer.accept(mapper.readValue(body, PyrisGlobalSearchAnswerRequestDTO.class));
+            return withRawStatus(status.value()).contentType(MediaType.APPLICATION_JSON).body("{\"detail\":\"invalid input: " + body.replace("\"", "'") + "\"}")
+                    .createResponse(request);
+        });
     }
 
     private String write(Object responseBody) {

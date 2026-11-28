@@ -83,7 +83,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             opacity: 1;
         }
 
-        :host-context(html[prime-ng-use-dark-theme='false']) .logo-item.light-mode-black {
+        :host-context(html[data-theme='light']) .logo-item.light-mode-black {
             filter: brightness(0) saturate(100%);
         }
 
@@ -145,7 +145,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
             <a class="social-proof-link" href="https://docs.artemis.tum.de/about/adoption" target="_blank" rel="noopener">
                 {{ 'landing.socialProof.cta' | artemisTranslate }}
                 <fa-icon [icon]="faArrowUpRightFromSquare" />
-                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+                <span class="sr-only">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
             </a>
         </section>
     `,

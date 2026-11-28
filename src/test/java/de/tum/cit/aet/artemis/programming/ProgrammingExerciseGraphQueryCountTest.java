@@ -19,11 +19,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Pins how often the graph loads of a programming exercise read the exercise and its course.
- * <p>
- * An exercise brings its course along, and a graph that is assembled from several queries used to read both again for every query: the course as a select of its
- * own after each of them, and the exercise itself with all its columns, the problem statement among them. The course is now fetched in the statement that reads the
- * exercise, and the queries of one assembly run in one session and select the parts by the id of the exercise, so that the exercise and its course are read once.
+ * Pins the query count and course-loading behavior of programming exercise graphs.
+ * Creation uses three exercise-rooted queries to initialize managed collection wrappers without replacing them in a joined write transaction.
+ * This repeats the exercise columns, but avoids a collection Cartesian product and separate course reads.
  */
 class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -64,30 +62,30 @@ class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheUpdateGraphReadsTheExerciseAndItsCourseInOneStatement() {
         assertThatDb(() -> programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId)).hasBeenCalledTimes(1);
-        assertReadsTheExerciseOnceAndNoCourseOnItsOwn();
+        assertReadsTheExerciseTimesAndNoCourseOnItsOwn(1);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testTheCreationGraphReadsTheExerciseAndItsCourseOnce() {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testTheCreationGraphInitializesManagedCollectionsWithoutSeparateCourseReads() {
         // The graph without the criteria and the links, the criteria, and the links.
         assertThatDb(() -> programmingExerciseRepository.findForCreationByIdElseThrow(exerciseId)).hasBeenCalledTimes(3);
-        assertReadsTheExerciseOnceAndNoCourseOnItsOwn();
+        assertReadsTheExerciseTimesAndNoCourseOnItsOwn(3);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheVersioningGraphReadsTheExerciseAndItsCourseOnce() {
         // The base graph, the test cases, the tasks and the static code analysis categories.
         assertThatDb(() -> programmingExerciseRepository.findForVersioningById(exerciseId)).hasBeenCalledTimes(4);
-        assertReadsTheExerciseOnceAndNoCourseOnItsOwn();
+        assertReadsTheExerciseTimesAndNoCourseOnItsOwn(1);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testTheNameOfTheChannelIsReadWithoutReadingTheExercise() {
         Channel channel = conversationUtilService.addChannelToExercise(exercise);
 
@@ -98,9 +96,9 @@ class ProgrammingExerciseGraphQueryCountTest extends AbstractSpringIntegrationIn
         assertThat(queryInterceptor.getStatements()).noneMatch(statement -> READS_THE_EXERCISE.matcher(statement).find() || READS_A_COURSE.matcher(statement).find());
     }
 
-    private void assertReadsTheExerciseOnceAndNoCourseOnItsOwn() {
+    private void assertReadsTheExerciseTimesAndNoCourseOnItsOwn(int expectedExerciseReads) {
         List<String> statements = queryInterceptor.getStatements();
-        assertThat(statements).filteredOn(statement -> READS_THE_EXERCISE.matcher(statement).find()).hasSize(1);
+        assertThat(statements).filteredOn(statement -> READS_THE_EXERCISE.matcher(statement).find()).hasSize(expectedExerciseReads);
         assertThat(statements).noneMatch(statement -> READS_A_COURSE.matcher(statement).find());
     }
 }

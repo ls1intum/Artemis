@@ -4,17 +4,17 @@
             <div *titleBarTitle class="flex items-center">
                 @if (exam && !exam.id) {
                     @if (!isImport()) {
-                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.createExam"></h5>
+                        <h5 class="my-0" jhiTranslate="artemisApp.examManagement.createExam"></h5>
                     } @else {
-                        <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.importExam"></h5>
+                        <h5 class="my-0" jhiTranslate="artemisApp.examManagement.importExam"></h5>
                     }
                     <jhi-documentation-button [type]="documentationType" />
                 } @else {
-                    <h5 class="my-0!" jhiTranslate="artemisApp.examManagement.editExam"></h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.examManagement.editExam"></h5>
                 }
             </div>
             <!-- Section exam configuration -->
-            <div>
+            <div class="mb-6">
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
                 <jhi-title-channel-name
                     [(title)]="exam.title"
@@ -23,28 +23,24 @@
                     [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
+                    [titleValidationMessage]="!exam.title?.trim() ? 'artemisApp.examManagement.titleMissingOrNotValid' : undefined"
+                    [channelNameValidationMessage]="isChannelNameMissing ? 'error.examChannelNameMissing' : undefined"
                 />
-                @if (!exam.title?.trim()) {
-                    <div class="-mt-2 block text-sm text-state-danger" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
-                }
-                @if (isChannelNameMissing) {
-                    <div class="-mt-2 block text-sm text-state-danger" data-testid="channel-name-validation-message" jhiTranslate="error.examChannelNameMissing"></div>
-                }
             </div>
-            <div class="mb-4">
+            <div class="mb-6">
                 <div>
                     <label jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
                     <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
-            @if (!exam.testExam) {
-                <div class="mb-4 flex items-center gap-2">
+            @if (isRealExam(exam)) {
+                <div class="mb-6 flex items-center gap-2">
                     <tumaet-ui-checkbox inputId="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
                     <label for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck">Exam with attendance check </label>
                 </div>
             }
-            <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <tumaet-ui-form-field controlId="examiner" [label]="'artemisApp.examManagement.examiner' | artemisTranslate">
                     <input
                         tumAetUiInput
@@ -79,24 +75,25 @@
                     />
                 </tumaet-ui-form-field>
             </div>
-            <hr class="my-4 border-(--border-color)" />
+            <hr class="my-6" />
             <!-- Section exam conduction (release dates and working time) -->
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction"></h5>
             <div class="@container">
-                <div class="mb-4 grid grid-cols-1 items-start gap-x-6 gap-y-4 @min-[45.5rem]:grid-cols-2 @min-[69rem]:grid-cols-3">
+                <div class="mb-6 grid grid-cols-1 items-start gap-x-6 gap-y-6 @min-[45.5rem]:grid-cols-2 @min-[69rem]:grid-cols-3">
+                    @let realExam = isRealExam(exam);
                     <div>
                         <jhi-exam-timeline
                             [(visibleDate)]="exam.visibleDate"
                             [(startDate)]="exam.startDate"
                             [(endDate)]="exam.endDate"
-                            [testExam]="exam.testExam ?? false"
+                            [testExam]="!realExam"
                             (datesChanged)="updateExamWorkingTime()"
                             (timelineStatusChange)="timelineStatus.set($event)"
                         />
                     </div>
                     <div>
                         @if (isOngoingExam) {
-                            <div class="mb-4">
+                            <div class="mb-6">
                                 <span class="inline-flex" [tumAetUiTooltip]="'artemisApp.examManagement.dateChange.message' | artemisTranslate">
                                     <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" />
                                     <span class="mx-1 font-bold" jhiTranslate="artemisApp.examManagement.dateChange.label"></span>
@@ -106,12 +103,12 @@
                         @if (confirmDateChangeVisible()) {
                             <tumaet-ui-dialog [(visible)]="confirmDateChangeVisible" size="medium" [header]="'artemisApp.examManagement.dateChange.title' | artemisTranslate">
                                 <p class="whitespace-pre-line">{{ 'artemisApp.examManagement.dateChange.message' | artemisTranslate }}</p>
-                                <div class="rounded-lg bg-(--hover-slightly-darker-body-bg) p-4">
+                                <div class="rounded-lg bg-(--hover-slightly-darker-body-bg) p-6">
                                     @if (oldWorkingTime && newWorkingTime) {
                                         <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
                                     }
                                 </div>
-                                <hr class="my-4 border-(--border-color)" />
+                                <hr class="my-6" />
                                 <div>
                                     <jhi-confirm-entity-name
                                         confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
@@ -141,18 +138,18 @@
                                 </ng-template>
                             </tumaet-ui-dialog>
                         }
-                        <div class="mb-4 flex flex-col gap-1">
+                        <div class="mb-6 flex flex-col gap-1">
                             <div>
                                 <label for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                                <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                                <jhi-help-icon [text]="'artemisApp.examManagement' + (!realExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                             </div>
-                            @if (!exam.testExam) {
+                            @if (realExam) {
                                 <input tumAetUiInput id="workingTimeInMinutes" readonly disabled type="text" class="w-full" [value]="workingTimeInMinutesRounded" />
                                 @if (isWorkingTimeTooHigh) {
                                     <tumaet-ui-message severity="error"><span jhiTranslate="error.examWorkingTimeTooHigh"></span></tumaet-ui-message>
                                 }
                             }
-                            @if (exam.testExam) {
+                            @if (!realExam) {
                                 <input
                                     tumAetUiInput
                                     id="workingTimeInMinutes"
@@ -199,24 +196,21 @@
                     </div>
                 </div>
             </div>
-            <hr class="my-4 border-(--border-color)" />
+            <hr class="my-6" />
             <!-- Section settings for exam exercises -->
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises"></h5>
-            <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div class="flex flex-col gap-1">
                     <div>
                         <label for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
                         <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
                     </div>
-                    <input
-                        tumAetUiInput
-                        id="examMaxPoints"
+                    <jhi-points-input
+                        fluid
+                        inputId="examMaxPoints"
                         name="examMaxPoints"
-                        class="w-full"
-                        type="number"
-                        min="1"
-                        max="9999"
-                        step="1"
+                        [min]="1"
+                        [max]="9999"
                         pattern="\d*"
                         [(ngModel)]="exam.examMaxPoints"
                         #examMaxPointsInput="ngModel"
@@ -257,13 +251,13 @@
                     }
                 </div>
             </div>
-            <div class="mb-4 flex items-center gap-2">
+            <div class="mb-6 flex items-center gap-2">
                 <tumaet-ui-checkbox inputId="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
                 <label for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"></label>
             </div>
             <!-- Subsection Exercise Selection for Exam Import -->
             @if (isImport() && exam.exerciseGroups) {
-                <div class="mb-4">
+                <div class="mb-6">
                     <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
                     <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
                     <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="exam.course?.id" />
@@ -271,13 +265,13 @@
             }
             <!-- Section exam assessment and student review
         Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
-            @if (!exam.testExam) {
+            @if (isRealExam(exam)) {
                 <div>
-                    <hr class="my-4 border-(--border-color)" />
+                    <hr class="my-6" />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    @if (!exam.testExam) {
-                        <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                    @if (isRealExam(exam)) {
+                        <div class="mb-6 grid gap-6 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                             <div class="flex flex-col gap-1">
                                 <label for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"></label>
                                 <input
@@ -311,7 +305,7 @@
                                 }
                             </div>
                         </div>
-                        <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                        <div class="mb-6 grid gap-6 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                             <div>
                                 <tumaet-ui-date-picker
                                     inputId="examSummaryPublicationDate"
@@ -330,7 +324,7 @@
                             </div>
                         </div>
                     }
-                    <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                    <div class="mb-6 grid gap-6 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                         <div>
                             <tumaet-ui-date-picker
                                 inputId="examStudentReviewStart"
@@ -360,9 +354,9 @@
                     </div>
                 </div>
             }
-            <hr class="my-4 border-(--border-color)" />
+            <hr class="my-6" />
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
-            <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+            <div class="mb-6 grid gap-6 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                 <div>
                     <tumaet-ui-date-picker
                         inputId="exampleSolutionPublicationDate"
@@ -380,38 +374,38 @@
                     }
                 </div>
             </div>
-            <hr class="my-4 border-(--border-color)" />
+            <hr class="my-6" />
             <!-- Section Texts-->
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text"></h5>
-            <div class="mb-4 flex flex-col gap-1">
+            <div class="mb-6 flex flex-col gap-1">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText"></label>
                 <jhi-markdown-editor-monaco id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
                 @if (isExamTextTooLong(exam.startText)) {
                     <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
                 }
             </div>
-            <div class="mb-4 flex flex-col gap-1">
+            <div class="mb-6 flex flex-col gap-1">
                 <label for="endText" jhiTranslate="artemisApp.examManagement.endText"></label>
                 <jhi-markdown-editor-monaco id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
                 @if (isExamTextTooLong(exam.endText)) {
                     <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
                 }
             </div>
-            <div class="mb-4 flex flex-col gap-1">
+            <div class="mb-6 flex flex-col gap-1">
                 <label for="confirmationStartText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
                 <jhi-markdown-editor-monaco id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
                 @if (isExamTextTooLong(exam.confirmationStartText)) {
                     <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
                 }
             </div>
-            <div class="mb-4 flex flex-col gap-1">
+            <div class="mb-6 flex flex-col gap-1">
                 <label for="confirmationEndText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
                 <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
                 @if (isExamTextTooLong(exam.confirmationEndText)) {
                     <div class="text-state-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
                 }
             </div>
-            <div class="mt-4">
+            <div class="mt-6">
                 @if (!isValidExamStudentReviewEnd) {
                     <tumaet-ui-tag
                         severity="warn"

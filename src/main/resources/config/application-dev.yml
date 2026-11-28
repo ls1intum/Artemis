@@ -31,6 +31,7 @@ spring:
     # profile emit pretty-printed responses that no longer match production byte for byte. Re-enable deliberately.
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the dev datasource to PostgreSQL before MySQL support is removed
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
@@ -141,6 +142,9 @@ artemis:
     continuous-integration:
         build-job:
           retention-period: 365 # Number of days before build job entries are deleted
+        # Docker Desktop forwards connections to the host to its loopback interface, so the check reports the services of a local installation as reachable
+        network-isolation-check:
+            enabled: false
     security:
         internal:
             allowed-cidrs:
@@ -158,10 +162,11 @@ artemis:
         # The Weaviate server must have API key authentication enabled (see deployment/docker/weaviate/*.env).
         # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
         # The following properties are only required when using vectorizer-module: text2vec-openai
-        # See docs: admin/global-search-weaviate
-        # open-ai-embedding-model: qwen3-embedding:0.6b              # Embedding model name served by the OpenAI-compatible API; changing it rebuilds the index
-        # open-ai-base-url: http://localhost:11434                   # Base URL of the OpenAI-compatible API as seen from Artemis (not from Weaviate); no /v1 suffix
-        # gpu-api-key: yourApiKey                                    # API key for the embedding API (use any non-empty value for Ollama)
+        # See docs: admin/global-search-weaviate and admin/llm-configuration
+        # embedding-llm-preset: embed                                 # Preset with api: embeddings under artemis.llm.presets, e.g. Ollama:
+        #                                                             #   artemis.llm.endpoints.ollama.base-url: http://localhost:11434/v1
+        #                                                             #   artemis.llm.presets.embed: { endpoint: ollama, model: qwen3-embedding:0.6b, api: embeddings }
+        #                                                             # Changing the preset's model rebuilds the index.
         # open-ai-query-instruction: ""                              # Optional text put in front of every search query before embedding it (see the admin docs)
         # Outbox dispatcher and index check tuning for the durable global-search metadata sync. The values below
         # are the built-in defaults; uncomment and change only to override. Freshness is driven by an after-commit
@@ -198,11 +203,6 @@ artemis:
         #     max-inputs-per-request: 32             # Chunks sent in one embedding request (at most 256)
         #     background-max-rows-per-minute: 600    # Background index writes per minute
         #     background-max-requests-per-minute: 30 # Background embedding requests per minute
-
-# Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
-sentry:
-  traces-sample-rate: 0.0
-  environment: local
 
 helios:
   status:

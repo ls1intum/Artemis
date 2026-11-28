@@ -90,11 +90,15 @@ export class TumAetUiDialogComponent implements OnDestroy {
     readonly dismissableMask = input(false, { transform: booleanAttribute });
     /** Responsive dialog dimensions. Omit for content-sized dialogs. */
     readonly size = input<TumAetUiDialogSize>();
+    /** Body spacing only; `none` supports edge-to-edge illustrations or media. Header and footer keep their spacing. */
+    readonly contentPadding = input<'default' | 'none'>('default');
     /** Accessible name used when no visible header or header template is present. */
     readonly ariaLabel = input<string>();
     readonly closeButtonAriaLabel = input<string>();
     readonly role = input<DialogRole>('dialog');
     readonly ariaDescribedBy = input<string>();
+    /** Initial focus target. Dialog focus keeps long content at its starting scroll position. */
+    readonly autoFocus = input<'dialog' | 'first-tabbable'>('first-tabbable');
 
     readonly shown = output<void>();
     readonly hidden = output<void>();
@@ -151,6 +155,7 @@ export class TumAetUiDialogComponent implements OnDestroy {
             ariaLabelledBy: labelledBy ?? null,
             ariaDescribedBy: this.ariaDescribedBy() ?? null,
             restoreFocus: true,
+            autoFocus: this.autoFocus(),
         });
         this.dialogRef = ref;
         lockPageScroll();
@@ -161,6 +166,9 @@ export class TumAetUiDialogComponent implements OnDestroy {
         });
         ref.keydownEvents.subscribe((event) => {
             if (event.key === 'Escape' && this.closeOnEscape()) {
+                // Mark it as handled, like a native dialog does, so a document-level Escape listener of the page behind
+                // (a fullscreen layout, for instance) does not close itself on the same key press.
+                event.preventDefault();
                 this.close();
             }
         });

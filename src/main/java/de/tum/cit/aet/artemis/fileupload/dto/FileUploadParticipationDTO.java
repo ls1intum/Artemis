@@ -35,29 +35,19 @@ public record FileUploadParticipationDTO(Long id, @Nullable InitializationState 
         @Nullable String participantName, @Nullable String participantIdentifier, @Nullable Boolean isOwner, @Nullable FileUploadExerciseContextDTO exercise) {
 
     /**
-     * Factory method to create a {@link FileUploadParticipationDTO} from a {@link Participation} entity.
-     *
-     * @param participation   the participation entity to map, can be null
-     * @param includeExercise whether to include the exercise details in the mapped DTO
-     * @return the mapped DTO, or null if the input was null
-     */
-    public static @Nullable FileUploadParticipationDTO of(@Nullable Participation participation, boolean includeExercise) {
-        return of(participation, includeExercise, null, null, null, null);
-    }
-
-    /**
-     * Factory method to create a {@link FileUploadParticipationDTO} from a {@link Participation} entity with permission flags.
+     * Maps a participation with explicit participant identity visibility.
      *
      * @param participation       the participation entity to map, can be null
-     * @param includeExercise     whether to include the exercise details in the mapped DTO
+     * @param includeExercise     whether to include the exercise details
      * @param isOwner             whether the current user owns the participation
-     * @param isAtLeastTutor      whether the current user has at least tutor privileges for the exercise
-     * @param isAtLeastEditor     whether the current user has at least editor privileges for the exercise
-     * @param isAtLeastInstructor whether the current user has at least instructor privileges for the exercise
+     * @param isAtLeastTutor      whether the current user has at least tutor privileges
+     * @param isAtLeastEditor     whether the current user has at least editor privileges
+     * @param isAtLeastInstructor whether the current user has at least instructor privileges
+     * @param includeParticipant  whether to include participant names and identifiers
      * @return the mapped DTO, or null if the input was null
      */
-    public static @Nullable FileUploadParticipationDTO of(@Nullable Participation participation, boolean includeExercise, @Nullable Boolean isOwner,
-            @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
+    static @Nullable FileUploadParticipationDTO of(@Nullable Participation participation, boolean includeExercise, @Nullable Boolean isOwner, @Nullable Boolean isAtLeastTutor,
+            @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor, boolean includeParticipant) {
         if (participation == null) {
             return null;
         }
@@ -67,8 +57,10 @@ public record FileUploadParticipationDTO(Long id, @Nullable InitializationState 
         String participantIdentifier = null;
         if (participation instanceof StudentParticipation studentParticipation) {
             presentationScore = studentParticipation.getPresentationScore();
-            participantName = studentParticipation.getParticipantName();
-            participantIdentifier = studentParticipation.getParticipantIdentifier();
+            if (includeParticipant) {
+                participantName = studentParticipation.getParticipantName();
+                participantIdentifier = studentParticipation.getParticipantIdentifier();
+            }
         }
 
         FileUploadExerciseContextDTO exerciseDTO = null;

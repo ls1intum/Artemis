@@ -1,13 +1,13 @@
 @if (feedbackItem()) {
-    <p-message class="feedback-item mb-2 block" [severity]="messageSeverity(feedbackItem()!.color)" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
+    <tumaet-ui-message class="feedback-item mb-2" [severity]="messageSeverity(feedbackItem()!.color)">
         <div class="w-full">
             <div class="flex justify-between gap-8">
-                <h4 class="feedback-item__category m-0! text-base! font-semibold!">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
+                <h4 class="feedback-item__category m-0 text-base font-semibold">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
                 @if (feedbackItem()!.credits) {
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {
-                            <fa-icon [icon]="faExclamationTriangle" [pTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+                            <fa-icon [icon]="faExclamationTriangle" [tumAetUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                         }
                     </span>
                 }
@@ -30,12 +30,12 @@
                 </div>
             }
             @if (feedbackItem()!.text) {
-                <jhi-feedback-collapse class="mt-4! block" [feedback]="feedbackItem()!" />
+                <jhi-feedback-collapse class="mt-4 block" [feedback]="feedbackItem()!" />
             } @else {
-                <p class="mb-0!" jhiTranslate="artemisApp.result.noFeedback"></p>
+                <p class="mb-0" jhiTranslate="artemisApp.result.noFeedback"></p>
             }
         </div>
-    </p-message>
+    </tumaet-ui-message>
 }
 @if (feedbackItemGroup()) {
     <div class="feedback-item-group">
@@ -52,7 +52,7 @@
         >
             <div class="flex items-center">
                 <fa-icon class="me-2" [icon]="isGroupExpanded() ? faAngleUp : faAngleDown" />
-                <h4 class="feedback-item__category m-0! text-base! font-semibold!">
+                <h4 class="feedback-item__category m-0 text-base font-semibold">
                     {{ 'artemisApp.feedback.group.' + feedbackItemGroup()!.name | artemisTranslate }} ({{ feedbackItemGroup()!.members.length }})
                 </h4>
             </div>

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -46,12 +47,16 @@ public class ExerciseDateService {
     /**
      * Whether participation identities must be hidden from non-instructor staff. Course programming exercises allow
      * student support until their exercise due date, and indefinitely when assessment is automatic or no due date is set.
-     * Other exercise types and exams retain anonymous assessment throughout.
+     * Course quizzes are always assessed automatically, so no tutor assessment needs to be anonymous and staff may see
+     * who achieved which score. Other exercise types and exams retain anonymous assessment throughout.
      *
      * @param exercise the exercise being accessed
      * @return whether anonymous assessment applies
      */
     public boolean isAssessmentAnonymizationActive(Exercise exercise) {
+        if (exercise instanceof QuizExercise) {
+            return exercise.isExamExercise();
+        }
         return !(exercise instanceof ProgrammingExercise) || isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.getAssessmentType(), exercise.getDueDate());
     }
 

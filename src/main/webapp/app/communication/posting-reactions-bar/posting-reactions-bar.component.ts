@@ -1,3 +1,7 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -10,8 +14,7 @@ import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
@@ -55,6 +58,15 @@ interface ReactionEvent {
 }
 
 /**
+ * what the forward message dialog hands back when the user confirms the forwarding
+ */
+interface ForwardMessageSelection {
+    channels: Conversation[];
+    users: UserPublicInfoDTO[];
+    messageContent: string;
+}
+
+/**
  * represents the amount of users that reacted
  * hasReacted indicates if the currently logged-in user is among those counted users
  */
@@ -74,9 +86,11 @@ interface ReactionMetaDataMap {
 @Component({
     selector: 'jhi-posting-reactions-bar',
     templateUrl: './posting-reactions-bar.component.html',
-    styleUrls: ['./posting-reactions-bar.component.scss'],
+    styleUrls: ['../communication.component.css', './posting-reactions-bar.component.css'],
     imports: [
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiTagComponent,
         EmojiComponent,
         CdkOverlayOrigin,
         FaIconComponent,
@@ -96,7 +110,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     private communicationService = inject(CommunicationService);
     private accountService = inject(AccountService);
     private conversationService = inject(ConversationService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private courseConversationsService = inject(CourseConversationsService);
     private courseSidebarService = inject(CourseSidebarService);
 
@@ -115,6 +130,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     this.getPostingType() === 'answerPost' ? this.communicationService.currentUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false,
                 );
                 if (this.getPostingType() === 'post') {
+                    // The permission to pin depends on the conversation of the posting, which differs when the component is reused
+                    this.updateCanPin();
                     this.resetTooltipsAndPriority();
                 }
                 this.setMayDelete();
@@ -199,8 +216,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         );
 
         if (this.getPostingType() === 'post') {
-            const currentConversation = this.communicationService.getCurrentConversation();
-            this.setCanPin(currentConversation);
+            this.updateCanPin();
             this.resetTooltipsAndPriority();
         }
         this.setMayDelete();
@@ -224,11 +240,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     setCanPin(currentConversation: ConversationDTO | undefined) {
         if (!currentConversation) {
-            this.canPin.set(this.communicationService.currentUserIsAtLeastTutorInCourse());
-            return;
-        }
-
-        if (isChannelDTO(currentConversation)) {
+            // Pinning is a moderation right of the conversation, so the user is not offered it while the conversation is unknown
+            this.canPin.set(false);
+        } else if (isChannelDTO(currentConversation)) {
             this.canPin.set(currentConversation.hasChannelModerationRights ?? false);
         } else if (isGroupChatDTO(currentConversation)) {
             this.canPin.set(currentConversation.creator?.id === this.accountService.userIdentity()?.id);
@@ -236,6 +250,19 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.canPin.set(true);
         }
         this.canPinOutput.emit(this.canPin());
+    }
+
+    private updateCanPin() {
+        this.setCanPin(this.communicationService.getCurrentConversation() ?? this.getCachedConversationOfPost());
+    }
+
+    /**
+     * Posts outside of a selected conversation (e.g. in the course-wide search) only carry a reference to their conversation,
+     * which lacks what the user may do in it. The cached conversation of the user has it.
+     */
+    private getCachedConversationOfPost(): ConversationDTO | undefined {
+        const conversationId = (this.posting() as Post).conversation?.id;
+        return conversationId === undefined ? undefined : this.courseConversationsService.getCachedConversation(conversationId);
     }
 
     private resetTooltipsAndPriority() {
@@ -553,12 +580,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
      */
     forwardMessage(): void {
-        const isAnswer = this.getPostingType() === 'answerPost';
-        if (!this.posting()!.content || this.posting()!.content === '') {
-            this.openForwardMessageView(this.originalPostDetails()!, isAnswer);
-        } else {
-            this.openForwardMessageView(this.posting()!, isAnswer);
+        const posting = this.posting();
+        const source = posting?.content ? posting : this.originalPostDetails();
+        if (!source) {
+            return;
         }
+        // A received forward is a post even when its selected source is a reply without private parent metadata.
+        const isAnswer = 'resolvesPost' in source || 'post' in source;
+        this.openForwardMessageView(source, isAnswer);
     }
 
     markMessageAsUnread() {
@@ -596,12 +625,13 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         }
                     });
 
-                    // Open the forward message dialog using PrimeNG DialogService
-                    const ref = this.dialogService.open(
+                    // The dialog renders its own header, so the kit dialog only supplies the accessible name, and it is a form dialog.
+                    // The dialog reads the data through TumAetUiDialogConfig while it initialises, so it is passed here and never assigned afterwards.
+                    const ref = this.dialogService.open<ForwardMessageDialogComponent, ForwardMessageSelection>(
                         ForwardMessageDialogComponent,
                         cloneWith(defaultFirstLayerDialogOptions, {
-                            closable: false,
-                            focusOnShow: false,
+                            autoFocus: 'first-tabbable',
+                            ariaLabel: this.translateService.instant('artemisApp.communication.forward.forwardMessage'),
                             data: {
                                 users: [],
                                 channels: this.channels,
@@ -611,7 +641,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         }),
                     );
 
-                    ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
+                    ref.onClose.subscribe(async (selection) => {
                         if (selection) {
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);

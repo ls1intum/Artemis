@@ -129,7 +129,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetImprintForUpdate_instructorAccessForbidden() throws Exception {
         request.get("/api/admin/imprint-for-update?language=de", HttpStatus.FORBIDDEN, ImprintDTO.class);
     }
@@ -202,7 +202,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateImprint_instructorAccessForbidden() throws Exception {
         request.put("/api/admin/imprint", new ImprintDTO("Impressum", Language.GERMAN), HttpStatus.FORBIDDEN);
     }

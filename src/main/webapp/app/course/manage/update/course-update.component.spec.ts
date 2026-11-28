@@ -3,7 +3,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-image.service';
@@ -11,11 +10,10 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseUpdateComponent } from 'app/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { InitialCommitAuthorMode } from 'app/course/shared/entities/course-configuration.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -25,6 +23,7 @@ import { CourseAdminService } from 'app/course/manage/services/course-admin.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
@@ -42,7 +41,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -104,13 +103,12 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
@@ -138,6 +136,77 @@ describe('Course Management Update Component', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('loads instructor welcome context and saves an intentional clear without dropping course configuration', () => {
+        course.courseConfiguration = { studentWelcomeContext: 'Learn through practice.', gradeRelevant: false, dataRetentionHold: true };
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+        vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(comp.courseForm.controls['studentWelcomeContext'].value).toBe('Learn through practice.');
+        const update = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        comp.courseForm.controls['studentWelcomeContext'].setValue('');
+        comp.save();
+        const saved = update.mock.calls[0][1];
+        expect(toCourseUpdateDTO(saved).studentWelcomeContext).toBe('');
+        expect(saved.courseConfiguration?.gradeRelevant).toBe(false);
+        expect(saved.courseConfiguration?.dataRetentionHold).toBe(true);
+    });
+
+    describe('first commit author', () => {
+        function open(configuration: Course['courseConfiguration']) {
+            course.courseConfiguration = configuration;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            return vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        }
+
+        it('offers the setting for a stored course and keeps the exercise creator by default', () => {
+            const update = open({ gradeRelevant: true });
+            expect(fixture.nativeElement.querySelector('[data-testid="course-initial-commit-author"]')).not.toBeNull();
+
+            comp.save();
+
+            expect(toCourseUpdateDTO(update.mock.calls[0][1]).initialCommitAuthor).toEqual({ mode: InitialCommitAuthorMode.EXERCISE_CREATOR, name: undefined, email: undefined });
+        });
+
+        it('saves the stored custom identity and drops it when another mode is chosen', () => {
+            const update = open({ gradeRelevant: true, initialCommitAuthor: { mode: InitialCommitAuthorMode.CUSTOM, name: 'Course Team', email: 'team@university.example' } });
+            comp.courseForm.get('initialCommitAuthor.name')!.setValue('  Teaching Team ');
+
+            comp.save();
+            expect(toCourseUpdateDTO(update.mock.calls[0][1]).initialCommitAuthor).toEqual({
+                mode: InitialCommitAuthorMode.CUSTOM,
+                name: 'Teaching Team',
+                email: 'team@university.example',
+            });
+
+            comp.courseForm.get('initialCommitAuthor.mode')!.setValue(InitialCommitAuthorMode.PLACEHOLDER);
+            comp.save();
+            expect(toCourseUpdateDTO(update.mock.calls[1][1]).initialCommitAuthor).toEqual({ mode: InitialCommitAuthorMode.PLACEHOLDER, name: undefined, email: undefined });
+        });
+
+        it('keeps the course from being saved while the custom identity is incomplete', () => {
+            open({ gradeRelevant: true });
+            comp.courseForm.get('initialCommitAuthor.mode')!.setValue(InitialCommitAuthorMode.CUSTOM);
+
+            expect(comp.courseForm.get('initialCommitAuthor')!.invalid).toBe(true);
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(expect.arrayContaining(['initialCommitAuthorName', 'initialCommitAuthorEmail']));
+        });
+
+        it('does not offer the setting while a course is created', () => {
+            course.id = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.courseForm.get('initialCommitAuthor')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="course-initial-commit-author"]')).toBeNull();
+        });
     });
 
     describe('previousState', () => {
@@ -197,6 +266,26 @@ describe('Course Management Update Component', () => {
             maxPointsControl.setValue(10);
             expect(maxPointsControl.hasError('notInteger')).toBe(false);
             expect(maxPointsControl.hasError('min')).toBe(false);
+        });
+
+        it('should write the typed max points into the form control and report a fractional value as not an integer', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsInput = fixture.nativeElement.querySelector('#field_maxPoints') as HTMLInputElement;
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            typeIntoInputNumber(maxPointsInput, '120');
+            expect(maxPointsControl.value).toBe(120);
+            expect(maxPointsControl.valid).toBe(true);
+
+            typeIntoInputNumber(maxPointsInput, '10.5');
+            expect(maxPointsControl.value).toBe(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
         });
     });
 
@@ -788,6 +877,108 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
             // Verify the form control is editable
             expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].enabled).toBe(true);
+        });
+    });
+
+    describe('code of conduct length cap', () => {
+        beforeEach(() => {
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        });
+
+        it('reflects the live source length through the computed signal', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('abc');
+            expect(comp.codeOfConductLength()).toBe(3);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('');
+            expect(comp.codeOfConductLength()).toBe(0);
+        });
+
+        it('keeps the control valid at the exact limit and marks it invalid one over', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT));
+            expect(control.hasError('maxlength')).toBe(false);
+            expect(control.valid).toBe(true);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            expect(control.hasError('maxlength')).toBe(true);
+            expect(control.valid).toBe(false);
+        });
+
+        it('reveals the inline error and invalid state on a user edit over the limit, before any save attempt', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // Baseline: an untouched, pristine control shows no error and is not flagged invalid.
+            expect(control.dirty).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+
+            // A genuine user edit marks the control dirty, so the error and aria-invalid surface without pressing save.
+            expect(control.dirty).toBe(true);
+            expect(comp.submitAttempted()).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(true);
+        });
+
+        it('does not flag an error on load before the user edits the code of conduct', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            const control = comp.courseForm.get('courseInformationSharingMessagingCodeOfConduct')!;
+
+            // The programmatic [(markdown)] load does not call the user-edit handler, so the control stays pristine
+            // and no error is shown until the user actually edits.
+            expect(control.dirty).toBe(false);
+            expect(control.touched).toBe(false);
+            expect(comp.showError('courseInformationSharingMessagingCodeOfConduct')).toBe(false);
+        });
+
+        it('surfaces the code-of-conduct issue in the footer list once the limit is exceeded', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            fixture.detectChanges();
+
+            const issueControls = comp.issues().map((issue) => issue.control);
+            expect(issueControls).toContain('courseInformationSharingMessagingCodeOfConduct');
+        });
+
+        it('blocks save through the submit guard when the code of conduct is over the limit', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('x'.repeat(comp.CODE_OF_CONDUCT_LIMIT + 1));
+            fixture.detectChanges();
+
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => undefined);
+            // jsdom does not implement scrollIntoView; onSubmit calls focusIssue which scrolls to the first issue.
+            Element.prototype.scrollIntoView = vi.fn();
+
+            comp.onSubmit();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('flushes the debounced code-of-conduct editor before the submit guard reads the form state', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            Element.prototype.scrollIntoView = vi.fn();
+            const flushSpy = vi.fn();
+            // Pretend the inline Monaco editor is wired up (it is mocked away in the test module).
+            (comp as unknown as { codeOfConductEditor: () => { flushPendingTextChange: () => void } }).codeOfConductEditor = () => ({
+                flushPendingTextChange: flushSpy,
+            });
+
+            comp.onSubmit();
+
+            expect(flushSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -1947,7 +2138,7 @@ describe('Course Management Feature Toggle Update', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -1959,7 +2150,6 @@ describe('Course Management Feature Toggle Update', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
@@ -1990,7 +2180,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
     it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -2009,7 +2199,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 
     it('should hide the presentation assessments form field when the feature is not toggled', () => {
@@ -2020,7 +2210,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+        expect(formGroup.nativeElement.style.display).toBe('none');
     });
 
     it('should show the presentation assessments form field when the feature is toggled', () => {
@@ -2031,7 +2221,7 @@ describe('Course Management Feature Toggle Update', () => {
         const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
 
         expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
-        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+        expect(formGroup.nativeElement.style.display).toBe('');
     });
 });
 
@@ -2045,7 +2235,7 @@ describe('Course Management Update Component Create', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -2056,7 +2246,6 @@ describe('Course Management Update Component Create', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
@@ -2289,13 +2478,12 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },

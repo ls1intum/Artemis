@@ -9,7 +9,11 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -22,6 +26,7 @@ import {
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
     MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LDAP,
     MODULE_FEATURE_LECTURE,
@@ -115,6 +120,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): drop PROFILE_JENKINS here and its docs link below
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
     /** Module features to display */
@@ -123,6 +129,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_ATLASLLM,
         MODULE_FEATURE_HYPERION,
+        MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
         MODULE_FEATURE_DEIMOS,
         MODULE_FEATURE_EXAM,
         MODULE_FEATURE_PLAGIARISM,
@@ -148,15 +155,15 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.PlagiarismChecks]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/course-management/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
+        [FeatureToggle.Science]: 'https://docs.artemis.tum.de/admin/science-data-collection',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
-        [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
-        [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
-        [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
+        [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#enable-the-atlas-agent',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
         [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.GlobalSearchReconcile]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
         [FeatureToggle.GlobalSearchReconcileOrphan]: 'https://docs.artemis.tum.de/admin/global-search-weaviate',
+        [FeatureToggle.SmartQuizzes]: 'https://docs.artemis.tum.de/admin/hyperion#configure-the-quiz-question-pool',
     };
 
     /** Documentation links for profile-based features */
@@ -170,8 +177,9 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly moduleDocumentationLinks: Partial<Record<ModuleFeature, string>> = {
         [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#edutelligence--iris',
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning',
-        [MODULE_FEATURE_ATLASLLM]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
+        [MODULE_FEATURE_ATLASLLM]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#enable-the-atlas-agent',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_HYPERION_EXERCISE_GENERATION]: 'https://docs.artemis.tum.de/admin/hyperion',
         [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
         [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check',

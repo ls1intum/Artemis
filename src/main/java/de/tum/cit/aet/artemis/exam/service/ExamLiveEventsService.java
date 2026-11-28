@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXAM_EVENTS;
 import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.STUDENT_EXAM_EVENTS;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -73,6 +76,14 @@ public class ExamLiveEventsService {
     }
 
     /**
+     * @param examId the exam whose announcement history should be returned
+     * @return the exam-wide announcements in reverse chronological order
+     */
+    public List<ExamWideAnnouncementEventDTO> getAnnouncements(long examId) {
+        return examLiveEventRepository.findAnnouncementsByExamId(examId).stream().map(ExamWideAnnouncementEvent::asDTO).toList();
+    }
+
+    /**
      * Send an attendance check event to the specified student
      *
      * @param studentExam The student exam the where the popup should be shown
@@ -120,7 +131,7 @@ public class ExamLiveEventsService {
         // client on its correct startedDate-based fallback. A real exam a student is conducting always has both dates
         // set; the null checks are defensive and the client treats the dates as optional accordingly.
         var exam = studentExam.getExam();
-        if (!exam.isTestExam()) {
+        if (exam.getExamMode().isReal()) {
             if (exam.getStartDate() != null) {
                 event.setNewStartDate(exam.getStartDate().toInstant());
             }

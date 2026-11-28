@@ -2,6 +2,7 @@
 id: criteria-builder
 title: Criteria Builder
 sidebar_label: Criteria Builder
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -17,15 +18,11 @@ For this, each entity needs to have a corresponding metamodel class. (Artemis al
     ```java
     @Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
     @StaticMetamodel(User.class)
-    public abstract class User_ extends de.tum.cit.aet.artemis.domain.AbstractAuditingEntity_ {
+    public abstract class User_ extends de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity_ {
 
         public static volatile SingularAttribute<User, String> lastName;
-        public static volatile SingularAttribute<User, Instant> resetDate;
-        public static volatile SingularAttribute<User, ZonedDateTime> hideNotificationsUntil;
-        public static volatile SetAttribute<User, String> groups;
+        public static volatile SetAttribute<User, UserCourseRole> courseRoles;
         public static volatile SingularAttribute<User, String> login;
-        public static volatile SingularAttribute<User, String> activationKey;
-        public static volatile SingularAttribute<User, String> resetKey;
         public static volatile SetAttribute<User, Authority> authorities;
         ...
     }
@@ -80,11 +77,11 @@ For this, each entity needs to have a corresponding metamodel class. (Artemis al
     - Anonymous `new Specification<User>()`:
 
         ```java
-        private Specification<User> getAllUsersMatchingEmptyCourses() {
+        private Specification<User> getAllUsersWithoutCourseEnrollment() {
             return new Specification<User>() {
                 @Override
                 public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
-                    return criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+                    return criteriaBuilder.isEmpty(root.get(User_.COURSE_ROLES));
                 }
             };
         }
@@ -93,8 +90,8 @@ For this, each entity needs to have a corresponding metamodel class. (Artemis al
     - Lambda expression (preferred version):
 
         ```java
-        private Specification<User> getAllUsersMatchingEmptyCourses() {
-            return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+        private Specification<User> getAllUsersWithoutCourseEnrollment() {
+            return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.COURSE_ROLES));
         }
         ```
 

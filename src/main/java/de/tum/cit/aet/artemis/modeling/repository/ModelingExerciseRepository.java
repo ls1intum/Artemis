@@ -143,4 +143,12 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     default ModelingExercise findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId), exerciseId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "gradingCriteria" })
+    Optional<ModelingExercise> findWithCategoriesAndGradingCriteriaById(long exerciseId);
+
+    @NonNull
+    default ModelingExercise findWithCategoriesAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithCategoriesAndGradingCriteriaById(exerciseId), exerciseId);
+    }
 }

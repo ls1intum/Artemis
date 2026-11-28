@@ -18,8 +18,10 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
+    faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
+import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 describe('CourseSidebarItemService', () => {
     let service: CourseSidebarItemService;
@@ -100,6 +102,10 @@ describe('CourseSidebarItemService', () => {
         });
     });
 
+    it('provides the always-available student Home destination', () => {
+        expect(service.getHomeItem()).toMatchObject({ routerLink: 'home', testId: 'home-tab', hidden: false });
+    });
+
     describe('getStudentDefaultItems', () => {
         it('should return default items without training when questionsAvailableForTraining is false', () => {
             const items = service.getStudentDefaultItems(false);
@@ -122,6 +128,17 @@ describe('CourseSidebarItemService', () => {
     });
 
     describe('Individual item methods', () => {
+        it('getGocastBindingItem should return the instructor course connection item', () => {
+            expect(service.getGocastBindingItem(courseId)).toEqual({
+                routerLink: `${courseId}/gocast-binding`,
+                icon: faVideo,
+                title: 'TUM.Live',
+                translation: 'artemisApp.gocast.title',
+                testId: 'gocast-binding',
+                hidden: false,
+            });
+        });
+
         it('getTrainingItem should return correct item', () => {
             const item = service.getTrainingItem();
 
@@ -287,6 +304,19 @@ describe('CourseSidebarItemService', () => {
                 title: 'IRIS Settings',
                 translation: 'artemisApp.iris.settings.button.course.title',
                 testId: 'iris-settings',
+                hidden: false,
+            });
+        });
+
+        it('getAthenaSettingsItem should return correct item', () => {
+            const item = service.getAthenaSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/athena-settings`,
+                iconImage: ATHENA_LOGO_PATH,
+                title: 'Athena Settings',
+                translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+                testId: 'athena-settings',
                 hidden: false,
             });
         });

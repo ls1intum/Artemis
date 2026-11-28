@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Router } from '@angular/router';
+import { Subject, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
@@ -24,14 +27,27 @@ const tabs = (overrides: Partial<CourseAvailableTabs> = {}): CourseAvailableTabs
 });
 
 describe('CourseAvailableTabsService', () => {
+    let authentication: Subject<User | undefined>;
     let service: CourseAvailableTabsService;
     let courseManagementService: CourseManagementService;
     let fetchSpy: ReturnType<typeof vi.spyOn>;
+    let navigationId: number;
 
     beforeEach(() => {
+        navigationId = 1;
         TestBed.configureTestingModule({
-            providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useValue: { currentNavigation: () => ({ id: navigationId }), lastSuccessfulNavigation: () => null } },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+            ],
         });
+        authentication = new Subject<User | undefined>();
+        const account = TestBed.inject(AccountService);
+        vi.spyOn(account, 'userIdentity').mockReturnValue({ id: 1 } as User);
+        vi.spyOn(account, 'getAuthenticationState').mockReturnValue(authentication);
         service = TestBed.inject(CourseAvailableTabsService);
         service.clear();
         courseManagementService = TestBed.inject(CourseManagementService);
@@ -39,7 +55,30 @@ describe('CourseAvailableTabsService', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
+    });
+
+    it('preserves held state for the same user and clears it when the identity changes', () => {
+        service.load(1).subscribe();
+        authentication.next({ id: 1 } as User);
+        expect(service.tabsFor(1)).toBeDefined();
+        const clear = vi.spyOn(service, 'clear');
+        authentication.next({ id: 2 } as User);
+        expect(service.tabsFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        authentication.next(undefined);
+        authentication.next(undefined);
+        expect(clear).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears state and stops observing authentication when destroyed', () => {
+        service.load(1).subscribe();
+        const clear = vi.spyOn(service, 'clear');
+        service.ngOnDestroy();
+        expect(service.tabsFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        expect(clear).toHaveBeenCalledOnce();
     });
 
     it('should report no tabs before anything is loaded', () => {
@@ -61,6 +100,91 @@ describe('CourseAvailableTabsService', () => {
         service.loadIfNeeded(1).subscribe();
         service.loadIfNeeded(1).subscribe();
         expect(fetchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('shares one HTTP request between concurrent tab readers and delivers the response to both', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const first: CourseAvailableTabs[] = [];
+        const second: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => first.push(value));
+        service.loadIfNeeded(589).subscribe((value) => second.push(value));
+
+        const requests = http.match('api/course/courses/589/available-tabs');
+        expect(requests).toHaveLength(1);
+        const response = tabs({ lectures: true, competencies: true });
+        requests[0].flush(response);
+
+        expect(first).toEqual([response]);
+        expect(second).toEqual([response]);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('starts a fresh request after every reader cancels an unfinished load', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const subscription = service.loadIfNeeded(589).subscribe();
+        const cancelled = http.expectOne('api/course/courses/589/available-tabs');
+        subscription.unsubscribe();
+        expect(cancelled.cancelled).toBe(true);
+
+        const values: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => values.push(value));
+        const response = tabs({ lectures: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(values).toEqual([response]);
+    });
+
+    it('starts a new request for a later navigation and keeps its response when the older request finishes', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const earlierValues: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => earlierValues.push(value));
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+
+        navigationId = 2;
+        const currentValues: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => currentValues.push(value));
+        const current = http.expectOne('api/course/courses/589/available-tabs');
+        const response = tabs({ lectures: true, competencies: true });
+        current.flush(response);
+        const previousResponse = tabs({ lectures: true });
+        previous.flush(previousResponse);
+
+        expect(currentValues).toEqual([response]);
+        expect(earlierValues).toEqual([previousResponse]);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('does not retain a late response under a different navigation id', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        service.loadIfNeeded(589).subscribe();
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+
+        navigationId = 2;
+        previous.flush(tabs({ lectures: true }));
+        expect(service.tabsFor(589)).toBeUndefined();
+
+        service.loadIfNeeded(589).subscribe();
+        const response = tabs({ competencies: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('does not retain a response from a request cleared before it completes', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        service.loadIfNeeded(589).subscribe();
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+        service.clear();
+        previous.flush(tabs({ lectures: true }));
+        expect(service.tabsFor(589)).toBeUndefined();
+
+        service.loadIfNeeded(589).subscribe();
+        const response = tabs({ competencies: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(service.tabsFor(589)).toEqual(response);
     });
 
     it('should refetch for a different course and drop the previous one', () => {

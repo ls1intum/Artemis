@@ -67,7 +67,7 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
 
         await unreferencedFeedback.locator('.add-unreferenced-feedback').click();
         const feedbackCard = unreferencedFeedback.locator('jhi-unreferenced-feedback-detail').first();
-        const score = feedbackCard.locator('input[type="number"]');
+        const score = feedbackCard.getByTestId('unified-feedback-points-input').locator('input');
         await expect(feedbackCard).toBeVisible();
 
         await score.fill('');

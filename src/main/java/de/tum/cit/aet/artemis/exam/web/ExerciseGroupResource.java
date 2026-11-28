@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
@@ -32,28 +31,29 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionSummaryService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExerciseGroupService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -69,9 +69,6 @@ public class ExerciseGroupResource {
 
     private static final String ENTITY_NAME = "exerciseGroup";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final ExamRepository examRepository;
@@ -80,7 +77,9 @@ public class ExerciseGroupResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseDeletionService exerciseDeletionService;
+    private final ExamDeletionService examDeletionService;
+
+    private final ExamDeletionSummaryService examDeletionSummaryService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -91,13 +90,14 @@ public class ExerciseGroupResource {
     private final ExerciseGroupService exerciseGroupService;
 
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
-            ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
+            ExamDeletionService examDeletionService, ExamDeletionSummaryService examDeletionSummaryService, AuditEventRepository auditEventRepository,
+            ExamRepository examRepository, ExamImportService examImportService, ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.userRepository = userRepository;
-        this.exerciseDeletionService = exerciseDeletionService;
+        this.examDeletionService = examDeletionService;
+        this.examDeletionSummaryService = examDeletionSummaryService;
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
         this.exerciseRepository = exerciseRepository;
@@ -115,7 +115,8 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupCreateDTO exerciseGroupCreateDTO)
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroupCreateDTO);
@@ -156,7 +157,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
         log.debug("REST request to update an exercise group : {}", exerciseGroupUpdateDTO);
@@ -192,7 +194,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
             @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
         log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
@@ -218,7 +221,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
             @Valid @RequestBody List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
@@ -228,6 +232,9 @@ public class ExerciseGroupResource {
         // The DTOs become skeleton entities (title, mandatory flag, source exercise ids + overrides); the import service
         // loads the source exercises by id and copies their content, exactly like the full exam import.
         List<ExerciseGroup> updatedExerciseGroup = exerciseGroupsToImport.stream().map(ExerciseGroupImportDTO::toEntity).toList();
+
+        // The user also needs the editor role in the course of every source exercise
+        examImportService.checkEditorAccessToSourceExercisesElseThrow(updatedExerciseGroup);
 
         // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
         // can show a progress dialog while this (synchronous) request runs.
@@ -249,7 +256,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
 
@@ -267,7 +275,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExerciseGroupDTO>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
@@ -279,17 +288,19 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id.
+     * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id in the background. The progress is sent over the
+     * websocket topic of the exam.
      *
      * @param courseId                  the course to which the exercise group belongs to
      * @param examId                    the exam to which the exercise group belongs to
      * @param exerciseGroupId           the id of the exercise group to delete
      * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
      *                                      LocalCI, it does not make sense to keep these artifacts
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exam, or one of its exercise groups, is already being deleted
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
@@ -298,23 +309,33 @@ public class ExerciseGroupResource {
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
 
         User user = userRepository.getUser();
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
-        for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
-        }
+        // The exercises and the exercise group are deleted in the background. The request is audited only once the deletion is accepted, so a request that is refused because
+        // the exam or the exercise group is already being deleted is not logged as a deletion.
+        examDeletionService.startAsyncExerciseGroupDeletion(courseId, examId, exerciseGroupId, deleteBaseReposBuildPlans, () -> {
+            AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
+            auditEventRepository.add(auditEvent);
+            log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
+        });
 
-        // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
-        // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
-        // receive null values for the gaps in exam.getExerciseGroups().
-        Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
-        List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
-        filteredExerciseGroups.removeIf(exGroup -> exGroup.getId().equals(exerciseGroupId));
-        exam.setExerciseGroups(filteredExerciseGroups);
-        examRepository.save(exam);
+        return ResponseEntity.accepted().build();
+    }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
+    /**
+     * GET /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/deletion-summary : Get a summary of what deleting the exercise group removes.
+     *
+     * @param courseId        the course to which the exercise group belongs to
+     * @param examId          the exam to which the exercise group belongs to
+     * @param exerciseGroupId the id of the exercise group
+     * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exercise group
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/deletion-summary")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ExerciseGroupDeletionSummaryDTO> getDeletionSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
+        log.debug("REST request to get deletion summary for exercise group : {}", exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
+        return ResponseEntity.ok(examDeletionSummaryService.getExerciseGroupDeletionSummary(exerciseGroupId));
     }
 }

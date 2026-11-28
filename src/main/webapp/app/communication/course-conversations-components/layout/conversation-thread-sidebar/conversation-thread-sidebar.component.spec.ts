@@ -7,11 +7,11 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { post } from 'test/helpers/sample/communication-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentRef, signal } from '@angular/core';
+import { ComponentRef } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -121,6 +121,32 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(replyInput.componentInstance.activeConversation()).toBe(conversation);
     });
 
+    it('should pass forwarded messages to the post shown in the thread', () => {
+        const activePost = new Post();
+        activePost.forwardedPosts = [{ id: 10, content: 'Original message' }];
+        activePost.forwardedAnswerPosts = [{ id: 11, content: 'Original reply' }];
+        fixture.componentRef.setInput('activePost', activePost);
+        fixture.detectChanges();
+
+        const threadPost: PostComponent = fixture.debugElement.query(By.directive(PostComponent)).componentInstance;
+        expect(threadPost.forwardedPosts()).toEqual(activePost.forwardedPosts);
+        expect(threadPost.forwardedAnswerPosts()).toEqual(activePost.forwardedAnswerPosts);
+    });
+
+    it('should forward navigation from the thread to the original message', () => {
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.detectChanges();
+        const threadPost: PostComponent = fixture.debugElement.query(By.directive(PostComponent)).componentInstance;
+        const originalReply = new AnswerPost();
+        originalReply.id = 11;
+        let destination: Post | AnswerPost | undefined;
+        component.onNavigateToPost.subscribe((post: Post | AnswerPost) => (destination = post));
+
+        threadPost.onNavigateToPost.emit(originalReply);
+
+        expect(destination).toBe(originalReply);
+    });
+
     it('should not show the reply input in read only mode', () => {
         fixture.componentRef.setInput('activeConversation', new GroupChatDTO());
         fixture.componentRef.setInput('activePost', new Post());
@@ -128,6 +154,44 @@ describe('ConversationThreadSidebarComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.directive(MessageReplyInlineInputComponent))).toBeNull();
+    });
+
+    it('should clear the pinned width and open-post selection when closing the thread', () => {
+        const container = component.threadContainer()!.nativeElement as HTMLElement;
+        container.style.width = '420px';
+        const close = vi.fn();
+        component.closePostThread.subscribe(close);
+        const setOpenPost = vi.spyOn(component['conversationSelectionState'], 'setOpenPostId');
+
+        component.closeThread();
+
+        expect(container.style.width).toBe('');
+        expect(close).toHaveBeenCalledExactlyOnceWith(undefined);
+        expect(setOpenPost).toHaveBeenCalledExactlyOnceWith(undefined);
+    });
+
+    it('should pin a measured thread width while preserving an explicit user width', () => {
+        const container = component.threadContainer()!.nativeElement as HTMLElement;
+        vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ width: 420 } as DOMRect);
+
+        component['lockWidth']();
+        expect(container.style.width).toBe('420px');
+        container.style.width = '510px';
+        component['lockWidth']();
+        expect(container.style.width).toBe('510px');
+    });
+
+    it('should scroll the reply editor to the bottom of its own scroll container', () => {
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.detectChanges();
+        const body = component.scrollBody()!.nativeElement;
+        Object.defineProperty(body, 'scrollHeight', { configurable: true, value: 900 });
+        const scroll = vi.fn();
+        body.scrollTo = scroll;
+
+        component.scrollEditorIntoView();
+
+        expect(scroll).toHaveBeenCalledExactlyOnceWith({ top: 900, behavior: 'instant' });
     });
 
     it('should set min and max width for the resizable thread section', () => {
@@ -142,19 +206,19 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(parseFloat(expandedThreadElement.style.width)).toBeLessThanOrEqual(maxWidth);
     });
 
-    it('should toggle isExpanded and call close() on expandTooltip signal when toggleExpand() is called', () => {
-        const closeMock = vi.fn();
-
-        component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
-
+    it('should toggle isExpanded and the expanded class when toggleExpand() is called', () => {
+        const threadElement = fixture.debugElement.nativeElement.querySelector('.expanded-thread') as HTMLElement;
         expect(component.isExpanded()).toBe(false);
+        expect(threadElement.classList).not.toContain('expanded');
 
         component.toggleExpand();
+        fixture.detectChanges();
         expect(component.isExpanded()).toBe(true);
-        expect(closeMock).toHaveBeenCalledOnce();
+        expect(threadElement.classList).toContain('expanded');
 
         component.toggleExpand();
+        fixture.detectChanges();
         expect(component.isExpanded()).toBe(false);
-        expect(closeMock).toHaveBeenCalledTimes(2);
+        expect(threadElement.classList).not.toContain('expanded');
     });
 });

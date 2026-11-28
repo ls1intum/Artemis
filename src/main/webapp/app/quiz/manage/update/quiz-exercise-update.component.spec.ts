@@ -3,8 +3,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -32,7 +32,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -41,9 +41,10 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -83,7 +84,13 @@ describe('QuizExerciseUpdateComponent', () => {
 
     resetQuizExercise();
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+    const route = {
+        snapshot: {
+            paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }),
+            pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id } }],
+        },
+        queryParams: of({}),
+    } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -150,7 +157,6 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureTestBed = async (testRoute?: ActivatedRoute) => {
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
@@ -176,6 +182,7 @@ describe('QuizExerciseUpdateComponent', () => {
         fixture = TestBed.createComponent(QuizExerciseUpdateComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        vi.spyOn(courseManagementService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
         alertService = fixture.debugElement.injector.get(AlertService);
@@ -191,14 +198,45 @@ describe('QuizExerciseUpdateComponent', () => {
         let exerciseGroupServiceStub: any;
         let initStub: any;
         const configureStubs = () => {
-            quizExerciseServiceStub = vi.spyOn(quizExerciseService, 'find');
-            courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
+            quizExerciseServiceStub = vi.spyOn(quizExerciseService, comp['route'].snapshot.pathFromRoot.some((ancestor) => !!ancestor.params['examId']) ? 'findForExam' : 'find');
+            courseManagementServiceStub = vi.spyOn(courseManagementService, 'findForManagement');
             exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
             initStub = vi.spyOn(comp, 'init');
-            quizExerciseServiceStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            quizExerciseServiceStub.mockReturnValue(of(quizExercise));
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
             exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
         };
+
+        const configureFreshFixture = async (testRoute?: ActivatedRoute) => {
+            resetQuizExercise();
+            quizExercise.course = course;
+            quizExercise.exerciseGroup = undefined;
+            await configureTestBed(testRoute);
+            configureFixtureAndServices();
+            configureStubs();
+        };
+
+        it.each([
+            ['true', false],
+            ['false', true],
+            [undefined, true],
+        ])('loads import source %s before target exam context %s after reload', async (sourceFlag, targetIsExam) => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: 123, exerciseId: 456, ...(targetIsExam ? { examId: 7, exerciseGroupId: 8 } : {}) };
+            snapshot.queryParams = sourceFlag === undefined ? {} : { sourceIsExamExercise: sourceFlag };
+            vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'quiz-exercises/:exerciseId/import' });
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureTestBed({ snapshot, queryParams: of(snapshot.queryParams) } as ActivatedRoute);
+            configureFixtureAndServices();
+            vi.spyOn(courseManagementService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() })));
+            vi.spyOn(comp, 'init').mockImplementation(() => {});
+            const courseFind = vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
+            const examFind = vi.spyOn(quizExerciseService, 'findForExam').mockReturnValue(of(quizExercise));
+            comp.ngOnInit();
+            expect(sourceFlag === 'true' ? examFind : courseFind).toHaveBeenCalledExactlyOnceWith(456);
+            expect(sourceFlag === 'true' ? courseFind : examFind).not.toHaveBeenCalled();
+        });
 
         describe('without exam id', () => {
             beforeEach(async () => {
@@ -242,7 +280,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exam id', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
 
@@ -266,7 +307,13 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('with exam id but without exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, examId: 1, exerciseGroupId: 2 } }],
+                },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(async () => {
                 await configureTestBed(testRoute);
             });
@@ -287,7 +334,10 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('without exam id and exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id }), pathFromRoot: [{ params: { courseId: course.id } }] },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(async () => {
                 await configureTestBed(testRoute);
             });
@@ -309,7 +359,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exercise id and exam with test runs', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(async () => {
@@ -483,7 +536,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('set isEditable', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }),
+                    pathFromRoot: [{ params: { courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 } }],
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(async () => {
@@ -543,8 +599,8 @@ describe('QuizExerciseUpdateComponent', () => {
             });
         });
 
-        it('should set isImport to true when route contains /import', () => {
-            configureStubs();
+        it('should set isImport to true when route contains /import', async () => {
+            await configureFreshFixture();
             vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/quiz-exercises/import');
 
             comp.ngOnInit();
@@ -552,16 +608,32 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isImport()).toBeTruthy();
         });
 
-        it('should assign exerciseGroup to existing quizExercise in exam mode', () => {
-            configureStubs();
-            comp.isExamMode.set(true);
+        it('should import a quiz read from a file on the route of a new quiz', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
+            const fromFile = new QuizExercise(undefined, undefined);
+            fromFile.id = 9;
+            fromFile.title = 'From file';
+            fromFile.quizQuestions = [];
+            history.replaceState({ exerciseForImportFromFile: fromFile }, '');
 
-            const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 }) },
-                queryParams: of({}),
-            } as any as ActivatedRoute;
-            (comp as any).route = testRoute;
+            comp.ngOnInit();
+            history.replaceState(null, '');
 
+            expect(quizExerciseServiceStub).not.toHaveBeenCalled();
+            expect(comp.isImport()).toBe(true);
+            expect(comp.quizExercise().title).toBe('From file');
+            expect(comp.quizExercise().id).toBeUndefined();
+            expect(comp.quizExercise().course).toEqual(course);
+        });
+
+        it('should assign exerciseGroup to existing quizExercise in exam mode', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
             comp.quizExercise.set(new QuizExercise(undefined, undefined));
             comp.savedEntity = new QuizExercise(undefined, undefined);
 
@@ -571,28 +643,26 @@ describe('QuizExerciseUpdateComponent', () => {
 
             comp.ngOnInit();
 
+            expect(quizExerciseServiceStub).toHaveBeenCalledExactlyOnceWith(456);
             expect(comp.quizExercise().exerciseGroup).toEqual(exerciseGroup);
         });
 
-        it('should assign course to existing quizExercise in course mode', () => {
-            configureStubs();
-            comp.isExamMode.set(false);
-
-            const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) },
-                queryParams: of({}),
-            } as any as ActivatedRoute;
-            (comp as any).route = testRoute;
-
+        it('should assign course to existing quizExercise in course mode', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id, exerciseId: 456 };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
             comp.quizExercise.set(new QuizExercise(undefined, undefined));
             comp.savedEntity = new QuizExercise(undefined, undefined);
 
             comp.ngOnInit();
 
+            expect(quizExerciseServiceStub).toHaveBeenCalledExactlyOnceWith(456);
             expect(comp.quizExercise().course).toEqual(course);
         });
 
-        it('should updateCategories properly by making category available for selection again when removing it', () => {
+        it('should updateCategories properly by making category available for selection again when removing it', async () => {
+            await configureFreshFixture();
             comp.quizExercise.set(quizExercise);
             comp.exerciseCategories.set([]);
             const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
@@ -994,9 +1064,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC question explanation has exactly 500 characters', () => {
+            it('should be valid if MC question explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1010,9 +1080,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC question explanation has more than 500 characters', () => {
+            it('should not be valid if MC question explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1026,9 +1096,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if MC answer option explanation has exactly 500 characters', () => {
+            it('should be valid if MC answer option explanation has exactly the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1042,9 +1112,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
+            it('should not be valid if MC answer option explanation exceeds the explanation limit', () => {
                 const { question } = createValidMCQuestion();
-                question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
+                question.answerOptions![0]!.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1092,9 +1162,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(true);
             });
 
-            it('should be valid if DnD question explanation has exactly 500 characters', () => {
+            it('should be valid if DnD question explanation has exactly the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(true);
@@ -1108,9 +1178,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.quizIsValid()).toBe(false);
             });
 
-            it('should not be valid if DnD question explanation has more than 500 characters', () => {
+            it('should not be valid if DnD question explanation exceeds the explanation limit', () => {
                 const { question } = createValidDnDQuestion();
-                question.explanation = 'f'.repeat(500 + 1);
+                question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                 comp.quizExercise().quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid()).toBe(false);
@@ -1232,9 +1302,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
                 quizExerciseServiceCreateStub = vi.spyOn(quizExerciseService, 'create');
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceCreateStub.mockReturnValue(of(quizExercise));
                 quizExerciseServiceUpdateStub = vi.spyOn(quizExerciseService, 'update');
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(quizExercise));
                 const calendarService = TestBed.inject(CalendarService);
                 refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = vi.spyOn(Exercise, 'sanitize');
@@ -1267,7 +1337,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), {});
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), undefined);
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1296,26 +1366,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), { notificationText: 'test' });
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), 'test');
                 expect(refreshSpy).toHaveBeenCalled();
-            });
-
-            it('should call alert service if response has no body on create', () => {
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on update', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on import', () => {
-                comp.isImport.set(true);
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
             });
 
             it('should call alert service if create fails', () => {
@@ -1363,7 +1415,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = undefined;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
@@ -1383,7 +1435,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = false;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
@@ -1448,7 +1500,10 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.examId = 789;
                 comp.isExamMode.set(true);
                 const testRoute = {
-                    snapshot: { paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }) },
+                    snapshot: {
+                        paramMap: convertToParamMap({ courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 }),
+                        pathFromRoot: [{ params: { courseId: 123, examId: 789, exerciseGroupId: 111, exerciseId: 456 } }],
+                    },
                     queryParams: of({}),
                 } as any as ActivatedRoute;
                 (comp as any).route = testRoute;
@@ -1474,32 +1529,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise().releaseDate = now;
                 comp.prepareEntity(comp.quizExercise());
                 expect(comp.quizExercise().releaseDate).toEqual(dayjs(now));
-            });
-
-            it('getEnhancedDescriptionForSuggestions should combine title and question texts, with fallback', () => {
-                // title only
-                comp.quizExercise().title = 'Quiz Title';
-                comp.quizExercise().quizQuestions = [];
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Quiz Title');
-
-                // title + questions
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = 'Q1';
-                q1.text = 'First question';
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = 'Q2';
-                q2.text = 'Second question';
-                comp.quizExercise().quizQuestions = [q1, q2];
-                const combined = comp.getEnhancedDescriptionForSuggestions();
-                expect(combined).toContain('Quiz Title');
-                expect(combined).toContain('Q1 First question');
-                expect(combined).toContain('Q2 Second question');
-
-                // fallback to problemStatement
-                comp.quizExercise().title = '';
-                comp.quizExercise().quizQuestions = [];
-                comp.quizExercise().problemStatement = 'Problem statement fallback';
-                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
             });
 
             it('should handle undefined quizQuestions gracefully (cover ?? [])', () => {
@@ -1814,35 +1843,6 @@ describe('QuizExerciseUpdateComponent', () => {
                     expect(dndQuestion.dragItems[0].id).toBeUndefined();
                 });
             });
-
-            it('should return empty string if quizExercise is not set', () => {
-                comp.quizExercise.set(undefined as any);
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-
-                expect(result).toBe('');
-            });
-
-            it('should handle undefined title or text in questions gracefully (cover || "")', () => {
-                comp.quizExercise().title = 'Main Title';
-
-                const q1 = new MultipleChoiceQuestion();
-                q1.title = undefined;
-                q1.text = undefined;
-
-                const q2 = new MultipleChoiceQuestion();
-                q2.title = undefined;
-                q2.text = 'Only Text';
-
-                const q3 = new MultipleChoiceQuestion();
-                q3.title = 'Only Title';
-                q3.text = null as any;
-
-                comp.quizExercise().quizQuestions = [q1, q2, q3];
-
-                const result = comp.getEnhancedDescriptionForSuggestions();
-                expect(result).toBe('Main Title Only Text Only Title');
-            });
         });
 
         describe('quiz mode', () => {
@@ -1944,14 +1944,12 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('validateItemLimit', () => {
-            let dialogService: DialogService;
+            let confirmationService: TumAetUiConfirmationService;
             let saveSpy: any;
-            let dialogOpenSpy: any;
 
             beforeEach(() => {
-                dialogService = TestBed.inject(DialogService);
+                confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
                 saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {}); // Prevent actual save logic
-                dialogOpenSpy = vi.spyOn(dialogService, 'open');
                 comp.quizExercise.set(quizExercise);
             });
 
@@ -1961,45 +1959,38 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).not.toHaveBeenCalled();
+                expect(confirmationService.request(undefined)).toBeUndefined();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and save if confirmed when limit is exceeded', () => {
+            it('should ask for confirmation and save if confirmed when the limit is exceeded', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
-
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalledExactlyOnceWith(
-                    GenericConfirmationDialogComponent,
-                    // The second-layer confirmation dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
+                const request = confirmationService.request(undefined);
+                expect(request).toEqual(
                     expect.objectContaining({
-                        width: '40rem',
-                        breakpoints: { '768px': '95vw' },
-                        data: expect.objectContaining({ translationKeys: expect.anything(), canBeUndone: true }),
+                        header: 'artemisApp.quizWarning.title',
+                        acceptLabel: 'artemisApp.quizWarning.confirmButton',
+                        rejectLabel: 'entity.action.cancel',
                     }),
                 );
+                expect(saveSpy).not.toHaveBeenCalled();
 
-                // confirm
-                onClose.next(true);
+                request!.accept();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
-            it('should open dialog and NOT save if cancelled', () => {
+            it('should ask for confirmation and NOT save if cancelled', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
-
-                const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
-                expect(dialogOpenSpy).toHaveBeenCalled();
+                const request = confirmationService.request(undefined);
+                expect(request).toBeDefined();
 
-                // dismiss
-                onClose.next(undefined);
+                request!.reject?.();
                 expect(saveSpy).not.toHaveBeenCalled();
             });
         });
@@ -2099,7 +2090,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
@@ -2109,7 +2100,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.answerExplanationLength');
                 });
 
@@ -2119,8 +2110,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason exactly once if more than one answer option explanation is too long', () => {
-                    answerOption1.explanation = 'f'.repeat(500 + 1);
-                    answerOption2.explanation = 'f'.repeat(500 + 1);
+                    answerOption1.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
+                    answerOption2.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     const invalidReasonsAnswerOptions = comp
                         .computeInvalidReasons()
                         .filter((reason) => reason.translateKey === 'artemisApp.quizExercise.invalidReasons.answerExplanationLength');
@@ -2189,7 +2180,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
 
                 it('should put reason if question explanation is too long', () => {
-                    question.explanation = 'f'.repeat(500 + 1);
+                    question.explanation = 'f'.repeat(MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD + 1);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionExplanationLength');
                 });
 
@@ -2363,6 +2354,51 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.aiGenerationModalVisible).toBe(true);
         });
 
+        it('should append questions handed over from another page when a new quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            const handedOver: GeneratedQuestion[] = [
+                {
+                    id: 'pool-1',
+                    type: 'single-choice',
+                    title: 'Pooled question',
+                    questionText: 'From the pool',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ];
+            handoffService.offer(123, handedOver);
+            const newQuiz = new QuizExercise(course, undefined);
+            newQuiz.title = '';
+            newQuiz.duration = 600;
+            newQuiz.quizQuestions = [];
+            newQuiz.isEditable = true;
+            comp.quizExercise.set(newQuiz);
+            comp.course = course;
+            comp.courseId.set(123);
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(1);
+            expect((comp.quizExercise().quizQuestions?.[0] as MultipleChoiceQuestion).title).toBe('Pooled question');
+            expect(handoffService.take(123)).toEqual([]);
+        });
+
+        it('should leave handed-over questions alone when an existing quiz is initialised', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+            const handoffService = TestBed.inject(QuizQuestionHandoffService);
+            handoffService.offer(123, [{ id: 'pool-1', type: 'single-choice', title: 'Pooled question', questionText: 'From the pool', options: [{ text: 'A', correct: true }] }]);
+            comp.quizExercise().quizQuestions = [];
+            comp.course = course;
+
+            comp.init();
+
+            expect(comp.quizExercise().quizQuestions).toHaveLength(0);
+            expect(handoffService.take(123)).toHaveLength(1);
+        });
+
         it('should append generated questions to existing quiz questions', () => {
             vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
 
@@ -2417,6 +2453,33 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
             expect((comp.quizExercise().quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
+        });
+
+        it('should keep the quiz serializable so that a titled quiz with generated questions becomes valid', () => {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.title = 'Generated quiz';
+            quiz.duration = 600;
+            quiz.quizQuestions = [];
+            comp.quizExercise.set(quiz);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.appendAiGeneratedQuestions([
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    title: 'Generated Title',
+                    questionText: 'Generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ]);
+
+            expect(() => JSON.stringify(comp.quizExercise())).not.toThrow();
+            expect(comp.pendingChangesCache()).toBe(true);
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.noQuestion');
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.quizTitle');
         });
     });
     describe('save tooltip', () => {
@@ -2488,5 +2551,16 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.uneditableReason()).toBe('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
             expect(comp.isSaveTooltipDisabled()).toBe(false);
         });
+    });
+    it('clears a dismissed global refinement draft and its busy indicator', async () => {
+        await configureTestBed();
+        configureFixtureAndServices();
+        comp.globalRefinementPrompt.set('Clarify all questions');
+        comp.isGlobalRefining.set(true);
+        comp.isRefinementFabOpen.set(true);
+        comp.closeRefinementFab();
+        expect(comp.globalRefinementPrompt()).toBe('');
+        expect(comp.isGlobalRefining()).toBe(false);
+        expect(comp.isRefinementFabOpen()).toBe(false);
     });
 });

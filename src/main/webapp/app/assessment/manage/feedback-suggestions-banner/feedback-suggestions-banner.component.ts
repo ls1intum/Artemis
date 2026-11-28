@@ -1,9 +1,9 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, computed, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Message } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -33,8 +33,8 @@ export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    styleUrls: ['./feedback-suggestions-banner.component.scss'],
-    imports: [Message, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['./feedback-suggestions-banner.component.css'],
+    imports: [TumAetUiMessageComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     host: {
         '[class.feedback-suggestions-banner--chrome]': "appearance() === 'chrome'",
     },

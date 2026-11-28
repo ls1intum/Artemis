@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
@@ -14,22 +14,33 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import { QuizExerciseLifecycleService } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
+    variant = input<'solid' | 'outlined'>('solid');
+    batchesOnly = input(false);
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
 }
@@ -62,18 +73,22 @@ describe('ExerciseActionsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseActionsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseService),
+                MockProvider(AlertService),
                 EventManager,
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
                 MockProvider(QuizExerciseService),
+                MockProvider(QuizExerciseLifecycleService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(DeleteDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: vi.fn(() => of({ canCreateVariant: true })) } },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -91,7 +106,7 @@ describe('ExerciseActionsComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
-        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of({} as EntitySummary));
+        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of([]));
 
         fixture.componentRef.setInput('exercise', textExercise());
         fixture.componentRef.setInput('courseId', 1);
@@ -100,20 +115,122 @@ describe('ExerciseActionsComponent', () => {
 
     afterEach(() => vi.restoreAllMocks());
 
+    describe('on-demand AI variant preflight', () => {
+        const programming = () => {
+            const exercise = new ProgrammingExercise(course, undefined);
+            exercise.id = 5;
+            exercise.isAtLeastEditor = true;
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.projectType = ProjectType.PLAIN_GRADLE;
+            return exercise;
+        };
+        const action = () => component.mainActions().find((item) => item.id === 'create-variant-ai');
+        let requests: GenerationCapabilityRequestsService;
+        let warning: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            fixture.destroy();
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
+            fixture = TestBed.createComponent(ExerciseActionsComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('exercise', programming());
+            fixture.componentRef.setInput('courseId', 1);
+            fixture.componentRef.setInput('course', course);
+            requests = TestBed.inject(GenerationCapabilityRequestsService);
+            warning = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        });
+
+        it('renders rows without requests and leaves quiz variants synchronous', () => {
+            TestBed.tick();
+            expect(action()).toBeDefined();
+            expect(requests.describe).not.toHaveBeenCalled();
+            fixture.componentRef.setInput('exercise', { id: 8, type: ExerciseType.QUIZ, isAtLeastEditor: true } as QuizExercise);
+            action()!.onClick!();
+            expect(component['aiVariantModalVisible']()).toBe(true);
+            expect(requests.describe).not.toHaveBeenCalled();
+        });
+
+        it('checks once on click, ignores rapid clicks, and opens only after approval', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            const originalAction = action()!;
+            originalAction.onClick!();
+            originalAction.onClick!();
+            expect(requests.describe).toHaveBeenCalledExactlyOnceWith(5);
+            expect(action()!.disabled).toBe(true);
+            expect(component.mainActions().find((item) => item.id === 'edit')!.disabled).not.toBe(true);
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(true);
+            expect(action()!.disabled).not.toBe(true);
+            originalAction.onClick!();
+            expect(requests.describe).toHaveBeenCalledTimes(1);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it.each(['denied', 'error'])('keeps the wizard closed and clears pending when the preflight is %s', (outcome) => {
+            vi.mocked(requests.describe).mockReturnValue(
+                outcome === 'denied' ? of({ canCreateVariant: false, restriction: 'generationHarnessUnsupported' }) : throwError(() => new HttpErrorResponse({ status: 503 })),
+            );
+            action()!.onClick!();
+            expect(requests.describe).toHaveBeenCalledExactlyOnceWith(5);
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(action()!.disabled).not.toBe(true);
+            expect(warning).toHaveBeenCalledExactlyOnceWith(`artemisApp.hyperion.generation.blocker.${outcome === 'denied' ? 'harnessUnsupported' : 'capabilitiesUnavailable'}`);
+        });
+
+        it('does not open a different row after its input changes during the request', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            action()!.onClick!();
+            fixture.componentRef.setInput('exercise', { ...programming(), id: 9 });
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(action()!.disabled).not.toBe(true);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('unsubscribes on destruction without opening a wizard', () => {
+            const response = new Subject<ExerciseGenerationCapabilities>();
+            vi.mocked(requests.describe).mockReturnValue(response);
+            action()!.onClick!();
+            fixture.destroy();
+            response.next({ canCreateVariant: true });
+            expect(component['aiVariantModalVisible']()).toBe(false);
+            expect(warning).not.toHaveBeenCalled();
+        });
+
+        it('keeps authorization and project prefilters without capability requests', () => {
+            fixture.componentRef.setInput('exercise', { ...programming(), isAtLeastEditor: false });
+            expect(action()).toBeUndefined();
+            fixture.componentRef.setInput('exercise', { ...programming(), programmingLanguage: ProgrammingLanguage.PYTHON });
+            expect(action()).toBeUndefined();
+            expect(requests.describe).not.toHaveBeenCalled();
+        });
+    });
+
     describe('mainActions', () => {
         it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
             const programming = textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true });
+            Object.assign(programming, { programmingLanguage: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE });
             fixture.componentRef.setInput('exercise', programming);
             expect(component.mainActions().map((a) => a.id)).not.toContain('create-variant-ai');
 
-            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
             const hyperionFixture = TestBed.createComponent(ExerciseActionsComponent);
             hyperionFixture.componentRef.setInput('exercise', programming);
             hyperionFixture.componentRef.setInput('courseId', 1);
             hyperionFixture.componentRef.setInput('course', course);
+            TestBed.tick();
+            expect(TestBed.inject(GenerationCapabilityRequestsService).describe).not.toHaveBeenCalled();
             const variantAction = hyperionFixture.componentInstance.mainActions().find((a) => a.id === 'create-variant-ai');
             expect(variantAction).toBeDefined();
             variantAction!.onClick!();
+            expect(TestBed.inject(GenerationCapabilityRequestsService).describe).toHaveBeenCalledExactlyOnceWith(5);
             expect(hyperionFixture.componentInstance['aiVariantModalVisible']()).toBe(true);
 
             hyperionFixture.componentRef.setInput('exercise', textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: false }));
@@ -128,9 +245,10 @@ describe('ExerciseActionsComponent', () => {
             expect(component.mainActions().map((a) => a.id)).not.toContain('teams');
         });
 
-        it('always includes participations and scores', () => {
+        it('always includes participations, which also hold the scores', () => {
             const ids = component.mainActions().map((a) => a.id);
-            expect(ids).toEqual(expect.arrayContaining(['participations', 'scores']));
+            expect(ids).toContain('participations');
+            expect(ids).not.toContain('scores');
         });
 
         it('adds quiz-specific actions, including re-evaluate only when ended and instructor', () => {
@@ -257,13 +375,16 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasQuizButtons()).toBe(false);
         });
 
-        it('is true when the quiz is invisible and editor can make it visible', () => {
+        const actionIds = () => component.mainActions().map((action) => action.id);
+
+        it('offers making an invisible quiz visible as a row action, not as reserved content', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.INVISIBLE, isAtLeastEditor: true, visibleToStudents: false } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            expect(actionIds()).toContain('set-visible');
         });
 
-        it('is true when a synchronized quiz can be started', () => {
+        it('offers starting a synchronized quiz as the first row action', () => {
             const quiz = {
                 id: 2,
                 type: ExerciseType.QUIZ,
@@ -273,7 +394,8 @@ describe('ExerciseActionsComponent', () => {
                 quizStarted: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            expect(actionIds()[0]).toBe('start-quiz');
         });
 
         it('is true for a batched quiz that can show batches', () => {
@@ -282,7 +404,7 @@ describe('ExerciseActionsComponent', () => {
             expect(component.hasQuizButtons()).toBe(true);
         });
 
-        it('is true when an unsynchronized quiz can be ended by an instructor', () => {
+        it('offers ending an unsynchronized quiz as a row action with an end-now confirmation', () => {
             const quiz = {
                 id: 2,
                 type: ExerciseType.QUIZ,
@@ -292,7 +414,58 @@ describe('ExerciseActionsComponent', () => {
                 quizEnded: false,
             } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
-            expect(component.hasQuizButtons()).toBe(true);
+            expect(component.hasQuizButtons()).toBe(false);
+            const end = component.mainActions().find((action) => action.id === 'end-quiz');
+            expect(end?.kind).toBe('delete');
+            expect(end?.delete?.actionType).toBe(ActionType.EndNow);
+        });
+
+        it('starts the quiz through the lifecycle service and relays the updated quiz', () => {
+            const quiz = {
+                id: 2,
+                type: ExerciseType.QUIZ,
+                status: QuizStatus.VISIBLE,
+                quizMode: QuizMode.SYNCHRONIZED,
+                isAtLeastEditor: true,
+                quizStarted: false,
+            } as QuizExercise;
+            const started = { ...quiz, status: QuizStatus.ACTIVE } as QuizExercise;
+            const startQuiz = vi.spyOn(TestBed.inject(QuizExerciseLifecycleService), 'startQuiz').mockReturnValue(of(started));
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
+            const emitted: Exercise[] = [];
+            component.exerciseUpdated.subscribe((exercise) => emitted.push(exercise));
+            fixture.componentRef.setInput('exercise', quiz);
+
+            component.mainActions().find((action) => action.id === 'start-quiz')!.onClick!();
+
+            expect(startQuiz).toHaveBeenCalledExactlyOnceWith(quiz);
+            expect(emitted).toEqual([started]);
+            expect(started.quizStarted).toBe(true);
+        });
+
+        it('disables the quiz lifecycle actions while one of their requests runs', () => {
+            const quiz = {
+                id: 2,
+                type: ExerciseType.QUIZ,
+                status: QuizStatus.INVISIBLE,
+                quizMode: QuizMode.SYNCHRONIZED,
+                isAtLeastEditor: true,
+                visibleToStudents: false,
+                quizStarted: false,
+            } as QuizExercise;
+            const response = new Subject<QuizExercise>();
+            vi.spyOn(TestBed.inject(QuizExerciseLifecycleService), 'setVisible').mockReturnValue(response);
+            vi.spyOn(component.exerciseUpdated, 'emit');
+            fixture.componentRef.setInput('exercise', quiz);
+            const disabledOf = (id: string) => component.mainActions().find((action) => action.id === id)?.disabled;
+
+            component.mainActions().find((action) => action.id === 'set-visible')!.onClick!();
+            expect(disabledOf('start-quiz')).toBe(true);
+            expect(disabledOf('set-visible')).toBe(true);
+
+            response.next({ ...quiz, visibleToStudents: true } as QuizExercise);
+            response.complete();
+            expect(disabledOf('start-quiz')).toBeUndefined();
         });
 
         it('is false when none of the button conditions apply', () => {
@@ -348,7 +521,7 @@ describe('ExerciseActionsComponent', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
             vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
-            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quiz })));
+            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quiz));
             const emitted: Exercise[] = [];
             component.exerciseUpdated.subscribe((e) => emitted.push(e));
 
@@ -383,14 +556,15 @@ describe('ExerciseActionsComponent', () => {
             [ExerciseType.QUIZ, 'quizExerciseListModification'],
             [ExerciseType.MODELING, 'modelingExerciseListModification'],
         ])('deletes a %s exercise and broadcasts %s', (type, eventName) => {
-            const services: Record<string, unknown> = {
-                [ExerciseType.TEXT]: textExerciseService,
-                [ExerciseType.FILE_UPLOAD]: fileUploadExerciseService,
-                [ExerciseType.QUIZ]: quizExerciseService,
-                [ExerciseType.MODELING]: modelingExerciseService,
+            // Quiz deletes through the generated client, whose method carries the operation name instead of `delete`.
+            const deleters: Record<string, [Record<string, (id: number) => unknown>, string]> = {
+                [ExerciseType.TEXT]: [textExerciseService as never, 'delete'],
+                [ExerciseType.FILE_UPLOAD]: [fileUploadExerciseService as never, 'delete'],
+                [ExerciseType.QUIZ]: [TestBed.inject(QuizExerciseDeletionApi) as never, 'deleteQuizExercise'],
+                [ExerciseType.MODELING]: [modelingExerciseService as never, 'delete'],
             };
-            const service = services[type] as { delete: (id: number) => unknown };
-            const deleteSpy = vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const [service, method] = deleters[type];
+            const deleteSpy = vi.spyOn(service, method).mockReturnValue(of(new HttpResponse<void>()));
             const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const exercise = textExercise({ id: 3, type });
             fixture.componentRef.setInput('exercise', exercise);
@@ -402,6 +576,61 @@ describe('ExerciseActionsComponent', () => {
             expect(deleteSpy).toHaveBeenCalledWith(3);
             expect(broadcastSpy).toHaveBeenCalledWith({ name: eventName, content: 'Deleted an exercise' });
             expect(deleted).toEqual([exercise]);
+        });
+
+        it('hands the exercise to the background deletion with the target of that exercise', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT, title: 'Sorting' }));
+
+            component['onDelete']({});
+
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            expect(deletionService.delete).toHaveBeenCalledWith(
+                { entityType: EntityDeletionType.EXERCISE, entityId: 3, title: 'Sorting', successAlertKey: 'artemisApp.textExercise.deleted' },
+                expect.anything(),
+            );
+        });
+
+        it('keeps the exercise in the list when the background deletion failed', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+
+            component['onDelete']({});
+
+            expect(broadcastSpy).not.toHaveBeenCalled();
+            expect(deleted).toEqual([]);
+        });
+
+        it('asks the list to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            let reloads = 0;
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+            component.exerciseDeletionOutcomeUnknown.subscribe(() => reloads++);
+
+            component['onDelete']({});
+
+            // The exercise may still exist, so it is not removed as if the deletion was confirmed; the list is read from the server again.
+            expect(deleted).toEqual([]);
+            expect(reloads).toBe(1);
+        });
+
+        it('reports a refused deletion, e.g. one that is already running, to the confirmation dialog', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+            const errors: string[] = [];
+            component.dialogError$.subscribe((message) => errors.push(message));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+
+            component['onDelete']({});
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0]).not.toBe('');
         });
 
         it('deletes a programming exercise with the repo/build-plan flags', () => {

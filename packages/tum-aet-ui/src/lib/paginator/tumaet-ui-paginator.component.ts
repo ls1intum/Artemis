@@ -2,14 +2,14 @@ import { Directionality } from '@angular/cdk/bidi';
 import { ChangeDetectionStrategy, Component, DestroyRef, booleanAttribute, computed, inject, input, numberAttribute, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
-const PAGE_LINK_SIZE = 5;
+const PAGE_LINK_SIZE = 3;
 const NAV_BUTTON_CLASSES =
-    'tumaet:inline-flex tumaet:h-9 tumaet:w-9 tumaet:shrink-0 tumaet:cursor-pointer tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:rounded-full tumaet:border-0 tumaet:bg-transparent tumaet:text-sm tumaet:text-muted tumaet:transition-colors tumaet:hover:bg-hover-background tumaet:disabled:pointer-events-none tumaet:disabled:opacity-50';
+    'tumaet:inline-flex tumaet:h-7 tumaet:min-w-7 tumaet:shrink-0 tumaet:cursor-pointer tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:rounded-md tumaet:border-0 tumaet:bg-transparent tumaet:px-1.5 tumaet:text-xs tumaet:tabular-nums tumaet:text-text tumaet:transition-colors tumaet:hover:bg-hover-background tumaet:disabled:pointer-events-none tumaet:disabled:opacity-40';
 
-/** Controlled paginator using zero-based page indexes. */
+/** Controlled, single-line paginator (at most 40px high) using zero-based page indexes. Meant for the footer of a table layout. */
 @Component({
     selector: 'tumaet-ui-paginator',
     templateUrl: './tumaet-ui-paginator.component.html',
@@ -45,10 +45,11 @@ export class TumAetUiPaginatorComponent {
     protected readonly previousPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleRight : faAngleLeft));
     protected readonly nextPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleLeft : faAngleRight));
     protected readonly lastPageIcon = computed(() => (this.direction() === 'rtl' ? faAnglesLeft : faAnglesRight));
+    protected readonly pageSizeIcon = faChevronDown;
 
     protected readonly navButtonClasses = NAV_BUTTON_CLASSES;
     protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('tumaet:bg-transparent', 'tumaet:bg-primary/15').replace(
-        'tumaet:text-muted',
+        'tumaet:text-text',
         'tumaet:font-semibold tumaet:text-accent',
     );
 

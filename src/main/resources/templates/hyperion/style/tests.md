@@ -1,0 +1,170 @@
+# Tests (instructor harness)
+
+Role: the executable oracle. Every observable statement promise needs evidence here, and every assertion needs
+a stated rule — the two must trace to each other in both directions. Assessment tests pass on the solution
+and fail on the starter at the assigned work. Preservation checks protect supplied behavior, pass on both
+repositories, and earn no credit.
+
+## One partition per assertion focus
+
+Each test targets one behavioural partition (a rule, a boundary, a state transition, a stated error) with one
+clear assertion focus. Do not fold unrelated rules into a single test just to save a method; do not split one
+rule across tests that each assert nothing meaningful alone.
+
+## Non-degenerate witnesses
+
+Choose inputs that distinguish plausible wrong implementations, not just "any input that happens to pass".
+Vary input dimensions independently: competing order/tie rules must disagree on the expected winner, not
+select the same one. If forwarding an argument or calling exactly once is promised, observe the actual
+argument or call count; equal final state from an argument-ignoring or idempotent collaborator proves neither.
+For object-local state, interleave two instances before observing both. When the contract promises reference
+identity, use equal-but-distinct objects and identity assertions; equality alone does not distinguish them.
+Do not add these requirements when the contract does not promise them.
+
+For delegation, callbacks, strategies, and similar collaborations, prefer a tiny fake or recording
+implementation that returns a distinctive value and records its inputs. This proves the context really uses
+the supplied abstraction; exercising only the known concrete implementations also accepts a context that
+copies their logic, which defeats the learning objective while looking behaviorally correct.
+
+If the collaborator interface is `student-creates` and therefore absent from the template, load it by name and
+create the recording fake with `java.lang.reflect.Proxy`. Invoke constructors and methods whose signatures
+mention that missing interface reflectively too. Merely storing an instance in an `Object` variable does not
+make a normal call to a method expecting the missing interface compile against both repositories.
+`ReflectionTestUtils.getClazz(name)` delegates to `Class.forName`. Use the fully qualified binary name from
+the declared package and type, such as `getClazz("example.exercise.RequiredType")`, not `getClazz("RequiredType")`.
+Imports do not qualify string arguments. The `ownerName` and `collaboratorName` below are fully qualified names.
+`ReflectionTestUtils.newInstance(className, arguments...)` infers exact runtime classes. It therefore does not
+match an approved constructor declared with an interface or supertype when an argument is a concrete
+implementation. Resolve the declared signature explicitly, then instantiate it:
+`newInstance(getConstructor(getClazz(ownerName), List.class, getClazz(collaboratorName)), list, proxy)`.
+Never add concrete collection or implementation overloads to production code just to satisfy the harness.
+
+## Inputs decoupled from worked examples
+
+Never reuse a statement's worked-example numbers as a test's input — a student could read the answer straight
+out of the statement instead of implementing the rule. Pick different, still-representative values.
+
+## Assertion discipline
+
+Each test must establish its own state. Mutable static fields and registries survive between test methods;
+`@BeforeAll` resets them only once per class, not once per scenario. If the contract needs a fresh shared state,
+use an instructor-owned `@BeforeEach` fixture for each test. Keep reset machinery in the test harness rather
+than adding reset methods to the exercise API. Do not assume counters start at zero or registries are empty
+because a different test ran first. Verify the whole suite, not only individual test methods.
+
+Assert exception TYPES, never message strings, unless the statement itself fixes the exact message — a
+message-string assertion turns wording into a graded contract nobody stated. Write assertion messages that
+tell a student what rule failed and why; the message is part of the pedagogy.
+
+## Gradable student programs
+
+Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism
+together with its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is
+API use. Supplied runtime observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the
+supplied API alone do not grade the student's integration. When students write tests, checks of the supplied implementation are preservation checks with zero
+student credit. A weighted seam must observe the learner-written tests and distinguish effective assertions from wrong or ineffective ones. Do not assign
+learner credit to a teacher test that never executes learner work. Hidden variants need a declared way to observe that learner work; changing inputs to supplied
+code alone does not qualify. For an operation sequence, execute the learner scenario once per test and obtain all related observations from that same execution.
+Reset supplied observation state before that execution, not inside each accessor. Record immutable values at each required transition, not references to mutable
+objects that later actions change. A final snapshot cannot establish an earlier state erased by a later operation. Observation support must record student
+actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax
+restrictions merely to help a test. Source and bytecode inspection are not supported grading mechanisms.
+
+Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+
+For a beginner entry point that creates local objects, supplied constructors and methods can record the
+created instances and snapshots at the relevant operation boundaries. Tests reset that supplied recorder,
+invoke the student entry point, then inspect its observations. Recording must not establish the association,
+mutation, or other operation the learner is meant to perform. A final-state accessor alone loses evidence
+when a later operation undoes the earlier state; replaying the sequence inside the test supplies no evidence
+that the student entry point did it.
+
+## Harness conventions (Java/Ares)
+
+Use Java 25 and the current Ares 2 harness. Use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,
+`de.tum.cit.ase.ares.api.Policy`, and `de.tum.cit.ase.ares.api.StrictTimeout`. Keep an explicit
+`@Policy(value = "SecurityPolicy.yaml")` on every test class. Artemis manages `SecurityPolicy.yaml` and
+registers every instructor test class in it before each build; never edit it.
+Use `import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;` for reflection helpers.
+Resolve declared signatures with `getClazz`, `getConstructor`, and `getMethod`; cast the Object returned by
+`invokeMethod` to the declared return type. For `assertThrows`, use `invokeMethodRethrowing(instance,
+getMethod(instance, "withdraw", double.class), amount)` or `newInstanceRethrowing(constructor, arguments...)`.
+The non-rethrowing helpers turn invocation failures into assertion failures, not the student's exception.
+Reflection belongs only in instructor tests. Never import Ares into solution/ or template/; import JUnit there
+only in test classes the exercise asks students to write, declared `student-creates` or `stubbed` in the approved
+Design table (Artemis then permits that import). Never use
+reflective lookup there to evade references to absent student-created classes. Given starter code must compile
+without those classes; learner-owned methods can remain TODO bodies.
+
+Use JUnit `DisplayNameGeneration` with `DisplayNameGenerator.Simple.class` so reports retain method names.
+Use these supported imports and helper signatures. For a compiler diagnostic, inspect the named generated source,
+not dependency internals. The sandbox tools do not permit dependency-cache or JAR inspection.
+
+`AFTER_DUE_DATE` is Artemis visibility metadata in `test-plan.json`, not an Ares `@Hidden` or
+`@Deadline` annotation. Use the same executable test annotations for visible and after-due-date
+witnesses; both must run during verification and normal grading. Artemis controls feedback visibility.
+
+Test classes follow the seeded harness and security policy; each test carries `@StrictTimeout`. No `@DisplayName` — Artemis
+binds the reported method name, so the method name itself is the task-binding target. Structural checks use
+the seeded `testClass[X]` / `testMethods[X]` / `testAttributes[X]` / `testConstructors[X]` names verbatim;
+never invent structural names. For a type that exists only in the solution, reach it reflectively (the
+explicit declared-signature pattern above uses `ReflectionTestUtils`) so the same test still
+compiles against the template.
+
+## No theatre
+
+No tautological assertions, no asserting a constant against itself, no test that passes on every
+implementation including a broken one. If a test cannot fail for the wrong reason, it is not pulling weight.
+
+## The grading plan (test-plan.json)
+
+Before running the differential, write `/workspace/test-plan.json` implementing the spec's Testing Strategy:
+`{"tests":[{"name":"<exact test name>","seam":"S1","seamWeightTier":1..3,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}`.
+Purpose defaults to `ASSESSMENT`. For a check solely of supplied behavior, use
+`{"name":"<exact test name>","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}`.
+Preservation entries have no seam or riskPartitions, cannot cover student-work partitions, and never bind
+to a `[task]`. They remain visible so a learner who breaks supplied behavior receives useful feedback.
+
+For an existing method students modify, first write separate preservation checks for its already-working
+cases (including a successful case and any guard the change must retain). Call that supplied method directly;
+do not depend on a member students still have to create. Keep these checks passing on the actual old body.
+Then write assessment tests for the new behavior that distinguishes the completed method from that body.
+An unchanged guard does not become new student work merely because it is inside a modified method: its
+standalone regression test is PRESERVATION, not ASSESSMENT. Never erase the old body to make such a test fail.
+The final suite must reject both an unchanged old implementation (missing the extension) and a placeholder
+that discards its working behavior. Do not create a graded task for leaving supplied code untouched.
+
+List every agent-authored behavioral test. Do not list build gates or server-seeded structural checks; Artemis keeps seeded structural checks visible and zero-weight.
+The seam is the stable ID from the specification row this test implements. Start with the highest-risk
+learning-objective seam (for a design pattern, prove delegation with a recording fake before concrete formulas). Weights say
+what the exercise is really about — the core rule outweighs edge polish; equal weights everywhere is a
+decision too, and usually a lazy one. Mark a partition's HIDDEN variant `AFTER_DUE_DATE` and give it fresh
+witness values (never the visible test's inputs renamed): its whole point is catching a solution overfitted
+to the visible tests. Hidden tests are never bound to `[task]` lines in the statement. Names must be the
+exact names `verify` reports, copied verbatim.
+
+## What may vary
+
+Test count follows the design's partitions, not a quota. Non-Java languages keep the same rules with their
+own framework's idiom. Shared fixtures/helpers are fine when they keep each test's focus readable.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+For a test-writing task, each credited criterion must run the learner tests against correct behavior successfully and then require them to reject the relevant faulty behavior. A positive-only criterion can reward empty tests; a negative-only criterion can reward tests that always fail. A separate zero-weight positive guard does not protect the credit awarded by negative-only checks.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
+Declare how the supplied implementation selects faulty behavior before the specification freezes. The same calls compiled into the learner tests must reach that selection.
+For a static API, use ordinary Java dispatch inside the supplied implementation, such as an instructor-controlled delegate that defaults to correct behavior; restore it in a finally block.
+A reflection wrapper or a changed Method object does not redirect direct static calls. Do not depend on private JDK fields, class redefinition, attached agents, new dependencies,
+extra JVM opens, or new sandbox permissions. If the approved design has no working selection seam, redesign the contract rather than inventing interception during artifact repair.
+Only an assertion failure from the learner test against an activated fault demonstrates detection. Failed fault activation, linkage, discovery, or instructor support is a grader defect,
+not a detected fault. First establish that the same learner suite passes with correct behavior, and keep selection and failure classification out of the learner's responsibilities.
+
+For operation sequences, `reference/style/runtime-observation.md` shows supplied automatic recording from one learner execution.
+A claimed input variant must change a declared stimulus that reaches learner work. Hidden tests may add compatible assertions on the same execution; they cannot require contradictory outputs from identical deterministic invocations.

@@ -69,7 +69,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testScheduleAllHiddenSlides() {
         // Call the method to test
         slideUnhideScheduleService.scheduleAllHiddenSlides();
@@ -85,7 +85,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testScheduleSlideUnhidingByDTO_withValidSlide() {
         // Create a valid slide
         Slide slide = testSlides.getFirst();
@@ -105,7 +105,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testScheduleSlideUnhidingByDTO_withNullHidden() {
         // Setup a DTO with null hidden date
         SlideUnhideDTO dto = new SlideUnhideDTO(testSlides.getFirst().getId(), null);
@@ -120,7 +120,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testScheduleSlideUnhiding_withValidId() {
         // Use an existing slide from the database
         Slide slide = testSlides.getFirst();
@@ -140,7 +140,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testScheduleSlideUnhiding_withInvalidId() {
         // Use a slide ID that doesn't exist in the database
         Long nonExistentId = 999999L;
@@ -154,7 +154,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testCancelScheduledUnhiding() {
         Long slideId = testSlides.getFirst().getId();
 
@@ -166,7 +166,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testOnApplicationReady() {
         // Create a spy of the service to verify scheduleAllHiddenSlides is called
         SlideUnhideScheduleService serviceSpy = spy(slideUnhideScheduleService);

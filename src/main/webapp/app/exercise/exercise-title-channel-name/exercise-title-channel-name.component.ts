@@ -12,9 +12,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 // accesses (title, channelName, id, type) stay safe. Assigned via a variable so it is not an object-literal assertion.
 const emptyExercisePlaceholder: Partial<Exercise> = {};
 
-/**
- * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
- */
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',

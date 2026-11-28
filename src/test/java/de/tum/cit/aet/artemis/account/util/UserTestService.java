@@ -299,7 +299,7 @@ public class UserTestService {
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
-        final var newAuthorities = Stream.of(Role.TEACHING_ASSISTANT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
+        final var newAuthorities = Stream.of(Role.STUDENT.getAuthority()).map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get)
                 .collect(Collectors.toSet());
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
@@ -343,6 +343,21 @@ public class UserTestService {
     }
 
     // Test
+    public void updateUserWithOnlyRetiredRoles() throws Exception {
+        student.setInternal(true);
+        // the global teaching authorities no longer exist, so API clients that still send them must not end up without any role
+        student.setAuthorities(Set.of(new Authority("ROLE_INSTRUCTOR")));
+
+        var managedUserVM = new ManagedUserVM(student, "foobar1234");
+
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
+        assertThat(response).isNotNull();
+
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
+    }
+
+    // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
         final var oldPassword = userTestRepository.findById(student.getId()).orElseThrow().getPassword();
@@ -362,11 +377,9 @@ public class UserTestService {
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
+        // Science events are keyed by login, so a rename that skipped them would leave them unreachable for deletion and export.
+        assertThat(scienceEventRepository.findById(scienceEvent.getId()).orElseThrow().getIdentity()).isEqualTo(student.getLogin());
     }
-
-    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
-    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
-    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
@@ -390,12 +403,6 @@ public class UserTestService {
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
         return userInDB;
-    }
-
-    // Test
-    public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
-        var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test
@@ -534,22 +541,28 @@ public class UserTestService {
     }
 
     // Test
-    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+    public void searchUsers_asAdmin_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
-        List<UserDTO> users = request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        List<UserDTO> users = request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
         assertThat(users).hasSize(1); // size([student1]) = 1
+    }
+
+    // Test
+    public void searchUsers_asInstructor_forbidden() throws Exception {
+        final String loginOrName = TEST_PREFIX + "student1";
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asAdmin_badRequest() throws Exception {
         final String loginOrName = "ab"; // too short (needs at least 3 characters)
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asTutor_forbidden() throws Exception {
         final String loginOrName = "student";
-        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+        request.getList("/api/account/admin/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
@@ -590,7 +603,9 @@ public class UserTestService {
         assertThat(users).hasSize(2);
         assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS));
 
-        // Selected roles are combined with AND: tutors, editors and instructors are TAs, but only the instructor has both
+        // Teaching roles are course roles, so the users have to be enrolled in a course. Selected roles are combined with AND and mean "at least this role in some course":
+        // tutors, editors and instructors are TAs, but only the instructor is also an instructor
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         params.set("pageSize", "100");
         params.set("authorities", "TA,INSTRUCTOR");
         List<UserDTO> instructors = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
@@ -600,7 +615,7 @@ public class UserTestService {
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/account/admin/users/authorities", HttpStatus.OK, String.class);
-        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
+        assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_USER"));
     }
 
     // Test
@@ -635,7 +650,7 @@ public class UserTestService {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
 
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
@@ -651,7 +666,7 @@ public class UserTestService {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
 
-        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0 });
 
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
@@ -873,25 +888,19 @@ public class UserTestService {
     }
 
     // Test
-    public void createAndDeleteUserVcsAccessToken() throws Exception {
+    public void deleteUserVcsAccessTokenAndCannotCreateAnother() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Set expiry date to already past date -> Bad Request
-        ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
-        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
-        assertThat(userDTO).isNull();
+        // The personal token is deprecated: it cannot be created any more, however the request looks
+        request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + ZonedDateTime.now().plusMonths(1), null, UserDTO.class, HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Correct expiry date -> OK
-        expiryDate = ZonedDateTime.now().plusMonths(1);
-        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        // A token that exists from before can be revoked, which is what is left of the feature for a token that leaked
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcpat-" + "c".repeat(44), ZonedDateTime.now().plusMonths(1));
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
-        // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }

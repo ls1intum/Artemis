@@ -7,7 +7,9 @@ import { EMPTY, Subject, timer } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -309,8 +311,8 @@ export class TutorialGroupHolidaysComponent {
                 ),
                 takeUntilDestroyed(),
             )
-            .subscribe((response) => {
-                const configuration = response.body ? tutorialGroupsConfigurationEntityFromDto(response.body) : undefined;
+            .subscribe((loaded) => {
+                const configuration = loaded ? tutorialGroupsConfigurationEntityFromDto(loaded) : undefined;
                 this.configuration.set(configuration);
                 this.freePeriods.set(configuration?.tutorialGroupFreePeriods ?? []);
                 this.isLoading.set(false);

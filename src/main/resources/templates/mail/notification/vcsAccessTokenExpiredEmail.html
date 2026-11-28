@@ -18,9 +18,9 @@
     </p>
 
     <p>
-        <span th:text="#{email.notification.vcsAccessTokenExpiry.renew}">You can renew it here</span>
+        <span th:text="#{email.notification.vcsAccessTokenExpiry.deprecated}">Personal VCS access tokens are deprecated. Manage your tokens here:</span>
 
-        <a th:with="url=(@{|${baseUrl}/user-settings/vcs-token|})" th:href="${url}" th:text="${url}">Login
+        <a th:with="url=(@{|${baseUrl}/user-settings/credentials|})" th:href="${url}" th:text="${url}">Login
             link</a>
     </p>
 

@@ -2,33 +2,37 @@
 id: user-management
 title: User Management
 sidebar_label: User Management
+last_reviewed: 2026-11-26
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-Each course has four participant groups: **Students**, **Tutors**, **Editors**, and **Instructors**. Users can be added one at a time or imported in bulk from a CSV file. See [Access Rights](/admin/access-rights) for the permissions associated with each role.
+Every member of a course has a course role: **Student**, **Tutor**, **Editor** or **Instructor**. A user can hold several roles in the same course. Each role has its own members page, where you add users one by one or in bulk from a CSV file. See [Access Rights](/admin/access-rights) for the permissions of each role.
 
 <Callout variant={CalloutVariant.info}>
-Only users with the **Instructor** role on the course can add or remove participants. Tutors and Editors can view the lists but not modify them.
+Only instructors of the course and administrators can open the members pages.
 </Callout>
 
 ## Opening User Management
 
-Open the **Course Management** view and select your course. You can reach the user management screens in two ways:
+Open the **Course Management** view and select your course. You can reach a members page in these ways:
 
-- **Quick Actions**: Use the **User Management** dropdown in the Quick Actions bar and select the role you want to manage (Add Student, Add Tutor, Add Editor, Add Instructor). Next to the dropdown, the participant counters (Students, Tutors, Editors, Instructors) link directly to the corresponding management page.
-- **Direct URL**: Navigate to `/course-management/<course-id>/groups/<group>`, where `<group>` is one of `students`, `tutors`, `editors`, or `instructors` (e.g. `/course-management/42/groups/students`).
+- **Quick Actions**: Open the **User management** menu and select **Add student**, **Add tutor**, **Add editor** or **Add instructor**. The member counts next to the menu (**Students**, **Tutors**, **Editors**, **Instructors**) link to the same pages.
+- **Direct URL**: Navigate to `/course-management/<course-id>/members/<role>`, where `<role>` is one of `students`, `tutors`, `editors` or `instructors` (e.g. `/course-management/42/members/students`).
 
-Each page lists the current members of the selected group together with their ID, profile picture, login, registration number, full name, and email address. You can search the list with the search field at the top and sort by any column header.
+Each page lists the members with that role together with their profile picture, login, registration number, name and email address. You can search by login, name, email address or registration number, and sort by every column except the profile picture.
 
-## Adding a Single User
+## Adding Users
 
-1. Open the management page for the role you want to assign (Students, Tutors, Editors, or Instructors).
-2. Type the user's **login** or **name** into the search field at the top of the participant table. Matching users are suggested as you type.
-3. Select the desired user from the suggestion list. The user is added to the group immediately and appears in the table.
+1. Open the members page of the role you want to assign.
+2. Click **Add Users**.
+3. Enter a name, login, matriculation number or email address, and select one or more users from the results. Users who already have the role cannot be selected. **View Selected** shows your selection.
+4. Click **Register**. The users receive the role and appear in the table.
 
-To assign multiple roles to the same user (for example, a teaching assistant who is also enrolled as a student), repeat the steps on the corresponding management pages.
+To give the same user several roles (for example, a tutor who also takes the course as a student), repeat the steps on the other members pages.
+
+Course role changes apply on subsequent requests without signing in again. Users can reload an already open page if its controls have not updated. See [Access Rights](/admin/access-rights#roles-overview).
 
 <Callout variant={CalloutVariant.info}>
 The user must already exist in Artemis. If they have never logged in, they need to be created first either through self-registration, single sign-on, or by an administrator. See [User Registration](/admin/user-registration) for details.
@@ -36,7 +40,7 @@ The user must already exist in Artemis. If they have never logged in, they need 
 
 ## Importing Multiple Users via CSV
 
-To add many users at once, click the **Import Users** button at the top of any role's management page. A dialog opens where you can upload a CSV file.
+To add many users at once, click **Import Users** on the members page of the role. A dialog opens where you can select a CSV file.
 
 ### CSV Format
 
@@ -61,7 +65,7 @@ user_1,,,Alice,Smith
 ,,11712345,Carol,Müller
 ```
 
-After selecting the CSV file, Artemis displays a preview of the parsed users. Click **Import** to add them to the selected role. The dialog reports how many users were imported successfully and how many were not found.
+After you select the CSV file, Artemis displays a preview of the users. Click **Import** to give them the role. The dialog reports how many users were imported and how many were not found. Click **Finish** to close it.
 
 <Callout variant={CalloutVariant.warning}>
 Registration numbers in spreadsheets are often interpreted as numbers, which strips leading zeros (e.g. `01234567` becomes `1234567`). Format the column as **text** in your spreadsheet application before exporting to CSV, otherwise lookups by registration number may fail.
@@ -73,10 +77,10 @@ Users that cannot be matched to an existing Artemis account are reported under *
 
 ## Removing a User
 
-On any role's management page, click the **Remove** button (trash icon) in the user's row. Confirm the action in the dialog. The user is removed from this group, but their existing submissions, results, and participations are preserved.
+On the members page of a role, click the remove button in the user's row and confirm with **Remove**. The user loses this role in the course. Their submissions, results and participations are preserved.
 
-Removing a user from one group does not affect their membership in other groups of the same course. For example, removing a user from *Tutors* does not remove them from *Students*.
+Removing one role does not affect the other roles of the user in the same course. For example, removing a user from the tutors does not remove them from the students.
 
-## Exporting Participants
+## Exporting Members
 
-To export the current list of a role, open its management page and click the **Export CSV** button at the top right. The download contains the displayed columns (ID, login, registration number, name, email) for every user currently in the group.
+To export the members of a role, open its members page and click **Export as CSV**. The file contains the name, username, email address and registration number of every user with that role.

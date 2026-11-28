@@ -24,6 +24,8 @@ export default defineConfig({
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
             src: path.resolve(__dirname, 'src'),
+            // The Angular test compiler emits root-relative imports for shared component stylesheets.
+            '/src': path.resolve(__dirname, 'src'),
             // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
             // `./styles.css`, so the bare specifier resolves through the built library instead.
             '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-aet-ui/dist'),
@@ -31,19 +33,13 @@ export default defineConfig({
     },
     css: {
         // .postcssrc.json (Tailwind) is a production-build concern. Vitest would otherwise auto-load it and run
-        // PostCSS over every component's inline `styles`, whose SCSS `//` comments are invalid CSS and make PostCSS
-        // throw. Tests don't need Tailwind generation, so run no PostCSS plugins here.
+        // PostCSS over the styles of every component. Tests don't need Tailwind generation, so run no PostCSS
+        // plugins here.
         postcss: { plugins: [] },
-        preprocessorOptions: {
-            scss: {
-                loadPaths: [path.resolve(__dirname)],
-                silenceDeprecations: ['color-functions', 'global-builtin', 'import', 'if-function'],
-            },
-        },
     },
     // JIT mode required for ng-mocks compatibility; fastCompile is required under Angular 22 so the
     // plugin inlines external templateUrl/styleUrl (the two-pass JIT path's compiler markers are gone).
-    plugins: [angular({ jit: true, fastCompile: true })],
+    plugins: [angular({ jit: true, fastCompile: true, tsconfig: path.resolve(__dirname, 'config/client/tsconfig.spec.json') })],
     test: {
         globals: true,
         pool: 'forks',

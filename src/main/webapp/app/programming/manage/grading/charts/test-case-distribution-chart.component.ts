@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,7 +12,6 @@ import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/cha
 import { normalizedStackedBarChart, stackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type TestCaseColors = {
@@ -19,9 +20,9 @@ export type TestCaseColors = {
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
-    styleUrls: ['./sca-category-distribution-chart.scss'],
+    styleUrls: ['./sca-category-distribution-chart.css'],
     templateUrl: './test-case-distribution-chart.component.html',
-    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);

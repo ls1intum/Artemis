@@ -65,7 +65,7 @@ describe('ExamAssessmentButtons', () => {
             },
         }),
         MockProvider(CourseManagementService, {
-            find: () => {
+            findForManagement: () => {
                 return of(
                     new HttpResponse({
                         body: course,

@@ -48,50 +48,50 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void getTumLivePlaylistLink_validUrl_returnsPlaylist() {
+    void lookUpPlaylist_validUrl_returnsPlaylist() {
         var playlist = "https://cdn.tum.live/playlist_12345.m3u8";
         var dto = new TumLivePlaylistDTO(new StreamDTO(playlist));
 
         when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class))).thenReturn(dto);
 
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://live.rbg.tum.de/w/abc-course/12345").playlistUrl());
 
         assertThat(result).isPresent().contains(playlist);
     }
 
     @Test
-    void getTumLivePlaylistLink_notTumLiveHost_returnsEmpty() {
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://example.com/some/path");
+    void lookUpPlaylist_notTumLiveHost_returnsEmpty() {
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://example.com/some/path").playlistUrl());
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_malformedUrl_returnsEmpty() {
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc course/12345\nFORGED");
+    void lookUpPlaylist_malformedUrl_returnsEmpty() {
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://live.rbg.tum.de/w/abc course/12345\nFORGED").playlistUrl());
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_invalidPath_returnsEmpty() {
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/invalid/path");
+    void lookUpPlaylist_invalidPath_returnsEmpty() {
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://live.rbg.tum.de/invalid/path").playlistUrl());
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_apiReturnsNoPlaylist_returnsEmpty() {
+    void lookUpPlaylist_apiReturnsNoPlaylist_returnsEmpty() {
         var dto = new TumLivePlaylistDTO(null);
         when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("courseXYZ"), eq("999")).retrieve().body(eq(TumLivePlaylistDTO.class))).thenReturn(dto);
 
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/courseXYZ/999");
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://live.rbg.tum.de/w/courseXYZ/999").playlistUrl());
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_apiThrows_returnsEmpty() {
+    void lookUpPlaylist_apiThrows_returnsEmpty() {
         when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
                 .thenThrow(new RestClientException("boom"));
 
-        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+        Optional<String> result = Optional.ofNullable(tumLiveService.lookUpPlaylist("https://live.rbg.tum.de/w/abc-course/12345").playlistUrl());
         assertThat(result).isEmpty();
     }
 
@@ -157,10 +157,10 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void getTumLivePlaylistLink_clientNotConfigured_returnsEmpty() {
+    void lookUpPlaylist_clientNotConfigured_returnsEmpty() {
         TumLiveService unconfiguredService = new TumLiveService(restClientBuilder, " ");
 
-        Optional<String> result = unconfiguredService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+        Optional<String> result = Optional.ofNullable(unconfiguredService.lookUpPlaylist("https://live.rbg.tum.de/w/abc-course/12345").playlistUrl());
 
         assertThat(result).isEmpty();
     }

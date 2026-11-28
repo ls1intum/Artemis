@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
@@ -7,7 +9,6 @@ import { getColor } from 'app/programming/manage/grading/charts/programming-grad
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { normalizedStackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,16 +16,18 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
-    styleUrls: ['./sca-category-distribution-chart.scss'],
+    styleUrls: ['./sca-category-distribution-chart.css'],
     template: `
         <div>
             <div>
-                <div class="d-flex justify-content-between">
+                <div class="flex justify-between">
                     <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title"></h4>
                     @if (tableFiltered) {
                         <button
                             type="button"
-                            class="btn btn-info"
+                            tumAetUiButton
+                            size="small"
+                            severity="secondary"
                             (click)="resetTableFilter()"
                             jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
                         ></button>
@@ -32,7 +35,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                 </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
-            <div class="chart bg-light">
+            <div class="chart bg-(--light) dark:bg-white/5">
                 <tumaet-ui-bar-chart
                     [labels]="chartData().labels"
                     [series]="chartData().series"
@@ -44,7 +47,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             </div>
         </div>
     `,
-    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);
@@ -167,7 +170,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
 
     /**
      * Handles the click on a specific category in a specific line of the chart
-     * If the user clicks a category within the penalty bar, the user is delegated to the scores page of the exercise
+     * If the user clicks a category within the penalty bar, the user is delegated to the participation page of the exercise
      * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
      * @param event the event delegated by ngx-charts after the user clicked a part of the chart
      */
@@ -175,7 +178,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         const meta = event.meta as ChartSeriesEntry | undefined;
         if (!meta?.['isPenalty']) {
             const exercise = this.exercise();
-            this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'scores']);
+            this.navigationUtilsService.routeInNewTab(['course-management', exercise.course!.id, 'programming-exercises', exercise.id, 'participations']);
         } else {
             this.tableFiltered = true;
             this.scaCategoryFilter.emit(meta['id'] as number);

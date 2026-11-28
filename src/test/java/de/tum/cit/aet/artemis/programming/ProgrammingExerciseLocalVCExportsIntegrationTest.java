@@ -66,10 +66,10 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportByParticipationIds_happyPath() throws Exception {
         var participationIds = programmingExerciseStudentParticipationTestRepository.findByExerciseId(exercise.getId()).stream().map(p -> p.getId().toString()).toList();
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
+        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds) + "/for-instructor";
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
         var file = request.postWithResponseBodyFile(url, exportOptions, HttpStatus.OK);
         assertThat(file).exists();
@@ -87,9 +87,13 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generateTests_happyPath() throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void generateTests_happyPath(boolean sequential) throws Exception {
+        var config = programmingExerciseUtilService.buildConfigOf(exercise);
+        config.setSequentialTestRuns(sequential);
+        programmingExerciseBuildConfigRepository.save(config);
         // Ensure template, solution and tests repos exist and are wired to LocalVC via util
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
@@ -114,5 +118,8 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         var path = "/api/programming/programming-exercises/" + exercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, exercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
+        testsRepo.workingCopy().pull().call();
+        assertThat(testsDir.resolve("test.json")).exists();
+        assertThat(Files.readString(testsDir.resolve("test.json"))).isNotBlank();
     }
 }

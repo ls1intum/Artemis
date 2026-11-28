@@ -10,6 +10,7 @@ import { MockCommunicationService } from 'test/helpers/mocks/service/mock-commun
 import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,11 +18,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { PostingEditType } from 'app/communication/communication.util';
@@ -58,13 +57,12 @@ describe('MessageReplyInlineInputComponent', () => {
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(DraftService),
-                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         });
 
         TestBed.overrideComponent(MessageReplyInlineInputComponent, {
-            remove: { imports: [PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe] },
-            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockComponent(PostingButtonComponent), MockPipe(ArtemisTranslatePipe)] },
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
         });
         fixture = TestBed.createComponent(MessageReplyInlineInputComponent);
         component = fixture.componentInstance;
@@ -73,6 +71,41 @@ describe('MessageReplyInlineInputComponent', () => {
         accountService = TestBed.inject(AccountService);
         communicationServiceCreateStub = vi.spyOn(communicationService, 'createAnswerPost');
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updateAnswerPost');
+    });
+
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
+    it('passes a distinct draft identity when equal-content replies change parent threads', () => {
+        component.posting.set({ post: { id: 11 }, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        component.posting.set({ post: { id: 12 }, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('loads a different edited reply in the same thread instead of preserving the previous reply content', () => {
+        component.posting.set({ id: 21, post: { id: 11 }, content: 'First reply' });
+        fixture.detectChanges();
+        component.formGroup.get('content')!.setValue('Unsaved first reply');
+
+        component.posting.set({ id: 22, post: { id: 11 }, content: 'Second reply' });
+        fixture.detectChanges();
+
+        expect(component.formGroup.get('content')!.value).toBe('Second reply');
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:22');
     });
 
     it('should invoke communication service with created message reply', () => {
@@ -89,6 +122,38 @@ describe('MessageReplyInlineInputComponent', () => {
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
+    });
+
+    it('should offer cancel and save buttons only when an existing reply is edited', () => {
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelector('#save')).toBeNull();
+
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement;
+        const [cancel, save] = Array.from(element.querySelectorAll<HTMLButtonElement>('button'));
+        expect(cancel.type).toBe('button');
+        expect(save.id).toBe('save');
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+
+        const onModalOpenSpy = vi.spyOn(component.isModalOpen, 'emit');
+        cancel.click();
+        expect(onModalOpenSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the save button and show a spinner while the reply is saved', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+        const save = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#save')!;
+        expect(save.querySelector('fa-icon')).toBeNull();
+
+        component.isLoading.set(true);
+        fixture.detectChanges();
+
+        expect(save.disabled).toBe(true);
+        expect(save.querySelector('fa-icon')).not.toBeNull();
     });
 
     it('should hand the conversation and the edit type to the markdown editor, which decides whether @all is offered', () => {
@@ -244,6 +309,23 @@ describe('MessageReplyInlineInputComponent', () => {
             vi.advanceTimersByTime(0);
 
             expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content length validation', () => {
+        beforeEach(() => {
+            component.posting.set({ ...communicationPostToCreateUser1 });
+            fixture.detectChanges();
+        });
+
+        it('should flag a maxlength error when the reply content exceeds MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH + 1));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(true);
+        });
+
+        it('should not flag a maxlength error when the reply content is exactly MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(false);
         });
     });
 });

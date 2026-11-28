@@ -22,7 +22,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { problemStatement } from 'test/helpers/sample/problemStatement.json';
@@ -36,10 +36,14 @@ import {
     CodeEditorRepositoryService,
 } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -53,7 +57,7 @@ import { MockParticipationService } from 'test/helpers/mocks/service/mock-partic
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -74,8 +78,7 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -111,7 +114,6 @@ describe('CodeEditorInstructorIntegration', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
@@ -157,8 +159,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
+                // Keeps CodeEditorActionsComponent and ResultComponent from opening real dialogs.
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
                 }),
@@ -172,7 +174,7 @@ describe('CodeEditorInstructorIntegration', () => {
         const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
         const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        const resultService = TestBed.inject(ResultService);
+        const resultApi = TestBed.inject(ResultApi);
         const buildLogService = TestBed.inject(CodeEditorBuildLogService);
         const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         const programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
@@ -189,7 +191,7 @@ describe('CodeEditorInstructorIntegration', () => {
         checkIfRepositoryIsCleanStub = vi.spyOn(codeEditorRepositoryService, 'getStatus');
         getRepositoryContentStub = vi.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         getLatestResultWithFeedbacksStub = vi
             .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
             .mockReturnValue(throwError(() => new Error('no result')));
@@ -231,6 +233,47 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.loadingState()).toBe(comp.LOADING_STATE.INITIALIZING);
     };
 
+    it('preserves real editor files after remote invalidation blocks a repository switch, but allows saved uncommitted navigation', async () => {
+        const course = new Course();
+        course.id = 1;
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 1;
+        exercise.problemStatement = problemStatement;
+        exercise.templateParticipation!.id = 3;
+        exercise.templateParticipation!.repositoryUri = 'template';
+        exercise.solutionParticipation!.id = 4;
+        exercise.solutionParticipation!.repositoryUri = 'solution';
+        initContainer(exercise);
+        findWithParticipationsSubject.next({ body: exercise });
+        containerFixture.detectChanges();
+        const editor = comp.codeEditorContainer()!;
+        editor.onFileContentChange({ fileName: 'App.java', text: 'unsaved local code' });
+        const initialize = vi.spyOn(editor, 'initializeProperties');
+        const reset = vi.spyOn(TestBed.inject(CodeEditorFileSyncService), 'reset');
+        const setDomain = vi.spyOn(domainService, 'setDomain');
+
+        containerFixture.debugElement.injector.get(HyperionGenerationActivityFacade).exerciseContentsInvalidated.next('saved');
+        containerFixture.detectChanges();
+        expect(editor.editable()).toBe(false);
+
+        const switched = await comp.selectSolutionParticipation();
+        comp.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+
+        expect(editor.unsavedFiles).toEqual({ 'App.java': 'unsaved local code' });
+        expect(switched).toBe(false);
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(setDomain).not.toHaveBeenCalled();
+        expect(initialize).not.toHaveBeenCalled();
+        expect(reset).not.toHaveBeenCalled();
+        expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
+
+        editor.unsavedFiles = {};
+        editor.commitState = CommitState.UNCOMMITTED_CHANGES;
+        await comp.selectSolutionParticipation();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, 4], expect.any(Object));
+    });
+
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         vi.resetModules();
         const result = { id: 9 } as Result;
@@ -264,7 +307,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
-        expect(comp.exercise).toEqual(exercise);
+        expect(comp.exercise()).toEqual(exercise);
         expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState()).toBe(comp.LOADING_STATE.CLEAR);
@@ -279,8 +322,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // Submission could be built
         expect(getBuildLogsStub).not.toHaveBeenCalled();
-        // Once called by each build-output & instructions
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(2);
+        // The build output attaches the loaded details to the result, so the instructions find them and do not load them again
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
 
         expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
         expect(comp.codeEditorContainer()!.fileBrowser()).toBeDefined(); // Have to use this as it's a component
@@ -473,7 +516,7 @@ describe('CodeEditorInstructorIntegration', () => {
         } as ProgrammingExercise;
 
         beforeEach(() => {
-            comp.exercise = exercise;
+            comp.exercise.set(exercise);
         });
 
         it('should navigate to template participation repository from auxiliary repository', () => {

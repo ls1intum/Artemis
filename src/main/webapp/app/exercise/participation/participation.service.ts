@@ -1,11 +1,10 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, ParticipationSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
-import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -88,52 +87,7 @@ export class ParticipationService {
             .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
-    /**
-     * starts the student participation for the quiz exercise with the identifier quizExerciseId
-     * @param quizExerciseId The unique identifier of the quiz exercise
-     */
-    startQuizParticipation(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .post<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/start-participation`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
-    getQuizParticipationResult(quizExerciseId: number, participationId: number, submissionId?: number): Observable<EntityResponseType> {
-        const params: Record<string, string> = submissionId !== undefined ? { submissionId: String(submissionId) } : {};
-        return this.http
-            .get<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/participations/${participationId}/result`, { params, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
-    searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
-        const params: Record<string, string | number> = {
-            page: search.page,
-            pageSize: search.pageSize,
-            sortingOrder: search.sortingOrder,
-            sortedColumn: search.sortedColumn,
-            searchTerm: search.searchTerm,
-        };
-        if (search.filterProp) {
-            params['filterProp'] = search.filterProp;
-        }
-        return this.http
-            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
-                    const content = res.body ?? [];
-                    content.forEach((dto) => {
-                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
-                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
-            );
-    }
-
-    searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+    searchParticipations(exerciseId: number, search: ParticipationSearch, kind: 'course' | 'exam' = 'course'): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -151,19 +105,22 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/scores`, {
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}`, {
                 params,
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
-                    const content = res.body ?? [];
+                map(toPageableResult),
+                tap(({ content }) =>
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
+                        dto.correctionRoundResults?.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
+                    }),
+                ),
             );
     }
 
@@ -184,10 +141,6 @@ export class ParticipationService {
 
     shouldPreferPractice(exercise?: Exercise): boolean {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
-    }
-
-    getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
-        return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
     }
 
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
@@ -329,16 +282,6 @@ export class ParticipationService {
         const convertedResponse = participationRes.clone({ body: participationRes.body?.map(fromStudentParticipationDTO) ?? null });
         this.setAccessRightsParticipationEntityArrayResponseType(convertedResponse);
         return convertedResponse;
-    }
-
-    /**
-     * This method bundles recurring conversion steps for Participation EntityResponses.
-     * @param participationRes
-     */
-    private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
-        this.convertParticipationResponseDatesFromServer(participationRes);
-        this.setAccessRightsParticipationEntityResponseType(participationRes);
-        return participationRes;
     }
 
     private processParticipationDTOResponseType(participationRes: HttpResponse<StudentParticipationDTO>): EntityResponseType {

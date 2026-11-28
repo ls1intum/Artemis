@@ -20,6 +20,22 @@ import de.tum.cit.aet.artemis.core.config.valves.PublicTimeValve;
 public class TomcatConfiguration {
 
     /**
+     * The most locales Tomcat takes from the Accept-Language header of one request. Tomcat ignores the entries above the limit.
+     * <p>
+     * Tomcat 9.0.123, 10.1.61 and 11.0.27 introduced a default of 10 in a patch release. In those releases a request above the
+     * limit made {@code getLocale()} throw, and Spring's {@code RequestContextFilter} calls it for every request, so such a client
+     * got a 500 for every page and API call. Tomcat 11.0.28 reworked this to ignore the extra locales instead of throwing, and
+     * the build uses a Tomcat that does. Browsers send one entry per configured language and RFC 9110 sets no maximum, so users
+     * with many languages exceed 10. Do not lower the Tomcat version below 11.0.28 without restoring a test of the 500.
+     * <p>
+     * The limit stays to bound the locales that are processed for one request. Parsing costs about a microsecond per entry, and
+     * 50 entries cost at most about 45 microseconds per request, an order of magnitude less than unlimited parsing at the proxy's
+     * header size of up to 8 KB (roughly a thousand entries). These figures were measured when a header above the limit was
+     * rejected at the limit, and not again for the Tomcat that ignores the extra entries.
+     */
+    static final int MAX_ACCEPT_LANGUAGE_LOCALES = 50;
+
+    /**
      * Customize the Tomcat configuration to achieve performance improvements as outlined below
      *
      * @return the WebServerFactoryCustomizer with the customized options to improve the performance
@@ -31,6 +47,7 @@ public class TomcatConfiguration {
             container.addEngineValves(new HealthCheckValve());
             // Add time valve for ultra-fast /time responses used by the webapp
             container.addEngineValves(new PublicTimeValve());
+            container.addConnectorCustomizers(connector -> connector.setMaxLocaleCount(MAX_ACCEPT_LANGUAGE_LOCALES));
 
             container.addContextCustomizers((Context context) -> {
 

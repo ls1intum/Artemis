@@ -1,6 +1,6 @@
-import { signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -52,7 +52,7 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, NEVER, Subject, of, throwError } from 'rxjs';
-import { skip } from 'rxjs/operators';
+import { skip, tap } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -61,9 +61,13 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 describe('ExamParticipationComponent', () => {
     // Backing signal for the mocked submission-sync contract; see the MockProvider below.
     const submissionSyncVersion = signal(0);
@@ -84,6 +88,7 @@ describe('ExamParticipationComponent', () => {
     let courseService: CourseManagementService;
     let courseStorageService: CourseStorageService;
     let examManagementService: ExamManagementService;
+    let courseOverviewTabDataService: CourseOverviewTabDataService;
 
     function setupActivatedRouteMock() {
         return {
@@ -166,6 +171,7 @@ describe('ExamParticipationComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(ArtemisDatePipe),
                 MockProvider(ExamManagementService),
+                MockProvider(CourseOverviewTabDataService),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
@@ -191,9 +197,13 @@ describe('ExamParticipationComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examManagementService = TestBed.inject(ExamManagementService);
+        courseOverviewTabDataService = TestBed.inject(CourseOverviewTabDataService);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([]));
         // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
         // by tests below would crash with "Cannot read 'next' of undefined" during teardown.
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        (examParticipationService as any).testStudentExams = signal([]);
+        examParticipationService.testStudentExams.set([]);
         // The TestBed has no router routes registered, so any navigate(...) call would emit an
         // unhandled NG04002 rejection. Stub it once so individual tests don't have to.
         vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -202,6 +212,8 @@ describe('ExamParticipationComponent', () => {
         const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
+        examParticipationService.testStudentExams.set([]);
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
         comp.ngOnInit();
         loadTestRunSpy.mockClear();
         comp.exam.set(new Exam());
@@ -254,24 +266,6 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('isProgrammingExerciseWithCodeEditor', () => {
-        it('should return true if programming exercise is with code editor', () => {
-            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(false);
-            (comp.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor = true;
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(true);
-        });
-    });
-
-    describe('isProgrammingExerciseWithOfflineIDE', () => {
-        it('should return true if active exercise is with offline ide', () => {
-            comp.activeExamPage().exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(true);
-            (comp.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde = false;
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(false);
-        });
-    });
-
     it('should load test run if test run id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
@@ -308,6 +302,23 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()).not.toEqual(studentExam);
     });
 
+    it('should continue to load own student exam if overview request fails', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(throwError(() => new Error('HTTP 500')));
+        const loadStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+
+        comp.ngOnInit();
+
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam()).toEqual(studentExam);
+        expect(comp.exam()).toEqual(studentExam.exam);
+    });
+
     it('should redirect to exam summary after test run is over', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
@@ -329,7 +340,7 @@ describe('ExamParticipationComponent', () => {
     it('should load new testExam if studentExam id is start', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examMode = ExamMode.TEST;
         studentExam.exam.course = new Course();
         studentExam.workingTime = 100;
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'start' });
@@ -343,7 +354,7 @@ describe('ExamParticipationComponent', () => {
     it('should load existing testExam if studentExam id is start', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examMode = ExamMode.TEST;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 150;
         studentExam.id = 4;
@@ -364,7 +375,7 @@ describe('ExamParticipationComponent', () => {
     it('should load existing testExam for summary if studentExam id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examMode = ExamMode.TEST;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         studentExam.id = 3;
@@ -385,6 +396,112 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()).toEqual(studentExamWithExercises);
         expect(comp.studentExam()).not.toEqual(studentExam);
         expect(comp.studentExam().id).toEqual(studentExamWithExercises.id);
+    });
+
+    it('should not request a new student exam when the actual test exam is already over', () => {
+        const exam = new Exam();
+        exam.id = 2;
+        exam.examMode = ExamMode.TEST;
+        exam.endDate = dayjs().subtract(1, 'hour');
+
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
+        const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
+
+        comp.ngOnInit();
+
+        expect(getOwnStudentExamSpy).not.toHaveBeenCalled();
+        expect(comp.testExam()).toBe(true);
+        expect(comp.loadingExam()).toBe(false);
+        expect(comp.noStudentExamMessageKey()).toBe('artemisApp.examParticipation.testExamConcluded');
+    });
+
+    it('should not request a new student exam when the submitted supervised session attempt is clicked through the actual test exam', () => {
+        const exam = new Exam();
+        exam.id = 2;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
+        exam.startDate = dayjs().subtract(10, 'minutes').toISOString() as any;
+        exam.workingTime = 3600;
+        exam.endDate = dayjs().add(2, 'hours');
+        const supervisedSessionAttempt = new StudentExam();
+        supervisedSessionAttempt.exam = exam;
+        supervisedSessionAttempt.startedDate = dayjs().subtract(5, 'minutes');
+        supervisedSessionAttempt.submitted = true;
+
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
+        examParticipationService.testStudentExams.set([supervisedSessionAttempt]);
+        const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
+
+        comp.ngOnInit();
+
+        expect(getOwnStudentExamSpy).not.toHaveBeenCalled();
+        expect(comp.testExam()).toBe(true);
+        expect(comp.loadingExam()).toBe(false);
+        expect(comp.noStudentExamMessageKey()).toBe('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
+    });
+
+    it('should request a new student exam for an active practice exam with a supervised session without existing attempts', () => {
+        const exam = new Exam();
+        exam.id = 2;
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
+        exam.startDate = dayjs().subtract(10, 'minutes');
+        exam.workingTime = 3600;
+        exam.endDate = dayjs().add(2, 'hours');
+        const studentExam = new StudentExam();
+        studentExam.exam = exam;
+
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
+        examParticipationService.testStudentExams.set([]);
+        const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
+
+        comp.ngOnInit();
+
+        expect(getOwnStudentExamSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam()).toEqual(studentExam);
+    });
+
+    it('should request overview exams with reuseFromParentNavigation true', () => {
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        const loadExamsSpy = vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([]));
+
+        comp.ngOnInit();
+
+        expect(loadExamsSpy).toHaveBeenCalledWith(1, true);
+    });
+
+    it('should still load an existing test exam attempt summary when the attempt card is clicked', () => {
+        const exam = new Exam();
+        exam.id = 2;
+        exam.examMode = ExamMode.TEST;
+        exam.endDate = dayjs().subtract(1, 'hour');
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        studentExamWithExercises.exam = exam;
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        (activatedRoute as any).firstChild = {
+            snapshot: {
+                params: { studentExamId: '3' },
+            },
+        };
+        activatedRoute.params = of({ courseId: '1', examId: '2' });
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+        vi.spyOn(courseOverviewTabDataService, 'loadExamsIfNeeded').mockReturnValue(of([exam as any]));
+        const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
+        const loadStudentExamWithExercisesForSummarySpy = vi
+            .spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary')
+            .mockReturnValue(of(studentExamWithExercises));
+
+        comp.ngOnInit();
+
+        expect(getOwnStudentExamSpy).not.toHaveBeenCalled();
+        expect(loadStudentExamWithExercisesForSummarySpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam()).toEqual(studentExamWithExercises);
     });
 
     it('should load exam from local storage if needed', () => {
@@ -412,6 +529,41 @@ describe('ExamParticipationComponent', () => {
         expect(comp.exam()).toEqual(studentExam.exam);
     });
 
+    it.each(['route change', 'destroy'])('cancels a fallback participation start on %s', (cancellation) => {
+        const pending = new Subject<StudentParticipation>();
+        vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(pending);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        comp.createParticipationForExercise(exercise).subscribe();
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '999' });
+            comp.ngOnInit();
+        }
+        expect(pending.observed).toBe(false);
+        pending.next({ id: 42 });
+        expect(exercise.studentParticipations).toBeUndefined();
+    });
+
+    it.each(['route change', 'destroy'])('cancels an own exam load on %s', (cancellation) => {
+        const pending = new Subject<StudentExam>();
+        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(pending);
+        const params = new Subject<{ courseId: string; examId: string }>();
+        TestBed.inject(ActivatedRoute).params = params;
+        comp.ngOnInit();
+        params.next({ courseId: '1', examId: '2' });
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(NEVER);
+            params.next({ courseId: '1', examId: '999' });
+        }
+        expect(pending.observed).toBe(false);
+    });
+
     it('should determine tutor status if no exam was loaded', () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },
@@ -428,7 +580,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.isAtLeastTutor()).toBe(true);
     });
 
-    it('should determine tutor status if no exam was loaded and course was not cached', () => {
+    it('should determine tutor status if no exam was loaded and course was not cached', async () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },
             status: 400,
@@ -440,6 +592,7 @@ describe('ExamParticipationComponent', () => {
         const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
         const courseServiceSpy = vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.ngOnInit();
+        await Promise.resolve();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(courseServiceSpy).toHaveBeenCalledOnce();
@@ -499,7 +652,10 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBe(true);
         expect(secondSubmission.submitted).toBe(false);
 
-        if (studentExam.testRun || studentExam.exam?.testExam) {
+        const supervisedSessionEndDate = studentExam.exam?.startDate?.add(studentExam.exam.workingTime!, 'seconds');
+        if (studentExam.exam?.examMode === ExamMode.TEST_WITH_SUPERVISED_SESSION && studentExam.startedDate && studentExam.startedDate.isBefore(supervisedSessionEndDate!)) {
+            expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
+        } else if (studentExam.testRun || (studentExam.exam?.examMode !== undefined && studentExam.exam.examMode !== ExamMode.REAL)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.testStartTime()!.add(studentExam.workingTime!, 'seconds'));
         } else {
             expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
@@ -523,13 +679,47 @@ describe('ExamParticipationComponent', () => {
     it('should initialize test exam', () => {
         const studentExam = new StudentExam();
         const exam = new Exam();
-        exam.testExam = true;
+        exam.examMode = ExamMode.TEST;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
         testExamStarted(studentExam, () => {
             comp.testStartTime.set(dayjs().subtract(1000, 'seconds'));
             comp.exam.set(exam);
         });
+    });
+
+    it('should initialize practice exam with a supervised session using the fixed supervised session end date', () => {
+        const studentExam = new StudentExam();
+        const exam = new Exam();
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
+        exam.startDate = dayjs().subtract(10, 'minutes');
+        exam.workingTime = 3600;
+        studentExam.exam = exam;
+        studentExam.startedDate = dayjs();
+        studentExam.workingTime = 3600;
+
+        testExamStarted(studentExam, () => {
+            comp.exam.set(exam);
+        });
+
+        expect(comp.individualStudentEndDate()).toEqual(exam.startDate.add(exam.workingTime, 'seconds'));
+    });
+
+    it('should initialize practice exam with a supervised session practice attempt using the attempt start date', () => {
+        const studentExam = new StudentExam();
+        const exam = new Exam();
+        exam.examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
+        exam.startDate = dayjs().subtract(2, 'hours');
+        exam.workingTime = 3600;
+        studentExam.exam = exam;
+        studentExam.startedDate = dayjs();
+        studentExam.workingTime = 3600;
+
+        testExamStarted(studentExam, () => {
+            comp.exam.set(exam);
+        });
+
+        expect(comp.individualStudentEndDate()).toEqual(studentExam.startedDate.add(studentExam.workingTime, 'seconds'));
     });
 
     it('should initialize exercise without test run', () => {
@@ -585,6 +775,133 @@ describe('ExamParticipationComponent', () => {
         comp.createParticipationForExercise(exercise).subscribe();
         expect(seenStates).toEqual(['generating', 'failed']);
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
+    });
+
+    describe('manual participation recovery', () => {
+        function prepareExercise(exercise: TextExercise | ProgrammingExercise) {
+            fixture.detectChanges();
+            exercise.id = 42;
+            comp.exam.set({ id: 2, course: new Course(), startDate: dayjs().subtract(1, 'hours') });
+            comp.studentExam.set({ id: 3, exercises: [exercise], exam: comp.exam(), numberOfExamSessions: 0 });
+            comp.activeExamPage.set({ isOverviewPage: false, exercise });
+            comp.pageComponentVisited.set([false]);
+            comp.examStartConfirmed.set(true);
+            comp.individualStudentEndDate.set(dayjs().add(1, 'hours'));
+            comp.updateSidebarData();
+            vi.spyOn(comp, 'isVisible').mockReturnValue(true);
+            vi.spyOn(comp, 'isActive').mockReturnValue(true);
+            vi.spyOn(comp, 'isOver').mockReturnValue(false);
+            vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+        }
+
+        function clickRetry() {
+            fixture.detectChanges();
+            const button = fixture.debugElement.query(By.css('[data-testid="retry-exercise-participation"]'));
+            expect(button, 'the failed start exposes the real Retry control').not.toBeNull();
+            button.nativeElement.click();
+            fixture.detectChanges();
+        }
+
+        it('renders the text exercise after the real Retry control succeeds', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(of(participation));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.pageComponentVisited()).toEqual([false]);
+
+            clickRetry();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(exercise.studentParticipations).toEqual([participation]);
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-text-editor-exam'))).not.toBeNull();
+        });
+
+        it('clears the failed status when Retry finds the participation already valid', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const start = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.generateParticipationStatus.value).toBe('failed');
+            const participation = new StudentParticipation();
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            exercise.studentParticipations = [participation];
+
+            comp.retryParticipationForExercise();
+
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(comp.pageComponentVisited()).toEqual([true]);
+        });
+
+        it('initializes the programming submission subscription and clean placeholder once after Retry', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            const pendingSubmissions = new Subject<ProgrammingSubmissionStateObj>();
+            const pending = vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(pendingSubmissions);
+            const delayedStart = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayedStart);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+
+            clickRetry();
+            comp.retryParticipationForExercise();
+            expect(start, 'a second Retry while the request is pending does not start it again').toHaveBeenCalledTimes(2);
+            delayedStart.next(participation);
+            delayedStart.complete();
+            fixture.detectChanges();
+
+            expect(pending.mock.calls.filter((call) => call[4] === true)).toEqual([[321, 42, true, false, true]]);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0]).toMatchObject({ isSynced: true, submitted: false });
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-programming-submission-exam'))).not.toBeNull();
+        });
+
+        it('cancels a pending manual Retry when another exercise is selected', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const otherExercise = new TextExercise(new Course(), undefined);
+            otherExercise.id = 43;
+            const otherParticipation = new StudentParticipation();
+            otherParticipation.initializationState = InitializationState.INITIALIZED;
+            otherParticipation.submissions = [new TextSubmission()];
+            otherExercise.studentParticipations = [otherParticipation];
+            comp.studentExam().exercises!.push(otherExercise);
+            comp.pageComponentVisited.set([false, false]);
+            const delayed = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayed);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            clickRetry();
+            expect(comp.generateParticipationStatus.value).toBe('generating');
+
+            comp.onPageChange({ overViewChange: false, exercise: otherExercise, forceSave: false });
+            delayed.next(new StudentParticipation());
+            delayed.complete();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(exercise.studentParticipations).toBeUndefined();
+            expect(comp.activeExamPage().exercise).toBe(otherExercise);
+            expect(comp.pageComponentVisited()).toEqual([false, true]);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+        });
     });
 
     describe('websocket working time subscription', () => {
@@ -749,6 +1066,128 @@ describe('ExamParticipationComponent', () => {
             expectSyncedSubmissions(submission, syncedSubmission);
         });
 
+        describe('text saves of one submission', () => {
+            const pendingSaves: Subject<HttpResponse<TextSubmission>>[] = [];
+            let sentTexts: (string | undefined)[];
+            let inFlight: number;
+            let maxInFlight: number;
+            let submission: TextSubmission;
+
+            // Every request stays open until the test completes it, so tests control the order of the responses.
+            beforeEach(() => {
+                const textExercise = new TextExercise(new Course(), undefined);
+                textExercise.id = 5;
+                const participation = new StudentParticipation();
+                submission = new TextSubmission();
+                submission.text = 'Answer A';
+                submission.isSynced = false;
+                participation.submissions = [submission];
+                textExercise.studentParticipations = [participation];
+                comp.studentExam().exercises = [textExercise];
+                pendingSaves.length = 0;
+                sentTexts = [];
+                inFlight = 0;
+                maxInFlight = 0;
+                vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                    sentTexts.push(answer.text);
+                    inFlight++;
+                    maxInFlight = Math.max(maxInFlight, inFlight);
+                    const save = new Subject<HttpResponse<TextSubmission>>();
+                    pendingSaves.push(save);
+                    return save.pipe(
+                        tap({
+                            next: () => inFlight--,
+                            error: () => inFlight--,
+                        }),
+                    );
+                });
+            });
+
+            function respond(index: number) {
+                pendingSaves[index].next(new HttpResponse({ body: new TextSubmission() }));
+                pendingSaves[index].complete();
+            }
+
+            function edit(text: string) {
+                submission.text = text;
+                submission.isSynced = false;
+            }
+
+            it('should send the newest text only after the previous save responded, never two requests at once', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                comp.triggerSave(false);
+                // Save B must not overlap with save A: the database write order has to equal the send order.
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                expect(submission.isSynced).toBe(false);
+
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(maxInFlight).toBe(1);
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+            });
+
+            it('should only send the latest of several edits made while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer C');
+                comp.triggerSave(false);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer C']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer C');
+            });
+
+            it('should keep the submission synced when the student undoes to the text that is being saved', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                edit('Answer A');
+
+                respond(0);
+                // The server holds the same text as the editor, so nothing has to be sent again.
+                expect(sentTexts).toEqual(['Answer A']);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should release the slot after a failed save so the next trigger sends the latest text', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                pendingSaves[0].error(new HttpErrorResponse({ status: 500 }));
+                expect(submission.isSynced).toBe(false);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                comp.triggerSave(false);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+            });
+
+            it('should still flush the latest text of a forced save while a save is in flight', () => {
+                comp.triggerSave(false);
+                edit('Answer B');
+                comp.triggerSave(true);
+                expect(sentTexts).toEqual(['Answer A']);
+
+                respond(0);
+                expect(sentTexts).toEqual(['Answer A', 'Answer B']);
+                respond(1);
+                expect(submission.isSynced).toBe(true);
+                expect(submission.text).toBe('Answer B');
+            });
+        });
+
         it('should sync modeling submissions', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             modelingExercise.id = 5;
@@ -771,16 +1210,18 @@ describe('ExamParticipationComponent', () => {
             quizExercise.id = 5;
             const participation = new StudentParticipation();
             const submission = new QuizSubmission();
+            submission.id = 1;
             const syncedSubmission = new QuizSubmission();
+            syncedSubmission.id = 2;
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
             comp.studentExam().exercises = [quizExercise];
-            quizSubmissionUpdateSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            quizSubmissionUpdateSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             comp.triggerSave(false);
             await new Promise((resolve) => setTimeout(resolve, 500));
-            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
-            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(submission));
+            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(syncedSubmission));
             expectSyncedSubmissions(submission, syncedSubmission);
         });
     });
@@ -827,7 +1268,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // The mocked submission services return synchronous observables, so the re-send happens synchronously.
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -836,7 +1277,7 @@ describe('ExamParticipationComponent', () => {
             // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
         });
 
         it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
@@ -847,14 +1288,14 @@ describe('ExamParticipationComponent', () => {
             // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
             // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
             comp.connected.set(false);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
             // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
@@ -881,7 +1322,7 @@ describe('ExamParticipationComponent', () => {
         it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -921,7 +1362,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -945,7 +1386,7 @@ describe('ExamParticipationComponent', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -965,7 +1406,7 @@ describe('ExamParticipationComponent', () => {
             textSubmission.isSynced = true;
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -973,8 +1414,68 @@ describe('ExamParticipationComponent', () => {
 
             // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
             expect(textSpy).not.toHaveBeenCalled();
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
+        });
+
+        describe('after a page reload during the exam', () => {
+            // What the server returns for a student who has already started: the exam is running and the student exam is marked started.
+            const buildStartedStudentExam = () => {
+                const { studentExam } = buildResumeStudentExam();
+                studentExam.exam!.visibleDate = dayjs().subtract(1, 'hours');
+                studentExam.id = 1;
+                studentExam.started = true;
+                studentExam.startedDate = dayjs().subtract(5, 'minutes');
+                studentExam.submitted = false;
+                return studentExam;
+            };
+
+            const cover = () => fixture.debugElement.query(By.css('jhi-exam-participation-cover'));
+
+            it('should show the start cover again and neither resume nor create a session by itself when the last save succeeded', () => {
+                // Intended behavior: a reload sends the student back to the start cover, where typing the name and confirming the rules
+                // starts the exam again (a new exam session). Only a failed save resumes automatically (next test).
+                // Let Angular run its own first change detection (ngOnInit) before arranging the state under test.
+                fixture.changeDetectorRef.detectChanges();
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const loadLocalSpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage');
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(false);
+
+                comp.handleStudentExam(buildStartedStudentExam());
+                fixture.changeDetectorRef.detectChanges();
+
+                expect(examStartedSpy).not.toHaveBeenCalled();
+                expect(loadLocalSpy).not.toHaveBeenCalled();
+                expect(comp.examStartConfirmed()).toBe(false);
+                expect(comp.loadingExam()).toBe(false);
+                expect(cover()).not.toBeNull();
+                expect(fixture.debugElement.query(By.css('jhi-exam-bar'))).toBeNull();
+            });
+
+            it('should resume the exam without the start cover and re-send the unsaved answers when the last save failed', () => {
+                // The one automatic resume: the unsaved answers only exist in local storage, so the exam is restored from there.
+                fixture.changeDetectorRef.detectChanges();
+                const { studentExam: localExam, textSubmission } = buildResumeStudentExam();
+                localExam.id = 1;
+                localExam.started = true;
+                vi.spyOn(examParticipationService, 'lastSaveFailed').mockReturnValue(true);
+                vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionFromLocalStorage').mockReturnValue(of(localExam));
+                const examStartedSpy = vi.spyOn(comp, 'examStarted');
+                const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+                vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+
+                comp.handleStudentExam(buildStartedStudentExam());
+
+                expect(examStartedSpy).toHaveBeenCalledOnce();
+                expect(examStartedSpy).toHaveBeenCalledWith(comp.studentExam(), true);
+                expect(comp.examStartConfirmed()).toBe(true);
+                expect(comp.loadingExam()).toBe(false);
+                // the unsaved text answer is re-sent at once, without waiting for the websocket or the next autosave
+                expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+                fixture.changeDetectorRef.detectChanges();
+                expect(cover()).toBeNull();
+            });
         });
     });
 
@@ -1308,6 +1809,32 @@ describe('ExamParticipationComponent', () => {
     });
 
     describe('onPageChange', () => {
+        it('should update the submission status message when switching between overview, programming and text pages', () => {
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 15;
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 42;
+            comp.studentExam.set(new StudentExam());
+            comp.studentExam().exercises = [textExercise, programmingExercise];
+            comp.pageComponentVisited.set([false, false]);
+            comp.exam.set(new Exam());
+            vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+            vi.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
+            vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(of(undefined as any));
+
+            comp.onPageChange({ overViewChange: true, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(false);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.connected');
+
+            comp.onPageChange({ overViewChange: false, exercise: programmingExercise, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(true);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.ideConnected');
+
+            comp.onPageChange({ overViewChange: false, exercise: textExercise, forceSave: false });
+            expect(comp.isProgrammingExercise()).toBe(false);
+            expect(comp.connectionStatusTranslationKey()).toBe('artemisApp.examParticipation.connected');
+        });
+
         it('should trigger save and initialize exercise when exercise changed', () => {
             comp.exerciseIndex.set(0);
             const exercise1 = new TextExercise(new Course(), undefined);
@@ -1404,7 +1931,7 @@ describe('ExamParticipationComponent', () => {
     describe('toggleHandInEarly', () => {
         it('should not fetch attendance check status if exam is a test exam', () => {
             comp.exam.set(new Exam());
-            comp.exam().testExam = true;
+            comp.exam().examMode = ExamMode.TEST;
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
@@ -1535,6 +2062,48 @@ describe('ExamParticipationComponent', () => {
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
+    });
+
+    it('reloads and remounts the full published summary when its deadline event fires', () => {
+        fixture.changeDetectorRef.detectChanges();
+        const initial = new StudentExam();
+        initial.id = 3;
+        initial.submitted = true;
+        initial.exam = new Exam();
+        initial.exam.id = 2;
+        comp.exam.set(initial.exam);
+        comp.studentExam.set(initial);
+        comp.showExamSummary.set(true);
+        comp.loadingExam.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        const oldSummary = fixture.debugElement.query(By.directive(ExamResultSummaryComponent)).componentInstance as ExamResultSummaryComponent;
+
+        const response = new Subject<StudentExam>();
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(response);
+        oldSummary.refreshSummary.emit();
+        expect(load).toHaveBeenCalledExactlyOnceWith(1, 2, 3);
+        expect(comp.loadingExam()).toBe(true);
+        expect(comp.showExamSummary()).toBe(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.query(By.directive(ExamResultSummaryComponent))).toBeNull();
+
+        const published = new StudentExam();
+        published.id = 3;
+        published.submitted = true;
+        published.exam = initial.exam;
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.studentParticipations = [{ submissions: [{ id: 9, results: [{ id: 10, completionDate: dayjs(), score: 70 }] }] }];
+        published.exercises = [exercise];
+        response.next(published);
+        response.complete();
+        fixture.changeDetectorRef.detectChanges();
+
+        const refreshed = fixture.debugElement.query(By.directive(ExamResultSummaryComponent)).componentInstance as ExamResultSummaryComponent;
+        expect(refreshed).not.toBe(oldSummary);
+        expect(refreshed.studentExam()).toBe(published);
+        expect(refreshed.studentExam().exercises![0].studentParticipations![0].submissions![0].results![0].score).toBe(70);
+        expect(comp.loadingExam()).toBe(false);
     });
 
     it('should not reset Exam Layout in loadAndDisplaySummary if it is a test exam', () => {
@@ -1788,7 +2357,7 @@ describe('ExamParticipationComponent', () => {
             submittedTestExam.id = 3;
             submittedTestExam.submitted = true;
             submittedTestExam.exam = new Exam();
-            submittedTestExam.exam.testExam = true;
+            submittedTestExam.exam.examMode = ExamMode.TEST;
             const summarySpy = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(submittedTestExam));
 
             comp.ngOnInit();
@@ -2060,16 +2629,16 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint({ realExam: true, examLayoutActive: true });
 
             // the wrapper is the full-height frame of the running exam (6px dividers on all sides), without the fill-the-card modifier
-            expect(wrapper().classList).toContain('body-bg');
+            expect(wrapper().classList).toContain('bg-(--body-bg)');
             expect(wrapper().classList).not.toContain('exam-background-wrapper--test-run');
             expect(hint().parentElement).toBe(wrapper());
-            expect(hint().classList).toContain('module-bg');
+            expect(hint().classList).toContain('bg-(--module-bg)');
         });
 
         it('insets the hint like the scroller of an exercise', () => {
             showSubmissionHint({ realExam: true, examLayoutActive: true });
 
-            expect(hint().classList).toContain('p-3!');
+            expect(hint().classList).toContain('p-3');
             expect(hint().classList).not.toContain('px-4!');
         });
 
@@ -2100,9 +2669,8 @@ describe('ExamParticipationComponent', () => {
             showSubmissionHint();
 
             const heading: HTMLElement = hint().querySelector('h2')!;
-            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
-            expect(heading.classList).toContain('text-lg!');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('text-lg');
+            expect(heading.classList).toContain('font-semibold');
 
             const button: HTMLElement = hint().querySelector('#showExamSummaryButton')!;
             expect(button).not.toBeNull();
@@ -2125,7 +2693,7 @@ describe('ExamParticipationComponent', () => {
             expect(scroller.getAttribute('data-testid')).toBe('exam-summary-scroll');
             // `scrollable-content` is 100vh minus a hard-coded 156px and ended 75px above the bottom of the card
             expect(scroller.classList).not.toContain('scrollable-content');
-            expect(scroller.classList).not.toContain('p-6!');
+            expect(scroller.classList).not.toContain('p-6');
         });
 
         it('leaves the summary of a test run, which sits in the card of the management shell, without a scroll container class', () => {
@@ -2154,9 +2722,9 @@ describe('ExamParticipationComponent', () => {
 
             const card: HTMLElement = fixture.debugElement.query(By.css('.end-view')).nativeElement;
             expect(card.getAttribute('data-testid')).toBe('exam-end-view');
-            expect(card.classList).toContain('pt-3!');
+            expect(card.classList).toContain('pt-3');
             // `px-3!` on the card would stack 12px on the 12px of the cover and put the text 24px from the edge
-            expect(card.classList).not.toContain('px-3!');
+            expect(card.classList).not.toContain('px-3');
             expect(card.classList).not.toContain('pt-4!');
         });
     });
@@ -2166,7 +2734,7 @@ describe('ExamParticipationComponent', () => {
 
         const scroller: HTMLElement = fixture.debugElement.query(By.css('.content-exam-height')).nativeElement;
         // the card is not a frame of white space around the exercise
-        expect(scroller.classList).toContain('p-3!');
+        expect(scroller.classList).toContain('p-3');
         expect(scroller.classList).not.toContain('px-4!');
     });
 
@@ -2203,6 +2771,24 @@ describe('ExamParticipationComponent', () => {
         expect(examBarDebugElement).toBeFalsy();
     });
 
+    it('should show the real exam missed submission warning', () => {
+        fixture.changeDetectorRef.detectChanges();
+
+        comp.exam.set(new Exam());
+        comp.exam().examMode = ExamMode.REAL;
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.examStartConfirmed.set(true);
+        vi.spyOn(comp, 'isOver').mockReturnValue(true);
+        vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
+
+        fixture.changeDetectorRef.detectChanges();
+
+        const warning = fixture.debugElement.query(By.css('.text-state-danger span'));
+        const directiveInstance = warning.injector.get(TranslateDirective);
+        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.studentExam.submissionNotInTime');
+    });
+
     it('should get whether student failed to submit', () => {
         comp.studentExam.set(new StudentExam());
         comp.testRunId.set(1);
@@ -2214,7 +2800,7 @@ describe('ExamParticipationComponent', () => {
         const now = dayjs();
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         comp.exam().startDate = startDate.subtract(2, 'hours');
-        comp.exam().testExam = false;
+        comp.exam().examMode = ExamMode.REAL;
         comp.studentExam().workingTime = 3600;
         comp.exam().gracePeriod = 1;
         comp.studentExam().submitted = false;
@@ -2224,7 +2810,7 @@ describe('ExamParticipationComponent', () => {
     it('should get whether student failed to submit a TestExam', () => {
         comp.studentExam.set(new StudentExam());
         comp.testRunId.set(0);
-        comp.exam().testExam = true;
+        comp.exam().examMode = ExamMode.TEST;
 
         comp.studentExam().started = false;
         expect(comp.studentFailedToSubmit).toBe(false);
@@ -2264,12 +2850,25 @@ describe('ExamParticipationComponent', () => {
         // Case test exam
         now = dayjs();
         comp.studentExam().workingTime = 1;
-        comp.exam().testExam = true;
+        comp.exam().examMode = ExamMode.TEST;
         comp.exam().gracePeriod = 1;
         comp.exam().startDate = dayjs().subtract(4, 'hours');
 
         comp.initIndividualEndDates(now);
 
         expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
+
+        // Case practice exam with a supervised session during the supervised session
+        now = dayjs();
+        comp.studentExam().workingTime = 3600;
+        comp.studentExam().testRun = false;
+        comp.exam().examMode = ExamMode.TEST_WITH_SUPERVISED_SESSION;
+        comp.exam().workingTime = 3600;
+        comp.exam().gracePeriod = 1;
+        comp.exam().startDate = now.subtract(10, 'minutes');
+
+        comp.initIndividualEndDates(comp.exam().startDate!);
+
+        expect(comp.individualStudentEndDateWithGracePeriod()).toEqual(comp.exam().startDate!.add(3600, 'seconds').add(1, 'seconds'));
     });
 });

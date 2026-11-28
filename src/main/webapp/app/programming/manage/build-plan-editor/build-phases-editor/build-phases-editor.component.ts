@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 @Component({
     selector: 'jhi-build-phases-editor',
-    imports: [ButtonModule, FaIconComponent, BuildPhaseEditorComponent, TranslateDirective],
+    imports: [TumAetUiButtonDirective, FaIconComponent, BuildPhaseEditorComponent, TranslateDirective],
     templateUrl: './build-phases-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

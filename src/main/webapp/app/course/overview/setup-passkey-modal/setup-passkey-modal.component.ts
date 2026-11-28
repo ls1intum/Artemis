@@ -7,10 +7,11 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',

@@ -20,13 +20,13 @@ import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserTopic;
 public class ProgrammingWebsocketTopics implements WebsocketTopicProvider {
 
     /**
-     * New submissions of the template and solution participations, and build trigger errors of any participation of the exercise.
+     * New submissions and build trigger errors of any participation of the exercise.
      */
     public static final WebsocketTopic EXERCISE_SUBMISSIONS = WebsocketTopic.of("/topic/exercise/{exerciseId}/newSubmissions",
             WebsocketTopicAccess.atLeastTutorInExerciseAndEditorInExamExercise("exerciseId"));
 
     /**
-     * The start of the build of a template or solution submission.
+     * The start of the build of any submission of the exercise.
      */
     public static final WebsocketTopic EXERCISE_SUBMISSION_PROCESSING = WebsocketTopic.of("/topic/exercise/{exerciseId}/submissionProcessing",
             WebsocketTopicAccess.atLeastTutorInExerciseAndEditorInExamExercise("exerciseId"));
@@ -47,6 +47,13 @@ public class ProgrammingWebsocketTopics implements WebsocketTopicProvider {
      * Whether the builds of all participations of an exercise are being triggered.
      */
     public static final WebsocketTopic ALL_BUILDS_TRIGGERED = WebsocketTopic.of("/topic/programming-exercises/{exerciseId}/all-builds-triggered",
+            WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
+
+    /**
+     * The end of a run that queued the builds of selected participations of an exercise. The payload is a {@code SelectedBuildRunDTO} that names the run, so
+     * that a client waits for its own run and not for one that another instructor started.
+     */
+    public static final WebsocketTopic SELECTED_BUILDS_RUN_COMPLETED = WebsocketTopic.of("/topic/programming-exercises/{exerciseId}/selected-builds-run-completed",
             WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
 
     /**

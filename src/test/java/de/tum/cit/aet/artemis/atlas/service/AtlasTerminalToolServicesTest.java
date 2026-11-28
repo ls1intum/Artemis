@@ -95,6 +95,7 @@ class AtlasTerminalToolServicesTest {
         context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
+        context.put(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY, new AtomicInteger());
         context.put(OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY, new AtomicInteger());
         context.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, 0);
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));
@@ -105,4 +106,31 @@ class AtlasTerminalToolServicesTest {
     private static AtomicReference<WorkerCompletionDTO> workerHolder(Map<String, Object> context) {
         return (AtomicReference<WorkerCompletionDTO>) context.get(OrchestratorToolContextKeys.WORKER_COMPLETION_KEY);
     }
+
+    @Test
+    void missingCompletionContextAndBlankSummaryCannotCompleteWorker() {
+        assertThat(workerTerminal.completeWorkerTask(false, "Blocked", null)).contains("No worker completion context available");
+        assertThat(workerTerminal.completeWorkerTask(false, "Blocked", new ToolContext(new HashMap<>()))).contains("No worker completion context available");
+        var context = workerContext();
+        OrchestratorToolHelpers.markWorkerRead(new ToolContext(context));
+        assertThat(workerTerminal.completeWorkerTask(true, "  ", new ToolContext(context))).contains("message is required");
+        assertThat(workerHolder(context)).hasValue(null);
+        assertThat(workerTerminal.completeWorkerTask(true, "Checked", new ToolContext(context))).contains("\"completed\":true");
+        assertThat(workerHolder(context)).hasValue(new WorkerCompletionDTO(true, "Checked"));
+    }
+
+    @Test
+    void earlierActionsCannotBackLaterWorkerCompletionButMutationOutcomeCan() {
+        var context = workerContext();
+        var buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
+        buffer.actions().add(AppliedActionDTO.create(1L, "Earlier", "Created", "Previous task"));
+        context.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, 1);
+        var tools = new ToolContext(context);
+        assertThat(workerTerminal.completeWorkerTask(true, "Done", tools)).contains("Inspect course state");
+        assertThat(workerHolder(context)).hasValue(null);
+        OrchestratorToolHelpers.mutationNoOpJson(new JsonMapper(), "Already assigned", tools);
+        assertThat(workerTerminal.completeWorkerTask(true, "Already assigned", tools)).contains("\"completed\":true");
+        assertThat(workerHolder(context)).hasValue(new WorkerCompletionDTO(true, "Already assigned"));
+    }
+
 }

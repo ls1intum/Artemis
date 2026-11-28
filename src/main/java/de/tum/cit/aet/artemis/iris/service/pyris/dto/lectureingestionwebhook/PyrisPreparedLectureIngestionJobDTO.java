@@ -3,16 +3,16 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * A fully prepared lecture ingestion job: the registered job token plus the execution payload Pyris
+ * A fully prepared lecture ingestion job: the registered run id plus the execution payload Pyris
  * needs to run it. Preparation and delivery are separate steps so both dispatch transports can share
  * the same assembly: the legacy push path POSTs the payload to Pyris, while the pull path hands the
  * identical payload to a Pyris worker as its claim response.
  *
- * @param jobToken     the registered Pyris job token authenticating this run's status callbacks
+ * @param runId        the run id of the registered job
  * @param executionDTO the execution payload, byte-identical to the legacy webhook body
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisPreparedLectureIngestionJobDTO(String jobToken, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+public record PyrisPreparedLectureIngestionJobDTO(String runId, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
 
     /**
      * The fingerprint the payload actually carries, which Iris stamps into the index. The claim activates with this value, so the fingerprint Artemis

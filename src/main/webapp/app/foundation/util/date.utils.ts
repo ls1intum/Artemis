@@ -47,6 +47,8 @@ function padWithZero(x: number): string {
  *
  * @param date date to convert
  */
+export function toISO8601DateString(date: Date): string;
+export function toISO8601DateString(date: Date | undefined | null): string | undefined | null;
 export function toISO8601DateString(date: Date | undefined | null) {
     if (date) {
         return date.getFullYear() + '-' + padWithZero(date.getMonth() + 1) + '-' + padWithZero(date.getDate());

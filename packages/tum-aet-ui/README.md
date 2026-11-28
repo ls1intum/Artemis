@@ -17,11 +17,11 @@ Use the Angular CLI or another build that runs Angular's linker. Zone.js is not 
 Server-side rendering is not supported.
 
 In `angular.json`, add the stylesheet to `projects.<app>.architect.build.options.styles`, after
-existing global styles. Keep your application's current `.css` or `.scss` path:
+existing global styles. Keep your application's current `.css` or `.css` path:
 
 ```json
 {
-    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.css", "@tumaet/ui-angular/styles.css"]
 }
 ```
 
@@ -34,7 +34,8 @@ For a minimal standalone application, use this `src/main.ts` with `<app-root></a
 ```ts
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 @Component({
     selector: 'app-root',
@@ -55,9 +56,44 @@ void bootstrapApplication(App);
 ```
 
 In an existing application, add the components to the consuming component's `imports` instead of
-replacing its bootstrap. Import supported symbols from `@tumaet/ui-angular`; deep imports are
-not supported. See the [component reference](https://docs.artemis.tum.de/developer/tum-aet-ui-reference)
-for forms, tables, charts, and keyboard interactions.
+replacing its bootstrap. Import each component from its own entry point (`@tumaet/ui-angular/<component>`, named after the
+component directory): a bundler that splits code per file, such as esbuild in the Angular build, then loads only the components
+that a route uses. The package root `@tumaet/ui-angular` exports every component, for applications that import a few of them or
+do not split their code. Paths below an entry point are not supported. See the
+[component reference](https://docs.artemis.tum.de/developer/tum-aet-ui-reference) for forms, tables, charts, and keyboard interactions.
+
+## Cascade layers
+
+All styles of the package are in cascade layers, also the styles of the components:
+
+| Layer             | Content                                                |
+| ----------------- | ------------------------------------------------------ |
+| `tumaet-ui-theme` | Default values of the semantic custom properties       |
+| `tumaet-ui-cdk`   | Overlay styles of Angular CDK                          |
+| `tumaet-ui`       | Components, their utility classes and the shared rules |
+
+A declaration outside a layer overrides every layered one, whatever the specificity of its selector. Global styles
+of the host that are not in a layer therefore override the components. That is intended for deliberate overrides,
+but an element reset such as `button { padding: 0 }` or `* { margin: 0 }` would strip the components. Put resets
+and element defaults into a layer and declare it before the layers of the package:
+
+```css
+@layer reset, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui, utilities;
+
+@layer reset {
+    button {
+        padding: 0;
+    }
+}
+```
+
+A host that uses Tailwind CSS lists `tumaet-ui` before its `utilities` layer, as above. A utility class of the host
+on a component then overrides the component without the important modifier, for example
+`<button tumAetUiButton class="p-0">`. Tailwind's preflight is already in the layer `base`; declare `base` before
+`tumaet-ui`.
+
+A few components set a style inline, which no stylesheet rule overrides without the important modifier:
+`tumaet-ui-table-layout` sets its maximum height from the free viewport height unless it fills its parent.
 
 ## Host theme integration
 
@@ -76,7 +112,12 @@ Foundations:
   corresponding `--tumaet-ui-line-height-*` properties;
 - shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
 - elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
-- focus: `--tumaet-ui-focus-color`.
+- focus: `--tumaet-ui-focus-color`;
+- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`);
+- accordion panel: `--tumaet-ui-accordion-header-padding`, `--tumaet-ui-accordion-content-padding`,
+  `--tumaet-ui-accordion-icon-size`, and `--tumaet-ui-accordion-icon-color`;
+- menu group label: `--tumaet-ui-menu-group-label-padding` and
+  `--tumaet-ui-menu-group-label-font-size`.
 
 Colors:
 
@@ -92,14 +133,27 @@ Colors:
   `--tumaet-ui-highlight-focus-background`;
 - states: `--tumaet-ui-state-{danger,success,warning,info}` and each corresponding
   `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
+- button-only palette: `--tumaet-ui-button-{primary,secondary,success,info,warn,danger,contrast}-background`,
+  `-contrast`, and `-foreground`, plus `--tumaet-ui-button-secondary-border`,
+  `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+  `--tumaet-ui-button-active-overlay`; most default to semantic aliases and can be overridden
+  independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
-  `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
+  `--tumaet-ui-table-striped-background`, `--tumaet-ui-table-header-background`,
+  `--tumaet-ui-table-header-hover-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
 
 Primary is the brand fill; accent is the brand foreground for content and controls. Each state
 token is a fill or border, its `-contrast` token is text on that fill, and its `-foreground` token
 is text on content or a tinted state surface. Maintain readable contrast in both themes and keep
 focus indicators distinguishable from adjacent surfaces.
+
+Solid primary buttons use their own background/contrast pair so that a host brand override cannot
+silently make their text unreadable. Override `--tumaet-ui-button-primary-background` and
+`--tumaet-ui-button-primary-contrast` together to customize that pair; changing
+`--tumaet-ui-primary-color` alone does not recolor primary buttons. Use
+`--tumaet-ui-button-primary-foreground` for outlined/text buttons. Define and check these overrides
+in both themes.
 
 Responsive thresholds are fixed at 40rem, 48rem, 64rem, 80rem, and 96rem; host Tailwind
 configuration does not change them.
@@ -145,6 +199,39 @@ Contributors working in the Artemis repository should follow the
 [TUM AET UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-aet-ui-kit). It covers
 contribution, testing, and publishing.
 
+Consumer checks install minimum and latest compatible library peers with strict npm peer
+validation. Both modes use the workspace catalog version of `@angular/build`, keeping the
+build tool and its transitive dependencies separate from the library peer matrix.
+
 ## License
 
 [MIT](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-aet-ui/LICENSE).
+
+### Splitter
+
+`TumAetUiSplitterComponent` arranges two persistent template panels. Import it from
+`@tumaet/ui-angular/splitter` and mark each panel template with `#panel`:
+
+```html
+<tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
+    <ng-template #panel>Document</ng-template>
+    <ng-template #panel>Notes</ng-template>
+</tumaet-ui-splitter>
+```
+
+The separator supports pointer dragging over embedded frames, axis arrow keys (two
+percentage points, or ten with Shift), Home, and End. `layout="vertical"` stacks the
+panels. Sizes and minimums are percentages of the available space excluding the
+gutter. `gutterSize` overrides its pixel width; otherwise
+`--tumaet-ui-splitter-divider-size` applies, defaulting to `6px`.
+
+`sizesChange` emits percentage pairs during dragging; `resizeEnd` commits keyboard
+or pointer changes. Cancellation restores the previous sizes without committing.
+An optional `stateKey` persists the first percentage in local storage under
+`${stateKey}-${layout}`, retaining an independent split for each orientation.
+Consumers can instead persist `resizeEnd` values themselves. When `ariaLabel` is
+omitted, the separator uses the translated `tumAetUi.splitter.resize` label.
+
+Consumers must hide or make their own content inert when using
+`collapsedSecondSize` to replace the second panel with a fixed-size collapsed rail.
+Panel templates stay mounted during resizing and collapse.

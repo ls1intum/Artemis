@@ -133,7 +133,7 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "nonadmin", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "nonadmin", roles = "USER")
     void getCourseRoles_nonAdmin_forbidden() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "nonadmin");
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "target");

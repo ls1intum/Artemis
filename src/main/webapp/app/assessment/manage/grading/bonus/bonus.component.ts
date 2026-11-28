@@ -1,6 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
+import { toBonus, toBonusRequest } from 'app/assessment/shared/util/bonus-response.util';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,7 +27,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -29,7 +35,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -44,7 +50,7 @@ export enum BonusStrategyDiscreteness {
 @Component({
     selector: 'jhi-bonus',
     templateUrl: './bonus.component.html',
-    styleUrls: ['./bonus.component.scss'],
+    styleUrls: ['./bonus.component.css'],
     imports: [
         SafeHtmlPipe,
         GradeStepBoundsPipe,
@@ -53,17 +59,22 @@ export enum BonusStrategyDiscreteness {
         TranslateDirective,
         DeleteButtonDirective,
         FontAwesomeModule,
-        NgbTooltipModule,
+        TumAetUiTooltipDirective,
         FormsModule,
         CommonModule,
         HelpIconComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
         TumAetUiButtonDirective,
+        PointsInputComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class BonusComponent implements OnInit {
     private bonusService = inject(BonusService);
+    private bonusApi = inject(BonusApi);
     private gradingService = inject(GradingService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -87,23 +98,21 @@ export class BonusComponent implements OnInit {
     readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
         value: bonusStrategyOption,
         labelKey: 'artemisApp.bonus.bonusStrategy.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
-        btnClass: 'btn-secondary',
     }));
 
     readonly calculationSigns = [
         {
             value: this.CALCULATION_MINUS,
             label: '−',
-            btnClass: 'btn-secondary',
         },
         {
             value: this.CALCULATION_PLUS,
             label: '+',
-            btnClass: 'btn-secondary',
         },
     ];
 
     readonly sourceGradingScales = signal<GradingScale[]>([]);
+    readonly sourceGradingScaleOptions = computed(() => this.sourceGradingScales().map((scale) => ({ label: this.getGradingScaleTitle(scale) ?? '', value: scale })));
 
     readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
@@ -156,9 +165,9 @@ export class BonusComponent implements OnInit {
         this.examId = Number(paramMap.get('examId'));
 
         forkJoin([
-            this.bonusService.findBonusForExam(this.courseId, this.examId).pipe(
+            this.bonusApi.getBonusForExam(this.courseId, this.examId).pipe(
                 tap((bonusResponse) => {
-                    this.setBonus(bonusResponse.body || new Bonus());
+                    this.setBonus(bonusResponse ? toBonus(bonusResponse) : new Bonus());
                 }),
                 catchError((error) => {
                     if (error?.status === 404) {
@@ -181,7 +190,7 @@ export class BonusComponent implements OnInit {
                     );
                 }),
             ),
-            this.gradingService.findGradeSteps(this.courseId, this.examId).pipe(
+            this.gradingService.findGradeSteps(this.courseId, this.examId, 'management').pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
                         this.bonusToGradeStepsDTO.set(gradeSteps);
@@ -316,8 +325,8 @@ export class BonusComponent implements OnInit {
     save(): void {
         this.isLoading.set(true);
         const saveObservable = this.bonus.id
-            ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
-            : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
+            ? this.bonusApi.updateBonus(this.courseId, this.examId, this.bonus.id, toBonusRequest(this.bonus))
+            : this.bonusApi.createBonusForExam(this.courseId, this.examId, toBonusRequest(this.bonus));
 
         saveObservable
             .pipe(
@@ -326,7 +335,7 @@ export class BonusComponent implements OnInit {
                 }),
             )
             .subscribe((bonusResponse) => {
-                this.bonus.id = bonusResponse.body?.id;
+                this.bonus.id = bonusResponse.id;
                 this.commitBonus();
             });
     }
@@ -336,7 +345,7 @@ export class BonusComponent implements OnInit {
             return;
         }
         this.isLoading.set(true);
-        this.bonusService
+        this.bonusApi
             .deleteBonus(this.courseId, this.examId, this.bonus.id)
             .pipe(
                 finalize(() => {
@@ -344,8 +353,8 @@ export class BonusComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (bonusResponse) => {
-                    this.setBonus(bonusResponse.body || new Bonus());
+                next: () => {
+                    this.setBonus(new Bonus());
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => this.dialogErrorSource.next(error.message),

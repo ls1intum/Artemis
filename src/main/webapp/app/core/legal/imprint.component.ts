@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { LegalDocumentFragmentDirective } from './legal-document-fragment.directive';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
@@ -12,14 +12,12 @@ import { switchMap } from 'rxjs';
     template: ` <div [jhiMarkdown]="imprint()" (markdownRendered)="onMarkdownRendered()"></div> `,
     imports: [MarkdownDirective],
 })
-export class ImprintComponent implements AfterViewInit, OnInit {
-    private readonly route = inject(ActivatedRoute);
+export class ImprintComponent extends LegalDocumentFragmentDirective implements OnInit {
     private readonly legalDocumentService = inject(LegalDocumentService);
     private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly imprint = signal<string | undefined>(undefined);
-    private currentFragmentId: string | undefined;
 
     /**
      * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -32,42 +30,5 @@ export class ImprintComponent implements AfterViewInit, OnInit {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((imprint) => this.imprint.set(imprint.text));
-    }
-
-    /**
-     * After view initialization scroll the fragment of the current route into view.
-     */
-    ngAfterViewInit(): void {
-        this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((fragmentId) => {
-            this.currentFragmentId = fragmentId ?? undefined;
-            this.scrollToFragment(this.currentFragmentId);
-        });
-    }
-
-    /** Re-attempt fragment scrolling once the lazy markdown pipeline has produced the document. */
-    protected onMarkdownRendered(): void {
-        this.scrollToFragment(this.currentFragmentId);
-    }
-
-    /**
-     * Scrolls to the anchor with the given id. The imprint is rendered asynchronously (HTTP load + lazy
-     * markdown rendering), so the anchor may not exist yet; retry over a few animation frames until it does.
-     */
-    private scrollToFragment(fragmentId: string | undefined, attemptsLeft = 20): void {
-        if (!fragmentId) {
-            return;
-        }
-        try {
-            const fragment = document.querySelector('#' + fragmentId);
-            if (fragment !== null) {
-                fragment.scrollIntoView();
-                return;
-            }
-        } catch (e) {
-            return; // invalid selector — nothing to scroll to
-        }
-        if (attemptsLeft > 0) {
-            requestAnimationFrame(() => this.scrollToFragment(fragmentId, attemptsLeft - 1));
-        }
     }
 }

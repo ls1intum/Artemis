@@ -1,12 +1,12 @@
 @if (quizExercise()) {
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
+    <div class="grid grid-cols-12 gap-x-6">
+        <div class="col-span-12 md:col-span-8 md:col-start-3 text-center">
             @if (quizExercise().title !== question.title) {
                 <h3>{{ quizExercise().title }}</h3>
             }
-            <div class="row">
+            <div class="grid grid-cols-12 gap-x-6">
                 @if (question) {
-                    <div class="col">
+                    <div class="col-span-12">
                         <h3>
                             {{ question.title }}
                             @if (question.invalid) {
@@ -15,63 +15,17 @@
                         </h3>
                         <h4 [innerHTML]="questionTextRendered"></h4>
                         <div>
-                            <div class="row">
-                                <div class="col-md-7 text-start">
-                                    <p id="text" class="chart-title-text">
-                                        @if (rated) {
-                                            <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
-                                        }
-                                        @if (!rated) {
-                                            <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
-                                        }
-                                    </p>
-                                </div>
-                                <div class="col-md-5 text-end">
-                                    <p class="chart-title-text">
-                                        <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="quiz-statistic-chart" style="height: 525px">
-                                <tumaet-ui-bar-chart
-                                    [labels]="chartData().labels"
-                                    [series]="chartData().series"
-                                    [config]="chartConfig()"
-                                    [ariaLabel]="
-                                        (rated ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated')
-                                            | artemisTranslate
-                                    "
-                                />
-                            </div>
-                            <div class="col-md-12 text-center button-row">
-                                <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
-                                    @if (showSolution) {
-                                        <fa-icon [icon]="faCheckCircle" />
-                                    }
-                                    &nbsp;
-                                    @if (!showSolution) {
-                                        <fa-icon [icon]="faTimesCircle" />
-                                    }
-                                    &nbsp;
-                                    @if (showSolution) {
-                                        <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
-                                    }
-                                    @if (!showSolution) {
-                                        <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
-                                    }
-                                </button>
-                                <button (click)="switchRated()" type="button" class="btn btn-primary">
-                                    <fa-icon [icon]="faSync" />&nbsp;
-                                    @if (rated) {
-                                        <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
-                                    }
-                                    @if (!rated) {
-                                        <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
-                                    }
-                                </button>
-                            </div>
+                            <jhi-question-statistics-chart
+                                [rated]="rated"
+                                [participants]="participants"
+                                [showSolution]="showSolution"
+                                [chartData]="chartData()"
+                                [chartConfig]="chartConfig()"
+                                (toggleSolution)="switchSolution()"
+                                (toggleRated)="switchRated()"
+                            />
                             <p>&nbsp;</p>
-                            <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
+                            <div class="drag-and-drop-quizStatistic-picture w-full md:mx-auto md:w-2/3">
                                 @let backgroundFilePath = question.backgroundFilePath;
                                 @if (backgroundFilePath) {
                                     <jhi-image [src]="addPublicFilePrefix(backgroundFilePath)!" />
@@ -137,7 +91,7 @@
                                 </div>
                             </div>
                             @if (!showSolution) {
-                                <div class="drag-and-drop-quizStatistic-picture">
+                                <div class="drag-and-drop-quizStatistic-picture w-full">
                                     <h4>Drag-Items:</h4>
                                     @if (question.dragItems && question.dragItems.length) {
                                         <div class="drag-items">
@@ -159,6 +113,6 @@
                 }
             </div>
         </div>
-        <jhi-quiz-statistics-footer />
     </div>
+    <jhi-quiz-statistics-footer />
 }

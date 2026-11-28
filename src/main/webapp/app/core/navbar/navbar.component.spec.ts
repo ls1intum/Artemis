@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,6 +39,7 @@ class StubCourseNotificationOverviewComponent {
     courseId = input.required<number>();
 }
 import { of } from 'rxjs';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -50,6 +51,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -109,8 +111,18 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
+    /** Renders the deferred blocks of the navbar (the tray, the global search and the notification overview), which load after the first render. */
+    async function renderDeferredBlocks(): Promise<void> {
+        fixture.detectChanges();
+        for (const deferBlock of await fixture.getDeferBlocks()) {
+            await deferBlock.render(DeferBlockState.Complete);
+        }
+        fixture.detectChanges();
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            deferBlockBehavior: DeferBlockBehavior.Manual,
             imports: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
@@ -127,6 +139,7 @@ describe('NavbarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: BreakpointObserver, useValue: { observe: () => of({ matches: true, breakpoints: {} }) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -141,10 +154,18 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
+                    imports: [
+                        ThemeSwitchComponent,
+                        JhiConnectionWarningComponent,
+                        LoadingNotificationComponent,
+                        ImageComponent,
+                        CourseNotificationOverviewComponent,
+                        HyperionActivityTrayComponent,
+                    ],
                 },
                 add: {
                     imports: [
+                        MockComponent(HyperionActivityTrayComponent),
                         StubThemeSwitchComponent,
                         StubConnectionWarningComponent,
                         StubLoadingNotificationComponent,
@@ -171,16 +192,49 @@ describe('NavbarComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps course enrollment reachable through mobile account navigation', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAuthenticated').mockReturnValue(true);
+        fixture.detectChanges();
+        component.currAccount.set({ login: 'student' } as User);
+        component.iconsMovedToMenu.set(true);
+        component.isNavbarCollapsed.set(false);
+        fixture.detectChanges();
+
+        // The account menu renders its entries in an overlay once it is opened.
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        const enrollmentLink = document.querySelector<HTMLAnchorElement>('[data-testid="mobile-course-enrollment"]');
+        expect(enrollmentLink).toBeTruthy();
+        enrollmentLink!.click();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('#account-menu').click();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="logout"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+    });
+
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
-    it('should not render the variant generation tray host without jobs', () => {
-        TestBed.inject(ExerciseVariantGenerationService).jobs.set([]);
+    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', async () => {
         fixture.detectChanges();
-
+        component.currAccount.set({ login: 'editor' } as User);
+        component.hyperionExerciseGenerationEnabled.set(true);
+        TestBed.inject(ExerciseVariantGenerationService).jobs.set([{ jobId: 'quiz', phase: 'TRANSFORMING' }]);
+        await renderDeferredBlocks();
+        expect(fixture.nativeElement.querySelectorAll('jhi-hyperion-activity-tray')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-jobs-indicator')).toBeNull();
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-activity-tray')).toBeNull();
     });
 
     it('should display the current course next to the logo', () => {
@@ -192,6 +246,12 @@ describe('NavbarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
         expect(titleElement).toBeTruthy();
         expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(component.navigationContextIndicatorData()).toEqual({
+            type: 'course',
+            routerLink: ['/courses', 1],
+            title: 'Course1',
+            imagePath: 'path/to/icon.png',
+        });
         expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
     });
 
@@ -202,6 +262,28 @@ describe('NavbarComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
         expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it.each([
+        ['/admin/user-management', 'administration', '/admin', 'global.menu.admin.main'],
+        ['/user-settings/credentials', 'userSettings', '/user-settings', 'artemisApp.userSettings.userSettings'],
+    ] as const)('should display the navbar context without an image on %s', (url, type, routerLink, translationKey) => {
+        router.setUrl(url);
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toEqual({ type, routerLink, translationKey });
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+    });
+
+    it('should not display a navbar context outside administration and user settings', () => {
+        router.setUrl('/courses');
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).toBeNull();
     });
 
     it('should link the current course to the management overview when in a management route', () => {
@@ -488,7 +570,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs when creating a course', () => {
@@ -497,7 +579,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should not build breadcrumbs for administration routes', () => {
@@ -507,7 +589,7 @@ describe('NavbarComponent', () => {
         fixture.detectChanges();
 
         expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.jh-breadcrumb-container')).toBeNull();
     });
 
     it('should have correct git info', () => {
@@ -533,6 +615,19 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it('uses the translated TUM.Live label for the course connection route', () => {
+            router.setUrl('/course-management/1/gocast-binding');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.gocast.title',
+                translate: true,
+                uri: '/course-management/1/gocast-binding/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['', '?filter=pending'])('translates the presentation breadcrumb with suffix %s', (suffix) => {
             router.setUrl(`/course-management/1/presentations${suffix}`);
             fixture.detectChanges();
@@ -542,6 +637,15 @@ describe('NavbarComponent', () => {
                 translate: true,
                 uri: '/course-management/1/presentations/',
             });
+        });
+
+        it('ignores the URL fragment when building the breadcrumbs', () => {
+            router.setUrl('/course-management/1/programming-exercises/45#artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle');
+            fixture.detectChanges();
+
+            const uris = component.breadcrumbs().map((crumb) => crumb.uri);
+            expect(uris.every((uri) => !uri.includes('#'))).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.label.includes('difficultyStepTitle') || crumb.label.includes('45#'))).toBe(false);
         });
 
         it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
@@ -556,12 +660,17 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/exercises/'))).toBe(false);
         });
 
-        it('submissions link to the scores, since there is no list of submissions only', () => {
-            router.setUrl('/course-management/1/text-exercises/2/submissions');
+        it.each([
+            '/course-management/1/text-exercises/2/submissions',
+            '/course-management/1/text-exercises/2/participations/3/submissions',
+            '/course-management/1/exams/4/exercise-groups/5/text-exercises/2/participations/3/submissions',
+        ])('submissions link to the participation page for %s', (url) => {
+            router.setUrl(url);
 
             fixture.detectChanges();
 
-            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            const participationUrl = url.substring(0, url.indexOf('/text-exercises/2/') + '/text-exercises/2/'.length) + 'participations/';
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === participationUrl && crumb.label === 'artemisApp.exercise.submissions')).toBe(true);
             expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
         });
 
@@ -707,16 +816,33 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
         });
 
+        it('should translate the Athena settings breadcrumb', () => {
+            router.setUrl('/course-management/1/athena-settings');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.course.athenaConfig.settingsPage.title',
+                translate: true,
+                uri: '/course-management/1/athena-settings/',
+            } as MockBreadcrumb);
+        });
+
         it('should show the exercise title and correct exercise link for generic exercise routes', () => {
             const exerciseService = TestBed.inject(ExerciseService);
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
+                of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })),
+            );
             const testUrl = '/course-management/1/exercises/2';
             router.setUrl(testUrl);
 
             fixture.detectChanges();
 
-            expect(exerciseService.find).toHaveBeenCalledOnce();
-            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(exerciseService.findForStaff).toHaveBeenCalledOnce();
+            expect(exerciseService.findForStaff).toHaveBeenCalledWith(2);
             expect(component.breadcrumbs()).toHaveLength(4);
             expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Programming Exercise',
@@ -991,11 +1117,11 @@ describe('NavbarComponent', () => {
     });
 
     describe('course controls in navbar', () => {
-        it('should render the notification overview when a course is active', () => {
+        it('should render the notification overview when a course is active', async () => {
             setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
 
-            fixture.detectChanges();
+            await renderDeferredBlocks();
 
             const notificationOverview = fixture.nativeElement.querySelector('jhi-course-notification-overview');
             const themeSwitch = fixture.nativeElement.querySelector('jhi-theme-switch');
@@ -1004,11 +1130,11 @@ describe('NavbarComponent', () => {
             expect(notificationOverview.compareDocumentPosition(themeSwitch) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
         });
 
-        it('should render the notification overview for instructors in course management view', () => {
+        it('should render the notification overview for instructors in course management view', async () => {
             setCurrentCourse({ id: 1, isAtLeastTutor: true } as Course);
             router.setUrl('/course-management/1/exercises');
 
-            fixture.detectChanges();
+            await renderDeferredBlocks();
 
             expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
         });

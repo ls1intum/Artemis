@@ -1,3 +1,5 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -15,10 +17,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {
     let component: HeaderExercisePageWithDetailsComponent;
@@ -39,7 +42,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
@@ -74,7 +77,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
         expect(component.exerciseCategories()).toEqual(categories);
         expect(component.nextRelevantDate()).toEqual(exam.endDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-danger');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-danger');
     });
 
     it('should set the icon according to the exercise due date', () => {
@@ -83,13 +86,13 @@ describe('HeaderExercisePageWithDetails', () => {
         exercise.releaseDate = dayjs().add(1, 'day');
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exercise.releaseDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
 
         exercise.releaseDate = undefined;
         exercise.startDate = dayjs().add(1, 'day');
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exercise.startDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
 
         exercise.startDate = undefined;
         exercise.dueDate = dayjs().subtract(2, 'days');
@@ -104,7 +107,7 @@ describe('HeaderExercisePageWithDetails', () => {
         exercise.assessmentDueDate = dayjs().add(2, 'days');
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exercise.assessmentDueDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('course', { maxComplaintTimeDays: 7 } as Course);
@@ -112,7 +115,7 @@ describe('HeaderExercisePageWithDetails', () => {
         participation.submissions = [submission];
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
 
         participation.submissionCount = 1;
         const submission2 = { results: [{ rated: false }] } as ProgrammingSubmission;
@@ -129,7 +132,7 @@ describe('HeaderExercisePageWithDetails', () => {
         participation.submissions = [submission3];
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-danger');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-danger');
         expect(component.canComplainLaterOn()).toBe(false);
     });
 
@@ -145,11 +148,11 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should determine correct badge for due date', () => {
         exercise.dueDate = dayjs().add(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-success');
+        expect(component.dueDateStatusBadge()).toBe('bg-state-success');
 
         exercise.dueDate = dayjs().subtract(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateStatusBadge()).toBe('bg-danger');
+        expect(component.dueDateStatusBadge()).toBe('bg-state-danger');
     });
 
     it('should set the icon according to the exam end date', () => {
@@ -157,20 +160,20 @@ describe('HeaderExercisePageWithDetails', () => {
         fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exam.endDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-danger');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-danger');
 
         exam.publishResultsDate = dayjs().add(12, 'hours');
         fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exam.publishResultsDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
 
         exam.publishResultsDate = dayjs().subtract(12, 'hours');
         exam.endDate = dayjs().add(1, 'day');
         fixture.componentRef.setInput('exam', exam);
         component.ngOnInit();
         expect(component.nextRelevantDate()).toEqual(exam.endDate);
-        expect(component.nextRelevantDateStatusBadge()).toBe('bg-success');
+        expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
     });
 
     it('should not set a due date in exam mode as no individual due dates exist', () => {
@@ -209,5 +212,46 @@ describe('HeaderExercisePageWithDetails', () => {
         fixture.componentRef.setInput('submissionPolicy', submissionPolicy);
 
         expect(component.numberOfSubmissions()).toBe(expectedNumber);
+    });
+    describe.each(['releaseDate', 'startDate', 'assessmentDue', 'complaintDue'])('presentation summary at %s', (dateLabel) => {
+        it.each([
+            { coursePresentationScore: 1, participationScore: 1, expectedBadge: 'global.generic.yes', expectedScore: undefined },
+            { coursePresentationScore: 1, participationScore: 0, expectedBadge: 'global.generic.no', expectedScore: undefined },
+            { coursePresentationScore: undefined, participationScore: 50, expectedBadge: undefined, expectedScore: '50%' },
+            { coursePresentationScore: undefined, participationScore: 0, expectedBadge: 'global.generic.unset', expectedScore: undefined },
+        ])(
+            'preserves the summary for course setting $coursePresentationScore and student score $participationScore',
+            ({ coursePresentationScore, participationScore, expectedBadge, expectedScore }) => {
+                exercise.presentationScoreEnabled = true;
+                const course = new Course();
+                course.presentationScore = coursePresentationScore;
+                participation.presentationScore = participationScore;
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('studentParticipation', participation);
+                fixture.detectChanges();
+                component.nextRelevantDateLabel.set(dateLabel);
+                component.nextRelevantDate.set(undefined);
+                component.canComplainLaterOn.set(false);
+                fixture.detectChanges();
+
+                const summary: HTMLElement = fixture.nativeElement.querySelector('.right-col');
+                expect(summary.querySelectorAll('[data-testid="presentation-score-summary"]')).toHaveLength(1);
+                if (expectedBadge) {
+                    expect(summary.querySelector(`[jhiTranslate="${expectedBadge}"]`)).not.toBeNull();
+                } else {
+                    expect(summary.textContent).toContain(expectedScore);
+                }
+            },
+        );
+
+        it('omits the summary when presentation scoring is disabled', () => {
+            exercise.presentationScoreEnabled = false;
+            fixture.detectChanges();
+            component.nextRelevantDateLabel.set(dateLabel);
+            component.nextRelevantDate.set(undefined);
+            component.canComplainLaterOn.set(false);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.right-col').querySelectorAll('.badge')).toHaveLength(0);
+        });
     });
 });

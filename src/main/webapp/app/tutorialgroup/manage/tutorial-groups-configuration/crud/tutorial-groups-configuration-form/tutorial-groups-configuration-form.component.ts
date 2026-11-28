@@ -6,9 +6,14 @@ import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.mo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import type { TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -40,7 +45,7 @@ function isValidDate(value: unknown): value is Date {
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
-    styleUrl: './tutorial-groups-configuration-form.component.scss',
+    styleUrl: './tutorial-groups-configuration-form.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ReactiveFormsModule,
@@ -58,7 +63,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
     private destroyRef = inject(DestroyRef);
 
-    protected readonly faGear = faGear;
+    protected readonly faUsers = faUsers;
 
     readonly formData = input<TutorialGroupsConfigurationFormData>({
         period: undefined,
@@ -66,7 +71,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
         useTutorialGroupChannels: false,
     });
     readonly isEditMode = input(false);
-    readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
+    readonly formSubmitted = output<TutorialGroupsConfigurationSettings>();
 
     readonly course = input.required<Course>();
 

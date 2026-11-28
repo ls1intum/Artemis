@@ -1,17 +1,20 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { faCircleNotch, faExternalLink, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { isPushOutsideBuildWindow } from 'app/programming/shared/utils/build-time-window.utils';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,17 +31,18 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [TumAetUiButtonDirective, FeatureToggleDirective, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly repositoryService = inject(CodeEditorRepositoryService);
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly conflictService = inject(CodeEditorConflictStateService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
     private readonly submissionService = inject(CodeEditorSubmissionService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -75,8 +79,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval?: number;
 
-    private refreshModalRef?: DynamicDialogRef;
-    private conflictModalRef?: DynamicDialogRef;
+    private refreshModalRef?: TumAetUiDialogRef<boolean, CodeEditorConfirmRefreshModalComponent>;
+    private conflictModalRef?: TumAetUiDialogRef<boolean, CodeEditorResolveConflictModalComponent>;
 
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
@@ -115,11 +119,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.routeParamsSubscription = this.route.params.subscribe((params) => {
             const repositoryType = params['repositoryType'] ?? 'USER';
             const courseId = Number(params['courseId']);
-            const repositoryId = Number(params['repositoryId']);
+            // The page of the code of a student has the id of the participation instead of the one of a repository
+            const repositoryId = Number(params['repositoryId'] ?? params['participationId']);
             const exerciseId = Number(params['exerciseId']);
             const examId = Number(params['examId']);
             const exerciseGroupId = Number(params['exerciseGroupId']);
-            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId));
+            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, exerciseGroupId, examId));
         });
         this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
@@ -174,51 +179,67 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onRefresh() {
+        if (this.disableActions()) {
+            return;
+        }
         if (this.editorState() !== EditorState.CLEAN) {
             this.refreshModalRef =
-                this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
+                this.dialogService.open<CodeEditorConfirmRefreshModalComponent, boolean>(CodeEditorConfirmRefreshModalComponent, {
                     header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
-                    width: '50rem',
-                    modal: true,
-                    closable: true,
+                    size: 'large',
                     closeOnEscape: true,
                     dismissableMask: false,
                 }) ?? undefined;
             this.refreshModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-                if (confirmed) {
-                    this.executeRefresh();
+                if (confirmed && !this.disableActions()) {
+                    this.executeRefresh().subscribe();
                 }
             });
         } else {
-            this.executeRefresh();
+            this.executeRefresh().subscribe();
         }
     }
 
-    executeRefresh() {
+    executeRefresh(): Observable<boolean> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
+        return this.refreshRepository();
+    }
+
+    private refreshRepository(): Observable<boolean> {
         this.editorState.set(EditorState.REFRESHING);
-        this.repositoryService.pull().subscribe({
-            next: () => {
+        return this.repositoryService.pull().pipe(
+            map(() => {
                 this.onRefreshFiles.emit();
                 this.editorState.set(EditorState.CLEAN);
-            },
-            error: (error: Error) => {
+                return true;
+            }),
+            catchError((error: Error) => {
                 this.editorState.set(EditorState.UNSAVED_CHANGES);
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
                 } else {
                     this.onError.emit('refreshFailed');
                 }
-            },
-        });
+                return of(false);
+            }),
+        );
     }
 
     onSave() {
+        if (this.disableActions()) {
+            return;
+        }
         this.saveChangedFiles()
             .pipe(catchError(() => of()))
             .subscribe();
     }
 
     saveChangedFiles(andCommit = false): Observable<FileSubmission | FileSubmissionError | undefined> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);
@@ -226,7 +247,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (!('error' in fileSubmission)) {
-                        this.onSavedFiles.emit(fileSubmission);
+                        const completedFiles = Object.fromEntries(
+                            Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
+                        );
+                        if (!_isEmpty(completedFiles)) {
+                            this.onSavedFiles.emit(completedFiles);
+                        }
                     }
                 }),
                 catchError((error: Error) => {
@@ -244,7 +270,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     commit() {
-        if (this.commitState() === CommitState.COMMITTING) {
+        if (this.disableActions() || this.commitState() === CommitState.COMMITTING) {
             return;
         }
         of(undefined)
@@ -261,8 +287,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     if (this.editorState() === EditorState.CLEAN) {
                         this.commitState.set(CommitState.CLEAN);
                     }
-                    // Optimistic: assume a build follows the commit on a buildable repo.
-                    if (this.buildable()) {
+                    const participation = this.participation();
+                    if (isPushOutsideBuildWindow(participation && getExercise(participation), participation)) {
+                        // The server saved the commit without building it, so no build follows.
+                        this.alertService.info('artemisApp.editor.committedOutsideBuildWindow');
+                    } else if (this.buildable()) {
+                        // Optimistic: assume a build follows the commit on a buildable repo.
                         this.isBuilding.set(true);
                     }
                 }),
@@ -294,22 +324,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        if (this.isResolvingConflict()) {
+        if (this.disableActions() || this.isResolvingConflict()) {
             return;
         }
         this.conflictModalRef =
-            this.dialogService.open(CodeEditorResolveConflictModalComponent, {
+            this.dialogService.open<CodeEditorResolveConflictModalComponent, boolean>(CodeEditorResolveConflictModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
-                width: '50rem',
-                modal: true,
-                closable: true,
+                size: 'large',
                 closeOnEscape: true,
                 dismissableMask: false,
             }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            // The dialog can report a confirmation more than once (e.g. a double click on its submit button),
-            // so ignore it while a reset is already running
-            if (!confirmed || this.isResolvingConflict()) {
+            if (!confirmed || this.disableActions() || this.isResolvingConflict()) {
                 return;
             }
             this.isResolvingConflict.set(true);
@@ -319,7 +345,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.conflictService.notifyConflictState(GitConflictState.OK);
-                        this.executeRefresh();
+                        this.executeRefresh().subscribe();
                     },
                     error: () => {
                         this.onError.emit('resetFailed');

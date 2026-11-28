@@ -9,9 +9,10 @@ import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/dto/compet
     standalone: true,
     selector: 'jhi-host',
     imports: [OrchestrationResultDialogComponent],
-    template: '<jhi-orchestration-result-dialog [visible]="true" [summaryMessage]="msg()" [appliedActions]="actions()" />',
+    template: '<jhi-orchestration-result-dialog [(visible)]="visible" [summaryMessage]="msg()" [appliedActions]="actions()" />',
 })
 class HostComponent {
+    visible = signal(true);
     msg = signal('');
     actions = signal<AppliedActionDTO[]>([]);
 }
@@ -82,6 +83,40 @@ describe('OrchestrationResultDialogComponent', () => {
     });
 
     it('renders the empty-state translation key when no actions are present', () => {
-        expect(document.querySelector('p[jhitranslate="artemisApp.atlasOrchestrator.resultDialog.empty"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
+    it('renders applied action details and updates the host when the close action is chosen', async () => {
+        fixture.componentInstance.actions.set([
+            {
+                type: AppliedActionType.Assign,
+                competencyId: 42,
+                competencyTitle: 'Recursion',
+                weight: 1,
+                detail: 'Linked lecture content',
+                justification: 'Practices recursive methods',
+            },
+        ]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const table = document.querySelector('[data-testid="orchestration-actions"]')!;
+        expect(table.querySelectorAll('tbody tr')).toHaveLength(1);
+        expect(table.textContent).toContain('Recursion');
+        expect(table.textContent).toContain('Linked lecture content');
+        expect(table.textContent).toContain('Practices recursive methods');
+        document.querySelector<HTMLButtonElement>('[data-testid="orchestration-result-close"]')!.click();
+        fixture.detectChanges();
+        expect(fixture.componentInstance.visible()).toBe(false);
+    });
+    it('renders one translated type tag per applied action type and keeps the table inside the table layout', async () => {
+        const types = [AppliedActionType.Create, AppliedActionType.Edit, AppliedActionType.Assign, AppliedActionType.Unassign, AppliedActionType.Delete];
+        fixture.componentInstance.actions.set(types.map((type, index) => ({ type, competencyId: index, competencyTitle: `Competency ${index}`, detail: '', justification: '' })));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rows = Array.from(document.querySelectorAll('[data-testid="orchestration-actions"] tbody tr'));
+        expect(rows).toHaveLength(5);
+        expect(rows.map((row) => row.querySelector('td')!.textContent!.trim())).toEqual(types.map((type) => expect.stringContaining(type)));
+        expect(document.querySelector('tumaet-ui-table-layout [data-testid="orchestration-actions"]')).not.toBeNull();
     });
 });

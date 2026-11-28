@@ -8,11 +8,10 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { Task } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 
@@ -24,11 +23,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 ProgrammingExerciseInstructionService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
 
@@ -59,9 +58,9 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(steps).toHaveLength(2);
 
         // BubbleSort has a failed icon.
-        expect(steps[0].query(By.css('.text-danger'))).not.toBeNull();
+        expect(steps[0].query(By.css('.text-state-danger'))).not.toBeNull();
         // MergeSort has a success icon.
-        expect(steps[1].query(By.css('.text-success'))).not.toBeNull();
+        expect(steps[1].query(By.css('.text-state-success'))).not.toBeNull();
     });
 
     it('should not show any icons for empty tasks list', () => {
@@ -78,7 +77,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(steps).toHaveLength(0);
     });
 
-    it('should open the feedback dialog with responsive breakpoints', () => {
+    it('should open the named feedback dialog with the selected task and result', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2022-01-06T22:15:29.203+02:00'),
@@ -88,7 +87,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         fixture.componentRef.setInput('tasks', [{ id: 1, completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] }]);
         fixture.detectChanges();
 
-        const dialogService = TestBed.inject(DialogService);
+        const dialogService = TestBed.inject(TumAetUiDialogService);
         const openSpy = vi.spyOn(dialogService, 'open');
 
         fixture.componentInstance.showDetailsForTests([1], 'Implement BubbleSort');
@@ -96,10 +95,12 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             FeedbackComponent,
             expect.objectContaining({
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
-                },
+                size: 'large',
+                header: 'artemisApp.result.detail.feedbackForTask',
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: true,
+                inputValues: expect.objectContaining({ result, feedbackFilter: [1], taskName: 'Implement BubbleSort', numberOfNotExecutedTests: 0 }),
             }),
         );
     });

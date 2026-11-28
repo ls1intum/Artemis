@@ -238,10 +238,10 @@ class MailRetryQueueServiceTest {
     }
 
     @Test
-    void shouldNotWriteTheBodyOfAMailIntoALog() {
+    void shouldNotWriteMailContentOrRecipientIntoALog() {
         var text = mail("someone", MailPriority.BULK).toString();
 
-        assertThat(text).contains("someone").contains("subject of someone").doesNotContain("body of someone");
+        assertThat(text).contains("priority=BULK", "attempts=0").doesNotContain("someone", "subject of someone", "body of someone");
     }
 
     @Test

@@ -1,3 +1,4 @@
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
@@ -15,7 +16,6 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -69,7 +69,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 MockDirective(CdkDragHandle),
                 MockDirective(CdkDragPlaceholder),
                 MockDirective(CdkDropListGroup),
-                MockDirective(NgbCollapse),
                 MockComponent(FaIconComponent),
                 MockComponent(QuizScoringInfoModalComponent),
                 MockComponent(MatchPercentageInfoModalComponent),
@@ -305,6 +304,15 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.text).toEqual(question.text);
 
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should take points with a decimal separator and cut off the fraction after three digits', () => {
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        typeIntoInputNumber(input, '5.5555');
+
+        expect(input.value).toBe('5.555');
+        expect(component.shortAnswerQuestion.points).toBe(5.555);
     });
 
     describe('telling the parent when validity changes', () => {
@@ -742,7 +750,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
         const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
 
-        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(titleInput?.getAttribute('aria-invalid')).toBe('true');
         expect(feedback).not.toBeNull();
     });
 
@@ -757,7 +765,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(titleInput).not.toBeNull();
         expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
-        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(titleInput?.getAttribute('aria-invalid')).toBe('true');
         expect(feedback).not.toBeNull();
     });
 

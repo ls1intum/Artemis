@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
+
 class VerificationResultTest {
 
     @Test
@@ -15,6 +17,13 @@ class VerificationResultTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new VerificationResult(true, true, false, 3, List.of()));
         assertThatIllegalArgumentException().isThrownBy(() -> new VerificationResult(true, true, true, 0, List.of()));
         assertThatIllegalArgumentException().isThrownBy(() -> new VerificationResult(true, true, true, 3, List.of("Harness was modified")));
+    }
+
+    @Test
+    void onlyAFailedResultOpeningAReasonWithTheServerDefectPrefixIsAServerDefect() {
+        assertThat(new VerificationResult(false, false, true, 3, List.of(VerificationResult.SERVER_DEFECT_PREFIX + " seeded checks fail")).serverDefect()).isTrue();
+        assertThat(new VerificationResult(false, false, true, 3, List.of("Compile error: " + VerificationResult.SERVER_DEFECT_PREFIX)).serverDefect()).isFalse();
+        assertThat(new VerificationResult(true, true, true, 3, List.of()).serverDefect()).isFalse();
     }
 
     @Test
@@ -29,7 +38,8 @@ class VerificationResultTest {
         var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, identity.workerId(), identity.workerIncarnation(), 1, java.time.Instant.now(), WorkerEvent.Type.FINISHED,
                 identity, false, "sha256:" + "a".repeat(64), null, null, output);
         WorkerMessageCodec codec = new WorkerMessageCodec();
-        assertThat(codec.decodeEvent(codec.encode(event)).output()).isEqualTo(output);
+        var wire = new WorkerMessageCodecApi();
+        assertThat(codec.fromWire(wire.decodeEvent(wire.encode(codec.toWire(event)))).output()).isEqualTo(output);
         assertThat(output.verification().report()).contains("all 3 tests");
     }
 }

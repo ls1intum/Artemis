@@ -1,29 +1,38 @@
-<div class="row align-items-center mb-2 mt-2 position-relative">
+<div class="relative my-2 flex flex-wrap items-center gap-2 rounded-lg bg-(--overview-light-background-color) px-2 py-1 hover:bg-(--hover-slightly-darker-body-bg)">
     @if (course() && lecture()) {
-        <a class="stretched-link" [routerLink]="['/courses', course().id!, 'lectures', lecture().id!]"></a>
+        <a
+            class="absolute inset-0 z-10 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2"
+            [attr.aria-label]="lecture().title"
+            [routerLink]="['/courses', course().id!, 'lectures', lecture().id!]"
+        ></a>
     }
-    <div class="col-auto d-none d-sm-block">
-        <div class="exercise-row-icon">
-            <fa-icon [icon]="faChalkboardTeacher" size="2x" placement="right auto" [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate" />
+    <div class="w-auto hidden sm:block">
+        <div class="flex min-w-10 items-center justify-center text-color">
+            <fa-icon
+                [icon]="faChalkboardTeacher"
+                size="2x"
+                tumAetUiTooltipPlacement="right"
+                [tumAetUiTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate"
+            />
         </div>
     </div>
-    <div class="col">
-        <div class="row">
-            <div class="col-auto d-sm-none">
+    <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap">
+            <div class="w-auto sm:hidden">
                 <h4><fa-icon [icon]="faChalkboardTeacher" /></h4>
             </div>
-            <div class="col-sm col">
+            <div class="sm:flex-1 min-w-0 flex-1">
                 <h4>{{ lecture()?.title }}</h4>
             </div>
         </div>
-        <div class="row">
+        <div class="flex flex-wrap">
             @if (lecture()?.startDate) {
-                <div class="col-auto mb-2" [ngClass]="getUrgentClass(lecture().startDate)">
-                    <span class="d-none d-sm-inline"> {{ lecture().startDate | artemisDate: 'long-date' }} </span>
+                <div class="w-auto mb-2" [ngClass]="getUrgentClass(lecture().startDate)">
+                    <span class="hidden sm:inline"> {{ lecture().startDate | artemisDate: 'long-date' }} </span>
                     ({{ lecture().startDate | artemisTimeAgo }})
                 </div>
             } @else {
-                <div class="col-auto mb-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
+                <div class="w-auto mb-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
             }
         </div>
     </div>

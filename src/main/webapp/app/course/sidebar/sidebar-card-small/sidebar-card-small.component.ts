@@ -1,3 +1,4 @@
+import { refreshSidebarCard } from '../sidebar-card-refresh';
 import { Component, inject, input, output } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
@@ -10,7 +11,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',
-    styleUrls: ['./sidebar-card-small.component.scss'],
+    styleUrls: ['../sidebar-card.css'],
     imports: [NgClass, RouterLink, RouterLinkActive, SidebarCardItemComponent, ConversationOptionsComponent],
 })
 export class SidebarCardSmallComponent {
@@ -40,12 +41,6 @@ export class SidebarCardSmallComponent {
     }
 
     refreshChildComponent(): void {
-        void this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected()) {
-                void this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
-            } else {
-                void this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
-            }
-        });
+        void refreshSidebarCard(this.router, this.route, this.location, () => ({ id: this.sidebarItem().id, selected: !!this.itemSelected() }));
     }
 }

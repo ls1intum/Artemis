@@ -51,6 +51,59 @@ jobs:
       - name: Test requirement handling of the C and C++ test templates
         run: python3 supporting_scripts/test_template_test_requirements.py
 
+  badge-tests:
+    name: README badge and Sonar workflow tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+      - run: node --test supporting_scripts/badges/badges.test.mjs .github/scripts/sonar-workflow.test.cjs
+
+  test-selection:
+    name: CI selection and reporting tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          run_install: false
+          cache: true
+      - run: pnpm install --frozen-lockfile
+      - name: Test revision gate, coverage reporting and affected client/E2E selection
+        run: |
+          node --test .github/scripts/sonar-pr.test.cjs .github/scripts/sonar-duplication.test.cjs .github/scripts/cancel-closed-pr-ci.test.cjs supporting_scripts/tests/sonar-test-artifacts.test.mjs .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs .github/scripts/limit-issue-body.test.cjs .github/scripts/verify-war-client.test.mjs \
+            supporting_scripts/client/run-affected-tests.test.mjs \
+            supporting_scripts/ci/E2E-tests/selection.test.mjs \
+            supporting_scripts/chunk-eager-loading/diff_eager_chunks.test.mjs \
+            supporting_scripts/client/check_duplicate_dependencies.test.mjs
+          pnpm exec vitest run --config supporting_scripts/ci/E2E-tests/vitest.config.mjs
+      - name: Setup Java for the Gradle filtering contract
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Cache the pinned Gradle distribution without configuring Artemis
+        run: ./gradlew --version
+      - name: Test affected server selection and Gradle filtering
+        run: python3 -m unittest discover -s supporting_scripts/tests -p 'test_*.py'
+      - name: Lint selection scripts
+        run: |
+          shellcheck supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh supporting_scripts/ci/E2E-tests/prepare-docker-storage.sh supporting_scripts/ci/E2E-tests/prepull-exercise-images.sh supporting_scripts/ci/pull-through-registry-proxy.sh
+          for script in supporting_scripts/get_changed_modules.sh supporting_scripts/ci/E2E-tests/determine-relevant-tests.sh supporting_scripts/ci/E2E-tests/verify-test-determination.sh; do
+            bash -n "$script"
+          done
+
   actionlint:
     name: actionlint
     runs-on: ubuntu-latest
@@ -126,6 +179,14 @@ jobs:
                   current = None
 
           required = {
+              "has_workflows": {
+                  ".github/scripts/**",
+                  "supporting_scripts/get_changed_modules.sh",
+                  "supporting_scripts/select_server_test_modules.py",
+                  "supporting_scripts/tests/**",
+                  "supporting_scripts/client/run-affected-tests*",
+                  "supporting_scripts/ci/E2E-tests/**",
+              },
               "has_java": {
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-quality.yml",
@@ -144,6 +205,16 @@ jobs:
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-skills.yml",
                   "supporting_scripts/check_skill_references.py",
+              },
+              "has_exercise_images": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-exercise-images.yml",
+                  "supporting_scripts/check_exercise_image_sync.py",
+              },
+              "has_helm": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-helm.yml",
+                  "supporting_scripts/check_helm_chart.sh",
               },
           }
 

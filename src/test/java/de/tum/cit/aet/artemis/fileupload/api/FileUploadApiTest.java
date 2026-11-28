@@ -41,7 +41,7 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportFileUploadExerciseViaApi() {
         Course sourceCourse = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
         long sourceExerciseId = sourceCourse.getExercises().stream().findFirst().orElseThrow().getId();
@@ -80,7 +80,7 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFindFileUploadExerciseWithCompetencyViaApi() throws NoUniqueQueryException {
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         FileUploadExercise expectedFileUploadExercise = (FileUploadExercise) course.getExercises().stream().findFirst().orElseThrow();

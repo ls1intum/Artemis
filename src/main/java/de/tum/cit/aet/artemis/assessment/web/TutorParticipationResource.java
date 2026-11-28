@@ -24,9 +24,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ExampleSubmissionRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -56,16 +54,13 @@ public class TutorParticipationResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final UserRepository userRepository;
 
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, TutorParticipationRepository tutorParticipationRepository,
-            AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository) {
+            ExerciseRepository exerciseRepository, UserRepository userRepository) {
         this.tutorParticipationService = tutorParticipationService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exerciseRepository = exerciseRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
     }
 
@@ -79,12 +74,11 @@ public class TutorParticipationResource {
      * @throws URISyntaxException if URI path can't be created
      */
     @PostMapping("exercises/{exerciseId}/tutor-participations")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TutorParticipationDTO> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exerciseId, user.getId())) {
             // tutorParticipation already exists
@@ -108,13 +102,12 @@ public class TutorParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping("exercises/{exerciseId}/assess-example-submission")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId,
             @RequestBody ExampleSubmissionRequestDTO exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 

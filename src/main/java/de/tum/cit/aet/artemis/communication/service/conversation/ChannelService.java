@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -189,7 +191,7 @@ public class ChannelService {
             conversationParticipantOfRequestingUser.setIsModerator(true);
             conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
             savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
-            savedChannel = channelRepository.save(savedChannel);
+            // The participant owns the relationship and was already inserted; updating the inverse collection needs no channel merge.
             conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
         syncChannelWithWeaviate(savedChannel);
@@ -215,7 +217,7 @@ public class ChannelService {
             Channel channel) {
         Set<User> usersToRegister = new HashSet<>();
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
-        usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
+        usersToRegister.addAll(conversationService.findCourseUsersInDatabase(course, usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
     }
@@ -236,6 +238,37 @@ public class ChannelService {
     }
 
     /**
+     * Refuses a channel name that has characters which a channel name cannot have.
+     *
+     * @param name the name of a channel, which may be absent
+     * @throws BadRequestAlertException if the name does not match the pattern of channel names
+     */
+    public static void validateChannelNamePattern(@Nullable String name) {
+        if (name != null && !CHANNEL_NAME_PATTERN.matcher(name).matches()) {
+            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
+        }
+    }
+
+    /**
+     * Refuses the name that an exercise would give its channel if the channel does not accept it, which an update of the channel does only when it saves, and so only after the
+     * other
+     * work of the update. Nothing is changed. A name is not checked while the exercise has no channel or the name stays the same, as the update does not check it then either.
+     *
+     * @param exercise the exercise with the new channel name, which has to be the one that is saved
+     * @throws BadRequestAlertException if the channel would not accept the name
+     */
+    public void validateExerciseChannelUpdate(Exercise exercise) {
+        String newChannelName = exercise.getChannelName();
+        if (newChannelName == null) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (channel != null && !newChannelName.equals(channel.getName())) {
+            validateChannelNamePattern(newChannelName);
+        }
+    }
+
+    /**
      * Checks if the given channel is valid for the given course or throws an
      * exception
      *
@@ -243,9 +276,7 @@ public class ChannelService {
      * @param channel  the channel to check
      */
     public void channelIsValidOrThrow(Long courseId, @Valid Channel channel) {
-        if (channel.getName() != null && !CHANNEL_NAME_PATTERN.matcher(channel.getName()).matches()) {
-            throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, colons and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
-        }
+        validateChannelNamePattern(channel.getName());
 
         if (this.allowDuplicateChannelName(channel)) {
             return;
@@ -418,6 +449,42 @@ public class ChannelService {
     }
 
     /**
+     * Refreshes the channel after an exercise's changed release date has been saved.
+     *
+     * @param originalReleaseDate the date before the update
+     * @param updatedExercise     the exercise with its persisted date
+     */
+    public void notifyExerciseChannelOfDateChange(@Nullable ZonedDateTime originalReleaseDate, Exercise updatedExercise) {
+        if (updatedExercise.getId() == null || !updatedExercise.isCourseExercise() || sameInstant(originalReleaseDate, updatedExercise.getReleaseDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(updatedExercise.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    /**
+     * Refreshes the channel after an exam's changed visible date has been saved.
+     *
+     * @param originalVisibleDate the date before the update
+     * @param updatedExam         the exam with its persisted date
+     */
+    public void notifyExamChannelOfDateChange(@Nullable ZonedDateTime originalVisibleDate, Exam updatedExam) {
+        if (sameInstant(originalVisibleDate, updatedExam.getVisibleDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExamId(updatedExam.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    private static boolean sameInstant(@Nullable ZonedDateTime first, @Nullable ZonedDateTime second) {
+        return Objects.equals(first == null ? null : first.toInstant(), second == null ? null : second.toInstant());
+    }
+
+    /**
      * Update the channel of an exam.
      * Looks up the existing channel by exam ID and updates its name to match
      * the exam's current channel name.
@@ -583,5 +650,25 @@ public class ChannelService {
      */
     public void createDefaultChannels(Course course) {
         Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(course, channelType));
+    }
+
+    /**
+     * Finds the announcement channel an announcement should be posted to.
+     *
+     * @param courseId  the course the announcement belongs to
+     * @param channelId the requested announcement channel, or null for the course's default announcement channel
+     * @return the id of the announcement channel
+     * @throws BadRequestAlertException if the requested channel is not an announcement channel of the course, or the course has no
+     *                                      default announcement channel
+     */
+    public long findAnnouncementChannelIdElseThrow(long courseId, @Nullable Long channelId) {
+        List<Channel> announcementChannels = channelRepository.findChannelsByCourseId(courseId).stream().filter(Channel::getIsAnnouncementChannel).toList();
+        if (channelId != null) {
+            return announcementChannels.stream().filter(channel -> channelId.equals(channel.getId())).findFirst().map(Channel::getId)
+                    .orElseThrow(() -> new BadRequestAlertException("The channel is not an announcement channel of this course", CHANNEL_ENTITY_NAME, "notAnAnnouncementChannel"));
+        }
+        return announcementChannels.stream().filter(channel -> DefaultChannelType.ANNOUNCEMENT.getName().equals(channel.getName())).findFirst().map(Channel::getId)
+                .orElseThrow(() -> new BadRequestAlertException("The course has no default announcement channel, so a channelId is required", CHANNEL_ENTITY_NAME,
+                        "noDefaultAnnouncementChannel"));
     }
 }

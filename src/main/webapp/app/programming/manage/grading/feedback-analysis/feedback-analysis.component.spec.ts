@@ -1,16 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
-import { PaginatorState } from 'primeng/paginator';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
-import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -35,9 +32,7 @@ describe('FeedbackAnalysisComponent', () => {
     let feedbackAnalysisService: FeedbackAnalysisService;
     let searchSpy: ReturnType<typeof vi.spyOn>;
     let localStorageService: LocalStorageService;
-    let modalService: NgbModal;
     let alertService: AlertService;
-    let modalSpy: ReturnType<typeof vi.spyOn>;
     let createChannelSpy: ReturnType<typeof vi.spyOn>;
 
     const feedbackMock: FeedbackDetail[] = [
@@ -88,21 +83,10 @@ describe('FeedbackAnalysisComponent', () => {
         component = fixture.componentInstance;
         feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
         localStorageService = fixture.debugElement.injector.get(LocalStorageService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
         alertService = fixture.debugElement.injector.get(AlertService);
 
         vi.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
         searchSpy = vi.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
-        const mockFormSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
-        modalSpy = vi.spyOn(fixture.debugElement.injector.get(NgbModal), 'open').mockReturnValue({
-            componentInstance: {
-                formSubmitted: mockFormSubmitted,
-                affectedStudentsCount: null,
-                feedbackDetail: null,
-            },
-            result: Promise.resolve(),
-        } as any);
-
         createChannelSpy = vi.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
 
         vi.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
@@ -170,12 +154,6 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('openFilterModal', () => {
         it('should open filter modal and pass correct form values and properties', async () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
-            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({
-                componentInstance: {
-                    filterApplied: { subscribe: vi.fn() },
-                },
-            } as any);
             const getMaxCountSpy = vi.spyOn(feedbackAnalysisService, 'getMaxCount').mockResolvedValue(10);
             vi.spyOn(localStorageService, 'retrieve')
                 .mockReturnValueOnce(['task1'])
@@ -188,27 +166,26 @@ describe('FeedbackAnalysisComponent', () => {
             await component.openFilterModal();
 
             expect(getMaxCountSpy).toHaveBeenCalledWith(1);
-            expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
-            const modalInstance = modalSpy.mock.results[0].value.componentInstance;
-            expect(modalInstance.filters).toEqual({
+            expect(component.filterModalFilters()).toEqual({
                 tasks: ['task1'],
                 testCases: ['testCase1'],
                 occurrence: [component.minCount(), 5],
                 errorCategories: ['Student Error'],
             });
-            expect(modalInstance.taskArray).toBe(component.taskNames);
-            expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
-            expect(modalInstance.exerciseId).toBe(component.exerciseId);
-            expect(modalInstance.maxCount).toBe(component.maxCount);
+
+            fixture.detectChanges();
+            const filterModal = fixture.debugElement.query(By.directive(FeedbackFilterModalComponent)).componentInstance as FeedbackFilterModalComponent;
+            expect(filterModal.taskArray()).toBe(component.taskNames());
+            expect(filterModal.testCaseNames()).toBe(component.testCaseNames());
+            expect(filterModal.maxCount()).toBe(component.maxCount());
+            expect(filterModal.filters).toBe(component.filterModalFilters());
+
+            filterModal.closeModal();
+            fixture.detectChanges();
+            expect(component.filterModalFilters()).toBeUndefined();
         });
 
         it('should open filter modal and pass correct form values and properties when grouped feedback is active', async () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
-            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({
-                componentInstance: {
-                    filterApplied: { subscribe: vi.fn() },
-                },
-            } as any);
             vi.spyOn(localStorageService, 'retrieve')
                 .mockReturnValueOnce(['task1'])
                 .mockReturnValueOnce(['testCase1'])
@@ -220,18 +197,23 @@ describe('FeedbackAnalysisComponent', () => {
             component.groupFeedback.set(true);
             await component.openFilterModal();
 
-            expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
-            const modalInstance = modalSpy.mock.results[0].value.componentInstance;
-            expect(modalInstance.filters).toEqual({
+            expect(component.filterModalFilters()).toEqual({
                 tasks: ['task1'],
                 testCases: ['testCase1'],
                 occurrence: [component.minCount(), 5],
                 errorCategories: ['Student Error'],
             });
-            expect(modalInstance.taskArray).toBe(component.taskNames);
-            expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
-            expect(modalInstance.exerciseId).toBe(component.exerciseId);
-            expect(modalInstance.maxCount).toBe(component.maxCount);
+
+            fixture.detectChanges();
+            const filterModal = fixture.debugElement.query(By.directive(FeedbackFilterModalComponent)).componentInstance as FeedbackFilterModalComponent;
+            expect(filterModal.taskArray()).toBe(component.taskNames());
+            expect(filterModal.testCaseNames()).toBe(component.testCaseNames());
+            expect(filterModal.maxCount()).toBe(component.maxCount());
+            expect(filterModal.filters).toBe(component.filterModalFilters());
+
+            filterModal.closeModal();
+            fixture.detectChanges();
+            expect(component.filterModalFilters()).toBeUndefined();
         });
     });
 
@@ -289,15 +271,16 @@ describe('FeedbackAnalysisComponent', () => {
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
 
-        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        it('onPageChange converts the 0-indexed paginator page to a 1-indexed page', () => {
             const setPageSpy = vi.spyOn(component, 'setPage');
-            component.onPageChange({ page: 1 } as PaginatorState);
+            component.onPageChange(1);
             expect(setPageSpy).toHaveBeenCalledWith(2);
         });
 
-        it('onPageChange defaults an undefined PrimeNG page to the first page', () => {
+        it('onPageSizeChange stores the page size and returns to the first page', () => {
             const setPageSpy = vi.spyOn(component, 'setPage');
-            component.onPageChange({} as PaginatorState);
+            component.onPageSizeChange(50);
+            expect(component.pageSize()).toBe(50);
             expect(setPageSpy).toHaveBeenCalledWith(1);
         });
     });
@@ -318,18 +301,32 @@ describe('FeedbackAnalysisComponent', () => {
         expect(header.getAttribute('aria-sort')).toBe('ascending');
     });
 
-    describe('setSortedColumn', () => {
+    describe('onTableSort', () => {
         it('should update sortedColumn and sortingOrder, and reload data', async () => {
             const loadDataSpy = vi.spyOn(internals(component), 'loadData');
 
-            component.setSortedColumn('testCaseName');
+            component.onTableSort({ field: 'testCaseName', order: 1 });
             expect(component.sortedColumn()).toBe('testCaseName');
             expect(component.sortingOrder()).toBe('ASCENDING');
             expect(loadDataSpy).toHaveBeenCalledOnce();
 
-            component.setSortedColumn('testCaseName');
+            component.onTableSort({ field: 'testCaseName', order: -1 });
             expect(component.sortingOrder()).toBe('DESCENDING');
             expect(loadDataSpy).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('onTableSort without a field', () => {
+        it('should ignore a sort event that names no column', () => {
+            const loadDataSpy = vi.spyOn(internals(component), 'loadData');
+            const sortedColumn = component.sortedColumn();
+            const sortingOrder = component.sortingOrder();
+
+            component.onTableSort({ field: '', order: 1 });
+
+            expect(component.sortedColumn()).toBe(sortedColumn);
+            expect(component.sortingOrder()).toBe(sortingOrder);
+            expect(loadDataSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -351,69 +348,59 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('openFeedbackModal', () => {
         it('should open feedback modal with correct feedback detail', () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
-            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+            component.openFeedbackModal(feedbackMock[0]);
 
-            const feedbackDetail = feedbackMock[0];
-            component.openFeedbackModal(feedbackDetail);
-
-            expect(modalSpy).toHaveBeenCalledOnce();
+            expect(component.feedbackModalDetail()).toBe(feedbackMock[0]);
         });
     });
 
     describe('openAffectedStudentsModal', () => {
         it('should open affected students modal with the correct feedback detail', () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
-            const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+            component.openAffectedStudentsModal(feedbackMock[1]);
 
-            const feedbackDetail = feedbackMock[1];
-            component.openAffectedStudentsModal(feedbackDetail);
-
-            expect(modalSpy).toHaveBeenCalledWith(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
-            expect(modalSpy).toHaveBeenCalledOnce();
+            expect(component.affectedStudentsModalDetail()).toBe(feedbackMock[1]);
         });
     });
 
-    it('should open the feedback detail channel modal', async () => {
-        const formSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
-        const modalRef = {
-            result: Promise.resolve('mocked result'),
-            componentInstance: {
-                formSubmitted,
-                affectedStudentsCount: null,
-                feedbackDetail: null,
-            },
-        } as any;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        await component.openFeedbackDetailChannelModal(feedbackMock[0]);
-        expect(modalService.open).toHaveBeenCalledWith(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
+    it('should open the feedback detail channel modal and remove it once it is closed', () => {
+        component.openFeedbackDetailChannelModal(feedbackMock[0]);
+        fixture.detectChanges();
+
+        const channelModal = fixture.debugElement.query(By.directive(FeedbackDetailChannelModalComponent)).componentInstance as FeedbackDetailChannelModalComponent;
+        expect(channelModal.feedbackDetail()).toBe(feedbackMock[0]);
+
+        channelModal.closeModal();
+        fixture.detectChanges();
+        expect(component.channelModalDetail()).toBeUndefined();
+        expect(fixture.debugElement.query(By.directive(FeedbackDetailChannelModalComponent))).toBeNull();
+    });
+
+    it('should create the channel the dialog submits', async () => {
+        component.openFeedbackDetailChannelModal(feedbackMock[0]);
+        fixture.detectChanges();
+        const channelModal = fixture.debugElement.query(By.directive(FeedbackDetailChannelModalComponent)).componentInstance as FeedbackDetailChannelModalComponent;
+
+        channelModal.formSubmitted.emit({ channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: false });
+        await fixture.whenStable();
+
+        expect(createChannelSpy).toHaveBeenCalledExactlyOnceWith(1, 1, {
+            channel: { name: 'Test Channel' },
+            feedbackDetailTexts: feedbackMock[0].detailTexts,
+            testCaseName: feedbackMock[0].testCaseName,
+        });
+        expect(alertService.success).toHaveBeenCalledOnce();
     });
 
     it('should handle errors during channel creation gracefully', async () => {
-        const formSubmitted = new Subject<{ channelDto: ChannelDTO; navigate: boolean }>();
-        const modalRef = {
-            result: Promise.resolve('mocked result'),
-            componentInstance: {
-                formSubmitted,
-                affectedStudentsCount: null,
-                feedbackDetail: null,
-            },
-        } as any;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
         createChannelSpy.mockRejectedValue(new Error('Error creating channel'));
-        await component.openFeedbackDetailChannelModal(feedbackMock[0]);
-        formSubmitted.next({ channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: true });
-        await fixture.whenStable();
-        fixture.changeDetectorRef.detectChanges();
+        await component.createFeedbackChannel(feedbackMock[0], { channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: true });
         expect(alertService.error).toHaveBeenCalledOnce();
     });
 
-    it('should not proceed if modal is already open', async () => {
-        internals(component).isFeedbackDetailChannelModalOpen = true;
-        const feedbackDetail = feedbackMock[0];
-        await component.openFeedbackDetailChannelModal(feedbackDetail);
-        expect(internals(component).isFeedbackDetailChannelModalOpen).toBe(true);
-        expect(modalSpy).not.toHaveBeenCalled();
+    it('should not replace the feedback detail if the channel modal is already open', () => {
+        component.openFeedbackDetailChannelModal(feedbackMock[0]);
+        component.openFeedbackDetailChannelModal(feedbackMock[1]);
+        expect(component.channelModalDetail()).toBe(feedbackMock[0]);
     });
 
     describe('toggleGroupFeedback', () => {

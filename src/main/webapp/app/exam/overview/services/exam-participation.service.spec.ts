@@ -1,3 +1,4 @@
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -6,7 +7,6 @@ import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,6 @@ describe('ExamParticipationService', () => {
     let httpMock: HttpTestingController;
     let exam: Exam;
     let studentExam: StudentExam;
-    let quizSubmission: QuizSubmission;
     let localStorageService: LocalStorageService;
 
     beforeEach(() => {
@@ -42,7 +41,15 @@ describe('ExamParticipationService', () => {
         exam = new Exam();
         studentExam = new StudentExam();
         studentExam.exercises = [];
-        quizSubmission = new QuizSubmission();
+    });
+
+    it('should request explicit instructor-owner conduction with normal conversion', () => {
+        let result: StudentExam | undefined;
+        service.loadStudentExamWithExercisesForConduction(1, 2, 3, 'instructor-owner').subscribe((value) => (result = value));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ id: 3, exercises: [], exam: { startDate: '2026-10-25T08:00:00Z' } });
+        expect(req.request.url).toBe('api/exam/courses/1/exams/2/student-exams/3/conduction/for-instructor');
+        expect(dayjs.isDayjs(result?.exam?.startDate)).toBe(true);
     });
 
     it('should load a StudentExam with exercises for conduction', async () => {
@@ -130,6 +137,21 @@ describe('ExamParticipationService', () => {
         req.flush(returnedFromService);
     });
 
+    it('surfaces an own exam load conflict immediately without an automatic retry', async () => {
+        vi.useFakeTimers();
+        try {
+            let error: HttpErrorResponse | undefined;
+            service.getOwnStudentExam(1, 2).subscribe({ error: (value) => (error = value) });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+            expect(error?.status).toBe(409);
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {
@@ -197,7 +219,7 @@ describe('ExamParticipationService', () => {
             endDate,
             workingTime: 7200,
             examMaxPoints: 100,
-            testExam: false,
+            examMode: ExamMode.REAL,
         };
         let received: ExamForOverview[] | undefined;
 
@@ -207,7 +229,7 @@ describe('ExamParticipationService', () => {
         request.flush([serverExam]);
 
         expect(received).toHaveLength(1);
-        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, testExam: false });
+        expect(received?.[0]).toMatchObject({ id: 17, title: 'Overview exam', moduleNumber: 'M1', workingTime: 7200, examMaxPoints: 100, examMode: ExamMode.REAL });
         expect(dayjs.isDayjs(received?.[0].visibleDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].startDate)).toBe(true);
         expect(dayjs.isDayjs(received?.[0].endDate)).toBe(true);
@@ -273,18 +295,6 @@ describe('ExamParticipationService', () => {
         expect(received).toBeNull();
     });
 
-    it('should update a QuizSubmission', async () => {
-        const returnedFromService = Object.assign({}, quizSubmission);
-        const expected = Object.assign({}, returnedFromService);
-        service
-            .updateQuizSubmission(1, expected)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(expected));
-
-        const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
-    });
-
     it('should load testRun with exercises for conduction', async () => {
         const returnedFromService = Object.assign({}, studentExam);
         const expected = Object.assign({}, returnedFromService);
@@ -319,7 +329,9 @@ describe('ExamParticipationService', () => {
         service
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+            .subscribe(() => {
+                expect(service.testStudentExams()).toEqual(returnedFromService);
+            });
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
@@ -339,11 +351,12 @@ describe('ExamParticipationService', () => {
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch sidebar data successfully', async () => {
-        const returnedFromService = [studentExam];
-        service.getRealExamSidebarData(1).subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam sidebar data successfully', async () => {
+        const returnedFromService = [{ id: 1, title: 'Exam 1' } as Exam];
+        service.getRealExamSidebarData(1).subscribe((resp: Exam[]) => expect(resp).toMatchObject(returnedFromService));
 
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe('api/exam/courses/1/real-exams-sidebar-data');
         req.flush(returnedFromService);
     });
 
@@ -442,5 +455,107 @@ describe('ExamParticipationService', () => {
 
             expect(errorStatus).toBe(400);
         });
+    });
+    it('caches a serializable exam clone while retaining the working graph back references', () => {
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        const participation: StudentParticipation = { id: 8, exercise };
+        const submission: TextSubmission = { id: 9, participation };
+        const result: Result = { id: 10, submission };
+        const feedback = { id: 11, result, credits: 2 };
+        result.feedbacks = [feedback];
+        submission.results = [result];
+        participation.submissions = [submission];
+        exercise.studentParticipations = [participation];
+        studentExam.id = 6;
+        studentExam.exercises = [exercise];
+        service.saveStudentExamToLocalStorage(1, 2, studentExam);
+        const cached = localStorageService.retrieve<StudentExam>('artemis_student_exam_1_2');
+        const cachedParticipation = cached?.exercises?.[0].studentParticipations?.[0];
+        expect(cachedParticipation?.id).toBe(8);
+        expect(cachedParticipation?.exercise).toBeUndefined();
+        expect(cachedParticipation?.submissions?.[0]).toMatchObject({ id: 9, results: [{ id: 10, feedbacks: [{ id: 11, credits: 2 }] }] });
+        expect(cachedParticipation?.submissions?.[0].participation).toBeUndefined();
+        expect(cachedParticipation?.submissions?.[0].results?.[0].submission).toBeUndefined();
+        expect(cachedParticipation?.submissions?.[0].results?.[0].feedbacks?.[0].result).toBeUndefined();
+        expect(submission.participation).toBe(participation);
+        expect(result.submission).toBe(submission);
+        expect(feedback.result).toBe(result);
+        expect(participation.exercise).toBe(exercise);
+    });
+
+    it('keeps failed-save flags scoped to the course and exam', () => {
+        expect(service.lastSaveFailed(1, 2)).toBe(false);
+        service.setLastSaveFailed(true, 1, 2);
+        expect(service.lastSaveFailed(1, 2)).toBe(true);
+        expect(service.lastSaveFailed(1, 3)).toBe(false);
+        service.setLastSaveFailed(false, 1, 2);
+        expect(service.lastSaveFailed(1, 2)).toBe(false);
+    });
+
+    it.each([
+        [true, true, 'synced'],
+        [true, false, 'notSynced'],
+        [false, true, 'notStarted'],
+        [false, false, 'notSynced'],
+    ] as const)('shows text submission state submitted=%s synced=%s', (submitted, isSynced, tooltip) => {
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.studentParticipations = [{ submissions: [{ submitted, isSynced }] }];
+        expect(service.getExerciseButtonTooltip(exercise)).toBe(tooltip);
+    });
+
+    it('resets exam layout and maps exercises into sidebar cards', () => {
+        const started: boolean[] = [],
+            testRun: boolean[] = [],
+            end: boolean[] = [];
+        const subscriptions = [
+            service.examIsStarted$.subscribe((v) => started.push(v)),
+            service.testRunStarted$.subscribe((v) => testRun.push(v)),
+            service.endViewDisplayed$.subscribe((v) => end.push(v)),
+        ];
+        service.setExamLayout();
+        service.setExamLayout(true, true);
+        service.setEndView(true);
+        document.documentElement.style.setProperty('--header-height', '0px');
+        service.resetExamLayout();
+        expect(started).toEqual([false, true, true, false]);
+        expect(testRun).toEqual([false, false, true, false]);
+        expect(end).toEqual([false, true]);
+        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('68px');
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.exerciseGroup = { title: 'Written response' };
+        expect(service.mapExercisesToSidebarCardElements([exercise])).toEqual([expect.objectContaining({ title: 'Written response', id: 7, size: 'M' })]);
+        expect(service.mapExerciseToSidebarCardElement(new TextExercise(undefined, undefined))).toMatchObject({ title: '', id: '' });
+        subscriptions.forEach((s) => s.unsubscribe());
+    });
+
+    it('publishes saving and sync changes for the working submission without detaching its identity', () => {
+        const submission = new TextSubmission();
+        const other = new TextSubmission();
+        expect(service.isSubmissionSaving(undefined)).toBe(false);
+        service.setSubmissionSaving(submission, true);
+        expect(service.isSubmissionSaving(submission)).toBe(true);
+        expect(service.isSubmissionSaving(other)).toBe(false);
+        service.setSubmissionSaving(submission, false);
+        expect(service.isSubmissionSaving(submission)).toBe(false);
+        const version = service.submissionSyncVersion();
+        service.notifySubmissionSyncStateChanged();
+        expect(service.submissionSyncVersion()).toBe(version + 1);
+    });
+
+    it('preserves the exercise group in conduction payloads and converts the exam session dates', () => {
+        service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((loaded) => {
+            expect(loaded?.exercises?.[0].exerciseGroup).toMatchObject({ id: 8, title: 'Group', isMandatory: true });
+            expect(loaded?.exercises?.[0].exerciseGroup?.exam).toBe(loaded?.exam);
+            expect(loaded?.exam?.startDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/student-exams/3/conduction' }).flush({
+            id: 3,
+            exam: { id: 2, startDate: '2026-01-01T10:00:00Z' },
+            examSessions: [{ sessionToken: 'session-token' }],
+            exercises: [{ id: 7, type: 'text', exerciseGroup: { id: 8, title: 'Group', isMandatory: true } }],
+        });
+        expect(TestBed.inject(SessionStorageService).retrieve('ExamSessionToken')).toBe('session-token');
     });
 });

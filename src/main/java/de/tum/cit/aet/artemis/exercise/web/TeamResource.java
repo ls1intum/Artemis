@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,13 +43,15 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -87,6 +90,11 @@ public class TeamResource {
     private static final Pattern NON_SHORT_NAME_CHARACTER = Pattern.compile("[^0-9a-z]");
 
     public static final String ENTITY_NAME = "team";
+
+    private static final Set<CourseRole> STUDENT_ROLES = Set.of(CourseRole.STUDENT);
+
+    // A team owner is usually a tutor, but the deletion of accounts also hands a team over to one of its students, so any member of the course is accepted
+    private static final Set<CourseRole> OWNER_ROLES = Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR);
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -142,7 +150,7 @@ public class TeamResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("exercises/{exerciseId}/teams")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TeamResponseDTO> createTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", dto);
         if (dto.id() != null) {
@@ -150,7 +158,6 @@ public class TeamResource {
         }
         User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
@@ -170,19 +177,16 @@ public class TeamResource {
         team.setShortName(dto.shortName());
         team.setImage(dto.image());
 
-        // Resolve student IDs to User entities
-        Set<User> students = new HashSet<>();
-        for (Long studentId : dto.studentsOrEmpty()) {
-            students.add(userRepository.findByIdElseThrow(studentId));
-        }
-        team.setStudents(students);
+        // Resolve student IDs to User entities of the course
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        team.setStudents(findCourseUsersByIdElseThrow(course, STUDENT_ROLES, dto.studentsOrEmpty(), "studentNotInCourse"));
 
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
         }
         else if (dto.ownerId() != null) {
-            team.setOwner(userRepository.findByIdElseThrow(dto.ownerId()));
+            team.setOwner(findTeamOwnerElseThrow(course, dto.ownerId()));
         }
 
         Team savedTeam = teamRepository.save(exercise, team);
@@ -191,6 +195,33 @@ public class TeamResource {
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(TeamResponseDTO.of(savedTeam));
+    }
+
+    /**
+     * Resolves the given user ids to users that hold one of the given roles in the course.
+     *
+     * @param course   the course the users have to belong to
+     * @param roles    the accepted course roles
+     * @param userIds  the user ids to resolve
+     * @param errorKey the error key used if an id does not refer to such a user
+     * @return the resolved users
+     */
+    private Set<User> findCourseUsersByIdElseThrow(Course course, Set<CourseRole> roles, Set<Long> userIds, String errorKey) {
+        if (userIds.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<User> users = new HashSet<>(userRepository.findAllByCourseIdAndRoleInAndIdIn(course.getId(), roles, userIds));
+        if (users.size() != userIds.size()) {
+            Set<Long> resolvedIds = users.stream().map(User::getId).collect(Collectors.toSet());
+            Set<Long> unresolvedIds = new TreeSet<>(userIds);
+            unresolvedIds.removeAll(resolvedIds);
+            throw new BadRequestAlertException("The users with the ids " + unresolvedIds + " are not members of the course with the expected role.", ENTITY_NAME, errorKey);
+        }
+        return users;
+    }
+
+    private User findTeamOwnerElseThrow(Course course, long ownerId) {
+        return findCourseUsersByIdElseThrow(course, OWNER_ROLES, Set.of(ownerId), "ownerNotInCourse").iterator().next();
     }
 
     /**
@@ -203,7 +234,7 @@ public class TeamResource {
      *         Server Error) if the team couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/teams/{teamId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TeamResponseDTO> updateTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", dto);
         if (dto.id() == null) {
@@ -236,8 +267,19 @@ public class TeamResource {
             throw new AccessForbiddenException();
         }
 
-        // Resolve the new owner from DTO
-        User newOwner = dto.ownerId() != null ? userRepository.findByIdElseThrow(dto.ownerId()) : null;
+        // Resolve the new owner from DTO. An owner that already owns the team stays valid, only a newly chosen owner has to be a member of the course.
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        User existingOwner = existingTeam.getOwner();
+        User newOwner;
+        if (dto.ownerId() == null) {
+            newOwner = null;
+        }
+        else if (existingOwner != null && dto.ownerId().equals(existingOwner.getId())) {
+            newOwner = existingOwner;
+        }
+        else {
+            newOwner = findTeamOwnerElseThrow(course, dto.ownerId());
+        }
 
         // The team owner can only be changed by instructors
         final boolean ownerWasChanged = !Objects.equals(existingTeam.getOwner(), newOwner);
@@ -253,11 +295,12 @@ public class TeamResource {
         existingTeam.setName(stripIllegalCharacters(dto.name()));
         existingTeam.setImage(dto.image());
 
-        // Resolve student IDs to User entities
-        Set<User> students = new HashSet<>();
-        for (Long studentId : dto.studentsOrEmpty()) {
-            students.add(userRepository.findByIdElseThrow(studentId));
-        }
+        // Students who are already part of the team stay valid, only newly added students have to be students of the course
+        Set<Long> requestedStudentIds = dto.studentsOrEmpty();
+        Set<User> students = existingTeam.getStudents().stream().filter(student -> requestedStudentIds.contains(student.getId())).collect(Collectors.toCollection(HashSet::new));
+        Set<Long> keptStudentIds = students.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> addedStudentIds = requestedStudentIds.stream().filter(studentId -> !keptStudentIds.contains(studentId)).collect(Collectors.toSet());
+        students.addAll(findCourseUsersByIdElseThrow(course, STUDENT_ROLES, addedStudentIds, "studentNotInCourse"));
         existingTeam.setStudents(students);
         existingTeam.setOwner(newOwner);
 
@@ -266,7 +309,7 @@ public class TeamResource {
 
         // Propagate team owner change to other instances of this team in the course
         if (ownerWasChanged) {
-            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), savedTeam.getShortName());
+            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), savedTeam.getShortName());
             teamInstances.forEach(teamInstance -> teamInstance.setOwner(savedTeam.getOwner()));
             teamRepository.saveAll(teamInstances);
         }
@@ -311,11 +354,10 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
     @GetMapping("exercises/{exerciseId}/teams")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<TeamResponseDTO>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
@@ -330,7 +372,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("exercises/{exerciseId}/teams/{teamId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithAuthorities();
@@ -340,7 +382,6 @@ public class TeamResource {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Create audit event for team delete action
         var logMessage = "Delete Team with id " + teamId + " in exercise with id " + exerciseId;
         var auditEvent = new AuditEvent(login, Constants.DELETE_TEAM, logMessage);
@@ -364,11 +405,9 @@ public class TeamResource {
      * @return Response with status 200 (OK) and boolean flag in the body
      */
     @GetMapping("courses/{courseId}/teams/exists")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok().body(teamRepository.existsByExerciseCourseIdAndShortName(courseId, shortName));
     }
 
@@ -381,7 +420,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/team-search-users")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<TeamSearchUserDTO>> searchTeamInExercise(@PathVariable long courseId, @PathVariable long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
@@ -390,8 +429,11 @@ public class TeamResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        // the role of the user in the course only covers the exercise if it belongs to the course
+        if (courseId != exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId()) {
+            throw new BadRequestAlertException("The exercise does not belong to the course.", ENTITY_NAME, "exerciseCourseMismatch");
+        }
         return ResponseEntity.ok().body(teamService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
 
@@ -404,14 +446,13 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("exercises/{exerciseId}/teams/import-from-list")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<List<TeamResponseDTO>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<TeamImportDTO> teamDTOs,
             @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
@@ -447,7 +488,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("exercises/{exerciseId}/teams/import-from-exercise")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "destinationExerciseId")
     public ResponseEntity<List<TeamResponseDTO>> importTeamsFromSourceExercise(@PathVariable("exerciseId") long destinationExerciseId, @RequestParam long sourceExerciseId,
             @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
@@ -455,7 +496,6 @@ public class TeamResource {
         User user = userRepository.getUserWithAuthorities();
         String login = user.getLogin();
         Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, destinationExercise, user);
 
         if (destinationExerciseId == sourceExerciseId) {
             throw new BadRequestAlertException("The source and destination exercise must be different.", ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
@@ -464,6 +504,13 @@ public class TeamResource {
             throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
         Exercise sourceExercise = exerciseRepository.findByIdElseThrow(sourceExerciseId);
+        // the teams of the source exercise are copied, so the user must be allowed to see them
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, sourceExercise, user);
+        // the teams are copied together with their students, who have to be members of the course of the destination exercise
+        if (!Objects.equals(sourceExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(),
+                destinationExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
+            throw new BadRequestAlertException("The source and destination exercise must belong to the same course.", ENTITY_NAME, "sourceDestinationCourseMismatch");
+        }
         if (!sourceExercise.isTeamMode()) {
             throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
         }
@@ -495,10 +542,27 @@ public class TeamResource {
     @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseWithTeamExercisesDTO> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        return getTeamCourseOverview(courseId, teamShortName, false);
+    }
+
+    /**
+     * Returns all matching team exercises for course staff, retaining team owner result restrictions.
+     *
+     * @param courseId      the course whose team exercises to load
+     * @param teamShortName the short name shared by the matching team instances
+     * @return the course with matching team exercises and permitted participation details
+     */
+    @GetMapping("courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations/for-staff")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<CourseWithTeamExercisesDTO> getCourseWithExercisesAndParticipationsForTeamForStaff(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        return getTeamCourseOverview(courseId, teamShortName, true);
+    }
+
+    private ResponseEntity<CourseWithTeamExercisesDTO> getTeamCourseOverview(Long courseId, String teamShortName, boolean staff) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithAuthorities();
-        if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
+        if (!staff && !authCheckService.isStudentInTeam(course, teamShortName, user)) {
             throw new AccessForbiddenException();
         }
 
@@ -511,7 +575,7 @@ public class TeamResource {
         exercises = exercises.stream().filter(exercise -> exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
 
         // For students: Filter course exercises by their visibility to students
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (!staff) {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
 
@@ -520,7 +584,7 @@ public class TeamResource {
 
         // Fetch participations for team
         List<StudentParticipation> participations;
-        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
+        if (staff && (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals))) {
             // fetch including submissions and results for team tutor and instructors
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, false);

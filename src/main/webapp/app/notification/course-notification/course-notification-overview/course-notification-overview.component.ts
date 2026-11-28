@@ -16,7 +16,8 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
@@ -46,7 +47,7 @@ const PRESET_MENU_SELECTOR = '[data-notification-preset-menu]';
         CourseNotificationPresetPickerComponent,
     ],
     templateUrl: './course-notification-overview.component.html',
-    styleUrls: ['./course-notification-overview.component.scss'],
+    styleUrls: ['./course-notification-overview.component.css'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
     private elementRef = inject(ElementRef);
@@ -264,6 +265,10 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
         if (this.notificationsForSelectedCategory().length < this.courseNotificationService.pageSize && !this.pagesFinished) {
             this.queryStartSize = this.notificationsForSelectedCategory().length;
             this.queryCurrentCategory();
+        } else if (this.isShown() && !this.isLoading()) {
+            // A cached list does not emit another update when reopened. Persist its newly displayed
+            // notifications too, so closing the overview cannot leave them seen only in memory.
+            this.updateCurrentCategoryNotificationsToSeenOnServer();
         }
     }
 

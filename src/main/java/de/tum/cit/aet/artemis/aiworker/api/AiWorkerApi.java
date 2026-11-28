@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerEnabled;
@@ -16,10 +17,12 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerClientService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 /** Public coordinator boundary. Workloads never access distributed worker state or provider transport directly. */
 @Lazy
 @Controller
+@Profile(Constants.PROFILE_CORE)
 @Conditional(AiWorkerEnabled.class)
 public class AiWorkerApi implements AbstractApi {
 

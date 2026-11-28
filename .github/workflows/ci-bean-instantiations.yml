@@ -30,7 +30,21 @@ jobs:
       # TitleCacheConfiguration at startup.
       # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
       # mail retry queue and the test account e-mail service at startup.
-      MAX_INSTANTIATED_BEANS: 160
+      # 165 rather than 160 since the split of LocalVCServletService: the servlet service injects five new startup beans (the repository
+      # resolver, the access log recorder, the build agent authentication, the push processing and the password authentication notice).
+      # Measured with the command below: 158 edges before the split and 163 after it.
+      # 166 rather than 165 since the credential change check: the passkey WebAuthn configurer reaches
+      # the session freshness service at startup, because it hands it to the passkey registration filters.
+      # 167 rather than 166 since the explicit LLM configuration: LlmConfigurationValidator checks the artemis.llm catalog
+      # and the preset assignments before the server accepts requests, so it and LlmProperties start eagerly.
+      # Measured: 166 startup beans on #14725 (the base of this change) and 167 with it.
+      # 168 rather than 167 since the Hermes RestClient migration: the tracer records a configuration class only for the first bean
+      # that creates it. The push notification services used to create RestTemplateConfiguration, now they create RestClientConfiguration
+      # and the LTI token retriever becomes the first to create RestTemplateConfiguration. The extra edge disappears when the LTI classes
+      # move to RestClient, because then nothing creates RestTemplateConfiguration at startup.
+      # 169 rather than 167 since git access for agent tokens: LocalVCServletService injects LocalVCAgentTokenService, which in turn
+      # injects ProgrammingExerciseDraftGuardService, so both start with the servlet service. Measured: 167 startup beans on develop and 169 with it.
+      MAX_INSTANTIATED_BEANS: 169
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -105,13 +119,13 @@ jobs:
           echo "✅ All thresholds match between Java file and GitHub Action"
 
       - name: Set up JDK
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: '${{ env.java }}'
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Build application
         shell: bash

@@ -62,10 +62,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @BeforeEach
     void setUp() throws InvalidNameException {
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
-        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
-        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
-        authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
+        authorityRepository.saveAll(List.of(userAuthority, adminAuthority));
 
         // The admin endpoints resolve the authenticated login against the database, so the account the tests
         // authenticate as has to exist there with the admin authority rather than only in the mock security context.

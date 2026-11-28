@@ -1,18 +1,46 @@
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    ViewContainerRef,
+    ViewEncapsulation,
+    afterRenderEffect,
+    computed,
+    inject,
+    input,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import DOMPurify, { type Config } from 'dompurify';
+import { htmlForMarkdown, restrictRenderedAttributes } from 'app/foundation/util/markdown.conversion.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
 import { LECTURE_DEEP_LINK_NAVIGATION_STATE, lectureDeepLinkQueryParams, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
-import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
+import { setInputs } from 'app/foundation/util/set-inputs.util';
+import { IrisCitationNavigationComponent } from './iris-citation-navigation.component';
+import { IconDefinition, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
+
+/**
+ * Sanitizer settings for the finished markup. The markup contains the citation bubbles (spans, an inline SVG and the navigation buttons) next to the rendered markdown,
+ * so only the form controls and the attributes that retarget a request are refused, as for rendered markdown. Inline styles are reduced by restrictRenderedAttributes.
+ */
+const CITATION_MARKUP_PURIFY_CONFIG: Config = {
+    FORBID_TAGS: ['style', 'form', 'input', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'legend', 'link', 'meta', 'base', 'object', 'embed'],
+    FORBID_ATTR: ['form', 'formaction', 'action', 'formmethod', 'formtarget'],
+};
+
+const restrictFinishedMarkup = (node: Element) => restrictRenderedAttributes(node);
 
 /**
  * Translation keys for the notices shown when the cited material is no longer the one the answer was written against.
@@ -34,7 +62,7 @@ const UNIT_UNREACHABLE_STATUSES = [403, 404];
 @Component({
     selector: 'jhi-iris-citation-text',
     templateUrl: './iris-citation-text.component.html',
-    styleUrls: ['./iris-citation-text.component.scss'],
+    styleUrls: ['./iris-citation-text.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
@@ -45,6 +73,8 @@ export class IrisCitationTextComponent {
     private readonly alertService = inject(AlertService);
     private readonly materialVersionService = inject(IrisMaterialVersionService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly citationContent = viewChild.required<ElementRef<HTMLElement>>('citationContent');
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -64,8 +94,36 @@ export class IrisCitationTextComponent {
 
     readonly renderedContent = computed<SafeHtml>(() => {
         const processed = this.processText(this.text(), this.citationInfo());
-        return this.domSanitizer.bypassSecurityTrustHtml(processed);
+        // Reviewed false positive (Sonar S6268): processText sanitizes the finished markup with DOMPurify after the citations are inserted.
+        return this.domSanitizer.bypassSecurityTrustHtml(processed); // NOSONAR // nosemgrep
     });
+
+    constructor() {
+        // Markdown is generated HTML, so Angular cannot compile controls inside it. Mount a small Angular view only
+        // where the renderer left a navigation slot, keeping the kit's native controls, tooltips and focus behavior.
+        afterRenderEffect((onCleanup) => {
+            this.renderedContent();
+            const content = this.citationContent().nativeElement;
+            const references = untracked(() =>
+                Array.from(content.querySelectorAll<HTMLElement>('[data-iris-citation-navigation]')).flatMap((slot) => {
+                    const group = slot.closest('.iris-citation-group--has-summary');
+                    const summaryItems = Array.from(group?.querySelectorAll('.iris-citation__summary-item') ?? []);
+                    if (summaryItems.length < 2) {
+                        return [];
+                    }
+                    const reference = this.viewContainerRef.createComponent(IrisCitationNavigationComponent);
+                    setInputs(reference, { summaryCount: summaryItems.length });
+                    reference.instance.indexChanged.subscribe((selectedIndex) => {
+                        summaryItems.forEach((item, index) => item.classList.toggle('is-active', index === selectedIndex));
+                    });
+                    slot.replaceChildren(reference.location.nativeElement);
+                    reference.changeDetectorRef.detectChanges();
+                    return [reference];
+                }),
+            );
+            onCleanup(() => references.forEach((reference) => reference.destroy()));
+        });
+    }
 
     /**
      * Processes text by applying markdown rendering first, then replacing citation markers with HTML.
@@ -80,7 +138,15 @@ export class IrisCitationTextComponent {
             renderGroup: (parsed, metas) => this.renderCitationGroupHtml(parsed, metas),
         });
 
-        return withCitations;
+        // The citation markup is inserted into the HTML string, so a marker inside an attribute value (for example the alt text of an image) would end that attribute
+        // early. Sanitizing the finished markup keeps whatever that exposes from reaching the DOM.
+        // Formulas keep the validated styles KaTeX positions its glyphs with; every other inline style is removed.
+        DOMPurify.addHook('afterSanitizeAttributes', restrictFinishedMarkup);
+        try {
+            return DOMPurify.sanitize(withCitations, CITATION_MARKUP_PURIFY_CONFIG);
+        } finally {
+            DOMPurify.removeHook('afterSanitizeAttributes', restrictFinishedMarkup);
+        }
     }
 
     /**
@@ -241,21 +307,12 @@ export class IrisCitationTextComponent {
             return '';
         }
 
-        const chevronLeftSvg = this.getNavIconSvg('left');
-        const chevronRightSvg = this.getNavIconSvg('right');
-
-        return `
-            <span class="iris-citation__nav">
-                <button class="iris-citation__nav-button" type="button">${chevronLeftSvg}</button>
-                <span>1 / ${summaryCount}</span>
-                <button class="iris-citation__nav-button" type="button">${chevronRightSvg}</button>
-            </span>
-        `.trim();
+        return '<span class="iris-citation__nav" data-iris-citation-navigation></span>';
     }
 
     /**
      * Generates an SVG element from a FontAwesome icon definition.
-     * Used internally for rendering all citation and navigation icons.
+     * Used internally for rendering citation icons.
      */
     private generateSvg(fontAwesomeIcon: typeof faFilePdf): string {
         const [width, height, , , svgPath] = fontAwesomeIcon.icon;
@@ -273,15 +330,6 @@ export class IrisCitationTextComponent {
      */
     private getIconSvg(typeClass: string): string {
         const fontAwesomeIcon = this.CITATION_TYPE_ICONS[typeClass] ?? faCircleExclamation;
-        return this.generateSvg(fontAwesomeIcon);
-    }
-
-    /**
-     * Returns the appropriate FontAwesome navigation icon SVG for left/right chevrons.
-     * Used in multi-citation summary navigation controls.
-     */
-    private getNavIconSvg(direction: 'left' | 'right'): string {
-        const fontAwesomeIcon = direction === 'left' ? faChevronLeft : faChevronRight;
         return this.generateSvg(fontAwesomeIcon);
     }
 
@@ -469,36 +517,6 @@ export class IrisCitationTextComponent {
                 this.navigateToCitation(activeSummaryItem);
                 return;
             }
-        }
-
-        const button = target.closest('.iris-citation__nav-button');
-        if (!button) return;
-
-        event.stopPropagation();
-
-        (button as HTMLElement).blur();
-
-        const citationGroup = button.closest('.iris-citation-group--has-summary');
-        if (!citationGroup) return;
-
-        const navButtons = Array.from(citationGroup.querySelectorAll('.iris-citation__nav-button'));
-        const summaryItems = Array.from(citationGroup.querySelectorAll('.iris-citation__summary-item'));
-        const counterDisplay = citationGroup.querySelector('.iris-citation__nav span');
-
-        const hasInvalidNavigationStructure = navButtons.length !== 2 || summaryItems.length === 0;
-        if (hasInvalidNavigationStructure) return;
-
-        const currentActiveIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
-        const currentIndex = currentActiveIndex >= 0 ? currentActiveIndex : 0;
-
-        const isPrevious = navButtons[0] === button;
-        const newIndex = isPrevious ? (currentIndex - 1 + summaryItems.length) % summaryItems.length : (currentIndex + 1) % summaryItems.length;
-
-        summaryItems.forEach((item, index) => {
-            item.classList.toggle('is-active', index === newIndex);
-        });
-        if (counterDisplay) {
-            counterDisplay.textContent = `${newIndex + 1} / ${summaryItems.length}`;
         }
     }
 

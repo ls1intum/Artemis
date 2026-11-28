@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Validates URLs used to retrieve link previews.
  */
-final class LinkPreviewUrlValidator {
+public final class LinkPreviewUrlValidator {
 
     private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[a-zA-Z0-9-]{1,63}");
 
@@ -63,16 +63,32 @@ final class LinkPreviewUrlValidator {
         return true;
     }
 
+    /**
+     * Link previews are only retrieved from the ports of ordinary web servers.
+     *
+     * @param port the port of the URL, -1 if the URL does not specify one
+     * @return whether the port is the default port or one of the ports 80 and 443
+     */
+    private static boolean isAllowedPort(int port) {
+        return port == -1 || port == 80 || port == 443;
+    }
+
     private boolean isValidUri(URI uri) {
         String scheme = uri.getScheme();
         String host = uri.getHost();
         int port = uri.getPort();
 
-        return scheme != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && host != null && uri.getUserInfo() == null && port <= 65535
+        return scheme != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && host != null && uri.getUserInfo() == null && isAllowedPort(port)
                 && !isIpAddress(host) && isValidDomain(host);
     }
 
-    private boolean isIpAddress(String host) {
+    /**
+     * Recognizes IP literals without resolving hostnames or contacting a network.
+     *
+     * @param host host part of the URL
+     * @return whether the host is a bracketed IP literal or a valid dotted IPv4 address
+     */
+    public static boolean isIpAddress(String host) {
         if (host.startsWith("[") && host.endsWith("]")) {
             return true;
         }

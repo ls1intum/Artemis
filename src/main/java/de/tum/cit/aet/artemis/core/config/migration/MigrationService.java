@@ -3,17 +3,14 @@ package de.tum.cit.aet.artemis.core.config.migration;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -43,20 +40,18 @@ public class MigrationService {
     @Value("${artemis.version}")
     private String artemisVersion;
 
-    private final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-
     private final MigrationChangeRepository migrationChangeRepository;
 
     private final AutowireCapableBeanFactory beanFactory;
 
-    public MigrationService(MigrationChangeRepository migrationChangeRepository, AutowireCapableBeanFactory beanFactory) throws NoSuchAlgorithmException {
+    public MigrationService(MigrationChangeRepository migrationChangeRepository, AutowireCapableBeanFactory beanFactory) {
         this.migrationChangeRepository = migrationChangeRepository;
         this.beanFactory = beanFactory;
     }
 
     /**
      * First checks the integrity of the passed changelog, then executes not yet executed entries.
-     * After each execution it marks the entry as executed. All entries of one startup run get the same hash assigned.
+     * After each execution it marks the entry as executed. All entries of one startup run get the same deployment id assigned.
      * <p>
      * An entry that reports itself incomplete with a {@link MigrationIncompleteException} is not marked as executed, so it is offered again on the next start; see that
      * exception for why that is not the same as failing the start.
@@ -88,7 +83,8 @@ public class MigrationService {
 
         if (!migrationEntryMap.isEmpty()) {
             log.info("Executing migration entries");
-            String startupHash = toMD5(ZonedDateTime.now().toString());
+            // The id only tells which entries ran during the same startup, so it has to be unique, not derived from anything.
+            String startupId = UUID.randomUUID().toString().replace("-", "");
             for (Map.Entry<Integer, MigrationEntry> integerClassEntry : migrationEntryMap.entrySet()) {
                 MigrationEntry entry = integerClassEntry.getValue();
                 log.debug("Executing entry {}", entry.date());
@@ -107,7 +103,7 @@ public class MigrationService {
                 newChangelog.setDateExecuted(ZonedDateTime.now());
                 newChangelog.setDateString(entry.date());
                 newChangelog.setSystemVersion(artemisVersion);
-                newChangelog.setDeploymentId(startupHash);
+                newChangelog.setDeploymentId(startupId);
 
                 migrationChangeRepository.save(newChangelog);
                 log.debug("Done");
@@ -171,7 +167,4 @@ public class MigrationService {
         return passed;
     }
 
-    private String toMD5(String string) {
-        return HexFormat.of().formatHex(messageDigest.digest(string.getBytes(StandardCharsets.UTF_8)));
-    }
 }

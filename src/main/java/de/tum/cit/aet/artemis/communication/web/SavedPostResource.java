@@ -37,12 +37,16 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * REST controller for managing Message Posts.
@@ -68,13 +72,19 @@ public class SavedPostResource {
 
     private final AnswerMessageService answerMessageService;
 
+    private final ConversationService conversationService;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
     public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository,
-            AnswerMessageService answerMessageService) {
+            AnswerMessageService answerMessageService, ConversationService conversationService, AuthorizationCheckService authorizationCheckService) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
         this.answerMessageService = answerMessageService;
+        this.conversationService = conversationService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -92,15 +102,19 @@ public class SavedPostResource {
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, savedPostStatus);
         long start = System.nanoTime();
 
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
+        var user = userRepository.getUserWithAuthorities();
 
         List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.postType() == PostingType.POST).map(SavedPostDTO::postId).toList()).stream()
-                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
+                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId))
+                .filter(post -> conversationService.isConversationVisibleToUser(post.getConversation(), user)).toList();
         // findVisibleByIdIn drops unverified Iris replies for non-tutors, so a student cannot read pending Iris content
         // by bookmarking a guessed answer id and re-reading it here.
         List<AnswerPost> answerPosts = answerMessageService
                 .findVisibleByIdIn(courseId, savedPosts.stream().filter(savedPost -> savedPost.postType() == PostingType.ANSWER).map(SavedPostDTO::postId).toList()).stream()
-                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
+                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId))
+                .filter(post -> conversationService.isConversationVisibleToUser(post.getConversation(), user)).toList();
         List<PostingDTO> postingList = new ArrayList<>();
 
         for (SavedPostDTO savedPost : savedPosts) {
@@ -146,6 +160,12 @@ public class SavedPostResource {
         }
 
         var post = retrievePostingElseThrow(postId, postingType);
+        // the posting has to belong to a course the user is a member of
+        Course course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new BadRequestAlertException("The posting does not belong to a course.", ENTITY_NAME, "postingWithoutCourse");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         savedPostService.savePostForCurrentUser(post);
 

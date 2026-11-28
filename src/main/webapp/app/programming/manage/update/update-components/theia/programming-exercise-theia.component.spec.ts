@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
@@ -63,6 +64,24 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         expect(comp.programmingExercise().buildConfig?.theiaImage).toBeUndefined();
     });
 
+    it('should explain in the closed image picker that no image is available', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({}));
+        fixture.detectChanges();
+        comp.loadTheiaImages();
+        fixture.detectChanges();
+        const trigger: HTMLElement = fixture.nativeElement.querySelector('#field_theiaImage');
+        expect(trigger.textContent).toContain('artemisApp.programmingExercise.theiaImage.noImageAvailable');
+    });
+
+    it('should show the selected image, not the explanation, when images are available', () => {
+        theiaServiceMock.getTheiaImages.mockReturnValue(of({ 'Java-17': 'test-url' }));
+        fixture.detectChanges();
+        comp.loadTheiaImages();
+        fixture.detectChanges();
+        const trigger: HTMLElement = fixture.nativeElement.querySelector('#field_theiaImage');
+        expect(trigger.textContent).not.toContain('noImageAvailable');
+    });
+
     it('should select first image when none was selected', () => {
         theiaServiceMock.getTheiaImages.mockReturnValue(
             of({
@@ -86,5 +105,25 @@ describe('ProgrammingExerciseTheiaComponent', () => {
         fixture.detectChanges();
         comp.loadTheiaImages();
         expect(comp.programmingExercise().buildConfig?.theiaImage).toMatch('test-url-2');
+    });
+
+    it('should offer every experience level and leave the level unset by default', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="online-ide-experience-level"]')).not.toBeNull();
+        expect(comp.experienceLevelOptions()).toHaveLength(4);
+        expect(comp.experienceLevels).toEqual([OnlineIdeExperienceLevel.BEGINNER, OnlineIdeExperienceLevel.ADVANCED, OnlineIdeExperienceLevel.EXPERT]);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBeUndefined();
+    });
+
+    it('should store the selected experience level in the build config', () => {
+        fixture.detectChanges();
+
+        comp.onExperienceLevelChange(OnlineIdeExperienceLevel.BEGINNER);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBe(OnlineIdeExperienceLevel.BEGINNER);
+
+        comp.onExperienceLevelChange(undefined);
+        expect(comp.programmingExercise().buildConfig?.onlineIdeExperienceLevel).toBeUndefined();
     });
 });

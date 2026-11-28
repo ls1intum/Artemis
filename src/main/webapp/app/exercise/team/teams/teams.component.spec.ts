@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TeamsComponent } from 'app/exercise/team/teams/teams.component';
+import { FilterProp, TeamsComponent } from 'app/exercise/team/teams/teams.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -23,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
  * The component under test uses signal-based state (`teams`, `exercise`, `isLoading`, ...).
  * The mocked services emit synchronously and we assert against signal values directly.
  * We replace the standalone imports of `TeamsComponent` with a minimal set so the test
- * doesn't pull in real child components (which would otherwise require `DialogService`,
+ * doesn't pull in real child components (which would otherwise require `TumAetUiDialogService`,
  * `localStorage`, etc.).
  */
 describe('TeamsComponent', () => {
@@ -87,5 +87,29 @@ describe('TeamsComponent', () => {
         expect(comp.filteredTeamsSize()).toBeUndefined();
         comp.onFilteredTeamsSizeChange(2);
         expect(comp.filteredTeamsSize()).toBe(2);
+    });
+    it('requests the signed-in tutors own teams and updates the URL filter', () => {
+        fixture.detectChanges();
+        const service = TestBed.inject(TeamService);
+        const load = vi.spyOn(service, 'findAllByExerciseId');
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+        comp.updateTeamFilter(FilterProp.OWN);
+        expect(load).toHaveBeenCalledWith(1, comp.currentUser()?.id);
+        expect(navigate).toHaveBeenCalledWith([], { relativeTo: route, queryParams: { filter: FilterProp.OWN }, queryParamsHandling: 'merge', replaceUrl: true });
+        expect(comp.isLoading()).toBe(false);
+    });
+
+    it('inserts, replaces and removes changed teams without duplicating rows', () => {
+        comp.teams.set([{ id: 1, name: 'First' }]);
+        comp.onTeamUpdate({ id: 2, name: 'New' });
+        comp.onTeamUpdate({ id: 1, name: 'Renamed' });
+        expect(comp.teams()).toEqual([
+            { id: 1, name: 'Renamed' },
+            { id: 2, name: 'New' },
+        ]);
+        comp.onTeamDelete({ id: 2 });
+        expect(comp.teams()).toEqual([{ id: 1, name: 'Renamed' }]);
+        comp.onTeamsImport([{ id: 3, name: 'Imported' }]);
+        expect(comp.teams()).toEqual([{ id: 3, name: 'Imported' }]);
     });
 });

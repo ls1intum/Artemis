@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, catchError, finalize, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
@@ -14,7 +14,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
@@ -117,6 +117,8 @@ export class IrisChatService implements OnDestroy {
 
     private rateLimitSubscription: Subscription;
     private acceptSubscription?: Subscription;
+    private readonly savingLLMUsageConsent = signal(false);
+    readonly isSavingLLMUsageConsent = this.savingLLMUsageConsent.asReadonly();
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
     private sessionLoadingSubscription?: Subscription;
@@ -133,6 +135,13 @@ export class IrisChatService implements OnDestroy {
 
     private lastSeenPartialSeqByRunId = new Map<string, number>();
     private lastActivitySeqByRunId = new Map<string, number>();
+    /**
+     * Per run, the ids of the steps an interim message of that run already shows. The live feed leaves them out,
+     * so each step appears once, between the message before it and the message after it.
+     */
+    private activityIdsOnMessagesByRunId = new Map<string, Set<string>>();
+    /** The last full step snapshot of a run, kept to filter it again when an interim message takes some of its steps. */
+    private lastActivitySnapshot?: { runId: string; activities: IrisActivityItem[] };
     private knownRunIds = new Set<string>();
     private terminalRunStateByRunId = new Map<string, IrisRunState>();
     private currentRunId?: string;
@@ -524,38 +533,46 @@ export class IrisChatService implements OnDestroy {
         if (accepted === LLMSelectionDecision.NO_AI) {
             this.hasJustAcceptedLLMUsage = false;
             this.acceptSubscription?.unsubscribe();
-            this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
+            this.savingLLMUsageConsent.set(true);
+            this.acceptSubscription = this.userService
+                .updateLLMSelectionDecision(accepted)
+                .pipe(finalize(() => this.savingLLMUsageConsent.set(false)))
+                .subscribe({
+                    next: () => {
+                        this.lastConfirmedDecision = undefined;
+                        this.llmOptedOutSubject.next();
+                        this.close();
+                    },
+                    error: () => {
+                        revertDecision();
+                        this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+                        this.close();
+                    },
+                });
+            return;
+        }
+        this.acceptSubscription?.unsubscribe();
+        this.savingLLMUsageConsent.set(true);
+        this.acceptSubscription = this.userService
+            .updateLLMSelectionDecision(accepted)
+            .pipe(finalize(() => this.savingLLMUsageConsent.set(false)))
+            .subscribe({
                 next: () => {
                     this.lastConfirmedDecision = undefined;
-                    this.llmOptedOutSubject.next();
-                    this.close();
+                    this.hasJustAcceptedLLMUsage = true;
+                    // Only start the session that could not be created before the user opted in (the server rejects
+                    // session creation without consent). If one is already established — the chat was reopened right
+                    // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
+                    // the websocket subscription and discard the response to a message the user already sent.
+                    if (!this.sessionId) {
+                        this.closeAndStart();
+                    }
                 },
                 error: () => {
                     revertDecision();
                     this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
-                    this.close();
                 },
             });
-            return;
-        }
-        this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
-            next: () => {
-                this.lastConfirmedDecision = undefined;
-                this.hasJustAcceptedLLMUsage = true;
-                // Only start the session that could not be created before the user opted in (the server rejects
-                // session creation without consent). If one is already established — the chat was reopened right
-                // after the choice and start() succeeded on its own — leave it alone: closing it here would drop
-                // the websocket subscription and discard the response to a message the user already sent.
-                if (!this.sessionId) {
-                    this.closeAndStart();
-                }
-            },
-            error: () => {
-                revertDecision();
-                this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
-            },
-        });
     }
 
     private replaceMessage(message: IrisMessage): boolean {
@@ -650,8 +667,9 @@ export class IrisChatService implements OnDestroy {
                 this.websocketCommandSubscription?.unsubscribe();
                 this.websocketCommandSubscription = this.irisWebsocketService.subscribeToSessionCommands(this.sessionId).subscribe((command) => this.handleCommand(command));
             },
-            error: (error: IrisErrorMessageKey) => {
-                this.error.next(error);
+            error: () => {
+                // Every observable that loads a session fails with an Error, not with the translation key that the template needs
+                this.error.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 // Even on failure, mark the load attempt as complete so consumers gating on
                 // "messages have settled" don't wait forever (e.g. the onboarding tour would
                 // never show up if a transient session-load error left the gate closed).
@@ -723,6 +741,10 @@ export class IrisChatService implements OnDestroy {
             return false;
         }
         if (!isKnownRun) {
+            if (!this.pendingRunGeneration()) {
+                // A run this page did not start, for example after a reload while Iris was still answering.
+                this.seedStepsOnLoadedInterimMessages(runId);
+            }
             this.knownRunIds.add(runId);
             this.currentRunId = runId;
             this.closePendingRunGeneration();
@@ -765,8 +787,8 @@ export class IrisChatService implements OnDestroy {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
         }
-        // The server can resend an already-persisted assistant message (same id) to
-        // attach createdMemories; only fire the unread-badge side effects for a new id.
+        // The server can resend an already-persisted assistant message (same id);
+        // only fire the unread-badge side effects for a new id.
         const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {
             if (!isIntermediateMessage && isNewMessage) {
@@ -775,6 +797,9 @@ export class IrisChatService implements OnDestroy {
             }
             if (payload.runId && !isIntermediateMessage) {
                 this.activities.next([]);
+            }
+            if (payload.runId && isIntermediateMessage) {
+                this.moveStepsOntoMessage(payload.runId, payload.message.activities);
             }
         }
         if (payload.message?.sender === IrisSender.CTXSWAP) {
@@ -840,7 +865,46 @@ export class IrisChatService implements OnDestroy {
             return;
         }
         this.lastActivitySeqByRunId.set(payload.runId, payload.activitySeq);
-        this.activities.next(payload.activities);
+        this.lastActivitySnapshot = { runId: payload.runId, activities: payload.activities };
+        this.activities.next(this.stepsNotOnMessages(payload.runId, payload.activities));
+    }
+
+    /**
+     * An interim message carries the steps that ran before it. They now show above that message, so the live feed drops them.
+     */
+    private moveStepsOntoMessage(runId: string, messageActivities: IrisActivityItem[] | undefined): void {
+        if (!messageActivities?.length) {
+            return;
+        }
+        const idsOnMessages = this.activityIdsOnMessagesByRunId.get(runId) ?? new Set<string>();
+        messageActivities.forEach((activity) => idsOnMessages.add(activity.id));
+        this.activityIdsOnMessagesByRunId.set(runId, idsOnMessages);
+        if (this.lastActivitySnapshot?.runId === runId && !this.finalizedRunIds.has(runId)) {
+            this.activities.next(this.stepsNotOnMessages(runId, this.lastActivitySnapshot.activities));
+        }
+    }
+
+    /**
+     * After a reload the run's interim messages come from the session, not from frames of this run. Their steps already show on them,
+     * so the live feed must leave them out too. The run's interim messages are the ones after the last user message or final answer.
+     */
+    private seedStepsOnLoadedInterimMessages(runId: string): void {
+        const messages = this.messages.getValue();
+        const isRunStart = (message: IrisMessage) => message.sender === IrisSender.USER || (message.sender === IrisSender.LLM && message.final !== false);
+        const lastRunStartIndex = messages.findLastIndex(isRunStart);
+        const ids = messages
+            .slice(lastRunStartIndex + 1)
+            .filter((message): message is IrisAssistantMessage => message.sender === IrisSender.LLM && message.final === false)
+            .flatMap((message) => message.activities ?? [])
+            .map((activity) => activity.id);
+        if (ids.length) {
+            this.activityIdsOnMessagesByRunId.set(runId, new Set(ids));
+        }
+    }
+
+    private stepsNotOnMessages(runId: string, activities: IrisActivityItem[]): IrisActivityItem[] {
+        const idsOnMessages = this.activityIdsOnMessagesByRunId.get(runId);
+        return idsOnMessages?.size ? activities.filter((activity) => !idsOnMessages.has(activity.id)) : activities;
     }
 
     private resetLiveAssistantDraftTracking(): void {
@@ -871,6 +935,8 @@ export class IrisChatService implements OnDestroy {
         this.runInfo.next(undefined);
         this.activities.next([]);
         this.lastActivitySeqByRunId.clear();
+        this.activityIdsOnMessagesByRunId.clear();
+        this.lastActivitySnapshot = undefined;
         this.knownRunIds.clear();
         this.terminalRunStateByRunId.clear();
         this.currentRunId = undefined;

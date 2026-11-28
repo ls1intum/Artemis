@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { omit as _omit } from 'lodash-es';
+import { convertProgrammingExerciseResponseDatesFromServer, toProgrammingExerciseSetupPayload } from 'app/programming/api/programming-exercise-payload';
 
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -12,7 +12,6 @@ import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -21,7 +20,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -65,9 +64,7 @@ export class ProgrammingExerciseService {
      * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
      */
     automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        const copy = toProgrammingExerciseSetupPayload(programmingExercise);
         const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
@@ -94,6 +91,10 @@ export class ProgrammingExerciseService {
      */
     reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
         return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
+    }
+
+    resetParticipations(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset-participations`, options, { responseType: 'text' });
     }
 
     /**
@@ -149,10 +150,7 @@ export class ProgrammingExerciseService {
      */
     importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
-        // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
-
-        ExerciseService.stringifyExerciseCategories(exercise);
+        const exercise = toProgrammingExerciseSetupPayload(adaptedSourceProgrammingExercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -235,8 +233,17 @@ export class ProgrammingExerciseService {
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
     find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, false, withPlagiarismDetectionConfig);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+        return this.findDetails(programmingExerciseId, true, withPlagiarismDetectionConfig);
+    }
+
+    private findDetails(programmingExerciseId: number, exam: boolean, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}${exam ? '/for-exam' : ''}`, {
                 observe: 'response',
                 params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
             })
@@ -399,46 +406,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Converts the data from the client
-     * if template & solution participation exist removes the exercise and results from them
-     * @param exercise for which the data should be converted
-     */
-    convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = cloneWith(ExerciseService.convertExerciseDatesFromClient(exercise), {
-            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
-        });
-        // Remove exercise from template & solution participation to avoid circular dependency issues.
-        // Also remove the results, as they can have circular structures as well and don't have to be saved here.
-        if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']);
-        }
-        if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
-        }
-        // Each competency link back-references this exercise, which would make the payload circular.
-        if (copy.competencyLinks) {
-            copy.competencyLinks = copy.competencyLinks.map((link) => _omit(link, ['exercise']));
-        }
-
-        return copy as ProgrammingExercise;
-    }
-
-    /**
-     * Convert all date fields of the programming exercise to dayjs date objects.
-     * Note: This conversion could produce an invalid date if the date is malformatted.
-     *
-     * @param entity ProgrammingExercise
-     */
-    static convertProgrammingExerciseResponseDatesFromServer(entity: EntityResponseType) {
-        const res = ExerciseService.convertExerciseResponseDatesFromServer(entity);
-        if (!res.body) {
-            return res;
-        }
-        res.body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(res.body.buildAndTestStudentSubmissionsAfterDueDate);
-        return res;
-    }
-
-    /**
      * Exports the solution, template or test repository for a given exercise.
      * @param exerciseId
      * @param repositoryType
@@ -470,6 +437,14 @@ export class ProgrammingExerciseService {
         });
     }
 
+    exportStudentRepositoryForStaff(exerciseId: number, participationId: number, identified = false): Observable<HttpResponse<Blob>> {
+        const audience = identified ? 'for-instructor' : 'for-staff';
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${audience}?participationId=${participationId}`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
     /**
      * Exports all instructor repositories (solution, template, test), the problem statement and the exercise details.
      * @param exerciseId
@@ -491,6 +466,14 @@ export class ProgrammingExerciseService {
         params = params.set('includeTests', includeTests.toString());
         return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
             params,
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    exportSolutionSnapshotForStaff(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository/for-staff`, {
+            params: { includeTests },
             observe: 'response',
             responseType: 'blob',
         });
@@ -521,7 +504,7 @@ export class ProgrammingExerciseService {
      * @param exerciseRes
      */
     private processProgrammingExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
+        convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
@@ -560,9 +543,7 @@ export class ProgrammingExerciseService {
 
     /** Imports a programming exercise from a given zip file **/
     importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
-        let copy = this.convertDataFromClient(exercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        const copy = toProgrammingExerciseSetupPayload(exercise);
         const formData = new FormData();
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });

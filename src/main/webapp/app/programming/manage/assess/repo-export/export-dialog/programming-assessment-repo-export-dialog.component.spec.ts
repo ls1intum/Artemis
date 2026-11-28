@@ -13,10 +13,10 @@ import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/a
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const createBlobHttpResponse = () => {
@@ -30,7 +30,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     let fixture: ComponentFixture<ProgrammingAssessmentRepoExportDialogComponent>;
     let exerciseService: ExerciseService;
     let repoExportService: ProgrammingAssessmentRepoExportService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     vi.spyOn(global.URL, 'createObjectURL').mockImplementation(() => 'http://some.test.com');
     vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
@@ -58,8 +58,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 LocalStorageService,
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: dialogConfigData } },
+                { provide: TumAetUiDialogRef, useValue: mockDialogRef },
+                { provide: TumAetUiDialogConfig, useValue: { data: dialogConfigData } },
                 MockProvider(ExerciseService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -73,7 +73,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 comp = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
                 repoExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
-                dialogRef = TestBed.inject(DynamicDialogRef);
+                dialogRef = TestBed.inject(TumAetUiDialogRef);
 
                 // stubs
                 vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
@@ -122,7 +122,32 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
-    // Reached from the exercise scores page, where the dialog opens with no preselected participations: exporting
+    it('routes ALL to the instructor identifiers operation even with preselected IDs', async () => {
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = true;
+        comp.participationIdList = [1, 2];
+        const byIds = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(createBlobHttpResponse()));
+        comp.exportRepos();
+        await fixture.whenStable();
+        expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+        expect(byIds).not.toHaveBeenCalled();
+    });
+
+    it('routes identified selected IDs to the instructor operation with every option unchanged', async () => {
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        comp.repositoryExportOptions.anonymizeRepository = false;
+        comp.participationIdList = [1, 2];
+        const byIds = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        const identified = vi.spyOn(repoExportService, 'exportIdentifiedReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        comp.exportRepos();
+        await fixture.whenStable();
+        expect(identified).toHaveBeenCalledWith(exerciseId, [1, 2], comp.repositoryExportOptions);
+        expect(byIds).not.toHaveBeenCalled();
+    });
+
+    // Reached from the participation page, where the dialog opens with no preselected participations: exporting
     // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
     // request in the first place.
     it('should not send a request when neither participations nor participants are selected', async () => {
@@ -171,7 +196,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     });
 
     // Same `[]` is truthy trap as the disable guard: the textarea was hidden behind `!participationIdList`, so the
-    // dialog opened from the exercise scores page - which preselects nothing - offered no way to name anyone at all.
+    // dialog opened from the participation page - which preselects nothing - offered no way to name anyone at all.
     it('should offer the participant field when no participation is preselected', async () => {
         comp.participationIdList = [];
         fixture.detectChanges();
@@ -296,13 +321,15 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         programmingExercise2.isAtLeastInstructor = true;
         comp.programmingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
         await fixture.whenStable();
         expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
+        expect(exportReposStub).toHaveBeenCalledWith(42, ['ALL'], comp.repositoryExportOptions);
+        expect(exportReposStub).toHaveBeenCalledWith(43, ['ALL'], comp.repositoryExportOptions);
     });
 
     it('should close the dialog when cleared', () => {

@@ -2,10 +2,12 @@ import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'v
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
-import { BonusService, EntityResponseType } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
+import type { BonusResponse } from 'app/openapi/model/bonus-response';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -17,9 +19,10 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
@@ -29,6 +32,7 @@ describe('BonusComponent', () => {
     let fixture: ComponentFixture<BonusComponent>;
 
     let bonusService: BonusService;
+    let bonusApi: BonusApi;
     let gradingService: GradingService;
 
     let findGradeStepsSpy: MockInstance;
@@ -116,6 +120,27 @@ describe('BonusComponent', () => {
         bonusStrategy: BonusStrategy.POINTS,
         weight: 1,
         sourceGradingScale,
+    };
+
+    const bonusResponse: BonusResponse = {
+        id: 7,
+        bonusStrategy: 'POINTS',
+        weight: 1,
+        sourceGradingScale: {
+            id: 7,
+            gradeType: 'BONUS',
+            gradeSteps: sourceGradingScale.gradeSteps.map(
+                ({ gradeName, lowerBoundPercentage, lowerBoundInclusive, upperBoundPercentage, upperBoundInclusive, isPassingGrade }) => ({
+                    gradeName,
+                    lowerBoundPercentage,
+                    lowerBoundInclusive,
+                    upperBoundPercentage,
+                    upperBoundInclusive,
+                    isPassingGrade,
+                }),
+            ),
+            exam: { id: 3, title: 'Grade Test Exam', examMaxPoints: 150, course: { id: courseId, title: 'Test Course', maxPoints: 200 } },
+        },
     };
 
     const examGradeSteps: GradeStepsDTO = {
@@ -257,7 +282,7 @@ describe('BonusComponent', () => {
             imports: [
                 FormsModule,
                 ReactiveFormsModule,
-                MockModule(NgbTooltipModule),
+                MockDirective(TumAetUiTooltipDirective),
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
@@ -273,6 +298,7 @@ describe('BonusComponent', () => {
                 },
                 MockProvider(GradingService),
                 MockProvider(BonusService),
+                MockProvider(BonusApi),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -283,9 +309,10 @@ describe('BonusComponent', () => {
         fixture = TestBed.createComponent(BonusComponent);
         component = fixture.componentInstance;
         bonusService = TestBed.inject(BonusService);
+        bonusApi = TestBed.inject(BonusApi);
         gradingService = TestBed.inject(GradingService);
 
-        findBonusForExamSpy = vi.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        findBonusForExamSpy = vi.spyOn(bonusApi, 'getBonusForExam').mockReturnValue(of(bonusResponse));
         findWithBonusSpy = vi
             .spyOn(gradingService, 'findWithBonusGradeTypeForInstructor')
             .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScaleDTO>>));
@@ -323,7 +350,7 @@ describe('BonusComponent', () => {
         expect(findWithBonusSpy).toHaveBeenCalledWith(state);
 
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
-        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
+        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId, 'management');
 
         expect(component.isLoading()).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
@@ -377,7 +404,7 @@ describe('BonusComponent', () => {
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
         (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
-            const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
+            const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ bonusStrategy } as BonusResponse));
             component.ngOnInit();
             expect(bonusSpy).toHaveBeenCalledTimes(1);
             expect(component.currentBonusStrategyOption).toBe(bonusStrategyOption);
@@ -435,7 +462,7 @@ describe('BonusComponent', () => {
     });
 
     it('should create bonus', () => {
-        const createBonusSpy = vi.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        const createBonusSpy = vi.spyOn(bonusApi, 'createBonusForExam').mockReturnValue(of(bonusResponse));
         const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.changeDetectorRef.detectChanges();
@@ -445,7 +472,7 @@ describe('BonusComponent', () => {
         component.save();
 
         expect(createBonusSpy).toHaveBeenCalledTimes(1);
-        expect(createBonusSpy).toHaveBeenCalledWith(courseId, examId, newBonus);
+        expect(createBonusSpy).toHaveBeenCalledWith(courseId, examId, { id: undefined, weight: 1, bonusStrategy: BonusStrategy.POINTS, sourceGradingScale: { id: 7 } });
 
         expect(findBonusSpy).toHaveBeenCalledTimes(1);
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
@@ -455,7 +482,7 @@ describe('BonusComponent', () => {
     });
 
     it('should update bonus', () => {
-        const bonusSpy = vi.spyOn(bonusService, 'updateBonus').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        const bonusSpy = vi.spyOn(bonusApi, 'updateBonus').mockReturnValue(of(bonusResponse));
 
         component.bonus = bonus;
         component.ngOnInit();
@@ -463,14 +490,14 @@ describe('BonusComponent', () => {
         component.save();
 
         expect(bonusSpy).toHaveBeenCalledTimes(1);
-        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus);
+        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id, { id: 7, weight: 1, bonusStrategy: BonusStrategy.POINTS, sourceGradingScale: { id: 7 } });
 
         expect(component.bonus.id).toBe(bonus.id);
         expect(component.isLoading()).toBe(false);
     });
 
     it('should delete bonus', () => {
-        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({} as HttpResponse<void>));
+        const bonusSpy = vi.spyOn(bonusApi, 'deleteBonus').mockReturnValue(of(undefined));
 
         let dialogError: string | undefined = undefined;
         component.dialogError$.subscribe((err) => (dialogError = err));
@@ -495,7 +522,7 @@ describe('BonusComponent', () => {
 
     it('should show error on delete', () => {
         const errorMessage = 'Error message';
-        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus').mockReturnValue(throwError(() => new Error(errorMessage)));
+        const bonusSpy = vi.spyOn(bonusApi, 'deleteBonus').mockReturnValue(throwError(() => new Error(errorMessage)));
 
         let dialogError: string | undefined = undefined;
         component.dialogError$.subscribe((err) => (dialogError = err));
@@ -508,14 +535,14 @@ describe('BonusComponent', () => {
         expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id);
 
-        expect(component.bonus).toEqual(bonus);
+        expect(component.bonus.id).toBe(bonus.id);
         expect(dialogError).toBe(errorMessage);
 
         expect(component.isLoading()).toBe(false);
     });
 
     it('should not delete if id is empty', () => {
-        const bonusSpy = vi.spyOn(bonusService, 'deleteBonus');
+        const bonusSpy = vi.spyOn(bonusApi, 'deleteBonus');
 
         const unsavedBonus = { ...bonus, id: undefined };
         component.bonus = unsavedBonus;
@@ -543,7 +570,7 @@ describe('BonusComponent', () => {
     });
 
     it('should handle empty find bonus response', () => {
-        const findBonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: undefined } as any as EntityResponseType));
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(of(undefined));
 
         component.ngOnInit();
 
@@ -601,6 +628,33 @@ describe('BonusComponent', () => {
 
         expect(bonusFinalGradeSpy).toHaveBeenCalledTimes(1);
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
+    });
+
+    it('should calculate the dynamic example with the typed fractional points of the exam and the bonus source', async () => {
+        const bonusFinalGradeSpy = vi.spyOn(bonusService, 'calculateFinalGrade');
+
+        fixture.changeDetectorRef.detectChanges();
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
+        component.examples.set(bonusExamples);
+        for (let round = 0; round < 3; round++) {
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+        }
+
+        const [targetInput, sourceInput] = Array.from(fixture.nativeElement.querySelectorAll('jhi-points-input.dynamic-example input')) as HTMLInputElement[];
+        expect(targetInput).toBeDefined();
+        expect(sourceInput).toBeDefined();
+
+        typeIntoInputNumber(targetInput, '12,5');
+        expect(component.dynamicExample.studentPointsOfBonusTo).toBe(12.5);
+        expect(bonusFinalGradeSpy).toHaveBeenLastCalledWith(component.dynamicExample, component.bonus, examGradeSteps);
+
+        typeIntoInputNumber(sourceInput, '97.5');
+        expect(component.dynamicExample.studentPointsOfBonusSource).toBe(97.5);
+        expect(bonusFinalGradeSpy).toHaveBeenLastCalledWith(component.dynamicExample, component.bonus, examGradeSteps);
+
+        typeIntoInputNumber(sourceInput, '');
+        expect(component.dynamicExample.studentPointsOfBonusSource).toBeUndefined();
     });
 
     it('should refresh dynamic example on weight change only if previously calculated', () => {

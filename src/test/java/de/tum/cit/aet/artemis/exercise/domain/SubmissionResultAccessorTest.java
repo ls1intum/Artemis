@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -19,6 +20,76 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * {@link Submission#getLatestManualResult()} instead.
  */
 class SubmissionResultAccessorTest {
+
+    @Test
+    void latestCompletedResultIgnoresTheFutureLeaseOfPendingAthenaFeedback() {
+        Result assessed = result(1L, AssessmentType.MANUAL);
+        assessed.setCompletionDate(ZonedDateTime.now().minusHours(1));
+        assessed.setScore(80.0);
+        Result pending = result(2L, AssessmentType.AUTOMATIC_ATHENA);
+        pending.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        pending.setScore(0.0);
+        pending.setSuccessful(null);
+        Submission submission = submissionWith(assessed, pending);
+
+        assertThat(submission.getLatestResult()).isEqualTo(pending);
+        assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
+    }
+
+    @Test
+    void latestCompletedResultIgnoresFailedAthenaFeedbackButKeepsSuccessfulFeedback() {
+        Result assessed = result(1L, AssessmentType.MANUAL);
+        assessed.setCompletionDate(ZonedDateTime.now().minusHours(1));
+        Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
+        athena.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+        athena.setSuccessful(false);
+        Submission submission = submissionWith(assessed, athena);
+
+        assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
+        athena.setSuccessful(true);
+        assertThat(submission.getLatestCompletedResult()).isEqualTo(athena);
+    }
+
+    @Test
+    void latestGradingResultIgnoresUnfinishedAthenaWithoutChangingHistory() {
+        Result assessed = result(1L, AssessmentType.MANUAL);
+        Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
+        athena.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        Submission submission = submissionWith(assessed, athena, null);
+
+        assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
+        athena.setSuccessful(false);
+        assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
+        athena.setSuccessful(true);
+        assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestResult()).isSameAs(athena);
+        assertThat(submission.getResults()).containsExactlyInAnyOrder(assessed, athena, null);
+    }
+
+    @Test
+    void latestGradingResultKeepsHighestIdAndOrdinaryFailedOrDraftResults() {
+        Result assessed = result(1L, AssessmentType.MANUAL);
+        assessed.setCompletionDate(ZonedDateTime.now());
+        Result failedBuild = result(2L, AssessmentType.AUTOMATIC);
+        failedBuild.setCompletionDate(ZonedDateTime.now().minusMinutes(5));
+        failedBuild.setSuccessful(false);
+        Submission submission = submissionWith(assessed, failedBuild);
+
+        assertThat(submission.getLatestGradingResult()).isSameAs(failedBuild);
+        Result draft = result(3L, AssessmentType.MANUAL);
+        submission.addResult(draft);
+        assertThat(submission.getLatestGradingResult()).isSameAs(draft);
+    }
+
+    @Test
+    void latestGradingResultReturnsNullWhenOnlyUnfinishedAthenaRequestsExist() {
+        Result pending = result(1L, AssessmentType.AUTOMATIC_ATHENA);
+        Submission submission = submissionWith(pending);
+
+        assertThat(submission.getLatestGradingResult()).isNull();
+        pending.setSuccessful(false);
+        assertThat(submission.getLatestGradingResult()).isNull();
+    }
 
     private static Result result(long id, AssessmentType assessmentType) {
         Result result = new Result();

@@ -507,7 +507,7 @@ describe('System Notification Component', () => {
             vi.advanceTimersByTime(500);
 
             // The CSS variable must be set on document.documentElement (the :root element)
-            // because the dynamic-content-height mixin and admin-container use var(--system-notification-height, 0px)
+            // because the stylesheets that size a page by the viewport use var(--system-notification-height, 0px)
             const value = document.documentElement.style.getPropertyValue('--system-notification-height');
             expect(value).toBe('0px');
 
@@ -802,6 +802,59 @@ describe('System Notification Component', () => {
 
             expect(systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification')).toHaveLength(0);
 
+            vi.useRealTimers();
+        });
+
+        it.each([
+            ['Artemis will be unavailable', 'Maintenance: Artemis will be unavailable'],
+            ['', 'Maintenance'],
+            [undefined, 'Maintenance'],
+        ])('should separate the title and message without extra whitespace (%s)', (text, expected) => {
+            const notification = createActiveNotification(SystemNotificationType.INFO, 1);
+            notification.text = text;
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([notification]));
+
+            systemNotificationComponentFixture.detectChanges();
+
+            const message = systemNotificationComponentFixture.nativeElement.querySelector('.notification-text');
+            expect(message.textContent.trim()).toBe(expected);
+        });
+
+        it('should open the complete long notification on click and close it with Escape', async () => {
+            const notification = createActiveNotification(SystemNotificationType.INFO, 1);
+            notification.text = 'Long maintenance announcement. '.repeat(100);
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([notification]));
+            systemNotificationComponentFixture.detectChanges();
+
+            const trigger: HTMLElement = systemNotificationComponentFixture.nativeElement.querySelector('[data-testid="system-notification-message"]');
+            trigger.click();
+            systemNotificationComponentFixture.detectChanges();
+            await systemNotificationComponentFixture.whenStable();
+
+            const dialog = document.querySelector('[role="dialog"]');
+            expect(dialog?.getAttribute('aria-label')).toBe('Maintenance');
+            expect(dialog?.textContent).toContain(notification.text);
+            expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+            dialog?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            systemNotificationComponentFixture.detectChanges();
+            expect(document.querySelector('[role="dialog"]')).toBeNull();
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        });
+
+        it('should reveal the full notification when its text receives focus', () => {
+            vi.useFakeTimers();
+            const notification = createActiveNotification(SystemNotificationType.INFO, 1);
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([notification]));
+            systemNotificationComponentFixture.detectChanges();
+
+            const message = systemNotificationComponentFixture.nativeElement.querySelector('.notification-message');
+            expect(message?.tabIndex).toBe(0);
+            message.dispatchEvent(new FocusEvent('focusin'));
+            vi.advanceTimersByTime(200);
+            systemNotificationComponentFixture.detectChanges();
+
+            expect(document.querySelector('[role="tooltip"]')?.textContent?.trim()).toBe('Maintenance: Artemis will be unavailable');
             vi.useRealTimers();
         });
 

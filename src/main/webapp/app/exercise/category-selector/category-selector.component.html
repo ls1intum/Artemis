@@ -1,0 +1,21 @@
+<div class="mb-2 flex flex-wrap gap-2">
+    @for (label of selectedCategoryLabels(); track label) {
+        <div class="custom-tag inline-flex items-center gap-1 rounded px-2 py-1 text-sm" [style.backgroundColor]="colorFor(label)">
+            <button type="button" class="category-name" (click)="openColorSelectorForLabel($event, label)">{{ label }}</button>
+            <button type="button" class="category-chip-remove" [attr.aria-label]="('entity.action.remove' | artemisTranslate) + ' ' + label" (click)="removeChip(label, $event)">
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+    }
+</div>
+<tumaet-ui-autocomplete
+    inputId="field_categories"
+    [ngModel]="undefined"
+    [suggestions]="categorySuggestions()"
+    [completeOnFocus]="true"
+    [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
+    (searchRequested)="onComplete($event)"
+    (optionSelected)="onItemSelect($event)"
+    (keydown)="onSeparatorKeydown($event)"
+/>
+<jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)" />

@@ -12,9 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -34,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -42,6 +40,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
 /**
@@ -71,23 +70,17 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    // NOTE: MockitoBean is used here because ChatModel and ChatClient cannot be instantiated in tests without Azure OpenAI credentials
-    // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
+    // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel chatModel;
-
-    @MockitoBean
-    protected ChatClient chatClient;
-
-    @MockitoBean
-    protected ChatMemory chatMemory;
-
-    @MockitoBean
-    protected ChatMemoryRepository chatMemoryRepository;
 
     // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
     protected TumLiveService tumLiveService;
+
+    // Mock for the optional GoCast integration service so callback tests can exercise the real MVC boundary.
+    @MockitoBean
+    protected GocastBindingService gocastBindingService;
 
     // Both scan every exercise with an upcoming release, assessment or due date once, a fixed delay after startup, on a
     // shared scheduler thread; mocked here (rather than in a leaf test class) so every Independent test shares one Spring
@@ -117,6 +110,10 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected SbomService sbomService;
 
+    // Shared by the HTTP template tests without creating a separate Spring context for a leaf test override.
+    @MockitoSpyBean
+    protected ResourceLoaderService resourceLoaderService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -137,27 +134,21 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
-                passkeyAuthenticationService);
+                passkeyAuthenticationService, resourceLoaderService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
-        if (chatClient != null) {
-            Mockito.reset(chatClient);
-        }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (gocastBindingService != null) {
+            Mockito.reset(gocastBindingService);
         }
         if (notificationScheduleService != null) {
             Mockito.reset(notificationScheduleService);
         }
         if (athenaScheduleService != null) {
             Mockito.reset(athenaScheduleService);
-        }
-        if (chatMemoryRepository != null) {
-            Mockito.reset(chatMemoryRepository);
-        }
-        if (chatMemory != null) {
-            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }

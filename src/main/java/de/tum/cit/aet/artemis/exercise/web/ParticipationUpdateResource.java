@@ -26,8 +26,9 @@ import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -101,7 +102,8 @@ public class ParticipationUpdateResource {
      *         500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<StudentParticipationDTO> updateParticipation(@PathVariable long exerciseId, @Valid @RequestBody ParticipationUpdateDTO dto) {
         log.debug("REST request to update Participation : {}", dto);
         if (dto.exerciseId() != exerciseId) {
@@ -110,12 +112,11 @@ public class ParticipationUpdateResource {
 
         // Load the existing participation from database to avoid orphan removal issues with detached entities
         StudentParticipation existingParticipation = studentParticipationRepository.findByIdElseThrow(dto.id());
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), user);
         if (existingParticipation.getExercise().getId() != exerciseId) {
             throw new ConflictException("The participation does not belong to the specified exercise", ENTITY_NAME, "noidmatch");
         }
-
-        var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation)
@@ -188,7 +189,7 @@ public class ParticipationUpdateResource {
      * @return all participations where the individual due date actually changed.
      */
     @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<StudentParticipationDTO>> updateParticipationDueDates(@PathVariable long exerciseId,
             @Valid @RequestBody List<@Valid ParticipationDueDateUpdateDTO> dueDateUpdateDTOs) {
         final boolean anyInvalidExerciseId = dueDateUpdateDTOs.stream().anyMatch(dto -> dto.exerciseId() != exerciseId);
@@ -197,7 +198,6 @@ public class ParticipationUpdateResource {
         }
 
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");

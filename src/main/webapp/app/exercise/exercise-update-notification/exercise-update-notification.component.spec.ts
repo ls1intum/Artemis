@@ -34,8 +34,7 @@ describe('ExerciseUpdateNotificationComponent', () => {
         const inputElement = fixture.debugElement.query(By.css('#field_notification_text')).nativeElement;
         expect(inputElement.minLength).toBe(3);
         expect(inputElement.type).toBe('text');
-        expect(inputElement.classList).toContain('form-control');
-        expect(inputElement.classList).toContain('form-control-sm');
+        expect(inputElement.hasAttribute('tumAetUiInput')).toBe(true);
         expect(inputElement.name).toBe('notificationText');
         expect(inputElement.id).toBe('field_notification_text');
     });

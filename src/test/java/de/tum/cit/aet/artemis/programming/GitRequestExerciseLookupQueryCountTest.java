@@ -47,7 +47,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamExerciseIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findOneByProjectKeyOrThrow(examProgrammingExercise.getProjectKey(), true))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
@@ -58,7 +58,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
      * them, so it stays one query and, unlike the entity, hydrates nothing.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamExerciseAccessProjectionIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findAccessProjectionByProjectKey(examProgrammingExercise.getProjectKey()))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
@@ -66,12 +66,11 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
 
     /**
      * A course exercise leaves the whole exam side of the join empty. Every value taken from it has to survive that,
-     * which a primitive component would not: the projection failed to instantiate for every course exercise until
-     * {@code testExam} became nullable. It also has to stay within the same budget as the exam case, since the empty
+     * including the nullable {@code examMode}. It also has to stay within the same budget as the exam case, since the empty
      * side of the join is where a follow-up load would be easiest to introduce unnoticed.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseExerciseAccessProjectionResolvesWithoutAnExam() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();
@@ -82,6 +81,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
         assertThat(projection).singleElement().satisfies(access -> {
             assertThat(access.isExamExercise()).isFalse();
             assertThat(access.examId()).isNull();
+            assertThat(access.examMode()).isNull();
             assertThat(access.isTestExamExercise()).isFalse();
             assertThat(access.courseId()).isEqualTo(courseExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         });

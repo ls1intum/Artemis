@@ -4,13 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -24,6 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 /**
@@ -32,6 +37,10 @@ import de.tum.cit.aet.artemis.core.util.StringUtil;
 public class UserSpecs {
 
     private static final String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
+
+    /** The filter entries that name a role within courses instead of a global authority. */
+    private static final Map<String, CourseRole> COURSE_ROLE_BY_FILTER = Map.of(Role.TEACHING_ASSISTANT.getAuthority(), CourseRole.TEACHING_ASSISTANT, Role.EDITOR.getAuthority(),
+            CourseRole.EDITOR, Role.INSTRUCTOR.getAuthority(), CourseRole.INSTRUCTOR);
 
     /**
      * Creates the specification to match the provided search term within the user’s login, email, and name attributes.
@@ -81,6 +90,9 @@ public class UserSpecs {
 
     /**
      * This method returns the selected authority specification based on the provided list of authorities.
+     * <p>
+     * The global authorities (user, administrator, super administrator) are matched on the user. The teaching authorities (tutor, editor, instructor) are not global, so they
+     * select users who hold at least that role in some course. A user has to match every selected entry.
      *
      * @param authorities provided authorities
      * @return specification used to chain database operations
@@ -91,11 +103,35 @@ public class UserSpecs {
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
-        else if (!authorities.isEmpty()) {
-            // Match all authorities
-            return getAllUsersMatchingAuthorities(authorities);
+        Specification<User> specification = (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        Set<String> globalAuthorities = authorities.stream().filter(authority -> !COURSE_ROLE_BY_FILTER.containsKey(authority)).collect(Collectors.toSet());
+        if (!globalAuthorities.isEmpty()) {
+            specification = specification.and(getAllUsersMatchingAuthorities(globalAuthorities));
         }
-        return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+        for (String authority : authorities) {
+            CourseRole courseRole = COURSE_ROLE_BY_FILTER.get(authority);
+            if (courseRole != null) {
+                specification = specification.and(hasAtLeastCourseRoleInSomeCourse(courseRole));
+            }
+        }
+        return specification;
+    }
+
+    /**
+     * Matches users that hold at least the given role in at least one course.
+     *
+     * @param minimum the lowest acceptable course role
+     * @return specification matching users with such a course role
+     */
+    @NonNull
+    public static Specification<User> hasAtLeastCourseRoleInSomeCourse(CourseRole minimum) {
+        return (root, query, criteriaBuilder) -> {
+            Subquery<Integer> subquery = query.subquery(Integer.class);
+            Root<UserCourseRole> userCourseRole = subquery.from(UserCourseRole.class);
+            subquery.select(criteriaBuilder.literal(1)).where(criteriaBuilder.equal(userCourseRole.get(UserCourseRole_.USER), root),
+                    userCourseRole.get(UserCourseRole_.ROLE).in(CourseRole.valuesAtLeast(minimum)));
+            return criteriaBuilder.exists(subquery);
+        };
     }
 
     /**

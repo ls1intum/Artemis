@@ -1,3 +1,6 @@
+import { CourseHomeWelcomeContextFormComponent } from './course-home-welcome-context-form.component';
+import { InitialCommitAuthor, InitialCommitAuthorMode } from 'app/course/shared/entities/course-configuration.model';
+import { CourseInitialCommitAuthorFormComponent, InitialCommitAuthorFormGroup, createInitialCommitAuthorFormGroup } from './course-initial-commit-author-form.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,20 +22,17 @@ import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } 
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiChipComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiChipComponent } from '@tumaet/ui-angular/chip';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faBan, faCircleExclamation, faPen, faPlus, faQuestionCircle, faSave, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -55,6 +55,7 @@ import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/featur
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 /**
  * Something that keeps the course from being saved, shown in the footer so the reason is visible instead of a
@@ -77,6 +78,8 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
     { control: 'title', labelKey: 'artemisApp.course.title', targetId: 'field_title' },
     { control: 'shortName', labelKey: 'artemisApp.course.shortName', targetId: 'field_shortName' },
     { control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' },
+    { control: 'initialCommitAuthor.name', labelKey: 'artemisApp.course.initialCommitAuthor.name.label', targetId: 'initialCommitAuthorName' },
+    { control: 'initialCommitAuthor.email', labelKey: 'artemisApp.course.initialCommitAuthor.email.label', targetId: 'initialCommitAuthorEmail' },
     { control: 'semester', labelKey: 'artemisApp.course.semester', targetId: 'semester' },
     { control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' },
     { control: 'endDate', labelKey: 'artemisApp.course.endDate', targetId: 'field_endDate_input' },
@@ -99,6 +102,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         labelKey: 'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label',
         targetId: 'field_maxDailyOrchestrationOverride',
     },
+    { control: 'courseInformationSharingMessagingCodeOfConduct', labelKey: 'artemisApp.codeOfConduct.title', targetId: 'field_codeOfConduct' },
     { control: 'enrollmentStartDate', labelKey: 'artemisApp.course.enrollmentStartDate', targetId: 'field_enrollmentStartDate_input' },
     { control: 'enrollmentEndDate', labelKey: 'artemisApp.course.enrollmentEndDate', targetId: 'field_enrollmentEndDate_input' },
     { control: 'enrollmentConfirmationMessage', labelKey: 'artemisApp.course.enrollmentConfirmationMessage', targetId: 'field_enrollmentConfirmationMessage' },
@@ -108,7 +112,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
-    styleUrls: ['./course-update.component.scss'],
+    styleUrls: ['./course-update.component.css'],
     imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -134,8 +138,11 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         TumAetUiInputDirective,
         TumAetUiFormFieldComponent,
         TumAetUiSelectComponent,
+        PointsInputComponent,
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
+        CourseHomeWelcomeContextFormComponent,
+        CourseInitialCommitAuthorFormComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -183,6 +190,11 @@ export class CourseUpdateComponent implements OnInit {
     readonly originalTimeZone = signal<string | undefined>(undefined);
     /** The browser's time zone, in which the course dates are entered. */
     protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    protected readonly studentWelcomeContext = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] });
+
+    /** Who authors the first commit of new programming exercises. Only a stored course has it: a new one starts with the exercise creator, the default. */
+    protected readonly initialCommitAuthorGroup = signal<InitialCommitAuthorFormGroup | undefined>(undefined);
 
     courseForm!: FormGroup; // built in ngOnInit()
     // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
@@ -273,6 +285,23 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_TEXT_LIMIT = 65535;
     readonly COURSE_TITLE_LIMIT = 255;
     readonly COURSE_DESCRIPTION_LIMIT = 2000;
+    readonly CODE_OF_CONDUCT_LIMIT = 10000;
+
+    /**
+     * Live source-length of the code-of-conduct markdown. Readback counts UTF-16 code units,
+     * matching the server-side @Size(max = 10000) on CourseUpdateDTO so the client preview
+     * and the server rejection never disagree.
+     */
+    readonly codeOfConductLength = computed(() => {
+        this.formRevision();
+        return (this.courseForm.get('courseInformationSharingMessagingCodeOfConduct')?.value as string | null | undefined)?.length ?? 0;
+    });
+
+    /**
+     * Reference to the Code of Conduct markdown editor so {@link onSubmit} can flush its debounced textChanged
+     * emission before the submit guard reads the form state.
+     */
+    private readonly codeOfConductEditor = viewChild<MarkdownEditorMonacoComponent>('codeOfConductEditor');
 
     ngOnInit() {
         this.timeZones = (Intl as typeof Intl & { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
@@ -303,6 +332,9 @@ export class CourseUpdateComponent implements OnInit {
                         if (res.body) {
                             this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
                             this.commitCourse();
+                            // Mirror the template content into the FormControl so the length counter and the
+                            // Validators.maxLength check inspect the content the editor is actually showing.
+                            this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                         }
                     },
                     error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -339,6 +371,8 @@ export class CourseUpdateComponent implements OnInit {
         this.messagingEnabled = isMessagingEnabled(this.course);
         this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
+        this.studentWelcomeContext.setValue(this.course.courseConfiguration?.studentWelcomeContext ?? '');
+        this.initialCommitAuthorGroup.set(this.course.id ? createInitialCommitAuthorFormGroup(this.course.courseConfiguration?.initialCommitAuthor) : undefined);
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -356,7 +390,10 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description, {
                     validators: [Validators.maxLength(this.COURSE_DESCRIPTION_LIMIT)],
                 }),
-                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
+                studentWelcomeContext: this.studentWelcomeContext,
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct, {
+                    validators: [Validators.maxLength(this.CODE_OF_CONDUCT_LIMIT)],
+                }),
                 startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
                 endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
                 semester: new FormControl(this.course.semester, { validators: [Validators.required] }),
@@ -415,6 +452,10 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+        const initialCommitAuthorGroup = this.initialCommitAuthorGroup();
+        if (initialCommitAuthorGroup) {
+            this.courseForm.addControl('initialCommitAuthor', initialCommitAuthorGroup);
+        }
         this.courseForm.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.formRevision.update((revision) => revision + 1));
         // The form was replaced, so anything derived from the previous one is stale.
         this.formRevision.update((revision) => revision + 1);
@@ -525,6 +566,10 @@ export class CourseUpdateComponent implements OnInit {
         if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
             active.blur();
         }
+        // The Code of Conduct markdown editor debounces its textChanged emission by 200 ms. Pressing Save inside that
+        // window would otherwise let issues() and save() read the pre-edit value and persist stale content. Flush the
+        // pending edit synchronously so both see the current text.
+        this.codeOfConductEditor()?.flushPendingTextChange();
         const issues = this.issues();
         if (issues.length > 0) {
             this.submitAttempted.set(true);
@@ -590,6 +635,12 @@ export class CourseUpdateComponent implements OnInit {
         return issues;
     }
 
+    /** The identity belongs to the custom mode only; the other modes send none, so the server stores none of a person's data. */
+    private toInitialCommitAuthor(value: { mode: InitialCommitAuthorMode; name: string; email: string }): InitialCommitAuthor {
+        const custom = value.mode === InitialCommitAuthorMode.CUSTOM;
+        return { mode: value.mode, name: custom ? value.name.trim() : undefined, email: custom ? value.email.trim() : undefined };
+    }
+
     /**
      * Save the changes on a course
      * This function is called by pressing save after creating or editing a course
@@ -616,6 +667,8 @@ export class CourseUpdateComponent implements OnInit {
         course.courseConfiguration = {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
+            studentWelcomeContext: rawValue.studentWelcomeContext,
+            initialCommitAuthor: this.initialCommitAuthorGroup() ? this.toInitialCommitAuthor(rawValue.initialCommitAuthor) : undefined,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
             autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
             debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
@@ -926,7 +979,11 @@ export class CourseUpdateComponent implements OnInit {
      * @param message new courseInformationSharingMessagingCodeOfConduct
      */
     updateCourseInformationSharingMessagingCodeOfConduct(message: string) {
-        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(message);
+        const control = this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'];
+        control.setValue(message);
+        // markdownChange only fires on genuine user edits (never on the programmatic [(markdown)] load), so marking the
+        // control dirty here lets showError reveal the length error and aria-invalid while typing, not only after a save attempt.
+        control.markAsDirty();
     }
 
     /**

@@ -8,6 +8,9 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 import { ExamRoomsComponent } from 'app/exam/manage/students/room-distribution/exam-rooms.component';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
@@ -35,6 +38,8 @@ describe('ExamRoomsComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 ExamRoomsService,
@@ -135,6 +140,24 @@ describe('ExamRoomsComponent', () => {
         expect(component.hasExamRoomData()).toBe(false);
     });
 
+    it('should load the exam context and hide administration actions for instructors', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(false);
+        TestBed.inject(ActivatedRoute).snapshot.queryParams = { courseId: '1', examId: '2' };
+        const room = mockServiceWithSingleRoom();
+        fixture.destroy();
+        fixture = TestBed.createComponent(ExamRoomsComponent);
+        component = fixture.componentInstance;
+
+        fixture.detectChanges();
+
+        expect(service.getRoomOverview).toHaveBeenCalledWith(1, 2);
+        expect(component.hasExamRoomData()).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain(room.name);
+        expect(fixture.nativeElement.querySelector('#roomDataFileSelectButton')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#roomDataUpload')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused')).toBeNull();
+    });
+
     it('should properly extract values from room overview', () => {
         // GIVEN
         const uploadedRoom: ExamRoomDTO = mockServiceWithSingleRoom();
@@ -154,6 +177,26 @@ describe('ExamRoomsComponent', () => {
             defaultCapacity: 30,
             maxCapacity: 30,
         });
+    });
+
+    it('should re-sort the room table when a column header sort is applied', () => {
+        const roomA = { roomNumber: '1', name: 'Alpha', building: 'MI', numberOfSeats: 10, layoutStrategies: [] } as unknown as ExamRoomDTO;
+        const roomB = { roomNumber: '2', name: 'Beta', building: 'MW', numberOfSeats: 20, layoutStrategies: [] } as unknown as ExamRoomDTO;
+        vi.spyOn(service, 'getRoomOverview').mockReturnValue(of(createHttpResponse({ newestUniqueExamRooms: [roomB, roomA] } as ExamRoomOverviewDTO)));
+        fixture.detectChanges();
+        expect(component.examRoomData()!.map((room) => room.name)).toEqual(['Alpha', 'Beta']);
+
+        component['onSortChange']({ field: 'name', order: -1 });
+
+        expect(component.sortAttribute()).toBe('name');
+        expect(component.ascending()).toBe(false);
+        expect(component.examRoomData()!.map((room) => room.name)).toEqual(['Beta', 'Alpha']);
+
+        component['onSortChange']({ field: 'building', order: 1 });
+
+        expect(component.sortAttribute()).toBe('building');
+        expect(component.ascending()).toBe(true);
+        expect(component.examRoomData()!.map((room) => room.building)).toEqual(['MI', 'MW']);
     });
 
     it('should show error message on loadExamRoomOverview fail', () => {

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -85,13 +86,16 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
+    private final SelectedBuildRunStatusService selectedBuildRunStatusService;
+
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            SelectedBuildRunStatusService selectedBuildRunStatusService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -104,6 +108,7 @@ public class ProgrammingTriggerService {
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.selectedBuildRunStatusService = selectedBuildRunStatusService;
     }
 
     /**
@@ -115,7 +120,7 @@ public class ProgrammingTriggerService {
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
-    @Async
+    @Async("bulkBuildTriggerExecutor")
     public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
         // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
         // Security checks still belong before this point, since the stand-in is not a user.
@@ -140,13 +145,50 @@ public class ProgrammingTriggerService {
     }
 
     /**
+     * Triggers a build for every given participation of the exercise, such as the ones whose build failed, on another
+     * thread.
+     * <p>
+     * The method is async because the run waits for room in the build queue, which can take as long as the builds
+     * queued before it, far longer than a request may stay open. It runs on its own executor, because a run that
+     * waits keeps its thread for as long as that takes.
+     * <p>
+     * The clients learn that the run is done through a message that names it, also if it fails, so that their retry action can stay
+     * busy until then without mistaking the end of another run of the exercise for it. The run is also recorded while it goes on, see
+     * {@link SelectedBuildRunStatusService}, for a client that was disconnected when the message was sent.
+     *
+     * @param triggerData what a trigger reads off each participation that is to be built, newest submission included
+     * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
+     *                        repositories
+     * @param runId       names this run in the message that reports its end
+     */
+    @Async("bulkBuildTriggerExecutor")
+    public void triggerInstructorBuildForParticipations(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise, String runId) {
+        // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
+        // Security checks still belong before this point, since the stand-in is not a user.
+        SecurityUtils.setAuthorizationObject();
+        try {
+            triggerBuildForParticipationData(triggerData, exercise);
+        }
+        finally {
+            // The status first: a client that gets the message and asks for the status must find the run ended. The status service does not throw,
+            // so the message is sent even if the store cannot be written.
+            selectedBuildRunStatusService.markEnded(runId);
+            programmingMessagingService.notifyAboutCompletedSelectedBuildRun(exercise, runId);
+        }
+    }
+
+    /**
      * Triggers a build for every given participation of one exercise, pacing the batch the same way as the entity based
-     * path above.
+     * path above and, when the CI system has a build queue, holding the run back while that queue is longer than the
+     * build agents can work off.
      * <p>
      * This is the path an instructor's "build all" and the build-and-test-after-due-date schedule take. Its input is a
      * projection rather than participation entities, so an exercise with a thousand participations costs one query for
      * the trigger inputs instead of a thousand and two, and the database ships roughly a third of the bytes. See
      * {@link ParticipationBuildTriggerDTO}.
+     * <p>
+     * The call can take a long time, so a caller on a request thread uses
+     * {@link #triggerInstructorBuildForParticipations(List, ProgrammingExercise, String)} instead.
      *
      * @param triggerData what a trigger reads off each participation of the exercise, newest submission included
      * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
@@ -156,19 +198,38 @@ public class ProgrammingTriggerService {
         if (triggerData.isEmpty()) {
             return;
         }
-        // Everything a trigger reads off the exercise rather than off the participation is resolved once for the batch:
-        // the build config, the auxiliary repositories, the build statistics and the head commit of the test
-        // repository are the same for every participation.
-        SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
-        int index = 0;
-        for (var participationData : triggerData) {
-            var participation = participationFor(participationData, exercise);
-            if (participation == null) {
-                continue;
+        // Queue every build even after cancellation, then make the interrupt visible to the caller.
+        boolean interrupted = Thread.interrupted();
+        try {
+            // Everything a trigger reads off the exercise rather than off the participation is resolved once for the batch:
+            // the build config, the auxiliary repositories, the build statistics and the head commit of the test
+            // repository are the same for every participation.
+            SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
+            // Only this path waits for room in the build queue. It serves the instructor's "build all" and the rebuild of
+            // selected participations, both of which are bulk runs that have no deadline. The entity based path below also
+            // serves the builds at the start and end of a student exam, which have to be queued at once.
+            BulkTriggerThrottle throttle = continuousIntegrationTriggerService.map(ContinuousIntegrationTriggerService::createBulkTriggerThrottle).orElse(BulkTriggerThrottle.NONE);
+            int index = 0;
+            for (var participationData : triggerData) {
+                var participation = participationFor(participationData, exercise);
+                if (participation == null) {
+                    continue;
+                }
+                pauseBetweenBatches(index, participationData.participationId());
+                interrupted |= Thread.interrupted();
+                // A participation without a submission is not built, so it must not wait for room in the queue either.
+                if (participation.findLatestSubmission().isPresent()) {
+                    throttle.awaitCapacity();
+                    interrupted |= Thread.interrupted();
+                }
+                triggerBuild(participation, sharedData);
+                index++;
             }
-            pauseBetweenBatches(index, participationData.participationId());
-            triggerBuild(participation, sharedData);
-            index++;
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -215,12 +276,9 @@ public class ProgrammingTriggerService {
             Thread.sleep(externalSystemRequestBatchWaitingTime);
         }
         catch (InterruptedException ex) {
-            // The interrupt status is deliberately not restored, which is what java:S2142 would ask for, and the batch
-            // deliberately carries on. There is no durable retry behind this loop: the scheduled build after the due
-            // date is a one-shot task that ExerciseLifecycle only ever schedules while its timestamp is still in the
-            // future, so a run that stops half way is never recreated on startup, and the exercise's testCasesChanged
-            // flag is not consulted by that scheduler either. Stopping here would leave the remaining participations
-            // permanently unbuilt, whereas carrying on costs one lost pause.
+            // The enclosing bulk run defers this flag while queueing builds and restores it when the run ends.
+            // A scheduled build after the due date has no durable retry, so cancellation must not skip its remaining builds.
+            Thread.currentThread().interrupt();
             log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
         }
     }
@@ -242,40 +300,49 @@ public class ProgrammingTriggerService {
      *                           repositories, or null when the caller does not have it and it should be loaded here
      */
     public void triggerBuildForParticipations(Collection<ProgrammingExerciseStudentParticipation> participations, @Nullable ProgrammingExercise loadedExercise) {
-        // Everything a trigger reads off the exercise rather than off the participation is resolved once per exercise
-        // here, not once per student: the build config, the auxiliary repositories, the build statistics and the head
-        // commit of the test repository are the same for every participation of an exercise. Triggering all
-        // participations of a course of two thousand used to resolve each of them two thousand times, which is what
-        // made an instructor's "build all" spike the node handling it and the database behind it. Participations are
-        // grouped because callers do not always pass a single exercise: a student exam hands over that student's
-        // participations across the whole exam.
-        Map<Long, List<ProgrammingExerciseStudentParticipation>> participationsByExerciseId = participations.stream().filter(Objects::nonNull)
-                .filter(participation -> participation.getExercise() != null).collect(Collectors.groupingBy(participation -> participation.getExercise().getId()));
-        long groupedCount = participationsByExerciseId.values().stream().mapToLong(List::size).sum();
-        if (groupedCount != participations.size()) {
-            log.warn("Not triggering {} of {} participations: they carry no exercise", participations.size() - groupedCount, participations.size());
-        }
-
-        var index = 0;
-        for (var participationsOfExercise : participationsByExerciseId.values()) {
-            // A participation without a submission is not triggered at all, so an exercise where nobody submitted must
-            // not pay for the shared data either: resolving it reads the test repository and the build statistics.
-            List<ProgrammingExerciseStudentParticipation> triggerable = participationsOfExercise.stream().filter(participation -> participation.findLatestSubmission().isPresent())
-                    .toList();
-            if (triggerable.isEmpty()) {
-                continue;
+        boolean interrupted = Thread.interrupted();
+        try {
+            // Everything a trigger reads off the exercise rather than off the participation is resolved once per exercise
+            // here, not once per student: the build config, the auxiliary repositories, the build statistics and the head
+            // commit of the test repository are the same for every participation of an exercise. Triggering all
+            // participations of a course of two thousand used to resolve each of them two thousand times, which is what
+            // made an instructor's "build all" spike the node handling it and the database behind it. Participations are
+            // grouped because callers do not always pass a single exercise: a student exam hands over that student's
+            // participations across the whole exam.
+            Map<Long, List<ProgrammingExerciseStudentParticipation>> participationsByExerciseId = participations.stream().filter(Objects::nonNull)
+                    .filter(participation -> participation.getExercise() != null).collect(Collectors.groupingBy(participation -> participation.getExercise().getId()));
+            long groupedCount = participationsByExerciseId.values().stream().mapToLong(List::size).sum();
+            if (groupedCount != participations.size()) {
+                log.warn("Not triggering {} of {} participations: they carry no exercise", participations.size() - groupedCount, participations.size());
             }
-            // Worth doing even for a single participation: one load of the exercise with its build config and auxiliary
-            // repositories costs less than the separate lookups the trigger would otherwise make for each of them.
-            SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(triggerable, loadedExercise);
-            // Only the participations that will actually be built: a participation without a submission returns from
-            // triggerBuild immediately, so counting it towards the external system's batch size would buy a pause for a
-            // build that never happened.
-            for (var participation : triggerable) {
-                // Execute requests in batches when using an external build system.
-                pauseBetweenBatches(index, participation.getId());
-                triggerBuild(participation, sharedData);
-                index++;
+
+            var index = 0;
+            for (var participationsOfExercise : participationsByExerciseId.values()) {
+                // A participation without a submission is not triggered at all, so an exercise where nobody submitted must
+                // not pay for the shared data either: resolving it reads the test repository and the build statistics.
+                List<ProgrammingExerciseStudentParticipation> triggerable = participationsOfExercise.stream()
+                        .filter(participation -> participation.findLatestSubmission().isPresent()).toList();
+                if (triggerable.isEmpty()) {
+                    continue;
+                }
+                // Worth doing even for a single participation: one load of the exercise with its build config and auxiliary
+                // repositories costs less than the separate lookups the trigger would otherwise make for each of them.
+                SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(triggerable, loadedExercise);
+                // Only the participations that will actually be built: a participation without a submission returns from
+                // triggerBuild immediately, so counting it towards the external system's batch size would buy a pause for a
+                // build that never happened.
+                for (var participation : triggerable) {
+                    // Execute requests in batches when using an external build system.
+                    pauseBetweenBatches(index, participation.getId());
+                    interrupted |= Thread.interrupted();
+                    triggerBuild(participation, sharedData);
+                    index++;
+                }
+            }
+        }
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
             }
         }
     }

@@ -90,16 +90,6 @@ public class AnswerPost extends Posting {
         this.reactions = reactions;
     }
 
-    @Override
-    public void addReaction(Reaction reaction) {
-        this.reactions.add(reaction);
-    }
-
-    @Override
-    public void removeReaction(Reaction reaction) {
-        this.reactions.remove(reaction);
-    }
-
     public Post getPost() {
         return post;
     }

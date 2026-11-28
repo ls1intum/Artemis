@@ -1,15 +1,16 @@
+import { LectureUnitReleaseDateFormDirective } from '../lecture-unit-release-date-form.directive';
 import dayjs from 'dayjs/esm';
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { map } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -52,14 +53,16 @@ function urlValidator(control: AbstractControl) {
         ArtemisTranslatePipe,
     ],
 })
-export class OnlineUnitFormComponent {
+export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly onlineUnitService = inject(OnlineUnitService);
+    private readonly onlineUnitApi = inject(OnlineUnitApi);
 
     protected readonly faTimes = faTimes;
 
     formData = input<OnlineUnitFormData>();
     isEditMode = input<boolean>(false);
+    /** The course of the lecture the unit belongs to, needed by the server to authorize fetching the metadata of the link. */
+    readonly courseId = input.required<number>();
 
     formSubmitted = output<OnlineUnitFormData>();
 
@@ -73,7 +76,6 @@ export class OnlineUnitFormComponent {
     private applyingFormData = false;
 
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
-    readonly isReleaseDateTextValid = signal(true);
 
     urlValidator = urlValidator;
 
@@ -92,6 +94,7 @@ export class OnlineUnitFormComponent {
     private appliedFormData?: OnlineUnitFormData;
 
     constructor() {
+        super();
         // Patch the form with the provided data in edit mode (replaces ngOnChanges).
         // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
         // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
@@ -126,26 +129,7 @@ export class OnlineUnitFormComponent {
         return this.form.get('description');
     }
 
-    get releaseDateControl() {
-        return this.form.get('releaseDate');
-    }
-
-    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
-        this.releaseDateControl?.setValue(releaseDate);
-        this.releaseDateControl?.markAsDirty();
-        this.reportChange(true);
-    }
-
-    onReleaseDateTextValidityChange(valid: boolean): void {
-        // The picker also reports the validity it starts with, which is no change of the user.
-        if (valid === this.isReleaseDateTextValid()) {
-            return;
-        }
-        this.isReleaseDateTextValid.set(valid);
-        this.reportChange(false);
-    }
-
-    private reportChange(immediate: boolean): void {
+    protected override reportChange(immediate: boolean): void {
         if (!this.autosave() || this.applyingFormData) {
             return;
         }
@@ -177,20 +161,17 @@ export class OnlineUnitFormComponent {
         }
 
         if (this.sourceControl?.valid) {
-            this.onlineUnitService
-                .getOnlineResource(this.sourceControl.value)
-                .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
-                .subscribe({
-                    next: (onlineResource) => {
-                        // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
-                        const keepCurrent = this.autosave();
-                        const updateForm = {
-                            name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
-                            description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
-                        };
-                        this.form.patchValue(updateForm);
-                    },
-                });
+            this.onlineUnitApi.getOnlineResource(this.sourceControl.value, this.courseId()).subscribe({
+                next: (onlineResource) => {
+                    // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
+                    const keepCurrent = this.autosave();
+                    const updateForm = {
+                        name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
+                        description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
+                    };
+                    this.form.patchValue(updateForm);
+                },
+            });
         }
     }
 

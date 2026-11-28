@@ -107,7 +107,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -130,7 +130,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.INCLUDE)
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError(ProgrammingLanguage programmingLanguage) {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExercise.setProgrammingLanguage(programmingLanguage);
@@ -152,7 +152,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testDeleteBuildPlan() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -170,7 +170,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testRecreateBuildPlanDeletedFolder() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -200,13 +200,13 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testFailToUpdatePlanRepositoryBadRequest() throws Exception {
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testFailToUpdatePlanRepositoryInternalError() throws Exception {
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -230,7 +230,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testUpdateBuildPlanRepoUrisForStudent() throws Exception {
         try (MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class)) {
             ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
@@ -257,7 +257,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testCopyBuildPlan() throws IOException {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
@@ -289,7 +289,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
      * The old exercise uses the old-style build plans that are stored in Jenkins directly rather than in Artemis.
      */
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    @WithMockUser(roles = "USER", username = TEST_PREFIX + "instructor1")
     void testCopyLegacyBuildPlan() throws IOException {
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 

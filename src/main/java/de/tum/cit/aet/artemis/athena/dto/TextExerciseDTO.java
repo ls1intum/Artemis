@@ -21,7 +21,7 @@ public record TextExerciseDTO(long id, String title, double maxPoints, double bo
      */
     public static TextExerciseDTO of(@NotNull TextExercise exercise) {
         return new TextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getGradingInstructions(),
-                exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList(), exercise.getProblemStatement(), exercise.getExampleSolution());
+                GradingCriterionDTO.ofAll(exercise.getGradingCriteria()), exercise.getProblemStatement(), exercise.getExampleSolution());
     }
 
     /**

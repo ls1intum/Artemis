@@ -15,14 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 
@@ -38,16 +34,10 @@ public class ConsistencyCheckResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ConsistencyCheckService consistencyCheckService;
 
-    private final ExerciseRepository exerciseRepository;
-
-    public ConsistencyCheckResource(AuthorizationCheckService authCheckService, ConsistencyCheckService consistencyCheckService, ExerciseRepository exerciseRepository) {
-        this.authCheckService = authCheckService;
+    public ConsistencyCheckResource(ConsistencyCheckService consistencyCheckService) {
         this.consistencyCheckService = consistencyCheckService;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -58,11 +48,9 @@ public class ConsistencyCheckResource {
      */
     @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("programming-exercises/{programmingExerciseId}/consistency-check")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise(resourceIdFieldName = "programmingExerciseId")
     public ResponseEntity<List<ConsistencyErrorDTO>> checkConsistencyOfProgrammingExercise(@PathVariable long programmingExerciseId) {
         log.debug("REST request to check consistencies of programming exercise [{}]", programmingExerciseId);
-        final Exercise exercise = exerciseRepository.findByIdElseThrow(programmingExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         List<ConsistencyErrorDTO> result = consistencyCheckService.checkConsistencyOfProgrammingExercise(programmingExerciseId);
         return ResponseEntity.ok(result);
     }

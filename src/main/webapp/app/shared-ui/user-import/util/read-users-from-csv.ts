@@ -9,6 +9,8 @@ interface CsvUser {
     [key: string]: string;
 }
 
+type CsvUserParsingResult = { ok: true; users: CsvUser[]; header: (aliases: string[]) => string } | { ok: false; invalidRowIndices: number[] };
+
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
 const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
@@ -25,34 +27,17 @@ function parseBooleanCell(value?: string): boolean {
 }
 
 export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<StudentParsingResult> {
-    const csvUsers: CsvUser[] = await parseCsvUserFromFile(csvFile);
-
-    const invalidRowIndices: number[] = computeInvalidRowIndices(csvUsers);
-    if (invalidRowIndices.length > 0) {
-        return {
-            ok: false,
-            invalidRowIndices: invalidRowIndices,
-        };
+    const parsed = await readValidatedCsvUsers(csvFile);
+    if (!parsed.ok) {
+        return parsed;
     }
-
-    const usedHeaders = Object.keys(csvUsers.first() || []);
-    const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
-    const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
-    const emailHeader = usedHeaders.find((value) => POSSIBLE_EMAIL_HEADERS.includes(value)) || '';
-    const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
-    const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
-    const testUserHeader = usedHeaders.find((value) => POSSIBLE_IS_TEST_USER_HEADERS.includes(value)) || '';
-
-    const students = csvUsers.map((user: CsvUser) => {
-        return {
-            registrationNumber: user[registrationNumberHeader]?.trim() || '',
-            login: user[loginHeader]?.trim() || '',
-            email: user[emailHeader]?.trim() || '',
-            firstName: user[firstNameHeader]?.trim() || '',
-            lastName: user[lastNameHeader]?.trim() || '',
-            // Only set when the column is present; otherwise leave undefined so the import does not change the existing flag.
-            isTestUser: testUserHeader ? parseBooleanCell(user[testUserHeader]) : undefined,
-        };
+    const readIdentity = csvUserIdentityReader(parsed.header);
+    const testUserHeader = parsed.header(POSSIBLE_IS_TEST_USER_HEADERS);
+    const students = parsed.users.map((user) => {
+        const student = readIdentity(user);
+        // An absent column must not change an existing user's flag during import.
+        student.isTestUser = testUserHeader ? parseBooleanCell(user[testUserHeader]) : undefined;
+        return student;
     });
     return {
         ok: true,
@@ -61,40 +46,48 @@ export async function readStudentDTOsFromCSVFile(csvFile: File): Promise<Student
 }
 
 export async function readExamUserDTOsFromCSVFile(csvFile: File): Promise<ExamUserParsingResult> {
-    const csvUsers: CsvUser[] = await parseCsvUserFromFile(csvFile);
-
-    const invalidRowIndices = computeInvalidRowIndices(csvUsers);
-    if (invalidRowIndices.length > 0) {
-        return {
-            ok: false,
-            invalidRowIndices: invalidRowIndices,
-        };
+    const parsed = await readValidatedCsvUsers(csvFile);
+    if (!parsed.ok) {
+        return parsed;
     }
-
-    const usedHeaders = Object.keys(csvUsers.first() || []);
-    const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
-    const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
-    const emailHeader = usedHeaders.find((value) => POSSIBLE_EMAIL_HEADERS.includes(value)) || '';
-    const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
-    const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
-    const roomHeader = usedHeaders.find((value) => POSSIBLE_ROOM_HEADERS.includes(value)) || '';
-    const seatHeader = usedHeaders.find((value) => POSSIBLE_SEAT_HEADERS.includes(value)) || '';
-
-    const students = csvUsers.map((user: CsvUser) => {
-        return {
-            registrationNumber: user[registrationNumberHeader]?.trim() || '',
-            login: user[loginHeader]?.trim() || '',
-            email: user[emailHeader]?.trim() || '',
-            firstName: user[firstNameHeader]?.trim() || '',
-            lastName: user[lastNameHeader]?.trim() || '',
-            room: user[roomHeader]?.trim() || '',
-            seat: user[seatHeader]?.trim() || '',
-        };
+    const readIdentity = csvUserIdentityReader(parsed.header);
+    const roomHeader = parsed.header(POSSIBLE_ROOM_HEADERS);
+    const seatHeader = parsed.header(POSSIBLE_SEAT_HEADERS);
+    const students = parsed.users.map((user) => {
+        const examUser: ExamUserDTO = readIdentity(user);
+        examUser.room = user[roomHeader]?.trim() || '';
+        examUser.seat = user[seatHeader]?.trim() || '';
+        return examUser;
     });
     return {
         ok: true,
         examUsers: students,
     };
+}
+
+async function readValidatedCsvUsers(csvFile: File): Promise<CsvUserParsingResult> {
+    const users = await parseCsvUserFromFile(csvFile);
+    const invalidRowIndices = computeInvalidRowIndices(users);
+    if (invalidRowIndices.length) {
+        return { ok: false, invalidRowIndices };
+    }
+    const headers = Object.keys(users.first() || []);
+    return { ok: true, users, header: (aliases) => headers.find((name) => aliases.includes(name)) || '' };
+}
+
+function csvUserIdentityReader(header: (aliases: string[]) => string): (user: CsvUser) => StudentDTO {
+    const registrationNumber = header(POSSIBLE_REGISTRATION_NUMBER_HEADERS);
+    const login = header(POSSIBLE_LOGIN_HEADERS);
+    const email = header(POSSIBLE_EMAIL_HEADERS);
+    const firstName = header(POSSIBLE_FIRST_NAME_HEADERS);
+    const lastName = header(POSSIBLE_LAST_NAME_HEADERS);
+    return (user) => ({
+        registrationNumber: user[registrationNumber]?.trim() || '',
+        login: user[login]?.trim() || '',
+        email: user[email]?.trim() || '',
+        firstName: user[firstName]?.trim() || '',
+        lastName: user[lastName]?.trim() || '',
+    });
 }
 
 function parseCsvUserFromFile(csvFile: File): Promise<CsvUser[]> {

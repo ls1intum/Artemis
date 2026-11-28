@@ -2,6 +2,7 @@
 id: distributed-data
 title: Distributed Data
 sidebar_label: Distributed Data
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -25,7 +26,7 @@ store.
 Artemis supports two providers and intends to be able to switch between them:
 
 * **Hazelcast** — embedded in every node, no extra container. This is what production runs today.
-* **Redis** — an external server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
+* **Redis** — an external Redis or Valkey server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
   instance is created at all.
 
 A third, **Local**, keeps everything inside one JVM. It exists for single-node development and has no cross-node
@@ -54,6 +55,17 @@ contract suite `AbstractDistributedDataTest`, which every provider runs:
 
 `putIfAbsent`, `remove(key, value)` and `computeIfAbsent` on a map are genuine atomics and are the right way to claim a
 job slot from exactly one node.
+
+Redis implements `replace(key, expected, replacement)` and `remove(key, value)` by comparing the encoded bytes of
+`expected` with the stored bytes, while Hazelcast and the local provider use `equals`. A value that was read from the map
+therefore only works as `expected` if encoding it again reproduces the stored bytes. `Map.copyOf`, `Map.of` and the
+other immutable maps do not: their iteration order depends on a random per-JVM salt, so a map with two or more entries
+is written in another order after a round trip, and the operation fails every time. A retry loop around it never ends.
+Copy a `Map` component of such a value with `CanonicalMaps.copyOf`, which sorts by key, and do not use a `Set` or a
+`HashMap` there. `DistributedValueEncodingStabilityTest` checks the live-save slot and the generation baseline.
+A canonical constructor can change the bytes of an older readable entry too. For live-save coordination, follow the
+[coordinated encoding upgrade](/admin/hyperion#upgrade-live-save-coordination-encoding): drain operations and reconcile
+retained reservations before stopping all old writers and clearing only that map. Do not reuse old CAS operands blindly.
 
 <Callout variant={CalloutVariant.warning}>
   A provider-level map configuration is not a substitute for asking for what you need. A Hazelcast <code>MapConfig</code>
@@ -96,7 +108,7 @@ Spring `@Cacheable` resolves against a `RoutingCacheManager` that splits caches 
 * **Blob caches** (`files`, `plantUmlPng`, `plantUmlSvg`) are per-node Caffeine caches bounded by *bytes*, because their
   values range from kilobytes to tens of megabytes. Pushing those through a shared grid costs a network transfer per
   read, and on Redis it is worse: Redis is single-threaded, so one multi-MB value stalls every other operation including
-  the CI queue. Coherence comes from `BlobCacheEvictionService`, which broadcasts evictions, plus a time-to-live so a
+  the CI queue. Coherence comes from `PerNodeCacheEvictionService`, which broadcasts evictions, plus a time-to-live so a
   dropped broadcast self-corrects.
 * **Everything else** is served by `DistributedDataCacheManager`, which is built on `DistributedDataProvider` and
   therefore behaves the same on every provider.
@@ -125,7 +137,7 @@ Queue entries, set elements, topic messages, and map keys use positional Kryo en
 version. An incompatible change can therefore cause a `KryoBufferUnderflowException` or produce plausible but incorrect
 values. Issue #12137 is an example.
 
-Redis keys include `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`. A release reads only its
+Redis keys include `DistributedDataSchema.VERSION`, for example `artemis:v2:{buildJobQueue}`. A release reads only its
 own namespace. The version protects production only when every incompatible change is detected, reviewed, and paired
 with an explicit migration decision.
 

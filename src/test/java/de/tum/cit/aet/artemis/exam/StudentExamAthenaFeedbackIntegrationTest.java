@@ -331,7 +331,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchForInstructorTestRun() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -348,7 +348,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldRejectTestRunWhileAnotherTestRunIsUnsubmitted() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -593,7 +593,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchTheCurrentAnswerWhenItWasSavedAfterHandIn() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -828,7 +828,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void getAthenaFeedbackUsage_shouldCountTestRunsInTheirOwnBucket() {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -848,7 +848,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     class RestEndpoints {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void restRequestAthenaFeedback_shouldReturnOkForOwnTestRunAndCountItInTheTestRunBucket() throws Exception {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -889,7 +889,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void restRequestAthenaFeedback_shouldReturnForbiddenForOwnTestRunAfterInstructorAccessWasRevoked() throws Exception {
             Exam realExam = createRunningRealExam();
             TextExercise textExercise = addTextExerciseToExam(realExam);
@@ -905,6 +905,24 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             String usageUrl = "/api/exam/courses/" + course.getId() + "/exams/" + realExam.getId() + "/student-exams/" + testRun.getId() + "/athena-feedback-usage";
             request.get(usageUrl, HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void restRequestAthenaFeedback_shouldReturnForbiddenForOwnAttemptAfterStudentWasRemovedFromCourse() throws Exception {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            userUtilService.unenrollUserFromCourse(student, course);
+
+            String base = "/api/exam/courses/" + course.getId() + "/exams/" + testExam.getId() + "/student-exams/" + studentExam.getId();
+            request.postWithoutResponseBody(base + "/request-feedback", null, HttpStatus.FORBIDDEN);
+            request.get(base + "/athena-feedback-usage", HttpStatus.FORBIDDEN, AthenaFeedbackUsageDTO.class);
         }
 
         @Test

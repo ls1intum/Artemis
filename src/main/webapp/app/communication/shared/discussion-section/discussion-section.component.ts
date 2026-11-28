@@ -9,7 +9,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/communication/directive/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -18,7 +18,9 @@ import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
@@ -31,7 +33,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-discussion-section',
     templateUrl: './discussion-section.component.html',
-    styleUrls: ['./discussion-section.component.scss'],
+    styleUrls: ['../../communication.component.css', './discussion-section.component.css'],
     imports: [
         FontAwesomeModule,
         InfiniteScrollDirective,
@@ -41,7 +43,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         MessageInlineInputComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
-        NgbTooltipModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
         SearchFilterComponent,
         ResizableDirective,
     ],
@@ -90,7 +94,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 

@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -8,6 +8,7 @@ import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.mode
 import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 @Service()
 export class CourseAdminService {
@@ -34,7 +35,9 @@ export class CourseAdminService {
     }
 
     /**
-     * deletes the course corresponding to the given unique identifier using a DELETE request
+     * Starts the deletion of the course corresponding to the given unique identifier using a DELETE request.
+     * The server accepts the request with 202 and deletes the course in the background, the progress is published on the
+     * websocket topic of the course operation and can be read with {@link getOperationProgress}.
      * @param courseId - the id of the course to be deleted
      */
     delete(courseId: number): Observable<HttpResponse<void>> {
@@ -59,13 +62,17 @@ export class CourseAdminService {
     }
 
     /**
-     * Returns the current progress of a delete/reset/archive operation on the course.
-     * This is used for polling when WebSocket is not available.
+     * Returns the current progress of a delete/reset/archive operation on the course, or an empty body when none is known.
+     * This is used for polling when WebSocket is not available and to pick up a running operation after the page was reloaded.
+     * A failed read is not reported to the user with an alert.
      * @param courseId - the id of the course to get the operation progress for
      */
     getOperationProgress(courseId: number): Observable<HttpResponse<CourseOperationProgressDTO | null>> {
         return this.http
-            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, { observe: 'response' })
+            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, {
+                observe: 'response',
+                context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true),
+            })
             .pipe(tap((res) => res.body && (res.body.startedAt = convertDateFromServer(res.body.startedAt))));
     }
 }

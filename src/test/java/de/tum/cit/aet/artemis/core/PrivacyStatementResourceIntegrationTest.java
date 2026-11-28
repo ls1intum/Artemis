@@ -135,7 +135,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetPrivacyStatementForUpdate_instructorAccessForbidden() throws Exception {
         request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.FORBIDDEN, PrivacyStatementDTO.class);
     }
@@ -208,7 +208,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdatePrivacyStatement_instructorAccessForbidden() throws Exception {
         request.put("/api/admin/privacy-statement", new PrivacyStatementDTO("", Language.GERMAN), HttpStatus.FORBIDDEN);
     }

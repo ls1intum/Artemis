@@ -1,3 +1,9 @@
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -16,13 +22,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import {
-    Submission,
-    SubmissionExerciseType,
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-} from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { filter, finalize, map } from 'rxjs/operators';
@@ -35,7 +35,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -50,9 +50,8 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFileImport, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -62,11 +61,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
-import { Message } from 'primeng/message';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
@@ -77,9 +71,13 @@ import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/asses
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-participation';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
+import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -89,17 +87,26 @@ export interface ExampleSubmissionQueryParams {
     toComplete?: boolean;
 }
 
+const tutorParticipationStatusByApiStatus: Record<TutorParticipationStatusEnum, TutorParticipationStatus> = {
+    NOT_PARTICIPATED: TutorParticipationStatus.NOT_PARTICIPATED,
+    REVIEWED_INSTRUCTIONS: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+    TRAINED: TutorParticipationStatus.TRAINED,
+    COMPLETED: TutorParticipationStatus.COMPLETED,
+};
+
 @Component({
     selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styleUrls: ['./exercise-assessment-dashboard.component.scss'],
+    styleUrls: ['./exercise-assessment-dashboard.component.css'],
     providers: [CourseManagementService],
     imports: [
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
         TumAetUiDoughnutChartComponent,
+        TumAetUiButtonComponent,
         TumAetUiButtonDirective,
+        AssessmentUploadDialogComponent,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -109,11 +116,8 @@ export interface ExampleSubmissionQueryParams {
         ModelingEditorComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        NgbTooltip,
-        TooltipModule,
-        Message,
-        SortDirective,
-        SortByDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiMessageComponent,
         LanguageTableCellComponent,
         ResultComponent,
         AssessmentWarningComponent,
@@ -122,6 +126,9 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
@@ -131,7 +138,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private submissionService = inject(SubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -210,6 +217,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     readonly ExerciseType = ExerciseType;
     protected readonly RepositoryType = RepositoryType;
+    protected readonly faFileImport = faFileImport;
+    protected readonly uploadDialogVisible = signal(false);
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
@@ -260,6 +269,32 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     /** Bumped on every language change so that translations built outside the template are rebuilt as well. */
     private readonly currentLanguage = signal<string | undefined>(undefined);
 
+    /** Whether the manual assessment upload belongs on this dashboard at all: it imports programming assessments, and only an instructor may do that. */
+    readonly canOfferManualAssessmentUpload = computed(() => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun());
+
+    /**
+     * Whether an upload would be accepted. The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is: manual
+     * assessment configured and the relevant due date passed. The server enforces the same gate; this only decides whether the instructor is invited to try.
+     */
+    readonly canUploadManualAssessments = computed(() => this.canOfferManualAssessmentUpload() && areManualResultsAllowed(this.exercise()));
+
+    /** Why the upload is offered but disabled, or undefined while it is possible. The two reasons need different things from the instructor, so they are told apart. */
+    readonly manualAssessmentUploadDisabledReason = computed(() => {
+        if (!this.canOfferManualAssessmentUpload() || this.canUploadManualAssessments()) {
+            return undefined;
+        }
+        return this.exercise().assessmentType === AssessmentType.AUTOMATIC
+            ? 'artemisApp.assessmentUpload.notPossible.automaticAssessment'
+            : 'artemisApp.assessmentUpload.notPossible.beforeDueDate';
+    });
+
+    /** Tooltip for the disabled upload button, empty while the upload is possible so that no tooltip is shown. */
+    readonly manualAssessmentUploadDisabledTooltip = computed(() => {
+        this.currentLanguage();
+        const reason = this.manualAssessmentUploadDisabledReason();
+        return reason ? this.translateService.instant(reason) : '';
+    });
+
     /**
      * For exam exercises: why assessment is not possible yet, or undefined once it is (also for course exercises and for
      * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
@@ -293,11 +328,31 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
-    faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
     faFlag = faFlag;
     faCircleInfo = faCircleInfo;
+
+    /**
+     * Opens the dialog that lets an instructor upload manual assessments for the participants of this programming exercise at once.
+     * Precondition: the current exercise is a programming exercise and the user is at least instructor (the launch button is only shown then).
+     * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
+     */
+    openAssessmentUpload(): void {
+        // Guarded as well as disabled: the button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        if (!this.canUploadManualAssessments()) {
+            return;
+        }
+        this.uploadDialogVisible.set(true);
+    }
+
+    /**
+     * Refreshes the dashboard after an instructor uploaded manual assessments, so the assessment counts, chart and assessable-submission state reflect the newly stored results.
+     * Postcondition: reloads the exercise data for tutors; it does not itself change any persistent state.
+     */
+    onAssessmentsUploaded(): void {
+        this.loadAll();
+    }
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
@@ -455,20 +510,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.scheduleAssessmentAvailabilityUpdate();
 
+                if (!this.isTestRun()) {
+                    const complaintQueue = this.accountService.isAtLeastInstructorForExercise(exercise)
+                        ? this.submissionService.getSubmissionsWithComplaintsForInstructor(this.exerciseId())
+                        : this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId());
+                    complaintQueue.subscribe({
+                        next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
+                            this.submissionsWithComplaints.set(res.body || []);
+                            this.sortComplaintRows();
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                }
                 this.setupLinks();
             },
             error: (response: string) => this.onError(response),
         });
 
         if (!this.isTestRun()) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
-                next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithComplaints.set(res.body || []);
-                    this.sortComplaintRows();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests.set(res.body || []);
@@ -631,13 +690,19 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             // TODO: This could be one generic endpoint.
             switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
+                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
@@ -777,14 +842,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     readInstruction() {
         this.isLoading.set(true);
-        this.tutorParticipationService
-            .create(this.exerciseId())
+        this.tutorParticipationApi
+            .initTutorParticipation(this.exerciseId())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
-                next: (res: HttpResponse<TutorParticipationDTO>) => {
-                    const dto = res.body!;
-                    this.tutorParticipation.set(dto);
-                    this.tutorParticipationStatus.set(dto.status);
+                next: (dto) => {
+                    const status = tutorParticipationStatusByApiStatus[dto.status];
+                    this.tutorParticipation.set({
+                        id: dto.id,
+                        status,
+                        trainedExampleSubmissions: dto.trainedExampleSubmissions?.map(({ id, usedForTutorial, assessmentExplanation }) => ({
+                            id,
+                            usedForTutorial,
+                            assessmentExplanation,
+                        })),
+                    });
+                    this.tutorParticipationStatus.set(status);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
@@ -825,7 +898,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
+        const group = this.exercise().exerciseGroup;
+        const sourcePath = group ? `exams/${group.exam!.id}/exercise-groups/${group.id}/` : '';
+        const route = `/course-management/${this.courseId()}/${sourcePath}${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
@@ -938,6 +1013,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    protected onSubmissionSort(correctionRound: number, event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[0] = event.field;
+        this.reverseOrders[0] = event.order === 1;
+        this.sortSubmissionRows(correctionRound);
+    }
+
+    protected onComplaintSort(event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[1] = event.field;
+        this.reverseOrders[1] = event.order === 1;
+        this.sortComplaintRows();
+    }
+
+    protected onMoreFeedbackSort(event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[2] = event.field;
+        this.reverseOrders[2] = event.order === 1;
+        this.sortMoreFeedbackRows();
+    }
+
     sortSubmissionRows(correctionRound: number) {
         this.assessedSubmissionsByRound.update((rounds) => {
             const next = [...rounds];
@@ -973,9 +1066,27 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Link to the respective exercise details page. Computed rather than a method, because
-     * `[routerLink]="exerciseDetailsLink()"` is evaluated on every change-detection pass and a fresh array each pass
-     * makes RouterLink re-process the link every time.
+     * Link to the respective exercise details page. An exam exercise has to be opened below its exam, because the course level
+     * page loads the exercise as a course exercise and the server refuses an exam exercise there.
+     * Computed rather than a method, because `[routerLink]="exerciseDetailsLink()"` is evaluated on every change-detection pass
+     * and a fresh array each pass makes RouterLink re-process the link every time.
      */
-    readonly exerciseDetailsLink = computed(() => ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!]);
+    readonly exerciseDetailsLink = computed(() => {
+        const exercise = this.exercise();
+        const exerciseTypePath = exercise.type! + '-exercises';
+        const group = exercise.exerciseGroup;
+        if (group) {
+            return ['/course-management', this.courseId(), 'exams', group.exam!.id!, 'exercise-groups', group.id!, exerciseTypePath, exercise.id!];
+        }
+        return ['/course-management', this.courseId(), exerciseTypePath, exercise.id!];
+    });
+
+    /**
+     * Whether the user can open the details page of the exercise. The server gives the details of an exam exercise only to editors and above,
+     * except for a modeling exercise, so a tutor would only get a permission error from the button.
+     */
+    readonly canOpenExerciseDetails = computed(() => {
+        const exercise = this.exercise();
+        return !exercise.exerciseGroup || exercise.type === ExerciseType.MODELING || this.accountService.isAtLeastEditorInCourseWithId(this.courseId());
+    });
 }

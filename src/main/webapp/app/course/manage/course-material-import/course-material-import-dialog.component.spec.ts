@@ -8,17 +8,15 @@ import { CourseMaterialImportService } from './course-material-import.service';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
-import { TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { PaginatorModule } from 'primeng/paginator';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseMaterialImportDialogComponent', () => {
@@ -68,13 +66,11 @@ describe('CourseMaterialImportDialogComponent', () => {
             imports: [
                 CourseMaterialImportDialogComponent,
                 FormsModule,
-                MockModule(DialogModule),
-                MockModule(ButtonModule),
-                MockModule(CheckboxModule),
-                MockModule(TableModule),
-                MockModule(InputTextModule),
-                MockModule(ProgressSpinnerModule),
-                MockModule(PaginatorModule),
+                MockComponent(TumAetUiDialogComponent),
+                TumAetUiButtonDirective,
+                FaIconComponent,
+                MockComponent(TumAetUiCheckboxComponent),
+                MockComponent(TumAetUiProgressSpinnerComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -87,13 +83,11 @@ describe('CourseMaterialImportDialogComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
-                        MockModule(DialogModule),
-                        MockModule(ButtonModule),
-                        MockModule(CheckboxModule),
-                        MockModule(TableModule),
-                        MockModule(InputTextModule),
-                        MockModule(ProgressSpinnerModule),
-                        MockModule(PaginatorModule),
+                        MockComponent(TumAetUiDialogComponent),
+                        TumAetUiButtonDirective,
+                        FaIconComponent,
+                        MockComponent(TumAetUiCheckboxComponent),
+                        MockComponent(TumAetUiProgressSpinnerComponent),
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
                     ],
@@ -401,7 +395,7 @@ describe('CourseMaterialImportDialogComponent', () => {
         });
 
         it('should update pagination on page change', async () => {
-            component.onPageChange({ first: 10, rows: 10 });
+            component.onPageChange(1);
             await fixture.whenStable();
 
             expect(component.first()).toBe(10);

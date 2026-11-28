@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -25,7 +25,7 @@ export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportDialogFooterComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
     protected readonly faArrowLeft = faArrowLeft;
 
     back(): void {

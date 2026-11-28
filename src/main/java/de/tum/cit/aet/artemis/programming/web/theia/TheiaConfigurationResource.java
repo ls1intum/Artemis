@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -37,7 +37,7 @@ public class TheiaConfigurationResource {
      * @return a map of flavor/name -> image-link
      */
     @GetMapping("images")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getImagesForLanguage(@RequestParam("language") ProgrammingLanguage language) {
         return ResponseEntity.ok(this.theiaConfiguration.getImagesForLanguage(language));
     }

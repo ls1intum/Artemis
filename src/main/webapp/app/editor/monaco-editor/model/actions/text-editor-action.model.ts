@@ -7,10 +7,10 @@ import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 
 /** Instantiated (subclassed) and populated after construction; the definite-assignment (!) marker below is set later. */
 export abstract class TextEditorAction implements Disposable {
@@ -96,25 +96,15 @@ export abstract class TextEditorAction implements Disposable {
      * @param editor The editor whose model to register the completion provider for.
      * @param searchFn Function that returns all relevant items for the current search term. Note that Monaco also filters the items based on the user input.
      * @param mapToCompletionItemFn Function that maps an item to a Monaco completion suggestion.
-     * @param triggerCharacter The character that triggers the completion provider.
-     * @param listIncomplete Whether the list of suggestions is incomplete. If true, Monaco will keep searching for more suggestions.
-     * @param options Optional completer behavior: require a word boundary before the trigger character and/or override the scan length used to locate it.
      */
     registerCompletionProviderForCurrentModel<ItemType>(
         editor: TextEditor,
         searchFn: (searchTerm?: string) => Promise<ItemType[]>,
-        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange, searchTerm: string, index: number) => TextEditorCompletionItem,
-        triggerCharacter?: string,
-        listIncomplete?: boolean,
-        options?: { requireWordBoundaryBeforeTrigger?: boolean; scanLengthLimit?: number },
+        mapToCompletionItemFn: (item: ItemType, range: TextEditorRange) => TextEditorCompletionItem,
     ): Disposable {
         return editor.addCompleter({
-            triggerCharacter,
-            incomplete: listIncomplete ?? false,
             searchItems: searchFn,
             mapCompletionItem: mapToCompletionItemFn,
-            requireWordBoundaryBeforeTrigger: options?.requireWordBoundaryBeforeTrigger,
-            scanLengthLimit: options?.scanLengthLimit,
         });
     }
 

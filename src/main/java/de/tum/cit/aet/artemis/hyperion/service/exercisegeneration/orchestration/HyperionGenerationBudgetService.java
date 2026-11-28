@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -326,7 +327,7 @@ public class HyperionGenerationBudgetService {
         if (maxTokensPerUser <= 0 && maxTokensPerCourse <= 0 && maxTokensGlobal <= 0) {
             return;
         }
-        ZonedDateTime since = ZonedDateTime.now().minus(budgetWindow);
+        ZonedDateTime since = ZonedDateTime.now(ZoneOffset.UTC).minus(budgetWindow);
         ReservationTotals reservations = reservationTotals(userId, courseId);
         if (maxTokensPerUser > 0 && userId != null) {
             long used = tokenUsageTraceRepository.sumTokensSinceForUser(LLMServiceType.HYPERION, GenerationJobService.GENERATION_PIPELINE_ID, userId, since)

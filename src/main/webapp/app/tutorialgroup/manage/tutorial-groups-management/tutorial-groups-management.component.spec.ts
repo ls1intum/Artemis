@@ -9,8 +9,8 @@ import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
@@ -21,9 +21,8 @@ import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-bu
 import { TutorialGroupRowButtonsComponent } from './tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { TutorialGroupManagementService } from 'app/tutorialgroup/manage/service/tutorial-group-management.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 
@@ -108,7 +107,7 @@ describe('TutorialGroupsManagementComponent', () => {
             imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupManagementService, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -120,7 +119,7 @@ describe('TutorialGroupsManagementComponent', () => {
                     {},
                 ),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 // The paginator and the table's empty row translate through this adapter, as they do in the app.
                 provideArtemisTumAetUiTranslator(),
                 provideHttpClient(),
@@ -152,7 +151,8 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.id)).toEqual([tutorialGroupOne.id, tutorialGroupTwo.id]);
+        expect(component.tutorialGroups().map((tutorialGroup) => tutorialGroup.title)).toEqual([tutorialGroupOne.title, tutorialGroupTwo.title]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();

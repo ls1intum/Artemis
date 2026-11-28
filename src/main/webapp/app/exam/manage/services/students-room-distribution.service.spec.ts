@@ -5,7 +5,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 describe('StudentsRoomDistributionService', () => {
     let service: StudentsRoomDistributionService;
@@ -41,9 +42,9 @@ describe('StudentsRoomDistributionService', () => {
                 { id: 2, name: 'Room 2', roomNumber: 'R2', building: 'B2' },
             ];
 
-            service.loadRoomData();
+            service.loadRoomData(42, 7);
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/distribution-data`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/distribution-data`);
             expect(req.request.method).toBe('GET');
             req.flush(mockRooms);
 
@@ -51,9 +52,9 @@ describe('StudentsRoomDistributionService', () => {
         });
 
         it('should reset availableRooms to empty array on error', () => {
-            service.loadRoomData();
+            service.loadRoomData(42, 7);
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/distribution-data`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/distribution-data`);
             req.error(new ProgressEvent('error'));
 
             expect(service.availableRooms()).toEqual([]);
@@ -67,7 +68,7 @@ describe('StudentsRoomDistributionService', () => {
         };
 
         it('should immediately reset capacity data if no room IDs are provided', () => {
-            service.updateCapacityData([], 0.2);
+            service.updateCapacityData(42, 7, [], 0.2);
             expect(service.capacityData()).toEqual({
                 combinedDefaultCapacity: 0,
                 combinedMaximumCapacity: 0,
@@ -78,9 +79,9 @@ describe('StudentsRoomDistributionService', () => {
             const roomIds = [1, 2];
             const reserveFactor = 0.1;
 
-            service.updateCapacityData(roomIds, reserveFactor);
+            service.updateCapacityData(42, 7, roomIds, reserveFactor);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/rooms/distribution-capacities` && r.method === 'GET');
+            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
             expect(req.request.params.getAll('examRoomIds')).toEqual(['1', '2']);
             expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
 
@@ -91,9 +92,9 @@ describe('StudentsRoomDistributionService', () => {
 
         it('should reset capacityData on error', () => {
             const roomIds = [1];
-            service.updateCapacityData(roomIds, 0.1);
+            service.updateCapacityData(42, 7, roomIds, 0.1);
 
-            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/rooms/distribution-capacities` && r.method === 'GET');
+            const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/42/exams/7/rooms/distribution-capacities` && r.method === 'GET');
             req.error(new ProgressEvent('error'));
 
             expect(service.capacityData()).toEqual({
@@ -124,6 +125,42 @@ describe('StudentsRoomDistributionService', () => {
 
             expect(actualResponse?.status).toBe(200);
         });
+    });
+
+    it.each([
+        [undefined, 7],
+        [42, undefined],
+        [undefined, undefined],
+    ])('should return no rooms without course %s or exam %s without an HTTP request', (courseId, examId) => {
+        let rooms: RoomForDistributionDTO[] | undefined;
+        service.loadRoomsUsedInExam(courseId, examId).subscribe((response) => (rooms = response));
+        expect(rooms).toEqual([]);
+        httpMock.expectNone(() => true);
+    });
+
+    it.each(['rooms', 'seats', 'reseat'] as const)('should propagate the %s HTTP error', (operation) => {
+        const requests = {
+            rooms: { response: service.loadRoomsUsedInExam(42, 7), url: `${BASE_URL}/courses/42/exams/7/rooms-used`, method: 'GET' },
+            seats: { response: service.loadSeatsOfExamRoom(42, 7, 123), url: `${BASE_URL}/courses/42/exams/7/rooms/123/seats`, method: 'GET' },
+            reseat: { response: service.reseatStudent(42, 7, 99, 'R1', 'S1'), url: `${BASE_URL}/courses/42/exams/7/reseat-student`, method: 'POST' },
+        };
+        const selected = requests[operation];
+        let actualError: HttpErrorResponse | undefined;
+        let emitted = false;
+        const response: Observable<unknown> = selected.response;
+        response.subscribe({
+            next: () => (emitted = true),
+            error: (error: HttpErrorResponse) => (actualError = error),
+        });
+        const request = httpMock.expectOne(selected.url);
+        expect(request.request.method).toBe(selected.method);
+        const errorBody = { message: 'distribution unavailable' };
+        request.flush(errorBody, { status: 503, statusText: 'Service Unavailable' });
+        expect(emitted).toBe(false);
+        expect(actualError).toBeInstanceOf(HttpErrorResponse);
+        expect(actualError?.status).toBe(503);
+        expect(actualError?.error).toEqual(errorBody);
+        expect(actualError?.url).toBe(selected.url);
     });
 
     describe('loadRoomsUsedInExam', () => {
@@ -162,9 +199,9 @@ describe('StudentsRoomDistributionService', () => {
 
             let actualSeats: any;
 
-            service.loadSeatsOfExamRoom(examRoomId).subscribe((resp) => (actualSeats = resp));
+            service.loadSeatsOfExamRoom(42, 7, examRoomId).subscribe((resp) => (actualSeats = resp));
 
-            const req = httpMock.expectOne(`${BASE_URL}/rooms/${examRoomId}/seats`);
+            const req = httpMock.expectOne(`${BASE_URL}/courses/42/exams/7/rooms/${examRoomId}/seats`);
 
             expect(req.request.method).toBe('GET');
             req.flush(mockSeats);

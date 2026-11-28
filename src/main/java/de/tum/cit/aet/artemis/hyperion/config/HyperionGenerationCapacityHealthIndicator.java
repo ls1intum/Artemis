@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 
 /** Reports dedicated generation-worker capacity without involving LocalCI build agents. */
@@ -33,7 +34,7 @@ public class HyperionGenerationCapacityHealthIndicator implements HealthIndicato
         long now = System.currentTimeMillis();
         long previous = lastWarning.get();
         if (now - previous > 300_000 && lastWarning.compareAndSet(previous, now)) {
-            log.warn("Hyperion generation has no available worker. Check the generation broker, worker image and worker readiness.");
+            log.warn("Hyperion generation has no available worker. Check the distributed-data provider, worker image and worker readiness.");
         }
     }
 
@@ -42,7 +43,7 @@ public class HyperionGenerationCapacityHealthIndicator implements HealthIndicato
         int reachable = workers.reachableWorkers();
         int available = workers.availableWorkers();
         int capable = workers.capableWorkers();
-        return (capable == 0 ? Health.down() : Health.up()).withDetail("reachableWorkers", reachable).withDetail("capableWorkers", capable)
+        return (capable == 0 ? Health.status(ConnectorHealth.DEGRADED) : Health.up()).withDetail("reachableWorkers", reachable).withDetail("capableWorkers", capable)
                 .withDetail("availableWorkers", available).build();
     }
 }

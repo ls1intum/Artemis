@@ -13,7 +13,8 @@ import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/gradi
 import { Subject } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('ProgrammingExerciseTaskComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTaskComponent>;
@@ -140,7 +141,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         expect(taskFieldEl.textContent.trim()).toContain('testBubbleSort()');
     });
 
-    it('should bind a pTooltip with the full task name to the task name field so it stays readable when truncated', () => {
+    it('should bind a tooltip with the full task name to the task name field so it stays readable when truncated', () => {
         const longTaskName = 'testThisIsAVeryLongTaskNameThatWouldOtherwiseBeTruncatedByEllipsis()';
         taskService.currentTasks = [
             { taskName: longTaskName, testCases: [], stats: undefined },
@@ -152,9 +153,8 @@ describe('ProgrammingExerciseTaskComponent', () => {
         comp.ngOnInit();
         fixture.detectChanges();
 
-        const taskFieldTooltip = fixture.debugElement.query(By.css('.task__field')).injector.get(Tooltip);
-        expect(taskFieldTooltip.content).toBe(longTaskName);
-        expect(taskFieldTooltip.showOnEllipsis).toBe(true);
+        const taskFieldTooltip = fixture.debugElement.query(By.css('.task__field')).injector.get(TumAetUiTooltipDirective);
+        expect(taskFieldTooltip.content()).toBe(longTaskName);
     });
 
     it('should render test case names inside task__field elements when task is expanded', () => {
@@ -179,7 +179,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         expect(fieldTexts).toContain('testSelectionSort()');
     });
 
-    it('should bind a pTooltip with the full test name to each test case name field so it stays readable when truncated', () => {
+    it('should bind a tooltip with the full test name to each test case name field so it stays readable when truncated', () => {
         const longTestName = 'testThisIsAVeryLongTestCaseNameThatWouldOtherwiseBeTruncatedByEllipsis()';
         const testCases = [{ testName: longTestName, weight: 1 }];
         taskService.currentTasks = [{ taskName: 'Task1', testCases, stats: undefined }] as ProgrammingExerciseTask[];
@@ -193,12 +193,11 @@ describe('ProgrammingExerciseTaskComponent', () => {
         const taskFieldDebugEls = fixture.debugElement.queryAll(By.css('.task__field'));
         const testNameFieldDebugEl = taskFieldDebugEls.find((debugEl) => debugEl.nativeElement.textContent?.trim() === longTestName);
         expect(testNameFieldDebugEl).not.toBeUndefined();
-        const testNameFieldTooltip = testNameFieldDebugEl!.injector.get(Tooltip);
-        expect(testNameFieldTooltip.content).toBe(longTestName);
-        expect(testNameFieldTooltip.showOnEllipsis).toBe(true);
+        const testNameFieldTooltip = testNameFieldDebugEl!.injector.get(TumAetUiTooltipDirective);
+        expect(testNameFieldTooltip.content()).toBe(longTestName);
     });
 
-    it('should bind a pTooltip with the full points text to the resulting points field', () => {
+    it('should bind a tooltip with the full points text to the resulting points field', () => {
         taskService.currentTasks = [
             { taskName: 'Task1', testCases: [], stats: undefined },
             { taskName: 'Task2', testCases: [], stats: undefined },
@@ -218,10 +217,10 @@ describe('ProgrammingExerciseTaskComponent', () => {
         const taskFieldDebugEls = fixture.debugElement.queryAll(By.css('.task__field'));
         const resultingPointsFieldDebugEl = taskFieldDebugEls.find((debugEl) => debugEl.nativeElement.textContent?.trim() === '12.5P (83.3%)');
         expect(resultingPointsFieldDebugEl).not.toBeUndefined();
-        expect(resultingPointsFieldDebugEl!.injector.get(Tooltip).content).toBe('12.5P (83.3%)');
+        expect(resultingPointsFieldDebugEl!.injector.get(TumAetUiTooltipDirective).content()).toBe('12.5P (83.3%)');
     });
 
-    it('should bind a pTooltip with the full points text to each test case resulting points field when task is expanded', () => {
+    it('should bind a tooltip with the full points text to each test case resulting points field when task is expanded', () => {
         const testCases = [{ testName: 'test1', weight: 1, resultingPoints: 4, resultingPointsPercent: 100 }];
         taskService.currentTasks = [{ taskName: 'Task1', testCases, stats: undefined }] as ProgrammingExerciseTask[];
         fixture.componentRef.setInput('task', { taskName: 'Task1', testCases, stats: undefined } as ProgrammingExerciseTask);
@@ -234,7 +233,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         const taskFieldDebugEls = fixture.debugElement.queryAll(By.css('.task__field'));
         const resultingPointsFieldDebugEl = taskFieldDebugEls.find((debugEl) => debugEl.nativeElement.textContent?.trim() === '4P (100%)');
         expect(resultingPointsFieldDebugEl).not.toBeUndefined();
-        expect(resultingPointsFieldDebugEl!.injector.get(Tooltip).content).toBe('4P (100%)');
+        expect(resultingPointsFieldDebugEl!.injector.get(TumAetUiTooltipDirective).content()).toBe('4P (100%)');
     });
 
     it('should position every task__field tooltip above the row so it cannot be clipped or covered by the cells to its right', () => {
@@ -250,14 +249,11 @@ describe('ProgrammingExerciseTaskComponent', () => {
         const taskFieldDebugEls = fixture.debugElement.queryAll(By.css('.task__field'));
         expect(taskFieldDebugEls.length).toBeGreaterThan(0);
         for (const debugEl of taskFieldDebugEls) {
-            expect(debugEl.injector.get(Tooltip).tooltipPosition).toBe('top');
+            expect(debugEl.injector.get(TumAetUiTooltipDirective).placement()).toBe('top');
         }
     });
 
-    it('should append every task__field tooltip to the document body instead of the cramped table row', () => {
-        // Tooltip defaults appendTo to 'self', which inserts the popup right next to the truncated span:
-        // trapped inside .task__field's own overflow:hidden (invisible) or squeezed into the same flex row
-        // (visually covered by the next cell). appendTo="body" escapes both failure modes.
+    it('should not announce the tooltip of a task__field as its description, because it repeats the visible text', () => {
         const testCases = [{ testName: 'test1', weight: 1, resultingPoints: 4, resultingPointsPercent: 100 }];
         taskService.currentTasks = [{ taskName: 'Task1', testCases, stats: undefined }] as ProgrammingExerciseTask[];
         fixture.componentRef.setInput('task', { taskName: 'Task1', testCases, stats: undefined } as ProgrammingExerciseTask);
@@ -270,7 +266,93 @@ describe('ProgrammingExerciseTaskComponent', () => {
         const taskFieldDebugEls = fixture.debugElement.queryAll(By.css('.task__field'));
         expect(taskFieldDebugEls.length).toBeGreaterThan(0);
         for (const debugEl of taskFieldDebugEls) {
-            expect(debugEl.injector.get(Tooltip).appendTo()).toBe('body');
+            expect(debugEl.injector.get(TumAetUiTooltipDirective).describesHost()).toBe(false);
         }
+    });
+
+    describe('bonus points inputs', () => {
+        const bonusPointsInput = (name: string) => fixture.nativeElement.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+
+        async function render(task: ProgrammingExerciseTask) {
+            taskService.currentTasks = [task, { taskName: 'Task2', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+            vi.spyOn(taskService, 'initializeTask').mockReturnValue(task);
+            fixture.componentRef.setInput('task', task);
+            fixture.componentRef.setInput('index', 0);
+            comp.ngOnInit();
+            comp.open.set(true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        it('should show the bonus points of the task and of each test and distribute the typed task bonus points over its tests', async () => {
+            const testCases = [
+                { testName: 'test1', weight: 1, bonusPoints: 1.5 },
+                { testName: 'test2', weight: 1, bonusPoints: 2 },
+            ];
+            const task = { taskName: 'Task1', bonusPoints: 3.5, testCases, stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+            expect(bonusPointsInput('Task1-bonusPoints').value).toBe('3.5');
+            expect(bonusPointsInput('test1-bonusPoints').value).toBe('1.5');
+            expect(bonusPointsInput('test2-bonusPoints').value).toBe('2');
+
+            typeIntoInputNumber(bonusPointsInput('Task1-bonusPoints'), '5,5');
+
+            expect(task.bonusPoints).toBe(5.5);
+            expect(testCases[0]).toEqual(expect.objectContaining({ bonusPoints: 2.75, changed: true }));
+            expect(testCases[1]).toEqual(expect.objectContaining({ bonusPoints: 2.75, changed: true }));
+            expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
+        });
+
+        it('should remove the bonus points of every test when the bonus points of the task are cleared', async () => {
+            const testCases = [
+                { testName: 'test1', weight: 1, bonusPoints: 1.5 },
+                { testName: 'test2', weight: 1, bonusPoints: 2 },
+            ];
+            const task = { taskName: 'Task1', bonusPoints: 3.5, testCases, stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+
+            typeIntoInputNumber(bonusPointsInput('Task1-bonusPoints'), '');
+
+            expect(task.bonusPoints).toBeUndefined();
+            expect(testCases[0]).toEqual(expect.objectContaining({ bonusPoints: 0, changed: true }));
+            expect(testCases[1]).toEqual(expect.objectContaining({ bonusPoints: 0, changed: true }));
+        });
+
+        it('should mark a test as changed when its bonus points are typed', async () => {
+            const testCase = { testName: 'test1', weight: 1, bonusPoints: 1, changed: false };
+            const task = { taskName: 'Task1', testCases: [testCase], stats: undefined } as ProgrammingExerciseTask;
+            await render(task);
+
+            typeIntoInputNumber(bonusPointsInput('test1-bonusPoints'), '0.25');
+
+            expect(testCase.bonusPoints).toBe(0.25);
+            expect(testCase.changed).toBe(true);
+            expect(comp.updateTasksEvent.emit).toHaveBeenCalled();
+        });
+
+        it('should not accept negative bonus points of a test', async () => {
+            const testCase = { testName: 'test1', weight: 1, bonusPoints: 1, changed: false };
+            await render({ taskName: 'Task1', testCases: [testCase], stats: undefined } as ProgrammingExerciseTask);
+
+            typeIntoInputNumber(bonusPointsInput('test1-bonusPoints'), '-2');
+
+            expect(testCase.bonusPoints).toBe(0);
+        });
+
+        it('should disable the bonus points of the task that collects the tests without a task', async () => {
+            const task = { taskName: comp.NOT_ASSIGNED_TO_TASK_NAME, testCases: [], stats: undefined } as ProgrammingExerciseTask;
+            taskService.currentTasks = [task, { taskName: 'Task2', testCases: [], stats: undefined }] as ProgrammingExerciseTask[];
+            fixture.componentRef.setInput('task', task);
+            fixture.componentRef.setInput('index', 0);
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(bonusPointsInput(`${comp.NOT_ASSIGNED_TO_TASK_NAME}-bonusPoints`).disabled).toBe(true);
+        });
     });
 });

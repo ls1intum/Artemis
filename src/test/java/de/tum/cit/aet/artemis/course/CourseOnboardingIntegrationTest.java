@@ -41,7 +41,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void newCourse_shouldHaveOnboardingDoneFalse() {
         assertThat(course.isOnboardingDone()).isFalse();
 
@@ -51,7 +51,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_setOnboardingDoneTrue_shouldPersist() throws Exception {
         course.setOnboardingDone(true);
 
@@ -65,7 +65,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_onboardingDoneTrue_cannotBeResetToFalse() throws Exception {
         // First, set onboardingDone to true
         course.setOnboardingDone(true);
@@ -85,7 +85,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_onboardingDoneFalse_canBeSetToTrue() throws Exception {
         // Verify initial state is false
         assertThat(course.isOnboardingDone()).isFalse();
@@ -98,7 +98,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_onboardingDoneFalse_staysFalseIfNotChanged() throws Exception {
         // Update the course without changing onboardingDone (remains false by default)
         course.setDescription("Updated description");
@@ -111,7 +111,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_onboardingDoneTrue_preservedOnUnrelatedUpdate() throws Exception {
         // Set onboardingDone to true
         course.setOnboardingDone(true);

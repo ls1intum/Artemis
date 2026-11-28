@@ -1,13 +1,3 @@
-@if (postingContentPart()?.contentBeforeReference) {
-    <span
-        class="markdown-preview"
-        [jhiMarkdown]="processedContentBeforeReference()"
-        [markdownPosting]="true"
-        [markdownContentBeforeReference]="true"
-        [markdownAllowedTags]="allowedHtmlTags"
-        [markdownAllowedAttributes]="allowedHtmlAttributes"
-    ></span>
-}
 @if (postingContentPart()?.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart()?.linkToReference" [queryParams]="postingContentPart()?.queryParams">
         <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart()?.referenceType!)" />{{ postingContentPart()?.referenceStr }}
@@ -65,7 +55,7 @@
     </a>
 }
 @if (postingContentPart()?.slideToReference) {
-    <div style="max-width: 400px">
+    <div class="max-w-100">
         @if (!imageNotFound()) {
             <a
                 class="reference"
@@ -78,7 +68,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
             >
                 <img
-                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border border-(--border-color)"
                     [src]="postingContentPart()?.slideToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
@@ -89,15 +79,15 @@
             </a>
         }
         @if (imageNotFound()) {
-            <div class="card">
-                <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
-            </div>
+            <tumaet-ui-card>
+                <h5 class="mb-0 text-xl font-medium"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
+            </tumaet-ui-card>
         }
     </div>
 }
 
 @if (postingContentPart()?.imageToReference) {
-    <div [style.user-select]="'none'" [style.max-width.px]="400">
+    <div class="max-w-100 select-none">
         @if (postingContentPart()?.imageToReference && !imageNotFound()) {
             <a
                 class="reference"
@@ -110,7 +100,7 @@
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
             >
                 <img
-                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    class="mt-1 mb-1 h-auto max-w-full rounded-sm border border-(--border-color)"
                     [src]="postingContentPart()?.imageToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
@@ -120,21 +110,9 @@
                 />
             </a>
         } @else if (imageNotFound()) {
-            <div class="card">
-                <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
-            </div>
+            <tumaet-ui-card>
+                <h5 class="mb-0 text-xl font-medium"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
+            </tumaet-ui-card>
         }
     </div>
-}
-
-@if (postingContentPart()?.contentAfterReference) {
-    <span
-        class="markdown-preview"
-        style="white-space: pre-wrap"
-        [jhiMarkdown]="processedContentAfterReference()"
-        [markdownPosting]="true"
-        [markdownContentBeforeReference]="false"
-        [markdownAllowedTags]="allowedHtmlTags"
-        [markdownAllowedAttributes]="allowedHtmlAttributes"
-    ></span>
 }

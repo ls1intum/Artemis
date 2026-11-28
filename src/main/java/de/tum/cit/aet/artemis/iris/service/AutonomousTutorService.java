@@ -247,8 +247,7 @@ public class AutonomousTutorService {
         return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream().map(participant -> {
             var rolesInCourse = participant.getUser().getCourseRolesByCourseId().getOrDefault(course.getId(), EnumSet.noneOf(CourseRole.class));
             boolean isAtLeastTutor = rolesInCourse.stream().anyMatch(role -> role.isAtLeast(CourseRole.TEACHING_ASSISTANT));
-            return new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden() != null && participant.getIsHidden(),
-                    isAtLeastTutor);
+            return new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden(), isAtLeastTutor);
         }).collect(Collectors.toSet());
     }
 

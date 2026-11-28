@@ -35,6 +35,9 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
@@ -118,6 +121,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ExerciseConfigurationService exerciseConfigurationService;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     /**
@@ -152,7 +157,8 @@ public class ProgrammingExerciseCreationUpdateService {
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
             TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
-            ExerciseConfigurationService exerciseConfigurationService) {
+            ExerciseConfigurationService exerciseConfigurationService, CourseConfigurationRepository courseConfigurationRepository) {
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -176,6 +182,21 @@ public class ProgrammingExerciseCreationUpdateService {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
+    }
+
+    /**
+     * The setting of the course of the exercise that says who authors the first commit of its repositories.
+     *
+     * @param programmingExercise the exercise that is created
+     * @return the setting, or null if the course cannot be resolved or has no configuration, which leaves the exercise creator as the author
+     */
+    @Nullable
+    private InitialCommitAuthorDTO findInitialCommitAuthor(ProgrammingExercise programmingExercise) {
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null || course.getId() == null) {
+            return null;
+        }
+        return courseConfigurationRepository.findByCourseId(course.getId()).map(InitialCommitAuthorDTO::of).orElse(null);
     }
 
     /**
@@ -237,6 +258,10 @@ public class ProgrammingExerciseCreationUpdateService {
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
+        // These values only depend on the course and short name, so persist them with the initial insert.
+        programmingExercise.generateAndSetProjectKey();
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -247,9 +272,8 @@ public class ProgrammingExerciseCreationUpdateService {
         final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
         final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
+        buildConfig.setBranch(defaultBranch);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
-        savedProgrammingExercise.generateAndSetProjectKey();
-        savedBuildConfig.setBranch(defaultBranch);
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -258,15 +282,15 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.saveAndFlush(savedBuildConfig);
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        programmingExerciseRepository.updateRepositoryMetadataForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         if (!skipRepositoryAndBuildTrigger) {
-            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator, emptyRepositories);
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, savedBuildConfig, exerciseCreator,
+                    findInitialCommitAuthor(savedProgrammingExercise), emptyRepositories);
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
@@ -285,10 +309,13 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Restore competency links with proper exercise reference before final save
+        // Only the competency links still need writing. Keep their cascade save, but avoid merging and re-fetching
+        // the entire exercise graph when no links were selected (or none survived resolution).
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
-
-        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
+        if (!savedProgrammingExercise.getCompetencyLinks().isEmpty()) {
+            createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        }
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
@@ -530,11 +557,28 @@ public class ProgrammingExerciseCreationUpdateService {
             }
         }
         programmingExercise.validateDates();
+        validateBuildTimeWindowFitsDates(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
+    }
+
+    /**
+     * Rejects a date change that would leave the build time window of the exercise (if any) outside of its new dates, as no push would be built then.
+     * Callers that change several exercises call this before they persist anything.
+     *
+     * @param programmingExercise the exercise with its new dates
+     * @throws BadRequestAlertException if the stored window does not lie between the start (or release) date and the due date
+     */
+    public void validateBuildTimeWindowFitsDates(ProgrammingExercise programmingExercise) {
+        var window = programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(programmingExercise.getId());
+        ZonedDateTime earliest = programmingExercise.getStartDate() != null ? programmingExercise.getStartDate() : programmingExercise.getReleaseDate();
+        if (window != null && !window.isWithin(earliest, programmingExercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "programmingExercise",
+                    "buildTimeWindowOutsideExerciseDates");
+        }
     }
 
     /**
@@ -640,7 +684,22 @@ public class ProgrammingExerciseCreationUpdateService {
         }
     }
 
-    private void validateProblemStatementLength(@Nullable String problemStatement) {
+    /**
+     * Refuses an update of the exercise that changes the name of its channel to one that the channel does not accept. The update itself refuses it only after it has done other
+     * work, so a request that shares the update with other changes asks for this first. Nothing is changed.
+     *
+     * @param updatedProgrammingExercise the exercise with the update applied
+     */
+    public void validateChannelNameOfUpdate(ProgrammingExercise updatedProgrammingExercise) {
+        channelService.validateExerciseChannelUpdate(updatedProgrammingExercise);
+    }
+
+    /**
+     * Refuses a problem statement that is longer than the maximum length.
+     *
+     * @param problemStatement the problem statement, which may be absent
+     */
+    public void validateProblemStatementLength(@Nullable String problemStatement) {
         if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
                     "problemStatementTooLong");

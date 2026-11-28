@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Service, inject } from '@angular/core';
 
@@ -14,7 +15,9 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
         if (exerciseId) {
-            return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
+            return (isExamExerciseRoute(route) ? this.service.findForExam(exerciseId, true) : this.service.find(exerciseId, true)).pipe(
+                map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!),
+            );
         }
         return of(new ProgrammingExercise(undefined, undefined));
     }

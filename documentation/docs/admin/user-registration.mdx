@@ -2,6 +2,7 @@
 id: user-registration
 title: User Management
 sidebar_label: User Management
+last_reviewed: 2026-11-25
 ---
 
 This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
@@ -132,6 +133,59 @@ An account that is not activated within `registration.cleanup-time-minutes` (def
 activated, so the timer applies only to self-registration — no other provisioning path schedules it.
 The activation mail states this deadline in minutes, or in hours when the value is a whole number of hours.
 
+### Changing the email address
+
+The email address is where a password reset goes, so changing it must not be possible for someone who only holds a session of the
+account. When a user with an internal account changes the address in the settings, Artemis therefore does not apply it. It stores a
+request and mails one confirmation link to the **current** address and one to the **new** address. The address changes once the owners
+of both addresses have followed their link. Confirming only from the new address changes nothing, because that mailbox is the one an
+intruder would choose.
+
+- A request is valid for 24 hours. The settings page shows what is pending and offers to resend the mails or to cancel the request.
+  At most one request is pending per account, and another one, or a resend, is accepted one minute after the last. That pause is kept
+  across all nodes and is not ended by cancelling the request.
+- Anything that ends an intrusion also cancels a pending request: a completed password reset, a password change, an administrator
+  changing the password or the address, a deactivation and a deletion.
+- The previous address is told when the change has been applied, as before.
+- `allowed-email-pattern` applies to the new address, as it does at registration. The address is checked again when the change is
+  applied.
+- Without a configured mail server (`jhipster.mail.from` left at its default) nothing could be confirmed, so users cannot change
+  their address themselves and the settings field is disabled. An administrator can still change it in the user management, which
+  is also the way out for a user whose old mailbox no longer exists.
+- Accounts managed by an external provider (LDAP, SAML2 or OIDC) do not confirm a change: their address comes from the provider and the settings field is disabled.
+  If an address is nevertheless saved for such an account directly through the REST API while registration is enabled, `allowed-email-pattern` applies to it.
+- A request remembers the address the account had when it was made and the moment its credentials last changed, and the address is
+  applied only while both are still the same. If an administrator assigns another address, or the password is changed or reset,
+  while the request is being stored, the request is dropped instead of being applied.
+- The links in the mails point to `/account/confirm-email-change` on `server.url`. That page is public and confirms only after a
+  click, so a mail scanner that opens links cannot confirm a change. The path has to reach the client, as `/account/reset/finish` does.
+- `POST /api/core/public/account/confirm-email-change` is public and counts against the `ACCOUNT_MANAGEMENT` limit of the
+  application, see [Login form and rate limits](#login-form-and-rate-limits). The shipped nginx configuration has no zone for it.
+- The mails are written in the language the user saves with the request, and a resend uses the language of the account.
+- A request and a completed change are recorded in the [audit log](#audit-log) as `ACCOUNT_EMAIL_CHANGE_REQUESTED` and
+  `ACCOUNT_EMAIL_CHANGED`.
+- The settings of the client read `mailConfigured` from `/management/info`, which is false while `jhipster.mail.from` has its
+  default, to disable the field.
+
+### Sessions and new credentials
+
+A password reset or change, a deactivation and an administrator setting a password record the moment the credentials changed.
+Tokens that are already issued cannot be revoked, so the session in use before that moment would otherwise keep working until its
+token expires, and could use that time to add a passkey, an SSH key or an access token, each of which outlives the password reset.
+Artemis therefore compares the start of the session, the `iat` claim of its token, to that moment before it creates any of these
+credentials, and refuses a session that started earlier with `401`. The client then asks the user to sign in again. The same check
+applies to the repository access token for course staff and to turning a session into a tool token.
+
+Reading a credential back is guarded the same way: the endpoints that return the access token of a participation or of a
+repository require a current session. The account that the client reads when it loads the app does not
+refuse an outdated session, because the client would otherwise sign the user out of a session that may still read. It carries no
+credential: the deprecated personal VCS access token is never sent, only the date on which it expires.
+
+The check is made when a credential is created or read back. Other ordinary requests make no check
+and no database access for it. It does not end the read access of an older session, which stays valid until its token expires,
+and a side effect is that a user who has just changed their own password signs in again before adding a new SSH key or passkey.
+The student page [Your Account](/student/getting-started/account) describes what the user sees.
+
 ### Deactivation versus deletion
 
 - **Deactivation** keeps the account and its data but refuses authentication. It also revokes the
@@ -221,6 +275,27 @@ Users can then register on the start page with any address matching `allowed-ema
 pattern is configured, any address is accepted. A working mail server is required: without it the
 activation mail is never delivered and the account is deleted once the cleanup time elapses.
 
+### What people see
+
+People who register, or who change their email address in their account settings, can only use an
+address that matches `allowed-email-pattern`. The whole address has to match, and Artemis compares it in
+lowercase, so capital letters in what someone types do not matter. Write the pattern for lowercase letters:
+a pattern that requires a capital letter, such as `[A-Z]+@tum\.de`, never matches.
+
+- The form shows the text from `allowed-email-pattern-readable` next to the email field, for example
+  `@tum.de, @in.tum.de`. Always set it, in words that people understand.
+- A moment after someone stops typing, the form asks the server and says right away if the address is
+  not allowed, so nobody has to fill in the whole form to find out. The server applies the same rule to
+  the address that it applies when the form is sent.
+- If the server cannot answer at that moment, the form does not mark the address and lets the person
+  continue: the address is checked again when the form is sent, and the person then sees that it is not
+  allowed.
+
+You do not have to do anything for this. The pattern is written once and is only ever evaluated by the
+server. Because campus networks can share one address, the check has its own, generous request limit of
+300 per minute and client IP address, which does not use up the limit for registration itself. You can
+change it with `artemis.rate-limiting.email-address-check-requests-per-minute`.
+
 ## Related authentication settings
 
 Each of the external mechanisms is enabled by its own property. `ldap.enabled` and `saml2.enabled` have
@@ -270,11 +345,14 @@ not terminate at this nginx configuration.
 | `POST /saml2` | `loginlimit`, 30 r/m | none — the SAML2 callback exchanges an already established assertion |
 | `GET /login-options` | `loginoptionslimit`, 30 r/m | `LOGIN_OPTIONS`, 30 rpm |
 | `/register`, `/activate`, `/account/reset-password/*` | `accountrecoverylimit`, 5 r/m | `ACCOUNT_MANAGEMENT`, 5 rpm |
+| `POST /email-allowed` (the check while an address is typed) | none | `EMAIL_ADDRESS_CHECK`, 300 rpm |
+| `POST /account/confirm-email-change` | none | `ACCOUNT_MANAGEMENT`, 5 rpm |
 | git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
 
 Application-level limits can be overridden per type under `artemis.rate-limiting`, for example
-`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is off unless
-`artemis.rate-limiting.enabled` is `true`.
+`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is on by default and is switched
+off with `artemis.rate-limiting.enabled: false`. The one exception is the limit for [client error reports](/admin/client-error-reports):
+it cannot be switched off, and it applies even then.
 
 If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
 otherwise only the application-level limits apply — and the SAML2 callback, which has none of its own, is
@@ -290,9 +368,18 @@ records. The entries relevant to account state:
 | `ACTIVATE_USER` | An account is activated, by an administrator or by its owner redeeming an activation key | Whoever performed it, or `system` if unauthenticated | `user=<login>` |
 | `DEACTIVATE_USER` | An account is deactivated, through either the deactivate action or the admin edit form | The acting administrator | `user=<login>` |
 | `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
+| `ACCOUNT_EMAIL_CHANGE_REQUESTED` | An internal account asks for a new address, or has the confirmation mails sent again | The account's login | None |
+| `ACCOUNT_EMAIL_CHANGED` | The address of an account was replaced, after both addresses confirmed or directly for an external account | The account's login | None |
 
-All three are classified as security events, so they are written to `security_audit_event` and appear under
-the **Security** tab of **Server Administration → Audits** in the admin UI, or through `GET /api/admin/audits`.
+All of them are classified as security events, so they are written to `security_audit_event` and appear under
+the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
+To see what one account did, type its login in full into the search field of the page, or pass it as the
+`principal` parameter of the endpoint. The search matches the principal recorded with the event, which is the
+account that acted: for `DEACTIVATE_USER` that is the administrator, and the deactivated account is named in the
+data (`user=<login>`), so it is not found by this search. The login is compared exactly, as typed and in lower
+case, which keeps the search on an index; whether capital letters matter beyond that depends on the collation of the
+database, which ignores case on MySQL. A failed login attempt is recorded with the identifier as it was entered,
+which can be an e-mail address or a login with capital letters, so it is found by typing it exactly as it was entered.
 `DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
 revocation itself writes none. Retention is configured separately per log; see
 [Cleanup Service](cleanup-service.mdx).
@@ -320,7 +407,8 @@ OIDC has one only if the provider supplies it through the configured registratio
 
 ## Related pages
 
-- [Access Rights](access-rights.mdx) — roles, groups and what each may do
+- [Access Rights](access-rights.mdx) — roles and what each may do
+- [Your Account](/student/getting-started/account) — what a user sees when changing the email address or signing in again
 - [SAML2 Login and Registration](saml2-login-registration.mdx)
 - [OpenID Connect Login](oidc-login-registration.mdx)
 - [Deleting User Accounts](user-deletion.mdx) — deactivation, permanent deletion, and automatic cleanup of accounts

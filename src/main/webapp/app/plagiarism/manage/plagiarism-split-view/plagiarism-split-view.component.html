@@ -1,18 +1,19 @@
 <div class="plagiarism-split-view">
-    <p-splitter
+    <tumaet-ui-splitter
         class="plagiarism-splitter"
-        [class.collapsed-left]="collapsedSide() === 'left'"
-        [class.collapsed-right]="collapsedSide() === 'right'"
         layout="horizontal"
         [gutterSize]="gutterSize"
         [panelSizes]="panelSizes()"
-        [minSizes]="[10, 10]"
+        [minSizes]="minSizes()"
+        (sizesChange)="onSizesChange($event)"
+        (resizeEnd)="onResizeEnd($event)"
     >
         <ng-template #panel>
             <div class="plagiarism-split-pane">
                 @if (plagiarismComparison()) {
                     @if (isProgrammingOrTextExercise()) {
                         <jhi-text-submission-viewer
+                            [viewingPurpose]="forStudent() ? 'owner' : 'staff-preview'"
                             [fileSelectedSubject]="this.fileSelectedSubject"
                             [exercise]="exercise()"
                             [matches]="matchesA()"
@@ -31,6 +32,7 @@
                 @if (plagiarismComparison()) {
                     @if (isProgrammingOrTextExercise()) {
                         <jhi-text-submission-viewer
+                            [viewingPurpose]="forStudent() ? 'owner' : 'staff-preview'"
                             [fileSelectedSubject]="this.fileSelectedSubject"
                             [exercise]="exercise()"
                             [matches]="matchesB()"
@@ -44,18 +46,22 @@
                 }
             </div>
         </ng-template>
-    </p-splitter>
-    <!-- Lock-files control: follows the gutter (gutterCenterPx) so it stays on the divider while dragging instead of
-         staying fixed at the centre. Hidden when one pane is fully collapsed (there is no gutter then). -->
+    </tumaet-ui-splitter>
+    <!-- Lock-files control: follows the gutter (lockButtonLeft) so it stays on the divider while dragging instead of
+         staying fixed at the centre. Hidden when one pane is fully collapsed, because the divider then sits at the edge. -->
     @if (!collapsedSide()) {
-        <div class="split-pane-header-color" [style.left.px]="gutterCenterPx()">
+        <div class="split-pane-header-color" [style.left]="lockButtonLeft()">
             <button
                 type="button"
-                class="btn btn-sm"
+                tumAetUiButton
+                severity="secondary"
+                size="small"
+                [variant]="isLockFilesEnabled() ? 'outlined' : 'text'"
                 (click)="toggleLockFiles()"
-                [class.active]="isLockFilesEnabled()"
-                [pTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
-                tooltipPosition="bottom"
+                [attr.aria-pressed]="isLockFilesEnabled()"
+                [tumAetUiTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                tumAetUiTooltipPlacement="bottom"
+                tumAetUiTooltipDescribesHost="false"
                 [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
                 data-qa="lock-files-toggle-button"
             >

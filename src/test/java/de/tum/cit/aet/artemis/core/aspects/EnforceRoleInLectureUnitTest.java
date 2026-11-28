@@ -106,7 +106,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsTutorOfCourseProvider")
-    @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
+    @WithMockUser(username = TUTOR_OF_COURSE, roles = "USER")
     void testAsTutorOfCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
@@ -117,7 +117,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsTutorOfOtherCourseProvider")
-    @WithMockUser(username = TUTOR_OF_OTHER_COURSE, roles = "TA")
+    @WithMockUser(username = TUTOR_OF_OTHER_COURSE, roles = "USER")
     void testAsTutorOfOtherCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
@@ -129,7 +129,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsEditorOfCourseProvider")
-    @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_OF_COURSE, roles = "USER")
     void testAsEditorOfCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
@@ -140,7 +140,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsEditorOfOtherCourseProvider")
-    @WithMockUser(username = EDITOR_OF_OTHER_COURSE, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_OF_OTHER_COURSE, roles = "USER")
     void testAsEditorOfOtherCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
@@ -151,7 +151,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsInstructorOfCourseProvider")
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testAsInstructorOfCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }
@@ -162,7 +162,7 @@ class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("testAsInstructorOfOtherCourseProvider")
-    @WithMockUser(username = INSTRUCTOR_OF_OTHER_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_OTHER_COURSE, roles = "USER")
     void testAsInstructorOfOtherCourse(String endpoint, HttpStatus expectedStatus) throws Exception {
         callEndpoint(endpoint, expectedStatus);
     }

@@ -214,7 +214,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
     });
 
     it('should apply the provided buttonClass to the trigger button', () => {
-        fixture.componentRef.setInput('buttonClass', 'btn btn-outline-primary btn-sm atlas-trigger-marker');
+        fixture.componentRef.setInput('buttonClass', 'atlas-trigger-marker');
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('button'));

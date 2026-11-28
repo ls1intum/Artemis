@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
@@ -33,12 +33,17 @@ describe('QuizReEvaluateComponent start time', () => {
         quizExercise.title = 'MyQuiz';
         quizExercise.releaseDate = dayjs('2030-06-02T12:00:00');
         quizExercise.quizQuestions = [];
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { courseId: '123', exerciseId: '456' };
+        snapshot.queryParams = {};
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+        vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'quiz-exercises/:exerciseId/re-evaluate' });
 
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
-                MockProvider(QuizExerciseService, { find: () => of(new HttpResponse({ body: quizExercise })) }),
-                { provide: ActivatedRoute, useValue: { params: of({ exerciseId: 456 }) } },
+                MockProvider(TumAetUiDialogService),
+                MockProvider(QuizExerciseService, { find: () => of(quizExercise) }),
+                { provide: ActivatedRoute, useValue: { snapshot, params: of(snapshot.params), queryParams: of(snapshot.queryParams) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },

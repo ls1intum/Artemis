@@ -29,7 +29,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
+import { ExamStartInformationComponent } from 'app/exam/overview/exam-start-information/exam-start-information.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -54,7 +57,7 @@ describe('ExamParticipationCoverComponent', () => {
         exam = new Exam();
         exam.course = course;
         exam.id = 123;
-        exam.testExam = false;
+        exam.examMode = ExamMode.REAL;
         studentExam = new StudentExam();
         studentExam.testRun = false;
         studentExam.id = 1;
@@ -97,6 +100,13 @@ describe('ExamParticipationCoverComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         vi.clearAllMocks();
+    });
+
+    it('should select instructor-owner conduction from known course access before loading', () => {
+        vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
+        component.startExam();
+        expect(load).toHaveBeenCalledWith(course.id, exam.id, studentExam.id, 'instructor-owner');
     });
 
     it('should initialize accountName when identity resolves', async () => {
@@ -151,11 +161,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         const card: HTMLElement = fixture.nativeElement.firstElementChild;
         expect(card.getAttribute('data-testid')).toBe('exam-cover');
-        expect(card.classList).toContain('px-3!');
+        expect(card.classList).toContain('px-3');
         expect(card.classList).not.toContain('px-4!');
         expect(card.classList).not.toContain('px-6!');
         // the same 12px between the rule and the content as on the pages of the exam
-        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3!');
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-finished-header"]').classList).toContain('mb-3');
     });
 
     it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
@@ -170,7 +180,7 @@ describe('ExamParticipationCoverComponent', () => {
         const rescheduledExam = new Exam();
         rescheduledExam.course = course;
         rescheduledExam.id = 123;
-        rescheduledExam.testExam = false;
+        rescheduledExam.examMode = ExamMode.REAL;
         rescheduledExam.startDate = dayjs().add(2, 'minutes');
         fixture.componentRef.setInput('exam', rescheduledExam);
         flushInputs();
@@ -204,7 +214,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithStartDate = new Exam();
         examWithStartDate.course = course;
         examWithStartDate.id = 123;
-        examWithStartDate.testExam = false;
+        examWithStartDate.examMode = ExamMode.REAL;
         examWithStartDate.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', examWithStartDate);
 
@@ -219,7 +229,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examFutureStart = new Exam();
         examFutureStart.course = course;
         examFutureStart.id = 123;
-        examFutureStart.testExam = false;
+        examFutureStart.examMode = ExamMode.REAL;
         examFutureStart.startDate = startDate.add(1, 'hours');
         fixture.componentRef.setInput('exam', examFutureStart);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -233,7 +243,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examNoStart = new Exam();
         examNoStart.course = course;
         examNoStart.id = 123;
-        examNoStart.testExam = false;
+        examNoStart.examMode = ExamMode.REAL;
         examNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', examNoStart);
         component.startExam();
@@ -253,7 +263,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExam = new Exam();
         testExam.course = course;
         testExam.id = 123;
-        testExam.testExam = true;
+        testExam.examMode = ExamMode.TEST;
         testExam.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', testExam);
 
@@ -268,7 +278,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamFuture = new Exam();
         testExamFuture.course = course;
         testExamFuture.id = 123;
-        testExamFuture.testExam = true;
+        testExamFuture.examMode = ExamMode.TEST;
         testExamFuture.startDate = startDate1.add(2, 'hours');
         fixture.componentRef.setInput('exam', testExamFuture);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
@@ -282,7 +292,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamNoStart = new Exam();
         testExamNoStart.course = course;
         testExamNoStart.id = 123;
-        testExamNoStart.testExam = true;
+        testExamNoStart.examMode = ExamMode.TEST;
         testExamNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', testExamNoStart);
         component.startExam();
@@ -309,7 +319,7 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithDate = new Exam();
         examWithDate.course = course;
         examWithDate.id = 123;
-        examWithDate.testExam = false;
+        examWithDate.examMode = ExamMode.REAL;
         examWithDate.startDate = dayjs();
         fixture.componentRef.setInput('exam', examWithDate);
 
@@ -365,9 +375,12 @@ describe('ExamParticipationCoverComponent', () => {
         const examVisible = new Exam();
         examVisible.course = course;
         examVisible.id = 123;
-        examVisible.testExam = false;
+        examVisible.examMode = ExamMode.REAL;
         examVisible.visibleDate = dayjs().subtract(1, 'hours');
         fixture.componentRef.setInput('exam', examVisible);
+        flushInputs();
+        // a new exam resets the confirmation, so the student ticks the checkbox for this one
+        component.confirmed = true;
         expect(component.startButtonEnabled).toBe(true);
 
         fixture.componentRef.setInput('handInPossible', true);
@@ -396,9 +409,120 @@ describe('ExamParticipationCoverComponent', () => {
         const examFuture = new Exam();
         examFuture.course = course;
         examFuture.id = 123;
-        examFuture.testExam = false;
+        examFuture.examMode = ExamMode.REAL;
         examFuture.visibleDate = dayjs().add(1, 'hours');
         fixture.componentRef.setInput('exam', examFuture);
+        flushInputs();
         expect(component.startButtonEnabled).toBe(false);
+    });
+});
+
+/**
+ * The start page of the exam. It decides from the clock whether the start button may be used (from EXAM_START_WAIT_TIME_MINUTES before the start on). The application runs zoneless,
+ * so nothing re-renders the page just because time passes: these tests wait for the page to catch up on its own, with the same scheduling as in the browser.
+ */
+describe('ExamParticipationCoverComponent start window', () => {
+    const course = { id: 456 } as Course;
+
+    let component: ExamParticipationCoverComponent;
+    let fixture: ComponentFixture<ExamParticipationCoverComponent>;
+    let serverNow: dayjs.Dayjs;
+
+    function createExam(startInMinutes: number): Exam {
+        const scheduledExam = new Exam();
+        scheduledExam.course = course;
+        scheduledExam.id = 123;
+        scheduledExam.examMode = ExamMode.REAL;
+        scheduledExam.visibleDate = serverNow.subtract(1, 'hours');
+        scheduledExam.startDate = serverNow.add(startInMinutes, 'minutes');
+        return scheduledExam;
+    }
+
+    const startButton = () => fixture.nativeElement.querySelector('[data-testid="start-exam"]') as HTMLButtonElement;
+
+    /** The student has read the page, ticked the checkbox and signed with their name. */
+    async function fillInStartPage(exam: Exam) {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.accountName.set('admin');
+        component.enteredName = 'admin';
+        component.confirmed = true;
+        await fixture.whenStable();
+    }
+
+    beforeEach(() => {
+        // Only the interval of the component is faked: Angular schedules its rendering with other timers, which must keep running for whenStable().
+        vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+        serverNow = dayjs();
+
+        TestBed.configureTestingModule({
+            imports: [FormsModule, ExamParticipationCoverComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockPipe(ArtemisDatePipe)],
+            providers: [
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                MockProvider(ArtemisMarkdownService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
+            ],
+        }).overrideComponent(ExamParticipationCoverComponent, {
+            // The live events and the exam information are not under test and need services of the running exam.
+            remove: { imports: [ExamLiveEventsButtonComponent, ExamStartInformationComponent] },
+            add: { imports: [MockComponent(ExamLiveEventsButtonComponent), MockComponent(ExamStartInformationComponent)] },
+        });
+        vi.spyOn(TestBed.inject(ArtemisServerDateService), 'now').mockImplementation(() => serverNow);
+
+        fixture = TestBed.createComponent(ExamParticipationCoverComponent);
+        component = fixture.componentInstance;
+        const studentExam = new StudentExam();
+        studentExam.testRun = false;
+        studentExam.id = 1;
+        fixture.componentRef.setInput('startView', true);
+        fixture.componentRef.setInput('studentExam', studentExam);
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should enable the start button once the start window opens, without any interaction of the student', async () => {
+        // The student prepared the start page while the window was still closed.
+        await fillInStartPage(createExam(EXAM_START_WAIT_TIME_MINUTES + 1));
+        expect(startButton().disabled).toBe(true);
+
+        // Time passes and the window opens. Nothing the student does (no click, no typing) and no input of the component changes: the page has to notice on its own.
+        serverNow = serverNow.add(2, 'minutes');
+        await vi.advanceTimersByTimeAsync(2000);
+        await fixture.whenStable();
+
+        expect(startButton().disabled).toBe(false);
+    });
+
+    it('should disable the start button again when a live schedule update moves the start out of the window', async () => {
+        await fillInStartPage(createExam(EXAM_START_WAIT_TIME_MINUTES - 1));
+        expect(startButton().disabled).toBe(false);
+
+        // The instructor postpones the exam, so that the start is outside of the window again.
+        fixture.componentRef.setInput('exam', createExam(EXAM_START_WAIT_TIME_MINUTES + 30));
+        await fixture.whenStable();
+        // A new exam resets the confirmation, which alone would disable the button: confirm again so that only the start window decides.
+        component.confirmed = true;
+        await fixture.whenStable();
+
+        // No timer is advanced, so the polling interval cannot be the one that noticed the postponement.
+        expect(component.startWindowOpen()).toBe(false);
+        expect(startButton().disabled).toBe(true);
+    });
+
+    it('should stop checking the clock when the page is left', async () => {
+        await fillInStartPage(createExam(EXAM_START_WAIT_TIME_MINUTES + 1));
+        expect(vi.getTimerCount()).toBeGreaterThan(0);
+
+        fixture.destroy();
+
+        expect(vi.getTimerCount()).toBe(0);
     });
 });

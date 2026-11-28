@@ -16,10 +16,13 @@ export class FileUploaderService {
     /**
      * Uploads a file for the markdown editor to the server.
      * @param file The file to upload
+     * @param courseId The ID of the course the markdown belongs to, the server requires at least the tutor role in it; omitted for the editors of the administration
      * @return A promise with the response from the server or an error
      */
-    uploadMarkdownFile(file: File): Promise<FileUploadResponse> {
-        return this.uploadFile(file, '/api/core/markdown-file-upload', MAX_FILE_SIZE);
+    uploadMarkdownFile(file: File, courseId?: number): Promise<FileUploadResponse> {
+        // An editor outside of a course is part of the administration, which has its own endpoint that only administrators may call.
+        const url = courseId ? `/api/core/markdown-file-upload?courseId=${courseId}` : '/api/core/admin/markdown-file-upload';
+        return this.uploadFile(file, url, MAX_FILE_SIZE);
     }
 
     /**

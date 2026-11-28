@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -9,13 +9,13 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizReEvaluateWarningComponent } from 'app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
@@ -23,8 +23,8 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;
-    let quizReEvaluateService: QuizReEvaluateService;
-    let dialogRef: DynamicDialogRef;
+    let quizExerciseEvaluationApi: QuizExerciseEvaluationApi;
+    let dialogRef: TumAetUiDialogRef;
     let navigationUtilService: ArtemisNavigationUtilService;
 
     const course = { id: 123 } as Course;
@@ -66,18 +66,20 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         return quizExercise;
     };
 
-    const dialogConfig = { data: {} } as DynamicDialogConfig;
+    const dialogData = {} as { quizExercise: QuizExercise; files: Map<string, File> };
+    const dialogConfig = new TumAetUiDialogConfig({ data: dialogData });
 
     beforeEach(() => {
         const quizExercise = createQuizExercise();
         const files = new Map<string, File>();
-        dialogConfig.data = { quizExercise, files };
+        dialogData.quizExercise = quizExercise;
+        dialogData.files = files;
 
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(DynamicDialogRef),
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
-                MockProvider(QuizReEvaluateService),
+                MockProvider(TumAetUiDialogRef),
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
+                MockProvider(QuizExerciseEvaluationApi),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -88,12 +90,12 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
-        quizReEvaluateService = TestBed.inject(QuizReEvaluateService);
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        quizExerciseEvaluationApi = TestBed.inject(QuizExerciseEvaluationApi);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
         comp.quizExercise = quizExercise;
-        vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: createQuizExercise() })));
+        vi.spyOn(quizService, 'find').mockReturnValue(of(createQuizExercise()));
     });
 
     afterEach(() => {
@@ -105,6 +107,15 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         comp.ngOnInit();
         expect(comp.backUpQuiz).toBeTruthy();
         expect(comp.isSaving).toBe(false);
+    });
+
+    it('loads the exam source backup via exam details', () => {
+        dialogData.quizExercise.exerciseGroup = {};
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(createQuizExercise()));
+        comp.ngOnInit();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(dialogData.quizExercise.id);
+        expect(quizService.find).not.toHaveBeenCalled();
+        expect(comp.backUpQuiz).toBeTruthy();
     });
 
     it('should close the dialog without a result on clear', () => {
@@ -315,7 +326,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     });
 
     it('should confirm change successfully', () => {
-        vi.spyOn(quizReEvaluateService, 'reevaluate').mockReturnValue(of(new HttpResponse({ body: createQuizExercise() })));
+        vi.spyOn(quizExerciseEvaluationApi, 'reEvaluateQuizExercise').mockReturnValue(of(undefined));
         comp.files = new Map();
 
         comp.confirmChange();
@@ -326,7 +337,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     });
 
     it('should handle confirm change error', () => {
-        vi.spyOn(quizReEvaluateService, 'reevaluate').mockReturnValue(throwError(() => new Error('error')));
+        vi.spyOn(quizExerciseEvaluationApi, 'reEvaluateQuizExercise').mockReturnValue(throwError(() => new Error('error')));
         comp.files = new Map();
 
         comp.confirmChange();

@@ -5,7 +5,6 @@ import java.util.Set;
 import de.tum.cit.aet.artemis.notification.web.CourseNotificationResource;
 import de.tum.cit.aet.artemis.notification.web.GlobalNotificationSettingResource;
 import de.tum.cit.aet.artemis.notification.web.PushNotificationResource;
-import de.tum.cit.aet.artemis.notification.web.SystemNotificationResource;
 import de.tum.cit.aet.artemis.notification.web.UserCourseNotificationSettingResource;
 import de.tum.cit.aet.artemis.notification.web.UserCourseNotificationStatusResource;
 import de.tum.cit.aet.artemis.notification.web.admin.AdminSystemNotificationResource;
@@ -24,8 +23,7 @@ class NotificationResourceArchitectureTest extends AbstractModuleResourceArchite
     // Once the legacy prefixes are removed these exemptions should be removed.
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
-        return Set.of(CourseNotificationResource.class, GlobalNotificationSettingResource.class, PushNotificationResource.class, SystemNotificationResource.class,
-                UserCourseNotificationSettingResource.class, UserCourseNotificationStatusResource.class, AdminSystemNotificationResource.class,
-                PublicSystemNotificationResource.class);
+        return Set.of(CourseNotificationResource.class, GlobalNotificationSettingResource.class, PushNotificationResource.class, UserCourseNotificationSettingResource.class,
+                UserCourseNotificationStatusResource.class, AdminSystemNotificationResource.class, PublicSystemNotificationResource.class);
     }
 }

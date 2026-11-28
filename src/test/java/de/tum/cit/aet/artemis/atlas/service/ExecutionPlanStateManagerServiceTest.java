@@ -208,4 +208,65 @@ class ExecutionPlanStateManagerServiceTest {
         assertThat(step.getStatus()).isEqualTo(ExecutionPlanStateManagerService.StepStatus.DONE);
         assertThat(step.getResult()).isEqualTo(result);
     }
+
+    @Test
+    void unavailableCacheMakesCompletionAndCancellationHarmless() {
+        when(cacheManager.getCache(ExecutionPlanStateManagerService.ATLAS_EXECUTION_PLAN_CACHE)).thenReturn(null);
+        assertThat(service.completeStepAndGetNext("s", null)).isEmpty();
+        service.cancelPlan("s");
+        org.mockito.Mockito.verifyNoInteractions(cache);
+    }
+
+    @Test
+    void expiredPlanIsEvictedRatherThanAdvanced() {
+        var expired = org.mockito.Mockito.mock(ExecutionPlanStateManagerService.ExecutionPlan.class);
+        when(expired.isExpired()).thenReturn(true);
+        when(cache.get("s", ExecutionPlanStateManagerService.ExecutionPlan.class)).thenReturn(expired);
+        assertThat(service.hasPlan("s")).isFalse();
+        assertThat(service.completeStepAndGetNext("s", null)).isEmpty();
+        verify(cache).evict("s");
+        verify(expired, never()).markCurrentStepDone(any());
+    }
+
+    @Test
+    void emptyAndCompletedPlansRejectDuplicateCompletionWithoutChangingCache() {
+        var empty = new ExecutionPlanStateManagerService.ExecutionPlan(List.of(), "goal");
+        when(cache.get("s", ExecutionPlanStateManagerService.ExecutionPlan.class)).thenReturn(empty);
+        assertThat(service.completeStepAndGetNext("s", null)).isEmpty();
+        empty.markCurrentStepDone(null);
+        empty.advanceToNextStep();
+        assertThat(empty.getCurrentStep()).isNull();
+        var step = new ExecutionPlanStateManagerService.PlanStep(ExecutionPlanStateManagerService.AgentType.COMPETENCY_EXPERT);
+        var completed = new ExecutionPlanStateManagerService.ExecutionPlan(List.of(step), "goal");
+        completed.markCurrentStepDone(null);
+        when(cache.get("s", ExecutionPlanStateManagerService.ExecutionPlan.class)).thenReturn(completed);
+        assertThat(service.completeStepAndGetNext("s", null)).isEmpty();
+        verify(cache, never()).put(any(), any());
+        verify(cache, never()).evict(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(ExecutionPlanStateManagerService.PlanTemplate.class)
+    void templateExerciseMetadataReachesOnlyExerciseMapperSteps(ExecutionPlanStateManagerService.PlanTemplate template) {
+        service.initializePlan("s", template, "goal", 8L, "Classes");
+        var captured = org.mockito.ArgumentCaptor.forClass(ExecutionPlanStateManagerService.ExecutionPlan.class);
+        verify(cache).put(eq("s"), captured.capture());
+        for (var step : captured.getValue().getSteps()) {
+            assertThat(step.getExerciseId()).isEqualTo(step.getAgentType() == ExecutionPlanStateManagerService.AgentType.EXERCISE_MAPPER ? 8L : null);
+            assertThat(step.getExerciseTitle()).isEqualTo(step.getAgentType() == ExecutionPlanStateManagerService.AgentType.EXERCISE_MAPPER ? "Classes" : null);
+        }
+    }
+
+    @Test
+    void stepWithoutResultIsNotIncludedInPreviousResults() {
+        var first = new ExecutionPlanStateManagerService.PlanStep(ExecutionPlanStateManagerService.AgentType.COMPETENCY_EXPERT);
+        var second = new ExecutionPlanStateManagerService.PlanStep(ExecutionPlanStateManagerService.AgentType.EXERCISE_MAPPER);
+        var plan = new ExecutionPlanStateManagerService.ExecutionPlan(List.of(first, second), "goal");
+        when(cache.get("s", ExecutionPlanStateManagerService.ExecutionPlan.class)).thenReturn(plan);
+        assertThat(service.completeStepAndGetNext("s", null)).hasValueSatisfying(next -> assertThat(next.previousResults()).isEmpty());
+        assertThat(first.getStatus()).isEqualTo(ExecutionPlanStateManagerService.StepStatus.DONE);
+        assertThat(second.getStatus()).isEqualTo(ExecutionPlanStateManagerService.StepStatus.ACTIVE);
+        plan.advanceToNextStep();
+        assertThat(plan.getCurrentStep()).isSameAs(second);
+    }
 }

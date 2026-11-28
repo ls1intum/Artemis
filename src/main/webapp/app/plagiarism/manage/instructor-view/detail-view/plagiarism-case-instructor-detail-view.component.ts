@@ -1,20 +1,20 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
-import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { PageType } from 'app/communication/communication.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronDown, faInfo, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { abbreviateString } from 'app/foundation/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,19 +22,12 @@ import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    NgbDropdown,
-    NgbDropdownItem,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
-    NgbNav,
-    NgbNavContent,
-    NgbNavItem,
-    NgbNavItemRole,
-    NgbNavLink,
-    NgbNavLinkBase,
-    NgbNavOutlet,
-} from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
@@ -50,30 +43,32 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
-    styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
+    styleUrls: ['./plagiarism-case-instructor-detail-view.component.css'],
     providers: [CommunicationService, CourseConversationsService, LinkPreviewService, LinkifyService],
     imports: [
+        PlagiarismCaseHeaderComponent,
         TranslateDirective,
-        PlagiarismCaseVerdictComponent,
         FaIconComponent,
         RouterLink,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
         PostingThreadComponent,
         PostCreateEditModalComponent,
-        NgbNav,
-        NgbNavItem,
-        NgbNavItemRole,
-        NgbNavLink,
-        NgbNavLinkBase,
-        NgbNavContent,
         ConfirmAutofocusButtonComponent,
         FormsModule,
-        NgbNavOutlet,
         PlagiarismCaseReviewComponent,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTabComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabsComponent,
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
@@ -95,12 +90,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly createdPost = signal<Post>(undefined!);
     currentAccount?: User;
 
-    activeTab = 1;
+    activeTab: number | string | undefined = 1;
 
     getExerciseUrlSegment = getExerciseUrlSegment;
-    getIcon = getIcon;
-    faUser = faUser;
     faPrint = faPrint;
+    faChevronDown = faChevronDown;
     faInfo = faInfo;
     faCheck = faCheck;
 

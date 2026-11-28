@@ -1,0 +1,64 @@
+<div class="fixed z-[1070] flex items-center" data-testid="inline-refinement" [style.top.px]="top()" [style.left.px]="left()">
+    @if (!isExpanded()) {
+        <!-- Collapsed: Trigger button with text label -->
+        <button
+            tumAetUiButton
+            type="button"
+            severity="primary"
+            size="small"
+            class="gap-1 rounded-full shadow-sm"
+            data-testid="inline-refinement-trigger"
+            (click)="expand()"
+            [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
+        >
+            <fa-icon [icon]="facArtemisIntelligence" class="text-xs" />
+            <span class="whitespace-nowrap">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
+        </button>
+    } @else {
+        <!-- Expanded: Input field with submit -->
+        <div class="flex items-center gap-1 rounded-full border border-(--border-color) bg-surface-raised px-2 py-1 shadow-lg">
+            <input
+                [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
+                #instructionInput
+                type="text"
+                class="w-full max-w-lg min-w-80 border-none bg-transparent px-2 py-1 text-color outline-none placeholder:text-muted-color disabled:opacity-60"
+                data-testid="inline-refinement-input"
+                [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
+                [ngModel]="instruction()"
+                (ngModelChange)="instruction.set($event)"
+                (keydown)="onKeydown($event)"
+                [disabled]="isLoading()"
+                [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
+            />
+            <span class="px-1 text-xs whitespace-nowrap" [class.text-state-danger]="isNearLimit()" [class.text-muted-color]="!isNearLimit()">
+                {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
+            </span>
+            <button
+                tumAetUiButton
+                type="button"
+                severity="primary"
+                size="small"
+                class="size-7 min-w-7 shrink-0 rounded-full p-0!"
+                data-testid="inline-refinement-submit"
+                (click)="submit()"
+                [disabled]="!instruction() || isLoading()"
+                [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
+            >
+                <fa-icon [icon]="faPaperPlane" />
+            </button>
+            <button
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="text"
+                size="small"
+                class="size-6 shrink-0 rounded-full p-0!"
+                data-testid="inline-refinement-close"
+                [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.close' | artemisTranslate"
+                (click)="handleClose()"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+    }
+</div>

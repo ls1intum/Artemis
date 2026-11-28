@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.programming.service.structureoraclegenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 
 import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaField;
@@ -9,29 +12,20 @@ import com.thoughtworks.qdox.model.JavaMember;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
 
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly throughout the other serializers in order to avoid code
  * repetition.
  */
 class SerializerUtil {
 
-    private static final JsonMapper mapper = JsonObjectMapper.get();
-
     /**
-     * This method is used to serialize the string representations of each modifier into a JSON array.
+     * This method is used to serialize the string representations of each modifier into a list.
      *
      * @param modifiers  A collection of modifiers that needs to get serialized.
      * @param javaMember The model of the {@link java.lang.reflect.Member} for which all modifiers should get serialized
-     * @return The JSON array containing the string representations of the modifiers.
+     * @return The list containing the string representations of the modifiers.
      */
-    static ArrayNode serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
-        ArrayNode modifiersArray = mapper.createArrayNode();
+    static List<String> serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
         // Check if the class is an interface and adjust modifiers accordingly
         if (javaMember.getDeclaringClass().isInterface()) {
             if (javaMember instanceof JavaMethod method) {
@@ -49,21 +43,32 @@ class SerializerUtil {
                 modifiers.add("final");
             }
         }
-        modifiers.forEach(modifiersArray::add);
-        return modifiersArray;
+        return new ArrayList<>(modifiers);
     }
 
     /**
-     * This method is used to serialize the string representations of each modifier into a JSON array.
+     * This method is used to serialize the simple names of the annotations into a list, leaving out the {@code @Override} annotation.
      *
      * @param annotations The annotations of the java member (e.g. Override, Inject, etc.)
-     * @return The JSON array containing the string representations of the modifiers.
+     * @return The list containing the simple names of the annotations.
      */
-    static ArrayNode serializeAnnotations(List<JavaAnnotation> annotations) {
+    static List<String> serializeAnnotations(List<JavaAnnotation> annotations) {
         filterAnnotations(annotations);
-        ArrayNode annotationsArray = mapper.createArrayNode();
-        annotations.forEach(annotation -> annotationsArray.add(annotation.getType().getSimpleName()));
-        return annotationsArray;
+        List<String> annotationNames = new ArrayList<>();
+        annotations.forEach(annotation -> annotationNames.add(annotation.getType().getSimpleName()));
+        return annotationNames;
+    }
+
+    /**
+     * This method serializes the annotations of a java member only when the member declares at least one annotation before the {@code @Override} annotation is filtered out,
+     * so that a member carrying only {@code @Override} still yields an empty list.
+     *
+     * @param annotations The annotations of the java member (e.g. Override, Inject, etc.)
+     * @return The list containing the simple names of the annotations, or null when the member declares no annotation at all
+     */
+    @Nullable
+    static List<String> serializeAnnotationsIfPresent(List<JavaAnnotation> annotations) {
+        return annotations.isEmpty() ? null : serializeAnnotations(annotations);
     }
 
     /**
@@ -77,34 +82,14 @@ class SerializerUtil {
     }
 
     /**
-     * This method is used to serialize the string representations of each parameter into a JSON array.
+     * This method is used to serialize the string representations of each parameter into a list.
      *
-     * @param parameters A collection of modifiers that needs to get serialized.
-     * @return The JSON array containing the string representations of the parameter types.
+     * @param parameters A collection of parameters that needs to get serialized.
+     * @return The list containing the string representations of the parameter types.
      */
-    static ArrayNode serializeParameters(List<JavaParameter> parameters) {
-        ArrayNode parametersArray = mapper.createArrayNode();
-        parameters.forEach(parameter -> parametersArray.add(parameter.getType().getValue()));
-        return parametersArray;
-    }
-
-    /**
-     * creates the json object for the serialization and inserts the name and the modifiers
-     *
-     * @param name        The name property of the new JSON object
-     * @param javaMember  The model for the {@link java.lang.reflect.Member} for which all modifiers should get serialized
-     * @param modifiers   A collection of modifiers that need to get serialized
-     * @param annotations A collection of annotations that need to get serialized
-     * @return A new JSON object containing all serialized modifiers under the {@code "modifiers"} key and the name of
-     *         the object under the {@code "name"} key
-     */
-    static ObjectNode createJsonObject(String name, Set<String> modifiers, JavaMember javaMember, List<JavaAnnotation> annotations) {
-        ObjectNode jsonObject = mapper.createObjectNode();
-        jsonObject.put("name", name);
-        jsonObject.set("modifiers", serializeModifiers(modifiers, javaMember));
-        if (!annotations.isEmpty()) {
-            jsonObject.set("annotations", serializeAnnotations(annotations));
-        }
-        return jsonObject;
+    static List<String> serializeParameters(List<JavaParameter> parameters) {
+        List<String> parameterTypes = new ArrayList<>();
+        parameters.forEach(parameter -> parameterTypes.add(parameter.getType().getValue()));
+        return parameterTypes;
     }
 }

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,7 +17,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * DTO describing one generated quiz question.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Schema(name = "GeneratedQuizQuestion", description = "One generated quiz question")
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "One generated quiz question")
 public record GeneratedQuizQuestionDTO(@NotNull @Schema(description = "Question type") QuizQuestionGenerationType type,
         @NotBlank @Size(min = 1, max = 500) @Schema(description = "Question title") String title,
         @NotBlank @Size(min = 1, max = 10000) @Schema(description = "Question text") String questionText,

@@ -18,8 +18,6 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,7 +28,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 
 /**
@@ -96,14 +93,6 @@ public class IrisMessage extends DomainObject {
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "accessed_memories", columnDefinition = "json")
-    private List<MemirisMemoryDTO> accessedMemories = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "created_memories", columnDefinition = "json")
-    private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
     /**
      * Deliberately not annotated {@code @Lob}. The column is plain text on both databases - Liquibase {@code clob}
@@ -216,22 +205,6 @@ public class IrisMessage extends DomainObject {
             messageContent.setMessage(this);
             this.content.add(messageContent);
         }
-    }
-
-    public List<MemirisMemoryDTO> getAccessedMemories() {
-        return accessedMemories;
-    }
-
-    public void setAccessedMemories(List<MemirisMemoryDTO> accessedMemories) {
-        this.accessedMemories = accessedMemories;
-    }
-
-    public List<MemirisMemoryDTO> getCreatedMemories() {
-        return createdMemories;
-    }
-
-    public void setCreatedMemories(List<MemirisMemoryDTO> createdMemories) {
-        this.createdMemories = createdMemories;
     }
 
     @Nullable

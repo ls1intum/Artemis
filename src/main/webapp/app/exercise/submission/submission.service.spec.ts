@@ -11,8 +11,9 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('Submission Service', () => {
@@ -52,6 +53,12 @@ describe('Submission Service', () => {
                 credits: 1,
             },
         ];
+    });
+
+    it('uses the explicit instructor complaint queue URL', () => {
+        service.getSubmissionsWithComplaintsForInstructor(42).subscribe((response) => expect(response.body).toEqual([]));
+        const req = httpMock.expectOne({ url: 'api/exercise/exercises/42/submissions-with-complaints/for-instructor', method: 'GET' });
+        req.flush([]);
     });
 
     afterEach(() => {

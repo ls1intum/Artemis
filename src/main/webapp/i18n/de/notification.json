@@ -45,7 +45,9 @@
             "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
             "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
             "sendMaintenanceEmail": "Wartungsankündigung per E-Mail an alle Lehrenden senden",
-            "maintenanceEmailInfo": "Eine E-Mail wird an {{ count }} Lehrende aller laufenden Kurse gesendet."
+            "maintenanceEmailInfo": "Eine E-Mail wird an {{ count }} Lehrende aller laufenden Kurse gesendet.",
+            "titleMaxlength": "Der Benachrichtigungstitel darf höchstens 255 Zeichen lang sein.",
+            "textMaxlength": "Der Benachrichtigungstext darf höchstens 2000 Zeichen lang sein."
         },
         "groupNotification": {
             "title": {
@@ -190,6 +192,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "Keine Nachrichtenvorschau verfügbar.",
             "newPostNotification": {
                 "settingsTitle": "Neue Nachricht",
                 "title": "Neue Nachricht",
@@ -289,17 +292,17 @@
             },
             "channelDeletedNotification": {
                 "title": "Kanal gelöscht",
-                "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",
+                "content": "{{channelName}} wurde in {{courseName}} gelöscht.",
                 "settingsTitle": "Kanal gelöscht"
             },
             "addedToChannelNotification": {
                 "title": "Kanal beigetreten",
-                "content": "Du bist {{channelName}} in {{courseTitle}} beigetreten.",
+                "content": "Du bist {{channelName}} in {{courseName}} beigetreten.",
                 "settingsTitle": "Kanal beigetreten"
             },
             "removedFromChannelNotification": {
                 "title": "Aus Kanal entfernt",
-                "content": "Du wurdest aus {{channelName}} in {{courseTitle}} entfernt.",
+                "content": "Du wurdest aus {{channelName}} in {{courseName}} entfernt.",
                 "settingsTitle": "Aus Kanal entfernt"
             },
             "tutorialGroupAssignedNotification": {

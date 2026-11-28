@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -12,10 +13,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
@@ -66,7 +66,6 @@ type CourseDateField = (typeof courseDateFields)[number];
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
-    let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
@@ -78,7 +77,6 @@ describe('Course Management Service', () => {
     let isAtLeastEditorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
-    let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
     let parseExerciseCategoriesSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
@@ -107,7 +105,6 @@ describe('Course Management Service', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
-        lectureService = TestBed.inject(LectureService);
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
         localStorageService = TestBed.inject(LocalStorageService);
@@ -117,7 +114,6 @@ describe('Course Management Service', () => {
         isAtLeastTutorInCourseSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
-        convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
         courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
@@ -158,7 +154,6 @@ describe('Course Management Service', () => {
     /** The response adapter owns the conversion, so the service must not run a second date or category pass over it. */
     const expectNoSecondConversion = () => {
         expect(convertExercisesDateFromServerSpy).not.toHaveBeenCalled();
-        expect(convertDatesForLecturesFromServerSpy).not.toHaveBeenCalled();
     };
 
     const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {
@@ -251,6 +246,44 @@ describe('Course Management Service', () => {
 
         httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
         expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
+    it.each(['findForTutor', 'findForInstructor'] as const)('%s preserves conversion and title side effects', (method) => {
+        const titleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let body: Course | null | undefined;
+        courseManagementService[method](7).subscribe((response) => (body = response.body));
+        const suffix = method === 'findForTutor' ? 'for-tutor' : 'for-instructor';
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7, title: 'Course', startDate: '2026-10-14T14:00:00Z' });
+        expect(body?.startDate?.toISOString()).toBe('2026-10-14T14:00:00.000Z');
+        expect(titleSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+        ['STUDENT', 'for-tutor'],
+        ['TEACHING_ASSISTANT', 'for-tutor'],
+        ['EDITOR', 'for-tutor'],
+        ['INSTRUCTOR', 'for-instructor'],
+    ] as const)('management chooses %s audience before reading a course', (role, suffix) => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: [role] }] }));
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7 });
+    });
+
+    it('selects the instructor projection for a numeric course ID from route parameters', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] }));
+        const route = new ActivatedRouteSnapshot();
+        route.params = { courseId: '7' };
+        courseManagementService.findForManagement(route.params['courseId']).subscribe();
+        const request = httpMock.expectOne((request) => request.url.startsWith(`${resourceUrl}/7/`));
+        request.flush({ id: 7 });
+        expect(request.request.url).toBe(`${resourceUrl}/7/for-instructor`);
+    });
+
+    it('management uses tutor projection for a passkey-blocked administrator without instructor membership', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, authorities: ['ROLE_ADMIN'], courseRoles: [] }));
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-tutor` }).flush({ id: 7 });
     });
 
     it('should find the course', () => {
@@ -1002,16 +1035,25 @@ describe('Course DTO adapter boundary', () => {
                     title: 'Exam with points',
                     startDate: '2026-01-01T00:00:00Z',
                     endDate: '2026-01-01T02:00:00Z',
-                    testExam: false,
+                    examMode: ExamMode.REAL,
                     examMaxPoints: 20,
                     course: { id: 5, title: 'Course' },
                 },
-                { id: 2, title: 'Exam without points', startDate: '2026-01-01T00:00:00Z', endDate: '2026-01-01T02:00:00Z', testExam: false, course: { id: 5, title: 'Course' } },
+                {
+                    id: 2,
+                    title: 'Exam without points',
+                    startDate: '2026-01-01T00:00:00Z',
+                    endDate: '2026-01-01T02:00:00Z',
+                    examMode: ExamMode.TEST_WITH_SUPERVISED_SESSION,
+                    course: { id: 5, title: 'Course' },
+                },
             ],
         };
 
         const result = coursesForDashboardFromDTO(dto);
 
+        expect(result.activeExams?.[0].examMode).toBe(ExamMode.REAL);
+        expect(result.activeExams?.[1].examMode).toBe(ExamMode.TEST_WITH_SUPERVISED_SESSION);
         expect(result.activeExams?.[0].examMaxPoints).toBe(20);
         expect(result.activeExams?.[1].examMaxPoints).toBeUndefined();
     });

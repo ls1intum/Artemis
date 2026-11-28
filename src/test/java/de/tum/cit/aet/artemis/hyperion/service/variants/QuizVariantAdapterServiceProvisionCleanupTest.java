@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
 /**
  * Unit test for the quiz counterpart of the programming provisioner's post-import cleanup (see
- * {@link ProgrammingVariantAdapterServiceProvisionCleanupTest}): {@code importQuizExercise} saves the new quiz
+ * the programming import path): {@code importQuizExercise} saves the new quiz
  * BEFORE creating its channel and updating competency progress. A failure after that save leaves a persisted
  * clone behind while {@code provision()} never returns, so the pipeline's own null-variant cleanup can never find
  * it. This test forces a post-save import failure and asserts the clone is deleted instead of leaked.
@@ -62,7 +63,7 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
 
         adapters = new QuizVariantAdapterService(quizExerciseRepository, quizExerciseImportService, mock(QuizExerciseService.class), mock(VariantPlacementService.class),
                 mock(ExerciseVariantJobService.class), JsonObjectMapper.get(), mock(HyperionPromptTemplateService.class), mock(LLMTokenUsageService.class),
-                mock(UserRepository.class), exerciseDeletionService, null);
+                mock(UserRepository.class), exerciseDeletionService, HyperionTestChatClients.returning(null));
 
         QuizExercise original = new QuizExercise();
         original.setId(SOURCE_ID);

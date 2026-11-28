@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
@@ -7,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,7 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
+import org.springframework.cloud.netflix.eureka.serviceregistry.EurekaRegistration;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -58,17 +60,14 @@ public class EurekaInstanceHelper {
 
     private final Optional<Registration> registration;
 
-    private final Optional<ServiceRegistry<Registration>> serviceRegistry;
-
     private final Environment env;
 
     @Value("${spring.hazelcast.port:5701}")
     private int hazelcastPort;
 
-    public EurekaInstanceHelper(DiscoveryClient discoveryClient, Optional<Registration> registration, Optional<ServiceRegistry<Registration>> serviceRegistry, Environment env) {
+    public EurekaInstanceHelper(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
-        this.serviceRegistry = serviceRegistry;
         this.env = env;
     }
 
@@ -99,7 +98,7 @@ public class EurekaInstanceHelper {
      * @return true if running as a Hazelcast client, false otherwise
      */
     public boolean isRunningAsClient() {
-        return env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
+        return (env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) || env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
                 && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_BUILDAGENT));
     }
 
@@ -114,12 +113,9 @@ public class EurekaInstanceHelper {
      * @return list of core node addresses in "host:port" format, empty if no core nodes found
      */
     public List<String> discoverCoreNodeAddresses() {
-        if (registration.isEmpty()) {
-            log.warn("Service registry not available for auto-discovery of core nodes.");
-            return List.of();
-        }
-
-        String serviceId = registration.get().getServiceId();
+        // A standalone client can fetch the registry without registering itself. Use the same
+        // Artemis service name that core nodes register under in that case.
+        String serviceId = registration.map(Registration::getServiceId).orElseGet(() -> env.getProperty("eureka.instance.appname", "Artemis"));
         log.info("Auto-discovering core nodes from service registry for serviceId '{}'", serviceId);
         List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 
@@ -326,9 +322,8 @@ public class EurekaInstanceHelper {
      * and enables proper address comparison in cluster management.
      *
      * <p>
-     * A re-registration is attempted to propagate the metadata change to the Eureka server.
-     * Note that Eureka discovery is eventually consistent - metadata propagation may take
-     * up to ~90 seconds (multiple heartbeat intervals) before other clients see the change.
+     * Eureka copies registration metadata into its own instance information. Mark that copy dirty so the next
+     * replication sends the actual Hazelcast address, not the core node's HTTP address.
      *
      * @param hazelcastHost the Hazelcast bind address to store in metadata
      * @param hazelcastPort the Hazelcast port to store in metadata
@@ -339,18 +334,8 @@ public class EurekaInstanceHelper {
             registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             log.info("Registered Hazelcast address in service registry: host={}, port={}", hazelcastHost, hazelcastPort);
 
-            // Attempt re-registration to propagate metadata change (eventually consistent, may take ~90s)
-            if (serviceRegistry.isPresent()) {
-                try {
-                    serviceRegistry.get().register(registration.get());
-                    log.info("Attempted Eureka re-registration for Hazelcast metadata (propagation is eventually consistent)");
-                }
-                catch (Exception e) {
-                    log.warn("Failed to trigger Eureka re-registration: {}. Metadata will propagate on subsequent heartbeats.", e.getMessage());
-                }
-            }
-            else {
-                log.debug("ServiceRegistry not available - metadata will propagate on subsequent Eureka heartbeats");
+            if (registration.get() instanceof EurekaRegistration eurekaRegistration) {
+                eurekaRegistration.getApplicationInfoManager().registerAppMetadata(Map.of("hazelcast.host", hazelcastHost, "hazelcast.port", String.valueOf(hazelcastPort)));
             }
         }
     }

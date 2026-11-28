@@ -1,3 +1,4 @@
+import { SavedPostingBannerComponent } from '../saved-posting-banner/saved-posting-banner.component';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -23,20 +24,20 @@ import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangle
 import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -45,16 +46,17 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
-    styleUrls: ['./answer-post.component.scss'],
+    styleUrls: ['../communication.component.css', './answer-post.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        SavedPostingBannerComponent,
         NgClass,
         FormsModule,
-        ButtonModule,
-        TextareaModule,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
         FaIconComponent,
         TranslateDirective,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         PostingHeaderComponent,
         PostingContentComponent,
         PostingReactionsBarComponent,
@@ -282,26 +284,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition.set({
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            this.showDropdown.set(true);
-            this.adjustDropdownPosition();
+            this.openDropdownAt(event);
             this.disableBodyScroll();
-        }
-    }
-
-    /**
-     * Adjusts dropdown position if it would overflow the screen.
-     */
-    adjustDropdownPosition() {
-        const dropdownWidth = 200;
-        const screenWidth = window.innerWidth;
-
-        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.update((position) => cloneWith(position, { x: screenWidth - dropdownWidth - 10 }));
         }
     }
 

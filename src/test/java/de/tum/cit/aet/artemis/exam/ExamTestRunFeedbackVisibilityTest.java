@@ -82,7 +82,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorConductingATestRunDoesNotSeeTestCasesHiddenUntilResultsAreReleased() throws Exception {
         StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
         Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
@@ -93,7 +93,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorConductingATestRunSeesAllTestCasesOnceTheExamResultsArePublished() throws Exception {
         StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
         Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
@@ -107,7 +107,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void otherInstructorStillSeesAllTestCasesOfATestRun() throws Exception {
         StudentParticipation testRunParticipation = createTestRunParticipation("instructor1");
         Result result = addResultWithBothTestCases(addSubmission(testRunParticipation));
@@ -118,7 +118,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorStillSeesTestCasesHiddenUntilResultsAreReleasedOfAStudentParticipation() throws Exception {
         ProgrammingSubmission studentSubmission = programmingExerciseUtilService.addProgrammingSubmission(examExercise,
                 (ProgrammingSubmission) new ProgrammingSubmission().submitted(true), TEST_PREFIX + "student1");
@@ -132,7 +132,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void newResultPushedToInstructorConductingATestRunDoesNotContainTestCasesHiddenUntilResultsAreReleased() throws Exception {
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Submission testRunSubmission = addSubmission(createTestRunParticipation("instructor1"));

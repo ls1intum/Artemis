@@ -5,16 +5,16 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
 
 import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title/git-diff-file-panel-title.component';
 import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
-    styleUrls: ['./git-diff-report.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         GitDiffLineStatComponent,
@@ -22,10 +22,9 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
         GitDiffFileComponent,
         ArtemisTranslatePipe,
         FontAwesomeModule,
-        NgbTooltipModule,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ButtonComponent,
-        NgbAccordionModule,
-        NgbCollapse,
     ],
 })
 export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
@@ -84,6 +83,13 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     private lastDiffInformation?: RepositoryDiffInformation;
     private intersectionObserver?: IntersectionObserver;
     private lazyObserverInitTimeoutId?: number;
+
+    /** Translation key of the tooltip that explains the added and removed line counts. */
+    protected readonly lineStatTooltipKey = computed(() =>
+        this.diffForTemplateAndSolution()
+            ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
+            : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline',
+    );
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
     readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
@@ -241,7 +247,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     }
 
     onToggleClick(title: string, wasCollapsed: boolean) {
-        // NgB will flip it after this click, so remember the new state.
         const newCollapsedState = !wasCollapsed;
         const overrides = new Map(this.userCollapsedOverrides());
         overrides.set(title, newCollapsedState);
@@ -254,7 +259,15 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     }
 
     private findScrollRoot(): HTMLElement | null {
-        const hostElement = this.hostElementRef.nativeElement;
-        return hostElement.closest('.modal-body') ?? null;
+        // The nearest scrolling ancestor, for example the content area of a dialog. Without one the viewport scrolls.
+        let element = this.hostElementRef.nativeElement.parentElement;
+        while (element) {
+            const overflowY = getComputedStyle(element).overflowY;
+            if (overflowY === 'auto' || overflowY === 'scroll') {
+                return element;
+            }
+            element = element.parentElement;
+        }
+        return null;
     }
 }

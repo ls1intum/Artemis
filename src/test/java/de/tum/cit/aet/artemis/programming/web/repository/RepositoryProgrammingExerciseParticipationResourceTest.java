@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -30,13 +32,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -106,7 +108,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private RepositoryAccessService repositoryAccessService;
 
     @Mock
-    private LocalVCServletService localVCServletService;
+    private LocalVCPushProcessingService localVCPushProcessingService;
 
     @Mock
     private RepositoryParticipationService repositoryParticipationService;
@@ -126,7 +128,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void setUp() {
         resource = new RepositoryProgrammingExerciseParticipationResource(userRepository, authCheckService, participationAuthCheckService, gitService, repositoryService,
                 participationService, programmingExerciseRepository, participationRepository, buildLogService, programmingSubmissionRepository, submissionPolicyRepository,
-                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService,
+                repositoryAccessService, Optional.of(localVCPushProcessingService), repositoryParticipationService,
                 org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
@@ -146,6 +148,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private void withAccessibleParticipation() throws Exception {
         lenient().when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         lenient().when(repositoryParticipationService.getRepositoryFromGitService(anyBoolean(), any())).thenReturn(repository);
     }
@@ -231,13 +234,36 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     @Test
     void getFilesForPlagiarismView_readsTheRepositoryThroughThePlagiarismSpecificLookup() throws Exception {
         // The plagiarism view is shown to people who are not allowed into the editor, so it has its own access path.
-        when(repositoryParticipationService.getRepositoryForPlagiarismView(PARTICIPATION_ID)).thenReturn(repository);
+        when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID)).thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, null));
+        when(repositoryParticipationService.getRepositoryFromGitService(true, participation)).thenReturn(repository);
         when(repositoryService.getFiles(repository)).thenReturn(java.util.Map.of("Main.java", de.tum.cit.aet.artemis.programming.domain.FileType.FILE));
 
         var response = resource.getFilesForPlagiarismView(PARTICIPATION_ID);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsKey("Main.java");
+    }
+
+    @Test
+    void getFilesForPlagiarismView_withComparedCommit_readsTheCommitInsteadOfTheLiveRepository() throws Exception {
+        when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID))
+                .thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, "abc123"));
+        when(repositoryService.getFilesAtCommit(participation, "abc123")).thenReturn(Map.of("Main.java", FileType.FILE));
+
+        var response = resource.getFilesForPlagiarismView(PARTICIPATION_ID);
+
+        assertThat(response.getBody()).containsKey("Main.java");
+        verify(repositoryParticipationService, never()).getRepositoryFromGitService(anyBoolean(), any());
+    }
+
+    @Test
+    void getFileForPlagiarismView_withComparedCommit_readsTheFileOfTheCommit() throws Exception {
+        when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID))
+                .thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, "abc123"));
+        when(repositoryService.getFileAtCommit(participation, "abc123", "Main.java")).thenReturn(ResponseEntity.ok("compared".getBytes()));
+
+        assertThat(resource.getFileForPlagiarismView(PARTICIPATION_ID, "Main.java").getBody()).asString().isEqualTo("compared");
+        verify(repositoryParticipationService, never()).getRepositoryFromGitService(anyBoolean(), any());
     }
 
     @Test
@@ -265,7 +291,6 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 
@@ -322,7 +347,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
 
     @Test
     void getFileForPlagiarismView_readsTheFileThroughThePlagiarismSpecificLookup() throws Exception {
-        when(repositoryParticipationService.getRepositoryForPlagiarismView(PARTICIPATION_ID)).thenReturn(repository);
+        when(repositoryParticipationService.resolvePlagiarismViewTarget(PARTICIPATION_ID)).thenReturn(new RepositoryParticipationService.PlagiarismViewTarget(participation, null));
+        when(repositoryParticipationService.getRepositoryFromGitService(true, participation)).thenReturn(repository);
         when(repositoryService.getFileFromRepository("Main.java", repository)).thenReturn(org.springframework.http.ResponseEntity.ok("content".getBytes()));
 
         assertThat(resource.getFileForPlagiarismView(PARTICIPATION_ID, "Main.java").getBody()).asString().isEqualTo("content");
@@ -401,7 +427,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, PARTICIPATION_ID)).thenReturn(Optional.empty());
 
         assertThat(resource.commitChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(localVCServletService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
+        verify(localVCPushProcessingService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
     }
 
     @Test

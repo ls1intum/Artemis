@@ -1,3 +1,5 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +18,6 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -29,7 +30,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
@@ -55,11 +56,12 @@ import {
 } from 'app/exercise/util/exercise-validation.util';
 import { ExerciseFormState } from 'app/exercise/util/exercise-form-state';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
-    styleUrl: './text-exercise-update.component.scss',
+    styleUrl: '../../../../exercise/shared/exercise-update-grading-layout.css',
     imports: [
         FormsModule,
         TranslateDirective,
@@ -67,7 +69,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
@@ -82,13 +84,15 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FeatureOverlayComponent,
         ExerciseTimelineComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
     private readonly textExerciseService = inject(TextExerciseService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
@@ -233,7 +237,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.exerciseState.patch('course', undefined);
                         } else {
                             // The target course where we want to import into
-                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.exerciseState.patch('exerciseGroup', undefined);
                         }

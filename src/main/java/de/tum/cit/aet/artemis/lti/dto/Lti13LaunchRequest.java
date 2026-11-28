@@ -4,9 +4,10 @@ import org.springframework.security.oauth2.core.oidc.IdTokenClaimNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
@@ -47,14 +48,26 @@ public record Lti13LaunchRequest(String iss, String sub, String deploymentId, St
         return new Lti13LaunchRequest(iss, sub, deploymentId, resourceLinkId, targetLinkUri, agsClaim, clientRegistrationId);
     }
 
+    /**
+     * The part of the resource link claim of an LTI 1.3 ID token that Artemis reads.
+     *
+     * @param id the resource link ID
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record ResourceLinkDTO(String id) {
+    }
+
     private static String extractResourceLinkId(OidcIdToken ltiIdToken) {
         Object resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
         if (resourceLinkClaim != null) {
-            JsonNode resourceLinkJson = JsonObjectMapper.get().convertValue(resourceLinkClaim, JsonNode.class);
-            JsonNode idNode = resourceLinkJson.get("id");
-            // asString(null): the claim comes from a third-party LMS, and Jackson 3 throws on a non-string node where
-            // Jackson 2's asText() returned "".
-            return idNode != null ? idNode.asString(null) : null;
+            try {
+                return JsonObjectMapper.get().convertValue(resourceLinkClaim, ResourceLinkDTO.class).id();
+            }
+            catch (JacksonException | IllegalArgumentException ex) {
+                // the claim comes from a third-party LMS: a malformed claim yields no resource link ID, which the required field validation rejects
+                return null;
+            }
         }
         return null;
     }

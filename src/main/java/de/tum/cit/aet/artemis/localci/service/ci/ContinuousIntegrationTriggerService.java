@@ -69,6 +69,18 @@ public interface ContinuousIntegrationTriggerService {
     }
 
     /**
+     * Creates the throttle for one run that triggers many builds in a row.
+     * <p>
+     * The caller awaits it before every trigger of the run, so that the run adds builds only while the CI system has room
+     * for them. An implementation without a queue to look at returns {@link BulkTriggerThrottle#NONE}.
+     *
+     * @return a throttle for one run, not shared with any other run
+     */
+    default BulkTriggerThrottle createBulkTriggerThrottle() {
+        return BulkTriggerThrottle.NONE;
+    }
+
+    /**
      * triggers a build for the build plan in the given participation, reusing inputs the caller already resolved
      *
      * @param participation the participation with the id of the build plan that should be triggered

@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -846,18 +847,10 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build success handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in success handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "success");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
         });
 
@@ -893,7 +886,7 @@ public class SharedQueueProcessingService {
                     else {
                         log.error("Error while processing build job: {}", buildJob, ex);
                     }
-                    if (!isCausedByImagePullFailedException(ex)) {
+                    if (!isCausedByImagePullFailedException(ex) && !isCausedByNetworkNotAllowed(ex)) {
                         consecutiveBuildJobFailures.incrementAndGet();
                     }
                 }
@@ -906,7 +899,7 @@ public class SharedQueueProcessingService {
                 BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
                         buildLogs, false);
 
-                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ResultQueueExceptionNormalizer.normalize(ex));
                 enqueueBuildResult(resultQueueItem);
                 // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
@@ -923,21 +916,28 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                log.error("Error in build exception handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
-                // Ensure we continue processing next builds even if cleanup/update fails
-                try {
-                    checkAvailabilityAndProcessNextBuild();
-                }
-                catch (Exception ignored) {
-                    log.error("Failed to check for next build after error in exception handler", ignored);
-                }
+                recoverAfterCompletionHandlerFailure(buildJob, e, "exception");
             }
             finally {
-                activeBuildAttempts.remove(buildJob.id(), attemptState);
-                buildJobManagementService.releaseBuildJob(futureResult);
+                releaseBuildAttempt(buildJob, attemptState, futureResult);
             }
             return null;
         });
+    }
+
+    private void recoverAfterCompletionHandlerFailure(BuildJobQueueItem buildJob, Exception failure, String handler) {
+        log.error("Error in build {} handler for job {}: {}. Attempting to continue processing.", handler, buildJob.id(), failure.getMessage(), failure);
+        try {
+            checkAvailabilityAndProcessNextBuild();
+        }
+        catch (Exception recoveryFailure) {
+            log.error("Failed to check for next build after error in {} handler", handler, recoveryFailure);
+        }
+    }
+
+    private void releaseBuildAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState, CompletableFuture<BuildResult> futureResult) {
+        activeBuildAttempts.remove(buildJob.id(), attemptState);
+        buildJobManagementService.releaseBuildJob(futureResult);
     }
 
     private void finishInternallyRequeuedAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState) {
@@ -1379,6 +1379,21 @@ public class SharedQueueProcessingService {
                 buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()
                 && buildExecutorService.getQueue().isEmpty();
+    }
+
+    /**
+     * Check if a throwable is caused by a build requesting a container network that the build agent does not allow. Such a build does not count as a failure of the agent.
+     *
+     * @param throwable throwable to check
+     * @return {@code true} if the build was refused because of its network
+     */
+    static boolean isCausedByNetworkNotAllowed(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            if (current instanceof ContainerNetworkNotAllowedException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

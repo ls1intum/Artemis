@@ -2,6 +2,7 @@
 id: integrated-code-lifecycle-setup
 title: Integrated Code Lifecycle Setup
 sidebar_label: Integrated Code Lifecycle Setup
+last_reviewed: 2026-11-03
 ---
 
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
@@ -52,6 +53,18 @@ eureka:
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 The `repository-authentication-mechanisms` field configures the repository authentication mechanisms (password, token, or SSH).
 
+Users who access a repository with their account password get an email (at most one per day) and a message in the terminal when they push, asking them to switch to a token or an SSH key.
+To tell them by when, set the date on which you plan to stop accepting passwords:
+
+```yaml
+artemis:
+    version-control:
+        password-authentication-end-date: 2027-01-15 # ISO date, empty by default
+```
+
+The date only appears in the email and the push message. Artemis does not reject passwords on that day, so removing `password` from `repository-authentication-mechanisms`
+(which hides it in the Code button) does not stop password authentication either. A malformed date stops Artemis from starting.
+
 If you are running Artemis on Windows, you also need to add a property `artemis.continuous-integration.docker-connection-uri` with the value `tcp://localhost:2375` as shown above.
 If you are running Artemis inside of a docker container, use `tcp://host.docker.internal:2375` instead.
 Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
@@ -78,6 +91,43 @@ artemis:
 
 More options can be found in `src/main/resources/config/application-localci.yml` and `src/main/resources/config/application-buildagent.yml`.
 
+### Bulk builds
+
+An instructor can trigger the builds of a whole exercise (**Trigger All** on the grading page) or of selected submissions, for example to rebuild the ones that failed.
+Such a run does not queue all of its builds at once.
+The server queues them one after the other in the background, pauses after every batch, and waits while the build queue is longer than the build agents can work off.
+
+- The pause after every batch is set with `artemis.external-system-request.batch-size` (default 50 builds) and `artemis.external-system-request.batch-waiting-time` (default 30 seconds).
+- The wait for room in the queue is set in `application-localci.yml`:
+
+```yaml
+artemis:
+    continuous-integration:
+        bulk-trigger:
+            # How many queued jobs each build slot may have before a bulk trigger waits. 0 turns the wait off.
+            max-queued-jobs-per-build-slot: 2
+            # The longest one bulk trigger waits in total, in minutes. After that, it queues the rest of its builds without waiting.
+            max-wait-minutes: 180
+```
+
+A build slot is one build that a build agent runs at the same time, so the number of build slots is the sum of the concurrent builds of all connected build agents that are not paused.
+With 20 build slots and the default of 2, a bulk trigger waits while 40 or more jobs are queued and continues as soon as the queue is shorter.
+Jobs of other bulk runs and of students' pushes count towards the queue, because they compete for the same slots.
+Builds triggered by a student's push and the builds at the start and the end of an exam are never held back.
+A bulk trigger also does not wait while no build agent is connected, because the queue cannot shrink then; its builds stay queued until an agent is available.
+
+<Callout variant={CalloutVariant.info}>
+
+  The wait only controls how fast a run adds builds to the queue. It does not reduce how many builds run at the same time on a build agent.
+  If builds fail with timeouts while many of them run, lower the concurrent builds of the build agents with `specify-concurrent-builds: true` and a smaller `concurrent-build-size`.
+
+</Callout>
+
+A run lives on the core node that received the request. If that node restarts while a long run is waiting, the builds that were not queued yet are not queued later, and the instructor has to trigger them again.
+
+What a build sees in its container, how to use a private image registry and how to give builds a dependency mirror is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
 By default, every build runs in a Docker container on the build agent, which is what the rest of this page assumes.
 A production installation can instead let each build run as a Kubernetes Job; see
 [LocalCI Build Runners](/admin/production-setup/build-runners).
@@ -98,7 +148,7 @@ Please read [Run the server via a run configuration in IntelliJ](/developer/setu
 
 You can now test the setup:
 
-To create a course with registered users, you can use the scripts from `supporting_scripts/course-setup-quickstart`.
+To create a course with registered users, you can use the scripts from `supporting_scripts/course-scripts/quick-course-setup`.
 
 - Create a course and a programming exercise.
 
@@ -117,14 +167,14 @@ For unauthorized access, your Git client will display the respective error messa
 
 ## Setup with Docker Compose
 
-You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and PostgreSQL containers:
 
 ```bash
-docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-  **Unix systems:** When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the `docker` group. You can do this by changing the value of `services.artemis-app.group_add` in the `deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml` file to the group ID of the `docker` group on your system. You can find the group ID by running `getent group docker | cut -d: -f3`. The default value is `999`.
+  **Unix systems:** When running the Artemis container on a Linux system with a native Docker daemon, you will have to give the user running the container permission to access the Docker socket. Pass the group ID of the `docker` group of the host in the environment variable `ARTEMIS_DOCKER_GROUP_ID`, which `services.artemis-app.group_add` in `deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml` reads, for example `ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3) docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up`. The default value is `0`, which works with Docker Desktop on macOS and Windows.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>

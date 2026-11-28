@@ -6,27 +6,24 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Observable, catchError, map, of } from 'rxjs';
 
-export function loadCourseFaqCategories(courseId: number | undefined, alertService: AlertService, faqService: FaqService, faqState?: FaqState): Observable<FaqCategory[]> {
+export function loadCourseFaqCategories(
+    courseId: number | undefined,
+    alertService: AlertService,
+    faqService: FaqService,
+    faqState?: FaqState,
+    audience: 'student' | 'management' = 'student',
+): Observable<FaqCategory[]> {
     if (courseId === undefined) {
         return of([]);
     }
-
-    if (faqState) {
-        return faqService.findAllCategoriesByCourseIdAndCategory(courseId, faqState).pipe(
-            map((categoryRes: HttpResponse<string[]>) => {
-                return faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
-            }),
-            catchError((error: HttpErrorResponse) => {
-                onError(alertService, error);
-                return of([]);
-            }),
-        );
-    }
-
-    return faqService.findAllCategoriesByCourseId(courseId).pipe(
-        map((categoryRes: HttpResponse<string[]>) => {
-            return faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
-        }),
+    const request =
+        audience === 'management'
+            ? faqService.findAllCategoriesForManagement(courseId, faqState)
+            : faqState
+              ? faqService.findAllCategoriesByCourseIdAndCategory(courseId, faqState)
+              : faqService.findAllCategoriesByCourseId(courseId);
+    return request.pipe(
+        map((categoryRes: HttpResponse<string[]>) => faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || [])),
         catchError((error: HttpErrorResponse) => {
             onError(alertService, error);
             return of([]);

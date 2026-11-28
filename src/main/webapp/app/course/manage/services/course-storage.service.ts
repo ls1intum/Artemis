@@ -1,3 +1,4 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -25,17 +26,10 @@ export class CourseStorageService implements OnDestroy {
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {

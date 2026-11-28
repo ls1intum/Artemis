@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import dayjs from 'dayjs/esm';
 
 describe('ComplaintRequestComponent', () => {
@@ -30,14 +30,14 @@ describe('ComplaintRequestComponent', () => {
             providers: [MockProvider(TranslateService)],
         })
             .overrideComponent(ComplaintRequestComponent, {
-                remove: { imports: [TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip] },
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisTimeAgoPipe, TumAetUiTooltipDirective] },
                 add: {
                     imports: [
                         MockDirective(TranslateDirective),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisDatePipe),
                         MockPipe(ArtemisTimeAgoPipe),
-                        MockDirective(NgbTooltip),
+                        MockDirective(TumAetUiTooltipDirective),
                     ],
                 },
             })
@@ -185,7 +185,7 @@ describe('ComplaintRequestComponent', () => {
 
             expect(card).toBeTruthy();
             // The same card language as the feedback cards on the page. The important padding is needed because Bootstrap pads and sizes by its own scale.
-            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4!']) {
+            for (const utility of ['rounded-lg', 'border', 'border-(--border-color)', 'bg-(--module-bg)', 'p-4']) {
                 expect(card.classList.contains(utility), utility).toBe(true);
             }
         });

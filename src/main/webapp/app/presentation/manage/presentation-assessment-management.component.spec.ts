@@ -6,12 +6,13 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { PresentationAssessmentFormDialogComponent } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
+import { PresentationRubricDialogComponent } from 'app/presentation/manage/presentation-rubric-dialog.component';
 import {
     PresentationAssessmentInstanceFormDialogComponent,
     PresentationAssessmentInstanceFormResult,
@@ -31,6 +32,8 @@ import {
     PresentationAssessmentInstancesCreate,
     PresentationAssessmentMode,
     PresentationAssessmentStudentRow,
+    PresentationGradingMethod,
+    PresentationRubricScale,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
@@ -119,10 +122,10 @@ describe('PresentationAssessmentManagementComponent', () => {
                 provideRouter([]),
                 provideArtemisTumAetUiTranslator(),
                 { provide: TranslateService, useValue: translateService },
-                { provide: DialogService, useValue: dialogService },
+                { provide: TumAetUiDialogService, useValue: dialogService },
                 {
                     provide: ExerciseService,
-                    useValue: { getTitlesForCourse: vi.fn().mockReturnValue(of([])) },
+                    useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },
                 },
                 {
                     provide: ActivatedRoute,
@@ -137,14 +140,17 @@ describe('PresentationAssessmentManagementComponent', () => {
                 },
             ],
         })
-            // The sidebar needs the course shell around it, and both dialogs have specs of their own.
+            // The sidebar needs the course shell around it, and the dialogs have specs of their own.
             .overrideComponent(PresentationAssessmentManagementComponent, {
-                remove: { imports: [SidebarComponent, PresentationAssessmentFormDialogComponent, PresentationAssessmentInstanceFormDialogComponent] },
+                remove: {
+                    imports: [SidebarComponent, PresentationAssessmentFormDialogComponent, PresentationAssessmentInstanceFormDialogComponent, PresentationRubricDialogComponent],
+                },
                 add: {
                     imports: [
                         MockComponent(SidebarComponent),
                         MockComponent(PresentationAssessmentFormDialogComponent),
                         MockComponent(PresentationAssessmentInstanceFormDialogComponent),
+                        MockComponent(PresentationRubricDialogComponent),
                     ],
                 },
             })
@@ -191,6 +197,10 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     function instanceDialog(): PresentationAssessmentInstanceFormDialogComponent {
         return fixture.debugElement.query(By.directive(PresentationAssessmentInstanceFormDialogComponent)).componentInstance;
+    }
+
+    function rubricDialog(): PresentationRubricDialogComponent {
+        return fixture.debugElement.query(By.directive(PresentationRubricDialogComponent)).componentInstance;
     }
 
     afterEach(() => {
@@ -283,7 +293,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.courseId()).toBe(courseId);
         expect(component.course()).toBe(course);
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledWith(courseId);
-        expect(TestBed.inject(ExerciseService).getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.presentationAssessments()).toEqual([presentationAssessment]);
     });
 
@@ -354,16 +364,16 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.totalStudentRows()).toBe(1);
     });
 
-    it('should only consider an assigned numeric score as assessed', async () => {
+    it.each([
+        { result: { resultPoints: undefined }, assessed: false },
+        { result: { resultPoints: 0 }, assessed: true },
+        { result: { passed: false }, assessed: true },
+        { result: { rubricScore: 0 }, assessed: true },
+    ])('should consider an instance with $result as assessed: $assessed', async ({ result, assessed }) => {
         presentationAssessmentService.findStudentRows.mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [
-                        {
-                            presentationAssessment,
-                            instance: { id: 11, presentationDate, resultPoints: undefined, student: { login: 'student1' } },
-                        },
-                    ],
+                    body: [{ presentationAssessment, instance: { id: 11, presentationDate, student: { login: 'student1' }, ...result } }],
                     headers: new HttpHeaders({ 'X-Total-Count': '1' }),
                 }),
             ),
@@ -371,25 +381,8 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.retryLoading();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.studentRows()[0].assessed).toBe(false);
 
-        presentationAssessmentService.findStudentRows.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [
-                        {
-                            presentationAssessment,
-                            instance: { id: 11, presentationDate, resultPoints: 0, student: { login: 'student1' } },
-                        },
-                    ],
-                    headers: new HttpHeaders({ 'X-Total-Count': '1' }),
-                }),
-            ),
-        );
-        component.retryLoading();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(component.studentRows()[0].assessed).toBe(true);
+        expect(component.studentRows()[0].assessed).toBe(assessed);
     });
 
     it.each([
@@ -407,9 +400,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         applySearch('ab12cde');
         fixture.detectChanges();
 
-        const studentButton = query('[data-testid="toggle-overview-row-details"]')!;
+        const studentButton = query('[data-testid="toggle-row-details"]')!;
         expect(studentButton.querySelector('strong.truncate')!.textContent!.trim()).toBe(expectedName);
-        expect(query('#presentation-overview-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
+        expect(query('#presentation-student-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
     });
 
     it('should request and display rows for the selected presentation', () => {
@@ -447,6 +440,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.totalStudentRows()).toBe(0);
         expect(component.isLoadingStudentRows()).toBe(false);
         expect(component.studentRowsLoadFailed()).toBe(false);
+        expect(countByTestId('table-empty')).toBe(1);
     });
 
     it('should finish loading student rows when the response arrives', async () => {
@@ -649,20 +643,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.selectedPresentationExerciseRoute()).toEqual(['/course-management', courseId, 'text-exercises', 7]);
     });
 
-    it('should expose stable keys and expansion state in the row view models', () => {
+    it('should expose stable keys in the row view models', () => {
+        const source = component.currentPageStudentRows()[0];
         const row = component.studentRows()[0];
-        component.toggleStudentRowDetails(row);
 
-        const selectedRow = component.studentRows()[0];
-        const overviewRow = component.studentRows()[0];
-        expect(selectedRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(overviewRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(selectedRow.student).toBe(row.student);
-        expect(selectedRow.instance).toBe(row.instance);
-        expect(selectedRow.presentationAssessment).toBe(row.presentationAssessment);
-        expect(overviewRow.student).toBe(row.student);
-        expect(overviewRow.instance).toBe(row.instance);
-        expect(overviewRow.presentationAssessment).toBe(row.presentationAssessment);
+        expect(row).toMatchObject({ rowKey: '11:student1', assessed: true });
+        expect(row.student).toBe(source.student);
+        expect(row.instance).toBe(source.instance);
+        expect(row.presentationAssessment).toBe(source.presentationAssessment);
     });
 
     it('should open the create dialog without persisting on cancel', () => {
@@ -1305,7 +1293,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         const link = query('.presentation-detail-row a[href="https://example.org/meeting"]')!;
         expect(link.getAttribute('target')).toBe('_blank');
@@ -1351,13 +1339,44 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(table.textContent).toContain('18');
     });
 
-    it('should reload the overview sorted by points when the points column is clicked', () => {
+    it('should reload the overview sorted by date when the date column is clicked', () => {
         presentationAssessmentService.findStudentRows.mockClear();
 
-        (query('th[tumAetUiSortableColumn="resultPoints"] button') as HTMLButtonElement).click();
+        (query('th[tumAetUiSortableColumn="presentationDate"] button') as HTMLButtonElement).click();
         fixture.detectChanges();
 
-        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'resultPoints', page: 0 }));
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'presentationDate', page: 0 }));
+    });
+
+    it('should sort the students of a presentation on the server and page through more than 25 of them', () => {
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: instances.map((instance) => ({ presentationAssessment, instance })),
+                    headers: new HttpHeaders({ 'X-Total-Count': '60' }),
+                }),
+            ),
+        );
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        const header = query('[data-testid="presentation-instances-table"] th[tumAetUiSortableColumn="presentationDate"]')!;
+        ((header.querySelector('button') ?? header) as HTMLElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
+            courseId,
+            expect.objectContaining({ sortField: 'presentationDate', page: 0, assessmentId: presentationAssessment.id }),
+        );
+
+        (query('button[aria-label="global.paginator.next"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
+            courseId,
+            expect.objectContaining({ sortField: 'presentationDate', page: 1, size: 25, assessmentId: presentationAssessment.id }),
+        );
     });
 
     it('should load the next page of the overview from the paginator', () => {
@@ -1391,13 +1410,13 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should collapse an expanded row again', () => {
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
         expect(query('.presentation-detail-row')).not.toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         expect(query('.presentation-detail-row')).toBeNull();
-        expect(query('[data-testid="toggle-overview-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
+        expect(query('[data-testid="toggle-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should open an empty presentation dialog from the create button in the title bar', () => {
@@ -1489,11 +1508,121 @@ describe('PresentationAssessmentManagementComponent', () => {
     it('should keep the exercise titles of the current visit when a delayed load of an earlier visit arrives', () => {
         const firstVisit = new Subject<ExerciseTitle[]>();
         const current: ExerciseTitle[] = [{ id: 7, title: 'Current exercise' }];
-        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourse).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
+        vi.mocked(TestBed.inject(ExerciseService).getTitlesForCourseForStaff).mockReturnValueOnce(firstVisit).mockReturnValueOnce(of([])).mockReturnValueOnce(of(current));
         visitCourseTwoThenThreeThenTwoAgain();
 
         firstVisit.next([{ id: 8, title: 'Stale exercise' }]);
 
         expect(component.exercises()).toEqual(current);
+    });
+
+    describe('grading methods', () => {
+        const rubricPresentation: PresentationAssessment = { ...presentationAssessment, gradingMethod: PresentationGradingMethod.RUBRIC, maxPoints: undefined };
+        const criteria = [{ id: 1, name: 'Content', weight: 100, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 11 }, { id: 12 }, { id: 13 }] }];
+
+        function openPresentation(presentation: PresentationAssessment, isAtLeastEditor = true): void {
+            component.course.set({ ...course, isAtLeastEditor, isAtLeastInstructor: isAtLeastEditor } as Course);
+            component.presentationAssessments.set([presentation]);
+            routeParamMap.next(convertToParamMap({ courseId, presentationId: presentation.id }));
+            fixture.detectChanges();
+        }
+
+        it('should offer the rubric of a presentation graded by rubric', () => {
+            openPresentation(rubricPresentation);
+
+            expect(query('[data-testid="edit-rubric-button"]')).not.toBeNull();
+            expect(query('[data-testid="presentation-grading-method-tag"]')).toBeNull();
+        });
+
+        it.each([PresentationGradingMethod.PASS_FAIL, PresentationGradingMethod.SCORE])('should show the grading method %s as a badge', (gradingMethod) => {
+            openPresentation({ ...presentationAssessment, gradingMethod });
+
+            const badge = query('[data-testid="presentation-grading-method-tag"]')!;
+            expect(badge.textContent).toContain(`artemisApp.presentationAssessment.gradingMethod.${gradingMethod}`);
+            expect(query('[data-testid="edit-rubric-button"]')).toBeNull();
+        });
+
+        it('should show a tutor the method of a presentation graded by rubric instead of the rubric', () => {
+            openPresentation(rubricPresentation, false);
+
+            expect(query('[data-testid="presentation-grading-method-tag"]')!.textContent).toContain('artemisApp.presentationAssessment.gradingMethod.RUBRIC');
+            expect(query('[data-testid="edit-rubric-button"]')).toBeNull();
+        });
+
+        it('should save the rubric of its dialog and reload the rows', () => {
+            presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: rubricPresentation })));
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            expect(rubricDialog().presentationAssessmentId()).toBe(rubricPresentation.id);
+            presentationAssessmentService.findStudentRows.mockClear();
+
+            rubricDialog().saved.emit(criteria);
+            fixture.detectChanges();
+
+            expect(presentationAssessmentService.update).toHaveBeenCalledWith(courseId, expect.objectContaining({ id: rubricPresentation.id, rubricCriteria: criteria }));
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.rubric.saved');
+            expect(component.rubricDialogVisible()).toBe(false);
+            expect(presentationAssessmentService.findStudentRows).toHaveBeenCalled();
+        });
+
+        it.each([
+            ['should not add a generic alert when the server already reports why the rubric was rejected', { errorKey: 'rubricStructureLocked' }, 0],
+            ['should alert when saving the rubric fails without a server message', undefined, 1],
+        ])('%s', (_description, errorBody, expectedAlerts) => {
+            presentationAssessmentService.update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: errorBody })));
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            alertService.addAlert.mockClear();
+
+            rubricDialog().saved.emit(criteria);
+            fixture.detectChanges();
+
+            expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
+            expect(component.rubricDialogVisible()).toBe(true);
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should save the rubric only once while a save is running', () => {
+            presentationAssessmentService.update.mockReturnValue(new Subject<HttpResponse<PresentationAssessment>>());
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+
+            rubricDialog().saved.emit(criteria);
+            rubricDialog().saved.emit(criteria);
+
+            expect(presentationAssessmentService.update).toHaveBeenCalledOnce();
+        });
+
+        it('should ignore a rubric that was saved for a course left in the meantime', () => {
+            const response = new Subject<HttpResponse<PresentationAssessment>>();
+            presentationAssessmentService.update.mockReturnValue(response);
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            rubricDialog().saved.emit(criteria);
+
+            routeParamMap.next(convertToParamMap({ courseId: 2 }));
+            fixture.detectChanges();
+            response.next(new HttpResponse({ body: rubricPresentation }));
+            response.complete();
+
+            expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.rubric.saved');
+        });
+
+        it('should close the rubric dialog when it is cancelled', () => {
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+
+            rubricDialog().cancelled.emit();
+            fixture.detectChanges();
+
+            expect(component.rubricDialogVisible()).toBe(false);
+        });
+
+        it('should give the grading dialog the course, whose settings round rubric results', () => {
+            component.startCreateInstance(presentationAssessment);
+            fixture.detectChanges();
+
+            expect(instanceDialog().course()).toEqual(course);
+        });
     });
 });

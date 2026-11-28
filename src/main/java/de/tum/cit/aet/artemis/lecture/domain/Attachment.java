@@ -60,8 +60,10 @@ public class Attachment extends DomainObject implements Serializable {
     @Parent
     private AttachmentVideoUnit attachmentVideoUnit;
 
-    // Student Version holds the version of the file without the pages hidden by the Instructor
-    @Column(name = "student_version")
+    // Student Version holds the version of the file without the pages hidden by the Instructor.
+    // Not updatable through the entity: a save of a loaded attachment must not write back a reference that a concurrent regeneration has replaced meanwhile. Every change
+    // goes through the conditional statements of AttachmentRepository, which check the reference they replace.
+    @Column(name = "student_version", updatable = false)
     private String studentVersion;
 
     @Column(name = "display_page_numbers")

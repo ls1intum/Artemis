@@ -7,6 +7,8 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "noEntriesYet": "No entries yet",
+            "serverNotReachable": "Server not reachable",
             "filterOptions": "Filter options",
             "noMatchingOptions": "No matching options",
             "selectedCount": "{{ count }} selected",
@@ -22,7 +24,10 @@
             "expandMenu": "Expand menu (Ctrl + M)",
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows",
+            "unknownPerson": "Unknown person"
         },
         "weekdays": {
             "monday": "Monday",
@@ -103,7 +108,7 @@
                     "file-upload": "File Upload Exercise",
                     "exercise": "Exercise",
                     "exam": "Exam",
-                    "test-exam": "Test Exam",
+                    "test-exam": "Practice Exam",
                     "lecture": "Lecture",
                     "lecture-unit": "Lecture Unit",
                     "faq": "FAQ",
@@ -193,7 +198,7 @@
             "courses": "Courses",
             "student": "Student",
             "course": "Management",
-            "courseRequests": "Request a new Course",
+            "courseRequests": "Request new course",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
@@ -308,6 +313,7 @@
                     "metrics": "Metrics",
                     "statistics": "Statistics",
                     "featureUsage": "Feature Usage",
+                    "errorAnalysis": "Error Analysis",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -318,6 +324,7 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
                     "dependencies": "Dependencies",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index Dashboard"
                 },
@@ -365,7 +372,7 @@
             "confirmpassword.placeholder": "Confirm the new password",
             "email": "Email",
             "email.placeholder": "Your email",
-            "email.pattern": "Please use an email with the following pattern:",
+            "email.pattern": "Allowed email addresses:",
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
@@ -407,7 +414,7 @@
                     "invalid": "Your email is invalid.",
                     "minlength": "Your email is required to be at least 5 characters.",
                     "maxlength": "Your email cannot be longer than 100 characters.",
-                    "pattern": "Your email does not follow the required pattern."
+                    "notAllowed": "This email address is not allowed."
                 }
             }
         },
@@ -418,8 +425,8 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} of {{total}}",
             "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
@@ -453,6 +460,13 @@
         },
         "imageCropper": {
             "sourceImage": "Image to crop"
+        },
+        "stepState": {
+            "pending": "Not started",
+            "current": "In progress",
+            "complete": "Done",
+            "failed": "Failed",
+            "skipped": "Skipped"
         }
     },
     "entity": {
@@ -460,6 +474,7 @@
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
         "action": {
+            "deleteAll": "Delete All",
             "add": "Add",
             "create": "Create",
             "addblob": "Add blob",
@@ -553,7 +568,10 @@
             "value": "Value"
         },
         "delete": {
-            "title": "Confirm delete operation"
+            "title": "Confirm delete operation",
+            "summary": {
+                "largeCountWarning": "This deletes a large amount of data. Please check the numbers below carefully before you confirm."
+            }
         },
         "unlink": {
             "title": "Confirm unlink operation"

@@ -48,7 +48,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @ParameterizedTest
     @MethodSource("provideUrls")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtraction(String url, File htmlFile) throws Exception {
         Document document = Jsoup.parse(htmlFile);
 
@@ -93,7 +93,48 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewReturnsRequestedUrlWhenOgUrlDiffers() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        Document document = Jsoup.parse("""
+                <html><head>
+                <meta property="og:title" content="AI Tools Directory" />
+                <meta property="og:description" content="A directory" />
+                <meta property="og:image" content="https://example.com/image.png" />
+                <meta property="og:url" content="https://other.example.com/page" />
+                </head><body></body></html>
+                """);
+
+        try (MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock = Mockito.mockStatic(LinkPreviewDocumentFetcher.class)) {
+            documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(requestedUrl)).thenReturn(document);
+
+            String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+            LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+            // The client removes a preview by locating this url in the message text, so it must be the posted link and not og:url.
+            assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+            assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewCachedWithOgUrlIsReturnedWithRequestedUrl() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        var cache = cacheManager.getCache("linkPreview");
+        assertThat(cache).isNotNull();
+        // An entry cached before the service started returning the requested url
+        cache.put(requestedUrl, new LinkPreviewDTO("AI Tools Directory", "A directory", "https://example.com/image.png", "https://other.example.com/page"));
+
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+        LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+        assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+        assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithInvalidUrls() throws Exception {
         // Construct the URL with an encoded query parameter
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://localhost", StandardCharsets.UTF_8);
@@ -103,7 +144,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithIpAddress() throws Exception {
         // Test a blocked private IPv4 address
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://192.168.1.1", StandardCharsets.UTF_8);
@@ -111,7 +152,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithLoopbackIp() throws Exception {
         // Test loopback address
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://127.0.0.1", StandardCharsets.UTF_8);
@@ -119,7 +160,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithIpv6Address() throws Exception {
         // Test a blocked IPv6 address
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[::1]", StandardCharsets.UTF_8);
@@ -127,7 +168,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithFullIpv6Address() throws Exception {
         // Test a blocked IPv6 address
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[2606:4700:4700::1111]", StandardCharsets.UTF_8);
@@ -135,7 +176,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithInvalidScheme() throws Exception {
         // Test a non-http/https scheme
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("ftp://example.com", StandardCharsets.UTF_8);
@@ -143,7 +184,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithJavaScriptUrl() throws Exception {
         // Test a JavaScript-based URL
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("javascript:void(0);", StandardCharsets.UTF_8);
@@ -151,7 +192,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithInvalidTld() throws Exception {
         // Test an invalid top-level domain (TLD)
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://example.superlongtldover20chars", StandardCharsets.UTF_8);

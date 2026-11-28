@@ -9,7 +9,6 @@
             "noAI": "Keine KI",
             "recommended": "Empfohlen",
             "experimental": "Experimentell",
-            "currentSelection": "Aktuell",
             "descriptionCloud": "Schnelle, hochwertige KI basierend auf modernsten Cloud-Modellen",
             "descriptionLocal": "Ideal für höchsten Datenschutz, aber mit einigen Einschränkungen",
             "descriptionNo": "Du kannst Artemis weiterhin nutzen, jedoch ohne KI-Unterstützung",
@@ -27,9 +26,7 @@
             "featureNoTwo": "Kein automatisches KI-Feedback zu Modellierungs- und Textaufgaben",
             "featureNoThree": "Keine KI-gestützte Anleitung",
             "disclaimer": "Artemis wird niemals deine persönlichen Daten wie Matrikelnummer oder E-Mail-Adresse an ein großes Sprachmodell senden •",
-            "disclaimerButton": "Erfahre mehr über deine Optionen",
-            "memirisTitle": "Langzeitgedächtnis aktivieren",
-            "memirisDescription": "Iris kann sich deine Lernpräferenzen und vergangene Interaktionen merken, um dich langfristig personalisierter zu unterstützen. Du kannst dies jederzeit deaktivieren."
+            "disclaimerButton": "Erfahre mehr über deine Optionen"
         }
     }
 }

@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +37,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateOutboxBacklogDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
@@ -86,6 +90,30 @@ public class WeaviateOutboxDispatcher {
      * backlog does not emit one warning per row per retry.
      */
     private static final int MAX_WARN_ATTEMPTS = 3;
+
+    /**
+     * Retrying does not help when Weaviate itself refuses writes, for example because it switched its store to read-only
+     * under disk or memory pressure. Rows then pile up and the search index falls behind, so a queue that is this old or
+     * this large is reported at {@code ERROR}. Only rows written for user actions count: reconcile rows can be numerous by design.
+     */
+    static final Duration BACKLOG_ALERT_AGE = Duration.ofMinutes(15);
+
+    static final long BACKLOG_ALERT_SIZE = 1000;
+
+    /**
+     * How often the queue is inspected, and how often an unchanged backlog is reported again. The queue is only inspected
+     * from the drain, so the check costs one small query per interval and no extra scheduled job.
+     */
+    static final Duration BACKLOG_CHECK_INTERVAL = Duration.ofMinutes(1);
+
+    static final Duration BACKLOG_REPORT_INTERVAL = Duration.ofMinutes(15);
+
+    private static final String INDEX_CHECK_FAILURE_SOURCE = "index check";
+
+    /**
+     * Text of the Weaviate error that marks its store as read-only.
+     */
+    private static final String READ_ONLY_MARKER = "read-only";
 
     /**
      * Drain and retry tuning, bound from {@code artemis.weaviate.outbox}.
@@ -166,6 +194,34 @@ public class WeaviateOutboxDispatcher {
      */
     private final AtomicBoolean drainPending = new AtomicBoolean();
 
+    /**
+     * Why the writes for user actions currently fail, named in the backlog report so that it says why the queue does not shrink. Set by a failed write of such a row
+     * or a failed index check. It is cleared when the row it comes from is written or superseded, or when no such row is queued any more, so a backlog is never
+     * blamed on an error that has gone, and neither a write for another entity nor one of an older row for the same entity hides it. Only the drain thread, which holds
+     * {@link #drainLock}, reads and writes it.
+     */
+    private String liveFailure;
+
+    /**
+     * What {@link #liveFailure} comes from: the entity of the row that failed, or {@link #INDEX_CHECK_FAILURE_SOURCE}.
+     */
+    private String liveFailureSource;
+
+    /**
+     * The id of the row that failed, or {@code null} for the index check. A row supersedes the rows of the same entity with a smaller id, so only a row with this id
+     * or a larger one ends the failure.
+     */
+    private Long liveFailureRowId;
+
+    /**
+     * The first check comes one interval after the start, so the queue is not queried while the node still boots.
+     */
+    private Instant nextBacklogCheckAt = Instant.now().plus(BACKLOG_CHECK_INTERVAL);
+
+    private Instant nextBacklogReportAt = Instant.MIN;
+
+    private boolean backlogReported;
+
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
             SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties,
             WeaviateEmbeddingProperties embeddingProperties, SearchableEntityEmbeddingClient embeddingClient, SearchableEntityIndexRebuildService rebuildService,
@@ -225,6 +281,8 @@ public class WeaviateOutboxDispatcher {
             }
             try {
                 if (!ensureIndexReady()) {
+                    // Nothing is written meanwhile, which is when a backlog builds up the fastest
+                    monitorBacklog(Instant.now());
                     return;
                 }
                 // Give the drain thread an authorization context, matching the previous @Async write behavior.
@@ -232,6 +290,7 @@ public class WeaviateOutboxDispatcher {
                 while (drainPending.getAndSet(false)) {
                     drainAllDueRows();
                 }
+                monitorBacklog(Instant.now());
             }
             catch (Exception e) {
                 // The database was unavailable while reading or recording. Give up for now; the next tick retries.
@@ -276,6 +335,8 @@ public class WeaviateOutboxDispatcher {
                     processEntry(entry, now, confirmedInTurn);
                 }
             }
+            // A queue that keeps filling whole batches would otherwise not be looked at before the drain ends
+            monitorBacklog(Instant.now());
         }
         while (batch.size() == outboxProperties.batchSize());
     }
@@ -449,11 +510,15 @@ public class WeaviateOutboxDispatcher {
         try {
             rebuildService.ensureIndexMatchesConfiguration();
             indexReady = true;
+            forgetLiveFailure();
             return true;
         }
         catch (Exception exception) {
             failedIndexChecks++;
             nextIndexCheckAt = now + indexCheckRetryDelayMillis;
+            liveFailure = describeFailure(exception);
+            liveFailureSource = INDEX_CHECK_FAILURE_SOURCE;
+            liveFailureRowId = null;
             if (failedIndexChecks < indexCheckWarnAttempts) {
                 log.warn("Global search index check attempt {} failed; retrying in {}s. Index writes stay queued until it succeeds.", failedIndexChecks,
                         indexCheckRetryDelayMillis / 1000, exception);
@@ -506,7 +571,76 @@ public class WeaviateOutboxDispatcher {
         confirmWrite(entry, now, writtenContentHash);
     }
 
+    /**
+     * Reports a queue of rows for user actions that Weaviate does not take. Called from the drain with the lock held, at most once
+     * per {@link #BACKLOG_CHECK_INTERVAL}. A backlog is reported when it is first seen and then every {@link #BACKLOG_REPORT_INTERVAL};
+     * the end of it is reported once. A failing check never disturbs the drain.
+     *
+     * @param now the current time
+     */
+    void monitorBacklog(Instant now) {
+        if (now.isBefore(nextBacklogCheckAt)) {
+            return;
+        }
+        nextBacklogCheckAt = now.plus(BACKLOG_CHECK_INTERVAL);
+        try {
+            WeaviateOutboxBacklogDTO queued = outboxRepository.findBacklogByOrigin(WeaviateOutboxOrigin.LIVE);
+            long size = queued.size();
+            if (size == 0) {
+                // Whatever failed has been written or superseded since, for example by a newer row that was written for the same entity
+                forgetLiveFailure();
+            }
+            Duration age = queued.oldestCreatedAt() == null ? Duration.ZERO : Duration.between(queued.oldestCreatedAt().toInstant(), now);
+            boolean backlog = size >= BACKLOG_ALERT_SIZE || age.compareTo(BACKLOG_ALERT_AGE) >= 0;
+            if (!backlog) {
+                if (backlogReported) {
+                    log.info("The Weaviate outbox backlog is gone: {} row(s) for user actions are waiting", size);
+                    backlogReported = false;
+                    nextBacklogReportAt = Instant.MIN;
+                }
+                return;
+            }
+            if (now.isBefore(nextBacklogReportAt)) {
+                return;
+            }
+            backlogReported = true;
+            nextBacklogReportAt = now.plus(BACKLOG_REPORT_INTERVAL);
+            String hint = liveFailure != null && liveFailure.contains(READ_ONLY_MARKER)
+                    ? " Weaviate has set its store to read-only, which it does when disk or memory runs short. Free capacity on the Weaviate host; the rows are written on their own afterwards."
+                    : "";
+            log.error("The Weaviate outbox has a backlog: {} row(s) for user actions are waiting, the oldest for {} minute(s). The search index falls behind. Last failure: {}.{}",
+                    size, age.toMinutes(), liveFailure != null ? liveFailure : "none recorded", hint);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not check the Weaviate outbox backlog: {}", e.getMessage());
+        }
+    }
+
+    private void forgetLiveFailure() {
+        liveFailure = null;
+        liveFailureSource = null;
+        liveFailureRowId = null;
+    }
+
+    /**
+     * What a row is written for. A newer row for the same entity supersedes an older one, so they share it.
+     */
+    private static String failureSource(WeaviateOutboxEntry entry) {
+        return entry.getEntityId() != null ? entry.getEntityType() + ":" + entry.getEntityId() : "row:" + entry.getId();
+    }
+
+    private static String describeFailure(Exception e) {
+        return e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : e.getClass().getSimpleName();
+    }
+
     private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
+        // A failed row of the same entity that is older than the one recorded does not replace it: the newer row is still queued, and only its own write ends the failure
+        boolean olderRowOfRecordedFailure = failureSource(entry).equals(liveFailureSource) && liveFailureRowId != null && entry.getId() < liveFailureRowId;
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE && !olderRowOfRecordedFailure) {
+            liveFailure = describeFailure(e);
+            liveFailureSource = failureSource(entry);
+            liveFailureRowId = entry.getId();
+        }
         int attempt = entry.getAttempts() + 1;
         // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
         ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
@@ -550,6 +684,9 @@ public class WeaviateOutboxDispatcher {
         collapseSupersededRows(entry);
         refreshSyncLedger(entry, now, writtenContentHash);
         outboxRepository.delete(entry);
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE && failureSource(entry).equals(liveFailureSource) && liveFailureRowId != null && entry.getId() >= liveFailureRowId) {
+            forgetLiveFailure();
+        }
     }
 
     /**

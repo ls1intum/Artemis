@@ -1,10 +1,10 @@
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/account/user/user.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -25,7 +25,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -82,7 +82,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                MockModule(NgbTooltipModule),
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(CodeButtonComponent),
@@ -93,6 +92,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockRouterLinkDirective,
             ],
             providers: [
+                MockProvider(FeatureToggleService, { getFeatureTogglesActive: () => of(true) }),
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(HttpClient),
@@ -564,7 +564,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
+            expect(startExerciseButton.componentInstance.forceDisabled()).toBe(true);
         },
     );
 

@@ -1,0 +1,122 @@
+---
+id: agent-access
+title: Agent Access for Developers
+sidebar_label: Agent Access
+last_reviewed: 2026-11-25
+---
+
+import Callout from '../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+
+Agent access lets a user give a coding agent a personal access token that calls a limited part of the REST API on their behalf.
+This page is for developers who add or change what a token can reach. The setup for administrators is in
+[Agent Access](/admin/agent-access), and what it means for instructors is in
+[Working with Coding Agents](/instructor/integrations/coding-agents).
+
+## How a request is checked
+
+A request with a bearer token that starts with `art_pat_` is authenticated by `PersonalAccessTokenFilter` as the token's owner,
+unless the owner is an administrator. `AllowedScopesInterceptor` then lets it reach a handler only if the handler carries
+`@AllowedScopes` and the token holds every listed scope. The ordinary role annotation of the handler still applies, so a token can do
+at most what its owner can do in that course, and at most what its scopes allow.
+
+Every endpoint is closed to tokens until you opt it in. That is the point: a new endpoint must not become reachable by an agent by
+accident.
+
+## Opt an endpoint in
+
+Add `@AllowedScopes(AgentScope.X)` to the handler, together with an `@EnforceAtLeast...` annotation and an
+`@Operation` with a summary and a description written for an agent, not for a developer: what it does, what it needs, what it refuses.
+Three rules are enforced by `AllowedScopesArchitectureTest`:
+
+- The handler has an `@EnforceAtLeast...` annotation, because a scope narrows access and never replaces the role check.
+- The handler takes and returns DTOs. The agent specification lists only DTO schemas, so an endpoint that uses a domain object would drop out of it
+  without an error.
+- The committed agent specification lists the handler, with a summary. Regenerate it as described below.
+
+Choose the scope by what the endpoint does. There is deliberately no scope for grades, exams, student data, deleting or publishing; do
+not add one without a separate threat review.
+
+## Keep content a draft
+
+Exercise and lecture-unit endpoints with the draft-date contract must keep token requests within that contract. `AgentDraftRules`
+holds these rules, which apply only to token requests:
+
+- `requireDraftDatesForCreate` requires a release date in the future and, if configured, a future start date. Exercise validation
+  separately requires the start date to follow the release date.
+- `requireStillDraft` lets a token change only content that is not visible yet, and only in a way that keeps it so.
+- `rejectExamExercise` keeps exam exercises out of reach.
+
+A programming exercise additionally has no student participations, which `ProgrammingExerciseDraftGuardService` checks. Call the rule
+before the request is applied to the stored object, and add a test that a token cannot publish through the endpoint. Announcements,
+competencies and lecture metadata are immediately visible. The MCP announcement and lecture-creation tools therefore require
+confirmation that the instructor approved the exact text; `AgentDraftRules` does not hide a newly created lecture.
+
+## Regenerate the agent specification
+
+The agent API specification is generated from the annotations and committed to `documentation/static/agent/openapi.yaml`, so that it can be
+published. After you opt an endpoint in or change its documentation, run:
+
+```bash
+./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp
+```
+
+The run starts a throwaway server on port 8080 and its SSH server on 7921. If a development server uses them, move the throwaway
+server with `-PopenApiServerPort=<port>` and `-PopenApiSshPort=<port>`. The application specification, which feeds the generated
+client, is produced by the same command without `-PopenApiGroup=agent` and covers only the packages listed in `gradle/openapi.gradle`.
+
+## The protocol of the MCP endpoint
+
+`AgentMcpService` implements revision 2026-07-28 of the Model Context Protocol, and only that one, with `server/discover`, `tools/list` and
+`tools/call`. That revision has no `initialize` handshake, no `ping` and no session: every request carries the protocol version and the
+capabilities of the client in `params._meta`, and the transport mirrors the version, the method and, for a tool call, the tool name in the
+headers `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name`. The service answers with the status the transport prescribes:
+
+| Case                                                           | Status | JSON-RPC error                                     |
+| -------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| not JSON-RPC 2.0                                               | 400    | -32600                                             |
+| `_meta` without version or capabilities                        | 400    | -32602                                             |
+| a header missing or different from the message                 | 400    | -32020                                             |
+| a version other than 2026-07-28, also an `initialize` request  | 400    | -32022 with `data.supported` and `data.requested`  |
+| a method that does not exist                                   | 404    | -32601                                             |
+| a notification                                                 | 202    | none                                               |
+| an `Origin` that is not the origin of `server.url`             | 403    | none                                               |
+| GET or DELETE                                                  | 405    | none                                               |
+
+`tools/list` is `private` for caches, because the tools depend on the scopes of the token; `server/discover` is `public`. Every result
+carries `resultType: complete`.
+
+The protocol asks for authorization with an OAuth server and protected-resource metadata that names it. Artemis has no such server: a
+personal access token is created in the settings and sent as a header, which the protocol allows ("custom authentication"). Do not publish
+protected-resource metadata, because it would have to list an authorization server that does not exist.
+
+## Git with a token
+
+`LocalVCAgentTokenService` lets a personal access token be the password of git over HTTPS. `LocalVCServletService` recognizes the prefix
+`art_pat_` before any other credential and never tries such a secret as a password or as a VCS access token, so a wrong token cannot lead to a
+login attempt. The user name has to be the login of the token's owner. What the token opens is narrower than what its owner may open, and is
+decided in the same place for every request of a clone or a push: the scope `programming:repositories`, only the template, solution, tests
+and auxiliary repositories, no exam exercise, and for a push the draft rule of `ProgrammingExerciseDraftGuardService`, the same one the REST
+API applies to changing the exercise. The roles of the owner apply on top. Requests are written to the audit logger of the REST API and to the
+VCS access log with `AuthenticationMechanism.AGENT_ACCESS_TOKEN`, which is appended to the enum because the log stores its position.
+
+`GET /api/programming/programming-exercises/{id}/repositories` tells an agent where the repositories are and whether it may push now, so that it
+does not discover the draft rule by a refused push. SSH is not an option for a token.
+
+## Tools of the MCP endpoint
+
+`/api/core/agent/mcp` serves the Model Context Protocol. Its tools, in `AgentToolService`, are tasks an instructor would name, not wrappers
+of endpoints, and each one calls the REST API of the same server through `AgentApi` with the token of the request. Opt the endpoint in
+first; a tool never grants anything the endpoint does not. A new tool needs a scope that the token must hold to see it, a description that
+tells the model when to use it and what to confirm first, and typed arguments: a record in `AgentToolArguments` that the arguments are read
+as, and a `JsonSchemaDTO` that describes them to the agent. A body that the tool sends on is the DTO of the endpoint it calls, never a
+`JsonNode`; the whole endpoint, protocol messages included, is written with records, as the
+[REST API guideline](/developer/guidelines/rest-api#use-records-not-the-tree-model) asks.
+
+<Callout variant={CalloutVariant.info}>
+
+Test a tool with the in-process `MockMvcAgentApiService`, as `AgentMcpIntegrationTest` does. The production client calls over a real
+connection, which only `AgentAccessLoopbackIntegrationTest` exercises. That is where an error of the container, such as a status
+swallowed by an error page, shows up.
+
+</Callout>

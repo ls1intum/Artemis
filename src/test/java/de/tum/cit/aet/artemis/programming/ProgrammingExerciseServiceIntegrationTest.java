@@ -9,8 +9,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,8 +29,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -42,6 +50,8 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -60,6 +70,24 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    @Autowired
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskTestRepository;
+
+    @Autowired
+    private CompetencyRepository competencyRepository;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
+
+    @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -77,7 +105,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         // Re-fetch the imported exercise with all references eagerly initialized instead of relying on lazy proxies:
         // the import runs without an open session, so a returned lazy collection could not be read here.
@@ -114,7 +142,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("submissionPolicyProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var imported = importExerciseBaseWithSubmissionPolicy(submissionPolicy);
         assertThat(imported.getSubmissionPolicy()).isNotNull();
@@ -123,15 +151,15 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
-    void importExercise_user_forbidden() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void importExercise_student_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
@@ -141,7 +169,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
      * request record ignores them, so the request must fail on the source exercise, never on the payload.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExercise_payloadWithUnknownFields_isTolerated() throws Exception {
         ObjectNode body = objectMapper.valueToTree(createToBeImported());
         body.put("removedLegacyProperty", "legacy value");
@@ -161,7 +189,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "USER")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
@@ -169,7 +197,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("Programming");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
@@ -177,7 +205,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorSearchTermMatchesId() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
@@ -205,7 +233,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
         testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsInstructor" + withSCA);
     }
@@ -243,7 +271,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13", TEST_PREFIX);
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Python", TEST_PREFIX);
@@ -280,7 +308,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchResultsCarryTheImportTableFieldSet() throws Exception {
         var title = "importTableFieldSet-Programming";
         programmingExercise.setTitle(title);
@@ -308,7 +336,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNoBuildPlanAccessSecretForImportedExercise() {
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
         assertThat(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret())
@@ -316,7 +344,32 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_initializesOmittedTestCasesAndTasks() {
+        var toBeImported = createToBeImported();
+        toBeImported.setTestCases(null);
+        toBeImported.setTasks(null);
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, null);
+        var stored = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(imported);
+
+        assertThat(stored.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
+        assertThat(programmingExerciseTaskTestRepository.findByExerciseId(imported.getId())).hasSameSizeAs(programmingExercise.getTasks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_keepsTheClassOfTestCases() {
+        programmingExercise.getTestCases().forEach(testCase -> testCase.setTestClass("de.tum.Outer$Inner"));
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
+
+        assertThat(testCaseRepository.findByExerciseId(imported.getId())).hasSameSizeAs(programmingExercise.getTestCases())
+                .allSatisfy(testCase -> assertThat(testCase.getTestClass()).isEqualTo("de.tum.Outer$Inner"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDifferentBuildPlanAccessSecretForImportedExercise() {
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
@@ -325,7 +378,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforePersistence() throws Exception {
         long exerciseCountBeforeImport = programmingExerciseRepository.count();
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
@@ -344,8 +397,66 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeImport);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_deletedSelectedCompetencyLeavesNoRows(boolean competencyFromAnotherCourse) {
+        var selected = competencyUtilService.createCompetency(competencyFromAnotherCourse ? programmingExercise.getCourseViaExerciseGroupOrCourseMember() : additionalEmptyCourse);
+        var valid = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var policy = new LockRepositoryPolicy();
+        policy.setSubmissionLimit(5);
+        policy.setActive(true);
+        var destination = createToBeImportedWithSubmissionPolicy(policy);
+        destination.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(valid, destination, 1), new CompetencyExerciseLink(selected, destination, 2))));
+        competencyRepository.deleteById(selected.getId());
+        long exercisesBefore = programmingExerciseRepository.count();
+        long buildConfigsBefore = programmingExerciseBuildConfigRepository.count();
+        long teamConfigsBefore = teamAssignmentConfigRepository.count();
+        long plagiarismConfigsBefore = plagiarismDetectionConfigRepository.count();
+        long policiesBefore = submissionPolicyRepository.count();
+        long linksBefore = competencyExerciseLinkRepository.count();
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), destination, null));
+
+        assertThat(programmingExerciseRepository.count()).as("no incomplete exercise").isEqualTo(exercisesBefore);
+        assertThat(programmingExerciseBuildConfigRepository.count()).as("no build configuration").isEqualTo(buildConfigsBefore);
+        assertThat(teamAssignmentConfigRepository.count()).as("no team configuration").isEqualTo(teamConfigsBefore);
+        assertThat(plagiarismDetectionConfigRepository.count()).as("no plagiarism configuration").isEqualTo(plagiarismConfigsBefore);
+        assertThat(submissionPolicyRepository.count()).as("no submission policy").isEqualTo(policiesBefore);
+        assertThat(competencyExerciseLinkRepository.count()).as("no partial competency links").isEqualTo(linksBefore);
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importProgrammingExerciseBasis_keepsSelectedTargetLinksAndSkipsOtherCourses() {
+        var sourceCompetency = competencyUtilService.createCompetency(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var sourceLink = competencyExerciseLinkRepository.save(new CompetencyExerciseLink(sourceCompetency, programmingExercise, 1));
+        programmingExercise.setCompetencyLinks(new HashSet<>(Set.of(sourceLink)));
+        var otherCourseCompetency = competencyUtilService.createCompetency(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var selected = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var secondSelected = competencyUtilService.createCompetency(additionalEmptyCourse);
+        var destination = createToBeImported();
+        var inferredLink = new CompetencyExerciseLink(selected, destination, 2.5);
+        inferredLink.setGeneratedByAi(true);
+        destination.setCompetencyLinks(new HashSet<>(
+                Set.of(inferredLink, new CompetencyExerciseLink(secondSelected, destination, 0.5), new CompetencyExerciseLink(otherCourseCompetency, destination, 3))));
+
+        var imported = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), destination, null);
+
+        var links = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(imported.getId());
+        assertThat(links).extracting(link -> link.getCompetency().getId()).containsExactlyInAnyOrder(selected.getId(), secondSelected.getId());
+        assertThat(links).allSatisfy(link -> {
+            assertThat(link.getExercise().getId()).isEqualTo(imported.getId());
+            assertThat(link.getWeight()).isEqualTo(link.getCompetency().getId().equals(selected.getId()) ? 2.5 : 0.5);
+            assertThat(link.isGeneratedByAi()).isEqualTo(link.getCompetency().getId().equals(selected.getId()));
+        });
+        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).singleElement()
+                .satisfies(link -> assertThat(link.getCompetency().getId()).isEqualTo(sourceCompetency.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findForCreationById_assemblesTheCompleteGraphFromItsSeparateQueries() {
         // findForCreationById combines three queries: the main graph plus one each for the grading criteria (with their
         // structured instructions) and the competency links, which would otherwise multiply the main query's result set.
@@ -371,7 +482,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_doesNotRollBackWhenItFailsPartway() {
         // The import deliberately runs without a surrounding transaction, so a failure partway does NOT roll back what was
         // already written - the caller (e.g. ExamImportService) reports such an exercise as incomplete instead. Pin that

@@ -46,6 +46,25 @@ describe('Faq Service', () => {
         httpMock.verify();
     });
 
+    it.each([undefined, FaqState.PROPOSED, FaqState.REJECTED])('loads management list with data-only state %s', (state) => {
+        service.findAllForManagement(courseId, state).subscribe((res) => expect(res.body?.[0].categories).toEqual(elemDefault.categories));
+        const req = httpMock.expectOne((request) => request.url === `api/communication/courses/${courseId}/faqs/for-management`);
+        expect(req.request.params.get('faqState')).toBe(state ?? null);
+        req.flush([{ ...elemDefault, categories: [JSON.stringify(elemDefault.categories![0])] }]);
+    });
+
+    it('loads management detail and converts categories', () => {
+        service.findForManagement(courseId, 1).subscribe((res) => expect(res.body?.categories).toEqual(elemDefault.categories));
+        httpMock.expectOne(`api/communication/courses/${courseId}/faqs/1/for-management`).flush({ ...elemDefault, categories: [JSON.stringify(elemDefault.categories![0])] });
+    });
+
+    it.each([undefined, FaqState.PROPOSED, FaqState.REJECTED])('loads management categories with state %s', (state) => {
+        service.findAllCategoriesForManagement(courseId, state).subscribe((res) => expect(res.body).toEqual(['category']));
+        const req = httpMock.expectOne((request) => request.url === `api/communication/courses/${courseId}/faq-categories/for-management`);
+        expect(req.request.params.get('faqState')).toBe(state ?? null);
+        req.flush(['category']);
+    });
+
     describe('Service methods', () => {
         it('should create a faq', () => {
             const returnedFromService = { ...elemDefault };

@@ -45,7 +45,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String login;
 
-    @Size(max = 50)
+    @Size(max = 101)
     private String name;
 
     @Size(max = 50)
@@ -83,8 +83,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<OrganizationDTO> organizations;
 
-    private String vcsAccessToken;
-
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
     /**
@@ -104,8 +102,6 @@ public class UserDTO extends AuditingEntityDTO {
     private boolean isLoggedInWithPasskey = DEFAULT_IS_LOGGED_IN_WITH_PASSKEY;
 
     private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
-
-    private boolean memirisEnabled = true;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -145,7 +141,7 @@ public class UserDTO extends AuditingEntityDTO {
             this.organizations = organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet());
         }
         // The AI preferences live in user_ai_preference, so they are set by the endpoints that actually surface them
-        // rather than read off the user here. memirisEnabled keeps its field default of true, matching "no row".
+        // rather than read off the user here.
     }
 
     public Long getId() {
@@ -252,19 +248,6 @@ public class UserDTO extends AuditingEntityDTO {
         this.organizations = organizations;
     }
 
-    public String getVcsAccessToken() {
-        return vcsAccessToken;
-    }
-
-    /**
-     * Only set this token if it is absolutely necessary in the client, otherwise this might reveal secret information
-     *
-     * @param vcsAccessToken the access token for the VCS repository
-     */
-    public void setVcsAccessToken(String vcsAccessToken) {
-        this.vcsAccessToken = vcsAccessToken;
-    }
-
     public void setVcsAccessTokenExpiryDate(ZonedDateTime zoneDateTime) {
         this.vcsAccessTokenExpiryDate = zoneDateTime;
     }
@@ -327,14 +310,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setSelectedLLMUsageTimestamp(ZonedDateTime selectedLLMUsageTimestamp) {
         this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
-    }
-
-    public boolean isMemirisEnabled() {
-        return memirisEnabled;
-    }
-
-    public void setMemirisEnabled(boolean memirisEnabled) {
-        this.memirisEnabled = memirisEnabled;
     }
 
     @Override

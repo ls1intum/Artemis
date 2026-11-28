@@ -63,7 +63,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAthenaConfig_returnsPersistedFlags() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -73,7 +73,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAthenaConfig_newCourse_returnsBothDisabled() throws Exception {
         var config = request.get(configPath, HttpStatus.OK, CourseAthenaConfigDTO.class);
 
@@ -81,7 +81,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_persistsBothFlags() throws Exception {
         persistAthenaConfig(false, false);
 
@@ -92,7 +92,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_newCourse_updatesItsDefaults() throws Exception {
         var updated = request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(false, true), CourseAthenaConfigDTO.class, HttpStatus.OK);
 
@@ -101,7 +101,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_switchingOneFlagKeepsTheOther() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -111,7 +111,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_omittedFlagIsNotWritten() throws Exception {
         persistAthenaConfig(true, true);
 
@@ -124,7 +124,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_emptyUpdate_changesNothing() throws Exception {
         persistAthenaConfig(true, false);
 
@@ -135,7 +135,7 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_concurrentSwitchesOfDifferentFeaturesBothSurvive() throws Exception {
         persistAthenaConfig(false, false);
 
@@ -171,13 +171,13 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getAthenaConfig_asTutor_isForbidden() throws Exception {
         request.get(configPath, HttpStatus.FORBIDDEN, CourseAthenaConfigDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void updateAthenaConfig_asTutor_isForbidden() throws Exception {
         request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(true, true), CourseAthenaConfigDTO.class, HttpStatus.FORBIDDEN);
     }

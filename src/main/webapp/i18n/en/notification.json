@@ -45,7 +45,9 @@
             "updated": "Updated system notification with identifier {{ param }}",
             "deleted": "Deleted system notification with identifier {{ param }}",
             "sendMaintenanceEmail": "Announce maintenance to all instructors via email",
-            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses."
+            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses.",
+            "titleMaxlength": "The notification title must not exceed 255 characters.",
+            "textMaxlength": "The notification text must not exceed 2000 characters."
         },
         "groupNotification": {
             "title": {
@@ -190,6 +192,7 @@
             }
         },
         "courseNotification": {
+            "messagePreviewUnavailable": "No message preview available.",
             "newPostNotification": {
                 "title": "New message",
                 "content": "{{postMarkdownContent}}",
@@ -289,17 +292,17 @@
             },
             "channelDeletedNotification": {
                 "title": "Channel deleted",
-                "content": "{{channelName}} was deleted in {{courseTitle}}.",
+                "content": "{{channelName}} was deleted in {{courseName}}.",
                 "settingsTitle": "Channel deleted"
             },
             "addedToChannelNotification": {
                 "title": "Added to channel",
-                "content": "You were added to {{channelName}} in {{courseTitle}}.",
+                "content": "You were added to {{channelName}} in {{courseName}}.",
                 "settingsTitle": "Added to channel"
             },
             "removedFromChannelNotification": {
                 "title": "Removed from channel",
-                "content": "You were removed from {{channelName}} in {{courseTitle}}.",
+                "content": "You were removed from {{channelName}} in {{courseName}}.",
                 "settingsTitle": "Removed from channel"
             },
             "tutorialGroupAssignedNotification": {

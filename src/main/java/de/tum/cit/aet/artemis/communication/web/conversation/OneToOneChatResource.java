@@ -66,9 +66,9 @@ public class OneToOneChatResource extends ConversationManagementResource {
     /**
      * POST courses/:courseId/one-to-one-chats : Starts a new one to one chat in a course with exactly one other participant.
      * <p>
-     * The partner is identified in the request body by either {@code userId} or {@code login} (see {@link OneToOneChatCreationDTO}). The body also tolerates the deprecated
-     * single-login array form for backwards compatibility. The canonical path is {@code courses/{courseId}/one-to-one-chats}; the legacy {@code .../one-to-one-chats/{userId}} path
-     * (partner id in the URL) is kept as a deprecated alias and resolved here.
+     * The partner is identified in the request body by either {@code userId} or {@code login} (see {@link OneToOneChatCreationDTO}). The canonical path is
+     * {@code courses/{courseId}/one-to-one-chats}; the legacy {@code .../one-to-one-chats/{userId}} path (partner id in the URL) is kept as a deprecated alias and resolved
+     * here.
      *
      * @param courseId    the id of the course
      * @param userId      the id of the other participant, only set when the deprecated {@code .../one-to-one-chats/{userId}} path is used
@@ -87,13 +87,16 @@ public class OneToOneChatResource extends ConversationManagementResource {
         Long partnerId = userId != null ? userId : (chatPartner != null ? chatPartner.userId() : null);
         User otherUser;
         if (partnerId != null) {
-            otherUser = userRepository.findByIdElseThrow(partnerId);
+            otherUser = conversationService.findCourseUserByIdElseThrow(course, partnerId);
         }
         else if (chatPartner != null && chatPartner.login() != null) {
-            otherUser = findSingleOtherChatParticipantElseThrow(requestingUser, chatPartner.login());
+            otherUser = findSingleOtherChatParticipantElseThrow(course, requestingUser, chatPartner.login());
         }
         else {
             throw new BadRequestAlertException("A one-to-one chat must specify the other participant by userId or login", "oneToOneChat", "missingPartner");
+        }
+        if (otherUser.getId().equals(requestingUser.getId())) {
+            throw new BadRequestAlertException("A one-to-one chat can only be started with another user", "oneToOneChat", "sameUser");
         }
         log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherUser.getLogin());
         return createOneToOneChat(requestingUser, otherUser, course);
@@ -102,13 +105,14 @@ public class OneToOneChatResource extends ConversationManagementResource {
     /**
      * Resolves the single other participant of a one-to-one chat from a login, ensuring exactly two distinct users (the requesting user and the partner) are involved.
      *
+     * @param course         the course of the chat, both participants have to be members of it
      * @param requestingUser the user creating the chat
      * @param partnerLogin   the login of the other participant
      * @return the other participant
      */
-    private User findSingleOtherChatParticipantElseThrow(User requestingUser, String partnerLogin) {
+    private User findSingleOtherChatParticipantElseThrow(Course course, User requestingUser, String partnerLogin) {
         var loginsToSearchFor = new HashSet<>(List.of(partnerLogin, requestingUser.getLogin()));
-        var chatMembers = new ArrayList<>(conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList()));
+        var chatMembers = new ArrayList<>(conversationService.findCourseUsersInDatabase(course, loginsToSearchFor.stream().toList()));
         if (chatMembers.size() != 2) {
             throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
         }

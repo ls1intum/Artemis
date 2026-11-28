@@ -12,12 +12,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.grid.hazelcast.Bucket4jHazelcast;
 import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
@@ -63,11 +65,16 @@ public class RateLimitConfig {
      * @param redissonClient the Redisson client holding the bucket state
      * @return bucket storage for the Redis provider
      */
+    // Exactly one of the three storages exists at runtime, because the conditions match one value of artemis.distributed-data.provider each. Static analysis
+    // cannot evaluate them and reports every injection of the ProxyManager as ambiguous (Sonar java:S9352); @Primary changes nothing at runtime.
     @Bean
+    @Primary
     @Conditional(RedisDistributedDataCondition.class)
     public ProxyManager<String> redisRateLimitProxyManager(RedissonClient redissonClient) {
         CommandAsyncExecutor commandExecutor = ((Redisson) redissonClient).getCommandExecutor();
-        return Bucket4jRedisson.casBasedBuilder(commandExecutor).build();
+        // Idle buckets expire like the ones of the other providers, so that distinct keys (the failed logins are keyed by the login name) cannot fill the store
+        return Bucket4jRedisson.casBasedBuilder(commandExecutor).expirationAfterWrite(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofMinutes(10)))
+                .build();
     }
 
     /**

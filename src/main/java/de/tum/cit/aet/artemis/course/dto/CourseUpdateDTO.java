@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -61,7 +62,7 @@ public record CourseUpdateDTO(
 
         // UI settings
         @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
-        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
+        boolean unenrollmentEnabled, @Nullable @Size(max = 10000) String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
         boolean learningPathsEnabled, @Nullable Boolean presentationAssessmentsEnabled,
@@ -79,7 +80,10 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext,
+
+        // Who authors the first commit of the repositories of new programming exercises. Omitted: unchanged.
+        @Nullable @Valid InitialCommitAuthorDTO initialCommitAuthor) implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -91,48 +95,13 @@ public record CourseUpdateDTO(
      * @return the updated course entity
      */
     public Course applyTo(Course course) {
-        // Basic info
-        course.setTitle(title);
-        course.setShortName(shortName);
-        course.setDescription(description);
-        course.setSemester(semester);
-
-        // Dates
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
-        course.setEnrollmentStartDate(enrollmentStartDate);
-        course.setEnrollmentEndDate(enrollmentEndDate);
-        course.setUnenrollmentEndDate(unenrollmentEndDate);
-
-        // Configuration flags
-        course.setTestCourse(testCourse);
-        course.setOnlineCourse(onlineCourse != null && onlineCourse);
-        course.setLanguage(language);
-        course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
-
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-
-        // UI settings
-        course.setColor(color);
+        applyBasicSettingsTo(course);
         course.setCourseIcon(courseIcon);
-        course.setEnrollmentEnabled(enrollmentEnabled);
-        course.setEnrollmentConfirmationMessage(enrollmentConfirmationMessage);
-        course.setUnenrollmentEnabled(unenrollmentEnabled);
+        applyEnrollmentSettingsTo(course);
         course.setCourseInformationSharingMessagingCodeOfConduct(courseInformationSharingMessagingCodeOfConduct);
 
         // Course features
-        course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setPresentationScore(presentationScore);
-        course.setMaxPoints(maxPoints);
-        course.setAccuracyOfScores(accuracyOfScores);
-        course.setTimeZone(timeZone);
-        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        applyFeatureSettingsTo(course);
 
         // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
         // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
@@ -159,6 +128,15 @@ public record CourseUpdateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        if (studentWelcomeContext != null) {
+            configuration.setStudentWelcomeContext(studentWelcomeContext);
+        }
+        if (initialCommitAuthor != null) {
+            // Checked here as well as by bean validation, so that a caller that applies this DTO directly cannot store an identity that injects git header data.
+            initialCommitAuthor.validate();
+            InitialCommitAuthorDTO strippedAuthor = initialCommitAuthor.stripped();
+            configuration.setInitialCommitAuthor(strippedAuthor.mode(), strippedAuthor.name(), strippedAuthor.email());
+        }
 
         return course;
     }

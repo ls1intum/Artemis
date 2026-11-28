@@ -52,7 +52,8 @@ test.describe('Exam bonus management', { tag: '@slow' }, () => {
         // Each choice opens the next step: strategy, then calculation, then source.
         await page.getByRole('button', { name: 'Grades', exact: true }).click();
         await page.getByRole('button', { name: '−', exact: true }).click();
-        await page.getByTitle('Select bonus source').selectOption({ label: bonusExam.title! });
+        await page.getByTestId('bonus-source-grading-scale').getByRole('combobox').click();
+        await page.getByRole('option', { name: bonusExam.title!, exact: true }).click();
         await expect(page.getByRole('cell', { name: '0.7', exact: true }).first()).toBeVisible();
 
         // The preview calculates the final grade from points that can be entered: 7 of 10 points is 3.0, 9 of 10 points in the source gives 0.7.

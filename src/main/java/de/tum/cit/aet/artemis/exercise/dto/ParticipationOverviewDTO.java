@@ -24,10 +24,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * @param individualDueDate   the student's own due date, when one was granted
  * @param repositoryUri       the student's repository for a programming participation; needed by the code actions
  * @param submissions         the submissions of this participation
+ * @param hasSubmitted        safe own-submission status, even when pending submission content is withheld
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationOverviewDTO(Long id, String type, InitializationState initializationState, ZonedDateTime initializationDate, Boolean testRun,
-        ZonedDateTime individualDueDate, String repositoryUri, Set<SubmissionOverviewDTO> submissions) {
+        ZonedDateTime individualDueDate, String repositoryUri, Set<SubmissionOverviewDTO> submissions, boolean hasSubmitted) {
 
     /**
      * Projects a participation with its submissions and results for the course overview.
@@ -37,8 +38,13 @@ public record ParticipationOverviewDTO(Long id, String type, InitializationState
      */
     public static ParticipationOverviewDTO of(StudentParticipation participation) {
         String repositoryUri = participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation ? programmingParticipation.getRepositoryUri() : null;
+        var submissions = SubmissionOverviewDTO.of(participation.getSubmissions());
+        boolean hasSubmitted = submissions.stream()
+                .anyMatch(submission -> Boolean.TRUE.equals(submission.submitted())
+                        || participation instanceof ProgrammingExerciseStudentParticipation && submission.submissionDate() != null
+                        || submission.results().stream().anyMatch(result -> Boolean.TRUE.equals(result.rated())));
         return new ParticipationOverviewDTO(participation.getId(), participation.getType(), participation.getInitializationState(), participation.getInitializationDate(),
-                participation.isTestRun(), participation.getIndividualDueDate(), repositoryUri, SubmissionOverviewDTO.of(participation.getSubmissions()));
+                participation.isTestRun(), participation.getIndividualDueDate(), repositoryUri, submissions, hasSubmitted);
     }
 
     /**

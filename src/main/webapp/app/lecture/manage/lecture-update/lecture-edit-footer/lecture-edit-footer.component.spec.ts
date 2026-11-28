@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { LectureEditFooterComponent } from 'app/lecture/manage/lecture-update/lecture-edit-footer/lecture-edit-footer.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -54,7 +54,7 @@ describe('LectureEditFooterComponent', () => {
         return element(testId).textContent?.trim() ?? '';
     }
 
-    function saveTooltip(): string | readonly string[] {
+    function saveTooltip(): ReturnType<TumAetUiTooltipDirective['content']> {
         return fixture.debugElement.query(By.css('[data-testid="lecture-edit-save"]')).injector.get(TumAetUiTooltipDirective).content();
     }
 
