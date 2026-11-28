@@ -37,6 +37,19 @@ const PREWARM_ROUTES = [
 
 const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
 
+// The headers the query detector reads. Lower case on purpose: `Request.headers()` returns lower-cased
+// names, so an override spelled differently would be added next to the existing entry and joined into `"setup, action"`.
+const PLAYWRIGHT_TEST_NAME_HEADER = 'x-playwright-test-name';
+const PLAYWRIGHT_PHASE_HEADER = 'x-playwright-phase';
+
+function mergeHeaders(existing: Record<string, string> | undefined, overrides: Record<string, string>): Record<string, string> {
+    const merged: Record<string, string> = { ...(existing ?? {}) };
+    for (const [name, value] of Object.entries(overrides)) {
+        merged[name.toLowerCase()] = value;
+    }
+    return merged;
+}
+
 let chunksWarmedOnThisWorker = false;
 
 /**
@@ -126,11 +139,27 @@ const test = baseTest.extend<
         },
         { scope: 'worker', auto: true },
     ],
+    // Tags every request with the test name and the `setup` phase. It has to be `contextOptions`, not `page.route()`,
+    // because test setup goes through `page.request`, which never passes through routes. `autoTestFixture` below
+    // switches the phase to `action` for requests the browser page issues.
+    contextOptions: async ({ contextOptions }, use, testInfo) => {
+        await use({
+            ...contextOptions,
+            extraHTTPHeaders: mergeHeaders(contextOptions.extraHTTPHeaders, {
+                // percent-encoded: HTTP header values must be ASCII, and test titles may contain e.g. '✕'
+                [PLAYWRIGHT_TEST_NAME_HEADER]: encodeURIComponent(testInfo.title),
+                [PLAYWRIGHT_PHASE_HEADER]: 'setup',
+            }),
+        });
+    },
     autoTestFixture: [
         async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
+
+            // `fallback()`, not `continue()`, so the request still reaches the context-level route of `installApiResponseCapture`.
+            await page.route('**/api/**', (route) => route.fallback({ headers: mergeHeaders(route.request().headers(), { [PLAYWRIGHT_PHASE_HEADER]: 'action' }) }));
 
             // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
             // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with

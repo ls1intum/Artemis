@@ -15,6 +15,7 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
 | Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
+| Change the E2E query report or find out why it is noisy       | [query-report](skills/query-report/SKILL.md)               |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.

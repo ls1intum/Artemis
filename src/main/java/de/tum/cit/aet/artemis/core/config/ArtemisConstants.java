@@ -25,6 +25,13 @@ public final class ArtemisConstants {
 
     public static final String SPRING_PROFILE_K8S = "k8s";
 
+    /**
+     * Activates the runtime query detector. Only used in CI E2E test runs.
+     * When active, the queries of every HTTP request are counted via a datasource-proxy wrapper
+     * and queries that a request repeats are collected for PR reporting.
+     */
+    public static final String SPRING_PROFILE_E2E_PERFORMANCE = "e2e-performance";
+
     private ArtemisConstants() {
     }
 }

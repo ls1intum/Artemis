@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the architecture diagrams of the system design page as UML 2 SVG files.
+"""Generates the architecture diagrams of the developer documentation as UML 2 SVG files.
 
 The diagrams are drawn from this file and not by hand, so that a change to the architecture is a change to the
 text of a diagram and shows up in the review. The SVG files are committed, because the documentation site
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-OUT = Path(__file__).resolve().parent.parent / "documentation" / "docs" / "developer" / "assets" / "system-design"
+OUT = Path(__file__).resolve().parent.parent / "documentation" / "docs" / "developer" / "assets"
 INK = "#000000"
 FONT = "Helvetica, Arial, sans-serif"
 TOP_FACE = "#f4f4f4"
@@ -147,6 +147,15 @@ class Svg:
         """Software that runs on a node."""
         self.rect(x, y, w, 34, sw=1.2)
         self.text(x + 10, y + 22, name, 12, "700", "start")
+
+    def stereotyped(self, x, y, w, h, stereo, name, sub=None):
+        """A box that is no component, such as a file or a script, with its stereotype above the name. The text is centered."""
+        self.rect(x, y, w, h)
+        top = y + (h - (46 if sub else 30)) // 2
+        self.text(x + w / 2, top + 10, f"«{stereo}»", 10)
+        self.text(x + w / 2, top + 27, name, 13, "700")
+        if sub:
+            self.text(x + w / 2, top + 43, sub, 11)
 
     def render(self):
         head = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.w} {self.h}" width="{self.w}" height="{self.h}" font-family="{FONT}" role="img" aria-labelledby="t d">'
@@ -387,13 +396,82 @@ def deployment():
     return s
 
 
-DIAGRAMS = {"TopLevelDesign.svg": top_level, "ServerArchitecture.svg": server_arch, "DeploymentOverview.svg": deployment}
+# ====================================================================== deployment diagram: query report
+def query_report():
+    s = Svg(0, 0, "Query report of the end-to-end tests (UML deployment diagram)",
+            "On the CI runner, the Playwright tests send requests to the Artemis server, which accesses PostgreSQL. In the server, the query listener passes every statement to the query collector. "
+            "The report formatter takes the query report that the tests fetch from the server, the results of the static query scanner and the develop baseline from GitHub. "
+            "It writes an HTML report and the comments of the pull request.")
+    d = Svg.DEPTH
+    gap = 40  # between the boxes of the lower rows
+    github = [("artifact", "Query Baseline", "keys of the latest develop run", "baseline"),
+              ("artifact", "HTML Report", "all findings of the run", "full report"),
+              ("comments", "Pull Request", "summary and inline comments", "new findings")]
+    box_w = max(s.size_comp(name, sub)[0] for _, name, sub, _ in github)
+    formatter_w = 3 * box_w + 2 * gap
+
+    left, top = 50, 90
+    test_w, comp_h = s.size_comp("Playwright Tests", ["container"])
+    listener_w = max(s.size_comp("Query Listener", ["every SQL statement"])[0], s.size_comp("Query Collector", ["repeats per request"])[0])
+    server_x = left + test_w + 110
+    server_w = listener_w + 40
+    server_h = 44 + comp_h + 34 + comp_h + 20
+    database_w = s.size_comp("PostgreSQL", ["container"])[0]
+    database_x = server_x + server_w + 100
+    mid = top + 44 + comp_h // 2  # the height of the connectors between the containers
+    formatter_y = top + server_h + 70
+    scanner_x = left + formatter_w + 120
+    scanner_w = s.size_comp("Static Query Scanner", ["script"])[0]
+    runner_w = max(scanner_x + scanner_w, database_x + database_w) + 20 - 30
+    runner_h = formatter_y + comp_h + 24 - 50
+    s.node(30, 50, runner_w, runner_h, "CI Runner")
+
+    s.stereotyped(left, mid - comp_h // 2, test_w, comp_h, "container", "Playwright Tests")
+    s.rect(server_x, top, server_w, server_h)
+    s.text(server_x + server_w / 2, top + 17, "«container»", 10)
+    s.text(server_x + server_w / 2, top + 34, "Artemis Server", 13, "700")
+    listener_y = top + 44
+    collector_y = listener_y + comp_h + 34
+    s.comp(server_x + 20, listener_y, "Query Listener", ["every SQL statement"], w=listener_w)
+    s.comp(server_x + 20, collector_y, "Query Collector", ["repeats per request"], w=listener_w)
+    s.dependency([(server_x + server_w // 2, listener_y + comp_h), (server_x + server_w // 2, collector_y)])
+    s.stereotyped(database_x, mid - comp_h // 2, database_w, comp_h, "container", "PostgreSQL")
+    s.line([(left + test_w, mid), (server_x, mid)])
+    s.text((left + test_w + server_x) / 2, mid - 8, "«HTTP»", 10)
+    s.line([(server_x + server_w, mid), (database_x, mid)])
+    s.text((server_x + server_w + database_x) / 2, mid - 8, "«JDBC»", 10)
+
+    s.stereotyped(left, formatter_y, formatter_w, comp_h, "script", "Report Formatter")
+    s.stereotyped(scanner_x, formatter_y, scanner_w, comp_h, "script", "Static Query Scanner")
+    row = formatter_y + comp_h // 2
+    s.line([(scanner_x, row), (left + formatter_w, row)], dashed=True, arrow="open")
+    s.text((scanner_x + left + formatter_w) / 2, row - 8, "findings", 11)
+    report_x = left + test_w // 2
+    s.line([(report_x, mid + comp_h // 2), (report_x, formatter_y)], dashed=True, arrow="open")
+    s.text(report_x + 10, (mid + comp_h // 2 + formatter_y) / 2 + 4, "query report", 11, anchor="start")
+
+    github_y = 50 + runner_h + 80
+    s.node(30, github_y, runner_w, 44 + comp_h + 20, "GitHub")
+    for i, (stereo, name, sub, label) in enumerate(github):
+        x = left + i * (box_w + gap)
+        y = github_y + 44
+        s.stereotyped(x, y, box_w, comp_h, stereo, name, sub)
+        line_x = x + box_w // 2
+        ends = [(line_x, y), (line_x, formatter_y + comp_h)]
+        s.line(ends if label == "baseline" else ends[::-1], dashed=True, arrow="open")
+        s.text(line_x + 10, 50 + runner_h + 38, label, 11, anchor="start")
+    s.frame("Query Report", 30 + runner_w + d + 24, github_y + 44 + comp_h + 20 + 24)
+    return s
+
+
+DIAGRAMS = {"system-design/TopLevelDesign.svg": top_level, "system-design/ServerArchitecture.svg": server_arch, "system-design/DeploymentOverview.svg": deployment,
+            "query-report/QueryReportDeployment.svg": query_report}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--check", action="store_true", help="fail when a committed SVG file differs from the generated one")
-    parser.add_argument("--out", type=Path, default=OUT, help="the directory of the SVG files")
+    parser.add_argument("--out", type=Path, default=OUT, help="the assets directory that holds the SVG files")
     args = parser.parse_args()
     outdated = []
     for name, diagram in DIAGRAMS.items():
@@ -403,6 +481,7 @@ def main() -> int:
             if not path.exists() or path.read_text(encoding="utf-8") != text:
                 outdated.append(name)
         else:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")
     if outdated:
         print("These diagrams differ from what generate_architecture_diagrams.py draws: " + ", ".join(outdated))

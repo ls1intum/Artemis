@@ -180,6 +180,13 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Query report (Phase 1)
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/query-report
+        with:
+          tests-outcome: ${{ steps.run-tests-phase1.outcome }}
+          artifact-name: Query Report Phase 1
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -257,6 +264,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -272,6 +280,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -292,6 +306,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (queryReportMd) { body += '\n' + queryReportMd; }
             body += runFullSuite
               ? `\n\n**Requested scope:** Full suite (two-phase execution)\n`
               : `\n\n**Requested scope:** Selected relevant + smoke specs. The full suite was not requested; Phase 2 is intentionally omitted.\n`;
@@ -315,6 +330,16 @@ jobs:
                 issue_number: prNumber, body,
               });
             }
+
+      - name: Post inline query comments (Phase 1)
+        if: (success() || failure()) && inputs.is_pr
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        uses: ./.github/actions/post-inline-query-comments
+        with:
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'false'
 
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
@@ -397,6 +422,13 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Query report (Phase 2)
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/query-report
+        with:
+          tests-outcome: ${{ steps.run-tests-phase2.outcome }}
+          artifact-name: Query Report Phase 2
+
       - name: E2E Teardown
         id: teardown
         if: ${{ !cancelled() }}
@@ -471,6 +503,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -483,6 +516,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -490,7 +529,7 @@ jobs:
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
 
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (queryReportMd ? '\n' + queryReportMd : ''));
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -531,6 +570,16 @@ jobs:
                 issue_number: prNumber, body,
               });
             }
+
+      - name: Post inline query comments (Phase 2)
+        if: (success() || failure()) && inputs.is_pr
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        uses: ./.github/actions/post-inline-query-comments
+        with:
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'false'
 
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
@@ -604,6 +653,13 @@ jobs:
         env:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
+
+      - name: Query report (All PR)
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/query-report
+        with:
+          tests-outcome: ${{ steps.run-tests-all-pr.outcome }}
+          artifact-name: Query Report All PR
 
       - name: E2E Teardown
         id: teardown
@@ -687,6 +743,7 @@ jobs:
           INPUT_STATUS_TEXT: ${{ steps.format-results.outputs.status-text }}
         with:
           script: |
+            const fs = require('fs');
             const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
 
             const prNumber = Number(process.env.INPUT_PR_NUMBER);
@@ -699,6 +756,12 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            // Read from disk rather than an env var: actions/github-script spawns a fresh Node
+            // process with the whole job environment, and a large report here has previously
+            // pushed that environment past the OS's exec() size limit ("Argument list too long"),
+            // silently swallowed by this step's continue-on-error.
+            let queryReportMd = '';
+            try { queryReportMd = fs.readFileSync('query-summary.md', 'utf8'); } catch {}
 
             const failedTests = parseFailedTests('all-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -712,6 +775,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (queryReportMd) { body += '\n' + queryReportMd; }
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
@@ -734,6 +798,16 @@ jobs:
 
   # The caller has acquired the develop concurrency slot before this job runs. Compare the
   # immutable build SHA before requesting a self-hosted runner for the full suite.
+      - name: Post inline query comments (All Tests)
+        if: (success() || failure()) && inputs.is_pr
+        # Convenience on top of the summary comment; a GitHub API blip must not fail the job.
+        continue-on-error: true
+        uses: ./.github/actions/post-inline-query-comments
+        with:
+          pr-number: ${{ steps.find-e2e-comment.outputs.pr-number }}
+          tested-sha: ${{ inputs.commit_sha }}
+          remove-stale: 'true'
+
   develop-e2e-tip:
     name: Check develop tip for E2E
     if: ${{ !inputs.is_pr && github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
@@ -817,6 +891,15 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: supporting_scripts/ci/E2E-tests/execute.sh multi-node-redis playwright
+
+      - name: Query report (Non-PR)
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/query-report
+        with:
+          tests-outcome: ${{ steps.run-tests-all-non-pr.outcome }}
+          artifact-name: Query Report Non-PR
+          compare-with-develop: 'false'
+          publish-baseline: ${{ inputs.branch_name == 'develop' }}
 
       - name: E2E Teardown
         id: teardown
