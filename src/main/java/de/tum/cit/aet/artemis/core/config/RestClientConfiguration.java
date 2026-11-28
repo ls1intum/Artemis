@@ -23,8 +23,6 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
-import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
-import io.micrometer.observation.ObservationRegistry;
 
 /**
  * The {@link RestClient} beans for the remote services that Artemis calls, one per service and timeout. They replace the deprecated
@@ -80,6 +78,16 @@ public class RestClientConfiguration {
     }
 
     /**
+     * Applies the shared request factory, URI encoding and short timeouts for a remote service.
+     *
+     * @param builder the client builder supplied by Spring Boot
+     * @return the configured builder
+     */
+    public static RestClient.Builder withShortTimeout(RestClient.Builder builder) {
+        return configured(builder, SHORT_CONNECTION_TIMEOUT, SHORT_READ_TIMEOUT);
+    }
+
+    /**
      * A client with the interceptor of its service. The XML converter is removed, as it was for the templates, because it would be picked
      * for requests and responses of the tests.
      */
@@ -114,7 +122,7 @@ public class RestClientConfiguration {
     @Bean
     @Conditional(ApollonEnabled.class)
     public RestClient shortTimeoutApollonRestClient(RestClient.Builder restClientBuilder) {
-        return configured(restClientBuilder, SHORT_CONNECTION_TIMEOUT, SHORT_READ_TIMEOUT).build();
+        return withShortTimeout(restClientBuilder).build();
     }
 
     // ---- Hermes
@@ -177,7 +185,7 @@ public class RestClientConfiguration {
         return configured(restClientBuilder, 0, 0).build();
     }
 
-    // ---- LTI and Sharing
+    // ---- LTI
 
     /**
      * The client for the LTI platforms: the token request, the score submission and the dynamic registration. There is no timeout, as
@@ -189,22 +197,6 @@ public class RestClientConfiguration {
     @Bean
     public RestClient ltiRestClient(RestClient.Builder restClientBuilder) {
         return configured(restClientBuilder, 0, 0).build();
-    }
-
-    /**
-     * The client for the Sharing Platform, with short timeouts. It is a client of its own so that a test can mock the platform without
-     * affecting the other services.
-     * <p>
-     * It records no observations. The observation of a request is tagged with its URL, and the URLs of the Sharing Platform carry the
-     * shared API key as a query parameter and basket tokens in the path, so the metrics of this client would publish both.
-     *
-     * @param restClientBuilder the builder of Spring Boot, which is a new instance for every injection
-     * @return the client with short timeouts for the Sharing Platform
-     */
-    @Bean
-    @Conditional(SharingEnabled.class)
-    public RestClient sharingRestClient(RestClient.Builder restClientBuilder) {
-        return configured(restClientBuilder, SHORT_CONNECTION_TIMEOUT, SHORT_READ_TIMEOUT).observationRegistry(ObservationRegistry.NOOP).build();
     }
 
     // ---- Athena
