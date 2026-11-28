@@ -21,10 +21,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
+import de.tum.cit.aet.artemis.core.service.llm.LlmEmbeddingResponse;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
-import de.tum.cit.aet.artemis.globalsearch.dto.embedding.EmbeddingResponseDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
@@ -74,8 +74,7 @@ class SearchableEntityEmbeddingClientTest {
         String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/v1/";
         var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", "embedding", null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, maxInputs, queryTimeout, Duration.ofSeconds(10));
-        var llmClientService = new LlmClientService(LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry(),
-                List.of());
+        var llmClientService = new LlmClientService(LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry());
         return new SearchableEntityEmbeddingClient(properties, embeddingProperties, llmClientService);
     }
 
@@ -150,7 +149,7 @@ class SearchableEntityEmbeddingClientTest {
         var client = clientFor(_ -> "503", Duration.ofSeconds(3), 32);
 
         assertThatThrownBy(() -> client.embedDocuments(List.of("a"))).isInstanceOf(EmbeddingFailedException.class);
-        // the outbox retries a failed write, so SDK retries are disabled, although the endpoint allows three
+        // the outbox retries a failed write, so transport retries are disabled, although the endpoint allows three
         assertThat(requests).hasSize(1);
     }
 
@@ -191,7 +190,7 @@ class SearchableEntityEmbeddingClientTest {
 
     @Test
     void embedQuery_turnsTruncatedBase64EmbeddingIntoEmbeddingFailed() throws IOException {
-        // AACAPwA= decodes to 5 bytes (one 4-byte float plus 1 trailing byte); the SDK would silently drop the trailing byte.
+        // AACAPwA= decodes to 5 bytes (one 4-byte float plus 1 trailing byte); the extra byte cannot encode another float.
         var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":\"AACAPwA=\"}]}", Duration.ofSeconds(3), 32);
 
         assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("byte length");
@@ -210,7 +209,7 @@ class SearchableEntityEmbeddingClientTest {
         var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", null, null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, 32, Duration.ofSeconds(3), Duration.ofSeconds(10));
         var client = new SearchableEntityEmbeddingClient(properties, embeddingProperties,
-                new LlmClientService(LlmTestCatalog.empty(), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry(), List.of()));
+                new LlmClientService(LlmTestCatalog.empty(), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry()));
 
         assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("embedding-llm-preset");
     }
@@ -223,37 +222,36 @@ class SearchableEntityEmbeddingClientTest {
 
     @Test
     void embeddingDataComparesItsVectorByContentAndDoesNotPrintIt() {
-        var data = new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 3f });
-        var sameContent = new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 3f });
+        var data = new LlmEmbeddingResponse.Entry(3L, new float[] { 1f, 2f, 3f });
+        var sameContent = new LlmEmbeddingResponse.Entry(3L, new float[] { 1f, 2f, 3f });
 
         assertThat(data).isEqualTo(sameContent).hasSameHashCodeAs(sameContent);
-        assertThat(data).isNotEqualTo(new EmbeddingResponseDTO.EmbeddingDataDTO(3, new float[] { 1f, 2f, 4f }));
-        assertThat(data).isNotEqualTo(new EmbeddingResponseDTO.EmbeddingDataDTO(4, new float[] { 1f, 2f, 3f }));
-        assertThat(data).hasToString("EmbeddingDataDTO[index=3, dimensions=3]");
-        assertThat(new EmbeddingResponseDTO.EmbeddingDataDTO(0, null)).hasToString("EmbeddingDataDTO[index=0, dimensions=0]");
+        assertThat(data).isNotEqualTo(new LlmEmbeddingResponse.Entry(3L, new float[] { 1f, 2f, 4f }));
+        assertThat(data).isNotEqualTo(new LlmEmbeddingResponse.Entry(4L, new float[] { 1f, 2f, 3f }));
+        assertThat(data).hasToString("Entry[index=3, dimensions=3]");
+        assertThat(new LlmEmbeddingResponse.Entry(0L, null)).hasToString("Entry[index=0, dimensions=0]");
     }
 
     @Test
     void validate_rejectsResponsesThatDoNotGiveExactlyOneUsableVectorPerInput() {
-        var good = new EmbeddingResponseDTO.EmbeddingDataDTO(0, new float[] { 1f, 0f });
+        var good = new LlmEmbeddingResponse.Entry(0L, new float[] { 1f, 0f });
 
         assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(null, 1)).isInstanceOf(EmbeddingFailedException.class);
-        var withEmptyEntry = new java.util.ArrayList<EmbeddingResponseDTO.EmbeddingDataDTO>();
+        var withEmptyEntry = new java.util.ArrayList<LlmEmbeddingResponse.Entry>();
         withEmptyEntry.add(null);
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(withEmptyEntry), 1)).isInstanceOf(EmbeddingFailedException.class);
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(good)), 2)).isInstanceOf(EmbeddingFailedException.class);
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(good, good)), 2)).hasMessageContaining("duplicate");
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(new EmbeddingResponseDTO.EmbeddingDataDTO(1, new float[] { 1f }))), 1))
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(withEmptyEntry), 1)).isInstanceOf(EmbeddingFailedException.class);
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(good)), 2)).isInstanceOf(EmbeddingFailedException.class);
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(good, good)), 2)).hasMessageContaining("duplicate");
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(new LlmEmbeddingResponse.Entry(1L, new float[] { 1f }))), 1))
                 .hasMessageContaining("index");
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(new EmbeddingResponseDTO.EmbeddingDataDTO(0, new float[0]))), 1))
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(new LlmEmbeddingResponse.Entry(0L, new float[0]))), 1))
                 .hasMessageContaining("Empty");
-        assertThatThrownBy(
-                () -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(new EmbeddingResponseDTO.EmbeddingDataDTO(0, new float[] { Float.NaN }))), 1))
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(new LlmEmbeddingResponse.Entry(0L, new float[] { Float.NaN }))), 1))
                 .hasMessageContaining("non-finite");
-        assertThatThrownBy(
-                () -> SearchableEntityEmbeddingClient.validate(new EmbeddingResponseDTO(List.of(new EmbeddingResponseDTO.EmbeddingDataDTO(0, new float[] { 0f, 0f }))), 1))
+        assertThatThrownBy(() -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(new LlmEmbeddingResponse.Entry(0L, new float[] { 0f, 0f }))), 1))
                 .hasMessageContaining("zero norm");
-        assertThatThrownBy(() -> SearchableEntityEmbeddingClient
-                .validate(new EmbeddingResponseDTO(List.of(good, new EmbeddingResponseDTO.EmbeddingDataDTO(1, new float[] { 1f, 0f, 0f }))), 2)).hasMessageContaining("dimension");
+        assertThatThrownBy(
+                () -> SearchableEntityEmbeddingClient.validate(new LlmEmbeddingResponse(List.of(good, new LlmEmbeddingResponse.Entry(1L, new float[] { 1f, 0f, 0f }))), 2))
+                .hasMessageContaining("dimension");
     }
 }

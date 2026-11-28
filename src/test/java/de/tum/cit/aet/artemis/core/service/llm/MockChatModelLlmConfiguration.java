@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
-import java.util.List;
-
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -34,8 +31,8 @@ public class MockChatModelLlmConfiguration {
     @Lazy
     @Conditional(LlmEnabled.class)
     public LlmClientService mockChatModelLlmClientService(LlmProperties properties, JsonMapper jsonMapper, ObservationRegistry observationRegistry, MeterRegistry meterRegistry,
-            List<OpenAiHttpClientBuilderCustomizer> customizers, ObjectProvider<ChatModel> mockedChatModel) {
-        return new LlmClientService(properties, jsonMapper, observationRegistry, meterRegistry, customizers) {
+            ObjectProvider<ChatModel> mockedChatModel) {
+        return new LlmClientService(properties, jsonMapper, observationRegistry, meterRegistry) {
 
             @Override
             public ChatModel chatModel(String presetName) {

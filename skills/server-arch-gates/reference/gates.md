@@ -149,7 +149,7 @@ yet is added to `LlmClientService`.
 
 **Enforced by.**
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/LlmClientArchitectureTest.java`. It fails
-when a production class outside `core.service.llm` and `core.config.llm` depends on `com.openai.client..`,
+when a production class outside `core.service.llm` and `core.config.llm` depends on the Artemis provider transport or Responses adapter, or on `com.openai.client..`,
 `com.openai.services..`, `org.springframework.ai.openai.setup..` or a Spring AI OpenAI model class, or reads `LlmProperties.Endpoint`
 or the methods that return endpoints. Request options, response, usage and exception types of the SDKs
 stay allowed. The test cannot see a module that adds its own URL and key properties and calls a model

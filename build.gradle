@@ -356,9 +356,6 @@ configurations.configureEach {
     // required by JPlag, but not used in this project
     exclude group: "xalan", module: "serializer"
 
-    // Note: kotlin-stdlib used to be excluded here ("we do not really use kotlin libraries"), but the
-    // official OpenAI Java SDK (com.openai:openai-java, pulled in by spring-ai-openai since 2.0.0-M6)
-    // is written in Kotlin and fails at runtime without it (NoClassDefFoundError: kotlin.jvm.internal.Intrinsics).
     // Keep compile-time annotation marker jars out of the runtime artifact.
     exclude group: "com.google.android", module: "annotations"
     exclude group: "com.google.code.findbugs", module: "annotations"
@@ -462,13 +459,11 @@ dependencies {
     // the beans itself (SpringAIConfiguration), so the modules are used without the starter and its auto-configuration.
     implementation "org.springframework.ai:spring-ai-session"
     implementation "org.springframework.ai:spring-ai-session-jdbc"
-    // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
-    // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
-    // the former spring-ai-starter-model-azure-openai module was removed upstream.
-    implementation("org.springframework.ai:spring-ai-starter-model-openai") {
-        // OpenAI's Java SDK pulls in legacy annotations that duplicate springdoc's Jakarta Schema class.
-        exclude group: "io.swagger.core.v3", module: "swagger-annotations"
-    }
+    // Artemis implements the provider protocol. Keep the chat client used by advisors and tool callbacks.
+    implementation "org.springframework.ai:spring-ai-client-chat"
+    runtimeOnly "org.springframework.ai:spring-ai-autoconfigure-model-chat-observation"
+    implementation "com.squareup.okhttp3:okhttp-jvm:${okhttp_version}"
+    implementation "org.springframework.boot:spring-boot-starter-restclient"
     // Spring Boot 4's OTLP tracing auto-configuration is not supplied by the exporter alone.
     // The starter also supplies the tracing bridge, so do not declare that bridge again below.
     implementation "org.springframework.boot:spring-boot-starter-opentelemetry"

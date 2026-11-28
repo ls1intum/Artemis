@@ -1,65 +1,67 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
-import static org.mockito.Mockito.lenient;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.function.Function;
 
-import com.openai.core.JsonField;
-import com.openai.core.JsonValue;
-import com.openai.models.ResponsesModel;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseFunctionToolCall;
-import com.openai.models.responses.ResponseOutputItem;
-import com.openai.models.responses.ResponseOutputMessage;
-import com.openai.models.responses.ResponseOutputText;
-import com.openai.models.responses.ResponseReasoningItem;
-import com.openai.models.responses.ResponseStatus;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
-/**
- * Mocked OpenAI Responses objects shared by the Responses adapter tests.
- */
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import io.micrometer.observation.ObservationRegistry;
+
+/** Exercises the Responses adapter with the JSON the provider would receive and return. */
 public final class OpenAiResponsesTestFixtures {
 
     private OpenAiResponsesTestFixtures() {
     }
 
-    public static void withUsage(Response response, long input, long output) {
-        var usage = mock(com.openai.models.responses.ResponseUsage.class);
-        when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
-        when(usage.inputTokens()).thenReturn(input);
-        when(usage.outputTokens()).thenReturn(output);
-        when(usage.totalTokens()).thenReturn(input + output);
-        when(response.usage()).thenReturn(Optional.of(usage));
+    public static OpenAiResponsesChatModel model(String model, Function<Map<String, Object>, Map<String, Object>> provider) {
+        return model(LlmChatOptions.builder().model(model).build(), provider);
     }
 
-    public static Response response(List<ResponseOutputItem> output, String id) {
-        Response response = mock(Response.class);
-        lenient().when(response.id()).thenReturn(id);
-        lenient().when(response.model()).thenReturn(ResponsesModel.ofString("gpt-test"));
-        lenient().when(response.output()).thenReturn(output);
-        lenient().when(response.status()).thenReturn(Optional.of(ResponseStatus.COMPLETED));
-        lenient().when(response.error()).thenReturn(Optional.empty());
-        lenient().when(response.incompleteDetails()).thenReturn(Optional.empty());
-        lenient().when(response.usage()).thenReturn(Optional.empty());
-        return response;
+    public static OpenAiResponsesChatModel model(LlmChatOptions defaults, Function<Map<String, Object>, Map<String, Object>> provider) {
+        return model(defaults, JsonObjectMapper.get(), provider);
     }
 
-    public static ResponseFunctionToolCall functionCall() {
-        return ResponseFunctionToolCall.builder().id("fc-1").type(JsonValue.from("function_call")).callId("call-1").name("lookup").arguments("{\"value\":\"x\"}")
-                .status(ResponseFunctionToolCall.Status.COMPLETED).build();
+    static OpenAiResponsesChatModel model(LlmChatOptions defaults, JsonMapper configured, Function<Map<String, Object>, Map<String, Object>> provider) {
+        var mapper = LlmHttpClient.wireMapper(configured);
+        var client = mock(LlmHttpClient.class);
+        when(client.post(eq("responses"), any(), any())).thenAnswer(call -> {
+            Map<String, Object> request = mapper.readValue(mapper.writeValueAsBytes(call.getArgument(1, LlmHttpClient.Request.class)), new TypeReference<>() {
+            });
+            // The provider encodes its own response independently of the application's null/empty inclusion settings.
+            Class<?> responseType = call.getArgument(2);
+            return mapper.readValue(JsonObjectMapper.get().writeValueAsBytes(provider.apply(request)), responseType);
+        });
+        return new OpenAiResponsesChatModel(client, mapper, defaults, ObservationRegistry.NOOP);
     }
 
-    public static ResponseReasoningItem reasoning(String encryptedContent) {
-        return ResponseReasoningItem.builder().id("rs-1").type(JsonValue.from("reasoning")).summary(List.of()).encryptedContent(encryptedContent)
-                .status(ResponseReasoningItem.Status.COMPLETED).build();
+    public static void withUsage(Map<String, Object> response, long input, long output) {
+        response.put("usage", Map.of("input_tokens", input, "output_tokens", output, "total_tokens", input + output));
     }
 
-    public static ResponseOutputMessage message(String text) {
-        ResponseOutputText outputText = ResponseOutputText.builder().type(JsonValue.from("output_text")).text(text).annotations(List.of()).build();
-        return ResponseOutputMessage.builder().id("msg-1").type(JsonValue.from("message")).role(JsonValue.from("assistant")).status(ResponseOutputMessage.Status.COMPLETED)
-                .content(List.of(ResponseOutputMessage.Content.ofOutputText(outputText))).build();
+    public static Map<String, Object> response(List<Map<String, Object>> output, String id) {
+        return new LinkedHashMap<>(Map.of("id", id, "model", "gpt-test", "output", output, "status", "completed"));
+    }
+
+    public static Map<String, Object> functionCall() {
+        return Map.of("id", "fc-1", "type", "function_call", "call_id", "call-1", "name", "lookup", "arguments", "{\"value\":\"x\"}", "status", "completed");
+    }
+
+    public static Map<String, Object> reasoning(String encryptedContent) {
+        return Map.of("id", "rs-1", "type", "reasoning", "summary", List.of(), "encrypted_content", encryptedContent, "status", "completed");
+    }
+
+    public static Map<String, Object> message(String text) {
+        return Map.of("id", "msg-1", "type", "message", "role", "assistant", "status", "completed", "content",
+                List.of(Map.of("type", "output_text", "text", text, "annotations", List.of())));
     }
 }

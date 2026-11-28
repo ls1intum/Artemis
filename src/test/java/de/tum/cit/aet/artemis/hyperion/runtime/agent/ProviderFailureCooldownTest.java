@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,19 +12,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.InternalServerException;
-import com.openai.errors.NotFoundException;
-import com.openai.errors.RateLimitException;
-import com.openai.errors.UnauthorizedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 class ProviderFailureCooldownTest {
 
     @Test
     void disabledCooldownDoesNotRetainHardFailuresOrBlockSubsequentCalls() {
         var cooldown = ProviderFailureCooldown.disabled();
-        var error = new IllegalStateException("credentials rejected", UnauthorizedException.builder().headers(Headers.builder().build()).build());
+        var error = new IllegalStateException("credentials rejected", new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
         var calls = new AtomicInteger();
 
         for (int attempt = 0; attempt < 2; attempt++) {
@@ -58,7 +56,7 @@ class ProviderFailureCooldownTest {
     @ValueSource(strings = { "billing", "model does not exist", "insufficient_quota", "deployment_not_found" })
     void serverErrorBodyCannotOpenSharedCooldown(String echoedText) {
         var cooldown = new TestProviderFailureCooldown();
-        var error = new IllegalStateException(echoedText, InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build());
+        var error = new IllegalStateException(echoedText, new HttpServerErrorException(HttpStatus.valueOf(500)));
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw error;
         })).isSameAs(error);
@@ -68,7 +66,7 @@ class ProviderFailureCooldownTest {
     @Test
     void rejectedCredentialsOpenTheSharedCooldown() {
         var cooldown = new TestProviderFailureCooldown();
-        var error = new IllegalStateException("call failed", UnauthorizedException.builder().headers(Headers.builder().build()).build());
+        var error = new IllegalStateException("call failed", new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw error;
         })).isSameAs(error);
@@ -78,13 +76,14 @@ class ProviderFailureCooldownTest {
     @Test
     void exhaustedQuotaOpensTheCooldownWhilePlainRateLimitingDoesNot() {
         var cooldown = new TestProviderFailureCooldown();
-        var rateLimited = new IllegalStateException("slow down", RateLimitException.builder().headers(Headers.builder().build()).build());
+        var rateLimited = new IllegalStateException("slow down", new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS));
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw rateLimited;
         })).isSameAs(rateLimited);
         assertThat(cooldown.cooldownUntil("model")).isNull();
 
-        var quota = new IllegalStateException("You exceeded your current quota (insufficient_quota)", RateLimitException.builder().headers(Headers.builder().build()).build());
+        var quota = new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "Too many requests",
+                "{\"error\":{\"code\":\"insufficient_quota\"}}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw quota;
         })).isSameAs(quota);
@@ -94,13 +93,13 @@ class ProviderFailureCooldownTest {
     @Test
     void missingModelOpensTheCooldownWhileOtherNotFoundResponsesDoNot() {
         var cooldown = new TestProviderFailureCooldown();
-        var otherNotFound = new IllegalStateException("resource missing", NotFoundException.builder().headers(Headers.builder().build()).build());
+        var otherNotFound = new IllegalStateException("resource missing", new HttpClientErrorException(HttpStatus.NOT_FOUND));
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw otherNotFound;
         })).isSameAs(otherNotFound);
         assertThat(cooldown.cooldownUntil("model")).isNull();
 
-        var missingModel = new IllegalStateException("The model does not exist (model_not_found)", NotFoundException.builder().headers(Headers.builder().build()).build());
+        var missingModel = new IllegalStateException("The model does not exist (model_not_found)", new HttpClientErrorException(HttpStatus.NOT_FOUND));
         assertThatThrownBy(() -> cooldown.execute("model", Duration.ofMinutes(1), () -> {
             throw missingModel;
         })).isSameAs(missingModel);

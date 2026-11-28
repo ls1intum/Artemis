@@ -11,8 +11,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
@@ -75,8 +75,8 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
     }
 
     /** A fresh builder per call: the chat client consumes a mutable options builder. */
-    private OpenAiChatOptions.Builder outputOptions() {
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+    private LlmChatOptions.Builder outputOptions() {
+        LlmChatOptions.Builder options = LlmChatOptions.builder();
         if (usesLegacyMaxTokens) {
             options.maxTokens(outputTokens);
         }

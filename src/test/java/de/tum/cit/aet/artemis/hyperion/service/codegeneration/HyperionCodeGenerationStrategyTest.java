@@ -36,9 +36,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.openai.errors.OpenAIInvalidDataException;
-import com.openai.errors.OpenAIIoException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -449,7 +448,7 @@ class HyperionCodeGenerationServiceTest {
     void callChatClient_withTransientOpenAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("Temporary AI service issue"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new ResourceAccessException("Temporary AI service issue"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("Temporary AI service issue. Please retry.");
@@ -459,7 +458,7 @@ class HyperionCodeGenerationServiceTest {
     void callChatClient_withNonTransientOpenAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIInvalidDataException("AI configuration error"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RestClientException("AI configuration error"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
                 .hasMessageContaining("AI request failed due to configuration or input. Check model and request.");

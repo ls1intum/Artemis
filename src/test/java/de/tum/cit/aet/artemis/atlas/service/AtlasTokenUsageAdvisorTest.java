@@ -29,12 +29,8 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
-
-import com.openai.core.JsonValue;
-import com.openai.models.responses.ResponseUsage;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
@@ -42,6 +38,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 
 class AtlasTokenUsageAdvisorTest {
@@ -54,7 +51,7 @@ class AtlasTokenUsageAdvisorTest {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenReturn(response("first-model", true, 100, 20, 0.01), response("last-model", false, 50, 5, lastCost));
 
-        ChatResponse result = client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found")).call()
+        ChatResponse result = client(model, record(accounting)).prompt().user("work").options(LlmChatOptions.builder().model("test")).tools(tool(() -> "found")).call()
                 .chatResponse();
 
         var traces = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
@@ -80,7 +77,7 @@ class AtlasTokenUsageAdvisorTest {
         var priced = response("test", false, 50, 5, 0.003);
         when(model.call(any(Prompt.class))).thenReturn(unknown, priced);
 
-        client(model, record(accounting)).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found")).call().chatResponse();
+        client(model, record(accounting)).prompt().user("work").options(LlmChatOptions.builder().model("test")).tools(tool(() -> "found")).call().chatResponse();
 
         var traces = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
         verify(repository, times(2)).save(traces.capture());
@@ -98,8 +95,8 @@ class AtlasTokenUsageAdvisorTest {
         List<ChatResponse> outerCalls = new ArrayList<>();
         List<ChatResponse> innerCalls = new ArrayList<>();
         var worker = client(inner, innerCalls::add);
-        client(outer, outerCalls::add).prompt().user("outer").options(OpenAiChatOptions.builder().model("outer"))
-                .tools(tool(() -> worker.prompt().user("inner").options(OpenAiChatOptions.builder().model("inner")).tools(tool(() -> "found")).call().content())).call()
+        client(outer, outerCalls::add).prompt().user("outer").options(LlmChatOptions.builder().model("outer"))
+                .tools(tool(() -> worker.prompt().user("inner").options(LlmChatOptions.builder().model("inner")).tools(tool(() -> "found")).call().content())).call()
                 .chatResponse();
 
         assertThat(outerCalls).extracting(call -> call.getMetadata().getUsage().getPromptTokens()).containsExactly(10, 20);
@@ -112,7 +109,7 @@ class AtlasTokenUsageAdvisorTest {
         ChatModel model = model();
         when(model.call(any(Prompt.class))).thenReturn(response("test", true, 100, 20, 0.01)).thenThrow(new IllegalStateException("provider unavailable"));
 
-        assertThatThrownBy(() -> client(model, record(accounting(repository))).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(tool(() -> "found"))
+        assertThatThrownBy(() -> client(model, record(accounting(repository))).prompt().user("work").options(LlmChatOptions.builder().model("test")).tools(tool(() -> "found"))
                 .call().chatResponse()).isInstanceOf(IllegalStateException.class).hasMessageContaining("provider unavailable");
 
         var trace = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
@@ -137,7 +134,7 @@ class AtlasTokenUsageAdvisorTest {
                 throw new IllegalStateException("tool unavailable");
             }
         };
-        assertThatThrownBy(() -> client(model, captured::add).prompt().user("work").options(OpenAiChatOptions.builder().model("test")).tools(callback).call().chatResponse())
+        assertThatThrownBy(() -> client(model, captured::add).prompt().user("work").options(LlmChatOptions.builder().model("test")).tools(callback).call().chatResponse())
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("tool unavailable");
         assertThat(captured).hasSize(1);
     }
@@ -176,7 +173,7 @@ class AtlasTokenUsageAdvisorTest {
 
     private static ChatModel model() {
         var model = mock(ChatModel.class);
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test").build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().model("test").build());
         return model;
     }
 
@@ -190,10 +187,7 @@ class AtlasTokenUsageAdvisorTest {
     }
 
     private static ChatResponse response(String model, boolean tools, int input, int output, double usd) {
-        var nativeUsage = ResponseUsage.builder().inputTokens(input).outputTokens(output).totalTokens(input + output)
-                .inputTokensDetails(ResponseUsage.InputTokensDetails.builder().cachedTokens(0).cacheWriteTokens(0).build())
-                .outputTokensDetails(ResponseUsage.OutputTokensDetails.builder().reasoningTokens(0).build()).putAdditionalProperty("cost", JsonValue.from(usd))
-                .putAdditionalProperty("cost_currency", JsonValue.from("USD")).build();
+        var nativeUsage = Map.of("prompt_tokens", input, "completion_tokens", output, "cost", usd, "cost_currency", "USD");
         return new ChatResponse(List.of(new Generation(assistant(tools))),
                 ChatResponseMetadata.builder().model(model).usage(new DefaultUsage(input, output, input + output, nativeUsage)).build());
     }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.deimos.service;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -29,9 +30,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.openai.errors.OpenAIServiceException;
 
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.DeserializationFeature;
@@ -58,7 +59,7 @@ import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
  * lets those responses be recovered while still rejecting genuinely unusable ones.
  * <p>
  * No retry is implemented here. Transport retries are configured once via {@code max-retries} of the preset or its
- * endpoint and performed by the OpenAI SDK; layering a second retry on top would multiply attempts and stall a large
+ * endpoint and performed by the shared LLM client; layering a second retry on top would multiply attempts and stall a large
  * batch.
  */
 @Conditional(DeimosEnabled.class)
@@ -124,7 +125,7 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
         catch (Exception ex) {
             OptionalInt rejectedStatus = credentialRejectionStatus(ex);
             if (rejectedStatus.isPresent()) {
-                // Fixed text and no cause: the SDK exception can carry the rejected request, and a cause attached here
+                // Fixed text and no cause: the provider exception can carry the rejected request, and a cause attached here
                 // would be printed in full wherever this exception is logged.
                 throw new DeimosLlmException(DeimosFailureType.LLM_AUTHENTICATION_FAILED, String.format(Locale.ROOT, CREDENTIALS_REJECTED_MESSAGE, rejectedStatus.getAsInt()));
             }
@@ -343,8 +344,8 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
      */
     static OptionalInt credentialRejectionStatus(Throwable exception) {
         for (Throwable current : causeChain(exception)) {
-            if (current instanceof OpenAIServiceException serviceException) {
-                int status = serviceException.statusCode();
+            if (current instanceof RestClientResponseException serviceException) {
+                int status = serviceException.getStatusCode().value();
                 if (status == HttpStatus.UNAUTHORIZED.value() || status == HttpStatus.FORBIDDEN.value()) {
                     return OptionalInt.of(status);
                 }
@@ -370,14 +371,17 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     }
 
     /**
-     * Maps a failure surviving the SDK's transport retries onto a reportable failure type.
+     * Maps a failure surviving the transport retries onto a reportable failure type.
      *
      * @param exception the exception thrown by the chat client
      * @return the matching failure type
      */
     private static DeimosFailureType classifyCallFailure(Exception exception) {
         for (Throwable current : causeChain(exception)) {
-            if (current instanceof SocketTimeoutException || current instanceof TimeoutException) {
+            if (current instanceof RestClientResponseException response && response.getStatusCode().value() == HttpStatus.TOO_MANY_REQUESTS.value()) {
+                return DeimosFailureType.LLM_RATE_LIMITED;
+            }
+            if (current instanceof SocketTimeoutException || current instanceof HttpTimeoutException || current instanceof TimeoutException) {
                 return DeimosFailureType.LLM_TIMEOUT;
             }
             DeimosFailureType classifiedByMessage = classifyByMessage(current.getMessage());

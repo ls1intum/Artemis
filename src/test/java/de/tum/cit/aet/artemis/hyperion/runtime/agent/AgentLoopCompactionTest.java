@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -29,8 +28,11 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
+
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 
 /** Deterministic tests for the agent loop's context-window management: no LLM and no Docker. */
 class AgentLoopCompactionTest {
@@ -192,7 +194,7 @@ class AgentLoopCompactionTest {
     @Test
     void compact_summarizesOldTurnsKeepsRecentVerbatimAndStaysPaired() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().reasoningEffort("medium").topP(0.9).build());
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("## Goal\nBuild a bubble-sort exercise.\n## Next steps\nFinish the tests."));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
@@ -201,12 +203,11 @@ class AgentLoopCompactionTest {
 
         ArgumentCaptor<Prompt> summaryPrompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(summaryPrompt.capture());
-        assertThat(summaryPrompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(summaryPrompt.getValue().getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getMaxCompletionTokens()).isEqualTo(4_096);
             assertThat(options.getMaxTokens()).isNull();
             assertThat(options.getReasoningEffort()).isEqualTo("low");
-            assertThat(options.getServiceTier()).isEqualTo("priority");
-            assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
+            assertThat(options.getTopP()).isEqualTo(0.9);
         });
 
         assertThat(compacted.get(0)).isInstanceOf(SystemMessage.class);
@@ -222,7 +223,7 @@ class AgentLoopCompactionTest {
     @Test
     void compact_preservesTheLegacyTokenParameter() {
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().maxTokens(1_234).build());
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("summary"));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
 
@@ -230,7 +231,7 @@ class AgentLoopCompactionTest {
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
-        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getMaxTokens()).isEqualTo(1_234);
             assertThat(options.getMaxCompletionTokens()).isNull();
         });
@@ -262,7 +263,7 @@ class AgentLoopCompactionTest {
             if (missingResponse) {
                 return null;
             }
-            throw com.openai.errors.InternalServerException.builder().statusCode(500).headers(com.openai.core.http.Headers.builder().build()).build();
+            throw new HttpServerErrorException(HttpStatus.valueOf(500));
         });
         ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
         List<Message> prior = new ArrayList<>();

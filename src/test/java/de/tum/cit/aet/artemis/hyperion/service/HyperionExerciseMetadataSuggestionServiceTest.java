@@ -26,10 +26,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -103,7 +103,7 @@ class HyperionExerciseMetadataSuggestionServiceTest {
             Integer sentMaxCompletionTokens) {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"title\": \"Bounded Stack\"}")))));
         // a preset's model carries OpenAI options, into which the ChatClient merges the request options
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().build());
         HyperionChatClientService chatClients = mock(HyperionChatClientService.class);
         when(chatClients.forTask(any())).thenReturn(ChatClient.create(chatModel));
         when(chatClients.presetFor(any()))
@@ -115,7 +115,7 @@ class HyperionExerciseMetadataSuggestionServiceTest {
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(prompt.capture());
-        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getMaxTokens()).isEqualTo(sentMaxTokens);
             assertThat(options.getMaxCompletionTokens()).isEqualTo(sentMaxCompletionTokens);
         });

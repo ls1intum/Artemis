@@ -20,15 +20,17 @@ import com.tngtech.archunit.lang.ArchRule;
  * tracking and observations of the core, and needs its own keys for the URL and the API key, which the deployments then have to configure twice.
  * <p>
  * There are no exceptions. A module that needs a kind of call the core does not offer yet adds it to {@code LlmClientService}. Modules may
- * still use the request options, the response and usage types and the exception types of the SDKs. These rules cannot see a module that
+ * use the shared request options and response types. These rules cannot see a module that
  * reads its own URL and key and calls a model with a plain HTTP client; the server non-negotiables in {@code AGENTS.md} forbid that too.
  */
 class LlmClientArchitectureTest extends AbstractArchitectureTest {
 
     private static final String[] LLM_CORE_PACKAGES = { ARTEMIS_PACKAGE + ".core.service.llm..", ARTEMIS_PACKAGE + ".core.config.llm.." };
 
-    private static final DescribedPredicate<JavaClass> PROVIDER_CLIENTS = resideInAnyPackage("com.openai.client..", "com.openai.services..",
-            "org.springframework.ai.openai.setup..").or(nameMatching("org\\.springframework\\.ai\\.openai\\.(responses\\.)?OpenAi\\w+Model(\\$Builder)?"))
+    private static final DescribedPredicate<JavaClass> PROVIDER_CLIENTS = nameMatching(
+            ARTEMIS_PACKAGE.replace(".", "\\.") + "\\.core\\.service\\.llm\\.(LlmHttpClient|OpenAiResponsesChatModel)")
+            .or(resideInAnyPackage("com.openai.client..", "com.openai.services..", "org.springframework.ai.openai.setup.."))
+            .or(nameMatching("org\\.springframework\\.ai\\.openai\\.(responses\\.)?OpenAi\\w+Model(\\$Builder)?"))
             .or(nameMatching("org\\.springframework\\.ai\\.openai\\.http\\.okhttp\\.SpringAiOpenAiHttpClient(\\$.*)?")).as("are clients or models of an LLM provider");
 
     private static final DescribedPredicate<JavaClass> LLM_ENDPOINTS = nameMatching("de\\.tum\\.cit\\.aet\\.artemis\\.core\\.config\\.llm\\.LlmProperties\\$Endpoint.*")

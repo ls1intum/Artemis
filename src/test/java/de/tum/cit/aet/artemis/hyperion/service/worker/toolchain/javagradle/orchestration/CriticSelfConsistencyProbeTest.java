@@ -20,18 +20,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
-import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmConfiguration;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.PromptTemplates;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Critic test-retest reliability probe. Calls {@link SpecFidelityCritic#critique} N times against a real provider on one frozen candidate and writes every finding to disk;
@@ -102,13 +105,18 @@ class CriticSelfConsistencyProbeTest {
         identityMethod.setAccessible(true);
 
         String model = require("SPRING_AI_OPENAI_CHAT_MODEL");
-        new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(ToolCallingAutoConfiguration.class, OpenAiChatAutoConfiguration.class))
-                .withPropertyValues("spring.ai.openai.base-url=" + require("SPRING_AI_OPENAI_BASE_URL"), "spring.ai.openai.api-key=" + require("SPRING_AI_OPENAI_API_KEY"),
-                        "spring.ai.openai.chat.model=" + model, "spring.ai.openai.chat.temperature=" + env("SPRING_AI_OPENAI_CHAT_TEMPERATURE", "0.4"),
-                        "spring.ai.openai.timeout=" + env("SPRING_AI_OPENAI_TIMEOUT", "8m"), "spring.ai.openai.microsoft-foundry=false", "spring.ai.openai.max-retries=1")
+        new ApplicationContextRunner().withInitializer(context -> {
+            context.getEnvironment().setActiveProfiles("core");
+            context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance());
+        }).withUserConfiguration(LlmConfiguration.class, LlmClientService.class).withBean(MeterRegistry.class, SimpleMeterRegistry::new).withBean(JsonMapper.class, () -> mapper)
+                .withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
+                .withPropertyValues("artemis.llm.endpoints.test.base-url=" + require("SPRING_AI_OPENAI_BASE_URL"),
+                        "artemis.llm.endpoints.test.api-key=" + require("SPRING_AI_OPENAI_API_KEY"), "artemis.llm.presets.testpreset.endpoint=test",
+                        "artemis.llm.presets.testpreset.api=responses", "artemis.llm.presets.testpreset.model=" + model,
+                        "artemis.llm.presets.testpreset.temperature=" + env("SPRING_AI_OPENAI_CHAT_TEMPERATURE", "0.4"),
+                        "artemis.llm.endpoints.test.timeout=" + env("SPRING_AI_OPENAI_TIMEOUT", "8m"), "artemis.llm.endpoints.test.max-retries=1")
                 .run(context -> {
-                    ChatModel chatModel = context.getBean(ChatModel.class);
-                    // Verbatim the production ChatClient bean of SpringAIConfiguration#chatClient.
+                    ChatModel chatModel = context.getBean(LlmClientService.class).chatModel("testpreset");
                     ChatClient chatClient = ChatClient.builder(chatModel).build();
                     log.info("{}", "[probe] model=" + model + " defaultOptions=" + chatModel.getOptions());
                     SpecFidelityCritic critic = new SpecFidelityCritic(chatClient, mapper, new PromptTemplates(), model, Duration.ZERO, ProviderFailureCooldown.disabled(),

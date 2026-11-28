@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Sends a provider request again after a failure that provably produced no completion ({@link ProviderFailureClass#retryable()}).
  * <p>
- * The SDK's own retry policy is disabled where accounting must be exact, because an SDK retry cannot be attributed from the returned response. These retries are
+ * The HTTP client's own retry policy is disabled where accounting must be exact, because an HTTP retry cannot be attributed from the returned response. These retries are
  * attributable: each failed attempt is known to have produced no completion, so repeating it duplicates nothing. Five doubling waits from a ten-second base span roughly
  * five minutes, the length of provider outage worth waiting out inside a run.
  */

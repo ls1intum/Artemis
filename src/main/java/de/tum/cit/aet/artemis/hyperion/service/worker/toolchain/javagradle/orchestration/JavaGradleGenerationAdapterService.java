@@ -16,7 +16,6 @@ import javax.lang.model.SourceVersion;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
@@ -113,7 +113,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
 
     /**
      * Resolves the preset core assigned to this run in the worker's own configuration. Core and workers must carry the same {@code artemis.llm} block; a
-     * worker without the preset, or with SDK retries for it, fails the run at its start instead of producing unaccounted calls.
+     * worker without the preset, or with transport retries for it, fails the run at its start instead of producing unaccounted calls.
      */
     ChatModel workerModel(String llmPreset) {
         try {
@@ -124,7 +124,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
                     "This AI worker has no LLM preset '" + llmPreset + "' under artemis.llm.presets; configure the same artemis.llm block on core and workers", e);
         }
         if (llmClientService.effectiveMaxRetries(llmPreset) != 0) {
-            throw new IllegalStateException("The LLM preset '" + llmPreset + "' retries in the SDK; exercise generation needs max-retries 0 on the preset or its endpoint");
+            throw new IllegalStateException("The LLM preset '" + llmPreset + "' enables transport retries; exercise generation needs max-retries 0 on the preset or its endpoint");
         }
         return llmClientService.chatModel(llmPreset);
     }
@@ -150,7 +150,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
     private GenerationOutput generateObserved(GenerationAssignment assignment, BooleanSupplier cancelled, GenerationObserver observer, Consumer<GenerationOutput> checkpoint) {
         var parameters = assignment.parameters();
         ChatModel model = workerModel(parameters.llmPreset());
-        // Presets of exercise generation never retry in the SDK (checked above), so every provider call is accounted for.
+        // Presets of exercise generation never retry in the transport (checked above), so every provider call is accounted for.
         var usage = new WorkerUsageRecorder(parameters.maxTokens(), parameters.cachedInputTokenWeight(),
                 event -> observer.progress("Provider usage recorded.", new GenerationProgress(null, null, null, event)));
         BooleanSupplier stopAuthoring = stopAuthoring(cancelled, usage, assignment.authoringDeadline());
@@ -221,19 +221,13 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
             return null;
         }
         ChatModel repair = workerModel(repairPreset);
-        var defaults = repair.getOptions();
-        var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
-        builder.timeout(llmClientService.effectiveTimeout(repairPreset));
-        return new RepairModel(repairPreset, repair, builder.build());
+        return new RepairModel(repairPreset, repair, repair.getOptions());
     }
 
     HyperionGenerationSettings settings(GenerationParameters parameters, ChatModel model) {
-        var defaults = model.getOptions();
-        var builder = defaults instanceof OpenAiChatOptions openAi ? openAi.mutate() : OpenAiChatOptions.builder();
-        // Spring AI's default chat options carry 60s even when the configured HTTP client has a longer timeout.
-        builder.timeout(llmClientService.effectiveTimeout(parameters.llmPreset()));
+        var defaults = model.getOptions() instanceof LlmChatOptions options ? options : LlmChatOptions.builder().build();
         return new HyperionGenerationSettings(parameters.effortProfile(), null, parameters.maxTurns(), parameters.maxDuration(), parameters.maxTokens(),
-                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), parameters.llmPreset(), builder.build(), false, true,
+                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), parameters.llmPreset(), defaults, false, true,
                 parameters.repairLlmPreset());
     }
 

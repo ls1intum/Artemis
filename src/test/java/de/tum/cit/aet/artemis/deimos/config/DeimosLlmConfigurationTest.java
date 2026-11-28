@@ -75,7 +75,7 @@ class DeimosLlmConfigurationTest {
             var endpoint = new Endpoint(EndpointType.OPENAI, baseUrl, apiKey, Duration.ofSeconds(10), 0, null, null, Map.of(), List.of());
             var preset = new Preset(PRESET, "test-model", Api.RESPONSES, null, 0.0, null, null, null, null, null, null);
             var llmClientService = new LlmClientService(new LlmProperties(Map.of(PRESET, endpoint), Map.of(PRESET, preset), null), new JsonMapper(), ObservationRegistry.NOOP,
-                    new SimpleMeterRegistry(), List.of());
+                    new SimpleMeterRegistry());
             var client = new DefaultDeimosLlmClient(llmClientService, PRESET);
 
             assertThatExceptionOfType(DeimosLlmException.class).isThrownBy(() -> client.analyze(new DeimosLlmRequest(1L, "system", "user")))

@@ -2,7 +2,7 @@
 id: deimos
 title: Deimos
 sidebar_label: Deimos
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -49,7 +49,7 @@ stops the boot with `DeimosConfigurationException`, rendered by `DeimosConfigura
 actionable message, see [Evidence construction](#evidence-construction).
 
 Whether the provider accepts the `api-key` of the preset's endpoint is not checked at startup, because an empty key
-is a valid setup for an unauthenticated OpenAI-compatible endpoint (the SDK then sends no `Authorization` header). A missing or wrong key surfaces at the first request as HTTP `401`
+is a valid setup for an unauthenticated OpenAI-compatible endpoint (Artemis then sends no `Authorization` header). A missing or wrong key surfaces at the first request as HTTP `401`
 or `403`, which `DefaultDeimosLlmClient` reports as `LLM_AUTHENTICATION_FAILED`.
 
 <Callout variant={CalloutVariant.warning}>
@@ -251,13 +251,12 @@ in the part that was not scanned.
 `DeimosFailureType` distinguishes why a participation produced no verdict. This is not cosmetic: without it, "there
 was nothing to analyse" and "the model was unreachable" collapse into one counter and a broken run looks clean.
 
-`classifyCallFailure` maps transport exceptions onto the LLM categories after the SDK's own retries. Note that the
-SDK's `max-retries` is the **only** retry layer; do not add another.
+`classifyCallFailure` maps transport exceptions onto the LLM categories after the HTTP client exhausts the preset’s `max-retries`.
 
-`credentialRejectionStatus` runs first and looks for an `OpenAIServiceException` with status 401 or 403 anywhere in a
+`credentialRejectionStatus` runs first and looks for a `RestClientResponseException` with status 401 or 403 anywhere in a
 bounded, cycle-safe cause chain, so a wrapper whose message mentions a timeout cannot hide it. Such a failure becomes
-`LLM_AUTHENTICATION_FAILED` with a fixed message carrying only the status and **no cause**, because the SDK exception
-can carry the rejected request; the analysis service logs that message without the exception.
+`LLM_AUTHENTICATION_FAILED` with a fixed message carrying only the status and **no cause**, because the HTTP exception
+can contain provider-supplied text; the analysis service logs that message without the exception.
 
 `DeimosBatchSummaryDTO.failureCountsByType` reconciles the per-participation details with the total, so a run that
 aborted before reaching individual participations cannot report `Failed: 200` next to a breakdown summing to one. The

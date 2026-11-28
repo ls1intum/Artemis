@@ -17,9 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
-
-import com.openai.errors.InternalServerException;
+import org.springframework.web.client.RestClientResponseException;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -35,63 +33,62 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationObserver;
 import io.micrometer.observation.ObservationRegistry;
-import okhttp3.MediaType;
-import okhttp3.Protocol;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 class WorkerRetryConfigurationTest {
 
     /**
-     * The preset's retries override the endpoint's. The SDK honours the effective value, and exercise generation refuses any preset that retries, because a
+     * The preset's retries override the endpoint's. The client honours the effective value, and exercise generation refuses any preset that retries, because a
      * retried request is billed without a response the worker can account for.
      */
     @ParameterizedTest
     @CsvSource({ "0, , 1", "2, 0, 1", "0, 2, 2", "2, , 2" })
-    void sdkRequestsAndTheWorkerUseTheEffectiveRetriesOfThePreset(int endpointRetries, Integer presetRetries, int firstRequests) {
+    void providerRequestsAndTheWorkerUseTheEffectiveRetriesOfThePreset(int endpointRetries, Integer presetRetries, int firstRequests) throws Exception {
         var requests = new AtomicInteger();
         SandboxApi sandbox = mock(SandboxApi.class);
         when(sandbox.forExecution(any())).thenReturn(mock(InteractiveSandbox.class));
-        var runner = WorkerLlmTestContext.runner().withBean(SandboxApi.class, () -> sandbox).withBean(JsonMapper.class, () -> JsonMapper.builder().build())
-                .withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
-                .withPropertyValues("artemis.llm.endpoints.test.timeout=2s", "artemis.llm.endpoints.test.max-retries=" + endpointRetries)
-                .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
-                    boolean first = requests.incrementAndGet() == 1;
-                    // Return before proceed, including SDK retries: no network is used.
-                    String body = first ? "{\"error\":{\"message\":\"test failure\",\"type\":\"server_error\",\"code\":\"server_error\"}}" : WorkerLlmTestContext.SUCCESS;
-                    return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(first ? 500 : 200).message(first ? "Error" : "OK")
-                            .body(ResponseBody.create(body, MediaType.get("application/json"))).build();
-                }));
-        if (presetRetries != null) {
-            runner = runner.withPropertyValues("artemis.llm.presets.testpreset.max-retries=" + presetRetries);
-        }
-        runner.run(context -> {
-            assertThat(context).hasNotFailed();
-            var model = context.getBean(LlmClientService.class).chatModel("testpreset");
-            if (firstRequests == 1) {
-                assertThatThrownBy(() -> model.call(new Prompt("test"))).isInstanceOf(InternalServerException.class);
-                assertThat(requests).hasValue(1);
-                assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
-            }
-            else {
-                assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
-            }
-            assertThat(requests).hasValue(2);
-
-            // Generate through the real adapter, stopping before any sandbox or model work.
-            var adapter = context.getBean(JavaGradleGenerationAdapterService.class);
-            if (firstRequests == 1) {
-                var result = adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
-                });
-                assertThat(result.accountingState()).isEqualTo(AccountingState.COMPLETE);
-                assertThat(result.usage().modelCalls()).isZero();
-            }
-            else {
-                assertThatIllegalStateException().isThrownBy(() -> adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
-                })).withMessageContaining("max-retries 0");
-            }
-            assertThat(requests).hasValue(2);
+        var provider = WorkerLlmTestContext.startProvider(exchange -> {
+            boolean first = requests.incrementAndGet() == 1;
+            WorkerLlmTestContext.reply(exchange, first ? 500 : 200, first ? "{\"error\":{\"message\":\"test failure\"}}" : WorkerLlmTestContext.SUCCESS);
         });
+        try {
+            var runner = WorkerLlmTestContext.runner().withBean(SandboxApi.class, () -> sandbox).withBean(JsonMapper.class, JsonMapper::new)
+                    .withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP).withPropertyValues(WorkerLlmTestContext.baseUrlProperty(provider),
+                            "artemis.llm.endpoints.test.timeout=2s", "artemis.llm.endpoints.test.max-retries=" + endpointRetries);
+            if (presetRetries != null) {
+                runner = runner.withPropertyValues("artemis.llm.presets.testpreset.max-retries=" + presetRetries);
+            }
+            runner.run(context -> {
+                assertThat(context).hasNotFailed();
+                var model = context.getBean(LlmClientService.class).chatModel("testpreset");
+                if (firstRequests == 1) {
+                    assertThatThrownBy(() -> model.call(new Prompt("test"))).isInstanceOfSatisfying(RestClientResponseException.class,
+                            error -> assertThat(error.getStatusCode().value()).isEqualTo(500));
+                    assertThat(requests).hasValue(1);
+                    assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
+                }
+                else {
+                    assertThat(model.call(new Prompt("test")).getResult().getOutput().getText()).isEqualTo("OK");
+                }
+                assertThat(requests).hasValue(2);
+
+                // Generate through the real adapter, stopping before any sandbox or model work.
+                var adapter = context.getBean(JavaGradleGenerationAdapterService.class);
+                if (firstRequests == 1) {
+                    var result = adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
+                    });
+                    assertThat(result.accountingState()).isEqualTo(AccountingState.COMPLETE);
+                    assertThat(result.usage().modelCalls()).isZero();
+                }
+                else {
+                    assertThatIllegalStateException().isThrownBy(() -> adapter.generate(assignment(), () -> true, mock(GenerationObserver.class), ignored -> {
+                    })).withMessageContaining("max-retries 0");
+                }
+                assertThat(requests).hasValue(2);
+            });
+        }
+        finally {
+            provider.stop(0);
+        }
     }
 
     private static GenerationAssignment assignment() {

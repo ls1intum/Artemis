@@ -84,7 +84,7 @@ artemis:
   llm:
     endpoints:
       lmstudio:
-        # The OpenAI SDK appends /responses itself, so the base URL includes the /v1 prefix.
+        # Artemis appends /responses itself, so the base URL includes the /v1 prefix.
         # Without api-key Artemis sends no Authorization header, which LM Studio does not need.
         base-url: http://localhost:1234/v1
     presets:

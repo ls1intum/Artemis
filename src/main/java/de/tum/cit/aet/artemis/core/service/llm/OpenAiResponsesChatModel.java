@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,321 +26,261 @@ import org.springframework.ai.chat.observation.ChatModelObservationDocumentation
 import org.springframework.ai.chat.observation.DefaultChatModelObservationConvention;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.util.StringUtils;
 
-import com.openai.client.OpenAIClient;
-import com.openai.core.JsonValue;
-import com.openai.errors.OpenAIInvalidDataException;
-import com.openai.models.Reasoning;
-import com.openai.models.ReasoningEffort;
-import com.openai.models.ResponsesModel;
-import com.openai.models.responses.EasyInputMessage;
-import com.openai.models.responses.FunctionTool;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseCreateParams;
-import com.openai.models.responses.ResponseFunctionToolCall;
-import com.openai.models.responses.ResponseIncludable;
-import com.openai.models.responses.ResponseInputItem;
-import com.openai.models.responses.ResponseOutputItem;
-import com.openai.models.responses.ResponseOutputMessage;
-import com.openai.models.responses.ResponseStatus;
-import com.openai.models.responses.ResponseTextConfig;
-import com.openai.models.responses.ResponseUsage;
-import com.openai.models.responses.Tool;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
+import de.tum.cit.aet.artemis.core.config.RawJsonStringDeserializer;
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
+import de.tum.cit.aet.artemis.core.config.StrictStringDeserializer;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
- * Synchronous Spring AI {@link ChatModel} adapter for the OpenAI Responses API.
- *
- * <p>
- * Artemis uses this adapter for Responses presets. Spring AI's native {@code ToolCallingAdvisor}
- * owns tool execution and recursion. Each request is stateless ({@code store=false}) and carries
- * the complete conversation history, including the original ordered Responses output items. The
- * latter is required to replay reasoning items and their encrypted content on the next round.
+ * Synchronous, stateless Spring AI adapter for the Responses API. Spring AI's ToolCallingAdvisor executes tools.
+ * The ordered, original provider output travels with each assistant message so subsequent calls can replay encrypted reasoning.
  */
 public final class OpenAiResponsesChatModel implements ChatModel {
 
-    /** Metadata key containing the original ordered Responses output items. */
+    /** Assistant metadata containing the original ordered Responses output items, each encoded as JSON. */
     public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = ResponsesOutputRepair.OUTPUT_ITEMS_METADATA_KEY;
-
-    private static final String NO_REASONING = "none";
 
     private static final DefaultChatModelObservationConvention OBSERVATION_CONVENTION = new DefaultChatModelObservationConvention();
 
-    private final OpenAIClient openAIClient;
+    private final LlmHttpClient client;
 
-    private final JsonMapper objectMapper;
+    private final JsonMapper mapper;
 
-    private final OpenAiChatOptions defaultOptions;
+    private final LlmChatOptions defaultOptions;
 
-    private final ObservationRegistry observationRegistry;
+    private final ObservationRegistry observations;
 
-    /**
-     * Creates a Responses adapter with a default model only.
-     *
-     * @param openAIClient provider-aware synchronous OpenAI client
-     * @param objectMapper JSON parser used for tool schemas
-     * @param defaultModel model/deployment used when a request does not override it
-     */
-    public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, @Nullable String defaultModel) {
-        this(openAIClient, objectMapper,
-                StringUtils.hasText(defaultModel) ? OpenAiChatOptions.builder().deploymentName(defaultModel).build() : OpenAiChatOptions.builder().build());
+    OpenAiResponsesChatModel(LlmHttpClient client, JsonMapper mapper, LlmChatOptions defaultOptions, ObservationRegistry observations) {
+        this.client = client;
+        this.mapper = mapper;
+        this.defaultOptions = defaultOptions;
+        this.observations = observations;
     }
 
-    /**
-     * Creates a Responses adapter whose default options (model, reasoning effort, sampling and output limit) apply to every request that does not
-     * override them; a {@code ChatClient} starts each request from these options.
-     *
-     * @param openAIClient   provider-aware synchronous OpenAI client
-     * @param objectMapper   JSON parser used for tool schemas
-     * @param defaultOptions the default request options
-     */
-    public OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, OpenAiChatOptions defaultOptions) {
-        this(openAIClient, objectMapper, defaultOptions, ObservationRegistry.NOOP);
-    }
-
-    OpenAiResponsesChatModel(OpenAIClient openAIClient, JsonMapper objectMapper, OpenAiChatOptions defaultOptions, ObservationRegistry observationRegistry) {
-        this.openAIClient = openAIClient;
-        this.objectMapper = objectMapper;
-        this.defaultOptions = defaultOptions.mutate().store(false).build();
-        this.observationRegistry = observationRegistry;
-    }
-
-    /**
-     * Returns the adapter's default OpenAI options.
-     *
-     * @return default options with stateless Responses storage
-     */
     @Override
     public ChatOptions getOptions() {
         return defaultOptions;
     }
 
-    /**
-     * Sends one complete prompt to the Responses API and converts its output to Spring AI's
-     * response model. Failed or incomplete provider responses carry a failure finish reason
-     * without executable tools, retaining usage for accounting.
-     *
-     * @param prompt ordered system, user, assistant, and tool messages
-     * @return converted assistant response
-     * @throws IllegalArgumentException if the prompt contains unsupported content or malformed tools
-     */
     @Override
     public ChatResponse call(Prompt prompt) {
-        if (Thread.currentThread().isInterrupted()) {
-            throw new CancellationException("Responses dispatch interrupted before request");
-        }
-        OpenAiChatOptions options = requireOpenAiOptions(prompt.getOptions());
-        ResponseCreateParams.Builder request = ResponseCreateParams.builder().inputOfResponse(toInputItems(prompt.getInstructions())).store(false)
-                .include(List.of(ResponseIncludable.REASONING_ENCRYPTED_CONTENT));
-
-        String model = resolveModel(options);
-        request.model(model);
-        applyReasoningAndSampling(request, options);
-        applyTools(request, options);
-
-        if (Thread.currentThread().isInterrupted()) {
-            throw new CancellationException("Responses dispatch interrupted before request");
-        }
+        checkInterrupted();
+        var options = options(prompt.getOptions());
+        var request = request(prompt.getInstructions(), options);
+        checkInterrupted();
         var context = ChatModelObservationContext.builder().prompt(new Prompt(prompt.getInstructions(), options)).provider("openai").build();
-        return ChatModelObservationDocumentation.CHAT_MODEL_OPERATION.observation(null, OBSERVATION_CONVENTION, () -> context, observationRegistry).observe(() -> {
-            ChatResponse response = toChatResponse(openAIClient.responses().create(request.build()), model);
+        return ChatModelObservationDocumentation.CHAT_MODEL_OPERATION.observation(null, OBSERVATION_CONVENTION, () -> context, observations).observe(() -> {
+            var response = toChatResponse(client.post("responses", request, Response.class), request.model());
             context.setResponse(response);
             return response;
         });
     }
 
-    private OpenAiChatOptions requireOpenAiOptions(@Nullable ChatOptions options) {
+    private static void checkInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Responses dispatch interrupted before request");
+        }
+    }
+
+    private LlmChatOptions options(@Nullable ChatOptions options) {
         if (options == null) {
             return defaultOptions;
         }
-        if (!(options instanceof OpenAiChatOptions openAiOptions)) {
-            throw new IllegalArgumentException("OpenAI Responses requires OpenAiChatOptions, got " + options.getClass().getName());
+        if (options instanceof LlmChatOptions llm) {
+            return llm;
         }
-        return openAiOptions;
+        var builder = defaultOptions.mutate().combineWith(options.mutate());
+        if (options.getMaxTokens() != null) {
+            // The portable API has one output limit. An explicit request limit supersedes either spelling on the preset.
+            builder.maxCompletionTokens(null);
+        }
+        return builder.build();
     }
 
-    private String resolveModel(OpenAiChatOptions options) {
-        if (StringUtils.hasText(options.getDeploymentName())) {
-            return options.getDeploymentName();
+    private Request request(List<Message> messages, LlmChatOptions options) {
+        String model = StringUtils.hasText(options.getModel()) ? options.getModel() : defaultOptions.getModel();
+        if (!StringUtils.hasText(model)) {
+            throw new IllegalArgumentException("OpenAI Responses requires a model or deployment name");
         }
-        if (StringUtils.hasText(options.getModel())) {
-            return options.getModel();
-        }
-        if (StringUtils.hasText(defaultOptions.getDeploymentName())) {
-            return defaultOptions.getDeploymentName();
-        }
-        throw new IllegalArgumentException("OpenAI Responses requires a model or deployment name");
-    }
-
-    private static void applyReasoningAndSampling(ResponseCreateParams.Builder request, OpenAiChatOptions options) {
         String effort = options.getReasoningEffort();
-        if (StringUtils.hasText(effort)) {
-            request.reasoning(Reasoning.builder().effort(ReasoningEffort.of(effort)).build());
+        var reasoning = StringUtils.hasText(effort) ? new Reasoning(effort) : null;
+        Double temperature = reasoning == null || "none".equals(effort) ? options.getTemperature() : null;
+        Integer limit = options.getMaxCompletionTokens() != null ? options.getMaxCompletionTokens() : options.getMaxTokens();
+        String verbosity = options.getVerbosity();
+        Format format = null;
+        if (StringUtils.hasText(options.getOutputSchema())) {
+            format = new Format("json_schema", "response", schema(options.getOutputSchema(), "structured output"), true);
         }
-        // Reasoning models reject sampling options unless the reasoning effort is none.
-        if (options.getTemperature() != null && (!StringUtils.hasText(effort) || NO_REASONING.equals(effort))) {
-            request.temperature(options.getTemperature());
-        }
-        if (options.getTopP() != null) {
-            request.topP(options.getTopP());
-        }
-        if (StringUtils.hasText(options.getVerbosity())) {
-            request.text(ResponseTextConfig.builder().verbosity(ResponseTextConfig.Verbosity.of(options.getVerbosity())).build());
-        }
-        // The Responses API has one output limit; it takes either Chat Completions field.
-        Integer outputLimit = options.getMaxCompletionTokens() != null ? options.getMaxCompletionTokens() : options.getMaxTokens();
-        if (outputLimit != null) {
-            request.maxOutputTokens(outputLimit.longValue());
-        }
-        if (options.getParallelToolCalls() != null) {
-            request.parallelToolCalls(options.getParallelToolCalls());
-        }
-    }
-
-    private void applyTools(ResponseCreateParams.Builder request, OpenAiChatOptions options) {
-        List<ToolCallback> callbacks = options.getToolCallbacks();
-        if (callbacks == null) {
-            return;
-        }
-        for (ToolCallback callback : callbacks) {
+        var text = format != null || StringUtils.hasText(verbosity) ? new Text(verbosity, format) : null;
+        List<FunctionTool> tools = new ArrayList<>();
+        for (ToolCallback callback : Objects.requireNonNullElse(options.getToolCallbacks(), List.<ToolCallback>of())) {
             if (callback == null) {
                 continue;
             }
-            request.addTool(Tool.ofFunction(toFunctionTool(callback.getToolDefinition())));
+            var definition = callback.getToolDefinition();
+            String description = StringUtils.hasText(definition.description()) ? definition.description() : null;
+            tools.add(new FunctionTool("function", definition.name(), description, schema(definition.inputSchema(), "tool " + definition.name()), false));
         }
+        return new Request(model, input(messages), false, List.of("reasoning.encrypted_content"), reasoning, temperature, options.getTopP(), text, limit,
+                options.getParallelToolCalls(), tools.isEmpty() ? null : tools);
     }
 
-    private FunctionTool toFunctionTool(ToolDefinition definition) {
-        Map<String, Object> schema;
+    // Schemas belong to the callback or converter. Validate that they are single JSON objects before embedding them verbatim.
+    private String schema(String json, String source) {
         try {
-            schema = objectMapper.readValue(definition.inputSchema(), new TypeReference<>() {
-            });
+            if (mapper.readerFor(Schema.class).with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readValue(json) != null) {
+                return json;
+            }
         }
         catch (JacksonException ex) {
-            throw new IllegalArgumentException("Invalid JSON schema for tool " + definition.name(), ex);
+            throw new IllegalArgumentException("Invalid JSON schema for " + source, ex);
         }
-        Map<String, JsonValue> parameters = new LinkedHashMap<>();
-        schema.forEach((key, value) -> parameters.put(key, JsonValue.from(value)));
-        FunctionTool.Builder tool = FunctionTool.builder().name(definition.name()).strict(false)
-                .parameters(FunctionTool.Parameters.builder().additionalProperties(parameters).build());
-        if (StringUtils.hasText(definition.description())) {
-            tool.description(definition.description());
-        }
-        return tool.build();
+        throw new IllegalArgumentException("Invalid JSON schema for " + source);
     }
 
-    private static List<ResponseInputItem> toInputItems(List<Message> messages) {
-        List<ResponseInputItem> inputItems = new ArrayList<>();
+    private List<InputItem> input(List<Message> messages) {
+        List<InputItem> items = new ArrayList<>();
         for (Message message : messages) {
-            if (message instanceof SystemMessage systemMessage) {
-                inputItems.add(easyMessage(EasyInputMessage.Role.SYSTEM, systemMessage.getText()));
-            }
-            else if (message instanceof UserMessage userMessage) {
-                if (!userMessage.getMedia().isEmpty()) {
-                    throw unsupported("user media");
+            switch (message) {
+                case SystemMessage system -> items.add(new MessageInput("system", system.getText()));
+                case UserMessage user -> {
+                    if (!user.getMedia().isEmpty()) {
+                        throw unsupported("user media");
+                    }
+                    items.add(new MessageInput("user", user.getText()));
                 }
-                inputItems.add(easyMessage(EasyInputMessage.Role.USER, userMessage.getText()));
-            }
-            else if (message instanceof AssistantMessage assistantMessage) {
-                inputItems.addAll(toAssistantItems(assistantMessage));
-            }
-            else if (message instanceof ToolResponseMessage toolResponseMessage) {
-                for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
-                    // the record is deserialised from chat memory and built by tool callbacks, so tolerate a missing result
-                    String output = Objects.requireNonNullElse(response.responseData(), "");
-                    inputItems.add(ResponseInputItem.ofFunctionCallOutput(ResponseInputItem.FunctionCallOutput.builder().callId(response.id()).output(output).build()));
-                }
-            }
-            else {
-                throw unsupported("message type " + message.getClass().getName());
+                case AssistantMessage assistant -> addAssistant(items, assistant);
+                case ToolResponseMessage tool ->
+                    tool.getResponses().forEach(result -> items.add(new ToolOutput("function_call_output", result.id(), Objects.requireNonNullElse(result.responseData(), ""))));
+                default -> throw unsupported("message type " + message.getClass().getName());
             }
         }
-        return List.copyOf(inputItems);
+        return items;
     }
 
-    private static ResponseInputItem easyMessage(EasyInputMessage.Role role, @Nullable String text) {
-        return ResponseInputItem.ofEasyInputMessage(EasyInputMessage.builder().role(role).content(text == null ? "" : text).build());
-    }
-
-    private static List<ResponseInputItem> toAssistantItems(AssistantMessage assistantMessage) {
-        Object metadata = assistantMessage.getMetadata().get(RESPONSES_OUTPUT_ITEMS_METADATA_KEY);
-        if (metadata != null) {
-            if (!(metadata instanceof List<?> outputItems)) {
+    private void addAssistant(List<InputItem> items, AssistantMessage assistant) {
+        Object preserved = assistant.getMetadata().get(RESPONSES_OUTPUT_ITEMS_METADATA_KEY);
+        if (preserved != null) {
+            if (!(preserved instanceof List<?> output)) {
                 throw new IllegalArgumentException("OpenAI Responses assistant metadata must contain a list of output items");
             }
-            List<ResponseInputItem> replay = new ArrayList<>(outputItems.size());
-            for (Object outputItem : outputItems) {
-                if (!(outputItem instanceof ResponseOutputItem item)) {
-                    throw new IllegalArgumentException("OpenAI Responses assistant metadata contains an unsupported output item");
+            for (Object item : output) {
+                if (!(item instanceof String json)) {
+                    throw unsupported("assistant metadata contains an unsupported output item");
                 }
-                replay.add(toInputItem(item));
+                // Metadata may have passed through chat memory. Only replay a single valid, supported output item.
+                outputItem(json);
+                items.add(new Replay(json));
             }
-            return List.copyOf(replay);
         }
-        if (assistantMessage.hasToolCalls()) {
+        else if (assistant.hasToolCalls()) {
             throw new IllegalArgumentException("OpenAI Responses assistant tool calls require preserved Responses output metadata");
         }
-        if (!assistantMessage.getMedia().isEmpty()) {
+        else if (!assistant.getMedia().isEmpty()) {
             throw unsupported("assistant media");
         }
-        return List.of(easyMessage(EasyInputMessage.Role.ASSISTANT, assistantMessage.getText()));
+        else {
+            items.add(new MessageInput("assistant", assistant.getText()));
+        }
     }
 
-    private static ResponseInputItem toInputItem(ResponseOutputItem outputItem) {
-        if (outputItem.isReasoning()) {
-            return ResponseInputItem.ofReasoning(outputItem.asReasoning());
-        }
-        if (outputItem.isFunctionCall()) {
-            return ResponseInputItem.ofFunctionCall(outputItem.asFunctionCall());
-        }
-        if (outputItem.isMessage()) {
-            return ResponseInputItem.ofResponseOutputMessage(outputItem.asMessage());
-        }
-        throw unsupported("Responses output item kind " + outputItem.getClass().getSimpleName());
-    }
-
-    private static ChatResponse toChatResponse(Response response, String requestedModel) {
-        ChatResponseMetadata.Builder responseMetadata = ChatResponseMetadata.builder().model(requestedModel);
+    private OutputItem outputItem(String json) {
         try {
-            response.usage().ifPresent(usage -> responseMetadata.usage(toUsage(usage)));
-        }
-        catch (ArithmeticException | OpenAIInvalidDataException _) {
-            return terminalResponse("invalid_usage", responseMetadata);
-        }
-        try {
-            responseMetadata.id(response.id()).model(responseModelName(response));
-            ResponseStatus status = response.status().orElse(null);
-            if (response.error().isPresent() || !ResponseStatus.COMPLETED.equals(status)) {
-                // Return a terminal, tool-free response so the native advisor retains earlier rounds' usage.
-                // The orchestration layer rejects this finish reason after accounting; incomplete tools never run.
-                return terminalResponse(finishReason(response, status), responseMetadata);
+            OutputItem item = mapper.readerFor(OutputItem.class).with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readValue(json);
+            if (item != null && ("reasoning".equals(item.type()) || "message".equals(item.type()) || "function_call".equals(item.type()))) {
+                return item;
             }
-            return completedResponse(response, responseMetadata);
         }
-        catch (IllegalArgumentException | OpenAIInvalidDataException _) {
-            return terminalResponse("unsupported_output", responseMetadata);
+        catch (JacksonException ex) {
+            throw new IllegalArgumentException("OpenAI Responses assistant metadata contains an unsupported output item", ex);
         }
+        throw unsupported("output item");
     }
 
-    private static String finishReason(Response response, @Nullable ResponseStatus status) {
-        if (response.error().isPresent()) {
-            return "failed";
+    private ChatResponse toChatResponse(Response response, String requestedModel) {
+        var metadata = ChatResponseMetadata.builder().model(requestedModel);
+        if (response == null) {
+            return terminalResponse("unsupported_output", metadata);
         }
-        if (ResponseStatus.INCOMPLETE.equals(status)
-                && response.incompleteDetails().flatMap(Response.IncompleteDetails::reason).filter(Response.IncompleteDetails.Reason.MAX_OUTPUT_TOKENS::equals).isPresent()) {
-            return "length";
+        if (response.usage() != null) {
+            try {
+                metadata.usage(mapper.readValue(response.usage(), Usage.class).toUsage());
+            }
+            catch (JacksonException | IllegalArgumentException ex) {
+                return terminalResponse("invalid_usage", metadata);
+            }
         }
-        return status == null ? "missing_status" : status.asString();
+        if (!(response.id() instanceof String id) || !(response.model() instanceof String model)) {
+            return terminalResponse("unsupported_output", metadata);
+        }
+        metadata.id(id).model(model);
+        if (response.error() != null) {
+            return terminalResponse("failed", metadata);
+        }
+        if (!(response.status() instanceof String status)) {
+            return terminalResponse(response.status() == null ? "missing_status" : "unsupported_output", metadata);
+        }
+        if (!"completed".equals(status)) {
+            boolean truncated = "incomplete".equals(status) && response.incompleteDetails() instanceof Map<?, ?> details && "max_output_tokens".equals(details.get("reason"));
+            return terminalResponse(truncated ? "length" : status, metadata);
+        }
+
+        try {
+            if (response.output() == null) {
+                throw unsupported("missing output");
+            }
+            StringBuilder text = new StringBuilder();
+            List<AssistantMessage.ToolCall> calls = new ArrayList<>();
+            for (String json : response.output()) {
+                if (json == null) {
+                    throw unsupported("null output item");
+                }
+                var item = outputItem(json);
+                if ("function_call".equals(item.type())) {
+                    if (item.callId() == null || item.name() == null || item.arguments() == null) {
+                        throw unsupported("incomplete function call");
+                    }
+                    calls.add(new AssistantMessage.ToolCall(item.callId(), "function", item.name(), item.arguments()));
+                }
+                else if ("message".equals(item.type())) {
+                    if (item.content() == null) {
+                        throw unsupported("missing message content");
+                    }
+                    for (Content content : item.content()) {
+                        if (content == null || !"output_text".equals(content.type()) || content.text() == null) {
+                            throw unsupported("message content");
+                        }
+                        text.append(content.text());
+                    }
+                }
+            }
+            var assistant = AssistantMessage.builder().content(text.toString()).toolCalls(calls)
+                    .properties(Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, List.copyOf(response.output()))).build();
+            return new ChatResponse(List.of(new Generation(assistant)), metadata.build());
+        }
+        catch (IllegalArgumentException ex) {
+            // Keep billable usage, but never execute a tool returned alongside malformed or unsupported output.
+            return terminalResponse("unsupported_output", metadata);
+        }
     }
 
     private static ChatResponse terminalResponse(String reason, ChatResponseMetadata.Builder metadata) {
@@ -348,63 +289,117 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(""), generationMetadata)), metadata.build());
     }
 
-    private static ChatResponse completedResponse(Response response, ChatResponseMetadata.Builder responseMetadata) {
-        List<ResponseOutputItem> outputItems = List.copyOf(response.output());
-        StringBuilder text = new StringBuilder();
-        List<AssistantMessage.ToolCall> toolCalls = new ArrayList<>();
-        for (ResponseOutputItem outputItem : outputItems) {
-            if (outputItem.isReasoning()) {
-                continue;
-            }
-            if (outputItem.isFunctionCall()) {
-                ResponseFunctionToolCall functionCall = outputItem.asFunctionCall();
-                toolCalls.add(new AssistantMessage.ToolCall(functionCall.callId(), "function", functionCall.name(), functionCall.arguments()));
-                continue;
-            }
-            if (outputItem.isMessage()) {
-                appendOutputText(text, outputItem.asMessage());
-                continue;
-            }
-            throw unsupported("Responses output item kind " + outputItem.getClass().getSimpleName());
-        }
-
-        Map<String, Object> assistantMetadata = Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, outputItems);
-        AssistantMessage assistant = AssistantMessage.builder().content(text.toString()).toolCalls(toolCalls).properties(assistantMetadata).build();
-
-        return new ChatResponse(List.of(new Generation(assistant)), responseMetadata.build());
-    }
-
-    private static String responseModelName(Response response) {
-        ResponsesModel model = response.model();
-        if (model.isString()) {
-            return model.asString();
-        }
-        if (model.isChat()) {
-            return model.asChat().asString();
-        }
-        if (model.isOnly()) {
-            return model.asOnly().asString();
-        }
-        throw unsupported("Responses model " + model.getClass().getSimpleName());
-    }
-
-    private static void appendOutputText(StringBuilder text, ResponseOutputMessage message) {
-        message.content().forEach(content -> {
-            if (!content.isOutputText()) {
-                throw unsupported("Responses message content kind " + content.getClass().getSimpleName());
-            }
-            text.append(content.asOutputText().text());
-        });
-    }
-
-    private static DefaultUsage toUsage(ResponseUsage usage) {
-        var details = usage._inputTokensDetails().asKnown().orElse(null);
-        Long cacheRead = details == null ? null : details._cachedTokens().asKnown().orElse(null);
-        Long cacheWrite = details == null ? null : details._cacheWriteTokens().asKnown().orElse(null);
-        return new DefaultUsage(Math.toIntExact(usage.inputTokens()), Math.toIntExact(usage.outputTokens()), Math.toIntExact(usage.totalTokens()), usage, cacheRead, cacheWrite);
-    }
-
     private static IllegalArgumentException unsupported(String kind) {
         return new IllegalArgumentException("Unsupported OpenAI Responses " + kind);
+    }
+
+    private record Request(String model, List<InputItem> input, boolean store, List<String> include, Reasoning reasoning, Double temperature, @JsonProperty("top_p") Double topP,
+            Text text, @JsonProperty("max_output_tokens") Integer maxOutputTokens, @JsonProperty("parallel_tool_calls") Boolean parallelToolCalls, List<FunctionTool> tools)
+            implements LlmHttpClient.Request {
+    }
+
+    private interface InputItem {
+    }
+
+    private record MessageInput(String type, String role, String content) implements InputItem {
+
+        MessageInput(String role, String content) {
+            this("message", role, Objects.requireNonNullElse(content, ""));
+        }
+    }
+
+    private record ToolOutput(String type, @JsonProperty("call_id") String callId, String output) implements InputItem {
+    }
+
+    private record Replay(@JsonValue @JsonRawValue String json) implements InputItem {
+    }
+
+    private record Reasoning(String effort) {
+    }
+
+    private record Text(String verbosity, Format format) {
+    }
+
+    private record Format(String type, String name, @JsonRawValue String schema, boolean strict) {
+    }
+
+    private record FunctionTool(String type, String name, String description, @JsonRawValue String parameters, boolean strict) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Schema() {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Response(Object id, Object model, Object status, Object error, @JsonProperty("incomplete_details") Object incompleteDetails,
+            @JsonDeserialize(using = OutputItemsDeserializer.class) List<String> output, @JsonDeserialize(using = RawJsonStringDeserializer.class) String usage) {
+    }
+
+    // A malformed output still carries billable usage. Preserve each item as JSON for exact replay, including provider extensions.
+    private static final class OutputItemsDeserializer extends ValueDeserializer<List<String>> {
+
+        private final RawJsonStringDeserializer rawJson = new RawJsonStringDeserializer();
+
+        @Override
+        public List<String> deserialize(JsonParser parser, DeserializationContext context) {
+            if (!parser.isExpectedStartArrayToken()) {
+                parser.skipChildren();
+                return null;
+            }
+            List<String> items = new ArrayList<>();
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+                items.add(rawJson.deserialize(parser, context));
+            }
+            return items;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OutputItem(String type, @JsonProperty("call_id") @JsonDeserialize(using = StrictStringDeserializer.class) String callId,
+            @JsonDeserialize(using = StrictStringDeserializer.class) String name, @JsonDeserialize(using = StrictStringDeserializer.class) String arguments,
+            List<Content> content) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Content(String type, @JsonDeserialize(using = StrictStringDeserializer.class) String text) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Usage(@JsonProperty("input_tokens") @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer inputTokens,
+            @JsonProperty("output_tokens") @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer outputTokens,
+            @JsonProperty("total_tokens") @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer totalTokens, @JsonProperty("input_tokens_details") Object inputDetails,
+            @JsonProperty("output_tokens_details") Object outputDetails, Object cost, @JsonProperty("cost_currency") Object currency) {
+
+        DefaultUsage toUsage() {
+            if (inputTokens == null || outputTokens == null || totalTokens == null) {
+                throw new IllegalArgumentException("Missing Responses usage counter");
+            }
+            var nativeUsage = new LinkedHashMap<String, Object>();
+            nativeUsage.put("prompt_tokens", inputTokens);
+            nativeUsage.put("completion_tokens", outputTokens);
+            nativeUsage.put("total_tokens", totalTokens);
+            if (inputDetails != null) {
+                nativeUsage.put("input_tokens_details", inputDetails);
+            }
+            if (outputDetails != null) {
+                nativeUsage.put("output_tokens_details", outputDetails);
+            }
+            if (cost != null) {
+                nativeUsage.put("cost", cost);
+            }
+            if (currency != null) {
+                nativeUsage.put("cost_currency", currency);
+            }
+            return new DefaultUsage(inputTokens, outputTokens, totalTokens, Collections.unmodifiableMap(nativeUsage), cacheTokens("cached_tokens"),
+                    cacheTokens("cache_write_tokens"));
+        }
+
+        // Some gateways send a scalar or a malformed optional counter. The other counters and cost still apply.
+        private @Nullable Long cacheTokens(String field) {
+            if (inputDetails instanceof Map<?, ?> details && details.get(field) instanceof Number count && (count instanceof Long || count instanceof Integer)) {
+                return count.longValue();
+            }
+            return null;
+        }
     }
 }

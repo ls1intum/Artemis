@@ -22,16 +22,6 @@ spring:
             - org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration
             - org.springframework.boot.jdbc.autoconfigure.JdbcClientAutoConfiguration
             - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
-    ai:
-        model:
-            chat: none
-            embedding: none
-            image: none
-            moderation: none
-            decision: none
-            audio:
-                speech: none
-                transcription: none
 artemis:
     aiworker:
         id: ${AI_WORKER_ID}

@@ -295,17 +295,6 @@ spring: #disabled by default, you must enable it
             mail.smtp.connectiontimeout: 10000
             mail.smtp.timeout: 30000
             mail.smtp.writetimeout: 30000
-    ai:
-        # Artemis configures every LLM under artemis.llm and builds its clients itself; Spring AI creates no model of its own.
-        model:
-            chat: none
-            audio.speech: none
-            audio.transcription: none
-            embedding: none
-            image: none
-            moderation:  none
-            # Spring AI 2.1 added the decision model. Artemis does not use it, and without this key Spring AI creates it and fails for want of credentials.
-            decision: none
     application:
         name: Artemis
     jmx:

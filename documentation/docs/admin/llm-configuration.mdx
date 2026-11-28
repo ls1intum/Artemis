@@ -3,7 +3,7 @@ id: llm-configuration
 title: LLM Configuration
 sidebar_label: LLM Configuration
 description: Configure the language model endpoints and presets that Hyperion, Atlas, Deimos and global search use.
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -84,7 +84,8 @@ artemis:
 ## Endpoints
 
 An endpoint is one provider address with its credentials. Several presets can share one endpoint; Artemis keeps one
-HTTP client per endpoint.
+HTTP connection pool per endpoint. Use the final provider URL. Artemis returns HTTP redirects to the caller so credentials stay on the configured endpoint.
+When a provider requests a retry delay longer than eight seconds, Artemis returns that failure with its retry header so the caller can schedule a later attempt.
 
 | Key                                 | Default  | Meaning                                                                                                                                       |
 | ----------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,7 +93,7 @@ HTTP client per endpoint.
 | `base-url`                          | required | The API base URL, without credentials, query or fragment. For OpenAI-compatible servers it ends with `/v1`, for example `https://api.openai.com/v1` or `http://localhost:11434/v1`. |
 | `api-key`                           | none     | Sent as a bearer token (`openai`) or as the Azure key header (`microsoft-foundry`). Without a key, Artemis sends no `Authorization` header.  |
 | `timeout`                           | `300s`   | Time limit of one request.                                                                                                                    |
-| `max-retries`                       | `3`      | Retries of the provider SDK after a failed request.                                                                                           |
+| `max-retries`                       | `3`      | Retries by the Artemis HTTP client after a failed request.                                                                                           |
 | `organization-id`                   | none     | OpenAI organization, if your account needs one.                                                                                               |
 | `microsoft-foundry-service-version` | none     | Azure API version, only for `microsoft-foundry`.                                                                                              |
 | `custom-headers`                    | none     | Extra HTTP headers as a map, for example for a gateway.                                                                                       |
@@ -146,7 +147,7 @@ several tasks has an `llm-presets` map: each task can have its own key, and a ta
 The quiz question pool and Deimos send lecture material or student code to their model. Choose a preset on an endpoint
 that your institution allows for that data, for example a self-hosted model.
 
-Exercise generation retries failed model calls itself and counts the cost of every call. SDK retries would send
+Exercise generation retries failed model calls itself and counts the cost of every call. HTTP client retries would send
 requests that Artemis cannot count, so the server refuses an exercise generation preset whose effective
 `max-retries` is not `0`.
 
