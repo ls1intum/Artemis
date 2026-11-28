@@ -17,7 +17,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.util.JsonHelper;
 
-import de.tum.cit.aet.artemis.core.service.llm.ResponsesOutputRepair;
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
 
 /**
  * How {@link AgentLoopRunner} reads and answers one batch of model tool calls. Before execution it repairs leaked tool names, validates the batch, and recognizes a completion

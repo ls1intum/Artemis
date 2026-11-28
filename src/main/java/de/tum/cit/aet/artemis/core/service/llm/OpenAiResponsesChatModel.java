@@ -54,6 +54,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -68,7 +69,7 @@ import io.micrometer.observation.ObservationRegistry;
 public final class OpenAiResponsesChatModel implements ChatModel {
 
     /** Metadata key containing the original ordered Responses output items. */
-    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
+    public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = ResponsesOutputRepair.OUTPUT_ITEMS_METADATA_KEY;
 
     private static final String NO_REASONING = "none";
 

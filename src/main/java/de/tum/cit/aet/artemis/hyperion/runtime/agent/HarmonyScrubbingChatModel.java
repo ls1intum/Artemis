@@ -11,7 +11,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.service.llm.ResponsesOutputRepair;
+import de.tum.cit.aet.artemis.aiworker.api.ResponsesOutputRepair;
 import reactor.core.publisher.Flux;
 
 /**

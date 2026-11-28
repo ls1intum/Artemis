@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.llm;
+package de.tum.cit.aet.artemis.aiworker.api;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -17,6 +17,9 @@ import com.openai.models.responses.ResponseOutputMessage;
 /** Keeps provider output used for stateless replay in sync with repairs to a Spring AI assistant message. */
 public final class ResponsesOutputRepair {
 
+    /** Ordered provider output retained on the assistant message for the next Responses request. */
+    public static final String OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
+
     private ResponsesOutputRepair() {
     }
 
@@ -29,7 +32,7 @@ public final class ResponsesOutputRepair {
      */
     public static Map<String, Object> removeTextMatches(AssistantMessage assistant, Pattern pattern) {
         String text = assistant.getText();
-        if (text == null || !assistant.getMetadata().containsKey(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY)) {
+        if (text == null || !assistant.getMetadata().containsKey(OUTPUT_ITEMS_METADATA_KEY)) {
             return assistant.getMetadata();
         }
         var removed = new BitSet();
@@ -65,7 +68,7 @@ public final class ResponsesOutputRepair {
 
     private static Map<String, Object> repairMetadata(AssistantMessage assistant, @Nullable UnaryOperator<String> textRepair, @Nullable UnaryOperator<String> nameRepair) {
         var metadata = assistant.getMetadata();
-        if (!(metadata.get(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY) instanceof List<?> items)) {
+        if (!(metadata.get(OUTPUT_ITEMS_METADATA_KEY) instanceof List<?> items)) {
             return metadata;
         }
         List<Object> repairedItems = new ArrayList<>(items.size());
@@ -73,7 +76,7 @@ public final class ResponsesOutputRepair {
             repairedItems.add(repairItem(item, textRepair, nameRepair));
         }
         var repaired = new HashMap<>(metadata);
-        repaired.put(OpenAiResponsesChatModel.RESPONSES_OUTPUT_ITEMS_METADATA_KEY, List.copyOf(repairedItems));
+        repaired.put(OUTPUT_ITEMS_METADATA_KEY, List.copyOf(repairedItems));
         return repaired;
     }
 
