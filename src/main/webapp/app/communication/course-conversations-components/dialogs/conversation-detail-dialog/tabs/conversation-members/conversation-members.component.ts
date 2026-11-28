@@ -7,7 +7,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EMPTY, Subject, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -15,12 +14,17 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -31,13 +35,26 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
-    styleUrls: ['./conversation-members.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, TumAetUiPaginatorComponent, ArtemisTranslatePipe, SelectModule],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        FormsModule,
+        ConversationMemberRowComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiPaginatorComponent,
+        TumAetUiSelectComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     public conversationService = inject(ConversationService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
 
     private ngUnsubscribe = new Subject<void>();
@@ -101,6 +118,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(
             ConversationAddUsersDialogComponent,
             cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.addUsers'),
+                autoFocus: 'first-tabbable',
                 data: {
                     course: this.course(),
                     activeConversation: this.activeConversation(),

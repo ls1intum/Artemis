@@ -9,10 +9,10 @@ export type HyperionAccountingState = ExerciseGenerationStatusAccountingStateEnu
 /**
  * What the run cost, in the only three shapes that can be said honestly.
  *
- * `notPriced` is not zero and not free: it means no price is configured for a model the run used, so no amount may be
- * rendered at all. `lowerBound` means some responses were priced and others were not, so the figure is a floor.
+ * `notPriced` means neither a provider USD amount nor a configured USD estimate is available. It is not a zero cost.
+ * `lowerBound` means some responses were priced and others were not, so the figure is a floor.
  */
-export type HyperionSpendCost = { kind: 'amount'; eur: number } | { kind: 'lowerBound'; eur: number } | { kind: 'notPriced' };
+export type HyperionSpendCost = { kind: 'amount'; usd: number } | { kind: 'lowerBound'; usd: number } | { kind: 'notPriced' };
 
 /** The run's share of its token ceiling. Only ever built when the deployment actually configured one. */
 export interface HyperionSpendBudget {
@@ -65,7 +65,7 @@ export interface HyperionSpendView {
  * zero can never carry it (a zero amount is reported as `notPriced` before it ever reaches here).
  */
 export type HyperionSpendHero =
-    | { kind: 'money'; eur: number; lowerBound: boolean }
+    | { kind: 'money'; usd: number; lowerBound: boolean }
     /** `billable` is charged against the run's ceiling with cached input already discounted; `total` is input + output. */
     | { kind: 'tokens'; unit: 'billable' | 'total'; tokens: number; lowerBound: boolean };
 
@@ -92,10 +92,10 @@ export function spendHero(view: HyperionSpendView): HyperionSpendHero {
     // accounting tag says in its own words rather than by prefixing every number with "at least".
     const lowerBound = view.accounting === 'INCOMPLETE';
     if (view.cost.kind === 'amount') {
-        return { kind: 'money', eur: view.cost.eur, lowerBound };
+        return { kind: 'money', usd: view.cost.usd, lowerBound };
     }
     if (view.cost.kind === 'lowerBound') {
-        return { kind: 'money', eur: view.cost.eur, lowerBound: true };
+        return { kind: 'money', usd: view.cost.usd, lowerBound: true };
     }
     // The sealed total carries no billable figure - cached input is discounted at a weight that is not part of the
     // terminal account - so a finished unpriced run leads with the two counts it does have, under a different word.
@@ -185,15 +185,15 @@ function fromSealedUsage(usage: ExerciseGenerationUsage, accounting: HyperionAcc
     };
 }
 
-/** An absent amount is the server saying no price was configured, which is never the same as a cost of nothing. */
+/** An absent USD amount is unpriced, which is never the same as a cost of nothing. */
 function liveCost(usage: ExerciseGenerationLiveUsage): HyperionSpendCost {
-    if (usage.estimatedCostEur === undefined) {
+    if (usage.costUsd === undefined) {
         return { kind: 'notPriced' };
     }
-    if (usage.estimatedCostComplete) {
-        return { kind: 'amount', eur: usage.estimatedCostEur };
+    if (usage.costUsdComplete) {
+        return { kind: 'amount', usd: usage.costUsd };
     }
-    return usage.estimatedCostEur > 0 ? { kind: 'lowerBound', eur: usage.estimatedCostEur } : { kind: 'notPriced' };
+    return usage.costUsd > 0 ? { kind: 'lowerBound', usd: usage.costUsd } : { kind: 'notPriced' };
 }
 
 /**
@@ -203,10 +203,10 @@ function liveCost(usage: ExerciseGenerationLiveUsage): HyperionSpendCost {
  * saying the run was free.
  */
 function sealedCost(usage: ExerciseGenerationUsage): HyperionSpendCost {
-    if (usage.estimatedCostEurComplete) {
-        return { kind: 'amount', eur: usage.estimatedCostEur };
+    if (usage.costUsdComplete) {
+        return { kind: 'amount', usd: usage.costUsd };
     }
-    return usage.estimatedCostEur > 0 ? { kind: 'lowerBound', eur: usage.estimatedCostEur } : { kind: 'notPriced' };
+    return usage.costUsd > 0 ? { kind: 'lowerBound', usd: usage.costUsd } : { kind: 'notPriced' };
 }
 
 /** A whole token count in the reader's locale, so a five-figure counter is grouped rather than a run of digits. */
@@ -215,16 +215,15 @@ export function formatTokenCount(value: number, locale: string): string {
 }
 
 /**
- * An amount in EUR in the reader's locale.
+ * An amount in USD in the reader's locale.
  *
- * A real cost below one cent is rendered with four decimals rather than rounded: "0.00 EUR" for a run that did cost
- * something is exactly the claim this surface exists to avoid.
+ * Small costs keep at least four decimals and enough precision to avoid rounding a priced response to zero.
  */
-export function formatEuro(value: number, locale: string): string {
-    const fractionDigits = value > 0 && value < 0.01 ? 4 : 2;
+export function formatUsd(value: number, locale: string): string {
+    const fractionDigits = value > 0 && value < 0.01 ? Math.min(20, Math.max(4, 1 - Math.floor(Math.log10(value)))) : 2;
     return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'EUR',
+        currency: 'USD',
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,
     }).format(value);

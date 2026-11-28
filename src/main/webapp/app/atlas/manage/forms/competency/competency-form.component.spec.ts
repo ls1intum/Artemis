@@ -12,7 +12,7 @@ import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';

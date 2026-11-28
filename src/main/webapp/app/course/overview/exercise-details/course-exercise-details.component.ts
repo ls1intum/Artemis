@@ -53,6 +53,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
+import { AthenaResultNotificationTracker } from 'app/exercise/result/result.utils';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
@@ -65,7 +66,7 @@ interface InstructorActionItem {
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
+    styleUrls: ['../course-overview/course-overview.css', './course-exercise-details.component.css'],
     providers: [ExerciseCacheService],
     imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent, ProgrammingExerciseBuildWindowNoticeComponent],
 })
@@ -165,6 +166,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Display-only override for the quiz participation status badge, set from the live quiz view.
     readonly liveQuizStatus = signal<LiveQuizParticipationStatus | undefined>(undefined);
 
+    /**
+     * True while the student takes a running graded quiz, in live mode, synchronized or individual. The course sidebars
+     * (the exercise list and the side panels) read it and give way to the quiz, so the student can focus on it. Practice
+     * mode and a quiz that has not started or has ended do not count. It is undefined until the exercise has loaded:
+     * opening a quiz swaps this page for a new instance, and the sidebars must keep their state until the new one knows.
+     */
+    readonly focusMode = computed<boolean | undefined>(() => {
+        const exercise = this._exercise();
+        if (!exercise) {
+            return undefined;
+        }
+        return exercise.type === ExerciseType.QUIZ && this.participationMode() === 'graded' && this.liveQuizStatus() === LiveQuizParticipationStatus.PARTICIPATING;
+    });
+
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
@@ -245,6 +260,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Subscription tracking for methods called on each exercise load
     private participationUpdateListener?: Subscription;
     private teamAssignmentUpdateListener?: Subscription;
+
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
 
     // Icons
     faBook = faBook;
@@ -499,6 +516,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
+                this.athenaResultNotificationTracker.markAsNotified(participation.submissions);
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
         }
@@ -520,22 +538,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
-                    const changedResults = getAllResultsOfAllSubmissions(changedParticipation.submissions);
-                    const previousParticipation = this._studentParticipations().find((participation) => participation.id === changedParticipation.id);
-                    const previousResults = getAllResultsOfAllSubmissions(previousParticipation?.submissions);
-                    const completedAthenaResult = getNewestResult(
-                        changedResults.filter((result) => {
-                            if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful === undefined) {
-                                return false;
-                            }
-                            const previous = previousResults.find((oldResult) => result.id !== undefined && oldResult.id === result.id);
-                            return !previous || previous.successful === undefined;
-                        }),
-                    );
-                    if (completedAthenaResult?.successful === true) {
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
-                    } else if (completedAthenaResult?.successful === false) {
-                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                    const athenaResultsToNotify = this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions);
+                    for (const athenaResult of athenaResultsToNotify) {
+                        if (athenaResult.successful === true) {
+                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
+                        } else if (athenaResult.successful === false) {
+                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                        }
                     }
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
@@ -559,7 +568,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
-                    if (completedAthenaResult?.successful === true) {
+                    const completedAthenaResult = getNewestResult(athenaResultsToNotify.filter((result) => result.successful === true));
+                    if (completedAthenaResult) {
                         this.navigateToAthenaResult(changedParticipation, completedAthenaResult);
                     }
                 }
@@ -765,10 +775,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return merged;
         });
         this._studentParticipations.set(updatedParticipations);
-    }
-
-    exerciseRatedBadge(result: Result): string {
-        return result.rated ? 'bg-success' : 'bg-info';
     }
 
     /**

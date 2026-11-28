@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 describe('ContextSelectionComponent', () => {
     let component: ContextSelectionComponent;
@@ -146,6 +146,32 @@ describe('ContextSelectionComponent', () => {
 
             expect(optionLabels()).toEqual([]);
             expect(document.querySelector('[data-testid="iris-context-overlay"]')!.textContent).toContain('artemisApp.iris.contextSelection.noResults');
+        });
+
+        it('should say that the options are loading instead of reporting no results while they load', async () => {
+            const pendingLectures = new Subject<typeof lectures>();
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(pendingLectures);
+            const overlay = () => document.querySelector('[data-testid="iris-context-overlay"]')!;
+
+            await openPicker();
+            expect(overlay().querySelector('[data-testid="iris-context-loading"]')).not.toBeNull();
+            expect(overlay().textContent).not.toContain('artemisApp.iris.contextSelection.noResults');
+
+            pendingLectures.next(lectures);
+            pendingLectures.complete();
+            await fixture.whenStable();
+            expect(overlay().querySelector('[data-testid="iris-context-loading"]')).toBeNull();
+            expect(optionLabels()).toEqual(['Lecture 1', 'Lecture 2', 'Programming Ex', 'Text Ex']);
+        });
+
+        it('should report no results instead of loading once loading the options failed', async () => {
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('failed')));
+
+            await openPicker();
+
+            const overlay = document.querySelector('[data-testid="iris-context-overlay"]')!;
+            expect(overlay.querySelector('[data-testid="iris-context-loading"]')).toBeNull();
+            expect(overlay.textContent).toContain('artemisApp.iris.contextSelection.noResults');
         });
 
         it('should select a filtered option, stage it and close the picker', async () => {

@@ -21,14 +21,16 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
-// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
+// Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see CSS `.action-more`), and a small
 // safety margin so a button is always collapsed slightly before it would be clipped — never shown partially.
 const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 34;
@@ -64,7 +66,7 @@ function widthOf(element: HTMLElement): number {
 @Component({
     selector: 'jhi-exercise-action-bar',
     templateUrl: './exercise-action-bar.component.html',
-    styleUrl: './exercise-action-bar.component.scss',
+    styleUrl: './exercise-action-bar.component.css',
     imports: [
         RouterLink,
         NgTemplateOutlet,

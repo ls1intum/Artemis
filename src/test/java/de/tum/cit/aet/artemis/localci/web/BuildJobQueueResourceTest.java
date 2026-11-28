@@ -27,11 +27,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
@@ -121,7 +123,7 @@ class BuildJobQueueResourceTest {
         var response = buildJobQueueResource.getBuildJobById(COURSE_ID, "job-1");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isSameAs(running);
+        assertThat(response.getBody()).isEqualTo(CourseBuildJobDTO.of(running));
     }
 
     @Test
@@ -130,7 +132,7 @@ class BuildJobQueueResourceTest {
         var running = job("job-1", COURSE_ID);
         when(processingJobs.get("job-1")).thenReturn(running);
 
-        assertThat(buildJobQueueResource.getBuildJobById(COURSE_ID, " job-1 ").getBody()).isSameAs(running);
+        assertThat(buildJobQueueResource.getBuildJobById(COURSE_ID, " job-1 ").getBody()).isEqualTo(CourseBuildJobDTO.of(running));
     }
 
     @Test
@@ -151,7 +153,7 @@ class BuildJobQueueResourceTest {
         when(processingJobs.get("job-2")).thenReturn(null);
         when(distributedDataAccessService.getQueuedJobs()).thenReturn(new ArrayList<>(List.of(job("job-1", COURSE_ID), queued)));
 
-        assertThat(buildJobQueueResource.getBuildJobById(COURSE_ID, "job-2").getBody()).isSameAs(queued);
+        assertThat(buildJobQueueResource.getBuildJobById(COURSE_ID, "job-2").getBody()).isEqualTo(CourseBuildJobDTO.of(queued));
     }
 
     @Test
@@ -195,7 +197,7 @@ class BuildJobQueueResourceTest {
         var ofTheCourse = List.of(job("job-1", COURSE_ID));
         when(distributedDataAccessService.getQueuedJobsForCourse(COURSE_ID)).thenReturn(ofTheCourse);
 
-        assertThat(buildJobQueueResource.getQueuedBuildJobsForCourse(COURSE_ID).getBody()).isEqualTo(ofTheCourse);
+        assertThat(buildJobQueueResource.getQueuedBuildJobsForCourse(COURSE_ID).getBody()).isEqualTo(ofTheCourse.stream().map(CourseBuildJobDTO::of).toList());
     }
 
     @Test
@@ -203,7 +205,7 @@ class BuildJobQueueResourceTest {
         var ofTheCourse = List.of(job("job-1", COURSE_ID));
         when(distributedDataAccessService.getProcessingJobsForCourse(COURSE_ID)).thenReturn(ofTheCourse);
 
-        assertThat(buildJobQueueResource.getRunningBuildJobsForCourse(COURSE_ID).getBody()).isEqualTo(ofTheCourse);
+        assertThat(buildJobQueueResource.getRunningBuildJobsForCourse(COURSE_ID).getBody()).isEqualTo(ofTheCourse.stream().map(CourseBuildJobDTO::of).toList());
     }
 
     @Test
@@ -292,7 +294,7 @@ class BuildJobQueueResourceTest {
             when(localCIBuildJobQueueService.getFilteredFinishedBuildJobs(any(), org.mockito.ArgumentMatchers.eq(COURSE_ID)))
                     .thenReturn(new org.springframework.data.domain.SliceImpl<>(List.of(finished), org.springframework.data.domain.PageRequest.of(0, 20), false));
 
-            var response = buildJobQueueResource.getFinishedBuildJobsForCourse(COURSE_ID, null);
+            var response = buildJobQueueResource.getFinishedBuildJobsForCourse(COURSE_ID, new FinishedBuildJobPageableSearchDTO(null, null, null, null, null, null, null));
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).hasSize(1);

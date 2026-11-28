@@ -10,14 +10,11 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
@@ -44,7 +41,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
     @Value("${artemis.iris.health-ttl:30000}")
     private int CACHE_TTL;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private final JsonMapper objectMapper = JsonObjectMapper.get();
 
@@ -71,8 +68,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final PyrisRestartWatchService restartWatchService;
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, PyrisRestartWatchService restartWatchService) {
-        this.restTemplate = restTemplate;
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestClient") RestClient restClient, PyrisRestartWatchService restartWatchService) {
+        this.restClient = restClient;
         this.restartWatchService = restartWatchService;
     }
 
@@ -101,14 +98,12 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         ConnectorHealth connectorHealth;
-        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(ARTEMIS_BASE_URL_HEADER, artemisBaseUrl);
-            ResponseEntity<String> response = restTemplate.exchange(healthUri, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
+            ResponseEntity<String> response = restClient.get().uri(healthUri).header(ARTEMIS_BASE_URL_HEADER, artemisBaseUrl).retrieve().toEntity(String.class);
             String json = response.getBody();
 
             if (json == null || json.isBlank() || "null".equalsIgnoreCase(json.trim())) {
@@ -132,8 +127,12 @@ public class PyrisHealthIndicator implements HealthIndicator {
         catch (RestClientException e) {
             connectorHealth = fail(additionalInfo, "Connection to Pyris failed");
         }
+        catch (IllegalArgumentException e) {
+            // The configured URL is not an absolute URL, for example blank. Pyris is optional, so this reports DEGRADED and does not fail the health request.
+            connectorHealth = fail(additionalInfo, "The Pyris URL is not an absolute URL");
+        }
 
-        var newHealth = connectorHealth.asActuatorHealth();
+        var newHealth = connectorHealth.asOptionalActuatorHealth();
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
         return newHealth;

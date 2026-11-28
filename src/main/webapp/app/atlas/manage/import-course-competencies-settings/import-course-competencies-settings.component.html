@@ -1,4 +1,4 @@
-<div class="rounded-lg bg-(--body-bg) p-4!">
+<div class="rounded-lg bg-(--body-bg) p-4">
     <div class="flex">
         @let baseTranslationKey = 'artemisApp.courseCompetency.importSettings';
         <ng-container
@@ -35,7 +35,7 @@
             "
         />
     </div>
-    <hr class="my-4!" />
+    <hr class="my-4" />
     <div class="flex">
         <div class="min-w-0 flex-1 pe-2">
             <div class="flex items-center">
@@ -43,7 +43,7 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     size="sm"
-                    class="ms-1 text-text-secondary"
+                    class="ms-1 text-muted-color"
                     [tumAetUiTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTooltip' | artemisTranslate"
                 />
             </div>
@@ -62,12 +62,12 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     size="sm"
-                    class="ms-1 text-text-secondary"
+                    class="ms-1 text-muted-color"
                     [tumAetUiTooltip]="'artemisApp.courseCompetency.importSettings.referenceDateTypeTooltip' | artemisTranslate"
                 />
             </div>
             <tumaet-ui-select
-                class="flex! w-full!"
+                class="flex w-full"
                 inputId="reference-date-type-select"
                 name="dateTypes"
                 [required]="!!referenceDate()"
@@ -87,6 +87,6 @@
     <div class="flex min-w-0 flex-1 items-center">
         <tumaet-ui-checkbox [inputId]="setting + '-checkbox'" [checked]="value" (changed)="toggleImportSetting(setting)" />
         <label [for]="setting + '-checkbox'" class="ms-2" [jhiTranslate]="label"></label>
-        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-text-secondary" [tumAetUiTooltip]="tooltip | artemisTranslate" />
+        <fa-icon [icon]="faQuestionCircle" size="sm" class="ms-1 text-muted-color" [tumAetUiTooltip]="tooltip | artemisTranslate" />
     </div>
 </ng-template>

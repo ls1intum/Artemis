@@ -1,9 +1,9 @@
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
@@ -64,12 +64,10 @@ import { ChangeDetectorRef, Signal, computed, signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 vi.mock('y-monaco', () => ({
@@ -110,7 +108,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
-    let programmingExerciseSharingService: ProgrammingExerciseSharingService;
     let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
@@ -140,7 +137,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
-                MockProvider(DialogService),
             ],
         })
             .overrideComponent(ProgrammingExerciseUpdateComponent, {
@@ -172,7 +168,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
-        programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
         localStorageService = TestBed.inject(LocalStorageService);
 
         const programmingLanguageFeature = {
@@ -742,6 +737,60 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         });
 
+        it('should not show an unsupported branch-pattern save error a second time when the global handler shows it', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(true);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('should translate an unsupported branch-pattern save error that the global handler does not show', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: 400,
+                            headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                            error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+                        }),
+                ),
+            );
+            vi.spyOn(alertService, 'showsHttpErrorAlert').mockReturnValue(false);
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'artemisApp.programmingExercise.buildConfig.branchRegexNotSupported',
+                disableTranslation: false,
+            });
+        });
+
         it('should fail on error', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
@@ -942,6 +991,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
+        });
+
+        it('should keep the options of the exercise when the selected language is chosen again', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
+            // The instructor turns the solution checkout off, which the language switch had turned on.
+            comp.programmingExercise.buildConfig!.checkoutSolutionRepository = false;
+            const loadTemplate = vi.spyOn(comp as unknown as { loadProgrammingLanguageTemplate: (language: ProgrammingLanguage) => void }, 'loadProgrammingLanguageTemplate');
+            const confirm = vi.spyOn(window, 'confirm');
+
+            expect(comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL)).toBe(ProgrammingLanguage.HASKELL);
+
+            expect(comp.programmingExercise.buildConfig!.checkoutSolutionRepository).toBe(false);
+            expect(loadTemplate).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
         });
 
         it('should activate SCA for Swift', () => {
@@ -1571,173 +1637,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         );
     });
 
-    describe('import from sharing', () => {
-        let route: ActivatedRoute;
-
-        beforeEach(() => {
-            route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-
-            route.url = of([{ path: 'import-from-sharing' } as UrlSegment]);
-            route.queryParams = of({
-                basketToken: 'test-basket-token',
-                returnURL: '/test-return-url',
-                apiBaseURL: 'https://api.example.com',
-                selectedExercise: 5,
-                checksum: 'test-checksum',
-            });
-        });
-
-        it('should import and reset dates, id, project key and handle exercise', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
+    describe('external import', () => {
+        function openImport(exercise: ProgrammingExercise, save = vi.fn()) {
+            route.data = of({ externalImport: { exercise, save } });
+            route.params = of({ courseId: String(courseId) });
+            route.url = of([]);
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation(getProgrammingLanguageFeature);
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } })));
             comp.ngOnInit();
+        }
 
-            fixture.changeDetectorRef.detectChanges();
+        it('prepares the supplied exercise for import and keeps its language and build options', () => {
+            const exercise = getProgrammingExerciseForImport();
+            exercise.buildConfig!.sequentialTestRuns = true;
+            exercise.staticCodeAnalysisEnabled = true;
+            openImport(exercise);
+            expect(comp.isExternalImport).toBe(true);
             expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
-        });
-
-        it('should keep the imported language and build options when the course has another default language', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-            programmingExercise.buildConfig!.sequentialTestRuns = true;
-            programmingExercise.staticCodeAnalysisEnabled = true;
-
-            route.data = of({ programmingExercise });
-            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
-                getProgrammingLanguageFeature(language),
-            );
-            vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
-                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })),
-            );
-            comp.ngOnInit();
-
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            verifyImport(exercise);
             expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
         });
 
-        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
-            'should keep the imported project type %s',
-            (projectType) => {
-                const programmingExercise = getProgrammingExerciseForImport();
-                programmingExercise.projectType = projectType;
-
-                route.data = of({ programmingExercise });
-                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
-                    getProgrammingLanguageFeature(language),
-                );
-                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-                comp.ngOnInit();
-
-                expect(comp.isImportFromSharing).toBe(true);
-                expect(comp.programmingExercise.projectType).toBe(projectType);
-            },
-        );
-
-        it('should also handle exam mode import', () => {
-            const examId = 1;
-            const exerciseGroupId = 1;
-            const exerciseGroup = new ExerciseGroup();
-            exerciseGroup.id = exerciseGroupId;
-            exerciseGroup.exam = { id: examId, course };
-            route.params = of({ courseId, examId, exerciseGroupId });
-
-            const programmingExercise = getProgrammingExerciseForImport();
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
-            comp.ngOnInit();
-
-            fixture.changeDetectorRef.detectChanges();
-            expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])('keeps the imported project type %s', (projectType) => {
+            const exercise = getProgrammingExerciseForImport();
+            exercise.projectType = projectType;
+            openImport(exercise);
+            expect(comp.programmingExercise.projectType).toBe(projectType);
         });
 
-        it('should call create service on save for new sharing entity', () => {
-            // GIVEN
-            const entity: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            ...entity,
-                            id: 2,
-                        },
-                    }),
-                ),
-            );
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
-            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
-
-            comp.isImportFromSharing = true;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.programmingExercise.course = course;
-            comp.courseId.set(course.id!);
-            // WHEN
+        it('submits the edited exercise to the import route', () => {
+            const exercise = getProgrammingExerciseForImport();
+            const save = vi.fn().mockReturnValue(of(new HttpResponse({ body: exercise })));
+            openImport(exercise, save);
+            comp.programmingExercise.title = 'Edited title';
+            comp.programmingExercise.releaseDate = dayjs();
             comp.save();
-
-            // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
-        });
-
-        it('should call create service on save for new sharing entity, but save failed', () => {
-            // GIVEN
-            const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
-            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
-
-            comp.isImportFromSharing = true;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.programmingExercise.course = course;
-            comp.courseId.set(course.id!);
-            // WHEN
-            comp.save();
-
-            // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
-        });
-
-        it('should import without buildConfig and reset dates, id, project key and store zipFile', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-            programmingExercise.buildConfig = undefined; // Simulate no build config
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
-            comp.ngOnInit();
-
-            fixture.changeDetectorRef.detectChanges();
-            expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
+            expect(save).toHaveBeenCalledExactlyOnceWith(comp.programmingExercise, courseId);
         });
     });
 
@@ -1914,6 +1850,35 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { language: ProgrammingLanguage.GO, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.GO' },
                 { language: ProgrammingLanguage.DART, projectType: undefined, packageName: 'Not Valid!', expected: 'artemisApp.exercise.form.packageName.pattern.DART' },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de/', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // Ares 2 cannot supervise a package that contains or lies inside a namespace it reserves
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE, packageName: 'de', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum', expected: 'artemisApp.exercise.form.packageName.pattern.JAVA' },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_MAVEN,
+                    packageName: 'java.util',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'org', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // The build guards of the test templates reject the packages of Ares and of the libraries that come with it
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_MAVEN,
+                    packageName: 'de.tum.cit.ase.ares.other',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                {
+                    language: ProgrammingLanguage.JAVA,
+                    projectType: ProjectType.PLAIN_GRADLE,
+                    packageName: 'org.apache.commons',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                },
+                {
+                    language: ProgrammingLanguage.KOTLIN,
+                    projectType: undefined,
+                    packageName: 'kotlin.collections',
+                    expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                },
                 {
                     language: ProgrammingLanguage.JAVA,
                     projectType: ProjectType.MAVEN_BLACKBOX,
@@ -1926,6 +1891,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 comp.programmingExercise.packageName = packageName;
 
                 expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([expected]);
+            });
+
+            it.each([
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.MAVEN_BLACKBOX, packageName: 'org' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.MAVEN_BLACKBOX, packageName: 'sorting' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum.in' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'org.example' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'net.kotlin' },
+            ])('accepts the package name $packageName for $language $projectType', ({ language, projectType, packageName }) => {
+                // The tests of a black-box exercise are not run with Ares, so it may use a name that Ares reserves for other project types
+                comp.programmingExercise.programmingLanguage = language;
+                comp.programmingExercise.projectType = projectType;
+                comp.programmingExercise.packageName = packageName;
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([]);
+            });
+
+            it('does not let the package name of a saved exercise block saving other changes', () => {
+                // The package name is read-only for a saved exercise, so a name that the rules refuse today must not block the save of the due date
+                comp.isEdit = true;
+                comp.programmingExercise.id = 42;
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                comp.programmingExercise.packageName = 'org';
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual([]);
+            });
+
+            it('checks the package name of an exercise that is imported from an existing one', () => {
+                comp.isEdit = true;
+                comp.isImportFromExistingExercise = true;
+                comp.programmingExercise.id = undefined;
+                comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                comp.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                comp.programmingExercise.packageName = 'org';
+
+                expect(reasonKeys().filter((key) => key.startsWith('artemisApp.exercise.form.packageName.'))).toEqual(['artemisApp.exercise.form.packageName.pattern.JAVA']);
             });
 
             it('reports a package name that is too long before it checks the pattern', () => {
@@ -2246,7 +2248,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(returned).toBe('new-value');
         });
 
-        it('should find no validation errors for valid input', () => {
+        it.each([undefined, null])('should accept valid exercise details with submissionPolicy %s', (submissionPolicy) => {
+            Object.assign(comp.programmingExercise, { submissionPolicy });
             comp.programmingExercise.title = 'New title';
             comp.programmingExercise.shortName = 'home2';
             comp.programmingExercise.maxPoints = 10;

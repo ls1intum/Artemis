@@ -11,7 +11,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading/grading-key-overview/grading-key-overview.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
+import { BonusApi } from 'app/openapi/api/bonus-api';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -52,7 +52,7 @@ describe('GradingKeyOverviewComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(GradingService),
-                MockProvider(BonusService),
+                MockProvider(BonusApi),
                 MockProvider(CourseStorageService),
                 MockProvider(ScoresStorageService),
                 MockProvider(ArtemisNavigationUtilService),

@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -35,7 +36,10 @@ import { ExamResultOverviewComponent } from './result-overview/exam-result-overv
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -72,7 +76,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrl: 'exam-result-summary.component.scss',
+    styleUrl: 'exam-result-summary.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -171,7 +175,7 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly courseId = signal<number>(undefined!);
 
     readonly isTestRun = signal(false);
-    isTestExam = false;
+    readonly isRealExam = signal(true);
 
     testRunConduction = false;
     readonly testExamConduction = signal(false);
@@ -206,9 +210,9 @@ export class ExamResultSummaryComponent implements OnInit {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
         this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
-        this.isTestExam = studentExam.exam!.testExam!;
+        this.isRealExam.set(isRealExam(studentExam.exam));
         this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.testExamConduction.set(!this.isRealExam() && !studentExam.submitted);
         this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
@@ -222,7 +226,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
-        if (this.instructorView() || (this.isTestExam ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
+        if (this.instructorView() || (!this.isRealExam() ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
             const suppliedGrades = this.managementGradeInfo();
             const grades = this.instructorView()
                 ? suppliedGrades
@@ -249,7 +253,7 @@ export class ExamResultSummaryComponent implements OnInit {
             const subscription = grades
                 .pipe(
                     expand((gradeInfo) => {
-                        const pendingAutomaticResults = this.isTestExam && !!gradeInfo.pendingExerciseIds?.length;
+                        const pendingAutomaticResults = !this.isRealExam() && !!gradeInfo.pendingExerciseIds?.length;
                         if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
                             return EMPTY;
                         }
@@ -292,7 +296,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private watchPublicationAndReviewDates(): void {
-        if (this.instructorView() || this.isTestRun() || this.isTestExam) {
+        if (this.instructorView() || this.isTestRun() || !this.isRealExam()) {
             return;
         }
         const studentExamId = this.studentExam().id;
@@ -314,7 +318,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     get resultsArePublished(): boolean {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
 
@@ -444,7 +448,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -455,7 +459,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun() || this.isTestExam) {
+        if (this.isTestRun() || !this.isRealExam()) {
             return true;
         }
         const studentExam = this.studentExam();

@@ -8,7 +8,7 @@ type TumAetUiSortDirection = 'asc' | 'desc' | 'none';
 @Component({
     selector: 'th[tumAetUiSortableColumn]',
     templateUrl: './tumaet-ui-table-sortable-column.component.html',
-    styleUrl: './tumaet-ui-table-sortable-column.component.scss',
+    styleUrl: './tumaet-ui-table-sortable-column.component.css',
     imports: [FaIconComponent],
     host: {
         '[class]': 'hostClasses()',
@@ -56,7 +56,7 @@ export class TumAetUiTableSortableColumnComponent {
         }
     });
 
-    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tumaet:cursor-pointer tumaet:select-none tumaet:hover:bg-hover-background'));
+    protected readonly hostClasses = computed(() => (this.disabled() ? '' : 'tumaet:cursor-pointer tumaet:select-none tumaet:hover:bg-table-header-hover'));
 
     protected onActivate(): void {
         this.table.requestSort(this.field());

@@ -11,7 +11,7 @@ import type { TumAetUiEmptyStateVariant } from './tumaet-ui-empty-state.variants
 @Component({
     selector: 'tumaet-ui-empty-state',
     templateUrl: './tumaet-ui-empty-state.component.html',
-    styleUrl: './tumaet-ui-empty-state.component.scss',
+    styleUrl: './tumaet-ui-empty-state.component.css',
     imports: [FaIconComponent],
     host: {
         class: 'tumaet-ui-empty-state tumaet:flex tumaet:flex-col tumaet:items-center tumaet:text-center',

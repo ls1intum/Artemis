@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
+import de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO;
 
 /**
  * Spring Data JPA repository for the {@link CourseConfiguration} entity. The configuration holds the key to its course and
@@ -218,4 +220,63 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
 
     /** The number of courses whose configurations are read by one query when attaching them in bulk. */
     int ATTACH_BATCH_SIZE = 1000;
+
+    /**
+     * Reads the published learning guidance without loading other course settings.
+     *
+     * @param courseId the authorized course identifier
+     * @return the stored learning guidance, if configured
+     */
+    @Query("SELECT c.studentWelcomeContext FROM CourseConfiguration c WHERE c.course.id = :courseId")
+    Optional<String> findStudentWelcomeContextByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Updates an explicitly supplied welcome context on the permanent configuration row.
+     *
+     * @param courseId the authorized course identifier
+     * @param context  the nullable instructor-authored learning guidance
+     * @return the number of updated configuration rows
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE CourseConfiguration c SET c.studentWelcomeContext = :context WHERE c.course.id = :courseId")
+    int updateStudentWelcomeContext(@Param("courseId") long courseId, @Param("context") @Nullable String context);
+
+    /**
+     * Changes who authors the first commit of the repositories of new programming exercises of a course.
+     *
+     * @param courseId the authorized course identifier
+     * @param mode     the mode
+     * @param name     the author name of the custom mode, null for every other mode
+     * @param email    the author email address of the custom mode, null for every other mode
+     * @return the number of updated configuration rows
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE CourseConfiguration configuration
+            SET configuration.initialCommitAuthorMode = :mode, configuration.initialCommitAuthorName = :name, configuration.initialCommitAuthorEmail = :email
+            WHERE configuration.course.id = :courseId
+            """)
+    int updateInitialCommitAuthor(@Param("courseId") long courseId, @Param("mode") InitialCommitAuthorMode mode, @Param("name") @Nullable String name,
+            @Param("email") @Nullable String email);
+
+    /**
+     * Reads who authors the first commit of the repositories of an exercise's course, for the exercise of a course as well as for an exam exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the setting, or empty if the exercise has no course with a configuration
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.InitialCommitAuthorDTO(configuration.initialCommitAuthorMode, configuration.initialCommitAuthorName,
+                configuration.initialCommitAuthorEmail)
+            FROM Exercise exercise
+                LEFT JOIN exercise.course directCourse
+                LEFT JOIN exercise.exerciseGroup examGroup
+                LEFT JOIN examGroup.exam exam
+                LEFT JOIN exam.course examCourse
+                JOIN CourseConfiguration configuration ON configuration.course.id = COALESCE(directCourse.id, examCourse.id)
+            WHERE exercise.id = :exerciseId
+            """)
+    Optional<InitialCommitAuthorDTO> findInitialCommitAuthorByExerciseId(@Param("exerciseId") long exerciseId);
 }

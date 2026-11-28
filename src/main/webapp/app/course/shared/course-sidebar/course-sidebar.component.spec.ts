@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,6 +13,7 @@ import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fo
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
@@ -89,11 +90,9 @@ describe('CourseSidebarComponent', () => {
             imports: [
                 NgClass,
                 NgTemplateOutlet,
-                MockModule(NgbTooltipModule),
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
-                MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
                 FaIconComponent,
                 MockDirective(FeatureToggleHideDirective),
@@ -187,7 +186,7 @@ describe('CourseSidebarComponent', () => {
             close: vi.fn(),
         };
         // itemsDrop is a viewChild signal, so we need to spy on it to return our mock
-        vi.spyOn(component, 'itemsDrop').mockReturnValue(mockDropdown as unknown as NgbDropdown);
+        vi.spyOn(component, 'itemsDrop').mockReturnValue(mockDropdown as unknown as TumAetUiMenuTriggerDirective);
 
         vi.spyOn(component, 'applyThreshold').mockImplementation(() => {
             component.anyItemHidden.set(false);
@@ -233,6 +232,30 @@ describe('CourseSidebarComponent', () => {
         component.anyItemHidden.set(false);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBe(true);
+    });
+
+    it('should leave an entry out of the more menu while its feature is switched off', () => {
+        const featureToggleService = TestBed.inject(FeatureToggleService);
+        const toggled = { ...mockSidebarItems[0], title: 'Toggled', featureToggle: FeatureToggle.Science };
+        component.hiddenItems.set([toggled, mockSidebarItems[1]]);
+        component.anyItemHidden.set(true);
+        const entries = () => {
+            fixture.detectChanges();
+            fixture.nativeElement.querySelector('.three-dots').click();
+            fixture.detectChanges();
+            const titles = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).map((entry) => entry.getAttribute('title'));
+            component.itemsDrop().close();
+            fixture.detectChanges();
+            return titles;
+        };
+
+        featureToggleService.initializeFeatureToggles([FeatureToggle.Science]);
+        expect(entries()).toContain('Toggled');
+
+        featureToggleService.initializeFeatureToggles([]);
+        const withoutFeature = entries();
+        expect(withoutFeature).not.toContain('Toggled');
+        expect(withoutFeature).toContain(mockSidebarItems[1].title);
     });
 
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {

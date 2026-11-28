@@ -43,7 +43,10 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerd
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -60,6 +63,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -86,7 +90,7 @@ const exam = {
     publishResultsDate,
     examStudentReviewStart,
     examStudentReviewEnd,
-    testExam: false,
+    examMode: ExamMode.REAL,
     course,
 } as Exam;
 
@@ -96,7 +100,7 @@ const testExam = {
     visibleDate,
     startDate,
     endDate,
-    testExam: true,
+    examMode: ExamMode.TEST,
     course,
 } as Exam;
 
@@ -784,20 +788,20 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly identify a TestExam', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBe(true);
+        expect(component.isRealExam()).toBe(false);
         expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBe(true);
+        expect(component.isRealExam()).toBe(false);
         expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBe(false);
+        expect(component.isRealExam()).toBe(true);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -805,7 +809,7 @@ describe('ExamResultSummaryComponent', () => {
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isTestExam).toBe(false);
+        expect(component.isRealExam()).toBe(true);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -824,11 +828,11 @@ describe('ExamResultSummaryComponent', () => {
         component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.isTestExam = true;
+        component.isRealExam.set(false);
         component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.isTestExam = false;
+        component.isRealExam.set(true);
         // const publishResultsDate is in the past
         expect(component.resultsArePublished).toBe(true);
 
@@ -851,11 +855,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.isTestExam = true;
+        component.isRealExam.set(false);
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.isTestExam = false;
+        component.isRealExam.set(true);
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
@@ -877,11 +881,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.isTestExam = true;
+        component.isRealExam.set(false);
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.isTestExam = false;
+        component.isRealExam.set(true);
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);
@@ -1103,7 +1107,7 @@ describe('ExamResultSummaryComponent', () => {
             expect(aiButton.parentElement!.classList).toContain('justify-end');
             // the old float and the extra right margin left the button 8px short of the edge
             expect(aiButton.classList).not.toContain('float-right');
-            expect(aiButton.classList).not.toContain('mr-2!');
+            expect(aiButton.classList).not.toContain('mr-2');
         });
 
         it('makes the back-to-overview button a small one', () => {
@@ -1120,9 +1124,8 @@ describe('ExamResultSummaryComponent', () => {
             fixture.detectChanges();
 
             const heading = element('h3[jhiTranslate="artemisApp.exam.exercises"]')!;
-            // the important modifiers are needed because the unlayered global heading rules would win otherwise
-            expect(heading.classList).toContain('text-base!');
-            expect(heading.classList).toContain('font-semibold!');
+            expect(heading.classList).toContain('text-base');
+            expect(heading.classList).toContain('font-semibold');
             expect(heading.getAttribute('data-testid')).toBe('exam-summary-heading');
             expect(heading.classList).toContain('mb-3!');
             expect(element('fa-icon.info-icon')!.parentElement!.classList).toContain('mb-6!');

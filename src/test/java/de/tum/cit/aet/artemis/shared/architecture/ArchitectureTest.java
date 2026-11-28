@@ -255,7 +255,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
             // the placeholder names the caller asks to replace
             "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
             // the branch expression configured on the exercise
-            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.compileBranchRegex(java.lang.String)",
             // the branch expression of an exercise, checked when it is saved
             "de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService.validateBranchRegex(java.lang.String, boolean)",
             // the exceptions to filter, which the caller passes in
@@ -269,6 +269,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.specificationDeclaresRule(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.canonicalTypeName(java.lang.String, java.util.Set, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.templateDependencies(java.util.Set, java.util.Set)",
+            // the student-created type name the given type is checked for, which comes from the approved specification
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedOwnershipGate.referencesType(java.lang.String, java.lang.String, java.lang.String)",
+            // the class whose main the graded tests call and the helper methods that call it, both read from the generated tests
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.OutputOnlyMainProbe.gradesPrintedOutput(java.util.Map, java.lang.String, java.util.Set)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe.collidesWithExistingTest(de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness, java.util.Map)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasAnnotation(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasBoundedStrictTimeout(java.lang.String, java.lang.String)",
@@ -958,9 +962,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
-                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
-                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
-                "HyperionExerciseGenerationResourceTest",
+                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "SharingResourceArchitectureTest",
+                "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest",
+                "HyperionCodeGenerationResourceTest", "HyperionExerciseGenerationResourceTest",
                 // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
@@ -973,7 +977,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
                 "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
                 "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest", "AdminHyperionLiveSaveRecoveryTest",
-                "ProgrammingGradingLiveSaveCoordinationTest" };
+                "ProgrammingGradingLiveSaveCoordinationTest", "StudentExamConductionResourceTest" };
         final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

@@ -29,8 +29,8 @@ import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
+import { toFeedbacksOfResult } from 'app/assessment/shared/util/feedback-response.util';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/foundation/util/utils';
@@ -53,7 +53,7 @@ import { setInputs } from 'app/foundation/util/set-inputs.util';
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
-    styleUrls: ['./programming-exercise-instruction.scss'],
+    styleUrls: ['./programming-exercise-instruction.css'],
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -61,7 +61,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private static nextInstanceId = 0;
 
     private viewContainerRef = inject(ViewContainerRef);
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
     private programmingExercisePlantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
@@ -412,10 +412,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
-            map((res) => res && res.body),
-            map((feedbacks: Feedback[] | null) => {
-                result.feedbacks = feedbacks ?? undefined;
+        return this.resultApi.getResultDetails(currentParticipation!.id!, result.id!).pipe(
+            map((feedbacks) => {
+                result.feedbacks = toFeedbacksOfResult(feedbacks, result);
                 return result;
             }),
             catchError(() => of(result)),
@@ -527,9 +526,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         return this.tasks().reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                // Without class="d-flex" the injected components height would be 0.
+                // Without class="flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }

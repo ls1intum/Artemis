@@ -112,7 +112,7 @@ public class ProgrammingExercisePartialUpdateResource {
      * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
      *
      * @param timelineUpdateDTO containing the timeline changes that have to be saved
-     * @param notificationText  an optional text to notify the student group about the update on the programming exercise
+     * @param notificationText  an optional text to notify the students about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
      *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
@@ -166,7 +166,7 @@ public class ProgrammingExercisePartialUpdateResource {
      *
      * @param exerciseId              The ID of the exercise for which to change the problem statement
      * @param updatedProblemStatement The new problemStatement
-     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
+     * @param notificationText        to notify the students about the updated problemStatement on the programming exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
      *         user does not have permissions to access the programming exercise.
      */

@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/course/sidebar/conversation-options/conversation-options.component';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -57,7 +61,7 @@ examples.forEach((conversation) => {
                     MockProvider(ConversationService),
                     MockProvider(CourseConversationsService),
                     MockProvider(AlertService),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
@@ -78,6 +82,13 @@ examples.forEach((conversation) => {
         afterEach(() => {
             vi.useRealTimers();
         });
+
+        /** The entries only exist while the menu is open, in an overlay outside the component. */
+        function openMenuAndFind(selector: string): HTMLElement {
+            (fixture.nativeElement.querySelector('[data-testid="conversation-options-toggle"]') as HTMLElement).click();
+            fixture.detectChanges();
+            return document.querySelector(selector) as HTMLElement;
+        }
 
         it('should center the three-dots icon in its button with symmetric horizontal padding', () => {
             const toggle = fixture.nativeElement.querySelector('[data-testid="conversation-options-toggle"]') as HTMLElement;
@@ -100,7 +111,7 @@ examples.forEach((conversation) => {
             const nativeElement: HTMLElement = fixture.debugElement.nativeElement;
             const optionButtons = nativeElement.querySelector('.option-buttons');
             const favoriteButton = optionButtons?.querySelector('.favorite');
-            const dropdown = optionButtons?.querySelector('div[ngbDropdown]');
+            const dropdown = optionButtons?.querySelector('div.options-menu');
             expect(optionButtons).not.toBeNull();
             expect(favoriteButton).not.toBeNull();
             expect(dropdown).not.toBeNull();
@@ -110,7 +121,6 @@ examples.forEach((conversation) => {
             expect(favoriteButton!.parentElement).toBe(optionButtons);
             expect(dropdown!.parentElement).toBe(optionButtons);
             // an inline-block wrapper would put the options button on the text baseline instead of centering it
-            expect(dropdown!.classList).not.toContain('d-inline-block');
             expect(dropdown!.classList).toContain('flex');
             expect(dropdown!.classList).toContain('items-center');
         });
@@ -121,7 +131,7 @@ examples.forEach((conversation) => {
             component.conversation().isHidden = false;
             fixture.changeDetectorRef.detectChanges();
 
-            const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
+            const hideButton = openMenuAndFind('.hide');
             hideButton.click();
             await vi.advanceTimersByTimeAsync(501);
 
@@ -166,7 +176,7 @@ examples.forEach((conversation) => {
 
         it('should call updateIsHidden when button is clicked', async () => {
             vi.useFakeTimers();
-            const button = fixture.debugElement.nativeElement.querySelector('.hide');
+            const button = openMenuAndFind('.hide');
             button.click();
             await vi.advanceTimersByTimeAsync(501);
             expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
@@ -175,7 +185,7 @@ examples.forEach((conversation) => {
 
         it('should call updateIsMuted when button is clicked', async () => {
             vi.useFakeTimers();
-            const button = fixture.debugElement.nativeElement.querySelector('.mute');
+            const button = openMenuAndFind('.mute');
             button.click();
             await vi.advanceTimersByTimeAsync(501);
             expect(updateIsMutedSpy).toHaveBeenCalledOnce();
@@ -190,15 +200,23 @@ examples.forEach((conversation) => {
             vi.useFakeTimers();
             fixture.detectChanges();
             await vi.advanceTimersByTimeAsync(301);
-            const dialogService = TestBed.inject(DialogService);
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as any);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as unknown as TumAetUiDialogRef);
             fixture.detectChanges();
 
-            const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
+            const dialogOpenButton = openMenuAndFind('.setting');
             dialogOpenButton.click();
             await vi.advanceTimersByTimeAsync(301);
             await fixture.whenStable();
             expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationDetailDialogComponent,
+                expect.objectContaining({
+                    showHeader: false,
+                    ariaLabel: expect.any(String),
+                    data: expect.objectContaining({ selectedTab: ConversationDetailTabs.SETTINGS, activeConversation: component.conversation() }),
+                }),
+            );
         });
     });
 });

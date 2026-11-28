@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -38,8 +38,8 @@ describe('ForwardMessageDialogComponent', () => {
                 MockComponent(PostingContentComponent),
             ],
             providers: [
-                MockProvider(DynamicDialogRef),
-                MockProvider(DynamicDialogConfig),
+                MockProvider(TumAetUiDialogRef),
+                MockProvider(TumAetUiDialogConfig),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -101,7 +101,7 @@ describe('ForwardMessageDialogComponent', () => {
         expect(editor.suppressNewlineOnEnter()).toBe(false);
         editor.contentChange.emit('**Lecture notes**');
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
-        const close = vi.spyOn(TestBed.inject(DynamicDialogRef), 'close');
+        const close = vi.spyOn(TestBed.inject(TumAetUiDialogRef), 'close');
         fixture.detectChanges();
         (fixture.nativeElement.querySelector('[data-testid="forward-send-button"]') as HTMLButtonElement).click();
         expect(close).toHaveBeenCalledExactlyOnceWith({ channels: component.selectedChannels, users: [], messageContent: '**Lecture notes**' });
@@ -317,7 +317,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         expect(component.selectedUsers).toEqual([component.users()[0], recipient]);
         expect(searchInput.getAttribute('aria-expanded')).toBe('false');
-        const close = vi.spyOn(TestBed.inject(DynamicDialogRef), 'close');
+        const close = vi.spyOn(TestBed.inject(TumAetUiDialogRef), 'close');
         (fixture.nativeElement.querySelector('[data-testid="forward-send-button"]') as HTMLButtonElement).click();
         expect(close).toHaveBeenCalledWith({ channels: [], users: [component.users()[0], recipient], messageContent: undefined });
     });
@@ -477,6 +477,22 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.selectedChannels).toHaveLength(0);
     });
 
+    it('shows every selected recipient as a removable chip', () => {
+        component.selectOption(component.combinedOptions().find((option) => option.name === 'General')!);
+        component.selectOption(component.combinedOptions().find((option) => option.name === 'User1')!);
+        fixture.detectChanges();
+
+        const chips = fixture.nativeElement.querySelectorAll('.tag-input-container tumaet-ui-chip') as NodeListOf<HTMLElement>;
+        expect(chips).toHaveLength(2);
+        expect(chips[0].textContent).toContain('General');
+        expect(chips[1].textContent).toContain('User1');
+
+        (chips[1].querySelector('button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.selectedUsers).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('.tag-input-container tumaet-ui-chip')).toHaveLength(1);
+    });
+
     it('should remove a selected chat', () => {
         component.selectedUsers = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as UserPublicInfoDTO];
         component.removeSelectedUser(component.selectedUsers[0]);
@@ -486,13 +502,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should send selected items when Send button is clicked', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.newPost.content = 'Test content';
         fixture.detectChanges();
 
-        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        const sendButton = fixture.debugElement.query(By.css('[data-testid="forward-send-button"]')).nativeElement;
         sendButton.click();
 
         expect(closeSpy).toHaveBeenCalledWith({
@@ -503,13 +519,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should close the modal when cancel button is clicked', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const destroySpy = vi.spyOn(dialogRef, 'destroy');
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
 
-        const cancelButton = fixture.debugElement.query(By.css('.btn-close')).nativeElement;
+        const cancelButton = fixture.debugElement.query(By.css('[data-testid="dialog-close-button"]')).nativeElement;
         cancelButton.click();
 
-        expect(destroySpy).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalled();
     });
 
     it('should focus the input field', () => {
@@ -585,12 +601,12 @@ describe('ForwardMessageDialogComponent', () => {
         component.newPost.content = '';
         fixture.detectChanges();
 
-        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        const sendButton = fixture.debugElement.query(By.css('[data-testid="forward-send-button"]')).nativeElement;
         expect(sendButton.disabled).toBe(true);
     });
 
     it('should send both channels and chats when selections are made', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
 
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
@@ -598,7 +614,7 @@ describe('ForwardMessageDialogComponent', () => {
         component.newPost.content = 'Test content';
         fixture.detectChanges();
 
-        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        const sendButton = fixture.debugElement.query(By.css('[data-testid="forward-send-button"]')).nativeElement;
         sendButton.click();
 
         expect(closeSpy).toHaveBeenCalledWith({
@@ -655,7 +671,7 @@ describe('ForwardMessageDialogComponent', () => {
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
         fixture.detectChanges();
 
-        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        const sendButton = fixture.debugElement.query(By.css('[data-testid="forward-send-button"]')).nativeElement;
 
         expect(component.isMessageValid()).toBe(false);
         expect(sendButton.disabled).toBe(true);
@@ -668,7 +684,7 @@ describe('ForwardMessageDialogComponent', () => {
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
         fixture.detectChanges();
 
-        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        const sendButton = fixture.debugElement.query(By.css('[data-testid="forward-send-button"]')).nativeElement;
 
         expect(component.isMessageValid()).toBe(true);
         expect(sendButton.disabled).toBe(false);

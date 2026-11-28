@@ -28,7 +28,7 @@ import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
             </ng-template>
         </div>
     `,
-    styleUrl: './tumaet-ui-tab-panel.component.scss',
+    styleUrl: './tumaet-ui-tab-panel.component.css',
     host: {
         '[class.tumaet-ui-tab-panel-fill]': 'fill()',
         class: 'tumaet-ui-tab-panel tumaet:block',

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -23,6 +24,8 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 
 /**
@@ -165,14 +168,35 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     List<Long> findCompetencyIdsForCourse(@Param("courseId") long courseId);
 
     /**
-     * Counts the items of a course per cell. Cells without items are absent from the result.
+     * Finds the items of the given competencies that a quiz may draw from, least often drawn first: items in the given state whose material
+     * has not changed and that were approved, or that await a decision after the filter accepted them without flagging them for review.
+     *
+     * @param courseId      the course
+     * @param competencyIds the competencies to draw from
+     * @param state         the lifecycle state the items must have
+     * @return the items ordered by selection count, then id
+     */
+    @Query("""
+            SELECT item
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.competencyId IN :competencyIds AND item.state = :state AND item.materialChanged = FALSE
+                AND (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.APPROVED
+                    OR (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.PENDING AND item.accepted = TRUE AND item.flagged = FALSE))
+            ORDER BY item.selectionCount, item.id
+            """)
+    List<QuizQuestionPoolItem> findAllForSelection(@Param("courseId") long courseId, @Param("competencyIds") Collection<Long> competencyIds,
+            @Param("state") QuizQuestionPoolItemState state);
+
+    /**
+     * Counts the items of a course per cell whose material is unchanged, together with the highest index any item of the cell uses.
+     * Cells without items are absent from the result.
      *
      * @param courseId the course
-     * @return one count per cell that holds at least one item
+     * @return one entry per cell that holds at least one item
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO(item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty,
-                COUNT(item), MAX(item.itemIndex))
+                SUM(CASE WHEN item.materialChanged = FALSE THEN 1 ELSE 0 END), MAX(item.itemIndex))
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId
             GROUP BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty
@@ -296,4 +320,83 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             WHERE item.id = :itemId
             """)
     int updateReviewState(@Param("itemId") long itemId, @Param("reviewState") QuizQuestionReviewState reviewState, @Param("now") ZonedDateTime now);
+
+    /**
+     * Records a draw into a quiz on the given items: increments their selection count and sets their last selection and update time. Every
+     * other column, including the review decision, keeps its stored value.
+     *
+     * @param itemIds the drawn items
+     * @param now     the time of the draw
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE QuizQuestionPoolItem item
+            SET item.selectionCount = item.selectionCount + 1, item.lastSelectedAt = :now, item.updatedAt = :now
+            WHERE item.id IN :itemIds
+            """)
+    int recordSelection(@Param("itemIds") Collection<Long> itemIds, @Param("now") ZonedDateTime now);
+
+    /**
+     * Deletes the items of a lecture unit that do not carry the given review state, so that approved items can be kept while the rest goes.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit
+     * @param reviewState   the review state that spares an item
+     * @return the number of deleted items
+     */
+    @Modifying
+    @Transactional // ok because of the delete
+    @Query("""
+            DELETE FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.lectureUnitId = :lectureUnitId AND item.reviewState <> :reviewState
+            """)
+    int deleteAllByLectureUnitExceptReviewState(@Param("courseId") long courseId, @Param("lectureUnitId") long lectureUnitId,
+            @Param("reviewState") QuizQuestionReviewState reviewState);
+
+    /**
+     * Flags the remaining items of a lecture unit as generated from material that has changed since.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit
+     * @param now           the update time
+     * @return the number of flagged items
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE QuizQuestionPoolItem item
+            SET item.materialChanged = TRUE, item.updatedAt = :now, item.version = item.version + 1
+            WHERE item.course.id = :courseId AND item.lectureUnitId = :lectureUnitId AND item.materialChanged = FALSE
+            """)
+    int markMaterialChangedByLectureUnit(@Param("courseId") long courseId, @Param("lectureUnitId") long lectureUnitId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Counts, per cell, the items a draw may take: items in the given state whose material has not changed and that were approved, or that
+     * await a decision after the filter accepted them without flagging them for review.
+     *
+     * @param courseId the course
+     * @param state    the lifecycle state the items must have
+     * @return one count per cell that holds such items
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO(item.competencyId, item.lectureUnitId, item.questionType, item.difficulty,
+                COUNT(item))
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.state = :state AND item.materialChanged = FALSE AND item.question IS NOT NULL
+                AND (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.APPROVED
+                    OR (item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.PENDING AND item.accepted = TRUE AND item.flagged = FALSE))
+            GROUP BY item.competencyId, item.lectureUnitId, item.questionType, item.difficulty
+            """)
+    List<QuizQuestionPoolSelectionCandidateDTO> countSelectionCandidates(@Param("courseId") long courseId, @Param("state") QuizQuestionPoolItemState state);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO(item.lectureUnitId, COUNT(item),
+                SUM(CASE WHEN item.reviewState = :approved THEN 1 ELSE 0 END), SUM(CASE WHEN item.materialChanged = TRUE THEN 1 ELSE 0 END))
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId
+            GROUP BY item.lectureUnitId
+            """)
+    List<QuizQuestionPoolLectureUnitCountDTO> countByLectureUnitForCourse(@Param("courseId") long courseId, @Param("approved") QuizQuestionReviewState approved);
 }

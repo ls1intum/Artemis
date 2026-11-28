@@ -4,10 +4,16 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,6 +42,31 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 public class CourseConfiguration extends DomainObject {
 
     public static final String ENTITY_NAME = "courseConfiguration";
+
+    @Column(name = "student_welcome_context", length = 2000)
+    @Size(max = 2000)
+    private String studentWelcomeContext;
+
+    /**
+     * Who authors the first commit of the template, solution and test repositories of new programming exercises. Defaults to the creator of the exercise, which is what
+     * every course did before this setting existed.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "initial_commit_author_mode", nullable = false, length = 32)
+    @NotNull
+    private InitialCommitAuthorMode initialCommitAuthorMode = InitialCommitAuthorMode.EXERCISE_CREATOR;
+
+    /** The author name of {@link InitialCommitAuthorMode#CUSTOM}; null for every other mode. */
+    @Nullable
+    @Column(name = "initial_commit_author_name", length = 100)
+    @Size(max = 100)
+    private String initialCommitAuthorName;
+
+    /** The author email address of {@link InitialCommitAuthorMode#CUSTOM}; null for every other mode. */
+    @Nullable
+    @Column(name = "initial_commit_author_email", length = 254)
+    @Size(max = 254)
+    private String initialCommitAuthorEmail;
 
     /**
      * The course this configuration belongs to. The key lives here rather than on the course: the course carries no
@@ -194,5 +225,42 @@ public class CourseConfiguration extends DomainObject {
 
     public void setMaxDailyOrchestrationOverride(Integer maxDailyOrchestrationOverride) {
         this.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
+    }
+
+    public String getStudentWelcomeContext() {
+        return studentWelcomeContext;
+    }
+
+    public void setStudentWelcomeContext(String studentWelcomeContext) {
+        this.studentWelcomeContext = studentWelcomeContext == null || studentWelcomeContext.isBlank() ? null : studentWelcomeContext.strip();
+    }
+
+    public InitialCommitAuthorMode getInitialCommitAuthorMode() {
+        return initialCommitAuthorMode;
+    }
+
+    @Nullable
+    public String getInitialCommitAuthorName() {
+        return initialCommitAuthorName;
+    }
+
+    @Nullable
+    public String getInitialCommitAuthorEmail() {
+        return initialCommitAuthorEmail;
+    }
+
+    /**
+     * Sets who authors the first commit of new exercises. The name and the email address are only kept for the custom mode, so that no other mode leaves a person's
+     * data behind.
+     *
+     * @param mode  the mode
+     * @param name  the author name, used by {@link InitialCommitAuthorMode#CUSTOM} only
+     * @param email the author email address, used by {@link InitialCommitAuthorMode#CUSTOM} only
+     */
+    public void setInitialCommitAuthor(InitialCommitAuthorMode mode, @Nullable String name, @Nullable String email) {
+        this.initialCommitAuthorMode = mode;
+        boolean custom = mode == InitialCommitAuthorMode.CUSTOM;
+        this.initialCommitAuthorName = custom ? name : null;
+        this.initialCommitAuthorEmail = custom ? email : null;
     }
 }

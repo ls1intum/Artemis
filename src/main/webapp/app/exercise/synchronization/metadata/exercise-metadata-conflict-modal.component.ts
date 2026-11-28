@@ -1,9 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { TranslateService } from '@ngx-translate/core';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -58,7 +58,7 @@ export interface ExerciseMetadataConflictModalData {
 @Component({
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
-    styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
+    styleUrls: ['./exercise-metadata-conflict-modal.component.css'],
     imports: [NgTemplateOutlet, NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, TumAetUiButtonComponent, TumAetUiTableDirective],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {

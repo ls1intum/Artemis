@@ -16,17 +16,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { downloadFile } from 'app/foundation/util/download.util';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 /** Number of courses suggested while an administrator types. */
 const COURSE_SUGGESTION_COUNT = 10;
@@ -50,7 +47,7 @@ const toCourseOption = (course: CourseForRoleAssignment): CourseOption => {
 @Component({
     selector: 'jhi-admin-science',
     templateUrl: './admin-science.component.html',
-    styleUrl: './admin-science.component.scss',
+    styleUrl: './admin-science.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,

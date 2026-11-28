@@ -10,7 +10,7 @@ import { isAtlasModuleActive } from 'app/account/user/settings/learning/learner-
 @Component({
     selector: 'jhi-learner-profile',
     templateUrl: './learner-profile.component.html',
-    styleUrls: ['../user-settings.scss'],
+    styleUrls: ['../user-settings.css'],
     imports: [CourseLearnerProfileComponent, FeedbackLearnerProfileComponent],
 })
 export class LearnerProfileComponent implements OnInit {

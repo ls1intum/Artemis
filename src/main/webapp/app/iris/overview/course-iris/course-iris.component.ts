@@ -10,19 +10,19 @@ import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-rou
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
 
-/** Parses a route parameter holding an id, or yields undefined when it is missing or not a number. */
+/** Parses a positive, safely representable route id; rejects malformed and out-of-range values. */
 function toId(value: string | undefined): number | undefined {
     if (!value) {
         return undefined;
     }
     const parsed = Number(value);
-    return Number.isNaN(parsed) ? undefined : parsed;
+    return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 @Component({
     selector: 'jhi-course-iris',
     templateUrl: './course-iris.component.html',
-    styleUrls: ['./course-iris.component.scss'],
+    styleUrls: ['./course-iris.component.css'],
     imports: [CourseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,7 +54,7 @@ export class CourseIrisComponent implements SidebarView {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.HOME]);
             }
         });
     }

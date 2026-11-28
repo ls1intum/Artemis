@@ -7,7 +7,6 @@
             "courseToImport": "Course for exercise import",
             "noExercisesFound": "No imported exercises found!",
             "exerciseToImport": "Please select exercise to import",
-            "loginAsInstructorOrEditor": "Please ensure to log in as instructor or editor!",
             "coursesLoading": "Courses are loading, please stand by.",
             "error": {
                 "loadingStatus": "Sharing profile is not activated",
@@ -19,8 +18,12 @@
                 "noImportedExercises": "No imported exercises found",
                 "loadingCourses": "Courses could not be loaded",
                 "loadingBasket": "Imports could not be loaded",
-                "atLeastEditorNeeded": "You need at least editor rights! Please login with an appropriate user."
-            }
+                "export": "Unable to export programming exercise: {{ message }}",
+                "noRedirect": "The sharing platform did not return an export link.",
+                "loadingDetails": "Unable to load exercise details from the sharing platform: {{message}}"
+            },
+            "import": "Import programming exercise from Sharing Platform",
+            "export": "Export to Sharing"
         }
     },
     "health": {

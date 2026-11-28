@@ -10,21 +10,20 @@ catalog:
   '@analogjs/vite-plugin-angular': 2.9.7
   '@analogjs/vitest-angular': 2.9.7
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2202.7
-  '@angular-devkit/core': 22.2.7
+  '@angular-devkit/architect': 0.2203.0
+  '@angular-devkit/core': 22.3.0
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.7
-  '@angular/build': 22.2.7
-  '@angular/cdk': 22.2.7
-  '@angular/cli': 22.2.7
-  '@angular/common': 22.2.6
-  '@angular/compiler': 22.2.6
-  '@angular/compiler-cli': 22.2.6
-  '@angular/core': 22.2.6
-  '@angular/forms': 22.2.6
-  '@angular/localize': 22.2.6
-  '@angular/platform-browser': 22.2.6
+  '@angular/aria': 22.3.0
+  '@angular/build': 22.3.0
+  '@angular/cdk': 22.3.0
+  '@angular/cli': 22.3.0
+  '@angular/common': 22.3.0
+  '@angular/compiler': 22.3.0
+  '@angular/compiler-cli': 22.3.0
+  '@angular/core': 22.3.0
+  '@angular/forms': 22.3.0
+  '@angular/platform-browser': 22.3.0
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -51,7 +50,6 @@ catalog:
   eslint-plugin-storybook: 10.6.7
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.2.6
   postcss: 8.5.32
   publint: 0.3.25
   playwright: 1.65.0
@@ -59,7 +57,6 @@ catalog:
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.3.1
   rxjs: 7.8.2
-  sass: 1.108.2
   semver: 7.8.6
   storybook: 10.6.7
   stylelint: 18.0.0
@@ -123,6 +120,26 @@ peerDependencyRules:
 # because it never uses Vite. Without an override, @angular/build's own exact pin governs
 # and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
+  # @embedpdf/engines declares the preact, svelte and vue adapters of the PDF viewer as hard dependencies, although Artemis
+  # only imports its framework-free engine (src/main/webapp/app/core/pdf). They never reach the bundle, but they pull about
+  # 40 packages (compilers, parsers) into the production closure, and every advisory against them reaches this project.
+  # '-' removes the dependency; packageExtensions below marks the matching peers optional so autoInstallPeers does not bring
+  # them back. Re-check on every @embedpdf/engines bump with `pnpm run check:duplicate-dependencies` and `pnpm why svelte`.
+  '@embedpdf/engines>preact': '-'
+  '@embedpdf/engines>svelte': '-'
+  '@embedpdf/engines>vue': '-'
+  # @angular/cdk lists parse5 as a dependency for its own schematics (`ng add`, `ng generate @angular/cdk:...`), which this project does not run.
+  # It never reaches the bundle, but it brought a second copy of `entities` (9, next to the 8 that markdown-it uses) into the production
+  # closure. The root package.json declares parse5 as a development dependency for .github/scripts/verify-war-client.mjs, which keeps it
+  # out of the production closure. Drop this entry if the project ever runs those schematics.
+  '@angular/cdk>parse5': '-'
+  # @tumaet/apollon and @xyflow/react are two halves of the modeling editor and disagree about two small libraries, so each
+  # of them shipped twice: zustand 5 (Apollon) next to zustand 4 (@xyflow/react asks for ^4.4.0), and @xyflow/system 0.0.78
+  # (pinned by Apollon) next to 0.0.83 (what @xyflow/react 12.12 uses). @xyflow/react only imports zustand/traditional and
+  # zustand/shallow, which zustand 5 still provides. Drop both entries once Apollon and @xyflow/react agree on their own
+  # (`pnpm run check:duplicate-dependencies` lists what is still duplicated).
+  '@xyflow/react>zustand': '5.1.0'
+  '@tumaet/apollon>@xyflow/system': '0.0.83'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
@@ -130,33 +147,20 @@ overrides:
   'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
   'ng-mocks>@angular/router': '^22.0.0'
   'ng-mocks>rxjs': '^7.8.2'
-  # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
-  # whose peer range requires the current Angular major). Without this pin it resolves to a
-  # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.6
-  # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
+  # @angular/animations is never declared: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.6
+  '@angular/animations': 22.3.0
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
-  '@primeuix/styled': '0.7.4'
-  '@primeuix/utils': '0.7.2'
-  # lighthouse (a dev tool) asks for @sentry/node ^11.8.0. Its 11.10.0 release pulls @sentry/bundler-plugins with glob ^13.0.6, which is affected by
-  # GHSA-3g3m-2fjr-6pw4 (fixed in glob 14.0.2). 11.11.0 is the first release whose bundler plugin uses glob ^14.0.3.
-  '@sentry/node': '11.12.0'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
   brace-expansion: '5.0.13'
   debug: '4.4.3'
-  # Must stay >= 5.9.3, which fixed the uneval/stringify advisories reached through svelte (@embedpdf/engines).
-  # Kept on the 5.x line: svelte declares ^5 and reaches the client through @embedpdf/engines, so 6.x would change shipped code that
-  # the tests do not exercise. 6.x is the only update that was not taken on 2026-11-14.
-  devalue: '5.9.4'
   diff: '9.0.0'
   dompurify: '3.4.17'
   esbuild: '0.28.2'
@@ -228,13 +232,21 @@ overrides:
   ws: '8.23.0'
   yargs-parser: '22.0.0'
 
+# See the @embedpdf/engines overrides above.
+packageExtensions:
+  '@embedpdf/engines':
+    peerDependenciesMeta:
+      preact:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
   'eslint@10.14.0': 'config/pnpm/patches/eslint+10.14.0.patch'
-  # folder-hash calls minimatch.makeRe, which minimatch 11 removed. minimatch is pinned to 11 above (GHSA-g3hv-75wg-m249),
-  # and folder-hash is only used by supporting_scripts/client/prebuild.mjs. Remove once folder-hash supports minimatch 11.
-  folder-hash@4.1.4: config/pnpm/patches/folder-hash@4.1.4.patch
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
@@ -250,3 +262,23 @@ allowBuilds:
   lmdb: true
   msgpackr-extract: true
   unrs-resolver: true
+
+# Temporary exceptions: Angular 22.3.0 was published on 2026-11-18 and 2026-11-19, less than the 24 hours pnpm requires
+# before it installs a new release. Remove this block on or after 2026-11-20.
+minimumReleaseAgeExclude:
+  - '@angular-devkit/architect@0.2203.0'
+  - '@angular-devkit/core@22.3.0'
+  - '@angular-devkit/schematics@22.3.0'
+  - '@angular/animations@22.3.0'
+  - '@angular/build@22.3.0'
+  - '@angular/cli@22.3.0'
+  - '@angular/common@22.3.0'
+  - '@angular/compiler-cli@22.3.0'
+  - '@angular/compiler@22.3.0'
+  - '@angular/core@22.3.0'
+  - '@angular/forms@22.3.0'
+  - '@angular/language-service@22.3.0'
+  - '@angular/platform-browser@22.3.0'
+  - '@angular/router@22.3.0'
+  - '@angular/service-worker@22.3.0'
+  - '@schematics/angular@22.3.0'

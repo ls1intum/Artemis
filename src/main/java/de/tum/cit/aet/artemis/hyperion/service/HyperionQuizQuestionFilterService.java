@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -94,7 +93,7 @@ public class HyperionQuizQuestionFilterService {
      * @return the decision, or empty when the filter call failed or returned no usable verdict
      */
     public Optional<QuizQuestionFilterDecisionDTO> evaluate(Course course, @Nullable Long userId, GeneratedQuizQuestionDTO question, String groundingBlock) {
-        ChatClient chatClient = modelService.chatClient();
+        ChatClient chatClient = modelService.judgeChatClient();
         var outputConverter = HyperionStructuredOutputs.converterFor(FilterOutput.class);
         String systemPrompt = templateService.render(PROMPT_FILTER_QUIZ_QUESTION_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_FILTER_QUIZ_QUESTION_USER,
@@ -104,7 +103,7 @@ public class HyperionQuizQuestionFilterService {
 
         ChatResponse chatResponse;
         try {
-            chatResponse = chatClient.prompt().options(ChatOptions.builder().model(modelService.judgeModel())).system(systemPrompt).user(userPrompt).call().chatResponse();
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
         }
         catch (Exception e) {
             log.warn("Failed to filter quiz question '{}' for course [{}]", question.title(), course.getId(), e);
@@ -197,6 +196,9 @@ public class HyperionQuizQuestionFilterService {
         StringBuilder rendered = new StringBuilder();
         for (GeneratedQuizAnswerOptionDTO option : options) {
             rendered.append("- [").append(option.correct() ? "correct" : "wrong").append("] ").append(option.text()).append('\n');
+            if (option.explanation() != null) {
+                rendered.append("  Explanation: ").append(option.explanation()).append('\n');
+            }
         }
         return rendered.toString().strip();
     }

@@ -48,7 +48,8 @@ class HyperionProblemStatementRewriteServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, llmTokenUsageService, userRepository);
+        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(HyperionTestChatClients.returning(chatClient), templateService,
+                llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -103,16 +104,6 @@ class HyperionProblemStatementRewriteServiceTest {
         var course = new Course();
         course.setId(123L);
         assertThatThrownBy(() -> hyperionProblemStatementRewriteService.rewriteProblemStatement(course, "")).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    void rewriteProblemStatement_throwsExceptionWhenChatClientNull() {
-        var templateService = new HyperionPromptTemplateService();
-        var serviceWithoutClient = new HyperionProblemStatementRewriteService(null, templateService, llmTokenUsageService, userRepository);
-
-        var course = new Course();
-        course.setId(123L);
-        assertThatThrownBy(() -> serviceWithoutClient.rewriteProblemStatement(course, "Original")).isInstanceOf(InternalServerErrorAlertException.class);
     }
 
     @Test
