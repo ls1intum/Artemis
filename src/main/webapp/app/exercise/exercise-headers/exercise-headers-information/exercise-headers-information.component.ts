@@ -1,3 +1,5 @@
+import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
+import { getSubmissionDueDateInformation } from './submission-due-date-information';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
@@ -14,7 +16,6 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { InformationBox, InformationBoxComponent, InformationBoxLayout } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -368,38 +369,7 @@ export class ExerciseHeadersInformationComponent {
     }
 
     getDueDateItem(): InformationBox | undefined {
-        const dueDate = this.dueDate();
-        if (!dueDate) {
-            return undefined;
-        }
-        const isDueDateInThePast = dueDate.isBefore(this.now);
-        // If the due date is less than a day away, the color change to red
-        const dueDateStatusBadge = dueDate.isBetween(this.now, this.now.add(1, 'day')) ? 'danger' : 'body-color';
-        // If the due date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-        const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(dueDate, this.now);
-
-        if (isDueDateInThePast) {
-            return {
-                title: 'artemisApp.courseOverview.exerciseDetails.submissionDueOver',
-                content: {
-                    type: 'dateTime',
-                    value: dueDate,
-                },
-                isContentComponent: true,
-            };
-        }
-
-        return {
-            title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
-            content: {
-                type: shouldDisplayDueDateRelative ? 'timeAgo' : 'dateTime',
-                value: dueDate,
-            },
-            isContentComponent: true,
-            tooltip: shouldDisplayDueDateRelative ? 'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' : undefined,
-            contentColor: dueDateStatusBadge,
-            tooltipParams: { date: dueDate.format('lll') },
-        };
+        return getSubmissionDueDateInformation(this.dueDate(), this.now);
     }
 
     getStartDateItem(): InformationBox | undefined {

@@ -77,18 +77,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessedSubmissions()).toBe(5);
         expect(component.inProgressSubmissions()).toBe(1);
         expect(component.openSubmissions()).toBe(2);
-        expect(component.assessedPercentage()).toBe(62);
-        expect(component.inProgressPercentage()).toBe(12);
-    });
-
-    it('should floor progress percentages to whole numbers', () => {
-        const submissions = new DueDateStat();
-        submissions.inTime = 30;
-
-        fixture.componentRef.setInput('totalNumberOfAssessments', 11);
-        fixture.componentRef.setInput('numberOfSubmissions', submissions);
-
-        expect(component.assessedPercentage()).toBe(36);
     });
 
     it('should not render correction-round statistics when no correction rounds exist', () => {
@@ -134,19 +122,5 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(cells[1].textContent?.trim()).toBe('1');
         expect(cells[0].querySelector('a')?.getAttribute('href') ?? null).toBe(totalHref);
         expect(cells[1].querySelector('a')?.getAttribute('href') ?? null).toBe(ownHref);
-    });
-
-    it('should compute the right total/missing ratio', () => {
-        const complaints = new AssessmentDashboardInformationEntry(0, 10, undefined);
-
-        expect(complaints.doneToTotalPercentage).toBe('');
-
-        complaints.done = 2;
-
-        expect(complaints.doneToTotalPercentage).toBe('100%');
-
-        complaints.total = 3;
-
-        expect(complaints.doneToTotalPercentage).toBe('67%');
     });
 });

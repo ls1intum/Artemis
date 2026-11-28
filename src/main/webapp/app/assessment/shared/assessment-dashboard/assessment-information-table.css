@@ -1,0 +1,17 @@
+/* Shared by the course and the exercise assessment dashboards, whose information tables look the same. */
+.assessment-information-table tbody th,
+.assessment-information-table tbody td {
+    border-bottom: 1px solid var(--ui-border-color);
+    vertical-align: middle;
+}
+
+.assessment-information-table tbody th {
+    padding: calc(var(--tumaet-ui-spacing) * 2.5) calc(var(--tumaet-ui-spacing) * 6);
+    text-align: left;
+    font-weight: 400;
+}
+
+.assessment-information-table tbody td {
+    white-space: nowrap;
+    text-align: right;
+}

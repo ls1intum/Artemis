@@ -16,6 +16,9 @@ export class ExpandableSectionComponent implements OnInit {
     readonly headerKey = input.required<string>();
     readonly hasTranslation = input(true);
     readonly isSubHeader = input(false);
+    readonly initiallyCollapsed = input(false);
+    /** Keeps the saved state apart from other places that show a section with the same header. */
+    readonly storageScope = input<string>();
 
     readonly isCollapsed = signal<boolean>(undefined!);
     // Icons
@@ -25,8 +28,8 @@ export class ExpandableSectionComponent implements OnInit {
     readonly PREFIX = 'collapsed.';
 
     ngOnInit(): void {
-        this.isCollapsed.set(!!this.localStorageService.retrieve(this.storageKey));
-        this.localStorageService.store(this.storageKey, this.isCollapsed());
+        // Only a toggle saves the state, so a section the user never toggled keeps following initiallyCollapsed.
+        this.isCollapsed.set(this.localStorageService.retrieve<boolean>(this.storageKey) ?? this.initiallyCollapsed());
     }
 
     /**
@@ -41,6 +44,7 @@ export class ExpandableSectionComponent implements OnInit {
      * Returns the key to identify the value in the local storage
      */
     get storageKey() {
-        return this.PREFIX + this.headerKey();
+        const scope = this.storageScope();
+        return this.PREFIX + (scope ? `${scope}.` : '') + this.headerKey();
     }
 }

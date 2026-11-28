@@ -48,6 +48,8 @@ export class AssessmentInstructionsComponent {
     readonly showAssessmentInstructions = input(true);
     /** Drops the frame and heading, for a host whose surrounding card already provides both. */
     readonly embeddedInEditorChrome = input(false);
+    /** Starts the problem statement and example solution collapsed and saves their state separately from the assessment editors. */
+    readonly collapseReferenceSections = input(false);
     readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
     readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();

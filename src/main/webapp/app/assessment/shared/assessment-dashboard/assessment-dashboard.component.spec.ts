@@ -119,7 +119,6 @@ describe('AssessmentDashboardComponent', () => {
         numberOfAssessmentLocks: 2,
         tutorLeaderboardEntries,
         numberOfStudents: 5,
-        numberOfAutomaticAssistedAssessments: { inTime: 0, late: 0 },
         numberOfOpenComplaints: 0,
         totalNumberOfAssessmentLocks: 2,
     } as StatsForDashboard;

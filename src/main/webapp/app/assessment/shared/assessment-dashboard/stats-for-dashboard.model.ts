@@ -6,7 +6,6 @@ export class StatsForDashboard {
     public numberOfStudents = 0;
     public numberOfSubmissions = new DueDateStat();
     public totalNumberOfAssessments = 0;
-    public numberOfAutomaticAssistedAssessments = new DueDateStat();
     public numberOfComplaints = 0;
     public numberOfOpenComplaints = 0;
     public numberOfMoreFeedbackRequests = 0;
@@ -30,7 +29,6 @@ export class StatsForDashboard {
     static from(statsForDashboard: StatsForDashboard): StatsForDashboard {
         const stats = hydrate(new StatsForDashboard(), statsForDashboard);
         stats.numberOfSubmissions = hydrate(new DueDateStat(), stats.numberOfSubmissions);
-        stats.numberOfAutomaticAssistedAssessments = hydrate(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
         return stats;
     }
 }

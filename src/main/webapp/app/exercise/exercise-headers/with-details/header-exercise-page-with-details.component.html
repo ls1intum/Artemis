@@ -1,94 +1,131 @@
 @if (exercise()) {
-    <div class="course-info-bar" id="exercise-header">
-        <div class="left-col">
-            <div class="title-row">
-                <div class="inner-row">
-                    @if (exercise().type) {
-                        <fa-icon [icon]="getIcon(exercise().type)" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
-                    }
-                    &nbsp;
-                    <ng-content select="[pagetitle]" />
-                </div>
-                @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories()?.length) {
-                    <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
-                }
-            </div>
-            @if (exercise().maxPoints || (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING)) {
-                <div class="points-assessment-row">
-                    @if (exercise().maxPoints) {
-                        <span [style.margin-right]="exercise().maxPoints ? '30px' : null">
-                            <span class="me-2">
-                                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                                @if (achievedPoints() !== undefined) {
-                                    {{ achievedPoints() + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
-                                }
-                                {{ exercise().maxPoints }}
-                                @if (exercise().bonusPoints) {
-                                    <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise().bonusPoints }})</span>
-                                }
-                            </span>
-                            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" class="me-2" />
-                            }
-                        </span>
-                    }
-                    @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
-                        <span>
-                            <div>
-                                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
-                                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
-                                <fa-icon [icon]="faQuestionCircle" tumAetUiTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
-                            </div>
-                        </span>
-                    }
-                </div>
-            }
-            @if (submissionPolicy() && submissionPolicy()!.active) {
-                <div class="submission-row">
-                    <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
-                    <div>
-                        {{
-                            numberOfSubmissions() +
-                                '/' +
-                                submissionPolicy()!.submissionLimit +
-                                (submissionPolicy()!.exceedingPenalty
-                                    ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                                      | artemisTranslate: { points: submissionPolicy()!.exceedingPenalty })
-                                    : '')
-                        }}
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            tumAetUiTooltip="{{
-                                'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy()!.type + '.tooltip' | artemisTranslate
-                            }}"
-                        />
+    <header class="text-color" id="exercise-header">
+        <div class="flex w-full flex-wrap items-center justify-between gap-2" data-testid="exercise-header-heading">
+            <div class="left-col">
+                <div class="title-row">
+                    <div class="inner-row text-lg font-semibold">
+                        @if (exercise().type) {
+                            <fa-icon [icon]="getIcon(exercise().type)" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
+                        }
+                        &nbsp;
+                        <ng-content select="[pagetitle]" />
                     </div>
+                    @if (isTestRun()) {
+                        <span
+                            class="self-center text-sm font-normal text-muted-color"
+                            data-testid="exercise-header-test-run"
+                            jhiTranslate="artemisApp.examManagement.testRun.testRun"
+                        ></span>
+                    }
                 </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2"><ng-content select="[headerActions]" /></div>
+        </div>
+        <hr class="m-0 w-full border-border opacity-100" />
+        <div class="flex w-full flex-wrap items-stretch gap-2 text-sm" data-testid="exercise-header-metadata">
+            @if (exercise().maxPoints) {
+                <jhi-information-box [informationBoxData]="pointsInformation()" />
+                @if (exercise().bonusPoints) {
+                    <jhi-information-box [informationBoxData]="bonusPointsInformation()" />
+                }
+                @if (exercise().includedInOverallScore && exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                    <jhi-information-box [informationBoxData]="scoreInclusionInformation()">
+                        <span
+                            contentComponent
+                            [jhiTranslate]="
+                                'artemisApp.exercise.' + (exercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'includedAsBonus' : 'notIncluded')
+                            "
+                        ></span>
+                    </jhi-information-box>
+                }
+            }
+            @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
+                <jhi-information-box [informationBoxData]="assessmentTypeInformation()">
+                    <span contentComponent class="inline-flex items-center gap-1">
+                        {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
+                        <fa-icon [icon]="faQuestionCircle" tumAetUiTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
+                    </span>
+                </jhi-information-box>
+            }
+            @if (dueDateInformation(); as dateBox) {
+                <jhi-information-box [informationBoxData]="dateBox">
+                    <span contentComponent [class.text-state-danger]="dateBox.contentColor === 'danger'">
+                        @switch (dateBox.content.type) {
+                            @case ('timeAgo') {
+                                {{ dateBox.content.value | artemisTimeAgo }}
+                            }
+                            @case ('dateTime') {
+                                {{ dateBox.content.value | artemisDate }}
+                            }
+                            @default {}
+                        }
+                    </span>
+                </jhi-information-box>
+            }
+            @let difficulty = exercise().difficulty;
+            @if (difficulty) {
+                <jhi-information-box [informationBoxData]="difficultyInformation()">
+                    <jhi-difficulty-level contentComponent [difficultyLevel]="difficulty" />
+                </jhi-information-box>
+            }
+            @if (isNotReleased()) {
+                <jhi-information-box
+                    [informationBoxData]="releaseInformation()"
+                    [tumAetUiTooltip]="('artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate) + (exercise().releaseDate | artemisDate)"
+                >
+                    <span contentComponent>{{ exercise().releaseDate | artemisDate }}</span>
+                </jhi-information-box>
+            }
+            @if (exerciseCategories()?.length) {
+                <jhi-information-box class="min-w-0 max-w-full" [informationBoxData]="categoriesInformation()">
+                    <jhi-exercise-categories contentComponent class="flex min-w-0 flex-wrap gap-1 whitespace-normal wrap-anywhere" [exercise]="exercise()" [isSmall]="true" />
+                </jhi-information-box>
+            }
+            @if (nextRelevantDate() && (!exam() || (!isTestRun() && nextRelevantDateLabel() !== 'endDate'))) {
+                <jhi-information-box
+                    [informationBoxData]="nextDateInformation()"
+                    [tumAetUiTooltip]="
+                        exam()
+                            ? ''
+                            : ('artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate })
+                    "
+                >
+                    <span contentComponent [class.text-state-danger]="nextDateInformation().contentColor === 'danger'">
+                        @let dateContent = nextDateInformation().content;
+                        @switch (dateContent.type) {
+                            @case ('timeAgo') {
+                                {{ dateContent.value | artemisTimeAgo }}
+                            }
+                            @case ('dateTime') {
+                                {{ dateContent.value | artemisDate }}
+                            }
+                            @default {}
+                        }
+                    </span>
+                </jhi-information-box>
             }
         </div>
-        <div class="right-col">
-            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
-            } @else {
-                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
-                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
-            }
-            @if (dueDate()) {
-                <div class="font-medium">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
-                    <span
-                        [ngClass]="dueDateStatusBadge()"
-                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
-                        [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
-                    >
-                        {{ dueDate() | artemisTimeAgo }}
-                    </span>
+        @if (submissionPolicy() && submissionPolicy()!.active) {
+            <div class="flex flex-wrap items-center gap-1 text-sm">
+                <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
+                <div>
+                    {{
+                        numberOfSubmissions() +
+                            '/' +
+                            submissionPolicy()!.submissionLimit +
+                            (submissionPolicy()!.exceedingPenalty
+                                ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                  | artemisTranslate: { points: submissionPolicy()!.exceedingPenalty })
+                                : '')
+                    }}
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        tumAetUiTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy()!.type + '.tooltip' | artemisTranslate }}"
+                    />
                 </div>
-            }
-            @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
-            } @else {
-                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
-                <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
-            }
+            </div>
+        }
+        <div class="flex flex-wrap items-center justify-end gap-2 self-start text-sm" data-testid="exercise-header-statuses">
             @if (!nextRelevantDate() && canComplainLaterOn()) {
                 <div class="font-medium">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
@@ -102,48 +139,5 @@
                 </div>
             }
         </div>
-    </div>
+    </header>
 }
-
-<ng-template #nextRelevantDateBadge>
-    @if (nextRelevantDate() && (!exam() || !isTestRun())) {
-        <div class="font-medium">
-            {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
-            <span
-                [ngClass]="nextRelevantDateStatusBadge()"
-                class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
-                [tumAetUiTooltip]="
-                    'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
-                "
-            >
-                {{ nextRelevantDate() | artemisTimeAgo }}
-            </span>
-        </div>
-    }
-</ng-template>
-
-<ng-template #presentationScoreSummary>
-    @if (exercise().presentationScoreEnabled) {
-        <div data-testid="presentation-score-summary">
-            @if (effectiveCourse()?.presentationScore) {
-                {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success" jhiTranslate="global.generic.yes"></span>
-                }
-                @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.no"></span>
-                }
-            } @else {
-                {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                @if (studentParticipation()?.presentationScore) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success">
-                        {{ studentParticipation()!.presentationScore + '%' }}
-                    </span>
-                }
-                @if (!studentParticipation()?.presentationScore) {
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.unset"></span>
-                }
-            }
-        </div>
-    }
-</ng-template>

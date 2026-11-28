@@ -29,50 +29,29 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
         expect(component.exercise()).toEqual(mockExercise);
     });
 
-    it('should render the expanded panel as a card with a primary header', () => {
-        const header = fixture.debugElement.query(By.css('[data-testid="assessment-instructions-toggle"]')).nativeElement as HTMLElement;
+    it('should render the TUM UI panel with an accessible disclosure button', () => {
+        const panel = fixture.debugElement.query(By.css('tumaet-ui-panel'));
+        const toggle = fixture.debugElement.query(By.css('.tumaet-ui-panel-toggler')).nativeElement as HTMLButtonElement;
 
-        expect(header.getAttribute('role')).toBe('button');
-        expect(header.getAttribute('aria-expanded')).toBe('true');
-        expect(header.querySelector('h3')).not.toBeNull();
+        expect(panel).not.toBeNull();
+        expect(toggle.getAttribute('aria-label')).toBe('artemisApp.assessmentInstructions.instructions.instructions');
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('should collapse when the card header is clicked and reopen from the collapsed bar', () => {
-        const header = fixture.debugElement.query(By.css('[data-testid="assessment-instructions-toggle"]')).nativeElement as HTMLElement;
-        header.click();
+    it('should collapse and reopen the panel from its disclosure button', () => {
+        const toggle = fixture.debugElement.query(By.css('.tumaet-ui-panel-toggler')).nativeElement as HTMLButtonElement;
+        toggle.click();
         fixture.detectChanges();
 
         expect(component.collapsed()).toBe(true);
-        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).toBeNull();
-
-        const collapsedBar = fixture.debugElement.query(By.css('.collapsed-instructions')).nativeElement as HTMLElement;
-        expect(collapsedBar.getAttribute('aria-expanded')).toBe('false');
-        collapsedBar.click();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        toggle.click();
         fixture.detectChanges();
 
         expect(component.collapsed()).toBe(false);
-        expect(fixture.debugElement.query(By.css('.expanded-instructions'))).not.toBeNull();
-    });
-
-    it('should provide a named, keyboard-operable resize separator', async () => {
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const container = fixture.debugElement.query(By.css('.expanded-instructions')).nativeElement as HTMLElement;
-        const handle = fixture.debugElement.query(By.css('.draggable-left')).nativeElement as HTMLElement;
-        expect(handle.getAttribute('aria-label')).toBe('artemisApp.assessmentInstructions.instructions.resize');
-        expect(handle.getAttribute('role')).toBe('separator');
-        expect(handle.getAttribute('aria-orientation')).toBe('vertical');
-        expect(handle.tabIndex).toBe(0);
-
-        handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
-        expect(container.style.width).toBe('215px');
-        expect(handle.getAttribute('aria-valuenow')).toBe('215');
     });
 
     it('should expose icons', () => {
-        expect(component.faChevronRight).toBeDefined();
-        expect(component.faChevronLeft).toBeDefined();
         expect(component.farListAlt).toBeDefined();
     });
 });

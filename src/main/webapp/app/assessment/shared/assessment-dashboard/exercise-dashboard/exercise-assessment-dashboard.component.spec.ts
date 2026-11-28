@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -6,13 +7,12 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
@@ -99,8 +99,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseServiceGetStatsForTutorsStub: MockInstance;
 
     let accountService: AccountService;
-
-    let translateService: TranslateService;
 
     let submissionService: SubmissionService;
 
@@ -218,9 +216,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         ExerciseAssessmentDashboardComponent,
         FaIconComponent,
         MockComponent(TutorLeaderboardComponent),
-        MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),
-        MockComponent(SidePanelComponent),
         MockComponent(InfoPanelComponent),
         MockComponent(ModelingEditorComponent),
         MockComponent(SecondCorrectionEnableButtonComponent),
@@ -263,8 +259,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             providers,
         })
             .overrideComponent(ExerciseAssessmentDashboardComponent, {
-                remove: { imports: [TutorLeaderboardComponent] },
-                add: { imports: [MockComponent(TutorLeaderboardComponent)] },
+                remove: { imports: [TutorLeaderboardComponent, CollapsableAssessmentInstructionsComponent, ModelingEditorComponent] },
+                add: {
+                    imports: [MockComponent(TutorLeaderboardComponent), MockComponent(CollapsableAssessmentInstructionsComponent), MockComponent(ModelingEditorComponent)],
+                },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
@@ -302,7 +300,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
-        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -323,6 +320,108 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
     });
 
+    it('should separate course assessment states and keep exam remaining slots independent of locks', () => {
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 4, late: 1 }));
+        comp.totalNumberOfAssessments.set(2);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        expect([comp.completedAssessments(), comp.inProgressAssessments(), comp.openAssessments()]).toEqual([2, 1, 2]);
+
+        comp.isExamMode.set(true);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 2 }), new DueDateStat()]);
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 }), new DueDateStat()]);
+        expect(comp.totalAssessmentSlots()).toBe(10);
+        expect(comp.openAssessments()).toBe(8);
+    });
+
+    it.each([undefined, TutorParticipationStatus.NOT_PARTICIPATED])('should not show the instructions panel before participation is known (%s)', (status) => {
+        fixture.detectChanges();
+        comp.tutorParticipationStatus.set(status!);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(CollapsableAssessmentInstructionsComponent))).toBeNull();
+    });
+
+    it.each([TutorParticipationStatus.REVIEWED_INSTRUCTIONS, TutorParticipationStatus.TRAINED, TutorParticipationStatus.COMPLETED])(
+        'should keep the instructions checkmark visible when expanded with status %s',
+        (status) => {
+            fixture.detectChanges();
+            comp.tutorParticipationStatus.set(status);
+            fixture.detectChanges();
+            const instructions = fixture.debugElement.query(By.directive(CollapsableAssessmentInstructionsComponent)).componentInstance;
+            expect(instructions.showReadCheckmark()).toBe(true);
+
+            comp.assessmentInstructionsCollapsed.set(false);
+            fixture.detectChanges();
+            expect(instructions.showReadCheckmark()).toBe(true);
+        },
+    );
+
+    it.each([TutorParticipationStatus.NOT_PARTICIPATED, TutorParticipationStatus.TRAINED])('should keep test-run instructions available with participation status %s', (status) => {
+        fixture.detectChanges();
+        comp.isTestRun.set(true);
+        comp.tutorParticipationStatus.set(status);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
+    });
+
+    it('should ignore exam assessment locks when counting remaining work', () => {
+        comp.isExamMode.set(true);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([new DueDateStat()]);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        expect(comp.inProgressAssessments()).toBe(0);
+        expect(comp.openAssessments()).toBe(2);
+
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 2 }));
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 })]);
+        expect(comp.inProgressAssessments()).toBe(0);
+        expect(comp.openAssessments()).toBe(2);
+    });
+
+    it.each([false, true])('should show the in-progress category only for ordinary exercises (exam=%s)', (examMode) => {
+        fixture.detectChanges();
+        comp.isExamMode.set(examMode);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        fixture.detectChanges();
+
+        const progress: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-assessment-progress"]');
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.inProgress"]') !== null).toBe(!examMode);
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.remaining"]') !== null).toBe(examMode);
+        expect(progress.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.open"]') !== null).toBe(!examMode);
+    });
+
+    it('should render completed correction rounds in the exam assessment information row', () => {
+        fixture.detectChanges();
+        comp.isExamMode.set(true);
+        comp.totalNumberOfAssessments.set(5);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 5 }), Object.assign(new DueDateStat(), { inTime: 5 })]);
+        fixture.detectChanges();
+        const total = fixture.nativeElement.querySelector('[data-testid="exercise-assessments-row"] td');
+        expect(total.textContent.trim()).toBe('10');
+        comp.isExamMode.set(false);
+        fixture.detectChanges();
+        expect(total.textContent.trim()).toBe('5');
+    });
+
+    it('should show fully completed progress for a two-round exam', () => {
+        comp.isExamMode.set(true);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 5 }));
+        comp.totalNumberOfAssessments.set(5);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 5 }), Object.assign(new DueDateStat(), { inTime: 5 })]);
+        expect(comp.totalAssessmentSlots()).toBe(10);
+        expect(comp.completedAssessments()).toBe(10);
+        expect(comp.openAssessments()).toBe(0);
+    });
+
+    it('should keep progress bounded for empty and fully locked exercises', () => {
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 5 }));
+        expect(comp.inProgressAssessments()).toBe(2);
+        expect(comp.openAssessments()).toBe(0);
+    });
+
     it('should initialize', () => {
         const user = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(user);
@@ -333,14 +432,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exerciseId()).toBe(modelingExercise.id);
 
         expect(comp.tutor()).toEqual(user);
-
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
-
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should hide the complaints shortcut when the course has complaints disabled', () => {
+    it('should hide the complaint links when the course has complaints disabled', () => {
         accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(
             of(new HttpResponse({ body: { ...stats, complaintsEnabled: false } as StatsForDashboard, headers: new HttpHeaders() })),
@@ -349,21 +443,26 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         fixture.detectChanges();
 
         expect(comp.complaintsEnabled()).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints-total"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints-tutor"]')).toBeNull();
     });
 
-    it('should show the complaints shortcut when the course has complaints enabled', () => {
+    it('should show the complaint links when the course has complaints enabled', () => {
         accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(
             of(new HttpResponse({ body: { ...stats, complaintsEnabled: true } as StatsForDashboard, headers: new HttpHeaders() })),
         );
 
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
         fixture.detectChanges();
 
         expect(comp.complaintsEnabled()).toBe(true);
-        const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
-        expect(complaintsLink).not.toBeNull();
-        expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
+        const totalLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints-total"]') as HTMLAnchorElement;
+        const tutorLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints-tutor"]') as HTMLAnchorElement;
+        expect(totalLink.getAttribute('href')).toBe('/course-management/1/modeling-exercises/17/complaints');
+        expect(tutorLink.getAttribute('href')).toBe('/course-management/1/modeling-exercises/17/complaints?tutorId=10');
     });
 
     it.each([
@@ -449,11 +548,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.complaintsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
         expect(comp.moreFeedbackRequestsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
         expect(comp.ratingsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
-
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
-
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -560,6 +654,40 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
+    it('should count a completed submission only once across correction rounds', () => {
+        const submission = {
+            id: 42,
+            results: [
+                { correctionRound: 0, completionDate: dayjs() },
+                { correctionRound: 1, completionDate: dayjs() },
+            ],
+        };
+        comp.assessedSubmissionsByRound.set([[submission], [submission]]);
+        comp.numberOfSubmissions.set({ total: 2, inTime: 2, late: 0 });
+        expect(comp.numberOfTutorAssessedSubmissions()).toBe(1);
+        expect(comp.tutorSubmissionPercentage()).toBe(50);
+    });
+
+    it.each([
+        { assessmentType: AssessmentType.AUTOMATIC, expected: [5, 3, 2] },
+        { assessmentType: AssessmentType.SEMI_AUTOMATIC, expected: [4, 0, 4] },
+    ])('should count complaints only for automatically assessed programming exercises ($assessmentType)', ({ assessmentType, expected }) => {
+        const exercise = deepClone(modelingExercise);
+        exercise.type = ExerciseType.PROGRAMMING;
+        exercise.assessmentType = assessmentType;
+        exercise.allowComplaintsForAutomaticAssessments = true;
+        comp.exercise.set(exercise);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 4 }));
+        comp.totalNumberOfAssessments.set(0);
+        comp.statsForDashboard.update((stats) => {
+            stats.numberOfComplaints = 5;
+            stats.numberOfOpenComplaints = 2;
+            stats.totalNumberOfAssessmentLocks = 0;
+            return stats;
+        });
+        expect([comp.totalAssessmentSlots(), comp.completedAssessments(), comp.openAssessments()]).toEqual(expected);
+    });
+
     it('should call readInstruction', () => {
         const dto: TutorParticipation = {
             id: 1,
@@ -573,12 +701,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.tutorParticipation()).toBeUndefined();
         expect(comp.isLoading()).toBe(false);
 
+        expect(comp.assessmentInstructionsCollapsed()).toBe(true);
         comp.readInstruction();
 
         expect(comp.isLoading()).toBe(true);
         const request = http.expectOne(`/api/assessment/exercises/${comp.exerciseId()}/tutor-participations`);
         expect(request.request.method).toBe('POST');
         request.flush(dto);
+        expect(comp.assessmentInstructionsCollapsed()).toBe(true);
 
         expect(comp.isLoading()).toBe(false);
 
@@ -668,16 +798,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAutomaticAssessment, headers: new HttpHeaders() })));
 
-            const translateServiceSpy = vi.spyOn(translateService, 'instant');
-
             comp.loadAll();
 
             expect(programmingSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
             expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
-
-            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
         });
     });
 

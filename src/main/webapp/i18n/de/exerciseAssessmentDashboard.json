@@ -7,23 +7,7 @@
             "participation": {
                 "instructionsReviewed": "Du hast die Anweisungen gelesen, du kannst nun die Beispielabgaben lesen."
             },
-            "pageHeader": "Bewertungs-Dashboard für die Übung",
             "testRunPageHeader": "Testlaufübungs-Dashboard für die Übung:",
-            "yourStatus": "Dein Status",
-            "tutorParticipationStatus": {
-                "title": {
-                    "NOT_PARTICIPATED": "Nicht teilgenommen",
-                    "REVIEWED_INSTRUCTIONS": "Anweisungen geprüft",
-                    "TRAINED": "An Beispielabgaben trainiert",
-                    "COMPLETED": "Abgaben der Studierenden bewertet"
-                },
-                "description": {
-                    "NOT_PARTICIPATED": "Bitte lies die Bewertungsrichtlinien sorgfältig und bestätige, dass du sie verstanden hast.",
-                    "REVIEWED_INSTRUCTIONS": "Bitte öffne die Beispielabgaben und beginne das Training.",
-                    "TRAINED": "Du kannst nun beginnen, die Abgaben der Studierenden zu bewerten.",
-                    "COMPLETED": ""
-                }
-            },
             "secondCorrection": "Zweitkorrektur",
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert",
@@ -76,19 +60,12 @@
             "noMoreFeedbackRequestsDisplayed": "Es gibt keine Feedbackanfragen (abgesehen von Feedbackanfragen über deine Bewertungen)",
             "evaluateMoreFeedbackRequest": "Feedbackanfrage auswerten",
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
-            "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
-            "numberOfOpenComplaints": "Offene Beschwerden",
-            "exerciseInformation": "Übungsinformationen",
-            "totalYours": "Gesamt | Deine",
             "stats": {
                 "intime": "Zeitgerecht",
                 "late": "Verspätet"
             },
             "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
-            "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
-            "numberOfResolvedComplaints": "Bearbeitete Beschwerden",
-            "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
             "programmingExercise": {
                 "exampleSolution": "Beispiellösungs-Repository",

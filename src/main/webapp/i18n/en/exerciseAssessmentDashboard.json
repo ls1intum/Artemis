@@ -7,23 +7,7 @@
             "participation": {
                 "instructionsReviewed": "You have reviewed the instructions. You may now read the example submissions"
             },
-            "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
-            "yourStatus": "Your status",
-            "tutorParticipationStatus": {
-                "title": {
-                    "NOT_PARTICIPATED": "Not participated",
-                    "REVIEWED_INSTRUCTIONS": "Have read the instructions",
-                    "TRAINED": "Trained on example submissions",
-                    "COMPLETED": "Completed assessing students submissions"
-                },
-                "description": {
-                    "NOT_PARTICIPATED": "Please read the assessment instructions carefully and confirm that you have understood them.",
-                    "REVIEWED_INSTRUCTIONS": "Please open Example Submissions and start training.",
-                    "TRAINED": "Now you can start assessing students' submissions.",
-                    "COMPLETED": ""
-                }
-            },
             "secondCorrection": "Second correction",
             "enabled": "Enabled",
             "disabled": "Disabled",
@@ -76,19 +60,12 @@
             "noMoreFeedbackRequestsDisplayed": "There are no requests at the moment (excluding request about your own assessments)",
             "evaluateMoreFeedbackRequest": "Evaluate the request",
             "showMoreFeedbackRequests": "Show the request",
-            "numberOfUnassessedSubmissions": "Unassessed submissions",
-            "numberOfOpenComplaints": "Open complaints",
-            "exerciseInformation": "Exercise information",
-            "totalYours": "Total | Yours",
             "stats": {
                 "intime": "On time",
                 "late": "Late"
             },
             "numberOfSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
-            "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",
-            "numberOfResolvedComplaints": "Resolved complaints",
-            "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
             "programmingExercise": {
                 "exampleSolution": "Example solution repository",
