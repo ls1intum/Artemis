@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';

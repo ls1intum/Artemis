@@ -3,7 +3,7 @@ import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { PostingContentPart, ReferenceType } from 'app/communication/communication.util';
 import { PostingMarkdownComponent, postingReferencePlaceholder } from 'app/communication/posting-content/posting-markdown/posting-markdown.component';
 import { AccountService } from 'app/core/auth/account.service';

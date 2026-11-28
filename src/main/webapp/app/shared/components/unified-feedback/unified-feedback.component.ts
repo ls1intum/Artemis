@@ -16,7 +16,7 @@ import {
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faInfo, faLink, faLinkSlash, faMinus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {

@@ -25,7 +25,9 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 @Component({
     selector: 'jhi-faq-update',

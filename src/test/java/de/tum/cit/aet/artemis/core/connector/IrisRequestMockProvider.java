@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.core.connector;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +25,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.client.MockClientHttpRequest;
+import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -425,6 +430,14 @@ public class IrisRequestMockProvider {
         });
     }
 
+    /**
+     * Mocks a Pyris that does not answer the lecture search, as when the request times out.
+     */
+    public void mockSearchLecturesUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
+    }
+
     public void mockSearchLecturesError(HttpStatus status) {
         // @formatter:off
         mockServer
@@ -446,6 +459,39 @@ public class IrisRequestMockProvider {
             responseConsumer.accept(dto);
             return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
         });
+    }
+
+    /**
+     * Mocks a Pyris that does not take the global search request, as when the request times out.
+     */
+    public void mockGlobalSearchIrisAnswerUnreachable() {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Read timed out")));
+    }
+
+    /**
+     * Mocks a Pyris that sends the headers of the lecture search answer and then stops sending its body, so that the read times out.
+     */
+    public void mockSearchLecturesBodyTimesOut() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var response = new MockClientHttpResponse(new InputStream() {
+
+                @Override
+                public int read() throws IOException {
+                    throw new SocketTimeoutException("Read timed out");
+                }
+            }, HttpStatus.OK);
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return response;
+        });
+    }
+
+    /**
+     * Mocks a Pyris that answers the lecture search with a body that cannot be read.
+     */
+    public void mockSearchLecturesUnreadableAnswer() {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("this is not json", MediaType.APPLICATION_JSON));
     }
 
     public void mockGlobalSearchIrisAnswerError(HttpStatus status) {

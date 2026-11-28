@@ -95,6 +95,7 @@ if (prebuiltWebappDir.exists()) {
             "packages/tum-aet-ui/themes.css",
             "packages/tum-aet-ui/build-styles.mjs",
             "packages/tum-aet-ui/check-styles.mjs",
+            "packages/tum-aet-ui/write-entry-stubs.mjs",
         )
             .withPropertyName("tumaet-ui-build-config")
             .withPathSensitivity(PathSensitivity.RELATIVE)

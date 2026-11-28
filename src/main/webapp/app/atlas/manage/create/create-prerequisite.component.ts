@@ -1,4 +1,4 @@
-import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { Component, inject } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { finalize } from 'rxjs/operators';

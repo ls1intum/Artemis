@@ -18,7 +18,7 @@ import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statisti
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const question = { id: 1 };

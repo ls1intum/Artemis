@@ -14,7 +14,7 @@ import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-chec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',

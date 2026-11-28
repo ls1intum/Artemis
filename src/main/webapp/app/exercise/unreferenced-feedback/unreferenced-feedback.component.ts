@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { Feedback, FeedbackType, instructionCountsOf } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';

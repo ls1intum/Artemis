@@ -1,4 +1,5 @@
-import { TumAetUiMessageComponent, TumAetUiSkeletonComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular/skeleton';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';

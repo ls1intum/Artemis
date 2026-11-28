@@ -247,7 +247,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
         apollonDiagramRepository.save(apollonDiagram);
 
         String url = "/api/modeling/courses/" + course1.getId() + "/apollon-diagrams";
-        // Warm up request-independent caches (user groups, course authorization, feature toggles) so the comparison below
+        // Warm up request-independent caches (course roles, course authorization, feature toggles) so the comparison below
         // reflects only per-row query growth and not first-call cold-cache effects.
         request.getList(url, HttpStatus.OK, ApollonDiagramDTO.class);
 

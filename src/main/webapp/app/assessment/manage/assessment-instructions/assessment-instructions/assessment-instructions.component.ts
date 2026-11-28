@@ -1,4 +1,4 @@
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';

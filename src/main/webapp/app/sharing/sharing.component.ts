@@ -1,17 +1,14 @@
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { Course } from 'app/course/shared/entities/course.model';
+import { LOAD_SHARING_COURSES, SharingCourse } from './sharing-course';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { ProgrammingExerciseSharingService } from './programming-exercise-sharing.service';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -30,8 +27,7 @@ import { finalize } from 'rxjs/operators';
 export class SharingComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private userRouteAccessService = inject(UserRouteAccessService);
-    private courseService = inject(CourseManagementService);
+    private loadCourses = inject(LOAD_SHARING_COURSES);
     private sortService = inject(SortService);
     private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
     private alertService = inject(AlertService);
@@ -39,7 +35,7 @@ export class SharingComponent implements OnInit {
     // Icons
     protected readonly faPlus = faPlus;
 
-    readonly courses = signal<Course[]>([]);
+    readonly courses = signal<SharingCourse[]>([]);
     readonly coursesLoading = signal(true);
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -52,9 +48,7 @@ export class SharingComponent implements OnInit {
      */
     sharingInfo: SharingInfo = new SharingInfo();
 
-    readonly selectedCourse = signal<Course | undefined>(undefined);
-
-    readonly isInstructorOrEditor = signal(false);
+    readonly selectedCourse = signal<SharingCourse | undefined>(undefined);
 
     getBasketTokenExpiryDate(): Date {
         const tokenValidUntil = this.shoppingBasket()?.tokenValidUntil;
@@ -69,22 +63,15 @@ export class SharingComponent implements OnInit {
      */
     loadAll() {
         this.coursesLoading.set(true);
-        this.courseService
-            .getCourseOverview({})
+        this.loadCourses()
             .pipe(finalize(() => this.coursesLoading.set(false)))
             .subscribe({
-                next: (res: HttpResponse<Course[]>) => {
-                    this.courses.set(res.body!);
-                    this.coursesLoading.set(false);
-                },
-                error: (error: HttpErrorResponse) => {
-                    this.coursesLoading.set(false);
-                    this.alertService.error('artemisApp.sharing.error.loadingCourses');
-                },
+                next: (courses) => this.courses.set(courses),
+                error: () => this.alertService.error('artemisApp.sharing.error.loadingCourses'),
             });
     }
 
-    onCourseSelected(course: Course): void {
+    onCourseSelected(course: SharingCourse): void {
         this.selectedCourse.set(course);
     }
 
@@ -93,7 +80,7 @@ export class SharingComponent implements OnInit {
     }
 
     onExerciseSelected(index: number): void {
-        this.sharingInfo.selectedExercise = index;
+        this.sharingInfo.exercisePosition = index;
     }
 
     /**
@@ -101,7 +88,7 @@ export class SharingComponent implements OnInit {
      * @param index - Index of a course in the collection
      * @param item - Current course
      */
-    trackId(index: number, item: Course) {
+    trackId(index: number, item: SharingCourse) {
         return item.id ?? index;
     }
 
@@ -134,8 +121,8 @@ export class SharingComponent implements OnInit {
             !this.sharingInfo.apiBaseURL ||
             !this.sharingInfo.returnURL ||
             !this.sharingInfo.checksum ||
-            this.sharingInfo.selectedExercise === undefined ||
-            this.sharingInfo.selectedExercise === null
+            this.sharingInfo.exercisePosition === undefined ||
+            this.sharingInfo.exercisePosition === null
         ) {
             this.alertService.error('artemisApp.sharing.error.missingParameters');
             return;
@@ -146,7 +133,7 @@ export class SharingComponent implements OnInit {
                     basketToken: this.sharingInfo.basketToken,
                     apiBaseURL: this.sharingInfo.apiBaseURL,
                     returnURL: this.sharingInfo.returnURL,
-                    selectedExercise: this.sharingInfo.selectedExercise,
+                    selectedExercise: this.sharingInfo.exercisePosition,
                     checksum: this.sharingInfo.checksum,
                 },
             })
@@ -183,15 +170,8 @@ export class SharingComponent implements OnInit {
                 return;
             }
 
-            void this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
-                if (!isLoggedIn) {
-                    this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
-                    return;
-                }
-                this.isInstructorOrEditor.set(true);
-                this.loadAll();
-                this.loadSharedExercises();
-            });
+            this.loadAll();
+            this.loadSharedExercises();
         });
     }
 

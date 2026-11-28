@@ -1,6 +1,7 @@
 import { Component, ElementRef, TemplateRef, afterNextRender, inject, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogOptions, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogOptions, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
