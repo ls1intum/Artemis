@@ -14,6 +14,8 @@ describe('provideArtemisTumAetUiTranslator', () => {
         const translateService = TestBed.inject(TranslateService);
 
         expect(translator.translate('tumAetUi.datePicker.dialog')).toBe('global.datePicker.dialog');
+        expect(translator.translate('tumAetUi.inputNumber.increment')).toBe('global.inputNumber.increment');
+        expect(translator.translate('tumAetUi.inputNumber.decrement')).toBe('global.inputNumber.decrement');
         expect(translator.translationChanges?.()).toBeUndefined();
 
         translateService.use('de');

@@ -118,6 +118,7 @@ describe('UnreferencedFeedbackComponent', () => {
         vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
+            return true;
         });
 
         // Call spy function with empty event
@@ -127,8 +128,15 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
 
+    it('should not add feedback when the dropped instruction cannot be linked', () => {
+        comp.unreferencedFeedback = [];
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockReturnValue(false);
+        comp.createAssessmentOnDrop(new Event(''));
+        expect(comp.unreferencedFeedback).toHaveLength(0);
+    });
+
     it('should only replace feedback on drop, not add another one', () => {
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {});
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockReturnValue(true);
         comp.createAssessmentOnDrop(new Event(''));
         fixture.changeDetectorRef.detectChanges();
 
@@ -187,6 +195,18 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
         });
 
+        it('removes one application and keeps Add feedback beside the Other feedback group', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            const first = comp.unreferencedFeedback[0];
+            comp.addUnreferencedFeedback();
+            fixture.detectChanges();
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.unreferenced-feedback__group-actions .add-unreferenced-feedback')).not.toBeNull();
+            comp.unapplyOneInstruction(documentationInstruction);
+            expect(comp.unreferencedFeedback.filter((feedback) => feedback.gradingInstruction?.id === documentationInstruction.id)).toEqual([first]);
+        });
+
         it('should remove every feedback of the instruction when it is un-applied', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(documentationInstruction);
@@ -217,6 +237,20 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(groups.map((group) => group.points)).toEqual([4, -2, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
+        });
+
+        it('keeps criterion group keys when criteria are reloaded', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.addUnreferencedFeedback();
+            const keys = comp.feedbackGroups().map((group) => group.key);
+
+            fixture.componentRef.setInput(
+                'gradingCriteria',
+                comp.gradingCriteria().map((criterion) => ({ ...criterion })),
+            );
+
+            expect(comp.feedbackGroups().map((group) => group.key)).toEqual(keys);
+            expect(keys).toEqual([comp.gradingCriteria()[0].id, 'other']);
         });
 
         it('should not show a group header for a single uncategorized block', () => {
@@ -327,5 +361,54 @@ describe('UnreferencedFeedbackComponent', () => {
 
             expect(comp.pointsSummary()).toEqual({ awarded: 12, deducted: -2, total: 10 });
         });
+    });
+});
+
+describe('Applying instructions with real feedback cards', () => {
+    it.each([
+        { count: 1, points: 0, linked: true, text: false },
+        { count: 2, points: 0, linked: false, text: false },
+        { count: 1, points: 1, linked: false, text: false },
+        { count: 1, points: 0, linked: false, text: false },
+        { count: 1, points: 0, linked: false, text: true },
+    ])('applies immediately for $count manual cards, points=$points, linked=$linked, text=$text', async ({ count, points, linked, text }) => {
+        await TestBed.configureTestingModule({
+            imports: [UnreferencedFeedbackComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
+        const instruction: GradingInstruction = { id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Rubric feedback' };
+        const feedbacks = Array.from({ length: count }, () => {
+            const feedback = new Feedback();
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            feedback.credits = points;
+            if (text) {
+                feedback.text = 'Manual title';
+                feedback.detailText = 'Manual comment';
+            }
+            return feedback;
+        });
+        if (linked) {
+            const feedback = new Feedback();
+            feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+            feedback.gradingInstruction = instruction;
+            feedbacks.push(feedback);
+        }
+        fixture.componentRef.setInput('gradingCriteria', [{ id: 1, title: 'Criterion', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('feedbacks', feedbacks);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        await fixture.whenStable();
+        TestBed.inject(GradingInstructionSelectionService).toggleArmedInstruction(instruction);
+        await fixture.whenStable();
+        const target = fixture.debugElement.queryAll(By.directive(UnreferencedFeedbackDetailComponent)).find((card) => card.componentInstance.feedback() === feedbacks[0])!;
+        (target.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelectorAll('.unified-feedback-assessment-criterion')).toHaveLength(linked ? 2 : 1);
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('.unified-feedback-assessment-criterion')?.textContent).toContain('Instruction');
+        });
+        expect(fixture.componentInstance.unreferencedFeedback).toHaveLength(feedbacks.length);
     });
 });

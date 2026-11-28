@@ -1,13 +1,12 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
-import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { Component, OnDestroy, computed, effect, inject, input, viewChildren } from '@angular/core';
+import { faCrosshairs, faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -40,21 +39,23 @@ export interface SortedGradingCriterion {
         TumAetUiTagComponent,
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
-        TumAetUiTableDirective,
+        TumAetUiButtonComponent,
         TumAetUiMessageComponent,
     ],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
-    private readonly selectionService = inject(GradingInstructionSelectionService);
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnDestroy {
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private readonly deleteDialogService = inject(DeleteDialogService);
 
     public readonly criteria = input.required<GradingCriterion[]>();
     readonly readonly = input<boolean>();
-    readonly allowDrop = signal<boolean>(undefined!);
+    readonly allowArming = input(true);
+    readonly allowDrop = computed(() => !this.readonly());
     // Icons
     faInfoCircle = faInfoCircle;
-    faExpand = faExpand;
-    faCompress = faCompress;
+    faCrosshairs = faCrosshairs;
+    faMinus = faMinus;
+    faPlus = faPlus;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
@@ -78,13 +79,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         const applied = this.selectionService.appliedInstructionIds();
         return this.sortedCriteria().map((criterion) => criterion.instructions.filter((instruction) => instruction.id !== undefined && applied.has(instruction.id)).length);
     });
-
-    /**
-     * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
-     */
-    ngOnInit(): void {
-        this.allowDrop.set(!this.readonly());
-    }
 
     collapseAll() {
         this.expandableSections().forEach((section) => {
@@ -122,11 +116,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         if (!this.allowDrop()) {
             return false;
         }
-        const usageLimit = instruction.usageCount ?? 0;
-        if (usageLimit <= 0) {
-            return true;
-        }
-        return this.selectionService.applicationCount(instruction) < usageLimit;
+        return this.selectionService.canApplyInstruction(instruction);
     }
 
     /**
@@ -143,7 +133,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: 'artemisApp.feedback.delete.question',
+            deleteQuestion: 'artemisApp.feedback.delete.allInstances',
             translateValues: { text: '' },
             actionType: ActionType.Delete,
             buttonType: ButtonType.ERROR,
@@ -153,30 +143,15 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
-     * Set the tooltip of the draggable grading instruction to be equal to the feedback detail text
-     * @param {GradingInstruction} instr - the instruction object from which the feedback detail text is retrieved
+     * {@link GradingInstruction.usageCount} of 1 is a single application, which the checkbox covers. Zero/unset means
+     * unlimited, and any higher value is a finite multi-use limit; both show the stepper.
      */
-    setTooltip(instr: GradingInstruction) {
-        return 'Feedback: ' + instr.feedback;
+    isMultiUse(instruction: GradingInstruction): boolean {
+        return (instruction.usageCount ?? 0) !== 1;
     }
 
-    /**
-     * Set the color of the draggable grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
-     */
-    setInstrColour(instr: GradingInstruction) {
-        let colour;
-        if (instr.credits === 0) {
-            colour = 'var(--sgi-assessment-layout-zero-background)';
-        } else if (instr.credits < 0) {
-            colour = 'var(--sgi-assessment-layout-negative-background)';
-        } else {
-            colour = 'var(--sgi-assessment-layout-positive-background)';
-        }
-        return colour;
-    }
     setScore(nr: number) {
-        return nr + 'P';
+        return nr > 0 ? `+${nr}` : `${nr}`;
     }
     /**
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
@@ -193,10 +168,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         // the title of the instruction's criterion on the assessment it links.
         event.dataTransfer?.setData('text/plain', JSON.stringify(this.selectionService.withCriterionTitle(instruction)));
     }
-    /**
-     * disables drag if on readOnly mode
-     */
-    disableDrag() {
-        return this.allowDrop();
+    /** An assessment shows one instruction list; once it is gone, nothing would show which instruction is armed. */
+    ngOnDestroy(): void {
+        this.selectionService.clearArmedInstruction();
     }
 }

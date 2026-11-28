@@ -1,13 +1,3 @@
-.layout-table {
-    margin: 1px;
-}
-
-.layout-table .td-score,
-.layout-table .td-usage-count {
-    width: 4%;
-}
-
-.layout-table .td-usage-count {
-    position: relative;
-    white-space: nowrap;
+.sgi-item--armed {
+    border-color: var(--primary);
 }

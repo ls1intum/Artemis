@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, forwardRef, input, linkedSignal, numberAttribute, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 import { TumAetUiInputDirective } from '../input/tumaet-ui-input.directive';
 
 interface LocaleNumberSyntax {
@@ -17,11 +19,12 @@ interface LocaleNumberSyntax {
     selector: 'tumaet-ui-input-number',
     templateUrl: './tumaet-ui-input-number.component.html',
     styleUrl: './tumaet-ui-input-number.component.css',
-    imports: [TumAetUiInputDirective, FaIconComponent],
+    imports: [TumAetUiInputDirective, FaIconComponent, NgTemplateOutlet, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-input-number',
         '[class.tumaet-ui-input-number-fluid]': 'fluid()',
         '[class.tumaet-ui-input-number-buttons]': 'showButtons()',
+        '[class.tumaet-ui-input-number-horizontal]': 'horizontalButtons() && showButtons()',
     },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiInputNumberComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +44,12 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
     readonly snapToStep = input(false, { transform: booleanAttribute });
     /** Shows increment and decrement controls. */
     readonly showButtons = input(false, { transform: booleanAttribute });
+    /** Places the controls on both sides of the field, minus before and plus after, instead of stacked at its end. */
+    readonly horizontalButtons = input(false, { transform: booleanAttribute });
+    /** Accessible name of the increment control; defaults to the package's translated "Increase value". */
+    readonly incrementLabel = input<string>();
+    /** Accessible name of the decrement control; defaults to the package's translated "Decrease value". */
+    readonly decrementLabel = input<string>();
     /** Text displayed before the formatted number. */
     readonly prefix = input<string>();
     /** Text displayed after the formatted number. */
@@ -82,6 +91,8 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
 
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
 
     private readonly numberFormatter = computed(() => new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: this.maxFractionDigits() }));
     private readonly localeNumberSyntax = computed(() => this.createLocaleNumberSyntax());

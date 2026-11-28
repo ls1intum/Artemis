@@ -9,11 +9,13 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { NgTemplateOutlet } from '@angular/common';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
 export interface FeedbackGroup {
+    /** Keep criterion groups distinct from Other feedback when linking inserts or removes a group. */
+    key: number | GradingCriterion | 'other';
     title: string;
     translateTitle: boolean;
     feedbacks: Feedback[];
@@ -25,7 +27,15 @@ export interface FeedbackGroup {
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.css'],
-    imports: [TumAetUiTagComponent, TumAetUiMessageComponent, TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TranslateDirective,
+        UnreferencedFeedbackDetailComponent,
+        TumAetUiButtonDirective,
+        ArtemisTranslatePipe,
+        NgTemplateOutlet,
+    ],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -118,12 +128,12 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
                 continue;
             }
             groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
-            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits));
+            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits, criterion.id ?? criterion));
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
         if (ungrouped.length > 0) {
-            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
+            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits, 'other'));
         }
         return groups;
     });
@@ -136,6 +146,9 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         const groups = this.feedbackGroups();
         return groups.length > 1 || (groups.length === 1 && !groups[0].translateTitle);
     });
+
+    /** With group headers, the add button belongs to the Other feedback group instead of standing alone. */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.showGroupHeaders() && this.feedbackGroups().some((group) => group.translateTitle));
 
     /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
@@ -220,6 +233,13 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         this.appendFeedback(feedback);
     }
 
+    unapplyOneInstruction(instruction: GradingInstruction): void {
+        const feedback = this.unreferencedFeedback.findLast((item) => item.gradingInstruction?.id === instruction.id);
+        if (feedback) {
+            this.deleteFeedback(feedback);
+        }
+    }
+
     unapplyInstruction(instruction: GradingInstruction): void {
         const feedbacksToRemove = this.unreferencedFeedback.filter((feedback) => feedback.gradingInstruction?.id === instruction.id);
         feedbacksToRemove.forEach((feedback) => this.deleteFeedback(feedback));
@@ -259,17 +279,16 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         return Math.max(...references.concat([0])) + 1;
     }
 
+    /** Adds a feedback for a grading instruction dropped onto the list, unless its usage limit is reached. */
     createAssessmentOnDrop(event: Event) {
-        this.addUnreferencedFeedback();
-        const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
-        if (newFeedback) {
-            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
-            this.updateFeedback(newFeedback);
+        const feedback = this.createFeedback();
+        if (this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)) {
+            this.appendFeedback(feedback);
         }
     }
 }
 
-function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
+function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>, key: FeedbackGroup['key']): FeedbackGroup {
     const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
     let pointsSeverity: TumAetUiTagSeverity = 'secondary';
     if (points > 0) {
@@ -277,5 +296,5 @@ function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], 
     } else if (points < 0) {
         pointsSeverity = 'danger';
     }
-    return { title, translateTitle, feedbacks, points, pointsSeverity };
+    return { key, title, translateTitle, feedbacks, points, pointsSeverity };
 }

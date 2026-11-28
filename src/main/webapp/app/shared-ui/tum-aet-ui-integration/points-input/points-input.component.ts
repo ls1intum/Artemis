@@ -34,6 +34,12 @@ export class PointsInputComponent implements ControlValueAccessor, Validator {
     readonly step = input(1, { transform: numberAttribute });
     /** Steps a value that is not a multiple of the step to the next multiple in the direction of travel instead of adding the step to it. */
     readonly snapToStep = input(false, { transform: booleanAttribute });
+    /** Places the step buttons on both sides of the field, minus before and plus after, instead of stacked at its end. */
+    readonly horizontalButtons = input(false, { transform: booleanAttribute });
+    /** Accessible name of the increment button; defaults to the TUM AET UI translation "Increase value". */
+    readonly incrementLabel = input<string>();
+    /** Accessible name of the decrement button; defaults to the TUM AET UI translation "Decrease value". */
+    readonly decrementLabel = input<string>();
     readonly showButtons = input(false, { transform: booleanAttribute });
     readonly fluid = input(false, { transform: booleanAttribute });
     readonly invalid = input(false, { transform: booleanAttribute });

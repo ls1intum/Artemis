@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
  */
 export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     async provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
-        // Adding feedback requires an empty line. Use fillInlineFeedback to select an existing card explicitly.
+        // Adding feedback requires an empty line.
         await expect(this.getInlineFeedback(lineIndex)).toHaveCount(0);
         // Monaco renders the code lines, and its decoration API takes a class name and nothing else, so the
         // hover button cannot carry a test id either. These two selectors name Monaco's DOM out of necessity.
@@ -17,13 +17,14 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     /**
-     * Fills the explicitly selected card (0-based) among the feedback entries on a code line (also 0-based).
-     * Manual feedback commits while typing; nonmanual automatic feedback requires its save button.
+     * Fills and saves the selected open card (0-based) among the feedback entries on a code line (also 0-based).
+     * A stored card opens with its Edit button first.
      */
-    async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
+    private async fillInlineFeedback(lineIndex: number, feedbackIndex: number, points: number, feedback: string) {
         const card = this.getInlineFeedback(lineIndex).nth(feedbackIndex);
         await card.getByRole('textbox', { name: 'Feedback', exact: true }).fill(feedback);
         await this.setPoints(card, points);
+        await card.getByTestId('feedback-save').click();
     }
 
     private getInlineFeedback(lineIndex: number) {

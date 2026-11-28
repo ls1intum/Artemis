@@ -1,19 +1,23 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
-import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPencilAlt, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
+type EditableField = 'text' | 'detailText' | 'credits';
+
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
     styleUrl: './code-editor-tutor-assessment-inline-feedback.component.css',
-    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent, UnifiedFeedbackComponent],
+    imports: [TranslateDirective, FaIconComponent, UnifiedFeedbackComponent, TumAetUiButtonDirective],
     // Monaco anchors the widget on this host. Several cards may share a line, so the line is a data attribute,
     // not an HTML id that would be duplicated when two suggestions refer to the same location.
     host: {
@@ -22,225 +26,191 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         '[style.max-width.%]': '95',
     },
 })
-export class CodeEditorTutorAssessmentInlineFeedbackComponent {
-    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    // Needed for the outer editor to access the DOM node of this component
-    public elementRef = inject(ElementRef);
+export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestroy {
+    private readonly structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
+    public readonly elementRef = inject(ElementRef);
 
     protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly Feedback = Feedback;
-    protected readonly MANUAL = FeedbackType.MANUAL;
 
+    /** The stored feedback, or undefined for a new card that has not been saved yet. */
     readonly feedback = input<Feedback>();
-
-    /**
-     * The feedback currently displayed/edited. It is seeded from the {@link feedback} input (defaulting to a fresh
-     * {@link Feedback} when none is provided) and can be reassigned internally (e.g. when the user cancels an edit).
-     * Using a {@link linkedSignal} preserves the original setter behavior: whenever the bound input changes, the
-     * working copy resets to the new value.
-     *
-     * Manual/new feedback is fully owned by the tutor writing this assessment, so it is edited through the exact
-     * object bound via {@link feedback}, matching the live, auto-committing flow in {@link onFieldChanged}. Any
-     * other type (e.g. automatic/static-analysis) still shares that same object with {@link automaticFeedback} in
-     * the container until an explicit save, so editing it in place would leak in-progress field changes into the
-     * assessment even if the edit is later dismissed, and would duplicate the feedback into both the automatic and
-     * referenced buckets once {@link commitFeedback} retags it as manual. A working clone keeps those edits local
-     * until {@link updateFeedback} commits it.
-     */
-    readonly currentFeedback = linkedSignal<Feedback>(() => {
-        const feedback = this.feedback();
-        if (!feedback) {
-            return new Feedback();
-        }
-        return feedback.type === undefined || feedback.type === this.MANUAL ? feedback : deepClone(feedback);
-    });
-
     readonly selectedFile = input.required<string>();
-
     readonly codeLine = input.required<number>();
-
     readonly readOnly = input.required<boolean>();
-    readonly highlightDifferences = input<boolean>(false);
+    readonly highlightDifferences = input(false);
     readonly course = input<Course>();
-    private readonly unifiedFeedback = viewChild(UnifiedFeedbackComponent);
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
 
     readonly onUpdateFeedback = output<Feedback>();
     readonly onCancelFeedback = output<number>();
     readonly onDeleteFeedback = output<Feedback>();
     readonly onEditFeedback = output<number>();
 
+    private readonly unifiedFeedback = viewChild(UnifiedFeedbackComponent);
+
     /**
-     * Whether the bound feedback is manual or not yet typed (no type at all, i.e. a freshly added line). Both are
-     * fully owned by the tutor writing this assessment, so they get the always-open, auto-committing editor. Any
-     * other type (e.g. automatic/static-analysis feedback) keeps the legacy collapsed-view-plus-explicit-save flow,
-     * since editing it is a secondary, easy-to-get-wrong action that should not happen by accident.
+     * Working copy of an open card. It is replaced, never mutated, so the computeds below track every edit, and it
+     * is detached from {@link feedback} so the parent can rebind the stored feedback without discarding the edit.
      */
-    protected readonly isNewOrManual = computed(() => {
-        const type = this.feedback()?.type;
-        return type === undefined || type === this.MANUAL;
+    private readonly draft = signal<Feedback | undefined>(undefined);
+    /** Set by any edit, including raw input that has not reached the draft yet, such as a lone minus sign in the points field. */
+    private readonly edited = signal(false);
+
+    readonly viewOnly = computed(() => !!this.feedback() && !this.draft());
+    readonly currentFeedback = computed(() => this.draft() ?? this.feedback() ?? new Feedback());
+
+    protected readonly saveEnabled = computed(() => {
+        const feedback = this.currentFeedback();
+        return !this.readOnly() && Number.isFinite(feedback.credits) && Feedback.hasContent(feedback);
     });
 
-    /**
-     * Whether the feedback is rendered collapsed. Manual/new feedback is never collapsed while editable (it has no
-     * explicit save step to collapse it); any other type still starts collapsed and is only opened via
-     * {@link editFeedback}.
-     */
-    readonly viewOnly = linkedSignal<boolean>(() => this.readOnly() || !this.isNewOrManual());
-
-    /**
-     * Snapshot used to restore a non-manual feedback (e.g. automatic/static-analysis) if its in-progress edit is
-     * dismissed. Reset whenever the input changes.
-     */
-    readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
-
-    /**
-     * The auto-generated title for a manually created (non-suggestion) inline feedback. Computed live so it already
-     * reflects the current file/line while the feedback is being edited, not only after {@link commitFeedback}
-     * writes the same string into `feedback.text` on commit - otherwise the title falls back to the generic,
-     * points-derived placeholder for that in-between period.
-     */
-    protected readonly derivedTitle = computed(() => `File ${this.selectedFile()} at line ${this.codeLine() + 1}`);
-
-    /**
-     * Finalizes and emits the current feedback: assigns its reference and derived title (unless it is an
-     * already-accepted suggestion, whose title is the suggestion's own) and marks it positive when it awards credit.
-     */
-    private commitFeedback(): void {
+    protected readonly displayTitle = computed(() => {
         const feedback = this.currentFeedback();
-        feedback.type = this.MANUAL;
+        const instructionId = feedback.gradingInstruction?.id;
+        if (instructionId !== undefined) {
+            const criterion = this.gradingCriteria().find((item) => item.structuredGradingInstructions?.some((instruction) => instruction.id === instructionId));
+            if (criterion?.title) {
+                return criterion.title;
+            }
+        }
+        return Feedback.isFeedbackSuggestion(feedback) ? Feedback.stripSuggestionPrefix(feedback.text ?? '') || undefined : undefined;
+    });
+
+    protected readonly feedbackContent = computed(() => buildFeedbackTextForReview(this.currentFeedback(), false));
+
+    /** A new card counts as unsaved; a stored one only while it is open and edited. The original stays in the assessment until Save. */
+    hasUnsavedEdits(): boolean {
+        return !this.feedback() || (!this.viewOnly() && this.edited());
+    }
+
+    protected setField<K extends EditableField>(field: K, value: Feedback[K]): void {
+        const next = deepClone(this.currentFeedback());
+        next[field] = value;
+        this.commitDraft(next);
+    }
+
+    /** The shared card unlinks the instruction on the object it was given, so the draft is replaced to make the change visible. */
+    protected onInstructionUnlinked(): void {
+        this.commitDraft(deepClone(this.currentFeedback()));
+    }
+
+    protected markEdited(): void {
+        this.edited.set(true);
+    }
+
+    private commitDraft(next: Feedback): void {
+        this.draft.set(next);
+        this.edited.set(true);
+        // The stored link is already counted by the parent; reserve only an additional draft link.
+        const instruction = next.gradingInstruction;
+        this.selectionService.reserveInstruction(this, instruction?.id !== this.feedback()?.gradingInstruction?.id ? instruction : undefined);
+    }
+
+    private closeDraft(): void {
+        this.draft.set(undefined);
+        this.edited.set(false);
+        this.selectionService.reserveInstruction(this);
+    }
+
+    updateFeedback(): void {
+        if (!this.saveEnabled()) {
+            return;
+        }
+        this.unifiedFeedback()?.onCreditsCommit();
+        const feedback = deepClone(this.currentFeedback());
+        feedback.type = FeedbackType.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        // The unified card's own title/detail/credits handlers already rewrite an accepted suggestion's prefix to
-        // adapted, but the SGI-drop path (updateFeedbackOnDrop) mutates the feedback directly and commits here
-        // without going through those handlers, so it needs the same rewrite before the suggestion check below.
-        if (feedback.text) {
+        if (!feedback.text) {
+            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        } else if (this.edited()) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }
-        if (!Feedback.isFeedbackSuggestion(feedback) && !feedback.text) {
-            feedback.text = this.derivedTitle();
-        }
         feedback.positive = (feedback.credits ?? 0) > 0;
+        this.closeDraft();
         this.onUpdateFeedback.emit(feedback);
     }
 
-    /**
-     * Auto-commits a manual (or brand new) feedback on every title/detail/credits change, the same live-save
-     * behavior as unreferenced feedback - no separate save step. A non-manual feedback (e.g. automatic) opened via
-     * {@link editFeedback} keeps requiring the explicit save button instead, see {@link updateFeedback}.
-     */
-    protected onFieldChanged(): void {
-        if (this.isNewOrManual()) {
-            this.commitFeedback();
-        }
-    }
-
-    /**
-     * Explicit save for a feedback that is not manual/new (e.g. automatic/static-analysis feedback opened via
-     * {@link editFeedback}): manual/new feedback has no save button and commits on every change instead, see
-     * {@link onFieldChanged}.
-     */
-    updateFeedback(): void {
-        this.commitFeedback();
-        this.viewOnly.set(true);
-    }
-
-    /**
-     * Discards a feedback that was never actually saved (a freshly added, unsaved line): there is nothing to
-     * persist, so just tell the parent to remove the widget.
-     */
     cancelFeedback(): void {
-        this.onCancelFeedback.emit(this.codeLine());
-    }
-
-    /**
-     * Reverts an in-progress edit of a non-manual feedback (e.g. automatic/static-analysis, opened via
-     * {@link editFeedback}) back to its last-saved state and returns to the collapsed view.
-     */
-    private revertFeedbackEdit(): void {
-        const restored = this.oldFeedback();
-        this.currentFeedback.set(restored);
-        this.oldFeedback.set(deepClone(restored));
-        this.viewOnly.set(true);
-    }
-
-    /**
-     * Deletes feedback after confirmation and emits to parent component
-     */
-    deleteFeedback() {
-        this.onDeleteFeedback.emit(this.currentFeedback());
-    }
-
-    /**
-     * Handles the unified feedback's dismiss ("x") action, the only way left to remove a manual inline feedback: one
-     * already bound via the {@link feedback} input is persisted, so it must actually be deleted; one that was never
-     * bound (a freshly added, unsaved line) has nothing to delete and is just discarded. A non-manual feedback being
-     * edited is never deleted this way - dismissing it only reverts the in-progress edit.
-     */
-    removeFeedback() {
-        if (!this.isNewOrManual()) {
-            this.revertFeedbackEdit();
-        } else if (this.feedback()) {
-            this.deleteFeedback();
-        } else {
-            this.cancelFeedback();
+        if (this.readOnly()) {
+            return;
+        }
+        this.closeDraft();
+        if (!this.feedback()) {
+            this.onCancelFeedback.emit(this.codeLine());
         }
     }
 
-    /**
-     * Opens a non-manual feedback (e.g. automatic/static-analysis) for editing and focuses its text area. Manual/new
-     * feedback is always open already and never routes through here.
-     * @param line Line of code which is emitted to the parent
-     */
-    editFeedback(line: number) {
-        this.viewOnly.set(false);
-        // Save the old feedback in case the user cancels later
-        this.oldFeedback.set(deepClone(this.currentFeedback()));
-        this.onEditFeedback.emit(line);
+    removeFeedback(): void {
+        if (this.readOnly()) {
+            return;
+        }
+        const feedback = this.feedback();
+        if (!feedback) {
+            this.cancelFeedback();
+            return;
+        }
+        this.closeDraft();
+        this.onDeleteFeedback.emit(feedback);
+    }
+
+    editFeedback(): void {
+        if (this.readOnly()) {
+            return;
+        }
+        this.draft.set(deepClone(this.currentFeedback()));
+        this.edited.set(false);
+        this.onEditFeedback.emit(this.codeLine());
         setTimeout(() => this.unifiedFeedback()?.focusTextarea());
     }
 
-    /**
-     * Applies data from a dropped Structured Grading Instruction (SGI) to the feedback, then commits it the same
-     * way a field edit would for manual/new feedback.
-     * @param event Drop event with SGI data
-     */
-    updateFeedbackOnDrop(event: Event) {
-        const feedback = this.currentFeedback();
-        this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
-        this.onFieldChanged();
-    }
-
-    /**
-     * Builds the feedback text. When the feedback has a link with grading instruction it merges the feedback of
-     * the grading instruction with the feedback text provided by the assessor.
-     *
-     * @param feedback The feedback for which the text visible to the user should be created.
-     * @returns The formatted string representing the feedback text ready to display.
-     */
-    public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback, false);
-    }
-
-    /**
-     * This method prevents the propagation to global event listeners (especially the monaco event listener), so the backspace key can be used.
-     *
-     * As this component is rendered within the monaco code editor, the monaco keydown event listener is attached to input fields
-     * in this component.
-     * In the assessment the code editor is readonly, so it will prevent the default behavior of the backspace key.
-     *
-     * The listener is attached to the `<jhi-unified-feedback>` host element: the title/description/points inputs live
-     * inside that component, and their keydown events bubble up to the host, so a single binding still covers them all.
-     *
-     * To verify that the assumption of the side effects of the monaco code editor do still hold, use Chromes developer tools:
-     * 1. Inspect the textarea element
-     * 2. Go to the Event Listeners pane
-     * 3. Expand the keydown events to see which functions are bound to these events
-     * 4. Check if the monaco editor is bound to the keydown event and causes the issue when not using the handleKeydown method
-     * 5. You should observe, that when deleting the monaco event listener and NOT using the handleKeydown method, the backspace key works as expected
-     */
-    protected handleKeydown(event: KeyboardEvent) {
-        if (event.key === 'Backspace') {
-            event.stopPropagation();
+    updateFeedbackOnDrop(event: Event): void {
+        if (this.readOnly()) {
+            return;
         }
+        const next = deepClone(this.currentFeedback());
+        if (!this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(next, event)) {
+            return;
+        }
+        if (this.viewOnly()) {
+            this.editFeedback();
+        }
+        this.linkInstruction(next);
+    }
+
+    applyArmedInstruction(): void {
+        if (this.readOnly() || this.viewOnly()) {
+            return;
+        }
+        const next = deepClone(this.currentFeedback());
+        if (this.structuredGradingCriterionService.applyArmedInstructionToFeedback(next)) {
+            this.linkInstruction(next);
+        }
+    }
+
+    private linkInstruction(next: Feedback): void {
+        if (next.text) {
+            next.text = Feedback.markAdaptedIfAcceptedSuggestion(next.text);
+        }
+        this.commitDraft(next);
+    }
+
+    ngOnDestroy(): void {
+        this.selectionService.reserveInstruction(this);
+    }
+
+    /**
+     * Monaco forwards keys typed in a content widget to the editor, which would run its own commands, for example
+     * Backspace deleting code in the read-only editor. Only the assessment shortcuts handled by the assessment
+     * header (Ctrl+S, Ctrl+Enter, Ctrl+Shift+ArrowRight) may leave the card.
+     */
+    protected handleKeydown(event: KeyboardEvent): void {
+        if (event.ctrlKey && (event.key.toLowerCase() === 's' || event.key === 'Enter' || (event.shiftKey && event.key === 'ArrowRight'))) {
+            return;
+        }
+        event.stopPropagation();
     }
 }

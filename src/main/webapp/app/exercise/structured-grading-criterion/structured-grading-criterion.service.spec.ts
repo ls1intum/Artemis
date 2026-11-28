@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { provideHttpClient } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Structured Grading Criteria Service', () => {
     let service: StructuredGradingCriterionService;
@@ -60,6 +61,7 @@ describe('Structured Grading Criteria Service', () => {
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(5.0);
         });
+
         it('should calculate the total score too', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
@@ -86,6 +88,83 @@ describe('Structured Grading Criteria Service', () => {
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(2.5);
+        });
+
+        it('should apply an armed instruction to feedback without a drop event', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            const instruction = new GradingInstruction();
+            instruction.id = 9;
+            instruction.credits = 2.5;
+            selectionService.toggleArmedInstruction(instruction);
+
+            const feedback = new Feedback();
+            feedback.credits = 0;
+
+            expect(service.applyArmedInstructionToFeedback(feedback)).toBe(true);
+            expect(feedback.gradingInstruction).toBe(instruction);
+            expect(feedback.credits).toBe(2.5);
+            expect(selectionService.hasArmedInstruction()).toBe(false);
+            expect(service.applyArmedInstructionToFeedback(feedback)).toBe(false);
+        });
+
+        it('should not apply or consume an armed instruction when the drop payload is missing', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            const instruction = new GradingInstruction();
+            instruction.id = 9;
+            instruction.credits = 2.5;
+            selectionService.toggleArmedInstruction(instruction);
+
+            const feedback = new Feedback();
+            feedback.credits = 0;
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, new Event('drop'));
+
+            expect(feedback.gradingInstruction).toBeUndefined();
+            expect(feedback.credits).toBe(0);
+            expect(selectionService.hasArmedInstruction()).toBe(true);
+        });
+
+        it('should apply a dropped instruction from a non-empty text/plain payload', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            selectionService.toggleArmedInstruction({ id: 99, credits: 9 } as GradingInstruction);
+
+            const feedback = new Feedback();
+            const event = {
+                preventDefault() {},
+                dataTransfer: { getData: () => JSON.stringify({ id: 3, credits: 1 }) },
+            } as unknown as DragEvent;
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+
+            expect(feedback.gradingInstruction).toEqual({ id: 3, credits: 1 });
+            expect(feedback.credits).toBe(1);
+            expect(selectionService.hasArmedInstruction()).toBe(true);
+        });
+
+        it.each(['42', '{}', 'null', '"text"'])('should ignore a dropped JSON payload that is no instruction (%s)', (payload) => {
+            const feedback = { credits: 1 } as Feedback;
+            const event = { preventDefault() {}, dataTransfer: { getData: () => payload } } as unknown as DragEvent;
+
+            expect(service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)).toBe(false);
+            expect(feedback.gradingInstruction).toBeUndefined();
+            expect(feedback.credits).toBe(1);
+        });
+
+        it('should refuse a dropped instruction whose usage limit is reached, unless the feedback already links it', () => {
+            const instruction = { id: 3, credits: 1, usageCount: 1 } as GradingInstruction;
+            vi.spyOn(TestBed.inject(GradingInstructionSelectionService), 'canApplyInstruction').mockReturnValue(false);
+            const event = {
+                preventDefault() {},
+                dataTransfer: { getData: () => JSON.stringify(instruction) },
+            } as unknown as DragEvent;
+
+            const feedback = new Feedback();
+            feedback.credits = 0;
+            expect(service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event)).toBe(false);
+            expect(feedback.gradingInstruction).toBeUndefined();
+            expect(feedback.credits).toBe(0);
+
+            const linked = { gradingInstruction: { id: 3, credits: 1 } } as Feedback;
+            expect(service.updateFeedbackWithStructuredGradingInstructionEvent(linked, event)).toBe(true);
         });
     });
 

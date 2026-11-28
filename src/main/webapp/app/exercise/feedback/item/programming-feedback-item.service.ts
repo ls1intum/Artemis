@@ -112,7 +112,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const codeReference = this.getAiFeedbackCodeReference(feedback);
         // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
         // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
-        // linked grading instruction (see createGradingInstructionFeedbackItem).
+        // linked grading instruction (see gradingInstructionFeedbackItem).
         const gradingInstructionText = feedback.gradingInstruction?.feedback;
         const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
         return {

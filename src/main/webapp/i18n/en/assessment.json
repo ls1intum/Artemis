@@ -60,7 +60,15 @@
                 "deductions": "Deductions",
                 "finalScore": "Final",
                 "pointsShort": "{{points}} pts",
-                "pointsOfShort": "{{points}} / {{maxPoints}} pts"
+                "pointsOfShort": "{{points}} / {{maxPoints}} pts",
+                "title": "Title",
+                "instruction": "Instruction",
+                "feedbackUsage": {
+                    "limited": "Uses of this feedback: {{used}} of {{limit}} allowed.",
+                    "unlimited": "Uses of this feedback: {{used}}. This feedback has no usage limit."
+                },
+                "decreasePoints": "Decrease points",
+                "increasePoints": "Increase points"
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
@@ -72,7 +80,8 @@
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
                 "updateAfterComplaintFailed": "Updating the assessment failed.",
-                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?"
+                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?",
+                "incompleteFeedback": "Complete feedback text and points before submitting."
             },
             "dashboard": {
                 "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",

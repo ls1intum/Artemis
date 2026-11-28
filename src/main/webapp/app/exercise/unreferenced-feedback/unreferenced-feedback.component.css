@@ -78,6 +78,12 @@
     border-bottom: 1px solid var(--border-color);
 }
 
+.unreferenced-feedback__group-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .unreferenced-feedback__group-title {
     margin: 0;
     font-size: 1rem;
@@ -86,7 +92,7 @@
 
 .unreferenced-feedback__cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    grid-template-columns: repeat(auto-fill, min(22rem, 100%));
     gap: 0.5rem;
 
     /*

@@ -18,7 +18,11 @@
                         />
                     }
                 </ng-container>
-                <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="gradingCriteriaValue" />
+                <jhi-structured-grading-instructions-assessment-layout
+                    [readonly]="readOnly()"
+                    [allowArming]="exercise().type !== ExerciseType.MODELING"
+                    [criteria]="gradingCriteriaValue"
+                />
             </jhi-expandable-section>
         }
     </div>

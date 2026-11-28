@@ -1,3 +1,4 @@
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -11,9 +12,10 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { By } from '@angular/platform-browser';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faMinus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('UnifiedFeedbackComponent', () => {
@@ -35,6 +37,125 @@ describe('UnifiedFeedbackComponent', () => {
         fixture = TestBed.createComponent(UnifiedFeedbackComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    it('offers the shared instruction action only on editable assessment cards', () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        TestBed.inject(GradingInstructionSelectionService).toggleArmedInstruction({ id: 1, credits: 0, gradingScale: '', instructionDescription: '', feedback: '' });
+        fixture.detectChanges();
+        const applied = vi.fn();
+        component.applyInstruction.subscribe(applied);
+        (fixture.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
+        expect(applied).toHaveBeenCalledOnce();
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.assessment-apply-instruction')).toBeNull();
+    });
+
+    it('requires two clicks to delete an assessment card', () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        const deleted = vi.fn();
+        component.onDelete.subscribe(deleted);
+        const button = fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
+        expect(button.querySelector(`[data-icon="${faTrashAlt.iconName}"]`)).not.toBeNull();
+        button.click();
+        fixture.detectChanges();
+        expect(deleted).not.toHaveBeenCalled();
+        expect(button.querySelector(`[data-icon="${faTimes.iconName}"]`)).not.toBeNull();
+        expect(button.getAttribute('aria-label')).toBe(component.dismissConfirmTooltip());
+        button.click();
+        expect(deleted).toHaveBeenCalledOnce();
+    });
+
+    it('marks a missing comment in the assessment textarea and labels it', () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL_UNREFERENCED } as Feedback);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        const detail = fixture.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        expect(component.isDetailMissing()).toBe(true);
+        expect(detail.getAttribute('aria-invalid')).toBe('true');
+        expect(detail.classList).toContain('unified-feedback-detail-input-missing');
+        expect(detail.labels?.[0]?.textContent).toContain('artemisApp.assessment.detail.feedback');
+        expect(fixture.nativeElement.querySelector('.unified-feedback').classList).toContain('unified-feedback--success');
+        component.feedbackCredits.set(-1);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.unified-feedback').classList).toContain('unified-feedback--danger');
+    });
+
+    it('uses horizontal step buttons only in the assessment layout', async () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        await settle();
+        expect(fixture.nativeElement.querySelector('.tumaet-ui-input-number-horizontal')).not.toBeNull();
+        fixture.componentRef.setInput('assessmentLayout', false);
+        await settle();
+        expect(fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button')).toHaveLength(2);
+    });
+
+    it('keeps title and comment editing in the shared assessment layout', async () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.MANUAL_UNREFERENCED } as Feedback);
+        fixture.componentRef.setInput('feedbackTitle', 'Original title');
+        fixture.componentRef.setInput('feedbackDetail', 'Original comment');
+        const titles: (string | undefined)[] = [];
+        const comments: (string | undefined)[] = [];
+        component.feedbackTitle.subscribe((title) => titles.push(title));
+        component.feedbackDetail.subscribe((comment) => comments.push(comment));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const title = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+        const detail = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
+        expect(title.labels?.[0]?.textContent).toContain('artemisApp.assessment.detail.title');
+        title.value = 'Edited title';
+        title.dispatchEvent(new Event('input'));
+        detail.value = 'Edited comment';
+        detail.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+
+        expect(titles).toContain('Edited title');
+        expect(comments).toContain('Edited comment');
+        expect(fixture.nativeElement.querySelector('jhi-points-input')).not.toBeNull();
+    });
+
+    it('shows linked criteria and forwards unlinking without losing the stored title', async () => {
+        const feedback = {
+            text: 'Stored title',
+            credits: 2,
+            gradingInstruction: { id: 1, credits: 2, gradingScale: 'Good documentation', instructionDescription: 'When documentation is complete', feedback: 'Document the code' },
+        } as Feedback;
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('feedbackTitle', feedback.text);
+        fixture.componentRef.setInput('feedbackCredits', 2);
+        const unlinked = vi.fn();
+        component.instructionUnlinked.subscribe(unlinked);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input')).toBeNull();
+        // The instruction description is markdown, which renders asynchronously.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.textContent).toContain('When documentation is complete');
+        });
+        expect(fixture.nativeElement.textContent).toContain('Document the code');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-points').textContent.trim()).toBe('+2');
+        fixture.debugElement.query(By.directive(GradingInstructionLinkIconComponent)).componentInstance.removeLink();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(unlinked).toHaveBeenCalledOnce();
+        expect(feedback.text).toBe('Stored title');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title-input').value).toBe('Stored title');
+        expect(fixture.nativeElement.querySelector('jhi-points-input')).not.toBeNull();
     });
 
     it('should create', () => {
@@ -214,6 +335,17 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check` } as any);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('Missing null check');
+    });
+
+    it.each([true, false])('preserves the stored suggestion title and hides it only in assessment layout (%s)', (assessmentLayout) => {
+        const feedback = { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`, gradingInstruction: { feedback: 'Criterion comment' } } as Feedback;
+        fixture.componentRef.setInput('assessmentLayout', assessmentLayout);
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.detectChanges();
+
+        expect(component.inferredTitle()).toBe(assessmentLayout ? '' : 'Old title');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title')?.textContent ?? '').toBe(assessmentLayout ? '' : 'Old title');
+        expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`);
     });
 
     it('should strip the internal identifier from a non-graded feedback suggestion title', () => {

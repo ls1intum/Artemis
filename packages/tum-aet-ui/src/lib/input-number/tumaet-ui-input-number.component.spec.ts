@@ -23,6 +23,45 @@ describe('TumAetUiInputNumberComponent', () => {
         return fixture.debugElement.query(By.css('input')).nativeElement;
     }
 
+    it('provides accessible names for horizontal step buttons when labels are omitted', () => {
+        fixture.componentRef.setInput('showButtons', true);
+        fixture.componentRef.setInput('horizontalButtons', true);
+        fixture.detectChanges();
+
+        const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
+        expect(Array.from(buttons, (button) => button.getAttribute('aria-label'))).toEqual(['Decrease value', 'Increase value']);
+        expect(Array.from(buttons, (button) => button.tabIndex)).toEqual([0, 0]);
+    });
+
+    it('supports labelled horizontal stepping without moving focus or losing raw decimals', () => {
+        fixture.componentRef.setInput('showButtons', true);
+        fixture.componentRef.setInput('horizontalButtons', true);
+        fixture.componentRef.setInput('maxFractionDigits', 3);
+        fixture.componentRef.setInput('locale', 'en-US');
+        fixture.componentRef.setInput('incrementLabel', 'Increase points');
+        fixture.componentRef.setInput('decrementLabel', 'Decrease points');
+        fixture.componentRef.setInput('step', 0.5);
+        fixture.componentRef.setInput('snapToStep', true);
+        fixture.detectChanges();
+        input().value = '1.3';
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        const increase = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
+        const decrease = fixture.nativeElement.querySelector('[data-testid="input-number-decrement"]') as HTMLButtonElement;
+        expect(Array.from(fixture.nativeElement.querySelectorAll('input, button'))).toEqual([decrease, input(), increase]);
+        expect(decrease.tabIndex).toBe(0);
+        expect(increase.tabIndex).toBe(0);
+        expect(increase.getAttribute('aria-label')).toBe('Increase points');
+        expect(decrease.getAttribute('aria-label')).toBe('Decrease points');
+        expect(increase.getAttribute('aria-hidden')).toBeNull();
+        const down = new MouseEvent('mousedown', { cancelable: true });
+        increase.dispatchEvent(down);
+        expect(down.defaultPrevented).toBe(true);
+        increase.click();
+        fixture.detectChanges();
+        expect(input().value).toBe('1.5');
+    });
+
     it('forwards native input and accessibility attributes', () => {
         fixture.componentRef.setInput('inputId', 'capacity');
         fixture.componentRef.setInput('placeholder', 'Capacity');

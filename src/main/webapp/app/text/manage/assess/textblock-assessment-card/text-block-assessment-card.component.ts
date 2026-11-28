@@ -112,8 +112,8 @@ export class TextBlockAssessmentCardComponent {
             return;
         }
         this.select();
-        if (textBlockRef.feedback) {
-            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(textBlockRef.feedback, event);
+        if (textBlockRef.feedback && !this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(textBlockRef.feedback, event)) {
+            return;
         }
         this.feedbackDidChange();
     }

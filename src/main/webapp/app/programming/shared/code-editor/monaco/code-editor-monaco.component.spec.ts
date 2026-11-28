@@ -1,3 +1,4 @@
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -99,6 +100,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorMonacoComponent],
             providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -156,7 +158,7 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
             expect(zones.size).toBe(2);
             const cards = [...overlays.values()].map((overlay) => overlay.getDomNode());
             expect(cards[0]).not.toBe(cards[1]);
-            expect(cards.map((card) => card.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.value)).toEqual([
+            expect(cards.map((card) => card.querySelector<HTMLElement>('[data-testid="unified-feedback-text"]')?.textContent?.trim())).toEqual([
                 'First suggestion detail',
                 'Second suggestion detail',
             ]);
@@ -180,30 +182,76 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         assertIndependentCards();
     });
 
+    it('excludes canceled drafts from the guard before Angular removes their components', async () => {
+        await settle();
+        comp.addNewFeedback(2);
+        await settle();
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+
+        comp.discardUnsavedInlineFeedback();
+
+        expect(comp.inlineFeedbackComponents()).toHaveLength(1);
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
+    });
+
+    it('focuses the new draft when the keyboard shortcut is used on a line with existing feedback', async () => {
+        fixture.componentRef.setInput('feedbacks', [
+            {
+                id: 10,
+                type: FeedbackType.MANUAL,
+                reference: 'file:file1.java_line:1',
+                text: 'Existing feedback',
+                detailText: 'Existing detail',
+                credits: 1,
+            } as Feedback,
+        ]);
+        await settle();
+
+        let keydown: ((event: IKeyboardEvent) => void) | undefined;
+        vi.spyOn(comp.editor(), 'onKeyDown').mockImplementation((listener) => {
+            keydown = listener;
+            return { dispose: vi.fn() };
+        });
+        vi.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: 2, column: 1 });
+        internals(comp).setupAddFeedbackShortcut();
+        keydown?.({
+            browserEvent: new KeyboardEvent('keydown', { key: '+', code: 'Equal', shiftKey: true }),
+            preventDefault: vi.fn(),
+        } as unknown as IKeyboardEvent);
+        await settle();
+
+        const draft = comp.inlineFeedbackComponents().find((component) => component.feedback() === undefined)!;
+        expect(overlays).toHaveProperty('size', 2);
+        expect(document.activeElement).toBe(draft.elementRef.nativeElement.querySelector('.unified-feedback-detail-input'));
+    });
+
     it('edits and deletes only the selected unsaved suggestion on a shared line', async () => {
         const [first, second] = suggestions();
         fixture.componentRef.setInput('feedbacks', [first, second]);
         await settle();
         const secondCard = comp.inlineFeedbackComponents()[1];
+        secondCard.editFeedback();
+        await settle();
         const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.value = 'Edited second suggestion';
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
         await settle();
+        secondCard.updateFeedback();
+        await settle();
 
-        expect(comp.feedbackInternal()).toEqual([first, second]);
+        expect(comp.feedbackInternal()).toHaveLength(2);
         expect(comp.feedbackInternal()[0]).toBe(first);
-        expect(comp.feedbackInternal()[1]).toBe(second);
-        expect(first.detailText).toBe('First suggestion detail');
-        expect(second.detailText).toBe('Edited second suggestion');
-        expect(secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input')).toBe(textarea);
+        expect(comp.feedbackInternal()[1]).toMatchObject({ detailText: 'Edited second suggestion', credits: -2 });
+        expect(second.detailText).toBe('Second suggestion detail');
+        expect(secondCard.viewOnly()).toBe(true);
 
-        secondCard.deleteFeedback();
+        secondCard.removeFeedback();
         await settle();
         expect(comp.feedbackInternal()).toEqual([first]);
         expect(overlays.size).toBe(1);
         expect(zones.size).toBe(1);
         const remainingCard = [...overlays.values()][0].getDomNode();
-        expect(remainingCard.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.value).toBe('First suggestion detail');
+        expect(remainingCard.querySelector('[data-testid="unified-feedback-text"]')?.textContent).toContain('First suggestion detail');
     });
 
     it('retains the focused input on a cloned update and deletes only one of two identical unsaved suggestions', async () => {
@@ -212,6 +260,8 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         fixture.componentRef.setInput('feedbacks', [first, second]);
         await settle();
         const secondCard = comp.inlineFeedbackComponents()[1];
+        secondCard.editFeedback();
+        await settle();
         const textarea: HTMLTextAreaElement = secondCard.elementRef.nativeElement.querySelector('.unified-feedback-detail-input');
         textarea.focus();
         textarea.setSelectionRange(7, 7);
@@ -228,12 +278,40 @@ describe('CodeEditorMonacoComponent same-line suggestions', () => {
         expect(textarea.value).toBe('First suggestion detail');
         expect(textarea.selectionStart).toBe(7);
         expect(textarea.selectionEnd).toBe(7);
-        secondCard.deleteFeedback();
+        secondCard.removeFeedback();
         await settle();
 
         expect(comp.feedbackInternal()).toHaveLength(1);
         expect(comp.feedbackInternal()[0]).toBe(first);
         expect(overlays.size).toBe(1);
+    });
+    it('keeps card A’s working copy while card B is saved, then saves A without losing its edits', async () => {
+        const [first, second] = suggestions();
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        await settle();
+        const [cardA, cardB] = comp.inlineFeedbackComponents();
+        cardA.editFeedback();
+        await settle();
+        const comment = cardA.elementRef.nativeElement.querySelector('[data-testid="feedback-detail"]') as HTMLTextAreaElement;
+        comment.value = 'Unsaved comment A';
+        comment.dispatchEvent(new Event('input'));
+        const points = cardA.elementRef.nativeElement.querySelector('jhi-points-input input') as HTMLInputElement;
+        points.value = '2.5';
+        points.dispatchEvent(new Event('input'));
+        await settle();
+        cardB.editFeedback();
+        await settle();
+        cardB.updateFeedback();
+        await settle();
+        expect(comp.inlineFeedbackComponents()[0]).toBe(cardA);
+        expect(comment.value).toBe('Unsaved comment A');
+        expect(points.value).toBe('2.5');
+        expect(first.detailText).toBe('First suggestion detail');
+        expect(comp.hasUnsavedInlineFeedback()).toBe(true);
+        cardA.updateFeedback();
+        await settle();
+        expect(comp.feedbackInternal()[0]).toMatchObject({ detailText: 'Unsaved comment A', credits: 2.5 });
+        expect(comp.hasUnsavedInlineFeedback()).toBe(false);
     });
 });
 
@@ -242,7 +320,6 @@ describe('CodeEditorMonacoComponent', () => {
 
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
-    let getInlineFeedbackNodeStub: ReturnType<typeof vi.spyOn>;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadFileFromRepositoryStub: ReturnType<typeof vi.spyOn>;
 
@@ -272,6 +349,7 @@ describe('CodeEditorMonacoComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
+                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
 
@@ -285,7 +363,7 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
         // Provide a safe default so accidental file loads during change detection don't throw
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
-        getInlineFeedbackNodeStub = vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
+        vi.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         fixture.componentRef.setInput('sessionId', 'test');
@@ -1211,12 +1289,15 @@ describe('CodeEditorMonacoComponent', () => {
         });
         vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation((() => {}) as any);
         const element = document.createElement('div');
-        getInlineFeedbackNodeStub.mockImplementationOnce(() => undefined).mockImplementation(() => element);
+        vi.spyOn(comp, 'inlineFeedbackComponents').mockReturnValue([
+            { codeLine: () => feedbackLineZeroBased, feedback: () => undefined, elementRef: { nativeElement: element } },
+        ] as unknown as readonly CodeEditorTutorAssessmentInlineFeedbackComponent[]);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
         await vi.advanceTimersByTimeAsync(20);
         expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
+        expect(comp.editor().addLineWidget).toHaveBeenCalledWith(feedbackLineOneBased, 'feedback-new-' + feedbackLineZeroBased, element);
         vi.useRealTimers();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();

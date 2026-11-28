@@ -76,6 +76,21 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.detectChanges();
     });
 
+    it('keeps title editing connected to the text-block feedback', async () => {
+        const changes = vi.fn();
+        component.feedbackChange.subscribe(changes);
+        await fixture.whenStable();
+        const title = compiled.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+
+        title.value = 'Tutor title';
+        title.dispatchEvent(new Event('input'));
+        await fixture.whenStable();
+
+        expect(component.feedback().text).toBe('Tutor title');
+        expect(changes).toHaveBeenCalledWith(component.feedback());
+        expect(compiled.querySelector('jhi-points-input')).not.toBeNull();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
 
@@ -86,40 +101,20 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(input).toBeTruthy();
     });
 
-    it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('#dismiss-icon');
-        let confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeTruthy();
-        expect(confirm).toBeFalsy();
-
-        component.feedback().credits = 1;
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().detailText = 'Lorem Ipsum';
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().credits = 0;
-        reapplyFeedback();
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeFalsy();
-        expect(confirm).toBeTruthy();
-
-        component.feedback().detailText = '';
-        reapplyFeedback();
-
-        button = compiled.querySelector('#dismiss-icon');
-        confirm = compiled.querySelector('#confirm-icon');
-        expect(button).toBeTruthy();
-        expect(confirm).toBeFalsy();
+    it('offers the two-step delete action for both empty and populated assessment feedback', () => {
+        for (const [credits, detailText] of [
+            [0, ''],
+            [1, ''],
+            [1, 'Tutor comment'],
+            [0, 'Tutor comment'],
+        ] as const) {
+            component.feedback().credits = credits;
+            component.feedback().detailText = detailText;
+            reapplyFeedback();
+            expect(compiled.querySelector('[data-testid="delete-feedback"] button')).not.toBeNull();
+            expect(compiled.querySelector('#dismiss-icon')).toBeNull();
+            expect(compiled.querySelector('#confirm-icon')).toBeNull();
+        }
     });
 
     it('should call escKeyup when keyEvent', () => {
@@ -136,14 +131,16 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
-    it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
-        // Set feedback credits to non-zero which requires confirmation
+    it('keeps the feedback until the tutor clicks the delete control twice', () => {
         component.feedback().credits = 1;
-        fixture.changeDetectorRef.detectChanges();
-
-        // Verify confirm icon is displayed when feedback has credits
-        const confirmIcon = compiled.querySelector('#confirm-icon');
-        expect(confirmIcon).toBeTruthy();
+        reapplyFeedback();
+        const close = vi.fn();
+        component.onClose.subscribe(close);
+        (compiled.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
+        expect(close).not.toHaveBeenCalled();
+        fixture.detectChanges();
+        (compiled.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
+        expect(close).toHaveBeenCalledOnce();
     });
 
     it('should show link icon when feedback is associated with grading instruction', () => {
@@ -188,7 +185,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
 
         // when
-        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{"id":1,"credits":1}') } } as unknown as Event;
         component.connectFeedbackWithInstruction(mockEvent);
 
         // then
@@ -232,7 +229,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component.structuredGradingCriterionService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
         //@ts-ignore
         const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
-        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{}') } } as unknown as Event;
+        const mockEvent = { preventDefault: vi.fn(), dataTransfer: { getData: vi.fn().mockReturnValue('{"id":1,"credits":1}') } } as unknown as Event;
 
         component.connectFeedbackWithInstruction(mockEvent);
 

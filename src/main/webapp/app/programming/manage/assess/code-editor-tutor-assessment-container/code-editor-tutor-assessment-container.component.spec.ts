@@ -25,7 +25,10 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
 
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import {
+    CodeEditorTutorAssessmentContainerComponent,
+    canLeaveCodeEditorTutorAssessmentContainer,
+} from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -34,7 +37,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, ParamMap, Router, RouterStateSnapshot, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -259,6 +262,90 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
+        const discard = vi.fn();
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => true,
+            discardUnsavedInlineFeedback: discard,
+        } as unknown as CodeEditorContainerComponent);
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.participation.set(participation);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+
+        comp.save();
+        await comp.submit();
+        comp.nextSubmission();
+
+        const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+        comp.handleBeforeUnload(beforeUnload);
+        expect(beforeUnload.defaultPrevented).toBe(true);
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(false);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+        expect(confirmSpy).toHaveBeenCalledTimes(2);
+        expect(discard).not.toHaveBeenCalled();
+    });
+
+    it('should discard unsaved inline cards when the tutor confirms leaving', () => {
+        const discard = vi.fn();
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => true,
+            discardUnsavedInlineFeedback: discard,
+        } as unknown as CodeEditorContainerComponent);
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+        comp.hasPendingChanges = true;
+        comp.submission.set(submission);
+
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(true);
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(discard).toHaveBeenCalledOnce();
+    });
+
+    it.each([false, true])('preserves live result references when a save or submit fails (%s)', async (submit) => {
+        const feedback = { id: 404, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:1', detailText: 'Saved', result } as Feedback;
+        result.submission = submission;
+        result.feedbacks = [feedback];
+        submission.results = [result];
+        const liveResults = submission.results;
+        comp.participation.set(participation);
+        comp.exercise.set(exercise);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+        const response = new Subject<HttpResponse<Result>>();
+        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
+
+        if (submit) {
+            await comp.submit();
+        } else {
+            comp.save();
+        }
+
+        const request = save.mock.calls[0][1];
+        expect(request).not.toBe(result);
+        expect(request.submission).not.toBe(submission);
+        expect(request.submission?.results).toEqual([]);
+        expect(request.feedbacks?.[0]).not.toBe(feedback);
+        expect(request.feedbacks?.[0].result).toBeUndefined();
+        expect(comp.inlineFeedbackReadOnly()).toBe(true);
+        expect(submission.results).toBe(liveResults);
+        expect(feedback.result).toBe(result);
+
+        response.error(new HttpErrorResponse({ status: 500, error: { errorKey: 'saveFailed' } }));
+        await flushMicrotasks();
+
+        expect(comp.manualResult()).toBe(result);
+        expect(submission.results).toBe(liveResults);
+        expect(result.feedbacks).toEqual([feedback]);
+        expect(feedback.result).toBe(result);
+        expect(comp.inlineFeedbackReadOnly()).toBe(false);
     });
 
     it('should highlight lines that were changed', async () => {
@@ -726,6 +813,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
         const navigateBackStub = vi.spyOn(comp, 'navigateBack');
+        let hasUnsavedInlineFeedback = true;
+        const discardInlineFeedback = vi.fn(() => (hasUnsavedInlineFeedback = false));
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => hasUnsavedInlineFeedback,
+            discardUnsavedInlineFeedback: discardInlineFeedback,
+        } as unknown as CodeEditorContainerComponent);
         const cancelBackStub = vi.spyOn(programmingAssessmentManualResultService, 'cancelAssessment').mockReturnValue(of(undefined));
         global.confirm = () => true;
         const confirmSpy = vi.spyOn(window, 'confirm');
@@ -734,6 +827,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(confirmSpy).toHaveBeenCalledOnce();
         expect(comp.cancelBusy()).toBe(false);
         expect(navigateBackStub).toHaveBeenCalledOnce();
+        expect(discardInlineFeedback).toHaveBeenCalledOnce();
+        expect(discardInlineFeedback.mock.invocationCallOrder[0]).toBeLessThan(navigateBackStub.mock.invocationCallOrder[0]);
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(true);
         expect(cancelBackStub).toHaveBeenCalledOnce();
     });
 
