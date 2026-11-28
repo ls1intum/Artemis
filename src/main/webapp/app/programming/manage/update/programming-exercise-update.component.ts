@@ -21,6 +21,8 @@ import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators'
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { SandboxConfigurationCardComponent } from 'app/sandbox/manage/sandbox-configuration-card/sandbox-configuration-card.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -48,7 +50,14 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import {
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_PLAGIARISM,
+    MODULE_FEATURE_SANDBOX,
+    MODULE_FEATURE_THEIA,
+    PROFILE_LOCALCI,
+} from 'app/app.constants';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -113,6 +122,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
+        SandboxConfigurationCardComponent,
         ProgrammingExerciseBuildTimeWindowComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseGroupTimelineLockComponent,
@@ -132,6 +142,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -331,6 +342,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
+    /**
+     * Whether the sandbox card is shown in the advanced mode: only when an existing exercise is edited by an instructor of its course, and the sandbox module
+     * is enabled. Creating an exercise uses the template's setup and an import keeps the setup of its source; the card changes it afterwards.
+     */
+    readonly sandboxCardAvailable = signal(false);
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -661,7 +677,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     }
                 }),
             )
-            .subscribe(() => this.setupMetadataSync());
+            .subscribe(() => {
+                this.setupMetadataSync();
+                this.updateSandboxCardAvailability();
+            });
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
@@ -695,6 +714,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.confirmationService.close('hyperionSettingsReloadConfirmation');
         this.metadataSyncService.destroy();
         this.exerciseEditorSyncService.disconnect();
+    }
+
+    private updateSandboxCardAvailability(): void {
+        const editsExistingExercise =
+            this.isEdit && !this.isImportFromExistingExercise && !this.isImportFromFile && !this.isImportFromSharing && this.programmingExercise?.id !== undefined;
+        this.sandboxCardAvailable.set(
+            editsExistingExercise &&
+                this.profileService.isModuleFeatureActive(MODULE_FEATURE_SANDBOX) &&
+                this.accountService.isAtLeastInstructorForExercise(this.programmingExercise),
+        );
     }
 
     private setupMetadataSync(): void {

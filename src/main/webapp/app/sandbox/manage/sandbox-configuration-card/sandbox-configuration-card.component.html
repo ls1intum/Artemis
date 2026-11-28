@@ -1,0 +1,231 @@
+@if (isAvailable()) {
+    <section>
+        <h3 jhiTranslate="artemisApp.sandbox.title" id="artemisApp.sandbox.title"></h3>
+        <p jhiTranslate="artemisApp.sandbox.description"></p>
+
+        @if (loadFailed()) {
+            <tumaet-ui-message severity="error" class="sf-warning block" data-testid="sandbox-load-error">
+                <span jhiTranslate="artemisApp.sandbox.loadError"></span>
+                <button type="button" class="sf-retry" (click)="retryLoadConfiguration()" data-testid="sandbox-load-retry">
+                    <fa-icon [icon]="faRotateRight" />
+                    <span jhiTranslate="artemisApp.sandbox.retry"></span>
+                </button>
+            </tumaet-ui-message>
+        } @else {
+            <div class="sf-card" [class]="'sf-card--' + statusVariant()" data-testid="sandbox-card">
+                <div class="sf-card__main">
+                    <div class="sf-card__left">
+                        @if (showToggle()) {
+                            <tumaet-ui-toggle-switch
+                                inputId="sandboxActivateToggle"
+                                [ngModel]="isToggleOn()"
+                                [ngModelOptions]="{ standalone: true }"
+                                [disabled]="isBusy()"
+                                (changed)="onToggleChanged($event)"
+                                [ariaLabel]="'artemisApp.sandbox.activateLabel' | artemisTranslate"
+                                data-testid="sandbox-activate-toggle"
+                            />
+                        }
+                        <div>
+                            <div class="sf-title-row">
+                                <span class="font-medium" jhiTranslate="artemisApp.sandbox.activateLabel"></span>
+                                <span class="text-sm font-normal text-muted-color" jhiTranslate="artemisApp.sandbox.subtitle"></span>
+                                <span class="sf-pill" [class]="'sf-pill--' + statusVariant()" data-testid="sandbox-status-pill">
+                                    @if (isBusy()) {
+                                        <fa-icon [icon]="faCircleNotch" class="sf-spin text-[10px]" />
+                                    } @else if (status() === SandboxCardStatus.ERROR || isMisconfigured()) {
+                                        <fa-icon [icon]="faTriangleExclamation" class="text-[10px]" />
+                                    } @else {
+                                        <span class="sf-dot"></span>
+                                    }
+                                    <span [jhiTranslate]="'artemisApp.sandbox.status.' + statusVariant()"></span>
+                                </span>
+                            </div>
+                            <div class="sf-desc text-sm" data-testid="sandbox-status-text">
+                                @if (loading()) {
+                                    <span jhiTranslate="artemisApp.sandbox.desc.loading" data-testid="sandbox-loading"></span>
+                                } @else {
+                                    @switch (status()) {
+                                        @case (SandboxCardStatus.GENERATING) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.generating"></span>
+                                        }
+                                        @case (SandboxCardStatus.DELETING) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.deleting"></span>
+                                        }
+                                        @case (SandboxCardStatus.ERROR) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.error"></span>
+                                        }
+                                        @case (SandboxCardStatus.CONFIGURED) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.configured"></span>
+                                            @if (missingTestClasses().length) {
+                                                <span
+                                                    class="block"
+                                                    jhiTranslate="artemisApp.sandbox.desc.missingTestClasses"
+                                                    [translateValues]="{ classes: missingTestClasses().join(', ') }"
+                                                    data-testid="sandbox-missing-test-classes"
+                                                ></span>
+                                                <button
+                                                    type="button"
+                                                    tumAetUiButton
+                                                    size="small"
+                                                    class="mt-1"
+                                                    [disabled]="isBusy()"
+                                                    (click)="onAddMissingTestClasses()"
+                                                    data-testid="sandbox-add-test-classes"
+                                                    jhiTranslate="artemisApp.sandbox.addTestClasses"
+                                                ></button>
+                                            }
+                                            @for (policyPath of uncheckedPolicyFiles(); track policyPath) {
+                                                <span
+                                                    class="block"
+                                                    jhiTranslate="artemisApp.sandbox.desc.testClassListNotFound"
+                                                    [translateValues]="{ path: policyPath }"
+                                                    data-testid="sandbox-test-class-list-not-found"
+                                                ></span>
+                                            }
+                                        }
+                                        @case (SandboxCardStatus.INACTIVE) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.inactive"></span>
+                                        }
+                                        @case (SandboxCardStatus.MISCONFIGURED) {
+                                            <ul class="sf-list" data-testid="sandbox-misconfigured-problems">
+                                                @for (message of problemMessages(); track $index) {
+                                                    <li>{{ message.key | artemisTranslate: message.params }}</li>
+                                                }
+                                            </ul>
+                                            @if (hasUnrepairableProblem()) {
+                                                <span class="block" jhiTranslate="artemisApp.sandbox.desc.notRepairable" data-testid="sandbox-not-repairable"></span>
+                                            }
+                                        }
+                                        @case (SandboxCardStatus.UNSUPPORTED) {
+                                            <span jhiTranslate="artemisApp.sandbox.desc.unsupported"></span>
+                                            <ul class="sf-list" data-testid="sandbox-unsupported-reasons">
+                                                @for (message of problemMessages(); track $index) {
+                                                    <li>{{ message.key | artemisTranslate: message.params }}</li>
+                                                }
+                                            </ul>
+                                        }
+                                        @default {}
+                                    }
+                                }
+                            </div>
+                            @if (isMisconfigured()) {
+                                <div class="sf-actions">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        size="small"
+                                        [disabled]="isBusy() || hasUnrepairableProblem()"
+                                        (click)="onRepair()"
+                                        data-testid="sandbox-repair"
+                                        jhiTranslate="artemisApp.sandbox.repair"
+                                    ></button>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        size="small"
+                                        severity="danger"
+                                        variant="outlined"
+                                        [disabled]="isBusy()"
+                                        (click)="onDeactivate()"
+                                        data-testid="sandbox-deactivate"
+                                        jhiTranslate="artemisApp.sandbox.deactivate"
+                                    ></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (showVersionSelect()) {
+                        <div class="sf-version">
+                            <span class="sf-caps">
+                                <span jhiTranslate="artemisApp.sandbox.frameworkVersion"></span>
+                                <fa-icon
+                                    [icon]="faQuestionCircle"
+                                    class="cursor-help text-[10px]"
+                                    [tumAetUiTooltip]="'artemisApp.sandbox.frameworkVersionHelp' | artemisTranslate"
+                                    data-testid="sandbox-framework-version-help"
+                                />
+                            </span>
+                            <tumaet-ui-select
+                                inputId="sandboxFrameworkVersion"
+                                [ariaLabel]="'artemisApp.sandbox.frameworkVersion' | artemisTranslate"
+                                [options]="frameworkVersions()"
+                                optionLabel="label"
+                                optionValue="version"
+                                optionDisabled="incompatible"
+                                [ngModel]="state().frameworkVersion"
+                                [ngModelOptions]="{ standalone: true }"
+                                [disabled]="isVersionSelectDisabled()"
+                                (selectionChange)="onFrameworkVersionChanged($event)"
+                                size="small"
+                                data-testid="sandbox-framework-version-select"
+                            />
+                        </div>
+                        @if (incompatibleVersions().length > 0) {
+                            <ul class="sf-list text-sm" data-testid="sandbox-incompatible-versions">
+                                @for (compatibility of incompatibleVersions(); track compatibility.version) {
+                                    <li
+                                        jhiTranslate="artemisApp.sandbox.versionIncompatible"
+                                        [translateValues]="{ version: compatibility.version, details: (compatibility.incompatibilities ?? []).join('; ') }"
+                                    ></li>
+                                }
+                            </ul>
+                        }
+                    }
+                </div>
+
+                <div class="sf-syncline" data-testid="sandbox-sync-line">
+                    @if (isUnsupported()) {
+                        <span jhiTranslate="artemisApp.sandbox.sync.unsupported"></span>
+                    } @else if (loading()) {
+                        <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                        <span jhiTranslate="artemisApp.sandbox.sync.loading"></span>
+                    } @else {
+                        @switch (status()) {
+                            @case (SandboxCardStatus.GENERATING) {
+                                <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                                <span jhiTranslate="artemisApp.sandbox.sync.generating"></span>
+                            }
+                            @case (SandboxCardStatus.DELETING) {
+                                <fa-icon [icon]="faCircleNotch" class="sf-spin" />
+                                <span jhiTranslate="artemisApp.sandbox.sync.deleting"></span>
+                            }
+                            @case (SandboxCardStatus.CONFIGURED) {
+                                <span jhiTranslate="artemisApp.sandbox.sync.configured"></span>
+                            }
+                            @case (SandboxCardStatus.MISCONFIGURED) {
+                                <fa-icon [icon]="faTriangleExclamation" />
+                                <span jhiTranslate="artemisApp.sandbox.sync.misconfigured"></span>
+                                @if (state().errorDetail) {
+                                    <span class="sf-error-detail" data-testid="sandbox-error-detail">{{ state().errorDetail }}</span>
+                                }
+                                @if (hasFailedOperation()) {
+                                    <button type="button" class="sf-retry" [disabled]="isBusy()" (click)="onRetry()" data-testid="sandbox-retry">
+                                        <fa-icon [icon]="faRotateRight" />
+                                        <span jhiTranslate="artemisApp.sandbox.retry"></span>
+                                    </button>
+                                }
+                            }
+                            @case (SandboxCardStatus.ERROR) {
+                                <fa-icon [icon]="faTriangleExclamation" />
+                                <span jhiTranslate="artemisApp.sandbox.sync.error"></span>
+                                @if (state().errorDetail) {
+                                    <span class="sf-error-detail" data-testid="sandbox-error-detail">{{ state().errorDetail }}</span>
+                                }
+                                <button type="button" class="sf-retry" [disabled]="isBusy()" (click)="onRetry()" data-testid="sandbox-retry">
+                                    <fa-icon [icon]="faRotateRight" />
+                                    <span jhiTranslate="artemisApp.sandbox.retry"></span>
+                                </button>
+                            }
+                            @default {
+                                <span jhiTranslate="artemisApp.sandbox.sync.inactive"></span>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+            <tumaet-ui-confirm-dialog [key]="DEACTIVATE_CONFIRMATION_KEY" />
+        }
+    </section>
+}

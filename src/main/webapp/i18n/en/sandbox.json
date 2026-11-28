@@ -1,0 +1,79 @@
+{
+    "artemisApp": {
+        "sandbox": {
+            "title": "Security",
+            "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it switches off the sandbox and everything the security policy configures for the tests.",
+            "activateLabel": "Activate Security Framework",
+            "subtitle": "Programming Exercise Security Framework",
+            "frameworkVersion": "Framework version",
+            "frameworkVersionHelp": "The Ares release the tests run with, pinned in the build file of the tests repository. Newer releases support more policy settings and fix sandbox issues, so new exercises use the latest one. Choose an older release only if the exercise must keep behaving exactly as it did with it.",
+            "status": {
+                "loading": "Loading",
+                "inactive": "Inactive",
+                "generating": "Generating",
+                "configured": "Configured",
+                "deleting": "Deleting",
+                "error": "Error",
+                "misconfigured": "Misconfigured",
+                "unsupported": "Not supported"
+            },
+            "desc": {
+                "loading": "Reading the Security Framework state of the tests repository.",
+                "inactive": "All test classes run without the sandbox.",
+                "generating": "Saving the security policy to the tests repository.",
+                "configured": "The tests repository is set up for the sandbox. Artemis checked its files, but no Ares build has confirmed yet that Ares accepted the policy.",
+                "deleting": "Removing the Security Framework from this exercise.",
+                "error": "The last Security Framework operation failed. Retry it to sync the security policy.",
+                "missingTestClasses": "These test classes are missing in the policy and are treated like student code: {{ classes }}. Adding them never removes an entry.",
+                "testClassListNotFound": "The list of test classes in the policy file {{ path }} could not be checked.",
+                "notRepairable": "Artemis cannot repair an invalid, too large or unreadable policy file automatically. Fix the file in the tests repository or deactivate the Security Framework.",
+                "unsupported": "Artemis cannot manage the sandbox of this test setup automatically:"
+            },
+            "misconfigured": {
+                "MISSING": "Misconfigured: the policy file {{ path }} is missing, so the tests of {{ classes }} fail.",
+                "INVALID_PATH": "Misconfigured: the path of the policy file {{ path }} is invalid, so the tests of {{ classes }} fail.",
+                "TOO_LARGE": "Misconfigured: the policy file {{ path }} is too large, so the tests of {{ classes }} fail.",
+                "UNPARSEABLE": "Misconfigured: the policy file {{ path }} cannot be read, so the tests of {{ classes }} fail."
+            },
+            "unsupportedReason": {
+                "UNEVALUABLE_ARGUMENTS": "{{ location }}: A @Policy annotation uses an expression instead of a literal value.",
+                "POLICY_NOT_ON_TOP_LEVEL_TYPE": "{{ location }}: A @Policy annotation is placed on a method, a field or a nested type instead of the test class.",
+                "POLICY_ON_ANNOTATION_TYPE": "{{ location }}: A @Policy annotation is placed on an annotation type.",
+                "MULTIPLE_TOP_LEVEL_TYPES": "{{ location }}: The file declares more than one top-level type that is a test class or carries a @Policy annotation.",
+                "TESTS_IN_NESTED_TYPE": "{{ location }}: Tests or Ares annotations are inside a nested type.",
+                "TEST_CLASS_WITHOUT_POLICY": "{{ location }}: A test class uses the Ares sandbox without its own @Policy annotation.",
+                "TEST_CLASS_WITHOUT_ARES": "{{ location }}: A test class does not register the Ares sandbox through @Public, @Hidden, @PublicTest or @HiddenTest.",
+                "ARES_1": "{{ location }}: The tests use Ares 1, whose own sandbox keeps running.",
+                "NO_ARES_2": "{{ location }}: The tests do not use Ares 2.",
+                "NO_ARES_VERSION_PINNED": "{{ location }}: The build file does not pin an Ares version.",
+                "ARES_VERSION_IN_MAVEN_PROFILE": "{{ location }}: A Maven profile pins the Ares version, so the version the build uses depends on the active profiles."
+            },
+            "sync": {
+                "loading": "Loading the state of the tests repository…",
+                "inactive": "Activating restores the previous policy or generates a default one.",
+                "generating": "Saving the policy to the tests repository…",
+                "configured": "Policy saved in the tests repository · not yet confirmed by an Ares build.",
+                "deleting": "Removing the security policy from the tests repository…",
+                "error": "Sync failed · retry the operation.",
+                "misconfigured": "Ares fails the affected tests until the policy is repaired or deactivated.",
+                "unsupported": "Artemis leaves the sandbox of the tests repository as it is."
+            },
+            "addTestClasses": "Add missing test classes",
+            "repair": "Repair",
+            "deactivate": "Deactivate",
+            "deactivateConfirmation": {
+                "header": "Deactivate the Security Framework?",
+                "message": "Deactivating creates a commit in the tests repository that deletes the security policy with all its settings, and the template and solution builds run again. This switches off the sandbox for student code and everything the policy configures for the tests, such as hidden-test scheduling, output handling and failure reporting. Ares features the tests use directly, such as @StrictTimeout, keep working. Hidden tests are then protected only by the test visibility settings of Artemis, not by Ares. Activating again restores the last policy from the repository history, or generates a default policy if none is found.",
+                "aresLibraryStays": "The tests also use other parts of Ares ({{ apis }}), so the Ares library stays in the build file.",
+                "confirm": "Deactivate"
+            },
+            "retry": "Retry",
+            "loadError": "Couldn't load the security status.",
+            "latestSuffix": "(latest)",
+            "noLongerSupportedSuffix": "(no longer supported)",
+            "incompatibleSuffix": "(does not accept the policy)",
+            "unverifiedSuffix": "(compatibility not verified)",
+            "versionIncompatible": "Version {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}"
+        }
+    }
+}
