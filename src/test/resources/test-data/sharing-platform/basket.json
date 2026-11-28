@@ -1,0 +1,79 @@
+{
+  "userInfo" : {
+    "email" : "author@example.org"
+  },
+  "exerciseInfo" : [ {
+    "project" : {
+      "project_id" : 42,
+      "project_name" : "Wörter und Listen",
+      "namespace" : null,
+      "main_group" : null,
+      "sub_group" : null,
+      "url" : "https://git.example.org/exercises/lists",
+      "last_activity_at" : "2025-10-02T11:22:33.123Z",
+      "visibility" : "internal",
+      "users" : null,
+      "groups" : null,
+      "star_count" : 0,
+      "open_issues_count" : 0,
+      "forks_count" : 0,
+      "description" : null,
+      "archived" : false,
+      "commit_id" : null
+    },
+    "file" : {
+      "filename" : null,
+      "path" : "lists/exercise.json",
+      "commit_id" : null,
+      "parentId" : null,
+      "children" : null,
+      "indexing_date" : "2025-10-02T11:23:33Z",
+      "last_activity_at" : null
+    },
+    "metadata" : {
+      "assesses" : null,
+      "audience" : null,
+      "contributor" : null,
+      "creator" : null,
+      "description" : null,
+      "difficulty" : null,
+      "educationalAlignment" : null,
+      "educationalFramework" : null,
+      "educationalLevel" : null,
+      "educationalUse" : null,
+      "format" : null,
+      "identifier" : null,
+      "interactivityType" : null,
+      "isBasedOn" : null,
+      "image" : null,
+      "keyword" : null,
+      "language" : null,
+      "learningResourceType" : "programming exercise",
+      "license" : null,
+      "metadataVersion" : null,
+      "programmingLanguage" : [ "Java" ],
+      "publisher" : null,
+      "requires" : null,
+      "status" : null,
+      "structure" : null,
+      "subject" : null,
+      "teaches" : null,
+      "timeRequired" : null,
+      "title" : "Wörter und Listen",
+      "typicalAgeRange" : null,
+      "version" : null,
+      "valid" : null,
+      "publicVisibility" : null,
+      "repositoryURL" : "https://git.example.org/exercises/lists"
+    },
+    "searchStatistics" : null,
+    "exerciseId" : "[42]lists",
+    "ranking5" : 0,
+    "supportedActions" : [ {
+      "plugin" : "Artemis",
+      "action" : "import",
+      "commandName" : "Import into Artemis"
+    } ]
+  } ],
+  "tokenValidUntil" : 1760000000000
+}

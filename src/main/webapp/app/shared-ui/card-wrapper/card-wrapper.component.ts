@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

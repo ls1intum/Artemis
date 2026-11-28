@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PERSONAL_ACCESS_TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractUsernameAndPassword;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
@@ -351,6 +352,9 @@ public class LocalVCAccessLogRecorderService {
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
         String password = usernameAndPassword.password();
+        if (password.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX)) {
+            return AuthenticationMechanism.AGENT_ACCESS_TOKEN;
+        }
         if (!password.startsWith(TOKEN_PREFIX)) {
             return AuthenticationMechanism.PASSWORD;
         }

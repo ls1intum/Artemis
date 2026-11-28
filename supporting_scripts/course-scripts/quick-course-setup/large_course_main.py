@@ -28,7 +28,6 @@ ADMIN_PASSWORD: str = config.get("Settings", "admin_password")
 COURSE_NAME: str = config.get("CourseSettings", "course_name")
 COURSE_ID: str = config.get("CourseSettings", "course_id")
 CREATE_COURSE: bool = config.get("CourseSettings", "create_course").lower() == "true"
-IS_LOCAL_COURSE: bool = config.get("CourseSettings", "is_local_course").lower() == "true"
 
 try:
     MAX_WORKERS: int = int(config.get("Settings", "max_threads"))

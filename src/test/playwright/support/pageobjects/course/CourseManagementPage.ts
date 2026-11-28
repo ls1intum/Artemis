@@ -212,7 +212,7 @@ export class CourseManagementPage {
     }
 
     /**
-     * Adds the user to a specific group of the course.
+     * Gives the user a specific role in the course.
      * @param credentials The user that gets added to the group.
      * @param groupType The type of group (e.g., 'students', 'tutors', 'instructors').
      * @param selector The selector for the group action button.
@@ -239,24 +239,24 @@ export class CourseManagementPage {
     }
 
     /**
-     * Adds the user to the student group of the course.
-     * @param credentials The user that gets added to the student group of the course.
+     * Gives the user the student role in the course.
+     * @param credentials The user who gets the student role in the course.
      */
     async addStudentToCourse(credentials: UserCredentials) {
         await this.addUserToGroup(credentials, 'students', '#add-student');
     }
 
     /**
-     * Adds the user to the tutor group of the course.
-     * @param credentials The user that gets added to the tutor group of the course.
+     * Gives the user the tutor role in the course.
+     * @param credentials The user who gets the tutor role in the course.
      */
     async addTutorToCourse(credentials: UserCredentials) {
         await this.addUserToGroup(credentials, 'tutors', '#add-tutor');
     }
 
     /**
-     * Adds the user to the instructor group of the course.
-     * @param credentials The user that gets added to the instructor group of the course.
+     * Gives the user the instructor role in the course.
+     * @param credentials The user who gets the instructor role in the course.
      */
     async addInstructorToCourse(credentials: UserCredentials) {
         await this.addUserToGroup(credentials, 'instructors', '#add-instructor');

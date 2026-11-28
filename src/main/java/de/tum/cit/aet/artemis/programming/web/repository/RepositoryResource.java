@@ -409,7 +409,9 @@ public abstract class RepositoryResource {
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            log.error("CheckoutConflictException | WrongRepositoryStateException during repository operation", ex);
+            // The user's own changes conflict with the repository, or it is in a state the operation cannot start from. That is answered with a 409 that the user resolves,
+            // and is no error of the server, so there is no stack trace to analyse.
+            log.warn("The repository operation ended in a conflict: {}", ex.getMessage());
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         catch (FileNotFoundException ex) {

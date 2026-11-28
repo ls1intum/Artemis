@@ -13,7 +13,7 @@ import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/gradi
 import { Subject } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('ProgrammingExerciseTaskComponent', () => {

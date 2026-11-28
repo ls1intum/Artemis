@@ -1,5 +1,8 @@
 import { Component, OnInit, computed, inject, input, model, output, signal } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';

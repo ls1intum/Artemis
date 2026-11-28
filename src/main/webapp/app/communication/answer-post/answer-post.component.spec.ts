@@ -34,7 +34,7 @@ import { CourseConversationsService } from 'app/communication/service/course-con
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
