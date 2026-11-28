@@ -813,31 +813,6 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test token related user retrieval logic', () => {
-        let fetchStub: ReturnType<typeof vi.spyOn>;
-
-        beforeEach(() => {
-            // @ts-ignore spying on private method
-            fetchStub = vi.spyOn(accountService, 'fetch');
-        });
-
-        it('should not retrieve user if vcs token is missing but not required', () => {
-            user.vcsAccessToken = undefined;
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-
-        it('should not retrieve user if vcs token is present', () => {
-            user.vcsAccessToken = 'iAmAToken';
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-    });
-
     describe('test vcs token related logic', () => {
         afterEach(() => {
             httpMock.verify();
@@ -848,17 +823,6 @@ describe('AccountService', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
             req.flush(null);
-        });
-
-        it('should add a new VCS access token', () => {
-            const expiryDate = '2024-10-10';
-
-            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
-                expect(response.status).toBe(200);
-            });
-
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
-            req.flush({ status: 200 });
         });
 
         it('should get VCS access token for a participation', () => {

@@ -190,8 +190,8 @@
     margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
-    padding: 0 !important;
-    color: var(--link-color) !important;
+    padding: 0;
+    color: var(--link-color);
     text-decoration: underline;
     font-weight: 400;
 }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_PARTICIPATION;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +191,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
         participations.forEach(participation -> {
             participation.setExercise(quizExercise);
-            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().findFirst();
+            // The oldest submission, as the one the student worked on while the quiz was running, see QuizSubmissionRepository#findByExerciseIdAndStudentLogin
+            Optional<Submission> quizSubmissionOptional = participation.getSubmissions().stream().min(Comparator.comparing(Submission::getId));
 
             if (quizSubmissionOptional.isEmpty()) {
                 return;
@@ -225,6 +227,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
             quizSubmission.setResults(Set.of(result));
+            // The client shows the first submission it receives, so it is sent the graded one only, not a duplicate that has no result
+            participation.setSubmissions(new HashSet<>(Set.of(quizSubmission)));
 
             ltiApi.ifPresent(api -> api.onNewResult(participation));
             sendQuizResultToUser(quizExerciseId, participation);

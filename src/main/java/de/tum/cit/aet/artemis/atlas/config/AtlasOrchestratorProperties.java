@@ -21,6 +21,9 @@ import org.springframework.validation.annotation.Validated;
  * @param maxDailyOrchestrations maximum automatic orchestrations per course and day
  * @param schedulerRateMs        interval of the orchestration scheduler
  */
+// javac reports @Deprecated on a record component as having no effect on the constructor parameter. The annotation reaches the accessor and the field,
+// and with them the deprecation in the generated configuration metadata, which is why it stays.
+@SuppressWarnings("deprecation")
 @Validated
 @ConfigurationProperties(prefix = "artemis.atlas.orchestrator", ignoreUnknownFields = false)
 public record AtlasOrchestratorProperties(@Deprecated(forRemoval = true) @Nullable String model, @Deprecated(forRemoval = true) @Nullable String temperature,

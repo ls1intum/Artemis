@@ -1,5 +1,7 @@
 import { ConnectedPosition } from '@angular/cdk/overlay';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import type { ParticipationForExport } from 'app/openapi/model/participation-for-export';
 import type { ResultWithPointsPerGradingCriterion } from 'app/openapi/model/result-with-points-per-grading-criterion';

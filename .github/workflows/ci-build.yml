@@ -104,8 +104,10 @@ jobs:
         run: |
           pnpm run clean-www && pnpm run prebuild
           # First an unoptimized build, only for its esbuild metafile: the eager-chunk guard reads
-          # the module graph of that build, and only the metafile is kept.
-          pnpm exec ng build --configuration production --optimization=false --stats-json
+          # the module graph of that build, and only the metafile is kept. The `stats` configuration
+          # of angular.json turns the optimization off and has no limit for the size of the initial
+          # bundle: that limit (`budgets` of `production`) applies to the client that ships, below.
+          pnpm exec ng build --configuration production,stats
           mv build/resources/main/static/browser-stats.json build/client-stats.json || echo "::warning::browser-stats.json is missing; the eager-chunk report is skipped"
           # Then the client that ships, which replaces the output of the first build.
           pnpm run webapp:prod
@@ -178,25 +180,7 @@ jobs:
             exit 1
           fi
 
-          war_entries="$(jar tf "${wars[0]}")"
-          if ! grep -qx 'WEB-INF/classes/static/index.html' <<< "$war_entries"; then
-            echo "::error::${wars[0]} does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."
-            exit 1
-          fi
-          if ! grep -Eq '^WEB-INF/classes/static/main-.*\.js$' <<< "$war_entries"; then
-            echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
-            exit 1
-          fi
-
-          # The client in the WAR must be the optimized one: an unminified client (for example from a build with
-          # --optimization=false) is about four times the JavaScript to download, in about 150 chunks, and reaches the
-          # test servers, staging and production without anything else noticing. An optimized main bundle has lines
-          # of about 800 bytes on average, an unminified one of about 60.
-          read -r main_lines main_bytes < <(unzip -p "${wars[0]}" 'WEB-INF/classes/static/main-*.js' | awk '{ bytes += length($0) + 1 } END { print NR, bytes }')
-          if [ "${main_lines}" -eq 0 ] || [ $((main_bytes / main_lines)) -lt 200 ]; then
-            echo "::error::The main bundle in ${wars[0]} is not minified (${main_bytes} bytes in ${main_lines} lines). Build the client with 'pnpm run webapp:prod' and without --optimization=false: the WAR is what the test servers, staging and production run."
-            exit 1
-          fi
+          node .github/scripts/verify-war-client.mjs "${wars[0]}"
       - name: Upload Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

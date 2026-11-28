@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MODULE_FEATURE_AGENT_ACCESS, MODULE_FEATURE_PASSKEY } from 'app/app.constants';
@@ -8,6 +8,7 @@ import { PasskeySettingsComponent } from 'app/account/user/settings/credentials/
 import { SshUserSettingsComponent } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.component';
 import { VcsAccessTokenOverviewComponent } from 'app/account/user/settings/credentials/vcs-access-token-overview/vcs-access-token-overview.component';
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/credentials/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CredentialsSettingsComponent } from './credentials-settings.component';
@@ -32,11 +33,11 @@ class MockCredentialRevocationSettingsComponent {}
 
 describe('CredentialsSettingsComponent', () => {
     let fixture: ComponentFixture<CredentialsSettingsComponent>;
-    let accountService: { isAtLeastTutor: ReturnType<typeof vi.fn>; mayCreateAgentTokens: ReturnType<typeof vi.fn> };
+    let accountService: { userIdentity: WritableSignal<User | undefined>; mayCreateAgentTokens: ReturnType<typeof vi.fn> };
     let profileService: { isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
-        accountService = { isAtLeastTutor: vi.fn().mockReturnValue(false), mayCreateAgentTokens: vi.fn().mockReturnValue(false) };
+        accountService = { userIdentity: signal<User | undefined>(undefined), mayCreateAgentTokens: vi.fn().mockReturnValue(false) };
         profileService = { isModuleFeatureActive: vi.fn().mockReturnValue(false) };
 
         await TestBed.configureTestingModule({
@@ -100,12 +101,20 @@ describe('CredentialsSettingsComponent', () => {
         expect(fixture.nativeElement.querySelector('jhi-passkey-settings')).toBeTruthy();
     });
 
-    it('renders VCS Token for tutors', () => {
-        accountService.isAtLeastTutor.mockReturnValue(true);
+    it('renders the personal VCS token for whoever still holds one, whatever their role, so that it can be revoked', () => {
+        accountService.userIdentity.set({ vcsAccessTokenExpiryDate: '2027-01-01T00:00:00Z' } as User);
 
         createComponent();
 
         expect(fixture.nativeElement.querySelector('jhi-vcs-access-tokens-settings')).toBeTruthy();
+    });
+
+    it('does not render the personal VCS token for a user without one', () => {
+        accountService.userIdentity.set({} as User);
+
+        createComponent();
+
+        expect(fixture.nativeElement.querySelector('jhi-vcs-access-tokens-settings')).toBeFalsy();
     });
 
     it('renders Agent Access when the module is enabled and the user may create agent tokens', () => {

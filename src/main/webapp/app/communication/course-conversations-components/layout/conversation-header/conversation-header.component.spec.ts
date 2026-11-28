@@ -9,7 +9,7 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
