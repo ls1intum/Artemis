@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCardComponent } from 'app/course/overview/course-card/course-card.component';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -90,14 +91,12 @@ describe('CourseCardComponent', () => {
             maxPoints: 10,
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
         } as Exercise;
-        const futureManualExercise = {
-            id: 11,
-            type: ExerciseType.TEXT,
-            maxPoints: 10,
-            dueDate: dayjs().add(2, 'days'),
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            studentParticipations: [],
-        } as Exercise;
+        const futureManualExercise = new TextExercise(course, undefined);
+        futureManualExercise.id = 11;
+        futureManualExercise.maxPoints = 10;
+        futureManualExercise.dueDate = dayjs().add(2, 'days');
+        futureManualExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        futureManualExercise.studentParticipations = [];
         fixture.componentRef.setInput('course', { ...course, exercises: [completedExercise, futureManualExercise] } as Course);
         vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
             new CourseScores(20, 10, 0, {

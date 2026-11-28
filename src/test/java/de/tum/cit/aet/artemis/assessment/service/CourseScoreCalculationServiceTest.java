@@ -194,11 +194,20 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of(), courseExercises);
-        // Including an exercise in the course score no longer depends on its due date. Reachable points are still
-        // calculated separately from the assessment due date.
-        assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
-        assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
-        assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
+        if (withDueDate) {
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(0.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(0.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
+        }
+        else {
+            // The text participation contributes nothing because its results were deleted above. That deletion used to
+            // be a no-op: the results were an ordered list whose position column stayed at its database default for
+            // every result saved through the result repository, so the list came back with a null in it, and the null
+            // was filtered out before the delete. The expected values used to encode that.
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
+        }
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
 
@@ -253,9 +262,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         assertThat(textScores.maxPoints()).isEqualTo(5.0);
         assertThat(textScores.reachablePoints()).isZero();
-        assertThat(textScores.studentScores().absoluteScore()).isEqualTo(0.6);
-        assertThat(textScores.studentScores().absoluteScoreTotal()).isEqualTo(0.6);
-        assertThat(textScores.studentScores().relativeScore()).isEqualTo(12.0);
+        assertThat(textScores.studentScores().absoluteScore()).isZero();
+        assertThat(textScores.studentScores().absoluteScoreTotal()).isZero();
+        assertThat(textScores.studentScores().relativeScore()).isZero();
         assertThat(textScores.studentScores().currentRelativeScore()).isZero();
     }
 
@@ -270,18 +279,18 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(25.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(25.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(6.6);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(26.4);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(26.4);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
+        assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.maxPoints()).isEqualTo(5.0);
-        assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(5.0);
-        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isEqualTo(1.0);
-        assertThat(programmingExerciseScores.studentScores().relativeScore()).isEqualTo(20.0);
-        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isEqualTo(20.0);
+        assertThat(programmingExerciseScores.reachablePoints()).isZero();
+        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
+        assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
+        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
@@ -310,12 +319,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(40.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(40.0);
-        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(15.0);
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(21.6);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(54.0);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(54.0);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(28.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
+        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(10.7);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();

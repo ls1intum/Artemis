@@ -594,14 +594,12 @@ describe('CourseStatisticsComponent', () => {
             includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
             maxPoints: 10,
         } as Exercise;
-        const futureManualExercise = {
-            id: 902,
-            type: ExerciseType.TEXT,
-            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-            maxPoints: 10,
-            dueDate: dayjs().add(2, 'days'),
-            studentParticipations: [],
-        } as Exercise;
+        const futureManualExercise = new TextExercise(course, undefined);
+        futureManualExercise.id = 902;
+        futureManualExercise.maxPoints = 10;
+        futureManualExercise.dueDate = dayjs().add(2, 'days');
+        futureManualExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        futureManualExercise.studentParticipations = [];
         const courseWithFutureManualExercise = { ...course, presentationScore: undefined, exercises: [completedExercise, futureManualExercise] } as Course;
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseWithFutureManualExercise);
         const exerciseScores = new CourseScores(10, 10, 0, {

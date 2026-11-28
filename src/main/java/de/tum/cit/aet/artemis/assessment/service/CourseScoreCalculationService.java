@@ -89,12 +89,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if a grading scale with course is given.
-     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(ExerciseCourseScoreDTO)}) exercises, whose due date is over or unset or who
-     * are automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
-     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(ExerciseCourseScoreDTO)}).
-     * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
-     * the max points calculation,
-     * but not in the reachable max points calculation.
+     * Every fully included exercise contributes to the maximum. Reachable points also require the scoring window to
+     * have opened and assessment to be complete. Variant groups cap both totals independently.
      *
      * @param gradingScale the gradingScale for which the reachable presentation points should be calculated. Null if no reachable presentation points should be calculated.
      * @param exercises    the exercises which are included into max points calculation
@@ -112,18 +108,12 @@ public class CourseScoreCalculationService {
 
         // Non-variant exercises are summed individually.
         for (var exercise : exercises) {
-            if (isExerciseVariant(exercise)) {
+            if (isExerciseVariant(exercise) || exercise.includedInOverallScore() != IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 continue;
             }
-            if (!includeIntoScoreCalculation(exercise)) {
-                continue;
-            }
-            var maxPointsReachableInExercise = exercise.maxPoints();
-            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPoints += maxPointsReachableInExercise;
-                if (isAssessmentDone(exercise)) {
-                    reachableMaxPoints += maxPointsReachableInExercise;
-                }
+            maxPoints += exercise.maxPoints();
+            if (includeIntoScoreCalculation(exercise) && isAssessmentDone(exercise)) {
+                reachableMaxPoints += exercise.maxPoints();
             }
         }
 
@@ -154,14 +144,12 @@ public class CourseScoreCalculationService {
         var reachableMaxPointsPerGroup = new VariantGroupCappedSum();
 
         for (var exercise : exercises) {
-            if (!isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise)) {
+            if (!isExerciseVariant(exercise) || exercise.includedInOverallScore() != IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 continue;
             }
-            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
-                if (isAssessmentDone(exercise)) {
-                    reachableMaxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
-                }
+            maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
+            if (includeIntoScoreCalculation(exercise) && isAssessmentDone(exercise)) {
+                reachableMaxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
             }
         }
 
@@ -638,17 +626,16 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Determines whether a given exercise's score is included in course score calculations.
-     * <p>
-     * Inclusion depends only on the course score setting. Due dates and completion of the final test run affect whether
-     * points count as reachable, which is evaluated separately by {@link #isAssessmentDone(ExerciseCourseScoreDTO)}.
+     * Determines whether results from the exercise can count towards the achieved score. The course maximum
+     * already includes fully weighted exercises before this scoring window opens.
      *
      * @param exercise the exercise whose involvement should be determined
      */
     private boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise) {
         boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
+        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(ZonedDateTime.now()));
 
-        return isExerciseIncluded;
+        return isExerciseIncluded && (isExerciseFinished || isAutomaticAssessmentDone(exercise));
     }
 
     /**
