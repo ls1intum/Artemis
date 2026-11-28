@@ -6,7 +6,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiButtonSize, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSize } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

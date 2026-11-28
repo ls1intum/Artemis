@@ -47,6 +47,16 @@ It uses disposable containers on ports 16380 and 16381. It verifies that removin
 authorities preserves ordinary user access, administrator authorities, and course roles, including
 accounts without an explicit `ROLE_USER`. The Liquibase workflow runs it on both supported databases.
 
+The copy of the Atlas chat history to the Spring AI session tables has a populated-data regression test too:
+
+```bash
+python3 test_spring_ai_session_migration.py
+```
+
+It uses disposable containers on ports 15900 and 15901. It verifies that every conversation of a user and the assistant becomes
+one session, that the messages keep the order of the old sequence and their text, that system and tool rows are left behind and that
+the old table is not touched. The Liquibase workflow runs it on both supported databases.
+
 ## Cutting a baseline
 
 ```bash

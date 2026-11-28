@@ -1,4 +1,4 @@
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, computed, inject, input } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
