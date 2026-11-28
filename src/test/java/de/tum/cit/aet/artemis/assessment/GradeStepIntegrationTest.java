@@ -338,9 +338,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     /**
      * Test get request for a single grade by grade percentage
      */
-    @Test
+    @ParameterizedTest
+    @CsvSource({ "GRADE, gradePercentage=70", "BONUS, gradePercentage=70", "GRADE, gradePercentage=70&bonusPercentage=30", "BONUS, gradePercentage=30&bonusPercentage=70" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetGradeStepByPercentageForCourse() throws Exception {
+    void testGetGradeStepByPercentageForCourse(GradeType gradeType, String percentages) throws Exception {
         String gradeName = "Name";
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName(gradeName);
@@ -350,7 +351,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         gradeStep.setGradingScale(courseGradingScale);
         gradeSteps = Set.of(gradeStep);
         courseGradingScale.setGradeSteps(gradeSteps);
-        courseGradingScale.setGradeType(GradeType.GRADE);
+        courseGradingScale.setGradeType(gradeType);
         gradingScaleRepository.save(courseGradingScale);
 
         // Add student participation to course to avoid receiving no-participation special grade.
@@ -361,10 +362,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
         User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
 
-        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
+        GradeDTO foundGrade = request.get("/api/assessment/courses/" + course.getId() + "/grading-scale/match-grade-step?" + percentages, HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo(gradeName);
-        assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
+        assertThat(foundGrade.gradeType()).isEqualTo(gradeType);
         assertThat(foundGrade.isPassingGrade()).isTrue();
     }
 

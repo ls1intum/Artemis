@@ -451,7 +451,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         if (!Number.isFinite(relativeScore)) {
             return;
         }
-        this.gradeSubscription = this.gradeStepApi.getGradeStepByPercentageForCourse(this.courseId, relativeScore).subscribe((gradeDTO) => {
+        this.gradeSubscription = this.gradeStepApi.getGradeStepByPercentageForCourse(this.courseId, relativeScore, this.currentRelativeScore()).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);

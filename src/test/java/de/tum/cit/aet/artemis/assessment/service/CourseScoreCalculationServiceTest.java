@@ -120,6 +120,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         BonusSourceResultDTO bonusSourceResultDTO = bonusSourceResultDTOMap.get(student.getId());
         assertThat(bonusSourceResultDTO.achievedPoints()).isZero();
         assertThat(bonusSourceResultDTO.presentationScoreThreshold()).isEqualTo(course.getPresentationScore());
+
+        // Batch exam grading must apply the same deadline and inclusion rules as the individual bonus preview.
+        User otherStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var batchResults = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId(), otherStudent.getId()));
+        assertThat(batchResults).isEqualTo(bonusSourceResultDTOMap);
     }
 
     @Test
