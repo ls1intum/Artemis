@@ -327,7 +327,7 @@
                     "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
                     "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen",
-                    "MAINTENANCE": "Geplante Wartungsankündigungen",
+                    "MAINTENANCE": "Systemankündigungen",
                     "MAVEN_CENTRAL_RATE_LIMIT": "Fehlschlagende Aufgaben-Builds wegen Maven-Central-Rate-Limits (Lehrende)",
                     "PASSWORD_CHANGED": "Passwort geändert",
                     "CREDENTIALS_REVOKED": "Passkeys, SSH-Schlüssel oder Zugriffstoken widerrufen"

@@ -2,7 +2,7 @@
 id: system-notifications
 title: System Notifications
 sidebar_label: System Notifications
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-28
 ---
 
 System notifications allow administrators to inform all users about important events such as planned maintenance windows. Notifications appear as banners in the Artemis UI for all connected users.
@@ -20,22 +20,22 @@ Each banner uses a single line, with smaller text on narrow screens. Long messag
    - **Notification Date**: When the banner should start appearing.
    - **Expiration Date**: When the banner should disappear (must be after the notification date).
 
-## Maintenance Email Announcements
+## Emailing Instructors
 
 When creating a new system notification, administrators can optionally send an email to all instructors of ongoing courses:
 
-1. Check the **Announce maintenance to all instructors via email** checkbox.
+1. Check the **Email this notification to instructors** checkbox.
 2. The form displays the number of instructors who will receive the email.
-3. Upon saving, each instructor receives a localized email with the maintenance window details.
+3. Save the notification to send the email immediately. It includes the title, message and dates when the banner is visible. For planned maintenance, include the actual maintenance window in the message.
 
 ### Who receives the email?
 
 - All users with the **Instructor** role in an **ongoing course** (a course that has started and not yet ended).
-- Users who have **not opted out** of maintenance notifications in their user settings.
+- Users who have **not opted out** of system announcements in their user settings.
 - Only activated users with an email address. Test users receive the email only if they enabled these notifications.
 
 ### Opting out
 
-Instructors can disable maintenance email notifications in **User Settings > Notifications** by toggling the **Planned Maintenance Announcements** option.
+Instructors can disable system announcement emails in **User Settings > Notifications** by toggling the **System Announcements** option.
 
-A mail that the SMTP server does not accept is kept and sent again later, and test users receive no maintenance email unless they enabled it. See [E-Mail Delivery](/admin/email-delivery).
+A mail that the SMTP server does not accept is kept and sent again later, and test users receive no system announcement email unless they enabled it. See [E-Mail Delivery](/admin/email-delivery).
