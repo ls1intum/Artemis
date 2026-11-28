@@ -58,11 +58,7 @@ class WorkerRetryConfigurationTest {
                 .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
                     boolean first = requests.incrementAndGet() == 1;
                     // Return before proceed, including SDK retries: no network is used.
-                    String body = first ? "{\"error\":{\"message\":\"test failure\",\"type\":\"server_error\",\"code\":\"server_error\"}}" : """
-                            {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"test-model",
-                             "choices":[{"index":0,"message":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],
-                             "usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
-                            """;
+                    String body = first ? "{\"error\":{\"message\":\"test failure\",\"type\":\"server_error\",\"code\":\"server_error\"}}" : WorkerLlmTestContext.SUCCESS;
                     return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(first ? 500 : 200).message(first ? "Error" : "OK")
                             .body(ResponseBody.create(body, MediaType.get("application/json"))).build();
                 }));

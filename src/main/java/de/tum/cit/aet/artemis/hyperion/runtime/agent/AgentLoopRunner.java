@@ -70,9 +70,6 @@ public class AgentLoopRunner {
     /** Target size of the verbatim recent tail kept across a compaction (everything older is summarized). */
     private static final int KEEP_RECENT_TOKENS = 20_000;
 
-    /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
-    private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
-
     /** Output cap for the summary, so the summary itself never becomes a context problem on the next turn. */
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 4_096;
 
@@ -866,10 +863,7 @@ public class AgentLoopRunner {
 
     /** Summarizes the given older messages via a tool-free model call, producing the structured summary that replaces them. */
     private String summarize(List<Message> messages, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable GenerationActivityTracker activity) {
-        StringBuilder transcript = new StringBuilder();
-        for (Message message : messages) {
-            transcript.append(renderForSummary(message)).append('\n');
-        }
+        String transcript = AgentConversationContext.summaryTranscript(messages);
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
         // Preserve provider-specific options. Pin reasoning effort low where supported so it cannot consume the summary allowance.
@@ -898,39 +892,6 @@ public class AgentLoopRunner {
             throw new IllegalStateException("summarizer returned an empty summary");
         }
         return text.strip();
-    }
-
-    /** Renders one message as plain text for the summarizer, truncating long tool results and tool-call arguments so the summarization input itself stays bounded. */
-    private static String renderForSummary(Message message) {
-        if (message instanceof ToolResponseMessage toolResponse) {
-            StringBuilder builder = new StringBuilder();
-            for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                builder.append("TOOL RESULT (").append(response.name()).append("): ").append(truncateForSummary(response.responseData())).append('\n');
-            }
-            return builder.toString();
-        }
-        if (message instanceof AssistantMessage assistant) {
-            StringBuilder builder = new StringBuilder();
-            if (assistant.getText() != null && !assistant.getText().isBlank()) {
-                builder.append("ASSISTANT: ").append(assistant.getText()).append('\n');
-            }
-            for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                builder.append("ASSISTANT TOOL CALL ").append(toolCall.name()).append(": ").append(truncateForSummary(toolCall.arguments())).append('\n');
-            }
-            return builder.toString();
-        }
-        String role = message instanceof SystemMessage ? "SYSTEM" : "USER";
-        return role + ": " + (message.getText() == null ? "" : message.getText());
-    }
-
-    private static String truncateForSummary(@Nullable String value) {
-        if (value == null) {
-            return "";
-        }
-        if (value.length() <= SUMMARY_INPUT_TRUNCATE_CHARS) {
-            return value;
-        }
-        return value.substring(0, SUMMARY_INPUT_TRUNCATE_CHARS) + " […" + (value.length() - SUMMARY_INPUT_TRUNCATE_CHARS) + " more characters truncated]";
     }
 
     private static String extractText(ChatResponse response) {

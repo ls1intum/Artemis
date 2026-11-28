@@ -13,6 +13,12 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  */
 final class WorkerLlmTestContext {
 
+    static final String SUCCESS = """
+            {"id":"resp-test","object":"response","model":"test-model","status":"completed",
+             "output":[{"type":"message","id":"msg-1","role":"assistant","status":"completed",
+             "content":[{"type":"output_text","text":"OK","annotations":[]}]}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}
+            """;
+
     private WorkerLlmTestContext() {
     }
 

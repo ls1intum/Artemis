@@ -35,11 +35,8 @@ class WorkerChatConfigurationTest {
                 .withPropertyValues("artemis.llm.endpoints.test.timeout=10m", "artemis.llm.endpoints.test.max-retries=0")
                 .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
                     actualTimeout.set(Duration.ofNanos(chain.call().timeout().timeoutNanos()));
-                    return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK").body(ResponseBody.create("""
-                            {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"test-model",
-                             "choices":[{"index":0,"message":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],
-                             "usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
-                            """, MediaType.get("application/json"))).build();
+                    return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                            .body(ResponseBody.create(WorkerLlmTestContext.SUCCESS, MediaType.get("application/json"))).build();
                 }));
         if (presetOverride) {
             contextRunner = contextRunner.withPropertyValues("artemis.llm.presets.testpreset.timeout=2m");

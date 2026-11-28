@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
@@ -19,6 +20,9 @@ final class AgentConversationContext {
     static final int MAX_TOOL_RESPONSE_CHARS = 12_000;
 
     static final int MESSAGE_OVERHEAD_TOKENS = 4;
+
+    /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
+    private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
 
     private static final int TOOL_CALL_OVERHEAD_TOKENS = 8;
 
@@ -117,6 +121,47 @@ final class AgentConversationContext {
                 + " characters elided to fit the context window. Re-fetch just the part you need: read_file with offset/limit, or grep via bash. …]\n";
         int tail = Math.max(0, MAX_TOOL_RESPONSE_CHARS - head - marker.length());
         return data.substring(0, head) + marker + data.substring(data.length() - tail);
+    }
+
+    static String summaryTranscript(List<Message> messages) {
+        StringBuilder transcript = new StringBuilder();
+        for (Message message : messages) {
+            transcript.append(renderForSummary(message)).append('\n');
+        }
+        return transcript.toString();
+    }
+
+    /** Renders one message as plain text for the summarizer, truncating long tool results and tool-call arguments so the summarization input itself stays bounded. */
+    private static String renderForSummary(Message message) {
+        if (message instanceof ToolResponseMessage toolResponse) {
+            StringBuilder builder = new StringBuilder();
+            for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
+                builder.append("TOOL RESULT (").append(response.name()).append("): ").append(truncateForSummary(response.responseData())).append('\n');
+            }
+            return builder.toString();
+        }
+        if (message instanceof AssistantMessage assistant) {
+            StringBuilder builder = new StringBuilder();
+            if (assistant.getText() != null && !assistant.getText().isBlank()) {
+                builder.append("ASSISTANT: ").append(assistant.getText()).append('\n');
+            }
+            for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
+                builder.append("ASSISTANT TOOL CALL ").append(toolCall.name()).append(": ").append(truncateForSummary(toolCall.arguments())).append('\n');
+            }
+            return builder.toString();
+        }
+        String role = message instanceof SystemMessage ? "SYSTEM" : "USER";
+        return role + ": " + (message.getText() == null ? "" : message.getText());
+    }
+
+    private static String truncateForSummary(@Nullable String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.length() <= SUMMARY_INPUT_TRUNCATE_CHARS) {
+            return value;
+        }
+        return value.substring(0, SUMMARY_INPUT_TRUNCATE_CHARS) + " […" + (value.length() - SUMMARY_INPUT_TRUNCATE_CHARS) + " more characters truncated]";
     }
 
     static void assertValidPairing(List<Message> conversation) {
