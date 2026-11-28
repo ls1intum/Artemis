@@ -2,7 +2,7 @@
 id: learning-analytics
 title: Learning Analytics
 sidebar_label: Learning Analytics
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -11,6 +11,7 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import courseStatistics from './assets/learning-analytics/course-statistics.png';
 import exerciseStatistics from './assets/learning-analytics/exercise-statistics.png';
+import totalLlmCost from './assets/learning-analytics/total-llm-cost.png';
 
 Artemis measures how a course is going: how many students are active, how much they submit, and how they score
 against the average. Students see their own position in the cohort; instructors see the cohort.
@@ -26,11 +27,15 @@ against the average. Students see their own position in the cohort; instructors 
 
 The course page in the course management carries the headline figures, below the quick actions: **Total Assessments**
 as a fraction of the submissions waiting, **Total Complaints** and **More Feedback Requests** with how many have been
-answered, **Average Student Score** in both points and percent, and **Total LLM Cost** where AI features are in use.
+answered, **Average Student Score** in both points and percent, and **LLM Cost (USD)** where AI features are in use.
 Beside them, **Active students** plots participation week by week over the last four weeks, the last eight, or the
 whole course.
 
-Each of those figures is a link, so a number that looks wrong leads straight to the page that explains it.
+The assessment, complaint and feedback request figures link to the corresponding management pages. Instructors can also open the course scores from **Average Student Score**.
+
+**LLM Cost (USD)** adds up requests with a recorded price. If a request has no price, the chart shows how many requests it excluded. A **≥** before the amount means that the actual total may be higher.
+
+<Image src={totalLlmCost} alt="Course LLM cost of at least 70.30 USD, with one request excluded because it has no USD price" size={ImageSize.medium} />
 
 ## Course Statistics
 
