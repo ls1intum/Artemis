@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param port            port of the member
  * @param local           whether this node is the current node
  * @param liteMember      whether this node is a lite (build agent) member without broker connectivity
- * @param instanceId      optional discovery instance id (e.g. eureka.instance.instanceId) or node name (e.g. Build Agent 1)
+ * @param instanceId      optional instance name (eureka.instance.instanceId, otherwise spring.data.redis.client-name) or node name (e.g. Build Agent 1)
  * @param brokerConnected whether this node currently reports the websocket broker as available
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

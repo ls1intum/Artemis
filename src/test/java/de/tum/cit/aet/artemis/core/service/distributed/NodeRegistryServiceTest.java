@@ -26,7 +26,7 @@ class NodeRegistryServiceTest {
 
     @Test
     void testHeartbeatPublishesLocalNodeAndDeregisterRemovesIt() {
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance", "");
 
         assertThat(registry.getLiveNodeIds()).as("no node is known before the first heartbeat").isEmpty();
 
@@ -43,7 +43,7 @@ class NodeRegistryServiceTest {
 
     @Test
     void testRepeatedHeartbeatKeepsExactlyOneEntry() {
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance", "");
 
         registry.heartbeat();
         registry.heartbeat();
@@ -54,7 +54,7 @@ class NodeRegistryServiceTest {
 
     @Test
     void testUnknownNodeIsNotAlive() {
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "test-instance", "");
         registry.heartbeat();
 
         assertThat(registry.isNodeAlive("some-other-node")).isFalse();
@@ -72,7 +72,7 @@ class NodeRegistryServiceTest {
         when(provider.<String, ClusterNodeInfo>getExpiringMap(anyString(), any())).thenReturn(nodes);
         doThrow(new IllegalStateException("cluster unreachable")).when(nodes).put(anyString(), any());
 
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(provider), "instance");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(provider), "instance", "");
 
         assertThatCode(registry::heartbeat).doesNotThrowAnyException();
         assertThatCode(registry::deregister).doesNotThrowAnyException();
@@ -89,7 +89,7 @@ class NodeRegistryServiceTest {
         when(provider.getLocalMemberAddress()).thenReturn("[10.0.0.1]:5701");
         when(provider.<String, ClusterNodeInfo>getExpiringMap(anyString(), any())).thenAnswer(invocation -> backing.getExpiringMap("clusterNodes", Duration.ofSeconds(35)));
 
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(provider), "artemis-node-1");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(provider), "artemis-node-1", "");
         registry.heartbeat();
 
         assertThat(registry.getLiveNodes()).singleElement().satisfies(node -> {
@@ -100,8 +100,16 @@ class NodeRegistryServiceTest {
     }
 
     @Test
+    void testEmptyEurekaInstanceIdFallsBackToRedisClientName() {
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "", "artemis-redis-node-1");
+        registry.heartbeat();
+
+        assertThat(registry.getLiveNodes()).singleElement().extracting(ClusterNodeInfo::instanceId).isEqualTo("artemis-redis-node-1");
+    }
+
+    @Test
     void testLocalNodeDescriptionKeepsWholeIdentifierWhenItHasNoPort() {
-        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "artemis-node-2");
+        NodeRegistryService registry = new NodeRegistryService(Optional.of(new LocalDataProviderService()), "artemis-node-2", "");
         registry.heartbeat();
 
         assertThat(registry.getLiveNodes()).singleElement().satisfies(node -> {
@@ -116,7 +124,7 @@ class NodeRegistryServiceTest {
      */
     @Test
     void testDegradesGracefullyWithoutProvider() {
-        NodeRegistryService registry = new NodeRegistryService(Optional.empty(), "test-instance");
+        NodeRegistryService registry = new NodeRegistryService(Optional.empty(), "test-instance", "");
 
         assertThatCode(registry::heartbeat).doesNotThrowAnyException();
         assertThatCode(registry::deregister).doesNotThrowAnyException();
