@@ -1,11 +1,15 @@
-import { Routes } from '@angular/router';
+import { CanDeactivateFn, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
+import type { CodeEditorInstructorBaseContainerComponent } from './instructor-and-editor-container/code-editor-instructor-base-container.component';
+
+const saveBeforeLeaving: CanDeactivateFn<CodeEditorInstructorBaseContainerComponent> = (component) => component.saveBeforeLeaving();
 
 export const codeEditorManagementRoutes: Routes = [
     {
         path: 'ide/test',
+        canDeactivate: [saveBeforeLeaving],
         loadComponent: () =>
             import('app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component').then(
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,
@@ -18,6 +22,7 @@ export const codeEditorManagementRoutes: Routes = [
     },
     {
         path: 'ide/:repositoryId',
+        canDeactivate: [saveBeforeLeaving],
         loadComponent: () =>
             import('app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component').then(
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,
@@ -44,6 +49,7 @@ export const codeEditorManagementRoutes: Routes = [
     },
     {
         path: ':repositoryType/:repositoryId',
+        canDeactivate: [saveBeforeLeaving],
         loadComponent: () =>
             import('app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component').then(
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,

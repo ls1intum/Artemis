@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { OnDestroy, Service, inject } from '@angular/core';
-import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable, ReplaySubject, Subject, UnaryFunction, defer, of, pipe, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import {
     CommitState,
     DomainChange,
@@ -18,23 +18,66 @@ import { BuildLogService } from 'app/programming/shared/services/build-log.servi
 import { downloadFile } from 'app/foundation/util/download.util';
 import { PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
 
+// Leave room below the Server's 20 MiB document limit for request metadata.
+export const MAX_FILE_UPDATE_BATCH_SIZE_BYTES = 19 * 1024 * 1024;
+
+export class RepositoryWriteCoordinator {
+    private tail?: ReplaySubject<void>;
+
+    run<T>(operation: () => Observable<T>): Observable<T> {
+        return defer(() => {
+            const previous: Observable<void> = this.tail ?? of(undefined);
+            const finished = new ReplaySubject<void>(1);
+            this.tail = finished;
+            return previous.pipe(
+                take(1),
+                switchMap(operation),
+                finalize(() => {
+                    // A cancelled queued operation must still wait for its predecessor before releasing its successor.
+                    previous.pipe(take(1)).subscribe(() => {
+                        if (this.tail === finished) this.tail = undefined;
+                        finished.next();
+                        finished.complete();
+                    });
+                }),
+            );
+        });
+    }
+}
+
 export interface ICodeEditorRepositoryFileService {
+    runExclusive: <T>(operation: () => Observable<T>) => Observable<T>;
+    getRestResourceUrl: () => string | undefined;
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
     getFileAsBlob: (fileName: string) => Observable<Blob>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<unknown>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
+    updateFileContent: (fileName: string, fileContent: string, restResourceUrl?: string) => Observable<unknown>;
+    updateFiles: (
+        fileUpdates: Array<{ fileName: string; fileContent: string }>,
+        thenCommit?: boolean,
+        restResourceUrl?: string,
+    ) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
 }
 
 export interface ICodeEditorRepositoryService {
+    getRestResourceUrl: () => string | undefined;
     getStatus: () => Observable<{ repositoryStatus: string }>;
-    commit: () => Observable<void>;
+    commit: (restResourceUrl?: string) => Observable<void>;
     pull: (domain?: DomainChange) => Observable<void>;
     resetRepository: () => Observable<void>;
+}
+
+export class FileCommitError extends Error {
+    constructor(
+        readonly submission: FileSubmission,
+        override readonly cause: Error,
+    ) {
+        super(cause.message, { cause });
+    }
 }
 
 export class ConnectionError extends Error {
@@ -53,8 +96,9 @@ export class ConnectionError extends Error {
  * Type guard for checking if the file submission received through the websocket is an error object.
  * @param toBeDetermined either a FileSubmission or a FileSubmissionError.
  */
-const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
-    return !!(toBeDetermined as FileSubmissionError).error;
+export const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
+    const possibleError = toBeDetermined as Partial<FileSubmissionError>;
+    return possibleError.error === RepositoryError.CHECKOUT_CONFLICT && typeof possibleError.participationId === 'number';
 };
 
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
@@ -97,8 +141,8 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
         );
     };
 
-    commit = () => {
-        return this.http.post<void>(`${this.restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
+    commit = (restResourceUrl = this.restResourceUrl) => {
+        return this.http.post<void>(`${restResourceUrl}/commit`, {}).pipe(handleErrorResponse(this.conflictService));
     };
 
     pull = () => {
@@ -135,6 +179,13 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
 @Service()
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private conflictService = inject(CodeEditorConflictStateService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+
+    private writeCoordinator = new RepositoryWriteCoordinator();
+
+    runExclusive<T>(operation: () => Observable<T>): Observable<T> {
+        return this.writeCoordinator.run(operation);
+    }
 
     fileUpdateSubject = new Subject<FileSubmission>();
 
@@ -251,9 +302,9 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         return this.http.post<void>(`${this.restResourceUrl}/folder`, '', { params: new HttpParams().set('folder', folderName) }).pipe(handleErrorResponse(this.conflictService));
     };
 
-    updateFileContent = (fileName: string, fileContent: string) => {
+    updateFileContent = (fileName: string, fileContent: string, restResourceUrl = this.restResourceUrl) => {
         return this.http
-            .put(`${this.restResourceUrl}/file`, fileContent, {
+            .put(`${restResourceUrl}/file`, fileContent, {
                 params: new HttpParams().set('file', fileName),
             })
             .pipe(handleErrorResponse(this.conflictService));
@@ -266,7 +317,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * @param fileUpdates the Array of updated files
      * @param thenCommit indicates the server to also commit the saved changes
      */
-    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false) {
+    updateFiles(fileUpdates: Array<{ fileName: string; fileContent: string }>, thenCommit = false, restResourceUrl = this.restResourceUrl) {
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();
         }
@@ -278,23 +329,36 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             return !update.fileName.includes(PROBLEM_STATEMENT_IDENTIFIER);
         });
 
-        return this.http
-            .put<FileSubmission>(`${this.restResourceUrl}/files`, filteredUpdates, {
-                params: { commit: thenCommit ? 'yes' : 'no' },
-            })
-            .pipe(
-                handleErrorResponse(this.conflictService),
-                tap((fileSubmission: FileSubmission | FileSubmissionError) => {
-                    if (checkIfSubmissionIsError(fileSubmission)) {
-                        this.fileUpdateSubject.error(fileSubmission);
-                        if (fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
-                            this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
-                        }
-                        return;
+        let update: Observable<FileSubmission>;
+        if (filteredUpdates.length === 1 && new TextEncoder().encode(JSON.stringify(filteredUpdates)).length >= MAX_FILE_UPDATE_BATCH_SIZE_BYTES) {
+            const [{ fileName, fileContent }] = filteredUpdates;
+            update = this.updateFileContent(fileName, fileContent, restResourceUrl).pipe(map(() => ({ [fileName]: undefined })));
+        } else {
+            update = this.http.put<FileSubmission>(`${restResourceUrl}/files`, filteredUpdates, {
+                params: { commit: 'no' },
+            });
+        }
+        return update.pipe(
+            switchMap((submission) =>
+                thenCommit && !Object.values(submission).some((error) => !!error)
+                    ? this.repositoryService.commit(restResourceUrl).pipe(
+                          map(() => submission),
+                          catchError((error: Error) => throwError(() => new FileCommitError(submission, error))),
+                      )
+                    : of(submission),
+            ),
+            handleErrorResponse(this.conflictService),
+            tap((fileSubmission: FileSubmission | FileSubmissionError) => {
+                if (checkIfSubmissionIsError(fileSubmission)) {
+                    this.fileUpdateSubject.error(fileSubmission);
+                    if (fileSubmission.error === RepositoryError.CHECKOUT_CONFLICT) {
+                        this.conflictService.notifyConflictState(GitConflictState.CHECKOUT_CONFLICT);
                     }
-                    this.fileUpdateSubject.next(fileSubmission);
-                }),
-            );
+                    return;
+                }
+                this.fileUpdateSubject.next(fileSubmission);
+            }),
+        );
     }
 
     renameFile = (currentFilePath: string, newFilename: string) => {

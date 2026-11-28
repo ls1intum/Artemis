@@ -467,6 +467,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
+    @PutMapping({ "participations/{participationId}/repository/file", "repository/{participationId}/file" })
+    @FeatureToggle(Feature.ProgrammingExercises)
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.updateFile(participationId, filePath, request);
+    }
+
+    @Override
     @PostMapping(value = "participations/{participationId}/repository/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent

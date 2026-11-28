@@ -130,6 +130,14 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
+    @PutMapping("programming-exercises/{exerciseId}/test-repository/file")
+    @EnforceAtLeastTutorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> updateFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.updateFile(exerciseId, filePath, request);
+    }
+
+    @Override
     @PostMapping(value = "programming-exercises/{exerciseId}/test-repository/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)

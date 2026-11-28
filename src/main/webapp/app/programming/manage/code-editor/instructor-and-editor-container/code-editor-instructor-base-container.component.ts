@@ -152,12 +152,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         // Set selected participation
                         tap(() => {
                             if (repositoryType === RepositoryType.TESTS) {
-                                this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise()!]);
+                                void this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise()!]);
                             } else if (repositoryType === RepositoryType.AUXILIARY) {
                                 const auxiliaryRepo = this.exercise()!.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
                                 if (auxiliaryRepo) {
                                     this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
-                                    this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                                    void this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
                                 }
                             } else {
                                 const nextAvailableParticipation = this.getNextAvailableParticipation(repositoryId);
@@ -354,13 +354,13 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         const exercise = this.exercise()!;
         if (participationId === exercise.templateParticipation!.id) {
             exercise.templateParticipation!.programmingExercise = exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.templateParticipation!]);
+            void this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.templateParticipation!]);
         } else if (participationId === exercise.solutionParticipation!.id) {
             exercise.solutionParticipation!.programmingExercise = exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
+            void this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.solutionParticipation!]);
         } else if (exercise.studentParticipations?.length && participationId === exercise.studentParticipations[0].id) {
             exercise.studentParticipations[0].exercise = exercise;
-            this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
+            void this.saveChangesAndSelectDomain([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
         } else {
             this.onError('participationNotFound');
         }
@@ -371,14 +371,22 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      *
      * Always use this method for changing the editor content to save file modifications.
      */
-    saveChangesAndSelectDomain(domain: DomainChange) {
+    async saveChangesAndSelectDomain(domain: DomainChange) {
         if (!this.canSwitchRepository()) return;
-        if (this.codeEditorContainer() != undefined) {
-            // Save before switching domains. Use a non-null assertion (not optional chaining) so a missing
-            // actions component throws instead of silently skipping the save and losing unsaved edits.
-            this.codeEditorContainer()!.actions()!.onSave();
-        }
+        if (this.codeEditorContainer() && !(await this.saveBeforeLeaving())) return;
         this.domainService.setDomain(domain);
+    }
+
+    async saveBeforeLeaving(): Promise<boolean> {
+        try {
+            const container = this.codeEditorContainer();
+            if (container) {
+                await container.actions()!.saveBeforeSwitching();
+            }
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**

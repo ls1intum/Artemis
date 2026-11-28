@@ -187,6 +187,32 @@ public abstract class RepositoryResource {
     }
 
     /**
+     * Updates an existing file from a bounded raw request, avoiding JSON escape expansion.
+     *
+     * @param domainId the repository identifier
+     * @param filePath the existing file to update
+     * @param request  the raw UTF-8 file content
+     * @return an empty success response
+     */
+    public ResponseEntity<Void> updateFile(Long domainId, String filePath, HttpServletRequest request) {
+        return executeAndCheckForExceptions(() -> {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE));
+                    var inputStream = request.getInputStream()) {
+                Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
+                byte[] content = inputStream.readNBytes((int) LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1);
+                if (content.length > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+                    return new ResponseEntity<>(HttpStatus.CONTENT_TOO_LARGE);
+                }
+                FileSubmission submission = new FileSubmission();
+                submission.setFileName(filePath);
+                submission.setFileContent(new String(content, StandardCharsets.UTF_8));
+                fetchAndUpdateFile(submission, repository);
+            }
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
+    }
+
+    /**
      * Create new folder.
      *
      * @param domainId   that serves as an abstract identifier for retrieving the repository.

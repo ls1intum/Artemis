@@ -142,6 +142,15 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
+    @PutMapping("{auxiliaryRepositoryId}/file")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> updateFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
+        return super.updateFile(auxiliaryRepositoryId, filePath, request);
+    }
+
+    @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @ManualConfig

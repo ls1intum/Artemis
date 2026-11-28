@@ -11,6 +11,7 @@ import {
     FileBadge,
     FileBadgeType,
     FileChange,
+    FileSubmission,
     FileType,
     PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
@@ -360,12 +361,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Files that could not be saved will show an error in the header.
      * @param files
      */
-    onSavedFiles(files: { [fileName: string]: string | undefined }) {
+    onSavedFiles(files: FileSubmission) {
         const savedFiles = Object.entries(files)
-            .filter(([, error]: [string, string | undefined]) => !error)
+            .filter(([, error]) => !error)
             .map(([fileName]) => fileName);
         const errorFiles = Object.entries(files)
-            .filter(([, error]: [string, string | undefined]) => error)
+            .filter(([, error]) => error)
             .map(([fileName]) => fileName);
 
         this.unsavedFiles = fromPairs(toPairs(this.unsavedFiles).filter(([fileName]) => !savedFiles.includes(fileName)));
