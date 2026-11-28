@@ -141,10 +141,8 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
                 .andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withSuccess("true", MediaType.APPLICATION_JSON));
         sharingConnectorService.triggerReinit();
-        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();
-        assertThat(lastHealthStati).isNotEmpty();
-        assertThat(lastHealthStati.getLast().getStatusMessage()).describedAs("This assertion may fail due to race conditions!")
-                .isEqualTo("Requested reinitialization from Sharing Platform via http://localhost:9001");
+        var entries = sharingConnectorService.getHealthSnapshot().entries();
+        assertThat(entries.getLast().message()).isEqualTo("Requested reinitialization from Sharing Platform");
     }
 
 }

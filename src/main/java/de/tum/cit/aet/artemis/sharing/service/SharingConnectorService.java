@@ -71,73 +71,20 @@ public class SharingConnectorService {
      */
     protected static final int MAX_API_KEY_LENGTH = 200;
 
-    /**
-     * Immutable health entry consisting of a creation timestamp and a short status message.
-     */
-    public static class HealthStatus {
+    record HealthEntry(Instant timestamp, String message) {
+    }
 
-        private final Instant timeStamp = Instant.now();
+    record HealthSnapshot(List<HealthEntry> entries, @Nullable Instant lastConnect) {
 
-        private final String statusMessage;
-
-        /**
-         * Creates a new health entry with the current timestamp.
-         *
-         * @param statusMessage human-readable status description
-         */
-        public HealthStatus(String statusMessage) {
-            this.statusMessage = statusMessage;
-        }
-
-        public String getStatusMessage() {
-            return statusMessage;
-        }
-
-        public Instant getTimeStamp() {
-            return timeStamp;
+        HealthSnapshot {
+            entries = List.copyOf(entries);
         }
     }
 
-    /**
-     * Bounded in-memory history of recent {@link HealthStatus} entries plus the last successful connect time.
-     * <p>
-     * On insert, the oldest entry is removed when the size exceeds {@link #HEALTH_HISTORY_LIMIT}.
-     * </p>
-     */
-    public static class HealthStatusWithHistory extends ArrayList<HealthStatus> {
+    private final List<HealthEntry> healthHistory = new ArrayList<>(HEALTH_HISTORY_LIMIT);
 
-        private Instant lastConnect = null;
-
-        public HealthStatusWithHistory() {
-            super(HEALTH_HISTORY_LIMIT);
-        }
-
-        @Override
-        public synchronized boolean add(HealthStatus e) {
-            if (this.size() >= HEALTH_HISTORY_LIMIT) {
-                this.remove(0); // Remove the oldest element
-            }
-            return super.add(e);
-        }
-
-        public Instant getLastConnect() {
-            return lastConnect;
-        }
-
-        public void setLastConnect() {
-            this.lastConnect = Instant.now();
-        }
-
-        /**
-         * resets the last connect time
-         */
-        public void resetLastConnect() {
-            this.lastConnect = null;
-        }
-
-    }
-
-    private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
+    @Nullable
+    private Instant lastConnect;
 
     private static final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
@@ -278,8 +225,9 @@ public class SharingConnectorService {
         // this defines the export action in the sharing platform, by defining a filter to select all exercises in Artemis format.
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
-        lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
-        lastHealthStati.setLastConnect();
+        synchronized (this) {
+            lastConnect = recordHealth("Delivered configuration to Sharing Platform");
+        }
         return new SharingPluginConfig("Artemis Sharing Connector", List.of(action));
     }
 
@@ -306,7 +254,7 @@ public class SharingConnectorService {
     public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
             // this is just in case, somebody tries an attack
-            lastHealthStati.add(new HealthStatus("Failed api Key validation"));
+            recordHealth("Failed api Key validation");
 
             return false;
         }
@@ -317,7 +265,7 @@ public class SharingConnectorService {
 
         boolean success = sharingApiKey != null && MessageDigest.isEqual(DigestUtils.sha256(sharingApiKey), DigestUtils.sha256(apiKey));
         if (!success) {
-            lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
+            recordHealth("Failed api Key validation (unequal)");
         }
         return success;
     }
@@ -341,10 +289,10 @@ public class SharingConnectorService {
      * Primarily used in tests.
      * </p>
      */
-    void shutDown() {
+    synchronized void shutDown() {
         sharingApiBaseUrl = null;
-        this.lastHealthStati.add(new HealthStatus("shutdown requested"));
-        this.lastHealthStati.resetLastConnect();
+        recordHealth("shutdown requested");
+        lastConnect = null;
     }
 
     /**
@@ -356,29 +304,37 @@ public class SharingConnectorService {
      * </p>
      */
     void triggerReinit() {
-        if (sharingUrl != null) {
-            log.info("Requesting reinitialization from Sharing Platform");
-            lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform via " + sharingUrl));
+        if (sharingUrl == null) {
+            return;
+        }
+
+        log.info("Requesting reinitialization from Sharing Platform");
+        recordHealth("Requested reinitialization from Sharing Platform");
+        try {
             String reInitUrlWithApiKey = UriComponentsBuilder.fromUriString(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
-            try {
-                boolean success = Boolean.TRUE.equals(restClient.get().uri(reInitUrlWithApiKey).retrieve().body(Boolean.class));
-                if (!success) {
-                    log.warn("The request for connector reinitialization from Sharing Platform was not successful");
-                    lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful."));
-                }
-            }
-            catch (Exception e) {
-                log.warn("Failed to request reinitialization from Sharing Platform", e);
-                lastHealthStati.add(new HealthStatus("The request for connector reinitialization from Sharing Platform was not successful: " + e.getMessage()));
+            if (Boolean.TRUE.equals(restClient.get().uri(reInitUrlWithApiKey).retrieve().body(Boolean.class))) {
+                return;
             }
         }
+        catch (RuntimeException _) {
+            // A client exception can include the full request URL with the API key.
+        }
+        String failure = "Failed to request reinitialization from Sharing Platform";
+        log.warn(failure);
+        recordHealth(failure);
     }
 
-    /**
-     * @return the recent health history including the last connection time
-     */
-    public HealthStatusWithHistory getLastHealthStati() {
-        return lastHealthStati;
+    private synchronized Instant recordHealth(String message) {
+        var entry = new HealthEntry(Instant.now(), message);
+        if (healthHistory.size() == HEALTH_HISTORY_LIMIT) {
+            healthHistory.removeFirst();
+        }
+        healthHistory.add(entry);
+        return entry.timestamp();
+    }
+
+    synchronized HealthSnapshot getHealthSnapshot() {
+        return new HealthSnapshot(healthHistory, lastConnect);
     }
 }

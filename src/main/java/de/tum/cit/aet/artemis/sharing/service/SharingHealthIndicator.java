@@ -2,13 +2,9 @@ package de.tum.cit.aet.artemis.sharing.service;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
 
-import org.apache.commons.collections4.list.UnmodifiableList;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
@@ -30,47 +26,32 @@ public class SharingHealthIndicator implements HealthIndicator {
 
     private static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
 
-    @Value("${artemis.sharing.enabled:false}")
-    private boolean sharingEnabled;
+    private final SharingConnectorService sharingConnectorService;
 
-    private final Optional<SharingConnectorService> sharingConnectorService;
-
-    public SharingHealthIndicator(Optional<SharingConnectorService> sharingConnectorService) {
+    public SharingHealthIndicator(SharingConnectorService sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;
     }
 
-    /**
-     * returns the main health status (up/down or unknown if config request from Sharing Platform is too long ago), together
-     * with a list of the 10 most recent log events for the sharing connector.
-     */
+    /** Reports connection freshness and the ten most recent connector events, newest first. */
     @Override
     public Health health() {
+        var snapshot = sharingConnectorService.getHealthSnapshot();
         Health.Builder health;
-        if (sharingEnabled && sharingConnectorService.isPresent()) {
-
-            SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.get().getLastHealthStati();
-            if (lastHealthStati.getLastConnect() == null) {
-                health = Health.status(ConnectorHealth.DEGRADED);
-            }
-            else if (lastHealthStati.getLastConnect().isBefore(Instant.now().minus(11, ChronoUnit.MINUTES))) {
-                health = Health.unknown();
-            }
-            else {
-                health = Health.up();
-            }
-            UnmodifiableList<SharingConnectorService.HealthStatus> lastStati = new UnmodifiableList<>(lastHealthStati);
-
-            for (int i = lastStati.size() - 1; i >= 0; i--) {
-                SharingConnectorService.HealthStatus hs = lastStati.get(i);
-                ZonedDateTime zonedTimestamp = hs.getTimeStamp().atZone(UTC);
-                String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
-                health.withDetail("%3d: %s".formatted(i + 1, timeStamp), hs.getStatusMessage());
-            }
-
+        if (snapshot.lastConnect() == null) {
+            health = Health.status(ConnectorHealth.DEGRADED);
+        }
+        else if (snapshot.lastConnect().isBefore(Instant.now().minus(11, ChronoUnit.MINUTES))) {
+            health = Health.unknown();
         }
         else {
-            health = Health.status(ConnectorHealth.DEGRADED).withDetail("Status",
-                    "Sharing seems not configured: prop \"artemis.sharing.enabled\" is " + sharingEnabled + ". Should be \"true\"");
+            health = Health.up();
+        }
+
+        var entries = snapshot.entries();
+        for (int i = entries.size() - 1; i >= 0; i--) {
+            var entry = entries.get(i);
+            String timestamp = TIME_STAMP_FORMATTER.format(entry.timestamp().atZone(UTC));
+            health.withDetail("%3d: %s".formatted(i + 1, timestamp), entry.message());
         }
         return health.build();
     }

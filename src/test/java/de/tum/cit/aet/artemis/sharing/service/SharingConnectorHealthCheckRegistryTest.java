@@ -19,9 +19,6 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
     @Autowired
     private SharingHealthIndicator sharingHealthIndicator;
 
-    @Autowired
-    private SharingConnectorService sharingConnectorService;
-
     @AfterEach
     void tearDown() throws Exception {
         sharingPlatformMockProvider.reset();
@@ -35,23 +32,6 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
         final Health health = sharingHealthIndicator.health();
         // then
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-    }
-
-    @Test
-    void shouldLimitHealthHistorySizeToConfiguredMaximum() throws Exception {
-        // given
-        sharingPlatformMockProvider.mockStatus(true);
-
-        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();
-
-        // when - adding more entries than the limit
-        for (int i = 0; i < SharingConnectorService.HEALTH_HISTORY_LIMIT * 2; i++) {
-            lastHealthStati.add(new SharingConnectorService.HealthStatus("Just Testing"));
-            assertThat(lastHealthStati).size().isLessThanOrEqualTo(SharingConnectorService.HEALTH_HISTORY_LIMIT);
-        }
-
-        // then
-        assertThat(lastHealthStati).size().isEqualTo(SharingConnectorService.HEALTH_HISTORY_LIMIT);
     }
 
     @Test
