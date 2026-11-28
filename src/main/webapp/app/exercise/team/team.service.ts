@@ -10,7 +10,7 @@ import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-us
 import { downloadFile } from 'app/foundation/util/download.util';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, Subscription } from 'rxjs';
-import { filter, map, shareReplay } from 'rxjs/operators';
+import { filter, map, share } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
@@ -334,12 +334,12 @@ export class TeamService implements ITeamService, OnDestroy {
     }
 
     /**
-     * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$
+     * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$.
+     * The stream is shared but does not replay earlier updates: every consumer loads its data from the server when it opens, and that data already contains the earlier updates,
+     * so replaying them to a later subscriber would overwrite what it just loaded, for example a participation that the student started after being removed from a team.
      */
     private get newTeamAssignmentUpdates$(): Observable<TeamAssignmentPayload> {
-        this.teamAssignmentUpdates$ = this.websocketService
-            .subscribe<TeamAssignmentPayload>(teamAssignmentUpdatesWebsocketTopic)
-            .pipe(shareReplay({ bufferSize: 16, refCount: true }));
+        this.teamAssignmentUpdates$ = this.websocketService.subscribe<TeamAssignmentPayload>(teamAssignmentUpdatesWebsocketTopic).pipe(share());
         return this.teamAssignmentUpdates$;
     }
 
