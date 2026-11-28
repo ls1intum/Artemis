@@ -16,6 +16,7 @@ import {
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
+    participationsAfterTeamAssignment,
     validateStrictDateSequence,
     withPracticeParticipations,
 } from 'app/exercise/util/exercise.utils';
@@ -350,6 +351,38 @@ describe('ExerciseUtils', () => {
         it('should return the delivered participations when no practice participation exists', () => {
             expect(withPracticeParticipations([teamParticipation], [])).toEqual([]);
             expect(withPracticeParticipations(undefined, [teamParticipation])).toEqual([teamParticipation]);
+        });
+
+        it('should drop the team participations and keep the practice participation when the assignment delivers none', () => {
+            // The server leaves an empty list out of the JSON, so an unassignment reaches the client without participations.
+            expect(withPracticeParticipations([teamParticipation, practiceParticipation], undefined)).toEqual([practiceParticipation]);
+            expect(withPracticeParticipations(undefined, undefined)).toEqual([]);
+        });
+    });
+
+    describe('participationsAfterTeamAssignment()', () => {
+        const teamParticipation = { id: 1, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 2, testRun: true } as StudentParticipation;
+
+        it('should replace the team participations and keep the practice participation when the assignment delivers participations', () => {
+            const newTeamParticipation = { id: 3, testRun: false } as StudentParticipation;
+
+            expect(participationsAfterTeamAssignment([teamParticipation, practiceParticipation], { teamId: 5, studentParticipations: [newTeamParticipation] })).toEqual([
+                newTeamParticipation,
+                practiceParticipation,
+            ]);
+        });
+
+        it('should drop the team participations and keep the practice participation when the student was unassigned', () => {
+            // An unassignment has no team, and the server leaves its empty list of participations out of the JSON.
+            expect(participationsAfterTeamAssignment([teamParticipation, practiceParticipation], {})).toEqual([practiceParticipation]);
+            expect(participationsAfterTeamAssignment([teamParticipation], {})).toEqual([]);
+        });
+
+        it('should keep the participations when the student got a team that has no participations', () => {
+            // A new team has no participations yet, so the server leaves the empty list out. A message of this kind can also be replayed after the student started the exercise.
+            expect(participationsAfterTeamAssignment([teamParticipation, practiceParticipation], { teamId: 5 })).toEqual([teamParticipation, practiceParticipation]);
+            expect(participationsAfterTeamAssignment(undefined, { teamId: 5 })).toBeUndefined();
         });
     });
 

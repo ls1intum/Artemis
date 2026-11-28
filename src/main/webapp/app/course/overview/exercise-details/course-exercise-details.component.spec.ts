@@ -306,6 +306,107 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([3]);
         });
 
+        it('should unassign the team and keep the practice participation when the assignment carries no participations', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            // The server leaves the empty participation list and the missing team out of the JSON of an unassignment.
+            assignments.next({ exerciseId: 42 } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBeUndefined();
+            expect(comp.exercise?.studentParticipations?.map((participation) => participation.id)).toEqual([2]);
+        });
+
+        it('should stop showing the participation of the team the student was unassigned from', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+            comp.mergeResultsAndSubmissionsForParticipations();
+            expect(comp.studentParticipations.map((participation) => participation.id)).toEqual([1]);
+
+            assignments.next({ exerciseId: 42 } as TeamAssignmentPayload);
+
+            // there is no practice participation to show instead, and the merge alone would leave the participation of the old team on the page
+            expect(comp.studentParticipations).toEqual([]);
+        });
+
+        it('should evict the participations of the team the student left from the cache, but not the practice participation', async () => {
+            const removeCachedParticipations = vi.spyOn(participationWebsocketService, 'removeCachedParticipations');
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation, practiceParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42 } as TeamAssignmentPayload);
+
+            // a page that opens again seeds itself from the cache, and the server response without participations would not replace what the cache restores
+            expect(removeCachedParticipations).toHaveBeenCalledExactlyOnceWith([1]);
+        });
+
+        it('should not evict anything when the assignment brings a team without participations', async () => {
+            const removeCachedParticipations = vi.spyOn(participationWebsocketService, 'removeCachedParticipations');
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+
+            assignments.next({ exerciseId: 42, teamId: 8 } as TeamAssignmentPayload);
+
+            expect(removeCachedParticipations).not.toHaveBeenCalled();
+        });
+
+        it('should neither replace nor merge the shown participations when the assignment brings a team without participations', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+            comp.mergeResultsAndSubmissionsForParticipations();
+            // The shown participations are updated by the result handler and can be newer than those of the exercise, so merging them again from the exercise would roll them back.
+            const shown = comp.studentParticipations;
+            const merge = vi.spyOn(comp, 'mergeResultsAndSubmissionsForParticipations');
+
+            assignments.next({ exerciseId: 42, teamId: 8 } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBe(8);
+            expect(merge).not.toHaveBeenCalled();
+            expect(comp.studentParticipations).toBe(shown);
+        });
+
+        it('should keep the participations when the assignment brings a team without participations', async () => {
+            const assignments = await subscribeToAssignments({
+                id: 42,
+                type: ExerciseType.TEXT,
+                teamMode: true,
+                studentAssignedTeamId: 7,
+                studentParticipations: [oldTeamParticipation],
+            } as Exercise);
+            comp.mergeResultsAndSubmissionsForParticipations();
+
+            // the server leaves the empty list of participations of a team that has none out of the JSON, and a message like this can be replayed to a later subscriber
+            assignments.next({ exerciseId: 42, teamId: 8 } as TeamAssignmentPayload);
+
+            expect(comp.exercise?.studentAssignedTeamId).toBe(8);
+            expect(comp.studentParticipations.map((participation) => participation.id)).toEqual([1]);
+        });
+
         it('should ignore the team assignment of another exercise', async () => {
             const assignments = await subscribeToAssignments({
                 id: 42,
