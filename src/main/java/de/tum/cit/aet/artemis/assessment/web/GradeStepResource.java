@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
@@ -196,13 +197,15 @@ public class GradeStepResource {
      * GET /courses/{courseId}/grading-scale/grade-steps/match-grade-step : Find a grade step for the grading scale of a course by grade percentage
      *
      * @param courseId        the course to which the grading scale belongs
-     * @param gradePercentage the grade percentage the has to be mapped to a grade step
+     * @param gradePercentage the overall percentage to match to the course grading scale
+     * @param bonusPercentage the percentage of attainable points earned, used for bonus scales when supplied
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
     @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
     @GetMapping("courses/{courseId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
-    public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
+    public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage,
+            @RequestParam(required = false) Double bonusPercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithAuthorities();
@@ -223,7 +226,8 @@ public class GradeStepResource {
             gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
         }
         else {
-            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale);
+            double percentage = gradingScale.getGradeType() == GradeType.BONUS && bonusPercentage != null ? bonusPercentage : gradePercentage;
+            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(percentage, gradingScale);
         }
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradingScale.getGradeType());
         return ResponseEntity.ok(gradeDTO);

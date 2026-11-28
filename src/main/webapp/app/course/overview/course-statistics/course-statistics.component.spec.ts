@@ -493,8 +493,8 @@ describe('CourseStatisticsComponent', () => {
 
         expect(comp.course()?.id).toBe(2);
         expect(comp.course()?.title).not.toBe('Stale course');
-        expect(gradeSpy).toHaveBeenNthCalledWith(1, 1, expect.any(Number));
-        expect(gradeSpy).toHaveBeenNthCalledWith(2, 2, 0);
+        expect(gradeSpy).toHaveBeenNthCalledWith(1, 1, 80, 80);
+        expect(gradeSpy).toHaveBeenNthCalledWith(2, 2, 0, 0);
         expect(secondGrade.observed).toBe(true);
         expect(loadSpy).toHaveBeenCalledTimes(2);
         expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);
@@ -585,6 +585,56 @@ describe('CourseStatisticsComponent', () => {
         expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.reachablePoints');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
         expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
+    });
+
+    it('includes a future manual exercise in the score ring and uses attainable points for the current bonus', () => {
+        const completedExercise = {
+            id: 901,
+            type: ExerciseType.PROGRAMMING,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+        } as Exercise;
+        const futureManualExercise = new TextExercise(course, undefined);
+        futureManualExercise.id = 902;
+        futureManualExercise.maxPoints = 10;
+        futureManualExercise.dueDate = dayjs().add(2, 'days');
+        futureManualExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        futureManualExercise.studentParticipations = [];
+        const courseWithFutureManualExercise = { ...course, presentationScore: undefined, exercises: [completedExercise, futureManualExercise] } as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseWithFutureManualExercise);
+        const exerciseScores = new CourseScores(10, 10, 0, {
+            absoluteScore: 10,
+            absoluteScoreTotal: 10,
+            relativeScore: 100,
+            currentRelativeScore: 100,
+            presentationScore: 0,
+        });
+        vi.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(
+            new Map([
+                [ExerciseType.PROGRAMMING, exerciseScores],
+                [ExerciseType.TEXT, new CourseScores(10, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 })],
+            ]),
+        );
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(20, 10, 0, {
+                absoluteScore: 10,
+                absoluteScoreTotal: 10,
+                relativeScore: 50,
+                currentRelativeScore: 100,
+                presentationScore: 0,
+            }),
+        );
+
+        vi.spyOn(TestBed.inject(CourseOverviewExercisesService), 'loadIfNeeded').mockReturnValue(of(createOverviewResponse(courseWithFutureManualExercise.exercises!)));
+        const gradeSpy = vi.spyOn(TestBed.inject(GradeStepApi), 'getGradeStepByPercentageForCourse').mockReturnValue(of({ gradeType: 'BONUS', gradeName: '9' }));
+
+        fixture.detectChanges();
+
+        expect(gradeSpy).toHaveBeenCalledExactlyOnceWith(1, 50, 100);
+
+        expect(comp.doughnutChartEntries().map((entry) => entry.value)).toEqual([10, 10]);
+        expect(fixture.nativeElement.querySelector('[data-testid="total-score-label"]').textContent).toContain('50%');
+        expect(fixture.nativeElement.querySelector('[data-testid="total-score-label"]').textContent).toContain('10 / 20 pt');
     });
 
     it('should show total and credited points separately when the course has exercise variants', () => {

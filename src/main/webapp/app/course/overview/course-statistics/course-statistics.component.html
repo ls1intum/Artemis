@@ -68,8 +68,8 @@
                             </svg>
                         }
                         <div data-testid="total-score-label" class="statistics-score-center" [attr.aria-hidden]="hasScoreRingData() ? 'true' : null">
-                            <strong class="text-3xl tabular-nums">{{ displayedScores().currentPercentage }}%</strong
-                            ><span class="mt-1 text-sm tabular-nums text-muted-color">{{ displayedScores().creditedPoints }} / {{ displayedScores().attainablePoints }} pt</span>
+                            <strong class="text-3xl tabular-nums">{{ displayedScores().overallPercentage }}%</strong
+                            ><span class="mt-1 text-sm tabular-nums text-muted-color">{{ displayedScores().creditedPoints }} / {{ displayedScores().maximumPoints }} pt</span>
                         </div>
                     </div>
                     <ul class="m-0 flex list-none flex-col gap-3 p-0 text-sm">

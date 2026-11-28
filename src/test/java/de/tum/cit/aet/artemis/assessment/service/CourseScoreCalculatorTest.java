@@ -47,10 +47,10 @@ class CourseScoreCalculatorTest {
                 new CourseGradeScoreDTO(5L, STUDENT_ID, 5L, 100.0, false, null, ExerciseType.TEXT)), List.of(), 0.0, 0);
         StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context, input);
 
-        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(12.0);
+        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(42.0);
         assertThat(context.maxAndReachablePoints().reachablePoints()).isEqualTo(12.0);
         assertThat(scores.absoluteScore()).isEqualTo(13.0);
-        assertThat(scores.relativeScore()).isEqualTo(108.3);
+        assertThat(scores.relativeScore()).isEqualTo(31.0);
         assertThat(scores.currentRelativeScore()).isEqualTo(108.3);
     }
 
@@ -106,7 +106,8 @@ class CourseScoreCalculatorTest {
         CourseScoreContextDTO beforeFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
         CourseScoreContextDTO afterFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME.plusMinutes(2));
 
-        assertThat(beforeFinalBuild.maxAndReachablePoints().maxPoints()).isZero();
+        assertThat(beforeFinalBuild.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
+        assertThat(beforeFinalBuild.maxAndReachablePoints().reachablePoints()).isZero();
         assertThat(afterFinalBuild.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
         assertThat(afterFinalBuild.maxAndReachablePoints().reachablePoints()).isEqualTo(10.0);
     }

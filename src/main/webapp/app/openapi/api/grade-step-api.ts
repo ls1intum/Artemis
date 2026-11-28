@@ -51,10 +51,12 @@ export class GradeStepApi {
      *
      * @param courseId
      * @param gradePercentage
+     * @param bonusPercentage
      */
-    getGradeStepByPercentageForCourse(courseId: number, gradePercentage: number): Observable<Grade> {
+    getGradeStepByPercentageForCourse(courseId: number, gradePercentage: number, bonusPercentage?: number): Observable<Grade> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'gradePercentage', gradePercentage);
+        appendQueryParam(queryParams, 'bonusPercentage', bonusPercentage);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/assessment/courses/${courseId}/grading-scale/match-grade-step${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Grade>(url);

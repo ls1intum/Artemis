@@ -12,8 +12,8 @@
         <div class="flex flex-col justify-between gap-1">
             <div class="information-box-wrapper ms-1">
                 <div class="-mx-2 mt-1 flex flex-wrap">
-                    <div class="max-w-full shrink-0 px-2" [ngClass]="exerciseCount() && (totalReachableScore() || totalAbsoluteScore()) ? 'w-7/12' : 'w-full'">
-                        @if (exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) {
+                    <div class="max-w-full shrink-0 px-2" [ngClass]="exerciseCount() && (totalMaxPoints() || totalAbsoluteScore()) ? 'w-7/12' : 'w-full'">
+                        @if (exerciseCount() && (totalMaxPoints() || totalAbsoluteScore())) {
                             <div class="self-center">
                                 <div class="font-bold text-muted-color" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
                                 <div class="font-bold">
@@ -21,7 +21,7 @@
                                         jhiTranslate="artemisApp.studentDashboard.points"
                                         [translateValues]="{
                                             totalAbsoluteScore: totalAbsoluteScore(),
-                                            totalReachableScore: totalReachableScore(),
+                                            totalMaxPoints: totalMaxPoints(),
                                         }"
                                     ></div>
                                 </div>
@@ -44,7 +44,7 @@
                             </div>
                         }
                     </div>
-                    @if (exerciseCount() && (totalReachableScore() || totalAbsoluteScore())) {
+                    @if (exerciseCount() && (totalMaxPoints() || totalAbsoluteScore())) {
                         <div class="chart-container mb-2! w-5/12 max-w-full shrink-0 self-center px-2">
                             <div class="chart-text">
                                 <h4 class="mb-0">{{ totalRelativeScore() }}%</h4>

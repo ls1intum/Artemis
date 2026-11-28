@@ -67,7 +67,7 @@ export class CourseCardComponent {
     private readonly _nextRelevantExercise = signal<Exercise | undefined>(undefined);
     private readonly _exerciseCount = signal(0);
     private readonly _totalRelativeScore = signal<number>(0);
-    private readonly _totalReachableScore = signal<number>(0);
+    private readonly _totalMaxPoints = signal<number>(0);
     private readonly _totalAbsoluteScore = signal<number>(0);
     private readonly _courseNotificationCount = signal(0);
     private readonly _doughnutChartEntries = signal<ChartSeriesEntry[]>([
@@ -78,7 +78,7 @@ export class CourseCardComponent {
     readonly nextRelevantExercise = this._nextRelevantExercise.asReadonly();
     readonly exerciseCount = this._exerciseCount.asReadonly();
     readonly totalRelativeScore = this._totalRelativeScore.asReadonly();
-    readonly totalReachableScore = this._totalReachableScore.asReadonly();
+    readonly totalMaxPoints = this._totalMaxPoints.asReadonly();
     readonly totalAbsoluteScore = this._totalAbsoluteScore.asReadonly();
     readonly courseNotificationCount = this._courseNotificationCount.asReadonly();
     readonly doughnutChartEntries = this._doughnutChartEntries.asReadonly();
@@ -110,13 +110,13 @@ export class CourseCardComponent {
 
             const totalScoresForCourse: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(course.id!);
             if (totalScoresForCourse) {
-                this._totalRelativeScore.set(totalScoresForCourse.studentScores[ScoreType.CURRENT_RELATIVE_SCORE]);
+                this._totalRelativeScore.set(totalScoresForCourse.studentScores[ScoreType.RELATIVE_SCORE]);
                 this._totalAbsoluteScore.set(totalScoresForCourse.studentScores[ScoreType.ABSOLUTE_SCORE]);
-                this._totalReachableScore.set(totalScoresForCourse[ScoreType.REACHABLE_POINTS]);
+                this._totalMaxPoints.set(totalScoresForCourse[ScoreType.MAX_POINTS]);
             }
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
-            const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this._totalReachableScore() - this._totalAbsoluteScore()), course);
+            const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this._totalMaxPoints() - this._totalAbsoluteScore()), course);
             this._doughnutChartEntries.set([
                 { name: 'achievedPointsLabel', value: this._totalAbsoluteScore() },
                 { name: 'missingPointsLabel', value: scoreNotReached },

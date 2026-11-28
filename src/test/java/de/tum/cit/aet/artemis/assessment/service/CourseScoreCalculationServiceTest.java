@@ -120,6 +120,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         BonusSourceResultDTO bonusSourceResultDTO = bonusSourceResultDTOMap.get(student.getId());
         assertThat(bonusSourceResultDTO.achievedPoints()).isZero();
         assertThat(bonusSourceResultDTO.presentationScoreThreshold()).isEqualTo(course.getPresentationScore());
+
+        // Batch exam grading must apply the same deadline and inclusion rules as the individual bonus preview.
+        User otherStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var batchResults = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId(), otherStudent.getId()));
+        assertThat(batchResults).isEqualTo(bonusSourceResultDTOMap);
     }
 
     @Test
@@ -228,7 +233,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
-        exerciseRepository.save(exercise);
+        // Keep this test focused on the excluded exercise instead of contributions from the fixture's other exercises.
+        exerciseList.stream().skip(1).forEach(otherExercise -> otherExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED));
+        exerciseRepository.saveAll(exerciseList);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -247,6 +254,27 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getScoresAndParticipationResultsIncludesManuallyAssessedExercisePointsBeforeDueDate() {
+        var exercise = course.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exerciseRepository.save(exercise);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        CourseScoresDTO textScores = courseForDashboard.textScores();
+
+        assertThat(textScores.maxPoints()).isEqualTo(5.0);
+        assertThat(textScores.reachablePoints()).isZero();
+        assertThat(textScores.studentScores().absoluteScore()).isZero();
+        assertThat(textScores.studentScores().absoluteScoreTotal()).isZero();
+        assertThat(textScores.studentScores().relativeScore()).isZero();
+        assertThat(textScores.studentScores().currentRelativeScore()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
         Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
@@ -255,7 +283,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(25.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
         assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
@@ -263,7 +291,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
-        assertThat(programmingExerciseScores.maxPoints()).isZero();
+        assertThat(programmingExerciseScores.maxPoints()).isEqualTo(5.0);
         assertThat(programmingExerciseScores.reachablePoints()).isZero();
         assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
         assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
@@ -296,11 +324,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(28.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
         assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(37.5);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(10.7);
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
@@ -563,6 +591,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     /** Builds an in-memory participation for the given exercise carrying a single rated result with the given score. */
     private static StudentParticipation ratedParticipation(TextExercise exercise, double score) {
         StudentParticipation participation = new StudentParticipation();
+        participation.setId(exercise.getId());
         participation.setExercise(exercise);
         TextSubmission submission = new TextSubmission();
         Result result = ParticipationFactory.generateResult(true, score);
