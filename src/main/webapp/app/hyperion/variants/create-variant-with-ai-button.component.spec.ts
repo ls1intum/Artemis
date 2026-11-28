@@ -1,4 +1,4 @@
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';

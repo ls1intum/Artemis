@@ -6,7 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { vi } from 'vitest';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {

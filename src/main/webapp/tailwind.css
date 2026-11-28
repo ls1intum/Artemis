@@ -27,6 +27,8 @@
  * i.e. `--title-bar-height` in total, identically across the student overview, course management and admin shells.
  */
 :root {
+    color-scheme: light;
+
     --title-bar-height: 40px;
     --title-bar-content-height: 28px;
     --title-bar-padding-block: 6px;
@@ -45,29 +47,8 @@
      */
     --sidebar-nav-width: 164px;
     --sidebar-nav-width-collapsed: 64px;
-}
 
-@theme inline {
-    --color-state-danger: var(--danger);
-    --color-state-success: var(--success);
-    --color-state-warning: var(--warning);
-    --color-state-info: var(--info);
-}
-
-/* Test prose can contain class-shaped words and does not contribute runtime utilities. */
-@source not './app/**/*.spec.ts';
-
-/* `localRules/no-bootstrap-classes` bans the class names `collapse` and `table` in templates, so a stray use must not
-   start to render as the Tailwind utility of the same name either. */
-@source not inline("collapse");
-@source not inline("table");
-
-/* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
-:root {
-    color-scheme: light;
-
+    /* The roles of TUM AET UI, mapped to the tokens of the Artemis themes. The dark theme overrides some of them below. */
     --tumaet-ui-font-family: var(--font-family-sans-serif);
     --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
@@ -103,6 +84,24 @@
     --tumaet-ui-tooltip-background: var(--artemis-dark);
     --tumaet-ui-tooltip-color: var(--tooltip-color);
 }
+
+@theme inline {
+    --color-state-danger: var(--danger);
+    --color-state-success: var(--success);
+    --color-state-warning: var(--warning);
+    --color-state-info: var(--info);
+}
+
+/* Test prose can contain class-shaped words and does not contribute runtime utilities. */
+@source not './app/**/*.spec.ts';
+
+/* `localRules/no-bootstrap-classes` bans the class names `collapse` and `table` in templates, so a stray use must not
+   start to render as the Tailwind utility of the same name either. */
+@source not inline("collapse");
+@source not inline("table");
+
+/* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 [data-theme='dark'] {
     color-scheme: dark;

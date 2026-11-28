@@ -8,7 +8,7 @@ import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-butt
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { provideHttpClient } from '@angular/common/http';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 describe('ExerciseCreateButtonComponent', () => {
     let component: ExerciseCreateButtonComponent;

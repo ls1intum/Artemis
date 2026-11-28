@@ -119,7 +119,7 @@ final class HyperionQuizQuestionPoolQuestionMapper {
     /**
      * Maps a generated question to the DTO the checks and the pool use. A missing type counts as the requested one, because the model
      * was asked for exactly that type; a named type is matched ignoring case and separator characters, and an unknown name makes the
-     * question unmappable. Source code the question text, an option or the explanation carries as plain text is set in Markdown code.
+     * question unmappable. Source code the question text, an option or an explanation carries as plain text is set in Markdown code.
      *
      * @param generated     the model's question, or {@code null}
      * @param requestedType the type the generation call asked for
@@ -139,10 +139,14 @@ final class HyperionQuizQuestionPoolQuestionMapper {
             }
         }
         List<GeneratedQuizAnswerOptionDTO> options = generated.options().stream()
-                .map(option -> new GeneratedQuizAnswerOptionDTO(format(option.text()), Boolean.TRUE.equals(option.correct()), null, null)).toList();
-        String explanation = format(generated.explanation());
+                .map(option -> new GeneratedQuizAnswerOptionDTO(format(option.text()), Boolean.TRUE.equals(option.correct()), null, blankToNull(format(option.explanation()))))
+                .toList();
         return Optional.of(new GeneratedQuizQuestionDTO(questionType, plainTitle(generated.title()), format(generated.questionText()), options, null,
-                explanation.isBlank() ? null : explanation));
+                blankToNull(format(generated.explanation()))));
+    }
+
+    private static @Nullable String blankToNull(String text) {
+        return text.isBlank() ? null : text;
     }
 
     /**
@@ -191,10 +195,10 @@ final class HyperionQuizQuestionPoolQuestionMapper {
 
     record PoolQuestionOutput(@JsonPropertyDescription("the requested question type, exactly as given") String type, String title, String questionText,
             @JsonPropertyDescription("how many options the task requires this question to mark correct; decide it before writing the options") Integer correctOptionCount,
-            List<PoolOptionOutput> options,
-            @JsonPropertyDescription("why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer") String explanation) {
+            List<PoolOptionOutput> options, @JsonPropertyDescription("the work the reader must do to reach the answer; under 300 characters") String explanation) {
     }
 
-    record PoolOptionOutput(String text, Boolean correct) {
+    record PoolOptionOutput(String text, Boolean correct,
+            @JsonPropertyDescription("why this option is correct or wrong, naming the misconception a wrong option reflects; under 300 characters") String explanation) {
     }
 }

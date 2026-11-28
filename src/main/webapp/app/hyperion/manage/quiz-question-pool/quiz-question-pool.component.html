@@ -30,6 +30,21 @@
         <fa-icon [icon]="faRotate" class="me-1" />
         <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.refresh"></span>
     </button>
+    @if (canReview()) {
+        <button
+            tumAetUiButton
+            type="button"
+            size="small"
+            severity="primary"
+            variant="outlined"
+            data-testid="pool-create-quiz-button"
+            [disabled]="isLoadingCandidates() || !lectureUnits().length"
+            (click)="openCreateQuizDialog()"
+        >
+            <fa-icon [icon]="faListCheck" class="me-1" />
+            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.button"></span>
+        </button>
+    }
     @if (isInstructor() && settings()) {
         <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" data-testid="pool-settings-button" (click)="openSettingsDialog()">
             <fa-icon [icon]="faGear" class="me-1" />
@@ -199,6 +214,19 @@
 
     @if (isInstructor() && settings(); as settingsValue) {
         <jhi-quiz-question-pool-settings-dialog [(visible)]="settingsDialogVisible" [settings]="settingsValue" [saving]="isSavingSettings()" (save)="saveSettings($event)" />
+    }
+
+    @if (canReview()) {
+        <jhi-quiz-question-pool-create-quiz-dialog
+            [visible]="createQuizDialogVisible()"
+            (visibleChange)="setCreateQuizDialogVisible($event)"
+            [competencies]="quizCompetencies()"
+            [lectureUnits]="lectureUnits()"
+            [candidates]="selectionCandidates()"
+            [initialCompetencyId]="selectedCompetencyId()"
+            [busy]="isCreatingQuiz()"
+            (create)="createQuiz($event)"
+        />
     }
 
     @if (lectureUnits().length > 0) {

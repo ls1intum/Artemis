@@ -69,6 +69,11 @@ jobs:
       - name: Dependency Families
         run: ./gradlew verifyDependencyFamilies -x webapp
         if: ${{ !cancelled() }}
+      # The same class in two jars (for example sshd-osgi next to sshd-core) or an artifact that was removed on purpose coming
+      # back is invisible to Gradle's conflict resolution and to the families check; the JVM would load whichever copy is first.
+      - name: Runtime Classpath Hygiene
+        run: ./gradlew verifyRuntimeClasspathHygiene -x webapp
+        if: ${{ !cancelled() }}
       # Libraries with a known vulnerability must stay at their patched version on the build-script (plugin) classpath,
       # which GitHub's dependency graph reports separately from the shipped WAR. Same reason for running it explicitly.
       - name: Build-Script Classpath Pins
@@ -110,6 +115,9 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Dependency Version Consistency
         run: pnpm run sync-versions:check
+      - name: Duplicate Client Dependencies
+        run: node --test supporting_scripts/client/check_duplicate_dependencies.test.mjs && pnpm run check:duplicate-dependencies
+        if: ${{ !cancelled() }}
       - name: TypeScript Formatting
         run: pnpm run prettier:check
       - name: TypeScript Code Style

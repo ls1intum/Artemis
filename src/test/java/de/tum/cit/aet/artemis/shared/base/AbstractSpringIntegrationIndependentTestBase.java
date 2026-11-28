@@ -12,8 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -75,12 +73,6 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel chatModel;
-
-    @MockitoBean
-    protected ChatMemory chatMemory;
-
-    @MockitoBean
-    protected ChatMemoryRepository chatMemoryRepository;
 
     // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
@@ -157,12 +149,6 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (athenaScheduleService != null) {
             Mockito.reset(athenaScheduleService);
-        }
-        if (chatMemoryRepository != null) {
-            Mockito.reset(chatMemoryRepository);
-        }
-        if (chatMemory != null) {
-            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }
