@@ -28,7 +28,8 @@ import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO;
 
 /**
  * The TUM.Live uploads of attachment video units. Every change locks the unit row first, which serializes it against the other changes of the same unit on
- * every node. A TUM.Live lecture leaves a unit only by moving to the cleanup queue in the same transaction.
+ * every node. Updates scoped to the exact pending reference can also update its status directly. A TUM.Live lecture leaves a unit only by moving to the
+ * cleanup queue in the same transaction.
  */
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -66,6 +67,17 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     @Modifying
     @Query("UPDATE TumLiveUnitUpload upload SET upload.pendingCheckedAt = :now WHERE upload.id = :id AND upload.pendingRef = :ref")
     void markPendingChecked(@Param("id") long id, @Param("ref") String ref, @Param("now") ZonedDateTime now);
+
+    /**
+     * Records TUM.Live's acceptance before returning to the caller. A late acknowledgement cannot change a replacement upload.
+     *
+     * @param lectureUnitId the attachment video unit
+     * @param ref           the pending reference whose transfer was accepted
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE TumLiveUnitUpload upload SET upload.pendingTransferAccepted = TRUE WHERE upload.lectureUnitId = :lectureUnitId AND upload.pendingRef = :ref")
+    void markTransferAccepted(@Param("lectureUnitId") long lectureUnitId, @Param("ref") String ref);
 
     /**
      * The units of a course with a video uploaded to TUM.Live, attached or still pending: a pending one may be attached before the unit is deleted, so its delete
@@ -129,8 +141,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     int deleteWithoutUnitAndPendingUploadByIdIn(@Param("ids") Collection<Long> ids);
 
     /**
-     * Starts an upload for a unit, or returns the one that is pending: a unit has at most one pending upload, and repeating the start must not leave the first
-     * reference behind. A pending upload through another grant, made before the course was connected to TUM.Live again, moves to the cleanup queue instead.
+     * Starts an upload for a unit or returns its pending upload so the service can reject a competing start. A pending upload through an earlier grant moves
+     * to the cleanup queue when the course has been connected to TUM.Live again.
      *
      * @param lectureUnitId the attachment video unit
      * @param integrationId the TUM.Live integration
@@ -166,19 +178,24 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     }
 
     /**
-     * Stores the TUM.Live lecture of the pending upload, if it is still the pending one.
+     * Claims the pending reference for one transfer by recording its TUM.Live lecture. A reference with a lecture is never claimed again.
      *
      * @param lectureUnitId the attachment video unit
      * @param ref           the pending reference
      * @param streamId      its TUM.Live lecture
+     * @return whether the pending upload was claimed
      */
     @Transactional
-    default void recordPendingStream(long lectureUnitId, String ref, long streamId) {
-        findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findForUpdateByLectureUnitId(lectureUnitId)).filter(upload -> ref.equals(upload.getPendingRef()))
-                .ifPresent(upload -> {
-                    upload.setPendingStreamId(streamId);
-                    saveAndFlush(upload);
-                });
+    default boolean recordPendingStream(long lectureUnitId, String ref, long streamId) {
+        var pending = findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findForUpdateByLectureUnitId(lectureUnitId))
+                .filter(upload -> ref.equals(upload.getPendingRef()) && upload.getPendingStreamId() == null);
+        if (pending.isEmpty()) {
+            return false;
+        }
+        TumLiveUnitUpload upload = pending.get();
+        upload.setPendingStreamId(streamId);
+        saveAndFlush(upload);
+        return true;
     }
 
     /**
@@ -279,8 +296,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
                 insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), upload.getPendingStreamId(), now);
             }
             if (deleteRecording && upload.getCurrentRef() != null) {
-                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(),
-                        now.plus(TumLiveRecordingCleanup.SHOWN_LECTURE_DELAY));
+                // Imports lock the source until the copy is saved. After deletion, cleanup can already see any copy that took the link.
+                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(), now);
             }
             delete(upload);
         });

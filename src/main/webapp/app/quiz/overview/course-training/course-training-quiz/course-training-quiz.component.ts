@@ -22,9 +22,10 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionTraining } from 'app/openapi/model/quiz-question-training';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
-import { ButtonModule } from 'primeng/button';
 
 /**
  * A loaded training question. The question is converted once, when its page arrives: appending a later page must keep
@@ -37,7 +38,16 @@ interface TrainingQuestion {
 
 @Component({
     selector: 'jhi-course-training-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule, ButtonModule],
+    imports: [
+        MultipleChoiceQuestionComponent,
+        ShortAnswerQuestionComponent,
+        DragAndDropQuestionComponent,
+        ButtonComponent,
+        TranslateDirective,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {

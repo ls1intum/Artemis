@@ -11,7 +11,7 @@ import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/
 import { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 /**
  * Builds a signal-backed detail input matching {@link ProgrammingDiffReportDetail}. The fields are signals so the
@@ -37,8 +37,8 @@ function diffDetail(overrides: {
 describe('ProgrammingDiffReportDetailComponent', () => {
     let component: ProgrammingDiffReportDetailComponent;
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
-    let dialogService: DialogService;
-    let mockDialogRef: DynamicDialogRef;
+    let dialogService: TumAetUiDialogService;
+    let mockDialogRef: TumAetUiDialogRef;
 
     beforeEach(async () => {
         mockDialogRef = {
@@ -48,7 +48,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ProgrammingDiffReportDetailComponent],
             providers: [
-                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(mockDialogRef) } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue(mockDialogRef) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -56,7 +56,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingDiffReportDetailComponent);
 
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         component = fixture.componentInstance;
     });
 
@@ -82,7 +82,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         expect(dialogSpy).toHaveBeenCalledWith(
             expect.any(Function),
             expect.objectContaining({
-                // Guard the close-affordance fix: PrimeNG only renders the X and binds Escape when closable is true.
+                // Guard the close-affordance fix: the dialog only renders the close button and binds Escape when closable is true.
                 closable: true,
                 data: expect.objectContaining({
                     repositoryDiffInformation: expect.objectContaining({

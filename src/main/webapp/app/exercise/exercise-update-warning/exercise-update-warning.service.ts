@@ -1,6 +1,6 @@
 import { TranslateService } from '@ngx-translate/core';
 import { Service, Type, inject } from '@angular/core';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';

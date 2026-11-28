@@ -10,13 +10,11 @@ import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/w
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/calendar/shared/calendar-overview/calendar-overview-component.directive';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiMultiSelectComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiSelectButtonComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiMultiSelectComponent } from '@tumaet/ui-angular/multi-select';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -50,7 +48,7 @@ interface FilterOptionAndMetadata {
         ArtemisTranslatePipe,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
-    styleUrl: './calendar-desktop-overview.component.scss',
+    styleUrl: './calendar-desktop-overview.component.css',
 })
 export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent {
     private readonly viewState = inject(CalendarViewStateService);

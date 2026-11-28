@@ -16,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -38,15 +37,15 @@ public class OsvRequestMockProvider {
 
     private static final String OSV_VULN_API_URL = "https://api.osv.dev/v1/vulns/";
 
-    private final RestTemplate restTemplate;
+    private final MockRestClientServers mockRestClientServers;
 
     @Autowired
     private JsonMapper objectMapper;
 
     private MockRestServiceServer mockServer;
 
-    public OsvRequestMockProvider(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public OsvRequestMockProvider(MockRestClientServers mockRestClientServers) {
+        this.mockRestClientServers = mockRestClientServers;
     }
 
     /**
@@ -54,7 +53,7 @@ public class OsvRequestMockProvider {
      * Must be called before setting up mock expectations.
      */
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
+        mockServer = mockRestClientServers.serverOf("osvRestClient");
     }
 
     /**

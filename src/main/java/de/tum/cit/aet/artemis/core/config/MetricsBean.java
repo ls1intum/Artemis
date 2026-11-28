@@ -804,7 +804,8 @@ public class MetricsBean {
         }
         return switch (health.getStatus().getCode()) {
             case "UP" -> 1;
-            case "DOWN" -> 0;
+            // An optional external system that is not working was DOWN (0) before it got its own status. Keep 0 so that dashboards and alerts on this gauge behave as before.
+            case "DOWN", "DEGRADED" -> 0;
             case "OUT_OF_SERVICE" -> -1;
             case "UNKNOWN" -> -2;
             default -> -3;

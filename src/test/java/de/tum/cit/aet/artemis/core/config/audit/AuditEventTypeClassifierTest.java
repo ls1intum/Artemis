@@ -23,8 +23,8 @@ class AuditEventTypeClassifierTest {
 
     @ParameterizedTest
     @ValueSource(strings = { AuditEventConstants.PASSWORD_RESET_REQUESTED, AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED, AuditEventConstants.PASSWORD_RESET_COMPLETED,
-            AuditEventConstants.ACCOUNT_EMAIL_CHANGED, AuditEventConstants.ACCOUNT_REGISTERED, AuditEventConstants.SAML2_ACCOUNT_CREATE,
-            AuditEventConstants.AUTHENTICATION_SWITCH })
+            AuditEventConstants.ACCOUNT_EMAIL_CHANGED, AuditEventConstants.ACCOUNT_EMAIL_CHANGE_REQUESTED, AuditEventConstants.ACCOUNT_REGISTERED,
+            AuditEventConstants.SAML2_ACCOUNT_CREATE, AuditEventConstants.AUTHENTICATION_SWITCH })
     void accountCredentialAndIdentityChangesBelongToTheSecurityLog(String eventType) {
         assertThat(AuditEventTypeClassifier.classify(eventType)).isEqualTo(AuditLogType.SECURITY);
     }

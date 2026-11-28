@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public class StudentScoreUtilService {
 
     @Autowired
-    private StudentScoreRepository studentScoreRepository;
+    private StudentScoreTestRepository studentScoreRepository;
 
     /**
      * Creates student score for given exercise and user.

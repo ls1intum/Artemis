@@ -1,16 +1,13 @@
-import { NgClass } from '@angular/common';
-import { Component, OnDestroy, ViewEncapsulation, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { SliderModule } from 'primeng/slider';
-import { TextareaModule } from 'primeng/textarea';
-import { TooltipModule } from 'primeng/tooltip';
-import { MultiSelectModule } from 'primeng/multiselect';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMultiSelectComponent } from '@tumaet/ui-angular/multi-select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -28,25 +25,19 @@ type GenerationMode = 'free-topic' | 'competency-graph';
 @Component({
     selector: 'jhi-quiz-ai-generation-modal',
     templateUrl: './quiz-ai-generation-modal.component.html',
-    styleUrl: './quiz-ai-generation-modal.component.scss',
-    encapsulation: ViewEncapsulation.None,
+    styleUrl: './quiz-ai-generation-modal.component.css',
     imports: [
-        DialogModule,
-        ButtonModule,
-        InputTextModule,
-        InputNumberModule,
-        SliderModule,
-        TextareaModule,
-        TooltipModule,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiMultiSelectComponent,
+        TumAetUiTooltipDirective,
         FormsModule,
         TranslateDirective,
-        NgClass,
-        FaStackComponent,
         FaIconComponent,
-        FaStackItemSizeDirective,
         ArtemisTranslatePipe,
         QuizAiGeneratedQuestionCardComponent,
-        MultiSelectModule,
     ],
 })
 export class QuizAiGenerationModalComponent implements OnDestroy {
@@ -55,6 +46,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     private courseCompetencyApiService = inject(CourseCompetencyApiService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faTimes = faTimes;
     visible = model.required<boolean>();
     courseId = input<number>();
     addQuestions = output<GeneratedQuestion[]>();
@@ -90,6 +82,8 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
         'artemisApp.quizExercise.aiGeneration.actions.loading.refining',
     ] as const;
 
+    /** The multi-select identifies competencies by id, so the selection survives a reload of the competency list. */
+    readonly selectedCompetencyIds = computed(() => this.selectedCompetencies().map((competency) => competency.id));
     readonly isCompetencyMode = computed(() => this.mode() === 'competency-graph');
     readonly hasCompetencies = computed(() => this.courseCompetencies().length > 0);
     readonly hasGeneratedQuestions = computed(() => this.generatedQuestions().length > 0);
@@ -153,6 +147,10 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
 
     selectMode(mode: GenerationMode): void {
         this.mode.set(mode);
+    }
+
+    onCompetencySelectionChange(selectedIds: unknown[]): void {
+        this.selectedCompetencies.set(this.courseCompetencies().filter((competency) => selectedIds.includes(competency.id)));
     }
 
     toggleQuestionType(type: GeneratedQuestionType): void {

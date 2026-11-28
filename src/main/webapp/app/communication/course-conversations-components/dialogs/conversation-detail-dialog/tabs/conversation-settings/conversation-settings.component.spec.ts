@@ -6,7 +6,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -40,7 +40,7 @@ examples.forEach((activeConversation) => {
             TestBed.configureTestingModule({
                 imports: [FaIconComponent, ConversationSettingsComponent, MockDirective(DeleteButtonDirective), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
                     MockProvider(AlertService),
@@ -57,11 +57,11 @@ examples.forEach((activeConversation) => {
             component = fixture.componentInstance;
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('activeConversation', activeConversation);
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             modalServiceOpen = vi.spyOn(dialogService, 'open').mockReturnValue({
                 onClose: new Subject().asObservable(),
                 close: vi.fn(),
-            } as unknown as DynamicDialogRef);
+            } as unknown as TumAetUiDialogRef);
 
             fixture.detectChanges();
             component.ngOnInit();
@@ -181,11 +181,11 @@ examples.forEach((activeConversation) => {
                 const privacyChangeSpy = vi.spyOn(component.channelPrivacyChange, 'emit');
 
                 const dialogCloseSubject = new Subject();
-                const dialogService = TestBed.inject(DialogService);
+                const dialogService = TestBed.inject(TumAetUiDialogService);
                 vi.spyOn(dialogService, 'open').mockReturnValue({
                     onClose: dialogCloseSubject.asObservable(),
                     close: vi.fn(),
-                } as unknown as DynamicDialogRef);
+                } as unknown as TumAetUiDialogRef);
 
                 component.toggleChannelPrivacy();
                 dialogCloseSubject.next(true);
@@ -215,7 +215,10 @@ examples.forEach((activeConversation) => {
                 fixture.changeDetectorRef.detectChanges();
 
                 expect(modalServiceOpen).toHaveBeenCalledOnce();
-                expect(modalServiceOpen).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.objectContaining(defaultSecondLayerDialogOptions));
+                expect(modalServiceOpen).toHaveBeenCalledWith(
+                    GenericConfirmationDialogComponent,
+                    expect.objectContaining({ ...defaultSecondLayerDialogOptions, ariaLabel: expect.any(String), autoFocus: 'first-tabbable' }),
+                );
             }
         });
 
@@ -235,25 +238,28 @@ examples.forEach((activeConversation) => {
                 fixture.changeDetectorRef.detectChanges();
 
                 expect(modalServiceOpen).toHaveBeenCalledOnce();
-                expect(modalServiceOpen).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.objectContaining(defaultSecondLayerDialogOptions));
+                expect(modalServiceOpen).toHaveBeenCalledWith(
+                    GenericConfirmationDialogComponent,
+                    expect.objectContaining({ ...defaultSecondLayerDialogOptions, ariaLabel: expect.any(String), autoFocus: 'first-tabbable' }),
+                );
             }
         });
 
         function genericConfirmationDialogTest(button: HTMLElement) {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const dialogCloseSubject = new Subject<any>();
             const mockDialogRef = {
                 onClose: dialogCloseSubject.asObservable(),
                 close: vi.fn(),
             };
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as TumAetUiDialogRef);
             fixture.detectChanges();
 
             button.click();
             vi.advanceTimersByTime(0);
 
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
+            expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.objectContaining({ ariaLabel: expect.any(String), autoFocus: 'first-tabbable' }));
 
             // Emit a truthy value to trigger the component's onClose callback
             dialogCloseSubject.next(true);

@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-[1200px] p-4">
+<div class="mx-auto max-w-[1200px] p-6">
     <h5 *adminTitleBarTitle id="features-heading" class="mb-0" jhiTranslate="artemisApp.features.title"></h5>
 
     <!-- Quick Navigation in Title Bar -->
@@ -17,19 +17,19 @@
 
     <!-- Section 1: Profile-Based Features -->
     <section id="profile-features" class="mb-8">
-        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.profileFeatures.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
+        <h4 class="mb-2" jhiTranslate="artemisApp.features.profileFeatures.title"></h4>
+        <p class="mb-6 text-sm text-muted-color" jhiTranslate="artemisApp.features.profileFeatures.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (profileInfo of profileFeatures(); track profileInfo.profile) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(profileInfo.isActive)"
                     data-testid="profile-feature-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4 flex items-start justify-between">
                         <div class="flex items-center gap-2">
-                            <h5 class="m-0 text-base font-semibold">{{ getProfileNameKey(profileInfo.profile) | artemisTranslate }}</h5>
+                            <h5 class="m-0">{{ getProfileNameKey(profileInfo.profile) | artemisTranslate }}</h5>
                             @if (profileInfo.documentationLink) {
                                 <a
                                     [href]="profileInfo.documentationLink"
@@ -59,19 +59,19 @@
 
     <!-- Section 2: Module Features -->
     <section id="module-features" class="mb-8">
-        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.moduleFeatures.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
+        <h4 class="mb-2" jhiTranslate="artemisApp.features.moduleFeatures.title"></h4>
+        <p class="mb-6 text-sm text-muted-color" jhiTranslate="artemisApp.features.moduleFeatures.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(moduleInfo.isActive)"
                     data-testid="module-feature-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4 flex items-start justify-between">
                         <div class="flex items-center gap-2">
-                            <h5 class="m-0 text-base font-semibold">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
+                            <h5 class="m-0">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
                             @if (moduleInfo.documentationLink) {
                                 <a
                                     [href]="moduleInfo.documentationLink"
@@ -101,19 +101,19 @@
 
     <!-- Section 3: Runtime Feature Toggles -->
     <section id="runtime-toggles" class="mb-8">
-        <h4 class="mb-2 text-xl font-semibold" jhiTranslate="artemisApp.features.dynamicToggles.title"></h4>
-        <p class="mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
+        <h4 class="mb-2" jhiTranslate="artemisApp.features.dynamicToggles.title"></h4>
+        <p class="mb-6 text-sm text-muted-color" jhiTranslate="artemisApp.features.dynamicToggles.description"></p>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             @for (featureInfo of featureToggles(); track featureInfo.feature) {
                 <div
-                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    class="rounded-lg border border-(--border-color) p-6 transition-all duration-200"
                     [class]="featureCardClasses(featureInfo.isActive)"
                     data-testid="runtime-toggle-card"
                 >
-                    <div class="mb-3 flex items-start justify-between">
+                    <div class="mb-4 flex items-start justify-between">
                         <div class="flex items-center gap-2">
-                            <h5 class="m-0 text-base font-semibold">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
+                            <h5 class="m-0">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
                             @if (featureInfo.documentationLink) {
                                 <a
                                     [href]="featureInfo.documentationLink"

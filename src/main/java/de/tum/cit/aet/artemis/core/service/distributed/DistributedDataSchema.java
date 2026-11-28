@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -94,6 +94,27 @@ public final class DistributedDataSchema {
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
             // Current builds use pyris-job-map-v2 instead, so jobs moved from here are never read again.
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * The structures whose contents are moved from version 1 to version 2. Version 2 adds the class of a test to
+     * {@code LocalCITestJobDTO}, which is stored in {@code ResultQueueItem} and therefore in both result queues, {@code buildResultQueue} and {@code deferredBuildResultQueue}.
+     * Those queues are
+     * deliberately not listed: its entries are encoded positionally and cannot be read by the new layout, so finished results that were not yet written to the database at the
+     * moment of the deploy are discarded, and the affected submissions need a new build. Every other structure listed here stores types that did not change, so its
+     * entries move byte-for-byte.
+     *
+     * <p>
+     * As for {@link #LEGACY_TO_V1_STRUCTURES}, the bar is that the data is expensive or impossible to reconstruct.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(
+            // Queued student builds. Nothing else knows they were requested. BuildJobQueueItem does not contain a build result.
+            new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
+            // Builds already running on an agent, which SharedQueueManagementService re-queues when an agent disappears.
+            new CarriedOverStructure("processingJobs", StructureKind.MAP),
+            // Runtime feature toggles exist only here.
+            new CarriedOverStructure("features", StructureKind.MAP),
+            // Iris jobs waiting for a Pyris callback, moved with their remaining lifetime.
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

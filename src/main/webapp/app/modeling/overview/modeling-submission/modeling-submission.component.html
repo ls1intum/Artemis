@@ -9,8 +9,8 @@
         >
             <ng-container left-body>
                 @if (!submission() || submission().submitted || !isExamSummary()) {
-                    <div class="modeling-submission-content w-100">
-                        <div class="submission-container d-flex flex-column w-100">
+                    <div class="modeling-submission-content w-full">
+                        <div class="submission-container flex flex-col w-full">
                             <div class="modeling-submission-surface">
                                 @if (shouldShowLiveEditor()) {
                                     <div class="modeling-submission-editor-tile">
@@ -112,7 +112,11 @@
                                                                                 {{ feedbackPoints(feedback) }}
                                                                             </span>
                                                                             <span class="feedback-row__name">{{ feedbackElementName(feedback) }}</span>
-                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
+                                                                            @let title = feedbackTitle(feedback);
+                                                                            @if (title) {
+                                                                                <span class="feedback-row__title" data-testid="feedback-row-title">{{ title }}</span>
+                                                                            }
+                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback, !title)"></p>
                                                                         </li>
                                                                     }
                                                                 </ul>
@@ -168,7 +172,7 @@
             </ng-container>
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
-            <p right-body class="mb-3 markdown-preview">
+            <p right-body class="mb-4! markdown-preview">
                 @if (modelingExercise()!.problemStatement) {
                     <span [jhiMarkdown]="modelingExercise()!.problemStatement!"></span>
                 }

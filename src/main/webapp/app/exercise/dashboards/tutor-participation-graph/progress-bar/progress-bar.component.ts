@@ -1,4 +1,5 @@
-import { TumAetUiProgressBarComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { round } from 'app/foundation/util/utils';
@@ -6,7 +7,7 @@ import { round } from 'app/foundation/util/utils';
 @Component({
     selector: 'jhi-progress-bar',
     templateUrl: './progress-bar.component.html',
-    styleUrl: './progress-bar.component.scss',
+    styleUrl: './progress-bar.component.css',
     imports: [TumAetUiProgressBarComponent, TumAetUiTooltipDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

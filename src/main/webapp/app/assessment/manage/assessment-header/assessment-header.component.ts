@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, HostListener, inject, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
-    styleUrls: ['./assessment-header.component.scss'],
+    styleUrls: ['./assessment-header.component.css'],
     imports: [
         TranslateDirective,
         TumAetUiTooltipDirective,

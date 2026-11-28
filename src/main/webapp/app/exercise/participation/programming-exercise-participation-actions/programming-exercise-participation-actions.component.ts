@@ -1,6 +1,6 @@
 import { Component, input, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faPlayCircle, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';

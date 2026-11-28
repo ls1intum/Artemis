@@ -12,7 +12,6 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
     selector: 'jhi-tutorial-create-container',
     imports: [TutorialCreateOrEditComponent, LoadingIndicatorOverlayComponent],
     templateUrl: './tutorial-create-container.component.html',
-    styleUrl: './tutorial-create-container.component.scss',
 })
 export class TutorialCreateContainerComponent {
     private destroyRef = inject(DestroyRef);

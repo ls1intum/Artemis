@@ -1,0 +1,9 @@
+@layer tumaet-ui {
+    :host {
+        display: inline-flex;
+    }
+
+    .tumaet-ui-btn.tumaet-ui-btn-rounded {
+        border-radius: 9999px;
+    }
+}

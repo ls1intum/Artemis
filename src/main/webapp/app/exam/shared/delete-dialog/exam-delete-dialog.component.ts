@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
 import { faCheck, faExclamationTriangle, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -39,7 +41,7 @@ const ACTION_KEYS: Record<ActionType, string> = {
 /**
  * Asks the instructor to confirm a destructive action on an exam, its students, exercise groups or test runs: the question, an optional
  * summary of what is affected, optional extra checks and an optional entity name that has to be typed. It replaces the shared
- * PrimeNG delete dialog for the exam mode. The parent opens it with {@link visible}, reacts to {@link confirmed} and reports the
+ * delete dialog for the exam mode. The parent opens it with {@link visible}, reacts to {@link confirmed} and reports the
  * outcome of the action on {@link dialogError}: an empty message for success, an error message otherwise.
  */
 @Component({

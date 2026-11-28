@@ -23,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { AddUsersFormData } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -38,8 +38,8 @@ examples.forEach((activeConversation) => {
                 imports: [ConversationAddUsersDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)],
                 providers: [
                     MockProvider(AlertService),
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                    { provide: DynamicDialogConfig, useValue: { data: {} } },
+                    { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                    { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                     MockProvider(ChannelService),
                     MockProvider(ConversationService),
                     MockProvider(GroupChatService),
@@ -78,7 +78,7 @@ examples.forEach((activeConversation) => {
 
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
-                const dialogRef = TestBed.inject(DynamicDialogRef);
+                const dialogRef = TestBed.inject(TumAetUiDialogRef);
                 vi.spyOn(dialogRef, 'close');
                 vi.spyOn(channelService, 'registerUsersToChannel').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 form.formSubmitted.emit(addUsersFormData);
@@ -96,7 +96,7 @@ examples.forEach((activeConversation) => {
 
             if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
-                const dialogRef = TestBed.inject(DynamicDialogRef);
+                const dialogRef = TestBed.inject(TumAetUiDialogRef);
                 vi.spyOn(dialogRef, 'close');
                 vi.spyOn(groupChatService, 'addUsersToGroupChat').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 form.formSubmitted.emit(addUsersFormData);

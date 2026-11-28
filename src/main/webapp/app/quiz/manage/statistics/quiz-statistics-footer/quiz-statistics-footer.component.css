@@ -1,0 +1,19 @@
+.quiz-statistic-footer {
+    position: fixed;
+    height: 60px;
+    bottom: 4vh;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: var(--quiz-participation-footer-background);
+    box-shadow: 0 0 3px var(--quiz-participation-footer-box-shadow);
+}
+
+/* The footer is fixed, so it takes no space in the page flow and would cover the last content of the page (e.g. the solution and rating buttons). */
+.quiz-statistic-footer-spacer {
+    height: calc(60px + 4vh);
+}
+
+#remaining-time > * {
+    width: 100%;
+}

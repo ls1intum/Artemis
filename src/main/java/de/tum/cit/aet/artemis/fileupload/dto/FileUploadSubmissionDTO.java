@@ -76,11 +76,12 @@ public record FileUploadSubmissionDTO(Long id, @Nullable Boolean submitted, @Nul
      * @param isAtLeastTutor      whether the current user has at least tutor privileges for the exercise
      * @param isAtLeastEditor     whether the current user has at least editor privileges for the exercise
      * @param isAtLeastInstructor whether the current user has at least instructor privileges for the exercise
+     * @param includeParticipant  whether participant names and identifiers may be mapped
      * @return the mapped DTO, or null if the input was null
      */
     public static @Nullable FileUploadSubmissionDTO ofForEditor(@Nullable FileUploadSubmission submission, @Nullable Boolean isOwner, @Nullable Boolean isAtLeastTutor,
-            @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
-        return of(submission, true, true, true, isOwner, isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, true);
+            @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor, boolean includeParticipant) {
+        return of(submission, true, true, true, isOwner, isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, includeParticipant);
     }
 
     /**

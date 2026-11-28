@@ -18,10 +18,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
@@ -56,13 +54,12 @@ describe('MessageInlineInputComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         });
 
         TestBed.overrideComponent(MessageInlineInputComponent, {
-            remove: { imports: [PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe] },
-            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockComponent(PostingButtonComponent), MockPipe(ArtemisTranslatePipe)] },
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
         });
         fixture = TestBed.createComponent(MessageInlineInputComponent);
         component = fixture.componentInstance;
@@ -83,6 +80,38 @@ describe('MessageInlineInputComponent', () => {
             expect(confirm).toHaveBeenCalledOnce();
         });
     }
+
+    it('should offer cancel and save buttons only when an existing message is edited', () => {
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelector('#save')).toBeNull();
+
+        component.posting.set({ id: 21, content: 'old content' });
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement;
+        const [cancel, save] = Array.from(element.querySelectorAll<HTMLButtonElement>('button'));
+        expect(cancel.type).toBe('button');
+        expect(save.id).toBe('save');
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+
+        const onModalOpenSpy = vi.spyOn(component.isModalOpen, 'emit');
+        cancel.click();
+        expect(onModalOpenSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the save button and show a spinner while the message is saved', () => {
+        component.posting.set({ id: 21, content: 'old content' });
+        fixture.detectChanges();
+        const save = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#save')!;
+        expect(save.querySelector('fa-icon')).toBeNull();
+
+        component.isLoading.set(true);
+        fixture.detectChanges();
+
+        expect(save.disabled).toBe(true);
+        expect(save.querySelector('fa-icon')).not.toBeNull();
+    });
 
     it('passes a distinct draft identity when equal-content messages are edited', () => {
         component.posting.set({ id: 21, content: '' });

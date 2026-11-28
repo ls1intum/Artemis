@@ -121,7 +121,7 @@ interface ScoreboardRow extends TreeNode {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-browser-tree.component.html',
-    styleUrl: './course-ingestion-browser-tree.component.scss',
+    styleUrl: './course-ingestion-browser-tree.component.css',
 })
 export class CourseIngestionBrowserTreeComponent {
     readonly entities = input.required<IndexedEntity[]>();

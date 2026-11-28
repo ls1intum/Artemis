@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -18,8 +18,8 @@ describe('GenericConfirmationDialogComponent', () => {
         TestBed.configureTestingModule({
             imports: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -60,7 +60,7 @@ describe('GenericConfirmationDialogComponent', () => {
     });
 
     it('should close modal if confirm is selected', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         const confirmButton = fixture.debugElement.nativeElement.querySelector('.confirm');
         confirmButton.click();
@@ -68,10 +68,33 @@ describe('GenericConfirmationDialogComponent', () => {
     });
 
     it('should dismiss modal if cancel is selected', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const destroySpy = vi.spyOn(dialogRef, 'destroy');
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('.cancel');
         cancelButton.click();
-        expect(destroySpy).toHaveBeenCalledOnce();
+        expect(dismissSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should dismiss modal if the close button is clicked', () => {
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
+        fixture.debugElement.nativeElement.querySelector('[data-testid="dialog-close-button"]').click();
+        expect(dismissSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should only use the danger severity and warn about a missing undo for a dangerous action that cannot be undone', () => {
+        expect(fixture.nativeElement.querySelector('.confirm').className).not.toContain('danger');
+        expect(fixture.nativeElement.textContent).not.toContain('entity.action.notUndoable');
+
+        const dangerousFixture = TestBed.createComponent(GenericConfirmationDialogComponent);
+        initializeDialog(dangerousFixture.componentInstance, dangerousFixture, {
+            translationKeys: component.translationKeys,
+            canBeUndone: false,
+            isDangerousAction: true,
+            translationParameters: {},
+        });
+
+        expect(dangerousFixture.nativeElement.querySelector('.confirm').className).toContain('danger');
+        expect(dangerousFixture.nativeElement.textContent).toContain('entity.action.notUndoable');
     });
 });

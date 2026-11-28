@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,7 +30,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/fou
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -53,7 +55,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-text-submission-assessment',
     templateUrl: './text-submission-assessment.component.html',
-    styleUrls: ['./text-submission-assessment.component.scss'],
+    styleUrls: ['./text-submission-assessment.component.css'],
     imports: [
         AssessmentLayoutComponent,
         ResizeableContainerComponent,
@@ -66,6 +68,8 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         AssessmentNotPossibleYetComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -75,7 +79,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private route = inject(ActivatedRoute);
     private complaintService = inject(ComplaintService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
 
@@ -156,6 +160,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
      */
     private resetComponent(): void {
+        // Cancel a still-pending feedback-suggestion request for the previous submission: the component is reused
+        // for the next one, and its eventual response/error must not apply to the assessment now being shown.
+        this.feedbackSuggestionsObservable?.unsubscribe();
+
         this.participation = undefined;
         this.submission = undefined;
         this.exercise = undefined;
@@ -418,7 +426,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: () => {
+                this.loadingFeedbackSuggestions.set(false);
+                this.alertService.error('artemisApp.textAssessment.error.loadFeedbackSuggestionsFailed');
+            },
         });
     }
 
@@ -635,11 +646,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     /**
-     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
+     * Invokes the example submission import when useAsExampleSubmission is emitted in assessment-layout
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.exercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.exercise.id!).subscribe({
+            this.exampleSubmissionApi.importExampleSubmission(this.exercise.id!, this.submission.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

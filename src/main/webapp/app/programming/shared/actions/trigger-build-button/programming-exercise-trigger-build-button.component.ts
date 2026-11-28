@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, Signal, effect, inject, input, signal, untracked } from '@angular/core';
 import { filter, finalize, tap } from 'rxjs/operators';
 import { EMPTY, Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -7,11 +7,11 @@ import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
 import { isManualResult } from 'app/exercise/result/result.utils';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -43,6 +43,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     readonly isBuilding = signal(false);
     // If true, the trigger button is also displayed for successful submissions.
     readonly showForSuccessfulSubmissions = signal(false);
+    /** True if the server would refuse a manual build, because it is outside of the build time window of the exercise. Only the student button can be blocked. */
+    readonly isBlockedByBuildWindow: Signal<boolean> = signal(false);
 
     private submissionSubscription?: Subscription;
     private resultSubscription?: Subscription;

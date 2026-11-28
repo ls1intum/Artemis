@@ -2,11 +2,9 @@ import { vi } from 'vitest';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { Select } from 'primeng/select';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -16,8 +14,7 @@ describe('TaxonomySelectComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, TaxonomySelectComponent, MockDirective(TranslateDirective)],
-            declarations: [],
+            imports: [ReactiveFormsModule, TaxonomySelectComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -35,12 +32,19 @@ describe('TaxonomySelectComponent', () => {
         expect(component).toBeDefined();
     });
 
-    it('should set taxonomy correcty', () => {
+    it('should offer one option per taxonomy', () => {
         componentFixture.detectChanges();
 
-        const select = componentFixture.debugElement.query(By.directive(Select));
+        const select = componentFixture.debugElement.query(By.directive(TumAetUiSelectComponent)).componentInstance as TumAetUiSelectComponent;
+        expect(select.options().map((option) => (option as { value: CompetencyTaxonomy }).value)).toEqual(Object.values(CompetencyTaxonomy));
+    });
+
+    it('should set taxonomy correctly', () => {
+        componentFixture.detectChanges();
+
+        const select = componentFixture.debugElement.query(By.directive(TumAetUiSelectComponent));
         expect(select).not.toBeNull();
-        // No taxonomy selected yet (the p-select ControlValueAccessor normalizes the empty value to null).
+        // No taxonomy selected yet (the select's ControlValueAccessor normalizes the empty value to null).
         expect((component.form() as FormControl).value).toBeNull();
 
         (component.form() as FormControl).setValue(CompetencyTaxonomy.ANALYZE);

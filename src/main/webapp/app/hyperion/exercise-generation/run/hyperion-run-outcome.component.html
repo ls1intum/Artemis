@@ -1,17 +1,14 @@
 <!--
-    The verdict is a `tumaet-ui-card-title [level]`, not an `<h2>`: Bootstrap's unlayered `h1`-`h6` and `global.scss`'s
-    `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's `@layer utilities`, so a plain `text-lg font-semibold`
-    on a heading is silently ignored. The card title owns the typography of its own heading at a specificity Bootstrap
-    cannot reach, and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
+    The verdict is a `tumaet-ui-card-title [level]`, not an `<h2>`. The card title owns the typography of its own heading and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
 
     The sub-heading below cannot be a card title - that component is fixed at the L2 size, which is right for the answer
     and wrong for a heading inside it - so it takes the same treatment from this component's own stylesheet instead.
 -->
 <section aria-labelledby="hyperion-run-outcome-title" data-testid="hyperion-run-outcome" [attr.data-severity]="view().severity">
-    <tumaet-ui-message [severity]="view().severity" class="block">
+    <tumaet-ui-message [severity]="view().severity">
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
-            <h2 class="text-xl font-medium" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
+            <h2 id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
             <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate }}</p>
             @if (view().terminationReasonKey; as reasonKey) {
                 <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
@@ -26,7 +23,7 @@
     </tumaet-ui-message>
 
     @if (checks().length) {
-        <div class="mt-3" data-testid="hyperion-run-outcome-checks">
+        <div class="mt-4" data-testid="hyperion-run-outcome-checks">
             <h3 class="hyperion-outcome-checks-title">{{ 'artemisApp.hyperion.generation.verdict.title' | artemisTranslate }}</h3>
             <ul class="m-0 flex list-none flex-col gap-1 p-0">
                 @for (check of checks(); track check.labelKey) {
@@ -48,7 +45,7 @@
         </div>
     }
 
-    <p class="mt-3 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.outcome.disclaimer"></p>
+    <p class="mt-4 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.outcome.disclaimer"></p>
 
     @if (hasTechnicalDetails()) {
         <!--
@@ -57,7 +54,7 @@
             transcript is a reasoning trace rather than output - and the count on the header means collapsing it hides
             no statement about the run.
         -->
-        <tumaet-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
+        <tumaet-ui-panel class="mt-4 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
             @for (message of view().serverMessages; track message) {
                 <p class="m-0 text-sm wrap-anywhere text-muted-color" lang="en">{{ message }}</p>
             }

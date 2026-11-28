@@ -41,7 +41,7 @@ let nextAutoCompleteId = 0;
 @Component({
     selector: 'tumaet-ui-autocomplete',
     templateUrl: './tumaet-ui-autocomplete.component.html',
-    styleUrl: './tumaet-ui-autocomplete.component.scss',
+    styleUrl: './tumaet-ui-autocomplete.component.css',
     imports: [TumAetUiChipComponent, TumAetUiTranslatePipe, NgTemplateOutlet],
     host: {
         class: 'tumaet-ui-autocomplete',

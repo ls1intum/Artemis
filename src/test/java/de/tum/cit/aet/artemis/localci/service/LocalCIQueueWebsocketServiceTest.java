@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localci.dto.CourseBuildJobDTO;
 import de.tum.cit.aet.artemis.localci.web.LocalCIWebsocketTopics;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -113,9 +114,9 @@ class LocalCIQueueWebsocketServiceTest {
         localCIQueueWebsocketService.queuedJobsChanged(COURSE_ID);
         localCIQueueWebsocketService.broadcastPendingChanges();
 
-        ArgumentCaptor<List<BuildJobQueueItem>> forCourse = ArgumentCaptor.captor();
+        ArgumentCaptor<List<CourseBuildJobDTO>> forCourse = ArgumentCaptor.captor();
         verify(localCIWebsocketMessagingService).sendQueuedBuildJobsForCourse(eq(COURSE_ID), forCourse.capture());
-        Assertions.assertThat(forCourse.getValue()).extracting(BuildJobQueueItem::id).containsExactly("mine");
+        Assertions.assertThat(forCourse.getValue()).extracting(CourseBuildJobDTO::id).containsExactly("mine");
 
         ArgumentCaptor<List<BuildJobQueueItem>> forAdmin = ArgumentCaptor.captor();
         verify(localCIWebsocketMessagingService).sendQueuedBuildJobs(forAdmin.capture());

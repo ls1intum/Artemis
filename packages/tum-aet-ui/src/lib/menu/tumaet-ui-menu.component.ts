@@ -21,12 +21,15 @@ import { TumAetUiMenuItemDirective } from './tumaet-ui-menu-item.directive';
  * </ng-template>
  * ```
  *
+ * Structure a longer menu with `tumaet-ui-menu-separator` between sets of entries and `tumaet-ui-menu-group` for a set
+ * with a visible label; neither is an entry, so keyboard navigation and typeahead pass over them.
+ *
  * Use `tumaet-ui-popover` instead for rich or non-action content: a menu is for commands and navigation.
  */
 @Component({
     selector: 'tumaet-ui-menu',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-menu.component.scss',
+    styleUrl: './tumaet-ui-menu.component.css',
     hostDirectives: [Menu],
     host: {
         // Lets the Angular Aria test harnesses (`@angular/aria/menu/testing`) find the menu.

@@ -1,17 +1,17 @@
 @if (showAnswers() && sortedAnswerPosts().length) {
-    <div class="d-flex align-items-center mb-1 mx-3">
-        <div class="fs-x-small fw-900 me-2">
+    <div class="mx-4 mb-1 flex items-center">
+        <div class="text-[0.75rem] me-2">
             {{
                 sortedAnswerPosts().length === 1
                     ? ('artemisApp.communication.singleAnswer' | artemisTranslate)
                     : ('artemisApp.communication.multipleAnswers' | artemisTranslate: { number: sortedAnswerPosts().length })
             }}
         </div>
-        <div class="flex-grow-1">
+        <div class="grow">
             <hr class="m-0" />
         </div>
     </div>
-    <div class="list-answer-post" [ngClass]="{ 'ms-4': !isThreadSidebar() }">
+    <div class="list-answer-post" [ngClass]="{ 'ms-6!': !isThreadSidebar() }">
         @for (group of groupedAnswerPosts(); track trackGroupByFn($index, group)) {
             @for (answerPost of group.posts; track trackPostByFn($index, answerPost)) {
                 <jhi-answer-post
@@ -31,7 +31,7 @@
         }
     </div>
 }
-<div class="new-reply-inline-input" data-testid="inline-reply-input" [ngClass]="{ 'ms-4 my-3': !isCommunicationPage() && showAnswers() }">
+<div class="new-reply-inline-input" data-testid="inline-reply-input" [ngClass]="{ 'ms-6! my-4!': !isCommunicationPage() && showAnswers() }">
     <!-- rendered during the first reply to a post -->
     <ng-container #createEditAnswerPostContainer />
     <jhi-answer-post-create-edit-modal

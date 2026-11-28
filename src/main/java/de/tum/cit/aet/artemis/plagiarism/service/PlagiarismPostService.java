@@ -58,7 +58,7 @@ public class PlagiarismPostService extends PostingService {
     /**
      * Checks course, user, and post-validity,
      * determines the post's author, persists the post,
-     * and sends a notification to affected user groups
+     * and sends a notification to affected users
      *
      * @param courseId id of course the post belongs to
      * @param postDto  post to create
@@ -91,7 +91,7 @@ public class PlagiarismPostService extends PostingService {
 
     /**
      * Persists the continuous plagiarism control plagiarism case post
-     * and sends a notification to affected user groups
+     * and sends a notification to affected users
      *
      * @param post post to create
      */

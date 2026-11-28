@@ -4,7 +4,7 @@
     <div *titleBarActions class="flex items-center gap-2">
         @if (!hasNoTutorialGroups()) {
             <tumaet-ui-search-field
-                class="w-40 lg:w-64"
+                class="w-2/5! lg:w-64"
                 size="small"
                 data-testid="tutorial-groups-search"
                 placeholder="artemisApp.pages.tutorialGroupsManagement.searchPlaceholder"
@@ -65,7 +65,7 @@
 
     @if (hasNoTutorialGroups()) {
         <tumaet-ui-empty-state
-            class="mt-12!"
+            class="mt-12"
             data-testid="tutorial-groups-intro"
             [icon]="faUsers"
             [title]="'artemisApp.pages.tutorialGroupsManagement.noTutorialGroupsTitle' | artemisTranslate"

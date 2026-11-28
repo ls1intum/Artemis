@@ -1,8 +1,8 @@
 @if (!isLoading()) {
     <form name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
-        <div class="modal-body">
+        <div class="p-4!">
             @if (isRepoExportForMultipleExercises()) {
-                <div class="m-2 p-1">
+                <div class="m-2! p-1!">
                     <span style="font-weight: bold" jhiTranslate="artemisApp.instructorDashboard.exportRepos.currentlySelected"
                         >You are about to download all teams'/students' submissions of the following exercises:</span
                     >
@@ -34,6 +34,7 @@
             }
             @if (!participationIdList?.length && !isRepoExportForMultipleExercises()) {
                 <textarea
+                    tumAetUiInput
                     [attr.aria-label]="'accessibility.participantIdentifiers' | artemisTranslate"
                     name="studentIds"
                     class="export-textarea"
@@ -48,7 +49,7 @@
             @if (isAtLeastInstructor() && !singleParticipantMode && !isRepoExportForMultipleExercises()) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
+                        <tumaet-ui-checkbox name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
                         <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (programmingExercises[0].teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
                             Or download the repositories of all {{ programmingExercises[0].teamMode ? 'teams' : 'students' }}
                         </strong>
@@ -58,12 +59,12 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
+                        <tumaet-ui-checkbox name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.filterLateSubmissions.tooltip" />
                     </label>
                 </div>
-                <div class="form-group">
+                <div class="mb-4!">
                     <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissionsDate.title"
                         >Date for filter late submissions (defaults to exercise due date if not set)</strong
                     >
@@ -82,7 +83,7 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
+                        <tumaet-ui-checkbox name="excludePracticeSubmissions" [(ngModel)]="this.repositoryExportOptions.excludePracticeSubmissions" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.excludePracticeSubmissions.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.excludePracticeSubmissions.tooltip" />
                     </label>
@@ -91,7 +92,7 @@
             @if (!singleParticipantMode) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
+                        <tumaet-ui-checkbox name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                         @if (!isRepoExportForMultipleExercises()) {
                             <strong
                                 [jhiTranslate]="
@@ -111,7 +112,7 @@
             }
             <div class="checkbox">
                 <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
+                    <tumaet-ui-checkbox name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.combineStudentCommits.tooltip" />
                 </label>
@@ -119,13 +120,7 @@
             @if (isAtLeastInstructor()) {
                 <div class="checkbox">
                     <label class="control-label">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            name="anonymizeRepository"
-                            [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
-                            [disabled]="!isAtLeastInstructor()"
-                        />
+                        <tumaet-ui-checkbox name="anonymizeRepository" [(ngModel)]="this.repositoryExportOptions.anonymizeRepository" [disabled]="!isAtLeastInstructor()" />
                         <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title"></strong>
                         <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip" />
                     </label>
@@ -133,33 +128,39 @@
             }
             <div class="checkbox">
                 <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
+                    <tumaet-ui-checkbox name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle.title"></strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.normalizeCodeStyle.tooltip" />
                 </label>
             </div>
             @if (!singleParticipantMode) {
-                <div class="alert alert-warning mt-3">
+                <tumaet-ui-message severity="warn" class="mt-4!">
                     <span jhiTranslate="artemisApp.instructorDashboard.exportRepos.timeWarning">
                         <b>Note:</b> This action can take several minutes depending on number and size of repositories.
                     </span>
-                </div>
+                </tumaet-ui-message>
             }
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+        <div class="flex flex-wrap! items-center justify-end gap-2! border-t border-border p-4!">
+            <button type="button" tumAetUiButton variant="outlined" severity="secondary" (click)="clear()">
+                <span jhiTranslate="entity.action.cancel"></span>
             </button>
-            <button [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" [forceDisabled]="exportInProgress() || hasInvalidFilterDate()" type="submit" class="btn btn-default">
+            <button
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                [forceDisabled]="exportInProgress() || hasInvalidFilterDate()"
+                type="submit"
+                tumAetUiButton
+                severity="secondary"
+            >
                 @if (exportInProgress()) {
-                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                    <span class="me-1!"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
                 }
-                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export"></span>
+                <span jhiTranslate="entity.action.export"></span>
             </button>
         </div>
     </form>
 } @else {
-    <div class="d-flex justify-content-center mt-4 mb-4">
+    <div class="flex justify-center mt-6! mb-6!">
         <fa-icon [icon]="faCircleNotch" animation="spin" />
     </div>
 }
