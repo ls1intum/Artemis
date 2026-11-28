@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../../../support/constants';
 
 import { dayjsToString, generateUUID, readResponseJson, trimDate } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
@@ -51,7 +52,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         exam = { ...(await readResponseJson(examResponse)), course };
         expect(examResponse.status()).toBe(201);
         expect(exam.title).toBe(examData.title);
-        expect(exam.testExam).toBe(true);
+        expect(exam.examMode).toBe(ExamMode.TEST);
         expect(trimDate(String(exam.visibleDate))).toBe(trimDate(dayjsToString(examData.visibleDate)));
         expect(trimDate(String(exam.startDate))).toBe(trimDate(dayjsToString(examData.startDate)));
         expect(trimDate(String(exam.endDate))).toBe(trimDate(dayjsToString(examData.endDate)));
@@ -75,7 +76,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
             const examConfig = {
                 course,
                 title,
-                testExam: true,
+                examMode: ExamMode.TEST,
             };
             exam = await examAPIRequests.createExam(examConfig);
         });

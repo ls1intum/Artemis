@@ -1,10 +1,6 @@
 <div class="flex justify-center">
     <div class="w-full max-w-4xl">
-        <h5
-            class="mb-2! text-center text-base font-semibold"
-            jhiTranslate="artemisApp.examScores.exerciseGroupTitle"
-            [translateValues]="{ groupTitle: this.averageScores().title }"
-        ></h5>
+        <h5 class="mb-2 text-center" jhiTranslate="artemisApp.examScores.exerciseGroupTitle" [translateValues]="{ groupTitle: this.averageScores().title }"></h5>
         <!-- Flex (not a plain block) so the chart stretches to the explicit height: it fills its container in
              both dimensions, and a container without a definite height would collapse it. The height grows with
              the bar count so every bar keeps a readable label. -->

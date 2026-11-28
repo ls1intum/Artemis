@@ -43,7 +43,7 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
 @Component({
     selector: 'tumaet-ui-select',
     templateUrl: './tumaet-ui-select.component.html',
-    styleUrl: './tumaet-ui-select.component.scss',
+    styleUrl: './tumaet-ui-select.component.css',
     imports: [FaIconComponent, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-select',
@@ -58,6 +58,9 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
     private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
+
+    /** Keep the panel aligned to the trigger; disable for content-sized menus. */
+    readonly matchTriggerWidth = input(true, { transform: booleanAttribute });
 
     readonly showClear = input(false, { transform: booleanAttribute });
 
@@ -218,6 +221,15 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         return Object.is(a, b) || a === b;
     }
 
+    /**
+     * The value of an option as a `data-value` attribute, for values that have a stable text form. It gives tests and
+     * scripts a way to address an option that does not depend on its translated label.
+     */
+    protected optionDataValue(option: unknown): string | null {
+        const value = this.resolveValue(option);
+        return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : null;
+    }
+
     protected isSelected(option: unknown): boolean {
         const current = this.selectedValue();
         if (current === undefined || current === null) {
@@ -249,7 +261,11 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         const initialIndex = selectedIndex >= 0 ? selectedIndex : this.visibleOptions().length > 0 ? 0 : -1;
         this.keyManager.setActiveItem(initialIndex);
         const origin = this.trigger();
-        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', { hasBackdrop: true, matchOriginWidth: true });
+        this.overlayRef = this.overlayService.createConnectedOverlay(origin, 'bottom', {
+            hasBackdrop: true,
+            matchOriginWidth: this.matchTriggerWidth(),
+            minWidthFromOrigin: !this.matchTriggerWidth(),
+        });
         this.overlayRef.attach(new TemplatePortal(this.panel(), this.viewContainerRef));
         this.scrollOptionIntoView(initialIndex);
         this.overlayRef.backdropClick().subscribe(() => this.close());
@@ -280,6 +296,12 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     }
 
     protected selectOption(option: unknown): void {
+        // Choosing the option that is already selected is no change, as with a native select. Reporting it would let
+        // a consumer redo the work of a selection, such as resetting fields that depend on the value.
+        if (this.isSelected(option)) {
+            this.close();
+            return;
+        }
         const value = this.resolveValue(option);
         this.selectedValue.set(value);
         this.onChangeCallback(value);

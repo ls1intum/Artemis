@@ -1,7 +1,9 @@
 import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ConnectedPosition } from '@angular/cdk/overlay';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -56,17 +58,17 @@ export interface SidebarItem {
 @Component({
     selector: 'jhi-course-sidebar',
     templateUrl: './course-sidebar.component.html',
-    styleUrls: ['./course-sidebar.component.scss'],
+    styleUrls: ['./course-sidebar.component.css'],
     imports: [
         NgClass,
-        NgbDropdown,
-        NgbDropdownToggle,
         NgTemplateOutlet,
-        NgbDropdownMenu,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         RouterLink,
         RouterLinkActive,
         FeatureToggleHideDirective,
@@ -77,6 +79,7 @@ export class CourseSidebarComponent {
     // Optional: the sidebar also renders in course management, which collects no science data and provides no ScienceService.
     private readonly scienceService = inject(ScienceService, { optional: true });
     private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly faChevronRight = faChevronRight;
     protected readonly faEllipsis = faEllipsis;
@@ -95,6 +98,15 @@ export class CourseSidebarComponent {
     communicationRouteLoaded = input<boolean>(false);
 
     hiddenItems = signal<SidebarItem[]>([]);
+    private readonly activeFeatures = toSignal(this.featureToggleService.getFeatureToggles());
+    /**
+     * The entries of the "more" menu. An entry whose feature is switched off is left out instead of hidden with CSS,
+     * because a menu entry that is only invisible stays in the arrow-key order.
+     */
+    protected readonly menuItems = computed(() => {
+        const activeFeatures = this.activeFeatures();
+        return this.hiddenItems().filter((item) => !item.featureToggle || !activeFeatures || activeFeatures.includes(item.featureToggle));
+    });
     anyItemHidden = signal<boolean>(false);
     private readonly irisImpressionLoggedForCourseId = signal<number | undefined>(undefined);
 
@@ -106,7 +118,13 @@ export class CourseSidebarComponent {
         return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
     });
 
-    readonly itemsDrop = viewChild.required<NgbDropdown>('itemsDrop');
+    readonly itemsDrop = viewChild.required(TumAetUiMenuTriggerDirective);
+    /** The "more" menu opens beside the sidebar, level with its toggle, and moves up when there is no room below. */
+    protected readonly moreMenuPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'center', overlayX: 'start', overlayY: 'center' },
+        { originX: 'end', originY: 'bottom', overlayX: 'start', overlayY: 'bottom' },
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top' },
+    ];
 
     // Constants for threshold calculation
     readonly WINDOW_OFFSET: number = 225;

@@ -10,7 +10,6 @@ import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -26,6 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -222,11 +222,11 @@ describe('ProgrammingExamSummaryComponent', () => {
             // 'Your Submission', 'Assessment' and 'Problem Statement'
             expect(headings).toHaveLength(3);
             headings.forEach((heading) => {
-                expect(heading.classList).toContain('text-base!');
-                expect(heading.classList).toContain('font-semibold!');
+                expect(heading.classList).toContain('text-base');
+                expect(heading.classList).toContain('font-semibold');
             });
             // the first heading sits in a flex column that already provides the gap to the code button
-            expect(headings[0].classList).toContain('m-0!');
+            expect(headings[0].classList).toContain('m-0');
             expect(headings[0].parentElement!.classList).toContain('flex-col');
             expect(headings[0].parentElement!.classList).toContain('gap-2');
         });

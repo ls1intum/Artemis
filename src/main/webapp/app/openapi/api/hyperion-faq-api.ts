@@ -28,10 +28,11 @@ export class HyperionFaqApi {
      *
      * @param courseId
      * @param rewriteFaqRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest): Observable<RewriteFaqResponse> {
+    rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest, options?: import('./request-options').RequestOptions): Observable<RewriteFaqResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/faq/rewrite`;
-        return this.http.post<RewriteFaqResponse>(url, rewriteFaqRequest);
+        return this.http.post<RewriteFaqResponse>(url, rewriteFaqRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

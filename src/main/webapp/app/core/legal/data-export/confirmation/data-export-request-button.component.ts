@@ -1,4 +1,4 @@
-import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular/button';
 import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 @Component({
     selector: '[jhiDataExportRequestButton]',
     template: `
-        <span class="d-xl-inline">{{ buttonText() }}</span>
+        <span>{{ buttonText() }}</span>
         <jhi-data-export-confirmation-dialog
             [(visible)]="dialogVisible"
             [expectedLogin]="expectedLogin() ?? ''"

@@ -9,7 +9,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { createSubmission } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';

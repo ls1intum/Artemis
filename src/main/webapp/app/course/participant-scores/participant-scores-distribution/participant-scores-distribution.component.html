@@ -1,5 +1,5 @@
 <div>
-    <div class="row score-distribution-chart" [style.height.px]="height()">
+    <div class="score-distribution-chart flex flex-wrap *:w-full" [style.height.px]="height()">
         <tumaet-ui-bar-chart
             [labels]="chartData().labels"
             [series]="chartData().series"
@@ -9,20 +9,20 @@
             [ariaLabel]="chartAriaLabel()"
         />
     </div>
-    <div class="d-flex justify-content-center align-items-center">
+    <div class="flex items-center justify-center">
         @if (gradingScaleExists() && !isBonus()) {
-            <div class="d-flex justify-content-center align-items-center">
+            <div class="flex items-center justify-center">
                 <div class="color-box insufficient-performance"></div>
                 <span class="ms-2" jhiTranslate="artemisApp.examScores.insufficientPerformance"></span>
-                <div class="ms-4 color-box sufficient-performance"></div>
+                <div class="ms-6 color-box sufficient-performance"></div>
                 <span class="ms-2" jhiTranslate="artemisApp.examScores.sufficientPerformance"></span>
             </div>
         }
         @if (!gradingScaleExists() || isBonus()) {
-            <div class="d-flex justify-content-center align-items-center">
+            <div class="flex items-center justify-center">
                 <div class="color-box critical-performance"></div>
                 <span class="ms-2" jhiTranslate="artemisApp.examScores.criticalPerformance"></span>
-                <div class="ms-4 color-box sufficient-performance"></div>
+                <div class="ms-6 color-box sufficient-performance"></div>
                 <span class="ms-2" jhiTranslate="artemisApp.examScores.uncriticalPerformance"></span>
             </div>
         }

@@ -31,8 +31,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
@@ -64,7 +63,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintSpy: ReturnType<typeof vi.spyOn>;
     let router: Router;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionService: ExampleSubmissionApi;
     let paramMapSubject: BehaviorSubject<ParamMap>;
     let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
@@ -119,7 +118,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         complaintService = TestBed.inject(ComplaintService);
         submissionService = TestBed.inject(SubmissionService);
         mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionApi);
         mockAuth.hasAnyAuthorityDirect([]);
         mockAuth.identity();
         fixture.detectChanges();
@@ -377,6 +376,37 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(suggestionsSpy).toHaveBeenCalledOnce();
             expect(component.referencedFeedback).toContainEqual(suggestion);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should make the assessment valid as soon as the suggestions are applied, without editing a feedback first', async () => {
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, type: FeedbackType.MANUAL };
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            // The suggestion is part of the assessment ...
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            // ... and so is the validity that enables the Submit button, which used to stay false until a feedback was edited.
+            expect(component.assessmentsAreValid()).toBe(true);
+        });
+
+        it('should keep the assessment invalid when a suggestion has no credits yet', async () => {
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: undefined, type: FeedbackType.MANUAL };
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.assessmentsAreValid()).toBe(false);
         });
 
         it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
@@ -954,12 +984,12 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as ModelingSubmission);
 
-        const importSpy = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importSpy = vi.spyOn(exampleSubmissionService, 'importExampleSubmission').mockReturnValue(of({}));
 
         component.useStudentSubmissionAsExampleSubmission();
 
         expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(component.submission()!.id, component.modelingExercise()!.id);
+        expect(importSpy).toHaveBeenCalledWith(component.modelingExercise()!.id, component.submission()!.id);
     });
 
     it('should display error when complaint resolved but assessment invalid', () => {

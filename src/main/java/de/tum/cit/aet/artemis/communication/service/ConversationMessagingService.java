@@ -283,7 +283,7 @@ public class ConversationMessagingService extends PostingService {
             throw new AccessForbiddenException("Only tutors and above may filter for unverified Iris replies");
         }
 
-        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId(), requesterIsAtLeastTutor);
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
         // students must never see unverified Iris replies, even if a previous fetch included them in the in-memory answers

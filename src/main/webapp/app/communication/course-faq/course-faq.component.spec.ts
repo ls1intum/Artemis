@@ -18,6 +18,7 @@ import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ElementRef, signal } from '@angular/core';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -149,6 +150,32 @@ describe('CourseFaqs', () => {
         expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
         expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
         expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
+    });
+
+    it('lists the categories in a popover that is only available when categories exist', () => {
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.existingCategories.set([new FaqCategory('category1', '#94a11c'), new FaqCategory('category2', '#0ab84f')]);
+        courseFaqComponent.hasCategories.set(false);
+        courseFaqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const trigger = (view.rootNodes[0] as HTMLElement).querySelector('#filter-dropdown-button') as HTMLButtonElement;
+        expect(trigger.disabled).toBe(true);
+
+        courseFaqComponent.hasCategories.set(true);
+        courseFaqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(trigger.disabled).toBe(false);
+        const toggleFilters = vi.spyOn(courseFaqComponent, 'toggleFilters').mockImplementation(() => {});
+        trigger.click();
+        view.detectChanges();
+
+        const checkboxes = document.querySelectorAll<HTMLInputElement>('.cdk-overlay-container input[type="checkbox"]');
+        expect(Array.from(checkboxes).map((checkbox) => checkbox.id)).toEqual(['filter-category1', 'filter-category2']);
+        checkboxes[0].click();
+        expect(toggleFilters).toHaveBeenCalledExactlyOnceWith('category1');
+        view.destroy();
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
     });
 
     it('should search through already filtered array', () => {

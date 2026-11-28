@@ -1,14 +1,16 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 
 type NavigationDirection = 'next' | 'prev';
 
 @Component({
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
-    styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent],
+    styleUrls: ['./pdf-preview-enlarged-canvas.component.css'],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, CdkTrapFocus],
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
     // Injected services
@@ -16,6 +18,9 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
 
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
+    private readonly closeButton = viewChild.required('closeButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly previousPageButton = viewChild('previousPageButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly nextPageButton = viewChild('nextPageButton', { read: ElementRef<HTMLButtonElement> });
 
     readonly DEFAULT_ENLARGED_SLIDE_HEIGHT = 800;
 
@@ -46,11 +51,17 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
      * Handles navigation within the PDF viewer using keyboard arrow keys.
      * @param event - The keyboard event captured for navigation.
      */
-    @HostListener('document:keydown', ['$event'])
     handleKeyboardEvents(event: KeyboardEvent) {
-        if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            this.closeEnlargedView(event);
+        } else if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
+            event.preventDefault();
+            event.stopPropagation();
             this.navigatePages('next');
         } else if (event.key === 'ArrowLeft' && this.currentPage() > 1) {
+            event.preventDefault();
+            event.stopPropagation();
             this.navigatePages('prev');
         }
     }
@@ -183,7 +194,7 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     /**
      * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
      */
-    closeEnlargedView(event: MouseEvent) {
+    closeEnlargedView(event: Event) {
         this.isEnlargedViewOutput.emit(false);
         this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);
@@ -220,6 +231,10 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     navigatePages(direction: NavigationDirection) {
         const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
         if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
+            const disappearingButton = nextPageIndex === 1 ? this.previousPageButton() : nextPageIndex === this.totalPages() ? this.nextPageButton() : undefined;
+            if (disappearingButton?.nativeElement === this.enlargedContainer().nativeElement.ownerDocument.activeElement) {
+                this.closeButton().nativeElement.focus();
+            }
             this.currentPage.set(nextPageIndex);
             const canvas = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);

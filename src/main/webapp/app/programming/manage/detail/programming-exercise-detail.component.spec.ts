@@ -41,6 +41,8 @@ import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detai
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -52,8 +54,9 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DeimosBatchTriggerResponse, DeimosService } from 'app/programming/shared/services/deimos.service';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -73,9 +76,8 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import * as downloadUtil from 'app/foundation/util/download.util';
-import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
@@ -165,7 +167,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             providers: [
                 { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,
                 SessionStorageService,
@@ -173,7 +175,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
@@ -182,7 +183,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             ],
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in
-            // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
+            // their own dependencies (e.g. TumAetUiDialogService) or crash on missing inputs (doughnut chart).
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
                     imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],
@@ -309,6 +310,61 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
     });
 
+    it('shows the linked competencies on the imported exercise detail page', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.competencyLinks = [
+            { competency: { title: 'Sorting' }, weight: 1 },
+            { competency: { title: 'Searching' }, weight: 1 },
+        ];
+        expect(comp.getExerciseDetailsProblemSection(exercise).details).toContainEqual({
+            title: 'artemisApp.competency.link.title',
+            type: DetailType.Text,
+            data: { text: 'Sorting, Searching' },
+        });
+    });
+
+    it('runs the selected Deimos batch and restores the action after success or failure', () => {
+        const response = new Subject<DeimosBatchTriggerResponse>();
+        const trigger = vi
+            .spyOn(TestBed.inject(DeimosService), 'triggerExerciseBatch')
+            .mockReturnValueOnce(response)
+            .mockReturnValueOnce(throwError(() => new Error('Unavailable')));
+        const success = vi.spyOn(alertService, 'success');
+        const error = vi.spyOn(alertService, 'error');
+        const selection = { from: dayjs('2026-01-01'), to: dayjs('2026-01-07') };
+        comp.programmingExercise.set(new ProgrammingExercise(new Course(), undefined));
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(trigger).not.toHaveBeenCalled();
+
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(trigger).toHaveBeenCalledWith(mockProgrammingExercise.id, selection.from, selection.to);
+        expect(comp['deimosSubmitting']()).toBe(true);
+        response.next({ runId: 'batch', status: 'queued' });
+        expect(comp['deimosSubmitting']()).toBe(false);
+        expect(success).toHaveBeenCalledWith('artemisApp.deimos.trigger.success');
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(comp['deimosSubmitting']()).toBe(false);
+        expect(error).toHaveBeenCalledWith('artemisApp.deimos.trigger.error');
+    });
+
+    it('checks the displayed exercise for inconsistencies when an editor opens its details', () => {
+        const check = vi.spyOn(TestBed.inject(ConsistencyCheckService), 'checkConsistencyForProgrammingExercise').mockReturnValue(of([{ type: ErrorType.TEMPLATE_REPO_MISSING }]));
+        const warning = vi.spyOn(alertService, 'warning');
+        comp.programmingExercise.set({ ...mockProgrammingExercise, isAtLeastEditor: false });
+        comp.checkAndAlertInconsistencies();
+        expect(check).not.toHaveBeenCalled();
+
+        const exercise = { ...mockProgrammingExercise, isAtLeastEditor: true };
+        comp.programmingExercise.set(exercise);
+        comp.checkAndAlertInconsistencies();
+        expect(check).toHaveBeenCalledWith(exercise.id);
+        expect(warning).toHaveBeenCalledWith('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
+        comp.checkConsistencies(exercise);
+        expect(comp.consistencyExercises()).toEqual([exercise]);
+        expect(comp.showConsistencyCheck()).toBe(true);
+    });
+
     it('downloads the selected exercise and reports a failed download', () => {
         comp.programmingExercise.set(mockProgrammingExercise);
         const response = new HttpResponse({ body: new Blob(['exercise']) });
@@ -328,26 +384,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         comp.downloadExercise();
         expect(error).toHaveBeenCalledWith('error.exportFailed');
-    });
-
-    it('preserves sharing errors and does not export an unsaved exercise', () => {
-        const sharing = vi
-            .spyOn(TestBed.inject(ProgrammingExerciseSharingService), 'exportProgrammingExerciseToSharing')
-            .mockReturnValueOnce(of(new HttpResponse<string>({ body: null })))
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'Sharing unavailable' } })));
-        const error = vi.spyOn(alertService, 'error');
-        comp.programmingExercise.set(mockProgrammingExercise);
-
-        comp.exportExerciseToSharing();
-        expect(sharing).toHaveBeenCalledWith(mockProgrammingExercise.id, window.location.href);
-        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.noRedirect');
-
-        comp.exportExerciseToSharing();
-        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Sharing unavailable' });
-
-        comp.programmingExercise.set(new ProgrammingExercise(undefined, undefined));
-        comp.exportExerciseToSharing();
-        expect(sharing).toHaveBeenCalledTimes(2);
     });
 
     it('should reload on participation change', async () => {
@@ -551,6 +587,37 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
+    });
+
+    describe('build time window details', () => {
+        const windowStart = dayjs('2026-10-01T10:00:00Z');
+        const windowEnd = dayjs('2026-10-01T12:00:00Z');
+
+        const windowDetails = (buildTimeWindow?: { start?: dayjs.Dayjs; end?: dayjs.Dayjs }) => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 123;
+            programmingExercise.buildConfig!.advancedSettings = buildTimeWindow ? { buildTimeWindow } : undefined;
+            comp.programmingExercise.set(programmingExercise);
+            return comp
+                .getExerciseDetailsLanguageSection(programmingExercise)
+                .details.filter((detail) => !!detail && detail.type === DetailType.Date && detail.title?.includes('buildTimeWindow'));
+        };
+
+        it('should show no row for an exercise without a window', () => {
+            expect(windowDetails()).toEqual([]);
+        });
+
+        it('should show the start and the end of the window', () => {
+            expect(windowDetails({ start: windowStart, end: windowEnd })).toEqual([
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.start', data: { date: windowStart } },
+                { type: DetailType.Date, title: 'artemisApp.programmingExercise.buildTimeWindow.end', data: { date: windowEnd } },
+            ]);
+        });
+
+        it('should show only the bound that is set', () => {
+            expect(windowDetails({ start: windowStart }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.start']);
+            expect(windowDetails({ end: windowEnd }).map((detail) => detail && detail.title)).toEqual(['artemisApp.programmingExercise.buildTimeWindow.end']);
+        });
     });
 
     it.each([

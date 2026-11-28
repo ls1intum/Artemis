@@ -16,54 +16,62 @@
             [buttonLoading]="isLoading()"
             [smallButton]="smallButtons()"
             [hideLabelMobile]="false"
-            [ngbPopover]="popContent"
-            #popover="ngbPopover"
-            [autoClose]="'outside'"
-            placement="top-left"
-            container="body"
+            [tumAetUiPopoverTrigger]="resetPopover"
         ></button>
     }
-    <ng-template #popContent>
-        <form style="max-width: 660px" #resetForm="ngForm">
-            <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation() ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
-            <p jhiTranslate="artemisApp.exerciseActions.resetRepository.explanation"></p>
-            @if (exercise().allowOfflineIde) {
-                <p jhiTranslate="artemisApp.exerciseActions.resetRepository.offlineIDEExplanation"></p>
-            }
-            @if (gradedParticipation() && practiceParticipation()) {
-                <p jhiTranslate="artemisApp.exerciseActions.resetRepository.repositoryChoice"></p>
-            }
-            <p
-                [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation() ? 'Practice' : 'Graded')"
-                [translateValues]="{ title: exercise().title }"
-            >
-                <span jhiTranslate="entity.action.deleteQuestion"></span>
-            </p>
-            @if (exercise().title) {
-                <jhi-confirm-entity-name
-                    confirmationText="artemisApp.exerciseActions.resetRepository.typeNameToConfirm"
-                    [entityName]="exercise().title!"
-                    warningTextColor="text-danger"
-                    name="confirmExerciseName"
-                    ngModel
-                />
-            }
-            <div class="button-footer">
-                <button data-button-intent="destructive" class="btn btn-danger" type="submit" [disabled]="resetForm.invalid || isLoading()" (click)="resetRepository()">
-                    <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
-                </button>
+    <tumaet-ui-popover #resetPopover placement="top" alignment="start" [ariaLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate">
+        <!-- Rendered only while open, so every opening starts with an empty confirmation. -->
+        @if (resetPopover.isOpen()) {
+            <form class="text-sm" style="max-width: 660px" #resetForm="ngForm">
+                <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation() ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
+                <p jhiTranslate="artemisApp.exerciseActions.resetRepository.explanation"></p>
+                @if (exercise().allowOfflineIde) {
+                    <p jhiTranslate="artemisApp.exerciseActions.resetRepository.offlineIDEExplanation"></p>
+                }
                 @if (gradedParticipation() && practiceParticipation()) {
+                    <p jhiTranslate="artemisApp.exerciseActions.resetRepository.repositoryChoice"></p>
+                }
+                <p
+                    [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation() ? 'Practice' : 'Graded')"
+                    [translateValues]="{ title: exercise().title }"
+                >
+                    <span jhiTranslate="entity.action.deleteQuestion"></span>
+                </p>
+                @if (exercise().title) {
+                    <jhi-confirm-entity-name
+                        confirmationText="artemisApp.exerciseActions.resetRepository.typeNameToConfirm"
+                        [entityName]="exercise().title!"
+                        warningTextColor="text-state-danger"
+                        name="confirmExerciseName"
+                        ngModel
+                    />
+                }
+                <div class="button-footer">
                     <button
                         data-button-intent="destructive"
-                        class="btn btn-danger ms-2"
+                        tumAetUiButton
+                        severity="danger"
                         type="submit"
                         [disabled]="resetForm.invalid || isLoading()"
-                        (click)="resetRepository(gradedParticipation()?.id)"
+                        (click)="resetRepository()"
                     >
-                        <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
+                        <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
                     </button>
-                }
-            </div>
-        </form>
-    </ng-template>
+                    @if (gradedParticipation() && practiceParticipation()) {
+                        <button
+                            data-button-intent="destructive"
+                            tumAetUiButton
+                            severity="danger"
+                            class="ms-2"
+                            type="submit"
+                            [disabled]="resetForm.invalid || isLoading()"
+                            (click)="resetRepository(gradedParticipation()?.id)"
+                        >
+                            <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
+                        </button>
+                    }
+                </div>
+            </form>
+        }
+    </tumaet-ui-popover>
 </ng-container>

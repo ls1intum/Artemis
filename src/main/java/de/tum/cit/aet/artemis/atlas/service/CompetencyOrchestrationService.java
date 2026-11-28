@@ -20,9 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
@@ -33,7 +31,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
@@ -103,12 +100,6 @@ public class CompetencyOrchestrationService {
 
     private final ToolCallbackProvider orchestratorDelegationToolCallbackProvider;
 
-    private final String deploymentName;
-
-    private final double temperature;
-
-    private final String reasoningEffort;
-
     private final Optional<DistributedDataProvider> distributedDataProvider;
 
     private final ContentChangeAccumulatorService contentChangeAccumulatorService;
@@ -125,8 +116,8 @@ public class CompetencyOrchestrationService {
             @Qualifier("orchestratorReadToolCallbackProvider") AtlasToolSurface orchestratorReadToolCallbackProvider,
             @Qualifier("orchestratorPlanningToolCallbackProvider") AtlasToolSurface orchestratorPlanningToolCallbackProvider,
             @Qualifier("orchestratorDelegationToolCallbackProvider") AtlasToolSurface orchestratorDelegationToolCallbackProvider,
-            Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            Optional<DistributedDataProvider> distributedDataProvider, ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.contentExtractionService = contentExtractionService;
@@ -137,9 +128,6 @@ public class CompetencyOrchestrationService {
         this.orchestratorReadToolCallbackProvider = orchestratorReadToolCallbackProvider.provider();
         this.orchestratorPlanningToolCallbackProvider = orchestratorPlanningToolCallbackProvider.provider();
         this.orchestratorDelegationToolCallbackProvider = orchestratorDelegationToolCallbackProvider.provider();
-        this.deploymentName = properties.model();
-        this.temperature = properties.temperature();
-        this.reasoningEffort = properties.reasoningEffort();
         this.distributedDataProvider = distributedDataProvider;
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -234,7 +222,7 @@ public class CompetencyOrchestrationService {
      *         <li>{@link CompetencyOrchestrationResultDTO.Status#PARTIAL} when the LLM threw after committing at least one action — the partial audit trail is included so the
      *         caller can review/revert;</li>
      *         <li>{@link CompetencyOrchestrationResultDTO.Status#FAILED} with {@link CompetencyOrchestrationResultDTO.FailureReason#LLM_ERROR} if the call failed before any action
-     *         committed, or {@link CompetencyOrchestrationResultDTO.FailureReason#NO_CHAT_CLIENT} if no ChatClient is configured;</li>
+     *         committed;</li>
      *         <li>{@link CompetencyOrchestrationResultDTO.Status#IN_PROGRESS} if a run is already active for the same course.</li>
      *         </ul>
      */
@@ -293,9 +281,6 @@ public class CompetencyOrchestrationService {
      *         claimed learning object was applicable, {@code IN_PROGRESS} when another run holds the lock
      */
     public CompetencyOrchestrationResultDTO runBatch(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds) {
-        if (!delegationService.isOrchestratorAvailable()) {
-            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
-        }
         List<Exercise> exercises = resolveBatchExercises(courseId, exerciseIds);
         List<LectureUnit> lectureUnits = resolveBatchLectureUnits(courseId, lectureUnitIds);
         if (exercises.isEmpty() && lectureUnits.isEmpty()) {
@@ -389,9 +374,6 @@ public class CompetencyOrchestrationService {
                 || clicked.getLecture().getCourse() == null) {
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on content-bearing course lecture units.",
                     CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
-        }
-        if (!delegationService.isOrchestratorAvailable()) {
-            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
 
         long courseId = clicked.getLecture().getCourse().getId();
@@ -510,10 +492,6 @@ public class CompetencyOrchestrationService {
             log.info("Atlas orchestrator rejected for exam exercise {}", exercise.getId());
             return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator only operates on course exercises.",
                     CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_EXERCISE);
-        }
-        if (!delegationService.isOrchestratorAvailable()) {
-            log.info("Atlas orchestrator requested for exercise {} but no ChatClient is available", exercise.getId());
-            return CompetencyOrchestrationResultDTO.failed("Atlas chat model is not configured.", CompetencyOrchestrationResultDTO.FailureReason.NO_CHAT_CLIENT);
         }
         return null;
     }
@@ -712,12 +690,10 @@ public class CompetencyOrchestrationService {
      * {@code appliedActions} via the typed {@link AppliedActionsBuffer} in the tool context (passed by
      * reference into the harness).
      * <p>
-     * The orchestrator owns its model config: the orchestrator deployment / temperature / reasoning
-     * effort from {@link AtlasOrchestratorProperties} are applied via {@link #buildChatOptions()} and
-     * handed to the harness, which performs the call with chat memory OFF (each run is a fresh call).
-     * The {@link ChatResponse} (rather than just its content) is returned so the round's token usage
-     * is persisted via {@link LLMTokenUsageService}, feeding the existing per-course LLM cost views.
-     * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when there
+     * The harness calls the {@code orchestrator} preset with chat memory OFF (each run is a fresh call).
+     * Each provider response is persisted via {@link LLMTokenUsageService} before tool execution
+     * and usage accumulation, feeding the per-course LLM cost views. The final response is returned
+     * for completion checks only. Tracking is best-effort, and {@code userId} resolves to {@code null} when there
      * is no {@code SecurityContext} (e.g. a scheduler-driven run).
      * <p>
      * {@code preparedContent} seeds the invocation content cache, so orchestrator and worker detail reads
@@ -725,7 +701,6 @@ public class CompetencyOrchestrationService {
      */
     private String callChatClient(String systemPrompt, long courseId, @Nullable Long exerciseId, List<AppliedActionDTO> appliedActions,
             Map<String, ExtractedContentDTO> preparedContent) {
-        OpenAiChatOptions.Builder options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
         toolContext.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new AppliedActionsBuffer(appliedActions));
@@ -735,10 +710,13 @@ public class CompetencyOrchestrationService {
         toolContext.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(toolContext);
         budget.seedContent(preparedContent);
+        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         ChatResponse chatResponse;
         try {
             chatResponse = delegationService.delegateOrchestratorRound(systemPrompt,
-                    "Plan the competency-management work, delegate semantic batches in dependency order, verify the final index, and terminate explicitly.", options, toolContext,
+                    "Plan the competency-management work, delegate semantic batches in dependency order, verify the final index, and terminate explicitly.", toolContext,
+                    response -> llmTokenUsageService.trackModelCallTokenUsage(response, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
+                            builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId)),
                     orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, orchestratorDelegationToolCallbackProvider, terminalToolCallbackProvider);
         }
         catch (RuntimeException ex) {
@@ -747,26 +725,11 @@ public class CompetencyOrchestrationService {
             }
             throw ex;
         }
-        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-        if (chatResponse != null) {
-            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
-                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
-            if (Boolean.FALSE.equals(chatResponse.getMetadata().get(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY))) {
-                if (chatResponse.getMetadata().getUsage() instanceof EmptyUsage) {
-                    log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
-                }
-                else {
-                    log.warn("Atlas orchestration usage is incomplete for course {}; storing the reported partial usage", courseId);
-                }
-            }
-        }
-        else {
-            log.warn("Atlas orchestration usage is unavailable for course {}; no zero-cost record is stored", courseId);
-        }
         AtlasToolCallBudget.checkResponse(chatResponse, toolContext);
         if (chatResponse != null && chatResponse.getResult() != null) {
             String finish = chatResponse.getResult().getMetadata().getFinishReason();
-            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status").contains(finish == null ? "" : finish)) {
+            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
+                    .contains(finish == null ? "" : finish)) {
                 throw new IllegalStateException("Atlas Responses request did not complete: " + finish);
             }
         }
@@ -781,18 +744,6 @@ public class CompetencyOrchestrationService {
             throw new IncompleteOrchestrationException(completion.message());
         }
         return completion.message();
-    }
-
-    /** GPT-5 reasoning models reject explicit temperature alongside reasoningEffort, so we omit one when the other is set. */
-    private OpenAiChatOptions.Builder buildChatOptions() {
-        var builder = OpenAiChatOptions.builder().deploymentName(deploymentName);
-        if (reasoningEffort != null && !reasoningEffort.isBlank()) {
-            builder.reasoningEffort(reasoningEffort);
-        }
-        else {
-            builder.temperature(temperature);
-        }
-        return builder;
     }
 
     private static final class IncompleteOrchestrationException extends RuntimeException {

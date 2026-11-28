@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -37,6 +38,7 @@ import org.assertj.core.api.ThrowingConsumer;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
@@ -61,6 +63,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -465,6 +468,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Users cannot create new branches.
         assignmentRepository.workingCopy().branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        // The branch holds a commit that the repository does not have yet
+        assignmentRepository.workingCopy().checkout().setName("new-branch").call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "new-branch-file.txt");
+        ObjectId newCommit = assignmentRepository.workingCopy().getRepository().resolve("refs/heads/new-branch");
         String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
@@ -473,6 +480,31 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+        assertNothingOfThePushIsStored(newCommit);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPushWithWrongPasswordStoresNothingAndCreatesNoPlaceForTheObjects() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "rejected-before-the-receipt.txt");
+        ObjectId commit = assignmentRepository.workingCopy().getRepository().resolve("HEAD");
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, "wrong-" + USER_PASSWORD, projectKey1, assignmentRepositorySlug);
+
+        assertThatExceptionOfType(GitAPIException.class).isThrownBy(
+                () -> assignmentRepository.workingCopy().push().setRemote(repositoryUri).setCredentialsProvider(LocalVCLocalCITestService.ONLY_THE_CREDENTIALS_IN_THE_URI).call());
+
+        assertNothingOfThePushIsStored(commit);
+    }
+
+    /**
+     * A push that is rejected leaves nothing in the repository: neither the objects it sent nor a place for them.
+     */
+    private void assertNothingOfThePushIsStored(ObjectId commit) throws IOException {
+        assertThat(assignmentRepository.bareRepository().getRepository().getObjectDatabase().has(commit)).as("the objects of a rejected push are not stored").isFalse();
+        try (var entries = Files.list(assignmentRepository.bareRepositoryPath())) {
+            assertThat(entries.map(entry -> entry.getFileName().toString())).as("the place of the push is removed").noneMatch(name -> name.startsWith("incoming-"));
+        }
     }
 
     @Test
@@ -909,7 +941,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
 
         assignmentRepository.workingCopy().add().addFilepattern("large-file.txt").call();
-        GitService.commit(assignmentRepository.workingCopy()).setMessage("Add large file").call();
+        ObjectId largeCommit = GitService.commit(assignmentRepository.workingCopy()).setMessage("Add large file").call().getId();
 
         String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
         PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
@@ -917,6 +949,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
+        // the content is examined after its objects were received, and they are removed right away
+        assertNothingOfThePushIsStored(largeCommit);
     }
 
     @Test
@@ -1038,7 +1072,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      * Rate limiting is switched off for the shared test context, so a limiting service is swapped into the servlet
      * service for this test only. It exempts loopback, where every other test's git request comes from, and limits
      * the documentation address of this test, so concurrently running tests are unaffected. The requests come from loopback, a proxy that the
-     * servlet container believes (server.forward-headers-strategy: native), so it takes the documentation address from X-Forwarded-For as the address of the peer.
+     * servlet container believes (server.request.header.forwarded.strategy: web-server), so it takes the documentation address from X-Forwarded-For as the address of the peer.
      * The address is fresh on every run: the buckets live in the shared context, and LocalVCSshIntegrationTest runs
      * this test a second time, possibly concurrently: the swap is serialized so that neither run restores the other's
      * limiting service instead of the original.

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, model, output, signal } from '@angular/core';
-import { TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Dayjs } from 'dayjs/esm';
@@ -8,7 +9,7 @@ import { Dayjs } from 'dayjs/esm';
 @Component({
     selector: 'jhi-lecture-timeline',
     templateUrl: './lecture-timeline.component.html',
-    styleUrl: './lecture-timeline.component.scss',
+    styleUrl: './lecture-timeline.component.css',
     imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiDatePickerComponent, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -146,9 +146,27 @@ describe('ChecklistPanelComponent', () => {
         component.analysisResult.set(mockResponse);
         fixture.detectChanges();
 
-        const goalsSection = fixture.debugElement.query(By.css('.checklist-section'));
+        const goalsSection = fixture.debugElement.query(By.css('[data-testid="checklist-section-quality"]'));
         expect(goalsSection).toBeTruthy();
         expect(component.analysisResult()).toBeDefined();
+    });
+
+    describe('Category chips', () => {
+        it('colors a known category in any case and falls back to the neutral color', () => {
+            expect(component.getCategoryColorClass('CLARITY')).toBe('bg-(--primary) text-white');
+            expect(component.getCategoryColorClass('coherence')).toBe('bg-state-info text-white');
+            expect(component.getCategoryColorClass('Completeness')).toBe('bg-state-success text-white');
+            expect(component.getCategoryColorClass('SOMETHING_ELSE')).toBe('bg-(--tumaet-ui-muted-color) text-white');
+            expect(component.getCategoryColorClass(undefined)).toBe('bg-(--tumaet-ui-muted-color) text-white');
+        });
+
+        it('colors a known difficulty delta and falls back to the muted text color', () => {
+            expect(component.getDeltaClass('HIGHER')).toBe('text-state-danger');
+            expect(component.getDeltaClass('LOWER')).toBe('text-state-warning');
+            expect(component.getDeltaClass('MATCH')).toBe('text-state-success');
+            expect(component.getDeltaClass('SOMETHING_ELSE')).toBe('text-muted-color');
+            expect(component.getDeltaClass(undefined)).toBe('text-muted-color');
+        });
     });
 
     describe('AI Action Methods', () => {

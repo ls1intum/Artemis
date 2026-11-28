@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ApollonDiagramListComponent } from '../list/apollon-diagram-list.component';
@@ -9,13 +9,13 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
     selector: 'jhi-apollon-diagram-import-dialog',
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './apollon-diagram-import-dialog.component.html',
-    styleUrls: ['./apollon-diagram-import-dialog.component.scss'],
+    styleUrls: ['./apollon-diagram-import-dialog.component.css'],
     providers: [ApollonDiagramService],
     imports: [ApollonDiagramListComponent, ApollonDiagramDetailComponent],
 })
 export class ApollonDiagramImportDialogComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private dialogRef = inject(TumAetUiDialogRef<DragAndDropQuestion>);
+    private dialogConfig = inject(TumAetUiDialogConfig<{ courseId: number }>);
 
     readonly courseId = signal<number>(0);
 
@@ -23,7 +23,7 @@ export class ApollonDiagramImportDialogComponent implements OnInit {
     apollonDiagramDetailId = signal<number | undefined>(undefined);
 
     ngOnInit() {
-        this.courseId.set(this.dialogConfig.data.courseId);
+        this.courseId.set(this.dialogConfig.data!.courseId);
     }
 
     handleDetailOpen(id: number) {

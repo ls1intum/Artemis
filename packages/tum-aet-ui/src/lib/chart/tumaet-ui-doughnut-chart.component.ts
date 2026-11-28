@@ -25,7 +25,7 @@ interface SliceView {
 @Component({
     selector: 'tumaet-ui-doughnut-chart',
     templateUrl: './tumaet-ui-doughnut-chart.component.html',
-    styleUrl: './tumaet-ui-doughnut-chart.component.scss',
+    styleUrls: ['./tumaet-ui-chart.layout.css', './tumaet-ui-doughnut-chart.component.css'],
     imports: [TumAetUiChartCanvasDirective, TumAetUiChartLegendComponent, TumAetUiChartTooltipComponent, TumAetUiChartDataTableComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tumaet-ui-doughnut-chart' },

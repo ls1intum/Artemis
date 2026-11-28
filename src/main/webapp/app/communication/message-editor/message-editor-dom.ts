@@ -61,6 +61,15 @@ export class MessageEditorDom {
         this.historyIndex = 0;
     }
 
+    /**
+     * Whether the document has no content for the given serialized message. A list, quote or code block without text still
+     * draws its marker, and the serialization of an empty list item without a layout placeholder is blank, so the blocks
+     * count as content here.
+     */
+    isBlank(message: string): boolean {
+        return message === '' && !this.element.querySelector('ul, ol, blockquote, pre');
+    }
+
     /** Saves the active selection before a toolbar or form takes focus. */
     rememberSelection(): void {
         const range = this.range();
@@ -666,7 +675,8 @@ export class MessageEditorDom {
                     }
                     content.textContent = label || url;
                 }
-                existing.setAttribute('href', url);
+                // Reviewed false positive (CodeQL js/xss, js/client-side-unvalidated-url-redirection): isMessageLinkSafe above only accepts http, https and mailto destinations.
+                existing.setAttribute('href', url); // codeql[js/xss, js/client-side-unvalidated-url-redirection]
                 const caret = this.element.ownerDocument.createRange();
                 caret.setStartAfter(existing);
                 caret.collapse(true);
@@ -683,7 +693,8 @@ export class MessageEditorDom {
                 } else {
                     link.textContent = label || url;
                 }
-                link.setAttribute('href', url);
+                // Reviewed false positive (CodeQL js/xss, js/client-side-unvalidated-url-redirection): isMessageLinkSafe above only accepts http, https and mailto destinations.
+                link.setAttribute('href', url); // codeql[js/xss, js/client-side-unvalidated-url-redirection]
                 this.select(selection);
                 this.replace(link);
             }

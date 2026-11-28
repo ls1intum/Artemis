@@ -23,6 +23,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.runtime.workspace.BinaryContent;
 
 /**
  * Transfers workspace files in bounded tar archives, avoiding shell quoting and exec-output limits.
@@ -73,7 +74,7 @@ public final class WorkspaceArchive {
     }
 
     static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
-        return new ByteArrayInputStream(build(textFiles, directoryTrees, executableTextFiles));
+        return new ByteArrayInputStream(build(textFiles, directoryTrees, Map.of(), executableTextFiles));
     }
 
     /**
@@ -83,6 +84,10 @@ public final class WorkspaceArchive {
      * @return a bounded tar stream
      */
     public static InputStream buildFilesTarStream(Map<String, String> textFiles, Map<String, byte[]> binaryFiles, Set<String> executableFiles) {
+        return new ByteArrayInputStream(build(textFiles, Map.of(), binaryFiles, executableFiles));
+    }
+
+    private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees, Map<String, byte[]> binaryFiles, Set<String> executableFiles) {
         BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
@@ -100,26 +105,6 @@ public final class WorkspaceArchive {
                 rejectSecretMaterial(entry.getKey(), entry.getValue());
                 total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), entry.getValue(), executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
-            }
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return new ByteArrayInputStream(out.toByteArray());
-    }
-
-    private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees, Set<String> executableTextFiles) {
-        BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
-        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
-            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-            long total = 0;
-            int[] entryCount = { 0 };
-            for (Map.Entry<String, String> entry : textFiles.entrySet()) {
-                incrementEntryCount(entryCount);
-                byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
-                rejectSecretMaterial(entry.getKey(), content);
-                total = addToSeedTotal(total, content.length, entry.getKey());
-                writeFileEntry(tar, entry.getKey(), content, executableTextFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
             for (Map.Entry<String, Path> tree : directoryTrees.entrySet()) {
                 total = appendDirectory(tar, tree.getValue(), tree.getKey(), total, entryCount);

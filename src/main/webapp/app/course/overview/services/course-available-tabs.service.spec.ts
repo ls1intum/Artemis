@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
@@ -9,6 +9,7 @@ import { CourseAvailableTabsService } from 'app/course/overview/services/course-
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
@@ -26,6 +27,7 @@ const tabs = (overrides: Partial<CourseAvailableTabs> = {}): CourseAvailableTabs
 });
 
 describe('CourseAvailableTabsService', () => {
+    let authentication: Subject<User | undefined>;
     let service: CourseAvailableTabsService;
     let courseManagementService: CourseManagementService;
     let fetchSpy: ReturnType<typeof vi.spyOn>;
@@ -42,6 +44,10 @@ describe('CourseAvailableTabsService', () => {
                 MockProvider(AlertService),
             ],
         });
+        authentication = new Subject<User | undefined>();
+        const account = TestBed.inject(AccountService);
+        vi.spyOn(account, 'userIdentity').mockReturnValue({ id: 1 } as User);
+        vi.spyOn(account, 'getAuthenticationState').mockReturnValue(authentication);
         service = TestBed.inject(CourseAvailableTabsService);
         service.clear();
         courseManagementService = TestBed.inject(CourseManagementService);
@@ -51,6 +57,28 @@ describe('CourseAvailableTabsService', () => {
     afterEach(() => {
         TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
+    });
+
+    it('preserves held state for the same user and clears it when the identity changes', () => {
+        service.load(1).subscribe();
+        authentication.next({ id: 1 } as User);
+        expect(service.tabsFor(1)).toBeDefined();
+        const clear = vi.spyOn(service, 'clear');
+        authentication.next({ id: 2 } as User);
+        expect(service.tabsFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        authentication.next(undefined);
+        authentication.next(undefined);
+        expect(clear).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears state and stops observing authentication when destroyed', () => {
+        service.load(1).subscribe();
+        const clear = vi.spyOn(service, 'clear');
+        service.ngOnDestroy();
+        expect(service.tabsFor(1)).toBeUndefined();
+        authentication.next({ id: 2 } as User);
+        expect(clear).toHaveBeenCalledOnce();
     });
 
     it('should report no tabs before anything is loaded', () => {

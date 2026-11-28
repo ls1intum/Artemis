@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.ToolContext;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
@@ -65,12 +63,6 @@ public class OrchestratorDelegationToolsService {
 
     private final ToolCallbackProvider terminalTools;
 
-    private final String workerDeploymentName;
-
-    private final String workerReasoningEffort;
-
-    private final double workerTemperature;
-
     private final LLMTokenUsageService llmTokenUsageService;
 
     private final UserRepository userRepository;
@@ -78,8 +70,7 @@ public class OrchestratorDelegationToolsService {
     public OrchestratorDelegationToolsService(AtlasPromptTemplateService templateService, AtlasAgentDelegationService delegationService,
             @Qualifier("orchestratorReadToolCallbackProvider") AtlasToolSurface readTools, @Qualifier("creatorToolCallbackProvider") AtlasToolSurface creatorTools,
             @Qualifier("assignerToolCallbackProvider") AtlasToolSurface assignerTools, @Qualifier("editorToolCallbackProvider") AtlasToolSurface editorTools,
-            @Qualifier("workerTerminalToolCallbackProvider") AtlasToolSurface terminalTools, AtlasOrchestratorProperties properties, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
+            @Qualifier("workerTerminalToolCallbackProvider") AtlasToolSurface terminalTools, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.templateService = templateService;
         this.delegationService = delegationService;
         this.readTools = readTools.provider();
@@ -87,9 +78,6 @@ public class OrchestratorDelegationToolsService {
         this.assignerTools = assignerTools.provider();
         this.editorTools = editorTools.provider();
         this.terminalTools = terminalTools.provider();
-        this.workerDeploymentName = properties.workerModel();
-        this.workerReasoningEffort = properties.workerReasoningEffort();
-        this.workerTemperature = properties.temperature();
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
     }
@@ -148,15 +136,19 @@ public class OrchestratorDelegationToolsService {
         copyContextValue(parentContext, workerContext, OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
 
         try {
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            Object exerciseValue = workerContext.get(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
+            Long exerciseId = exerciseValue instanceof Number number ? number.longValue() : null;
             String systemPrompt = templateService.render(role.promptPath, Map.of());
-            // Same reasoning/temperature exclusivity as the main orchestrator: a blank reasoning effort disables reasoning options.
-            OpenAiChatOptions.Builder options = ContentExtractionService.buildChatOptions(workerDeploymentName, workerReasoningEffort, workerTemperature);
-            ChatResponse response = delegationService.delegateOrchestratorRound(systemPrompt,
-                    task + "\n\nExecute this batch, then call completeWorkerTask exactly once with the outcome.", options, workerContext, readTools, roleTools, terminalTools);
-            trackUsage(response, courseId, workerContext);
+            ChatResponse response = delegationService.delegateWorkerRound(systemPrompt,
+                    task + "\n\nExecute this batch, then call completeWorkerTask exactly once with the outcome.", workerContext,
+                    round -> llmTokenUsageService.trackModelCallTokenUsage(round, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
+                            builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId)),
+                    readTools, roleTools, terminalTools);
             AtlasToolCallBudget.checkResponse(response, workerContext);
-            if (response == null || response.getResult() == null || java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status")
-                    .contains(java.util.Objects.requireNonNullElse(response.getResult().getMetadata().getFinishReason(), ""))) {
+            if (response == null || response.getResult() == null
+                    || java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
+                            .contains(java.util.Objects.requireNonNullElse(response.getResult().getMetadata().getFinishReason(), ""))) {
                 return new WorkerResultDTO(false, role.displayName + " worker provider response did not complete.", actionSlice(buffer, actionStart));
             }
             WorkerCompletionDTO completion = completionHolder.get();
@@ -177,14 +169,6 @@ public class OrchestratorDelegationToolsService {
             log.warn("Atlas {} worker failed after applying {} action(s): {}", role.displayName, actionSlice(buffer, actionStart).size(), ex.getMessage(), ex);
             return new WorkerResultDTO(false, role.displayName + " worker failed while executing its batch.", actionSlice(buffer, actionStart));
         }
-    }
-
-    private void trackUsage(ChatResponse response, long courseId, Map<String, Object> workerContext) {
-        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-        Object exerciseValue = workerContext.get(OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
-        Long exerciseId = exerciseValue instanceof Number number ? number.longValue() : null;
-        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, ORCHESTRATION_PIPELINE_ID,
-                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
     }
 
     private static List<AppliedActionDTO> actionSlice(OrchestratorToolContextKeys.AppliedActionsBuffer buffer, int start) {

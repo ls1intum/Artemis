@@ -7,7 +7,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -16,8 +18,19 @@ import { addPublicFilePrefix } from 'app/app.constants';
 @Component({
     selector: 'jhi-posting-summary',
     templateUrl: './posting-summary.component.html',
-    styleUrls: ['./posting-summary.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgClass, ProfilePictureComponent, NgbTooltip, PostingContentComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    styleUrls: ['./posting-summary.component.css'],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        NgClass,
+        ProfilePictureComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTooltipDirective,
+        PostingContentComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PostingSummaryComponent {
     post = input<Posting>();
