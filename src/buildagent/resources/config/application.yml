@@ -1,6 +1,22 @@
 spring:
     application:
         name: Artemis
+    threads:
+        virtual:
+            enabled: true
+    task:
+        execution:
+            thread-name-prefix: artemis-task-
+            pool:
+                core-size: 16
+                max-size: 50
+                queue-capacity: 500
+        scheduling:
+            thread-name-prefix: artemis-scheduling-
+            pool:
+                size: 2
+    hazelcast:
+        localInstances: false
     data:
         redis:
             client-name: artemis-${artemis.continuous-integration.build-agent.short-name}

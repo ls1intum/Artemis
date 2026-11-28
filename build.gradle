@@ -220,6 +220,23 @@ if (project.hasProperty("war")) {
         }
         tasks.named("roleWars") { dependsOn archive }
     }
+    ext.verifyWorkerWarResources = { SourceSet worker, String warTask, String checkClass ->
+        def checks = sourceSets.create(worker.name + 'Test')
+        checks.compileClasspath += files(worker.output.classesDirs, worker.compileClasspath)
+        def archive = tasks.named(warTask).flatMap { it.archiveFile }
+        def verify = tasks.register(warTask.replace('boot', 'verify') + 'Resources', JavaExec) {
+            group = 'verification'
+            description = "Check packaged resources with the executable ${worker.name} WAR classloader"
+            dependsOn tasks.named(checks.classesTaskName)
+            classpath = files(archive)
+            inputs.files(checks.output.classesDirs)
+            mainClass = 'org.springframework.boot.loader.launch.PropertiesLauncher'
+            doFirst { workingDir = temporaryDir }
+            systemProperty 'loader.main', checkClass
+            systemProperty 'loader.path', "WEB-INF/classes/,WEB-INF/lib/,${checks.output.classesDirs.asPath}"
+        }
+        tasks.named('roleWars') { dependsOn verify }
+    }
     tasks.register("verifyRoleDependencies") { group = "verification" }
     tasks.register("roleWars") {
         group = "build"
@@ -1032,7 +1049,7 @@ checkstyleMain {
     source fileTree('src/core/java'), fileTree('src/buildagent/java'), fileTree('src/aiworker/java'), fileTree('src/worker/java')
 }
 checkstyleTest {
-    source fileTree('src/aiworkerTest/java')
+    source fileTree('src/aiworkerTest/java'), fileTree('src/buildagentTest/java')
     configFile = file("config/checkstyle/checkstyle-test.xml")
 }
 

@@ -28,7 +28,9 @@ aiworker.java.exclude(base + 'aiworker/api/AiWorkerApi.java') // Core-side assig
 tasks.named(aiworker.processResourcesTaskName) {
     inputs.property('version', project.version)
     filesMatching('config/application.yml') { filter { it.replace('#project.version#', project.version.toString()) } }
+    from('src/worker/resources')
     from('src/main/resources') {
+        include 'logback/message-converters.xml'
         include 'config/application-aiworker.yml', 'banner.txt', 'META-INF/licenses/**'
         include 'prompts/hyperion/critic/**', 'templates/hyperion/**'
         include 'templates/phases/java/plain_gradle.yaml', 'templates/phases/java/plain_maven.yaml'
@@ -55,18 +57,4 @@ dependencies.add(aiworker.implementationConfigurationName, 'org.springframework.
 
 registerRoleWar('bootAiWorkerWar', 'aiworker', 'de.tum.cit.aet.artemis.aiworker.AiWorkerApplication', aiworker)
 
-def aiworkerTest = sourceSets.create('aiworkerTest')
-aiworkerTest.compileClasspath += files(aiworker.output.classesDirs, aiworker.compileClasspath)
-def aiworkerArchive = tasks.named('bootAiWorkerWar').flatMap { it.archiveFile }
-def verifyWorkerResources = tasks.register('verifyAiWorkerWarResources', JavaExec) {
-    group = 'verification'
-    description = 'Read Hyperion prompts, recipes and teaching fixtures using the executable WAR classloader'
-    dependsOn tasks.named(aiworkerTest.classesTaskName)
-    inputs.files(aiworkerTest.output.classesDirs)
-    classpath = files(aiworkerArchive)
-    mainClass = 'org.springframework.boot.loader.launch.PropertiesLauncher'
-    doFirst { workingDir = temporaryDir }
-    systemProperty 'loader.main', 'de.tum.cit.aet.artemis.aiworker.PackagedGenerationResourcesCheck'
-    systemProperty 'loader.path', "WEB-INF/classes/,WEB-INF/lib/,${aiworkerTest.output.classesDirs.asPath}"
-}
-tasks.named('roleWars') { dependsOn verifyWorkerResources }
+verifyWorkerWarResources(aiworker, 'bootAiWorkerWar', 'de.tum.cit.aet.artemis.aiworker.PackagedGenerationResourcesCheck')

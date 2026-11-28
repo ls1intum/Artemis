@@ -182,7 +182,7 @@ jobs:
 
           node .github/scripts/verify-war-client.mjs "${wars[0]}"
           node .github/scripts/verify-war-client.mjs build/role-wars/Artemis-core.war
-          python3 supporting_scripts/verify_role_wars.py "${wars[0]}" build/role-wars ${{ inputs.is_release_build && '--sbom' || '--no-sbom' }}
+          node .github/scripts/verify-role-wars.mjs "${wars[0]}" build/role-wars ${{ inputs.is_release_build && '--sbom' || '--no-sbom' }}
           (cd build/role-wars && sha256sum Artemis-{core,buildagent,aiworker}.war > SHA256SUMS)
       - name: Upload dedicated WARs and checksums
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

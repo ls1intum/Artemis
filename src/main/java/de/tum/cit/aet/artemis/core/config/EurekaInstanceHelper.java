@@ -330,12 +330,13 @@ public class EurekaInstanceHelper {
      */
     public void registerHazelcastAddress(String hazelcastHost, int hazelcastPort) {
         if (registration.isPresent()) {
-            registration.get().getMetadata().put("hazelcast.host", hazelcastHost);
-            registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+            // Dedicated executables activate their role programmatically. The raw spring.profiles.active property can omit it.
+            var metadata = Map.of("hazelcast.host", hazelcastHost, "hazelcast.port", String.valueOf(hazelcastPort), "profile", String.join(",", env.getActiveProfiles()));
+            registration.get().getMetadata().putAll(metadata);
             log.info("Registered Hazelcast address in service registry: host={}, port={}", hazelcastHost, hazelcastPort);
 
             if (registration.get() instanceof EurekaRegistration eurekaRegistration) {
-                eurekaRegistration.getApplicationInfoManager().registerAppMetadata(Map.of("hazelcast.host", hazelcastHost, "hazelcast.port", String.valueOf(hazelcastPort)));
+                eurekaRegistration.getApplicationInfoManager().registerAppMetadata(metadata);
             }
         }
     }

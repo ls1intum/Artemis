@@ -215,7 +215,7 @@ jobs:
               - '.github/workflows/ci-quality.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
-              - 'src/{core,buildagent,aiworker,aiworkerTest,worker}/**'
+              - 'src/{core,buildagent,buildagentTest,aiworker,aiworkerTest,worker}/**'
               - 'build.gradle'
               - 'gradle/**'
               - 'config/checkstyle/**'

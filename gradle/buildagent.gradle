@@ -29,8 +29,10 @@ def base = 'de/tum/cit/aet/artemis/'
 tasks.named(agent.processResourcesTaskName) {
     inputs.property('version', version)
     filesMatching('config/application.yml') { filter { it.replace('#project.version#', project.version.toString()) } }
+    from('src/worker/resources')
     from('src/main/resources') {
-        include 'config/application-buildagent.yml', 'banner.txt', 'META-INF/licenses/**'
+        include 'logback/message-converters.xml'
+        include 'config/application-buildagent.yml', 'config/application-k8s.yml', 'banner.txt', 'META-INF/licenses/**'
     }
     from(tasks.named('generateGitProperties')) { include '**/git.properties' }
 }
@@ -50,3 +52,5 @@ configurations.implementation.dependencies.all { dependency ->
 }
 
 registerRoleWar('bootBuildAgentWar', 'buildagent', 'de.tum.cit.aet.artemis.buildagent.BuildAgentApplication', agent)
+
+verifyWorkerWarResources(agent, 'bootBuildAgentWar', 'de.tum.cit.aet.artemis.buildagent.PackagedAgentConfigurationCheck')

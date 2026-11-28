@@ -6,7 +6,7 @@ spotless {
                 include (
                     "src/main/java/**/*.java",
                     "src/test/java/**/*.java",
-                    "src/core/java/**/*.java", "src/buildagent/java/**/*.java", "src/aiworker/java/**/*.java", "src/aiworkerTest/java/**/*.java", "src/worker/java/**/*.java",
+                    "src/core/java/**/*.java", "src/buildagent/java/**/*.java", "src/buildagentTest/java/**/*.java", "src/aiworker/java/**/*.java", "src/aiworkerTest/java/**/*.java", "src/worker/java/**/*.java",
                 )
                 exclude(
                     "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
