@@ -475,7 +475,6 @@ public class SubmissionService {
         Result savedResult = manualResultCreationRepository.saveManualResultIfCorrectionRoundIsFree(submission.getId(), correctionRound, newResult)
                 .orElseThrow(() -> new LockedAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed"));
         submission.addResult(savedResult);
-        submissionRepository.save(submission);
         return savedResult;
     }
 

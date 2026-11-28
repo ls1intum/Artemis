@@ -115,6 +115,21 @@ class TextSubmissionLockConcurrencyTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
+    void lockTextSubmissionToBeAssessed_staleSubmission_preservesSubmittedFlag() {
+        TextSubmission submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        // Simulate a snapshot loaded before the exam assessment marked the submission as submitted.
+        submission.setSubmitted(false);
+
+        textSubmissionService.lockTextSubmissionToBeAssessed(submission, 0);
+
+        assertThat(jdbcTemplate.queryForObject("SELECT submitted FROM submission WHERE id = ?", Boolean.class, submission.getId())).isTrue();
+        assertThat(submission.getResultForCorrectionRound(0).getId()).isNotNull();
+        assertThat(countResultsOfRound(submission.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void lockTextSubmissionToBeAssessed_secondRound_copiesTheResultOfTheFirstRound() {
         TextSubmission submission = saveSubmissionWithManualResultOfRoundZero();
         Result firstRoundResult = submission.getResultForCorrectionRound(0);
