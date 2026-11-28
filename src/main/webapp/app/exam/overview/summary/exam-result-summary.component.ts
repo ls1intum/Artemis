@@ -391,17 +391,30 @@ export class ExamResultSummaryComponent implements OnInit {
      * covers the drawing of the diagram. The wait is bounded, and a chunk or a request that fails does not stop the export.
      */
     private async waitForDeferredSummaries(): Promise<void> {
-        const expectedSummaries = this.studentExam().exercises?.filter((exercise) => exercise.type === ExerciseType.MODELING).length ?? 0;
+        // An exercise that shows its example solution has no modeling summary: the template replaces it with the example solution
+        const exerciseInfos = this.exerciseInfos();
+        const expectedSummaries =
+            this.studentExam().exercises?.filter((exercise) => exercise.type === ExerciseType.MODELING && !exerciseInfos[exercise.id!]?.displayExampleSolution).length ?? 0;
         if (expectedSummaries === 0) {
             return;
         }
+        // One limit for the code and for the rendering, so that a download that never finishes cannot block the export either
+        const deadline = Date.now() + MODELING_SUMMARY_WAIT_LIMIT_MS;
+        let limitTimer: ReturnType<typeof setTimeout> | undefined;
+        const limit = new Promise<'timeout'>((resolve) => {
+            limitTimer = setTimeout(() => resolve('timeout'), MODELING_SUMMARY_WAIT_LIMIT_MS);
+        });
         try {
-            await this.loadModelingSummary();
+            const outcome = await Promise.race([this.loadModelingSummary().then(() => 'loaded' as const), limit]);
+            if (outcome === 'timeout') {
+                return; // print what is there
+            }
         } catch {
             return; // print what is there
+        } finally {
+            clearTimeout(limitTimer);
         }
         const root: HTMLElement = this.elementRef.nativeElement;
-        const deadline = Date.now() + MODELING_SUMMARY_WAIT_LIMIT_MS;
         while (Date.now() < deadline) {
             const renderedSummaries = root.querySelectorAll('jhi-modeling-exam-summary').length;
             const busySubmissions = root.querySelectorAll('jhi-modeling-submission[aria-busy="true"]').length;

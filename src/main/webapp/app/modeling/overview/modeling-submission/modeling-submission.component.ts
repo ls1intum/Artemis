@@ -252,6 +252,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.route.params
                 .pipe(
                     switchMap((params) => {
+                        // The component is reused when the route parameters change: it is busy again until the next load is done
+                        this.isLoading.set(true);
                         this.submissionId = Number(params['submissionId']) || undefined;
                         this.resultId = Number(params['resultId']) || undefined;
                         this.isFeedbackView.set(!!this.submissionId);
@@ -384,6 +386,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         this.updateModelAndExplanation();
+        // Everything to show was handed in, there is nothing to load
+        this.isLoading.set(false);
     }
 
     /** Clears state because Angular reuses this component across participation IDs. */

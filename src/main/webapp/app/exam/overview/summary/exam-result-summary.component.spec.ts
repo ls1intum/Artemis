@@ -356,6 +356,26 @@ describe('ExamResultSummaryComponent', () => {
             expect(printStub).toHaveBeenCalledOnce();
         });
 
+        it('prints what is there after the wait limit when the code never finishes downloading', async () => {
+            vi.useFakeTimers();
+            try {
+                const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+                loadModelingSummary().mockReturnValue(new Promise<void>(() => {}));
+                fixture.detectChanges();
+
+                const printing = component.printPDF();
+                await vi.advanceTimersByTimeAsync(14_000);
+                expect(printStub).not.toHaveBeenCalled();
+
+                await vi.advanceTimersByTimeAsync(2_000);
+                await printing;
+
+                expect(printStub).toHaveBeenCalledOnce();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
         it('prints what is there after the wait limit when a submission never finishes loading', async () => {
             vi.useFakeTimers();
             try {
@@ -399,6 +419,22 @@ describe('ExamResultSummaryComponent', () => {
 
             await component.printPDF();
 
+            expect(printStub).toHaveBeenCalledOnce();
+        });
+
+        it('does not wait for the summary of a modeling exercise that shows its example solution instead', async () => {
+            // The template replaces the modeling summary with the example solution, so no `jhi-modeling-exam-summary` will ever appear for it.
+            const printStub = vi.spyOn(TestBed.inject(ThemeService), 'print').mockResolvedValue(undefined);
+            const loadSpy = loadModelingSummary().mockResolvedValue(undefined);
+            fixture.detectChanges();
+            component.exerciseInfos.set({
+                ...component.exerciseInfos(),
+                3: { ...component.exerciseInfos()[3], displayExampleSolution: true } as ResultSummaryExerciseInfo,
+            });
+
+            await component.printPDF();
+
+            expect(loadSpy).not.toHaveBeenCalled();
             expect(printStub).toHaveBeenCalledOnce();
         });
 
