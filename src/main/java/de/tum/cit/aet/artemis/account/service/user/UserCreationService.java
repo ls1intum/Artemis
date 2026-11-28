@@ -164,7 +164,6 @@ public class UserCreationService {
 
     /**
      * Create user based on UserDTO. If the user management is done internally by Artemis, also create the user in the (optional) version control system
-     * In case user management is done externally, the users groups are configured in the external user management as well.
      *
      * @param userDTO user data transfer object
      * @return newly created user

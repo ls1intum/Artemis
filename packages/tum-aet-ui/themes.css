@@ -3,6 +3,7 @@
     color-scheme: light;
 
     --tumaet-ui-panel-enter-duration: 160ms;
+    --tumaet-ui-progress-bar-transition-duration: 1s;
     --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-splitter-divider-size: 6px;
     --tumaet-ui-accordion-header-padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);

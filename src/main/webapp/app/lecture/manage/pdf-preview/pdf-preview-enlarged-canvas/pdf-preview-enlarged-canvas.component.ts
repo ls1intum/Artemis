@@ -1,5 +1,6 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

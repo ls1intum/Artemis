@@ -4,7 +4,9 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
 
 @Component({
