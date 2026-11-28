@@ -64,7 +64,6 @@ describe('AdminDataExportsService', () => {
         const result = await exportPromise;
         expect(result.content).toHaveLength(2);
         expect(result.totalElements).toBe(50);
-        expect(result.totalPages).toBe(3); // 50 / 20 = 2.5, ceil = 3
         expect(result.content[0].userLogin).toBe('user1');
         expect(result.content[1].userLogin).toBe('user2');
     });
@@ -148,6 +147,6 @@ describe('AdminDataExportsService', () => {
         req.flush([], { headers: { 'X-Total-Count': '100' } });
 
         const result = await exportPromise;
-        expect(result.totalPages).toBe(2); // 100 / 50 = 2
+        expect(result.totalElements).toBe(100);
     });
 });

@@ -15,6 +15,9 @@ for directory in \
     python_version=3.10
     if [[ "$directory" == .github/python-dependencies ]]; then
         python_version=3.14
+    elif [[ "$directory" == supporting_scripts/code-coverage/generate_code_cov_table ]]; then
+        # The script itself requires Python 3.14, and Soup Sieve 4 needs Python 3.11.5 or newer.
+        python_version=3.14
     elif [[ "$directory" == supporting_scripts/lecture-transcription ]]; then
         # filelock 4.2.1, the first release without the known lock races, needs Python 3.11.
         python_version=3.11

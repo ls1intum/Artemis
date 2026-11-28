@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
@@ -18,10 +17,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,16 +34,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
@@ -116,9 +121,6 @@ class Lti13ServiceTest {
     private Lti13TokenRetriever tokenRetriever;
 
     @Mock
-    private RestTemplate restTemplate;
-
-    @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     @Mock
@@ -129,6 +131,8 @@ class Lti13ServiceTest {
 
     @Mock
     private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    private MockRestServiceServer server;
 
     private OidcIdToken oidcIdToken;
 
@@ -143,9 +147,11 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(restClientBuilder).build();
         lti13Service = new Lti13Service(userRepository, exerciseRepository, Optional.of(lectureRepositoryApi), courseRepository, launchRepository, ltiService,
-                resultGradeRepository, tokenRetriever, onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository,
-                onlineCourseConfigurationRepository, programmingFeedbackSynthesizerService);
+                resultGradeRepository, tokenRetriever, onlineCourseConfigurationService, restClientBuilder.build(), artemisAuthenticationProvider,
+                ltiPlatformConfigurationRepository, onlineCourseConfigurationRepository, programmingFeedbackSynthesizerService);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
@@ -160,8 +166,7 @@ class Lti13ServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultGradeRepository, onlineCourseConfigurationService, tokenRetriever,
-                restTemplate);
+        reset(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultGradeRepository, onlineCourseConfigurationService, tokenRetriever);
     }
 
     @Test
@@ -526,7 +531,7 @@ class Lti13ServiceTest {
         lti13Service.onNewResult(participation);
 
         verifyNoInteractions(resultGradeRepository);
-        verifyNoInteractions(restTemplate);
+        server.verify();
     }
 
     @Test
@@ -549,7 +554,7 @@ class Lti13ServiceTest {
         lti13Service.onNewResult(participation);
 
         verifyNoInteractions(resultGradeRepository);
-        verifyNoInteractions(restTemplate);
+        server.verify();
     }
 
     @Test
@@ -574,7 +579,7 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        verifyNoInteractions(restTemplate);
+        server.verify();
     }
 
     @Test
@@ -607,7 +612,7 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        verifyNoInteractions(restTemplate);
+        server.verify();
     }
 
     @Test
@@ -637,7 +642,7 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        verifyNoInteractions(restTemplate);
+        server.verify();
     }
 
     @Test
@@ -673,23 +678,22 @@ class Lti13ServiceTest {
         String accessToken = "accessToken";
         doReturn(accessToken).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
 
+        AtomicReference<MockClientHttpRequest> capturedRequest = new AtomicReference<>();
+        server.expect(requestTo(launch.getScoreLineItemUrl() + "/scores")).andExpect(method(HttpMethod.POST))
+                .andExpect(request -> capturedRequest.set((MockClientHttpRequest) request)).andRespond(withSuccess());
+
         lti13Service.onNewResult(participation);
 
-        ArgumentCaptor<String> urlCapture = forClass(String.class);
-        var httpEntityCapture = forClass(HttpEntity.class);
+        // The request goes to the score endpoint of the line item, which is checked by the expectation above.
+        server.verify();
+        MockClientHttpRequest request = capturedRequest.get();
+        assertThat(request.getHeaders().getContentType()).isEqualTo(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
 
-        verify(restTemplate).postForEntity(urlCapture.capture(), httpEntityCapture.capture(), any());
-
-        HttpEntity<?> capturedHttpEntity = httpEntityCapture.getValue();
-        assertThat(capturedHttpEntity.getBody()).isInstanceOf(String.class);
-
-        HttpEntity<String> httpEntity = new HttpEntity<>((String) capturedHttpEntity.getBody(), capturedHttpEntity.getHeaders());
-
-        List<String> authHeaders = httpEntity.getHeaders().get(HttpHeaders.AUTHORIZATION);
+        List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
-        var requestBody = httpEntity.getBody();
+        var requestBody = request.getBodyAsString();
         assertThat(requestBody).isNotNull();
         JsonNode body = JsonObjectMapper.get().readTree(requestBody);
         assertThat(body.get("userId").asString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
@@ -700,8 +704,6 @@ class Lti13ServiceTest {
         assertThat(body.get("comment").asString()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
         assertThat(body.get("scoreGiven").asDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
         assertThat(body.get("scoreMaximum").asDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
-
-        assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
 
     }
 
@@ -720,11 +722,14 @@ class Lti13ServiceTest {
         doReturn(client).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn("accessToken").when(tokenRetriever).getToken(eq(client), eq(Scopes.AGS_SCORE));
 
+        AtomicReference<MockClientHttpRequest> capturedRequest = new AtomicReference<>();
+        server.expect(requestTo(state.ltiResourceLaunch().getScoreLineItemUrl() + "/scores")).andExpect(request -> capturedRequest.set((MockClientHttpRequest) request))
+                .andRespond(withSuccess());
+
         lti13Service.onNewResult(participation);
 
-        var requestCapture = forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(eq(state.ltiResourceLaunch().getScoreLineItemUrl() + "/scores"), requestCapture.capture(), eq(Object.class));
-        var body = JsonObjectMapper.get().readTree((String) requestCapture.getValue().getBody());
+        server.verify();
+        var body = JsonObjectMapper.get().readTree(capturedRequest.get().getBodyAsString());
         assertThat(body.get("scoreGiven").asDouble()).isEqualTo(60D);
         assertThat(body.get("comment").asString()).isEqualTo("Prior graded manual feedback");
     }

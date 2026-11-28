@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -12,16 +13,20 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -35,13 +40,13 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -177,37 +182,51 @@ public class ParticipationRetrievalResource {
     /**
      * GET /exercises/:exerciseId/participations/page : get paginated participations for the participation management view.
      *
-     * @param exerciseId the exercise to query
-     * @param search     search parameters including pagination, sorting, search term, filter, and score range
+     * @param exerciseId      the exercise to query
+     * @param search          search parameters including pagination, sorting, search term, and filter
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
-        return getParticipationsPageForKind(exerciseId, search, false);
+    public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
+            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
+        return getParticipationsPageForKind(exerciseId, search, scoreRangeLower, scoreRangeUpper, false);
     }
 
     /**
      * Returns the exam participation management page, which requires an instructor.
      *
-     * @param exerciseId the exam exercise whose participations to load
-     * @param search     the filtering, sorting and pagination parameters
+     * @param exerciseId      the exam exercise whose participations to load
+     * @param search          the filtering, sorting and pagination parameters
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return the participation page with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page/for-exam")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<List<ParticipationManagementDTO>> getExamParticipationsPage(@PathVariable Long exerciseId, @Valid ParticipationSearchDTO search) {
-        return getParticipationsPageForKind(exerciseId, search, true);
+    public ResponseEntity<List<ParticipationManagementDTO>> getExamParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
+            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
+        return getParticipationsPageForKind(exerciseId, search, scoreRangeLower, scoreRangeUpper, true);
     }
 
-    private ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPageForKind(Long exerciseId, ParticipationSearchDTO search, boolean examExercise) {
+    private ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPageForKind(Long exerciseId, PagedSearchDTO search, Integer scoreRangeLower, Integer scoreRangeUpper,
+            boolean examExercise) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (examExercise ? !exercise.isExamExercise() : !exercise.isCourseExercise()) {
             throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
-        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+        Set<ParticipationFilter> filters;
+        try {
+            filters = ParticipationFilter.parse(search.filterProp());
+        }
+        catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
+        Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search, filters, scoreRangeLower, scoreRangeUpper);
         if (hideParticipant) {
             page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
         }

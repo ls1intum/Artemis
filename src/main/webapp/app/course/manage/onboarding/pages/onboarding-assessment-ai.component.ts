@@ -1,3 +1,6 @@
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -13,8 +16,19 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 @Component({
     selector: 'jhi-onboarding-assessment-ai',
     templateUrl: './onboarding-assessment-ai.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, DocumentationButtonComponent, NgClass, ArtemisTranslatePipe, PointsInputComponent],
+    styleUrls: ['./onboarding-pages.css'],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        DocumentationButtonComponent,
+        NgClass,
+        ArtemisTranslatePipe,
+        PointsInputComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+    ],
 })
 export class OnboardingAssessmentAiComponent {
     readonly course = input.required<Course>();

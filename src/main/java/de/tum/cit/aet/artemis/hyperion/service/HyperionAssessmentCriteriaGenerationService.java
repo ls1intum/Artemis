@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.AssessmentCriteriaGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.AssessmentCriteriaGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedAssessmentCriterionDTO;
@@ -60,7 +61,6 @@ public class HyperionAssessmentCriteriaGenerationService {
 
     private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
-    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -69,9 +69,9 @@ public class HyperionAssessmentCriteriaGenerationService {
 
     private final UserRepository userRepository;
 
-    public HyperionAssessmentCriteriaGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService,
-            UserRepository userRepository) {
-        this.chatClient = chatClient;
+    public HyperionAssessmentCriteriaGenerationService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.ASSESSMENT_CRITERIA);
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
@@ -86,10 +86,6 @@ public class HyperionAssessmentCriteriaGenerationService {
      */
     @Observed(name = "hyperion.assessment-criteria.generate", contextualName = "assessment criteria generation", lowCardinalityKeyValues = { "ai.span", "true" })
     public AssessmentCriteriaGenerationResponseDTO generateAssessmentCriteria(Course course, AssessmentCriteriaGenerationRequestDTO request) {
-        if (chatClient == null) {
-            throw generationError("AI chat client is not configured", "chatClientNotConfigured");
-        }
-
         var outputConverter = new BeanOutputConverter<>(GeneratedCriteriaOutput.class);
         String systemPrompt = templateService.render(SYSTEM_PROMPT, Map.of());
         String userPrompt = templateService.renderObject(USER_PROMPT,

@@ -21,7 +21,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 

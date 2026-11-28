@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
-import { TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';

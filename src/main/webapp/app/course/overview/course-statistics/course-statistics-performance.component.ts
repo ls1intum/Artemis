@@ -1,15 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiChartSelectEvent,
-    TumAetUiChartSeries,
-    TumAetUiCheckboxComponent,
-    TumAetUiLineChartComponent,
-    TumAetUiLineChartConfig,
-    TumAetUiMessageComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiChartSelectEvent, TumAetUiChartSeries, TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

@@ -1,4 +1,5 @@
-import { TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Component, OnInit, input, signal } from '@angular/core';
@@ -17,7 +18,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 @Component({
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
-    styleUrls: ['./feedback-node.scss'],
+    styleUrls: ['./feedback-node.css'],
     imports: [TumAetUiTooltipDirective, TumAetUiMessageComponent, FaIconComponent, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
@@ -59,7 +60,7 @@ export class FeedbackNodeComponent implements OnInit {
     }
 
     /**
-     * Maps the legacy Bootstrap alert color of a feedback item (`success` / `info` / `warning` / `danger`)
+     * Maps the color name of a feedback item (`success` / `info` / `warning` / `danger`)
      * to the corresponding TUM AET UI message severity.
      */
     messageSeverity(color: string | undefined): 'success' | 'info' | 'warn' | 'error' | 'secondary' {

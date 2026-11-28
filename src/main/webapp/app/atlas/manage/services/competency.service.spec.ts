@@ -2,10 +2,7 @@ import { vi } from 'vitest';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
-import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {
     Competency,
@@ -66,14 +63,6 @@ describe('CompetencyService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(LectureUnitService, {
-                    convertLectureUnitDateFromServer<T extends LectureUnit>(unit: T): T {
-                        return unit;
-                    },
-                    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
-                        return res;
-                    },
-                }),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExerciseService, useClass: MockExerciseService },
             ],
@@ -493,11 +482,9 @@ describe('CompetencyService', () => {
     });
 
     it('should convert response from server', () => {
-        const lectureUnitService = TestBed.inject(LectureUnitService);
         const accountService = TestBed.inject(AccountService);
 
         const convertDateSpy = vi.spyOn(dateUtils, 'convertDateFromServer');
-        const convertLectureUnitSpy = vi.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
         const setAccessRightsCourseSpy = vi.spyOn(accountService, 'setAccessRightsForCourse');
         const setAccessRightsExerciseSpy = vi.spyOn(accountService, 'setAccessRightsForExercise');
         const convertExerciseSpy = vi.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
@@ -517,7 +504,6 @@ describe('CompetencyService', () => {
 
         competencyService['postProcessCompetency'](undefined);
         expect(convertDateSpy).not.toHaveBeenCalled();
-        expect(convertLectureUnitSpy).not.toHaveBeenCalled();
         expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
         expect(convertExerciseSpy).not.toHaveBeenCalled();
         expect(parseCategoriesSpy).not.toHaveBeenCalled();
@@ -526,7 +512,6 @@ describe('CompetencyService', () => {
         competencyService['postProcessCompetency'](competencyFromServer);
 
         expect(convertDateSpy).toHaveBeenCalled();
-        expect(convertLectureUnitSpy).toHaveBeenCalledTimes(2);
         expect(setAccessRightsCourseSpy).toHaveBeenCalledOnce();
         expect(convertExerciseSpy).toHaveBeenCalledTimes(2);
         expect(parseCategoriesSpy).toHaveBeenCalledTimes(2);

@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationRepositoryUriDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -214,27 +214,55 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     List<ParticipationBuildTriggerDTO> findBuildTriggerDataByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
+    /**
+     * Finds the next batch of assignment repositories of the exercises with a due date in the given range, ordered by participation id.
+     * <p>
+     * The batches are read with keyset pagination: the next call passes the id of the last participation of the previous batch. Offset pagination without an order
+     * could return a participation twice or skip it between two pages, needed a count query for every full page, and read and discarded all rows of the earlier pages.
+     * The participation is the root of the query and not reached with {@code TREAT} from the exercise: {@code TREAT} wraps the id in a discriminator {@code CASE}, which
+     * keeps PostgreSQL from reading the primary key index in order.
+     *
+     * @param earliestDate the start of the due date range
+     * @param latestDate   the end of the due date range
+     * @param afterId      only participations with a greater id are returned, 0 for the first batch
+     * @param pageable     only used to limit the size of the batch
+     * @return at most {@code pageable.getPageSize()} repositories, ordered by participation id
+     */
     @Query("""
-            SELECT pa.repositoryUri
-            FROM ProgrammingExercise pe
-                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ParticipationRepositoryUriDTO(pa.id, pa.repositoryUri)
+            FROM ProgrammingExerciseStudentParticipation pa
+                JOIN pa.exercise pe
             WHERE pa.repositoryUri IS NOT NULL
                 AND pe.dueDate BETWEEN :earliestDate AND :latestDate
+                AND pa.id > :afterId
+            ORDER BY pa.id ASC
             """)
-    Page<String> findRepositoryUrisByCourseExerciseDueDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
-            Pageable pageable);
+    List<ParticipationRepositoryUriDTO> findRepositoryUrisByCourseExerciseDueDateBetween(@Param("earliestDate") ZonedDateTime earliestDate,
+            @Param("latestDate") ZonedDateTime latestDate, @Param("afterId") long afterId, Pageable pageable);
 
+    /**
+     * Finds the next batch of assignment repositories of the exams that ended in the given range, ordered by participation id, with the keyset pagination described at
+     * {@link #findRepositoryUrisByCourseExerciseDueDateBetween}.
+     *
+     * @param earliestDate the start of the exam end date range
+     * @param latestDate   the end of the exam end date range
+     * @param afterId      only participations with a greater id are returned, 0 for the first batch
+     * @param pageable     only used to limit the size of the batch
+     * @return at most {@code pageable.getPageSize()} repositories, ordered by participation id
+     */
     @Query("""
-            SELECT pa.repositoryUri
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam exam
-                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ParticipationRepositoryUriDTO(pa.id, pa.repositoryUri)
+            FROM ProgrammingExerciseStudentParticipation pa
+                JOIN pa.exercise pe
+                JOIN pe.exerciseGroup eg
+                JOIN eg.exam exam
             WHERE pa.repositoryUri IS NOT NULL
                 AND exam.endDate BETWEEN :earliestDate AND :latestDate
+                AND pa.id > :afterId
+            ORDER BY pa.id ASC
             """)
-    Page<String> findRepositoryUrisByExamExercisesEndDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
-            Pageable pageable);
+    List<ParticipationRepositoryUriDTO> findRepositoryUrisByExamExercisesEndDateBetween(@Param("earliestDate") ZonedDateTime earliestDate,
+            @Param("latestDate") ZonedDateTime latestDate, @Param("afterId") long afterId, Pageable pageable);
 
     @Query("""
             SELECT participation

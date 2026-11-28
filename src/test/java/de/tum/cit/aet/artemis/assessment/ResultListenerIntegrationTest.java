@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -55,7 +55,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
-    private StudentScoreRepository studentScoreRepository;
+    private StudentScoreTestRepository studentScoreRepository;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;

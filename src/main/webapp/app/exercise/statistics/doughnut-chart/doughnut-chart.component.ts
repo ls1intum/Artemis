@@ -7,7 +7,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 @Component({
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
-    styleUrls: ['./doughnut-chart.component.scss'],
+    styleUrls: ['./doughnut-chart.component.css'],
     imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {

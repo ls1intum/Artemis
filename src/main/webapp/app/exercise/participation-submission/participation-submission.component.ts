@@ -1,10 +1,11 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
 import { catchError, map, startWith, switchMap, take } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -25,7 +26,7 @@ import { QuizAssessmentApi } from 'app/openapi/api/quiz-assessment-api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faHashtag, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from '../result/result.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -64,6 +65,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     private submissionService = inject(SubmissionService);
     private translateService = inject(TranslateService);
     private participationService = inject(ParticipationService);
+    private resultApi = inject(ResultApi);
     private exerciseService = inject(ExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -163,7 +165,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 templateRef: this.submissionDateTemplate(),
             },
             {
-                headerIcon: 'pi pi-hashtag',
+                headerIcon: faHashtag,
                 headerTooltip: 'artemisApp.participation.participationSubmission.resultCount',
                 field: 'results',
                 width: '50px',
@@ -295,7 +297,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
                     this.isTmpOrSolutionProgrParticipation.set(queryParams['isTmpOrSolutionProgrParticipation'] === 'true');
                 }
-                this.participationService.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
+                this.resultApi.getBuildJobIdsForResultsOfParticipation(this._participationId).subscribe((buildJobIdMap) => {
                     this.resultIdToBuildJobIdMap.set(buildJobIdMap);
                     if (this.isTmpOrSolutionProgrParticipation()) {
                         // Find programming exercise of template and solution programming participation

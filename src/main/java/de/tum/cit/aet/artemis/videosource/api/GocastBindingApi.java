@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.videosource.api;
 
+import java.io.InputStream;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -69,6 +70,16 @@ public class GocastBindingApi implements AbstractApi {
      */
     public GocastUploadTargetDTO createUpload(long grantId, String externalRef, String title) {
         return gocastRecordingService.createUpload(grantId, externalRef, title);
+    }
+
+    /**
+     * Streams the video to the target issued for this upload.
+     *
+     * @param target the validated target returned by {@link #createUpload}
+     * @param file   the incoming stream
+     */
+    public void transferUpload(GocastUploadTargetDTO target, InputStream file) {
+        gocastRecordingService.transferUpload(target, file);
     }
 
     /**

@@ -12,7 +12,7 @@ const UNSET = Symbol('tumaet-ui-radio-unset');
 @Component({
     selector: 'tumaet-ui-radio-button',
     templateUrl: './tumaet-ui-radio-button.component.html',
-    styleUrl: './tumaet-ui-radio-button.component.scss',
+    styleUrl: './tumaet-ui-radio-button.component.css',
     host: { class: 'tumaet-ui-radio-button' },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiRadioButtonComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,

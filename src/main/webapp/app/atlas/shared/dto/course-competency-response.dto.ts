@@ -30,6 +30,7 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 import { parseJson } from 'app/foundation/util/json.util';
 import type { AttachmentForCompetencyAttachmentTypeEnum } from 'app/openapi/model/attachment-for-competency';
@@ -223,6 +224,7 @@ const toLectureUnit = (dto?: LectureUnitForCompetency): LectureUnit | undefined 
                 attachment.link = dto.attachment.link;
                 attachment.releaseDate = convertDateStringFromServer(dto.attachment.releaseDate);
                 attachment.uploadDate = convertDateStringFromServer(dto.attachment.uploadDate);
+                attachment.linkUrl = addPublicFilePrefix(dto.attachment.link);
                 attachment.version = dto.attachment.version;
                 attachment.attachmentType = dto.attachment.attachmentType ? attachmentTypeByValue[dto.attachment.attachmentType] : undefined;
                 attachment.studentVersion = dto.attachment.studentVersion;

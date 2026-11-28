@@ -1,0 +1,151 @@
+.question-type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: white;
+}
+
+.question-type-badge--mc {
+    background: var(--blue);
+}
+
+.question-type-badge--dnd {
+    background: var(--warning);
+}
+
+.question-type-badge--sa {
+    background: var(--success);
+}
+
+.question-card-header-reevaluation {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--overview-card-nested-bg, var(--tumaet-ui-highlight-background));
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
+    flex-wrap: wrap;
+}
+
+.question-reevaluation-title {
+    flex: 1;
+    min-width: 8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.question-reevaluation-title-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.question-reevaluation-title-input input {
+    width: 100%;
+    min-width: 0;
+}
+
+.question-reevaluation-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.question-card-body {
+    padding: 0.6rem 0.85rem;
+}
+
+.question-collapse {
+    flex-shrink: 0;
+    width: 2rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* TODO these styles are currently used in many components - maybe refactor them and if possible provide the styles in component style sheets */
+.question-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.question-options input {
+    display: inline-block;
+}
+
+/* The inputs inside these TUM AET UI components keep the width that the component sets. */
+.question-options input:not(.tumaet-ui-input-number-input, .tumaet-ui-checkbox-input, .tumaet-ui-radio-button-input) {
+    width: 1rem;
+}
+
+.question-options .datepicker-input {
+    max-width: 140px;
+}
+
+.question-options .checkbox {
+    display: inline-block;
+}
+
+.edit-quiz-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.edit-quiz-footer-content #remaining-time {
+    text-align: center;
+    width: 100%;
+}
+
+.edit-quiz-footer-content #remaining-time > div {
+    text-align: center;
+    width: 100%;
+}
+
+.edit-quiz-footer-content #remaining-time-value {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.edit-quiz-footer-content #quiz-score {
+    text-align: center;
+    font-weight: bold;
+    color: var(--success);
+}
+
+.edit-quiz-footer-content #quiz-score.incorrect {
+    color: var(--tumaet-ui-text-color);
+}
+
+.edit-quiz-footer-content .time-warning {
+    color: var(--warning);
+}
+
+.edit-quiz-footer-content .time-critical {
+    color: var(--danger);
+}
+
+@media (max-width: 767.98px) {
+    .edit-quiz-footer-content .connection-status-quiz {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .edit-quiz-footer-content {
+        font-size: 12px;
+    }
+}

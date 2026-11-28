@@ -1,6 +1,7 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faChevronDown, faChevronLeft, faChevronRight, faFlag, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
@@ -13,9 +14,16 @@ import { ScienceService } from 'app/foundation/science/science.service';
 @Component({
     selector: 'jhi-learning-path-student-nav',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        FontAwesomeModule,
+        LearningPathNavOverviewComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './learning-path-student-nav.component.html',
-    styleUrl: './learning-path-student-nav.component.scss',
 })
 export class LearningPathNavComponent {
     private learningPathNavigationService = inject(LearningPathNavigationService);

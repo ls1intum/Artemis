@@ -33,6 +33,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
+import de.tum.cit.aet.artemis.core.config.AllowedDockerRegistries;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.DefaultProfileUtil;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
 import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
+import de.tum.cit.aet.artemis.core.config.InternalAccessConfiguration;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -75,6 +77,10 @@ public class ArtemisApp {
         }
         if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_CLOUD)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
+        }
+        if (activeProfiles.contains(PROFILE_CORE)) {
+            InternalAccessConfiguration.warnIfFullyOpen(env);
+            AllowedDockerRegistries.from(env).logActiveList();
         }
     }
 

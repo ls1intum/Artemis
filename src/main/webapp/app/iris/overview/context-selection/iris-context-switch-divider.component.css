@@ -1,0 +1,39 @@
+jhi-iris-context-switch-divider .context-switch-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+    color: var(--primary);
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+jhi-iris-context-switch-divider .context-switch-divider .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--primary);
+    opacity: 0.3;
+}
+
+jhi-iris-context-switch-divider .context-switch-divider .divider-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--primary) 60%, transparent 40%);
+    border-radius: 9999px;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+}
+
+jhi-iris-context-switch-divider .context-switch-divider .divider-label-clickable {
+    cursor: pointer;
+}
+
+jhi-iris-context-switch-divider .context-switch-divider .divider-label-clickable:hover,
+jhi-iris-context-switch-divider .context-switch-divider .divider-label-clickable:focus-visible {
+    background: color-mix(in srgb, var(--primary) 12%, transparent 88%);
+    opacity: 1;
+}

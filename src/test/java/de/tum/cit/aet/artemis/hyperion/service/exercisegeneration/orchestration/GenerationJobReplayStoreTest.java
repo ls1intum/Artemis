@@ -548,7 +548,7 @@ class GenerationJobReplayStoreTest {
     }
 
     private static GenerationUsage llmRequest() {
-        return new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
+        return new GenerationUsage("model", 100, 50, "pipeline", "provider-id", 20L, true, 0.000182);
     }
 
     private static GenerationJobService.JobInfo jobInfo(String jobId, long exerciseId) {

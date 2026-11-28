@@ -18,7 +18,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.css', './drag-and-drop-question-statistic.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [QuestionStatisticsChartComponent, TranslateDirective, ImageComponent, DragItemComponent, QuizStatisticsFooterComponent],
 })

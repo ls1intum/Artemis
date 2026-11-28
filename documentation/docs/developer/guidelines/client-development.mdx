@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-27
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -103,10 +103,9 @@ Key principles:
 ### UI components
 
 <Callout variant={CalloutVariant.danger}>
-    **TUM AET UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
-    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM AET UI component
-    kit](/developer/guidelines/tum-aet-ui-kit), built on Angular Aria, Angular CDK, and Tailwind tokens. Use PrimeNG only for capabilities TUM AET UI does not yet provide, and do
-    not introduce Bootstrap or ng-bootstrap in new work.
+    **TUM AET UI is the Artemis component system. Bootstrap, ng-bootstrap, and PrimeNG are removed from the client; do not add them again.** Use a component from
+    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists, and import it from its entry point (`@tumaet/ui-angular/<component>`), not from the package root. The [TUM AET UI component kit](/developer/guidelines/tum-aet-ui-kit) is built on Angular Aria,
+    Angular CDK, and Tailwind tokens. When it lacks a capability, add the capability to the kit.
 </Callout>
 
 Choose the smallest stable abstraction that meets the requirement:
@@ -119,9 +118,6 @@ Choose the smallest stable abstraction that meets the requirement:
 4. Keep domain-specific composition, routing, requests, and application translations in Artemis.
    Compose those features from TUM AET UI primitives instead of exporting application policy as a
    package API.
-5. Use PrimeNG only when the TUM AET UI gap cannot reasonably be closed in the same change. State the
-   missing capability and migration path in the pull request, and isolate the fallback so it can be
-   replaced.
 
 Do not reimplement keyboard navigation, focus management, overlays, selection, or virtual scrolling
 when native HTML, Angular Aria, or Angular CDK already provides the behavior. Follow the
@@ -131,7 +127,7 @@ validation.
 #### Points inputs
 
 Every field in which a user enters points, bonus points or credits uses `jhi-points-input` (`PointsInputComponent` in
-`app/shared-ui/tum-aet-ui-integration/points-input`), never a native `<input type="number">` or a PrimeNG number input. It wraps
+`app/shared-ui/tum-aet-ui-integration/points-input`), never a native `<input type="number">`. It wraps
 `tumaet-ui-input-number` with one fixed setup, so that all of them accept and show a number in the same way: up to three fraction
 digits (a longer fraction is cut off while typing), `.` and `,` as decimal separator whatever the browser language, and no digit
 grouping. It works with `ngModel`, `formControlName` and `formControl`.
@@ -520,6 +516,18 @@ template areas as they are migrated.
 - Use JSDoc style comments for functions, interfaces, enums, and classes.
 - Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation without having to read the code.
 
+### Rendering markdown and user-provided text
+
+Render markdown through `ArtemisMarkdownService`, the `markdown` directive or `htmlForMarkdown`, never through a hand-built `innerHTML` binding.
+`htmlForMarkdown` validates its input:
+
+- Style sheets, form controls and document level elements (`style`, `form`, `input`, `button`, `select`, `textarea`, `link`, `meta`, `base`, `object`, `embed`) are removed.
+- The inline `style` attribute is removed everywhere except inside formulas, which KaTeX needs. A caller that must keep it lists `style` in `allowedHtmlAttributes`.
+- Images keep rendering, including remote ones, but are requested with `referrerpolicy="no-referrer"` so that the address of the page is not passed on to the image host.
+  Blocking remote images altogether would break posts that legitimately embed them; restrict them with an `img-src` rule if a deployment needs that.
+
+Render text that is not markdown, such as text produced by a language model, with interpolation (`{{ text }}`), not with `[innerHTML]`.
+
 ### Strings
 
 - Use single quotes for strings.
@@ -785,6 +793,28 @@ model does not — whether the title is already used, which plagiarism control i
 - Keep Angular lifecycle hooks synchronous and start async work in a separate method (`@angular-eslint/no-async-lifecycle-method`). Avoid repeating entries in component
   metadata arrays (`@angular-eslint/no-duplicates-in-metadata-arrays`).
 
+### Duplicate dependencies
+
+The production client must resolve every package to one version. A second copy ships twice in the bundle, doubles
+the advisories to follow and breaks libraries that keep module-level state. It usually appears silently when one
+dependency is bumped and another still asks for the old range.
+
+`pnpm run check:duplicate-dependencies` reads `pnpm-lock.yaml`, follows the `dependencies` of every workspace project
+and fails when a package resolves to more than one version. It runs in the **Client Code Style** job of CI.
+When it fails:
+
+1. Run `pnpm why <package>` to see which two dependencies disagree.
+2. Align them: bump the dependency that asks for the old version, or add a scoped override to `pnpm-workspace.yaml`
+   (for example `'@xyflow/react>zustand': '5.1.0'`) with a comment that says why it is safe and when to drop it.
+3. Only if neither works yet, add the package to `supporting_scripts/client/duplicate-dependencies-allowlist.json`
+   with the exact versions and the reason. The check fails again once an allowlisted package is no longer
+   duplicated or resolves to other versions, so the list only shrinks.
+
+Before adding a direct dependency, check that no package of the same kind is already there (one markdown parser,
+one HTML parser, one diff library, one icon set) and that it does not pull in a second copy of something we ship.
+To check what users actually download, build with `ng build --configuration production --stats-json` and pass the
+metafile: `node supporting_scripts/client/check_duplicate_dependencies.mjs --stats <output>/browser-stats.json`.
+
 ### Preventing Memory Leaks
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -846,9 +876,8 @@ login in serialized data, and the participants of repository urls.
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
 
-In a migrated module, use explicit Tailwind width, maximum-width, and logical-spacing utilities.
-Avoid the bare `.container` class while Bootstrap and Tailwind coexist because both frameworks own
-that selector.
+Use explicit Tailwind width, maximum-width, and logical-spacing utilities. Do not use the bare
+`container` class: `no-bootstrap-classes` rejects it, and an explicit maximum width states the intent.
 
 ```html
 <div class="mx-auto w-full max-w-7xl px-4 sm:px-6">
@@ -864,8 +893,8 @@ one in percentages or with its own pixel value.
 - A resizable side panel (`jhiResizable`) gives its handle the global `panel-divider-x` class, for example
   `<div class="draggable-left panel-divider-x"></div>`. The class sets the width, the small grip and a grab area that reaches
   4px into the following panel.
-- A PrimeNG `p-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
-  `resizable-panels.component.scss` does. Its default gutter is 4px.
+- A `tumaet-ui-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
+  `resizable-panels.component.css` does.
 
 ### Data tables
 
@@ -888,12 +917,14 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 ```
 
 - The toolbar is at most 40px high and never wraps. It holds only the table's own controls: search, filter, bulk and
-  create actions. Hide button labels below `md` and keep an icon. Filter forms and explanations stay above the frame.
+  create actions. Hide button labels below `md` and keep an icon. A filter that needs more than one control (for example a
+  date range) is a compact control in the toolbar too: use `size="small"` fields, or put the groups in a popover as the
+  participation page does. Explanations stay above the table.
 - The column header is always 30px high and sticks to the top of the scrolling body. Keep header text on one line.
 - Only the body scrolls, in both directions. The footer is at most 40px high, shows the range ("1–50 of 1,284") and a
   slim pager on one line, and adapts to the width of the table, so it also works inside dialogs. Skip it for lists that
   are shown completely.
-- The frame is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
+- The table has no frame of its own and sits flat on the panel of its page. It is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
   so content above the table needs no manual offset. Where that cannot work, for example several frames stacked on one
   page, set `--table-layout-offset` (the height of everything around the table) to switch to a viewport based cap, or pass
   `fill` inside a parent that provides a height.
@@ -910,65 +941,124 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
 
 ### Styling
 
-Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
-only when semantic utilities and component contracts cannot express a genuinely component-specific
-rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations
-and legacy integration.
+Use Tailwind for application layout and TUM AET UI for reusable component styling. Add a component
+stylesheet only when semantic utilities and component contracts cannot express a genuinely
+component-specific rule. Keep global styles in `src/main/webapp/content/css` limited to what a
+component stylesheet cannot hold. `application.css` is the entry of the global styles: it declares the
+order of the cascade layers and imports the stylesheets of libraries (KaTeX, highlight.js, the emoji
+picker) and the files below, in the order in which they are loaded:
 
-When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction/):
+| File                     | Content                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `themes/light.css`       | The colour and size tokens of the application with their values in the light theme              |
+| `themes/dark.css`        | The values of the tokens that differ in the dark theme                                          |
+| `apollon.css`            | Rules for the controls of the Apollon editor inside `.artemis-apollon-theme`                    |
+| `base.css`               | Element defaults (body, headings, links, tables, form controls) in the cascade layer `base`     |
+| `third-party.css`        | Rules that adapt libraries (Angular CDK, Apollon) and TUM AET UI to Artemis                     |
+| `github-alerts.css`      | Markdown alerts and callouts                                                                    |
+| `rendered-content.css`   | Content inserted with `innerHTML`: rendered markdown, answers of Iris, search results           |
+| `layout.css`             | Layout shared by the shells and their pages: dividers, title bars, scroll region, page sidebar  |
+| `shared-classes.css`     | Small classes that several features share and that have no Tailwind utility                     |
+| `print.css`              | Print styles                                                                                    |
+| `themes/dark-rules.css`  | The few rules of the dark theme that a token cannot express                                     |
 
-```scss
+Do not add a rule to these files for a single feature; put it in the stylesheet of the component.
+
+#### Stylesheets are plain CSS
+
+The client has no Sass. Every stylesheet is a `.css` file that the browser could read as it is; the build
+only resolves `@import`, runs Tailwind and adds the vendor prefixes that the supported browsers need.
+
+- **Do not nest style rules.** Write the full selector of every rule. The view encapsulation of Angular
+  scopes a nested selector differently from the flat one: `:host { &.open { … } }` matches nothing, and
+  `.a { &:hover { … } }` gets a higher specificity than `.a:hover`. Stylelint rejects nested rules
+  (`max-nesting-depth`). A rule inside `@media`, `@container`, `@supports` or `@layer` is not nesting.
+- **Use the tokens of the theme for values.** A colour is `var(--primary)`, not a copy of its value; derive a
+  shade with `color-mix(in srgb, var(--primary) 20%, transparent)`. A value that a stylesheet uses several
+  times is a custom property on `:host`, or on the outermost element of a component without view encapsulation.
+- **Share rules with `styleUrls`, not with `@import`.** Components that share rules list the shared stylesheet
+  before their own: `styleUrls: ['../build-jobs-table.css', './finished-jobs-table.component.css']`.
+  Rules that several features need and that no component owns belong in `layout.css` or `shared-classes.css`,
+  behind a class, as the controls of a title bar are (`title-bar-controls`).
+- **Do not import a stylesheet from TypeScript.** The build leaves CSS that a JavaScript module imports out of the
+  bundles (`loader` in `angular.json`): the modules of the Monaco editor import their CSS, and the build used to write
+  an unused copy of it next to every lazy chunk. A library that needs its stylesheet gets an `@import` in
+  `application.css` or an entry in `styles` of `angular.json`, as Monaco has. A stylesheet that embeds its fonts as
+  base64 data URIs (Apollon, Monaco) is not listed as it is: every visitor would download the fonts with every page.
+  Add it to `VENDOR_STYLESHEETS` in `supporting_scripts/client/prebuild.mjs` and list the copy in `vendor-styles/`, in which
+  the fonts are files that the browser fetches only when a glyph needs them (see
+  [First load of the sign-in page](#first-load-of-the-sign-in-page)).
+- **Do not write vendor prefixes** next to the standard property. The build adds `-webkit-user-select` and the
+  like from the list of supported browsers in `.browserslistrc`. A property that exists only with a prefix
+  (`-webkit-line-clamp`) stays as it is.
+- **Remove a rule together with the last element that uses its class.** A stylesheet without rules is deleted
+  with its `styleUrl`.
+
+When an application component needs owned class selectors, use [BEM](https://getbem.com/introduction)
+names and write each of them in full:
+
+```css
 .my-container {
-    // container styles
-    &__content {
-        // content styles
-        &--modifier {
-            // modifier styles
-        }
-    }
+    /* container styles */
+}
+
+.my-container__content {
+    /* content styles */
+}
+
+.my-container__content--modifier {
+    /* modifier styles */
 }
 ```
 
-**Bootstrap → TUM AET UI/Tailwind quick reference** (apply when migrating a module):
+A change to a global stylesheet, to the tokens or to many component stylesheets can alter pages that the
+author does not look at. Compare the client before and after such a change with the scripts in
+[Compare the styles of two clients](/developer/client-style-comparison).
 
-| Bootstrap                                                       | Target                                                                                                                                                                                    |
+**Bootstrap, ng-bootstrap and PrimeNG are removed.** Their class names, components and tokens no
+longer do anything, and lint rejects them. When one turns up in a review or in an old branch, this is
+what replaces it:
+
+| Removed                                                         | Use instead                                                                                                                                                                               |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tumaet-ui-button` or `[tumAetUiButton]` with `severity`, `size`, and `variant`; `tumaet-ui-button-group`                                                                                 |
-| `badge` / `bg-success` badge                                    | `tumaet-ui-tag` with a semantic `severity`                                                                                                                                                |
+| `badge`                                                         | `tumaet-ui-tag` with a semantic `severity`                                                                                                                                                |
 | `alert alert-*`                                                 | `tumaet-ui-message` with a semantic `severity`                                                                                                                                            |
 | `card` / collapsible panel                                      | `tumaet-ui-card` / `tumaet-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                                                              |
+| `accordion` / several collapsible sections                      | `tumaet-ui-accordion` with `tumaet-ui-accordion-panel`                                                                                                                                    |
 | `table table-striped table-responsive`                          | `tumaet-ui-table`, native `<table tumAetUiTable>` inside `tumaet-ui-table-layout` (see [Data tables](#data-tables)), or `tumaet-ui-table-virtual-scroll` when virtualization is justified |
 | `form-control` / `form-group` / `form-check`                    | `[tumAetUiInput]`, `tumaet-ui-select` (`tumaet-ui-multi-select` for several values), `tumaet-ui-checkbox`, or `tumaet-ui-radio-button`, composed with Tailwind layout                     |
 | a filter or search input                                        | `tumaet-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                                                                      |
 | tabs / pagination / progress / tooltip / date picker            | `tumaet-ui-tabs`, `tumaet-ui-paginator`, TUM AET UI progress components, `[tumAetUiTooltip]`, or `tumaet-ui-date-picker`                                                                  |
-| modal                                                           | `tumaet-ui-dialog`; keep feature state and result handling in the Artemis host                                                                                                            |
+| modal, `NgbModal`, the PrimeNG dialog service                   | `tumaet-ui-dialog` in the template, or `TumAetUiDialogService`; keep feature state and result handling in the Artemis host                                                                |
+| dropdown, `ngbDropdown`                                         | `tumaet-ui-menu` with `(triggered)` on its items, or `tumaet-ui-popover` for free content                                                                                                 |
 | `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                                                                          |
 | `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                                         |
 | `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                            |
-| `text-right` / `text-left`                                      | `text-end` / `text-start`                                                                                                                                                                 |
-| `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                                                  |
+| `text-muted`                                                    | `text-muted-color`                                                                                                                                                                        |
 | `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                                     |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)                          |
+| `mb-3` / `p-4` / `gap-5` (Bootstrap's scale)                    | the Tailwind step with the same size: `mb-4`, `p-6`, `gap-12` (see [Spacing utilities](#spacing-utilities))                                                                               |
+| PrimeIcons (`pi pi-*`)                                          | a Font Awesome icon with `fa-icon`                                                                                                                                                        |
 
 **Date and time fields use `tumaet-ui-date-picker`.** It is a signal-forms control: bind `[(value)]` to a `dayjs` signal or property, or `[formField]` on a signal form. `[min]` and `[max]` grey out the days outside a range in the calendar, but text typed into the field is not limited by them. The picker has no required flag and no message for an external error, so the consumer checks the range or the required state, marks the field with `[invalid]`, and explains the error next to it (`[ariaDescribedBy]` ties the text to the field). Typed text that is not a date leaves the last valid value in `value` and is reported through `(inputValidityChange)`, so a consumer must not submit while that is `false`. Use `[dateOnly]` for a date, `[timeOnly]` for a time and `[startAt]` for the month a calendar opens on while the field is empty. A reactive form that has not moved to signal forms adds `DatePickerControlDirective` (`app/shared-ui/date-picker-control`) to keep `formControlName`; it reports unparseable text as an `invalidDate` control error and goes away with the last such form. The field never gets narrower than its text needs: 15rem for a date and time, 11.5rem with `[dateOnly]` and 8rem with `[timeOnly]`; the `[inline]` variant has no minimum. A flex or grid parent therefore has to wrap or grow instead of squeezing it, so use `grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]` (or the matching minimum) rather than a fixed column count. To keep at most two columns, use `grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]` with `gap-4`. Do not stack indents in front of a picker on a phone, because a clipping parent hides its buttons. Give the picker its `labelName` and project a help icon next to it with the `tumAetUiDatePickerLabelAddon` attribute, so label, icon and time-zone indicator stay on one line; combine `[hideLabelName]` with an external label only together with `[shouldDisplayTimeZoneWarning]="false"`. For a range, use two pickers rather than a range component.
 
 **Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
-| Need                                    | Use                                                                                                           | Never                                                                             |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| brand / neutral / surface               | an Artemis semantic property, or an app-owned semantic utility when one is defined                            | `text-blue-500`, `bg-surface-200`, `bg-[#…]`, or a framework-owned primitive      |
-| state on a **TUM AET UI component**     | the component's semantic `severity`, such as `tumaet-ui-message`, `tumaet-ui-tag`, or `tumaet-ui-button`      | a color class that overrides the component                                        |
-| state on **plain markup** (static)      | `text-state-danger`, `bg-state-success`, `border-state-warning`, or `text-state-info`                         | `text-danger` (Bootstrap), `text-(--danger)`, or `text-(--p-red-500)`             |
-| state that is **dynamic / conditional** | a semantic component input, or `[style.color]="cond ? 'var(--danger)' : undefined"` for irreducible inline UI | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`, or a raw color value |
+| Need                                    | Use                                                                                                           | Never                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| brand / neutral / surface               | an Artemis semantic property, or an app-owned semantic utility when one is defined                            | `text-blue-500`, `bg-surface-200`, `bg-[#…]`, or a framework-owned primitive |
+| state on a **TUM AET UI component**     | the component's semantic `severity`, such as `tumaet-ui-message`, `tumaet-ui-tag`, or `tumaet-ui-button`      | a color class that overrides the component                                   |
+| state on **plain markup** (static)      | `text-state-danger`, `bg-state-success`, `border-state-warning`, or `text-state-info`                         | `text-danger`, `text-(--danger)`, or a primitive such as `text-red-500`      |
+| state that is **dynamic / conditional** | a semantic component input, or `[style.color]="cond ? 'var(--danger)' : undefined"` for irreducible inline UI | `[class.text-danger]`, or a raw color value                                  |
 
 The Artemis state tokens are `--danger`, `--success`, `--warning`, and `--info`. They are generated
-for light and dark mode and feed the TUM AET UI host-token adapter. Legacy PrimeNG also receives these
-roles during migration, but it does not own them. Semantic markup and TUM AET UI therefore share one
-source of truth without component-level `dark:` color branches.
+for light and dark mode and feed the TUM AET UI host-token adapter. Semantic markup and TUM AET UI
+therefore share one source of truth without component-level `dark:` color branches.
 
-The `state-*` names are Artemis's semantic namespace and avoid collisions with Bootstrap's
-unlayered color utilities during migration. `@theme inline` maps them directly to Artemis theme
-properties in `src/main/webapp/tailwind.css`.
+The `state-*` names are Artemis's semantic namespace. `@theme inline` maps them directly to Artemis
+theme properties in `src/main/webapp/tailwind.css`. The same file defines the brand and neutral
+utilities `text-primary`, `text-color`, `text-muted-color`, `border-surface`, `bg-highlight` and the
+`surface` ramp (`bg-surface-100`) from the `$ui-*` variables of the theme files.
 
 **Pick the tool by meaning, not by syntax.** Render a labelled status with `tumaet-ui-tag` or
 `tumaet-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
@@ -979,11 +1069,22 @@ to avoid an otherwise appropriate semantic utility.
 Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
 
 `localRules/no-raw-tailwind-color-palette` rejects raw palette and hexadecimal classes, primitive
-PrimeUI color properties used for meaning, and superseded arbitrary state forms. The
-`no-primeng-component-classes` rule prevents hand-painted PrimeNG root classes in remaining legacy
-uses. Bootstrap component and color classes are rejected by `no-bootstrap-classes` in fully
-migrated modules; the matching Stylelint override rejects hexadecimal and `--bs-*` values there.
-Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described below.
+color properties used for meaning, and superseded arbitrary state forms. The following rules keep the
+removed libraries from coming back:
+
+- `no-bootstrap-classes` rejects Bootstrap component, layout, typography, colour and utility classes in external
+  templates and, through the `.lock-template` block of `eslint.config.mjs`, in `template:` strings of components;
+- `no-bootstrap-classes-in-code` rejects Bootstrap class names that TypeScript builds, keeps in a map or looks up in
+  the DOM (`'text-' + color`, `'btn btn-sm'`, `querySelector('.modal-dialog')`), which the template rules cannot see.
+  Bare words such as `table` or `card` are ordinary identifiers in code and are not reported;
+- `no-primeng-component-classes` rejects PrimeNG root classes (`p-button`, `p-inputtext`) on plain elements;
+- `no-restricted-imports` rejects `primeng`, `@ng-bootstrap/**` and `bootstrap`, in specs too;
+- Stylelint rejects hexadecimal, `rgb()`, `--bs-*` and `--p-*` values, PrimeNG selectors (`.p-*`, `p-*` tags, also
+  behind `::ng-deep`) and Bootstrap component selectors (`.btn`, `.form-check`, `.modal`, ...).
+
+The rules apply to the modules in `migratedModules` of `eslint.config.mjs`, which lists every module. A new module
+is added to that list, to the Stylelint overrides and to the `@source` list of `tailwind.css`; the
+`migration-source-coverage` test keeps the three consistent.
 
 ```html
 <div class="flex items-center justify-between gap-2">
@@ -992,91 +1093,44 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 </div>
 ```
 
-**Coexistence with Bootstrap (transitional).** Bootstrap is still loaded globally for not-yet-migrated modules. To avoid global breakage during coexistence, `tailwind.css` deliberately does **not** import Tailwind's Preflight (Bootstrap's Reboot stays the authoritative reset) and uses `source(none)` with an explicit `@source` allowlist (one line per migrated module) so Tailwind only emits utilities for migrated code. A migrated module must be **fully** converted — never use a Tailwind utility to override a Bootstrap-styled element, because Tailwind's layer loses the cascade to unlayered Bootstrap. Once a module is Bootstrap-free, lock it in three places the `migration-source-coverage` test (`config/eslint/rules/`) keeps consistent: the `no-bootstrap-classes` ESLint glob (`eslint.config.mjs`) and the stylelint hex/`--bs-` override (`config/stylelint/stylelint.config.json`) must name the **same** modules, and every locked path must appear in the Tailwind `@source` allowlist (`tailwind.css`) — which may be a _superset_, since a partially-migrated module is scanned for its utilities before it is fully lockable. A missing `@source` entry fails **silently** (the module's utilities simply never generate), so the test turns any drift into a red build.
+**Tailwind setup.** `tailwind.css` does not import Tailwind's Preflight; `content/css/base.css` holds the element
+defaults instead. Tailwind is imported with `source(none)` and an explicit `@source` list, one line per module, so it
+emits utilities only for the listed folders. After a change to that list, restart the dev server: `ng serve` does not
+reliably pick up changes of `tailwind.css`.
 
-**Migrate a section — the runbook.** Migrating a section off Bootstrap, in order:
+| Symptom                              | Cause                                                                          | Fix                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| A utility has no effect in the build | the folder is missing from `@source`                                           | add it to the `@source` list of `tailwind.css`    |
+| A utility has no effect on one tag   | an unlayered rule (component stylesheet, global layout rule) or an inline style wins | write the important modifier, for example `mt-6!` |
+| Spacing is about a third too small   | a Bootstrap step was copied instead of converted by size                       | see [Spacing utilities](#spacing-utilities)       |
 
-1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
-2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed, but see _Ambiguous Spacing Utilities_ below for the values 3 to 5; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
-3. **Convert templates fully** (never half). Use the TUM AET UI and Tailwind quick-reference table above,
-   and convert spacing by target size rather than copying the class index; spell the steps 3 to 5 as
-   _Ambiguous Spacing Utilities_ describes. Import package symbols from `@tumaet/ui-angular`, never
-   through a deep path.
-4. **Replace legacy behavior with the target primitive.** Use `tumaet-ui-dialog` for modal presentation,
-   `[tumAetUiTooltip]` for tooltips, and the corresponding TUM AET UI control where it exists. Keep
-   application state and results in the Artemis component. If TUM AET UI lacks a capability, either add
-   the reusable contract or document a contained PrimeNG fallback.
-5. **Convert colors in `.html`, `.scss`, and `.ts`.** Template lint cannot see every color in
-   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM AET UI inputs,
-   Tailwind semantic utilities, or Artemis semantic properties.
-6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
-7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
-8. **Lock it** — add the path to the three lists the `migration-source-coverage` test keeps
-   consistent. `no-raw-tailwind-color-palette` and `no-primeng-component-classes` are app-wide and
-   need no per-section wiring.
-9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
-10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
+#### Spacing utilities
 
-| Symptom                                          | Cause                                                      | Fix                                             |
-| ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------- |
-| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                                 |
-| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                          |
-| Spacing changes when Bootstrap is removed        | a bare `mb-3` to `mb-5` renders Bootstrap's value          | write the important spelling (step 3)           |
-| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM AET UI or the actual fallback component |
-| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)              |
+Tailwind emits its utilities into the cascade layer `utilities`. The element defaults of `base.css` are in the layer
+`base`, which comes first, so a utility overrides them: `<p class="mt-6">` has a top margin and `<h2 class="text-xl">`
+the size of the utility. The styles of TUM AET UI are in the layer `tumaet-ui`, between `base` and `utilities`, so a
+utility on a TUM AET UI component overrides the component as well: `<button tumAetUiButton class="p-0">` has no
+padding. A declaration outside a layer still wins over every utility. That is the stylesheets of the application components
+and the global rules of `layout.css` and the other files listed above, for example the compact controls of a title
+bar. Where a utility has to override such a rule, write Tailwind's important modifier: `mb-6!`. The same holds for a
+style that a component sets inline: `tumaet-ui-table-layout` sets its maximum height this way, so `max-h-72!` needs the
+modifier. The order of the layers is declared in `application.css` and, for the time before the stylesheet has loaded, in the
+boot styles of `index.html`; keep the two lists equal. The end of `base.css` keeps a few element rules outside the layers on purpose,
+for example: links are not underlined except on hover, and the text colour of a `textarea`.
 
-**Exit criteria.** Bootstrap can be removed after every rendering closure is migrated and locked.
-That removal enables Tailwind Preflight, removes the source allowlist and Bootstrap dependency, and
-drops Bootstrap-specific token aliases. PrimeNG can be removed after its remaining capability gaps
-have TUM AET UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
-TUM AET UI host adapter keeps these migrations behind one boundary, so package component APIs and
-semantic tokens do not need to change as either legacy framework leaves.
+`rounded` and the shadows `shadow-sm`, `shadow` and `shadow-lg` have the values Artemis has always rendered, not
+Tailwind's defaults; `tailwind.css` sets them in its `@theme` block. A bare `border` draws a 1px line in the default
+border colour of Tailwind's base layer (`--ui-border-color`); add `border-(--border-color)` or another colour utility
+where a different colour is meant.
 
-#### Ambiguous Spacing Utilities
+Bootstrap, which is removed, used the spacing class names of Tailwind with another scale for the steps 3 to 5. Keep
+that in mind when you bring over markup from an old branch:
 
-Bootstrap and Tailwind define the same class names for margin, padding and gap (`m`, `mt`, `mb`, `ms`, `me`, `mx`,
-`my`, `p`, `pt`, `pb`, `ps`, `pe`, `px`, `py` and `gap`, each with 0 to 5), but they scale them differently. The two
-agree for 0 to 2 and differ for 3 to 5:
-
-| Class suffix | Bootstrap (wins while loaded) | Tailwind         |
-| ------------ | ----------------------------- | ---------------- |
-| `-3`         | `1rem` (16px)                 | `0.75rem` (12px) |
-| `-4`         | `1.5rem` (24px)               | `1rem` (16px)    |
-| `-5`         | `3rem` (48px)                 | `1.25rem` (20px) |
-
-Bootstrap's utilities are unlayered and `!important`, so while Bootstrap is loaded it wins: a bare `mb-3` renders
-16px, and renders 12px once Bootstrap is removed. The author of a template cannot tell which of the two they get, and
-the element shifts silently when Bootstrap leaves. `localRules/no-ambiguous-spacing-utility`
-(`config/eslint/rules/no-ambiguous-spacing-utility.mjs`) reports every such bare token in a static `class`,
-`[class.<token>]`, `[class]`, `[ngClass]` and the `styleClass` inputs (including component-specific ones such as
-`contentStyleClass`), and offers both fixes as ESLint suggestions:
-
-- To keep the value Bootstrap renders, write the important Tailwind step that has the Bootstrap value: `mb-3` becomes
-  `mb-4!`, `mb-4` becomes `mb-6!`, `mb-5` becomes `mb-12!`.
-- To take the Tailwind value, write it with the important modifier: `mb-3!`, `mb-4!`, `mb-5!`.
-
-The `!` is needed in both spellings. `mb-4!` is a different class from Bootstrap's `mb-4`, so Bootstrap's rule does not
-apply to it. And a bare `mb-6`, although Bootstrap has no such class, is a normal declaration in a Tailwind layer,
-which loses to Bootstrap's Reboot and to component SCSS that set the same property: a `<p class="mt-6">` renders no
-top margin, because Reboot sets `p { margin-top: 0 }`, while Bootstrap's `mt-4` is important and wins.
-
-The rule does not report what is already unambiguous: a variant (`md:mb-3`), an important token (`mb-3!`), an
-arbitrary value (`mb-[3px]`), a negative one (`-mb-3`), the steps 0 to 2, steps above 5, and `ml`, `mr`, `pl` and
-`pr`, which Bootstrap 5 does not define. Neither does it report utilities that merely look similar, such as `gap-x-3`
-or `space-x-3`. It judges the class names that are in the template text: a name that an expression computes
-(`[class]="spacing"`), a literal inside an interpolation of a class list, a plain `ngClass="..."` attribute, the case
-body of an ICU expression and the inline `template:` of a component are not looked at.
-
-It is enabled as an error for the Tailwind-laid-out templates of the student exam mode and the pages it shows: the
-templates under `app/exam/overview`, `app/exam/shared`, `app/assessment/overview`,
-`app/assessment/manage/complaints-for-tutor`, `app/assessment/manage/complaint-response`, `app/exercise/feedback`,
-`app/text/overview/text-editor` and `app/fileupload/overview/file-upload-submission`. Student-reachable folders that are
-still laid out with Bootstrap, such as the code editor and the modeling submission, join the list with their migration. To adopt it
-for another folder,
-add `<folder>/**/*.html` to the block that enables it in `eslint.config.mjs`, and fix the findings with the first
-suggestion, which changes nothing on screen. The folder must be listed in the `@source` allowlist of `tailwind.css`,
-because the classes the rule asks for exist only if Tailwind scans the template; the `migration-source-coverage` test
-fails otherwise. Update the specs that assert the old class names and run `pnpm run test:rules` and `pnpm run lint`.
+| Class suffix | Bootstrap (removed) | Tailwind         | Write for the Bootstrap size |
+| ------------ | ------------------- | ---------------- | ---------------------------- |
+| `-3`         | `1rem` (16px)       | `0.75rem` (12px) | `-4`                         |
+| `-4`         | `1.5rem` (24px)     | `1rem` (16px)    | `-6`                         |
+| `-5`         | `3rem` (48px)       | `1.25rem` (20px) | `-12`                        |
 
 ### Chart Instantiation
 
@@ -1379,7 +1433,7 @@ and a `render<D extends ShownDetail>(component: Type<{ readonly detail: InputSig
 the component cannot express that link, and `InputSignal` is invariant, so a map of components to one common input type does
 not compile either.
 
-`inputBinding(...)`, the `inputs` of `ngComponentOutlet` and the `inputValues` of the PrimeNG `DialogService` take the name
+`inputBinding(...)`, the `inputs` of `ngComponentOutlet` and the `inputValues` of `TumAetUiDialogService` take the name
 as a string as well and are not type checked, so they are no substitute. The rule does not cover them, because they are not
 calls to `setInput`.
 
@@ -1390,6 +1444,35 @@ The application utility re-exports it, so existing callers keep their import pat
 member in production code under `src/main/webapp` and `packages/tum-aet-ui` at error level, so aliasing, destructuring and
 `call`, `apply` or `bind` do not get around it. Specs are exempt, because they set inputs on fixtures. The package helper is the
 only place that disables the rule.
+
+### First load of the sign-in page
+
+A visitor of `/sign-in` is often on a slow connection and has downloaded nothing yet. On a slow 3G connection (400 kbit/s) every 100 KB is
+about two seconds. The page is meant to load with less than 500 KB of compressed data (the sum of the transfer sizes of one cold visit, not
+the size of the files), and what goes into the `main` bundle decides most of it. Measure with a production build (`pnpm run webapp:prod`), not
+with a development build: only the production build minifies the scripts and merges the chunks.
+
+- **Keep what only a signed-in user sees out of the application shell.** `AppComponent` and `NavbarComponent` are in `main`, and everything they
+  import statically is too. A part of them that only an authenticated user sees, such as the AI activity tray, the global search or the
+  notification overview, goes into a `@defer` block inside the `@if` that shows it. Imported statically, the tray brings the markdown renderer,
+  highlight.js, KaTeX and the exercise wizard into every visit. A deferred block is not loaded for an anonymous visitor.
+  In a spec, set `deferBlockBehavior: DeferBlockBehavior.Manual` and render the blocks with `fixture.getDeferBlocks()`.
+- **Import a large library when you need it.** The browser fingerprint library is loaded with `import()` in `BrowserFingerprintService`: the
+  fingerprint is sent with requests that come later, so the application does not wait for it.
+- **Translations start from a slice on `/` and `/sign-in`.** `prebuild.mjs` writes `i18n/{language}-landing.json` with the entries of
+  `LANDING_NAMESPACES` (a namespace, or a path into one such as `error.http`), and `SplitTranslateLoader` fetches it instead of the whole catalog.
+  The full catalog follows when the router leaves these routes, on the landing page when the browser is idle, and on the sign-in page with the first
+  pointer or key press of the visitor. When the sign-in page, its alerts or its footer show a key that is not in the slice, add the key
+  to `LANDING_NAMESPACES`; until the full catalog has loaded, the page shows `translation-not-found[...]` for it.
+- **Preload only what the route uses.** `index.html` preloads the poster of the landing page on `/` only.
+- **The size of the initial files has a limit.** The `initial` entry of `budgets` in the `production` configuration of `angular.json` is
+  the sum of the uncompressed files that the first page loads (`main` and the styles). The production build warns above the first value and
+  fails above the second, so a change that adds code to the shell shows up in the pull request that adds it. The values sit a little above
+  the size of the client that is built from `develop`: they are a guard against growth, not a target. When the build exceeds the limit, find
+  out which import grew `main` (the eager-chunk report of the pull request names the files that a route imports with a normal `import`), and
+  defer it with `@defer` or `import()`. Raise the limit only for growth that you have decided to accept, in the same pull request and with the
+  reason in its description; lower it when a pull request makes the bundle smaller, so that the gain stays. The build that only produces
+  the metafile for the eager-chunk report uses the `stats` configuration, which is unoptimized and has no limit for the initial files.
 
 ## Advanced Topics
 

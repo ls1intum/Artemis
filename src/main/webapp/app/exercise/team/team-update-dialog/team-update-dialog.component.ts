@@ -1,10 +1,10 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -30,7 +30,7 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 @Component({
     selector: 'jhi-team-update-dialog',
     templateUrl: './team-update-dialog.component.html',
-    styleUrls: ['./team-update-dialog.component.scss'],
+    styleUrls: ['./team-update-dialog.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         ArtemisTranslatePipe,
