@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
   "label": "coverage",
-  "message": "93.6%",
+  "message": "93.5%",
   "color": "brightgreen",
-  "exact": 93.56,
+  "exact": 93.55,
   "server": {
-    "covered": 121294,
+    "covered": 121288,
     "total": 130293
   },
   "client": {
-    "covered": 89274,
-    "total": 94769
+    "covered": 89305,
+    "total": 94821
   },
   "combined": {
-    "covered": 210568,
-    "total": 225062
+    "covered": 210593,
+    "total": 225114
   },
-  "sha": "dc9713efd8bf1c07599277fe9fe644f977920382",
-  "updatedAt": "2026-11-28T14:34:35.502Z"
+  "sha": "b21d4e3ae692e91881a9ab886734c737c6ad6719",
+  "updatedAt": "2026-11-28T14:36:35.893Z"
 }
